@@ -11,7 +11,10 @@ import {
   DragStartEvent,
   DragEndEvent,
   DragOverEvent,
-  closestCorners,
+  pointerWithin,
+  closestCenter,
+  type CollisionDetection,
+  defaultDropAnimationSideEffects,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { BoardColumn } from "./BoardColumn";
@@ -160,11 +163,32 @@ export function BoardView() {
     }
   };
 
+  // Jitter-free collision detection: prioritize pointer location within container
+  const collisionDetectionStrategy: CollisionDetection = (args) => {
+    const pointerCollisions = pointerWithin(args);
+    if (pointerCollisions.length > 0) {
+      return pointerCollisions;
+    }
+    return closestCenter(args);
+  };
+
+  const dropAnimationConfig = {
+    duration: 180,
+    easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+    sideEffects: defaultDropAnimationSideEffects({
+      styles: {
+        active: {
+          opacity: "0.4",
+        },
+      },
+    }),
+  };
+
   return (
     <div className="flex-1 overflow-x-auto p-6 h-full">
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
@@ -188,7 +212,7 @@ export function BoardView() {
         </div>
 
         {/* Active dragging overlay preview */}
-        <DragOverlay>
+        <DragOverlay dropAnimation={dropAnimationConfig}>
           {activeTask ? (
             <div className="rotate-2 scale-105 shadow-2xl">
               <BoardCard
