@@ -20,7 +20,7 @@ import {
   Link as LinkIcon,
   X,
 } from "lucide-react";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { Task } from "@/types";
@@ -78,11 +78,15 @@ export function GanttView() {
   } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = currentWorkspace?.spaces.find((s) => s.id === activeSpaceId);
+  const currentSpace = currentWorkspace?.spaces.find(
+    (s) => s.id === activeSpaceId,
+  );
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
 
   // Timeline viewport state
-  const [startDate, setStartDate] = useState(() => subDays(startOfWeek(new Date()), 7));
+  const [startDate, setStartDate] = useState(() =>
+    subDays(startOfWeek(new Date()), 7),
+  );
   const [zoom, setZoom] = useState<ZoomLevel>("day");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [quickTitle, setQuickTitle] = useState("");
@@ -119,11 +123,17 @@ export function GanttView() {
         if (!matchesTitle && !matchesDesc) return false;
       }
 
-      if (filters.priorities.length > 0 && !filters.priorities.includes(task.priority)) {
+      if (
+        filters.priorities.length > 0 &&
+        !filters.priorities.includes(task.priority)
+      ) {
         return false;
       }
 
-      if (filters.statusIds.length > 0 && !filters.statusIds.includes(task.statusId)) {
+      if (
+        filters.statusIds.length > 0 &&
+        !filters.statusIds.includes(task.statusId)
+      ) {
         return false;
       }
 
@@ -186,47 +196,58 @@ export function GanttView() {
   };
 
   // Calculate layout of each bar
-  const getTaskBarLayout = useCallback((task: Task) => {
-    let taskStart = task.startDate ? new Date(task.startDate) : task.dueDate ? subDays(new Date(task.dueDate), 2) : new Date();
-    let taskEnd = task.dueDate ? new Date(task.dueDate) : addDays(taskStart, 2);
+  const getTaskBarLayout = useCallback(
+    (task: Task) => {
+      let taskStart = task.startDate
+        ? new Date(task.startDate)
+        : task.dueDate
+          ? subDays(new Date(task.dueDate), 2)
+          : new Date();
+      let taskEnd = task.dueDate
+        ? new Date(task.dueDate)
+        : addDays(taskStart, 2);
 
-    let progressPercent = 0;
-    if (task.progress !== undefined) {
-      progressPercent = task.progress;
-    } else {
-      const completedCount = task.subtasks.filter((st) => st.completed).length;
-      progressPercent =
-        task.subtasks.length > 0
-          ? Math.round((completedCount / task.subtasks.length) * 100)
-          : task.statusId === "status-done"
-          ? 100
-          : 0;
-    }
-
-    // Apply live drag offsets if actively dragging this task
-    if (dragState && dragState.taskId === task.id) {
-      if (dragState.type === "move") {
-        taskStart = addDays(dragState.initialStartDate, dragState.deltaDays);
-        taskEnd = addDays(dragState.initialDueDate, dragState.deltaDays);
-      } else if (dragState.type === "resize-start") {
-        taskStart = addDays(dragState.initialStartDate, dragState.deltaDays);
-        if (taskStart > taskEnd) taskStart = taskEnd;
-      } else if (dragState.type === "resize-end") {
-        taskEnd = addDays(dragState.initialDueDate, dragState.deltaDays);
-        if (taskEnd < taskStart) taskEnd = taskStart;
-      } else if (dragState.type === "progress") {
-        progressPercent = dragState.liveProgress;
+      let progressPercent = 0;
+      if (task.progress !== undefined) {
+        progressPercent = task.progress;
+      } else {
+        const completedCount = task.subtasks.filter(
+          (st) => st.completed,
+        ).length;
+        progressPercent =
+          task.subtasks.length > 0
+            ? Math.round((completedCount / task.subtasks.length) * 100)
+            : task.statusId === "status-done"
+              ? 100
+              : 0;
       }
-    }
 
-    const startDiff = differenceInDays(taskStart, startDate);
-    const duration = Math.max(1, differenceInDays(taskEnd, taskStart) + 1);
+      // Apply live drag offsets if actively dragging this task
+      if (dragState && dragState.taskId === task.id) {
+        if (dragState.type === "move") {
+          taskStart = addDays(dragState.initialStartDate, dragState.deltaDays);
+          taskEnd = addDays(dragState.initialDueDate, dragState.deltaDays);
+        } else if (dragState.type === "resize-start") {
+          taskStart = addDays(dragState.initialStartDate, dragState.deltaDays);
+          if (taskStart > taskEnd) taskStart = taskEnd;
+        } else if (dragState.type === "resize-end") {
+          taskEnd = addDays(dragState.initialDueDate, dragState.deltaDays);
+          if (taskEnd < taskStart) taskEnd = taskStart;
+        } else if (dragState.type === "progress") {
+          progressPercent = dragState.liveProgress;
+        }
+      }
 
-    const left = startDiff * columnWidth;
-    const width = duration * columnWidth;
+      const startDiff = differenceInDays(taskStart, startDate);
+      const duration = Math.max(1, differenceInDays(taskEnd, taskStart) + 1);
 
-    return { left, width, progressPercent, taskStart, taskEnd };
-  }, [dragState, startDate, columnWidth]);
+      const left = startDiff * columnWidth;
+      const width = duration * columnWidth;
+
+      return { left, width, progressPercent, taskStart, taskEnd };
+    },
+    [dragState, startDate, columnWidth],
+  );
 
   // Global PointerMove and PointerUp handlers for Drag operations
   useEffect(() => {
@@ -237,18 +258,33 @@ export function GanttView() {
       const deltaDays = Math.round(deltaPx / columnWidth);
 
       if (dragState.type === "progress") {
-        const relativeX = e.clientX - (timelineBodyRef.current?.getBoundingClientRect().left || 0) + (timelineContainerRef.current?.scrollLeft || 0) - dragState.barLeft;
-        const newProgress = Math.max(0, Math.min(100, Math.round((relativeX / dragState.barWidth) * 100)));
-        setDragState((prev) => prev ? { ...prev, liveProgress: newProgress } : null);
+        const relativeX =
+          e.clientX -
+          (timelineBodyRef.current?.getBoundingClientRect().left || 0) +
+          (timelineContainerRef.current?.scrollLeft || 0) -
+          dragState.barLeft;
+        const newProgress = Math.max(
+          0,
+          Math.min(100, Math.round((relativeX / dragState.barWidth) * 100)),
+        );
+        setDragState((prev) =>
+          prev ? { ...prev, liveProgress: newProgress } : null,
+        );
       } else if (dragState.type === "dependency") {
         const bodyRect = timelineBodyRef.current?.getBoundingClientRect();
-        const pointerX = e.clientX - (bodyRect?.left || 0) + (timelineContainerRef.current?.scrollLeft || 0);
+        const pointerX =
+          e.clientX -
+          (bodyRect?.left || 0) +
+          (timelineContainerRef.current?.scrollLeft || 0);
         const pointerY = e.clientY - (bodyRect?.top || 0);
 
         // Find if hovering over another task row
         const hoveredRowIndex = Math.floor(pointerY / ROW_HEIGHT);
         const targetTask = scheduledTasks[hoveredRowIndex];
-        const targetId = targetTask && targetTask.id !== dragState.taskId ? targetTask.id : null;
+        const targetId =
+          targetTask && targetTask.id !== dragState.taskId
+            ? targetTask.id
+            : null;
 
         setDragState((prev) =>
           prev
@@ -258,7 +294,7 @@ export function GanttView() {
                 currentPointerY: pointerY,
                 targetTaskId: targetId,
               }
-            : null
+            : null,
         );
       } else {
         setDragState((prev) => (prev ? { ...prev, deltaDays } : null));
@@ -268,7 +304,10 @@ export function GanttView() {
     const handlePointerUp = () => {
       if (dragState.type === "move") {
         if (dragState.deltaDays !== 0) {
-          const newStart = addDays(dragState.initialStartDate, dragState.deltaDays);
+          const newStart = addDays(
+            dragState.initialStartDate,
+            dragState.deltaDays,
+          );
           const newDue = addDays(dragState.initialDueDate, dragState.deltaDays);
           updateTask(dragState.taskId, {
             startDate: format(newStart, "yyyy-MM-dd"),
@@ -278,8 +317,12 @@ export function GanttView() {
         }
       } else if (dragState.type === "resize-start") {
         if (dragState.deltaDays !== 0) {
-          let newStart = addDays(dragState.initialStartDate, dragState.deltaDays);
-          if (newStart > dragState.initialDueDate) newStart = dragState.initialDueDate;
+          let newStart = addDays(
+            dragState.initialStartDate,
+            dragState.deltaDays,
+          );
+          if (newStart > dragState.initialDueDate)
+            newStart = dragState.initialDueDate;
           updateTask(dragState.taskId, {
             startDate: format(newStart, "yyyy-MM-dd"),
           });
@@ -288,7 +331,8 @@ export function GanttView() {
       } else if (dragState.type === "resize-end") {
         if (dragState.deltaDays !== 0) {
           let newDue = addDays(dragState.initialDueDate, dragState.deltaDays);
-          if (newDue < dragState.initialStartDate) newDue = dragState.initialStartDate;
+          if (newDue < dragState.initialStartDate)
+            newDue = dragState.initialStartDate;
           updateTask(dragState.taskId, {
             dueDate: format(newDue, "yyyy-MM-dd"),
           });
@@ -300,9 +344,15 @@ export function GanttView() {
       } else if (dragState.type === "dependency") {
         if (dragState.targetTaskId) {
           addDependency(dragState.targetTaskId, dragState.taskId);
-          const sourceTask = scheduledTasks.find((t) => t.id === dragState.taskId);
-          const targetTask = scheduledTasks.find((t) => t.id === dragState.targetTaskId);
-          toast.success(`Linked: "${targetTask?.title}" is blocked by "${sourceTask?.title}"`);
+          const sourceTask = scheduledTasks.find(
+            (t) => t.id === dragState.taskId,
+          );
+          const targetTask = scheduledTasks.find(
+            (t) => t.id === dragState.targetTaskId,
+          );
+          toast.success(
+            `Linked: "${targetTask?.title}" is blocked by "${sourceTask?.title}"`,
+          );
         }
       }
 
@@ -324,13 +374,19 @@ export function GanttView() {
     type: "move" | "resize-start" | "resize-end" | "progress" | "dependency",
     barLeft: number,
     barWidth: number,
-    barY: number
+    barY: number,
   ) => {
     e.stopPropagation();
     e.preventDefault();
 
-    const taskStart = task.startDate ? new Date(task.startDate) : task.dueDate ? subDays(new Date(task.dueDate), 2) : new Date();
-    const taskEnd = task.dueDate ? new Date(task.dueDate) : addDays(taskStart, 2);
+    const taskStart = task.startDate
+      ? new Date(task.startDate)
+      : task.dueDate
+        ? subDays(new Date(task.dueDate), 2)
+        : new Date();
+    const taskEnd = task.dueDate
+      ? new Date(task.dueDate)
+      : addDays(taskStart, 2);
     const initialProgress = task.progress !== undefined ? task.progress : 0;
 
     const sourceX = barLeft + barWidth;
@@ -393,7 +449,8 @@ export function GanttView() {
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Calendar className="w-4 h-4 text-teal-600 dark:text-teal-400" />
             <span>
-              {format(startDate, "MMM d, yyyy")} – {format(endDate, "MMM d, yyyy")}
+              {format(startDate, "MMM d, yyyy")} –{" "}
+              {format(endDate, "MMM d, yyyy")}
             </span>
           </h2>
         </div>
@@ -410,7 +467,7 @@ export function GanttView() {
                   "px-2.5 py-1 rounded-md capitalize transition-all cursor-pointer",
                   zoom === lvl
                     ? "bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-xs font-bold"
-                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200",
                 )}
               >
                 {lvl}
@@ -446,7 +503,8 @@ export function GanttView() {
             <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
               {scheduledTasks.map((task) => {
                 const status = statuses.find((s) => s.id === task.statusId);
-                const hasDeps = task.dependencies && task.dependencies.length > 0;
+                const hasDeps =
+                  task.dependencies && task.dependencies.length > 0;
 
                 return (
                   <div
@@ -455,7 +513,8 @@ export function GanttView() {
                     style={{ height: `${ROW_HEIGHT}px` }}
                     className={cn(
                       "px-3 flex items-center justify-between gap-2 hover:bg-teal-50/50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors text-xs",
-                      dragState?.targetTaskId === task.id && "bg-teal-500/20 border-l-4 border-teal-500"
+                      dragState?.targetTaskId === task.id &&
+                        "bg-teal-500/20 border-l-4 border-teal-500",
                     )}
                   >
                     <div className="flex items-center gap-2 overflow-hidden">
@@ -478,7 +537,10 @@ export function GanttView() {
                           {task.dependencies?.length}
                         </span>
                       )}
-                      <PriorityBadge priority={task.priority} showLabel={false} />
+                      <PriorityBadge
+                        priority={task.priority}
+                        showLabel={false}
+                      />
                     </div>
                   </div>
                 );
@@ -531,8 +593,10 @@ export function GanttView() {
                       style={{ width: `${columnWidth}px` }}
                       className={cn(
                         "h-full flex flex-col items-center justify-center shrink-0 text-center transition-colors relative",
-                        weekend && "bg-slate-100/40 dark:bg-slate-950/40 text-slate-400",
-                        current && "bg-teal-50/80 dark:bg-teal-950/30 font-bold"
+                        weekend &&
+                          "bg-slate-100/40 dark:bg-slate-950/40 text-slate-400",
+                        current &&
+                          "bg-teal-50/80 dark:bg-teal-950/30 font-bold",
                       )}
                     >
                       <span className="text-[10px] font-semibold text-slate-400 uppercase">
@@ -543,7 +607,7 @@ export function GanttView() {
                           "text-xs font-bold inline-flex items-center justify-center w-6 h-6 rounded-full mt-0.5",
                           current
                             ? "bg-teal-600 text-white shadow-xs"
-                            : "text-slate-700 dark:text-slate-300"
+                            : "text-slate-700 dark:text-slate-300",
                         )}
                       >
                         {format(day, "d")}
@@ -569,7 +633,7 @@ export function GanttView() {
                       className={cn(
                         "h-full shrink-0 relative",
                         weekend && "bg-slate-100/30 dark:bg-slate-950/30",
-                        current && "bg-teal-50/20 dark:bg-teal-950/20"
+                        current && "bg-teal-50/20 dark:bg-teal-950/20",
                       )}
                     >
                       {current && (
@@ -597,7 +661,11 @@ export function GanttView() {
 
                 {/* Render Existing Dependencies */}
                 {scheduledTasks.map((targetTask, targetIdx) => {
-                  if (!targetTask.dependencies || targetTask.dependencies.length === 0) return null;
+                  if (
+                    !targetTask.dependencies ||
+                    targetTask.dependencies.length === 0
+                  )
+                    return null;
                   const targetLayout = getTaskBarLayout(targetTask);
                   const targetX = targetLayout.left;
                   const targetY = targetIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
@@ -651,7 +719,7 @@ export function GanttView() {
               {scheduledTasks.map((task, rowIndex) => {
                 const status = statuses.find((s) => s.id === task.statusId);
                 const statusColor = status?.color || "#0D9488";
-                const { left, width, progressPercent, taskStart, taskEnd } = getTaskBarLayout(task);
+                const { left, width, progressPercent } = getTaskBarLayout(task);
                 const isHovered = hoveredTaskId === task.id;
                 const isBeingDragged = dragState?.taskId === task.id;
                 const rowY = rowIndex * ROW_HEIGHT;
@@ -664,7 +732,7 @@ export function GanttView() {
                       "relative flex items-center transition-colors",
                       dragState?.targetTaskId === task.id
                         ? "bg-teal-500/15 dark:bg-teal-950/40"
-                        : "hover:bg-teal-50/20 dark:hover:bg-slate-800/20"
+                        : "hover:bg-teal-50/20 dark:hover:bg-slate-800/20",
                     )}
                     onMouseEnter={() => setHoveredTaskId(task.id)}
                     onMouseLeave={() => setHoveredTaskId(null)}
@@ -679,13 +747,16 @@ export function GanttView() {
                       }}
                       className={cn(
                         "absolute z-20 h-7 rounded-lg border flex items-center overflow-hidden shadow-xs hover:shadow-md select-none group transition-[box-shadow,border-color]",
-                        isBeingDragged && "shadow-xl ring-2 ring-teal-500 scale-[1.01]"
+                        isBeingDragged &&
+                          "shadow-xl ring-2 ring-teal-500 scale-[1.01]",
                       )}
                     >
                       {/* Left Resize Handle (Adjust Start Date) */}
                       <div
                         title="Drag edge to change Start Date"
-                        onPointerDown={(e) => startDrag(e, task, "resize-start", left, width, rowY)}
+                        onPointerDown={(e) =>
+                          startDrag(e, task, "resize-start", left, width, rowY)
+                        }
                         className="absolute left-0 top-0 bottom-0 w-2.5 cursor-ew-resize hover:bg-teal-500/40 z-30 transition-colors flex items-center justify-center"
                       >
                         <div className="w-0.5 h-3 bg-slate-400/80 rounded-full" />
@@ -705,14 +776,20 @@ export function GanttView() {
                       {/* Draggable Progress Handle (Circle at progress edge) */}
                       <div
                         title={`Drag to adjust progress (${progressPercent}%)`}
-                        style={{ left: `${Math.max(0, Math.min(width - 8, (width * progressPercent) / 100 - 4))}px` }}
-                        onPointerDown={(e) => startDrag(e, task, "progress", left, width, rowY)}
+                        style={{
+                          left: `${Math.max(0, Math.min(width - 8, (width * progressPercent) / 100 - 4))}px`,
+                        }}
+                        onPointerDown={(e) =>
+                          startDrag(e, task, "progress", left, width, rowY)
+                        }
                         className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white border border-slate-400 shadow-xs cursor-ew-resize hover:scale-125 z-30 transition-transform"
                       />
 
                       {/* Middle Body: Drag-to-Reschedule (Shift Start & Due Dates) */}
                       <div
-                        onPointerDown={(e) => startDrag(e, task, "move", left, width, rowY)}
+                        onPointerDown={(e) =>
+                          startDrag(e, task, "move", left, width, rowY)
+                        }
                         onClick={() => setSelectedTaskId(task.id)}
                         className="relative z-20 flex-1 h-full flex items-center justify-between px-3 cursor-grab active:cursor-grabbing overflow-hidden gap-2"
                       >
@@ -732,14 +809,20 @@ export function GanttView() {
                               {progressPercent}%
                             </span>
                           )}
-                          <AvatarGroup users={task.assignees} max={1} size="xs" />
+                          <AvatarGroup
+                            users={task.assignees}
+                            max={1}
+                            size="xs"
+                          />
                         </div>
                       </div>
 
                       {/* Right Resize Handle (Adjust Due Date) */}
                       <div
                         title="Drag edge to change Due Date"
-                        onPointerDown={(e) => startDrag(e, task, "resize-end", left, width, rowY)}
+                        onPointerDown={(e) =>
+                          startDrag(e, task, "resize-end", left, width, rowY)
+                        }
                         className="absolute right-0 top-0 bottom-0 w-2.5 cursor-ew-resize hover:bg-teal-500/40 z-30 transition-colors flex items-center justify-center"
                       >
                         <div className="w-0.5 h-3 bg-slate-400/80 rounded-full" />
@@ -750,7 +833,9 @@ export function GanttView() {
                     {(isHovered || isBeingDragged) && (
                       <div
                         style={{ left: `${Math.max(0, left + width + 4)}px` }}
-                        onPointerDown={(e) => startDrag(e, task, "dependency", left, width, rowY)}
+                        onPointerDown={(e) =>
+                          startDrag(e, task, "dependency", left, width, rowY)
+                        }
                         title="Drag connector to link dependency"
                         className="absolute z-30 w-3.5 h-3.5 rounded-full bg-teal-500 text-white flex items-center justify-center cursor-crosshair shadow-md hover:scale-125 transition-transform"
                       >
@@ -786,7 +871,10 @@ export function GanttView() {
                   onClick={() => {
                     const todayStr = format(new Date(), "yyyy-MM-dd");
                     const dueStr = format(addDays(new Date(), 3), "yyyy-MM-dd");
-                    updateTask(task.id, { startDate: todayStr, dueDate: dueStr });
+                    updateTask(task.id, {
+                      startDate: todayStr,
+                      dueDate: dueStr,
+                    });
                     toast.success(`Scheduled "${task.title}"`);
                   }}
                   className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-teal-500/20 text-slate-700 dark:text-slate-300 font-semibold text-[11px] truncate max-w-[140px] transition-colors cursor-pointer border border-slate-200/60 dark:border-slate-700"
@@ -800,7 +888,10 @@ export function GanttView() {
         ) : (
           <div className="flex items-center gap-2 text-slate-500">
             <span className="font-medium">💡 Quick Tips:</span>
-            <span>Drag bar to move • Drag edges to resize • Drag right dot to link dependencies • Drag circle inside to change %</span>
+            <span>
+              Drag bar to move • Drag edges to resize • Drag right dot to link
+              dependencies • Drag circle inside to change %
+            </span>
           </div>
         )}
 
@@ -815,7 +906,9 @@ export function GanttView() {
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/30 text-[10px] font-semibold"
                 >
                   <LinkIcon className="w-2.5 h-2.5" />
-                  <span className="truncate max-w-[90px]">{sourceTask?.title || "Task"}</span>
+                  <span className="truncate max-w-[90px]">
+                    {sourceTask?.title || "Task"}
+                  </span>
                   <span>→</span>
                   <span className="truncate max-w-[90px]">{t.title}</span>
                   <button
@@ -827,7 +920,7 @@ export function GanttView() {
                   </button>
                 </div>
               );
-            })
+            }),
           )}
         </div>
       </div>
