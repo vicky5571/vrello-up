@@ -12,6 +12,7 @@ import {
   Trash2,
   CheckCircle,
   Clock,
+  Link as LinkIcon,
 } from "lucide-react";
 import { TiptapEditor } from "./TiptapEditor";
 import { SubtaskManager } from "./SubtaskManager";
@@ -29,6 +30,7 @@ export function TaskDrawer() {
     addSubtask,
     toggleSubtask,
     deleteSubtask,
+    removeDependency,
     workspaces,
     activeWorkspaceId,
     activeSpaceId,
@@ -291,6 +293,49 @@ export function TaskDrawer() {
                   onDeleteSubtask={(stId) => deleteSubtask(task.id, stId)}
                 />
               </div>
+
+              {/* Dependencies & Blockers Section */}
+              {task.dependencies && task.dependencies.length > 0 && (
+                <div className="pt-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+                    <LinkIcon className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                    <span>
+                      Blocking Dependencies ({task.dependencies.length})
+                    </span>
+                  </label>
+                  <div className="space-y-1.5">
+                    {task.dependencies.map((depId) => {
+                      const blocker = tasks.find((t) => t.id === depId);
+                      return (
+                        <div
+                          key={depId}
+                          className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs"
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <span className="text-[10px] uppercase font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded shrink-0">
+                              Waiting On
+                            </span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                              {blocker?.title || "Deleted Task"}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              removeDependency(task.id, depId);
+                              toast.success("Dependency removed");
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                            title="Remove dependency"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Footer */}

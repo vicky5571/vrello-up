@@ -91,6 +91,10 @@ export function GanttView() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [quickTitle, setQuickTitle] = useState("");
   const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
+  const [hoveredDep, setHoveredDep] = useState<{
+    sourceId: string;
+    targetId: string;
+  } | null>(null);
 
   // Active Dragging State (for reschedule, resize, progress, or connecting dependencies)
   const [dragState, setDragState] = useState<DragState | null>(null);
@@ -681,19 +685,77 @@ export function GanttView() {
                     const sourceY = sourceIdx * ROW_HEIGHT + ROW_HEIGHT / 2;
 
                     const midX = (sourceX + targetX) / 2;
+                    const midY = (sourceY + targetY) / 2;
                     const pathData = `M ${sourceX} ${sourceY} C ${midX} ${sourceY}, ${midX} ${targetY}, ${targetX} ${targetY}`;
+                    const isHovered =
+                      hoveredDep?.sourceId === sourceId &&
+                      hoveredDep?.targetId === targetTask.id;
 
                     return (
-                      <path
+                      <g
                         key={`${sourceId}-${targetTask.id}`}
-                        d={pathData}
-                        fill="none"
-                        stroke="#0D9488"
-                        strokeWidth="2"
-                        strokeDasharray="4 2"
-                        markerEnd="url(#arrowhead)"
-                        className="opacity-80 hover:opacity-100 transition-opacity"
-                      />
+                        className="pointer-events-auto cursor-pointer group"
+                        onMouseEnter={() =>
+                          setHoveredDep({ sourceId, targetId: targetTask.id })
+                        }
+                        onMouseLeave={() => setHoveredDep(null)}
+                      >
+                        {/* Wide invisible hit area for easy hover/clicking */}
+                        <path
+                          d={pathData}
+                          fill="none"
+                          stroke="transparent"
+                          strokeWidth="16"
+                          onClick={() => {
+                            removeDependency(targetTask.id, sourceId);
+                            toast.success("Dependency removed");
+                          }}
+                        />
+
+                        {/* Visible line */}
+                        <path
+                          d={pathData}
+                          fill="none"
+                          stroke={isHovered ? "#EF4444" : "#0D9488"}
+                          strokeWidth={isHovered ? "2.5" : "2"}
+                          strokeDasharray="4 2"
+                          markerEnd="url(#arrowhead)"
+                          className="transition-colors"
+                          onClick={() => {
+                            removeDependency(targetTask.id, sourceId);
+                            toast.success("Dependency removed");
+                          }}
+                        />
+
+                        {/* Hover Delete Button at the midpoint */}
+                        {isHovered && (
+                          <g
+                            onClick={() => {
+                              removeDependency(targetTask.id, sourceId);
+                              toast.success("Dependency removed");
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <circle
+                              cx={midX}
+                              cy={midY}
+                              r="10"
+                              fill="#EF4444"
+                              className="filter drop-shadow-md"
+                            />
+                            <text
+                              x={midX}
+                              y={midY + 3.5}
+                              fill="#FFFFFF"
+                              fontSize="11"
+                              fontWeight="bold"
+                              textAnchor="middle"
+                            >
+                              ✕
+                            </text>
+                          </g>
+                        )}
+                      </g>
                     );
                   });
                 })}
