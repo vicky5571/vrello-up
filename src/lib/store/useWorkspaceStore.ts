@@ -302,6 +302,10 @@ interface WorkspaceState {
   toggleSubtask: (taskId: string, subtaskId: string) => void;
   deleteSubtask: (taskId: string, subtaskId: string) => void;
 
+  // Dependency Actions
+  addDependency: (taskId: string, dependsOnTaskId: string) => void;
+  removeDependency: (taskId: string, dependsOnTaskId: string) => void;
+
   // Space & List Actions
   createSpace: (name: string, icon: string, color: string) => Space;
   createList: (spaceId: string, name: string, folderId?: string) => List;
@@ -473,6 +477,42 @@ export const useWorkspaceStore = create<WorkspaceState>()(
                 }
               : t,
           ),
+        }));
+      },
+
+      addDependency: (taskId, dependsOnTaskId) => {
+        if (taskId === dependsOnTaskId) return;
+        set((state) => ({
+          tasks: state.tasks.map((t) => {
+            if (t.id === taskId) {
+              const currentDeps = t.dependencies || [];
+              if (!currentDeps.includes(dependsOnTaskId)) {
+                return {
+                  ...t,
+                  dependencies: [...currentDeps, dependsOnTaskId],
+                  updatedAt: new Date().toISOString(),
+                };
+              }
+            }
+            return t;
+          }),
+        }));
+      },
+
+      removeDependency: (taskId, dependsOnTaskId) => {
+        set((state) => ({
+          tasks: state.tasks.map((t) => {
+            if (t.id === taskId && t.dependencies) {
+              return {
+                ...t,
+                dependencies: t.dependencies.filter(
+                  (d) => d !== dependsOnTaskId,
+                ),
+                updatedAt: new Date().toISOString(),
+              };
+            }
+            return t;
+          }),
         }));
       },
 

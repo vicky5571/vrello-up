@@ -5,7 +5,11 @@ import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "VrelloUp | Modern Workspaces & Task Management",
-  description: "Enterprise ClickUp & Trello hybrid task management system with multi-views, real-time collaboration, and fluid animations.",
+  description:
+    "Enterprise ClickUp & Trello hybrid task management system with multi-views, real-time collaboration, and fluid animations.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

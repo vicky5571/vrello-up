@@ -2,7 +2,7 @@
 
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { ViewMode } from "@/types";
-import { Kanban, TableProperties, CalendarDays } from "lucide-react";
+import { Kanban, TableProperties, CalendarDays, Milestone } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,7 @@ const VIEWS: { id: ViewMode; label: string; icon: typeof Kanban }[] = [
   { id: "board", label: "Board", icon: Kanban },
   { id: "table", label: "Table", icon: TableProperties },
   { id: "calendar", label: "Calendar", icon: CalendarDays },
+  { id: "gantt", label: "Gantt", icon: Milestone },
 ];
 
 export function ViewSwitcher() {

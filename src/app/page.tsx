@@ -7,6 +7,7 @@ import { FilterBar } from "@/components/layout/FilterBar";
 import { BoardView } from "@/components/views/BoardView/BoardView";
 import { TableView } from "@/components/views/TableView/TableView";
 import { CalendarView } from "@/components/views/CalendarView/CalendarView";
+import { GanttView } from "@/components/views/GanttView/GanttView";
 import { TaskDrawer } from "@/components/tasks/TaskDrawer";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -65,6 +66,19 @@ export default function WorkspacePage() {
                 className="h-full w-full"
               >
                 <CalendarView />
+              </motion.div>
+            )}
+
+            {activeView === "gantt" && (
+              <motion.div
+                key="gantt-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <GanttView />
               </motion.div>
             )}
           </AnimatePresence>

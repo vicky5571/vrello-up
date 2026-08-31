@@ -35,13 +35,17 @@ export function BoardCard({
       type: "Task",
       task,
     },
+    transition: {
+      duration: 200,
+      easing: "cubic-bezier(0.2, 0, 0, 1)",
+    },
   });
 
   const [showMoveMenu, setShowMoveMenu] = useState(false);
 
   const style = {
     transform: CSS.Translate.toString(transform),
-    transition,
+    transition: transition || undefined,
   };
 
   const completedSubtasks = task.subtasks.filter((st) => st.completed).length;
@@ -55,7 +59,7 @@ export function BoardCard({
       {...listeners}
       onClick={() => onSelect(task.id)}
       className={cn(
-        "group relative rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-3.5 shadow-xs hover:shadow-md hover:border-teal-500/40 transition-all cursor-grab active:cursor-grabbing select-none",
+        "group relative rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-3.5 shadow-xs hover:shadow-md hover:border-teal-500/40 cursor-grab active:cursor-grabbing select-none transition-[box-shadow,border-color] duration-150",
         isDragging && "opacity-30 border-teal-500 shadow-xl"
       )}
     >
@@ -73,7 +77,7 @@ export function BoardCard({
               setShowMoveMenu(!showMoveMenu);
             }}
             title="Move to status..."
-            className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+            className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <MoreHorizontal className="w-3.5 h-3.5" />
           </button>

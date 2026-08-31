@@ -49,6 +49,8 @@ export interface Task {
   estimatedHours?: number;
   tags: Tag[];
   subtasks: Subtask[];
+  dependencies?: string[]; // IDs of tasks this task depends on (blocking)
+  progress?: number; // 0 to 100 manual or calculated progress
   orderIndex: number;
   createdAt: string;
   updatedAt: string;
@@ -89,7 +91,7 @@ export interface Workspace {
   members: User[];
 }
 
-export type ViewMode = "board" | "table" | "calendar";
+export type ViewMode = "board" | "table" | "calendar" | "gantt";
 
 export interface FilterOptions {
   search: string;
