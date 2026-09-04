@@ -963,6 +963,62 @@ export const useWorkspaceStore = create<WorkspaceState>()(
     }),
     {
       name: "vrelloup-workspace-storage",
+      version: 1,
+      migrate: (persistedState: unknown, version: number) => {
+        const state = (persistedState || {}) as Record<string, unknown>;
+
+        // Migration from unversioned (v0) to v1
+        if (version === 0 || !version) {
+          const rawWorkspaces = Array.isArray(state.workspaces) && state.workspaces.length > 0
+            ? (state.workspaces as Workspace[]).map((w) => ({
+                ...w,
+                spaces: Array.isArray(w.spaces)
+                  ? w.spaces.map((s) => ({
+                      ...s,
+                      statuses: Array.isArray(s.statuses) && s.statuses.length > 0 ? s.statuses : DEFAULT_STATUSES,
+                      folders: Array.isArray(s.folders)
+                        ? s.folders.map((f) => ({
+                            ...f,
+                            lists: Array.isArray(f.lists) ? f.lists : [],
+                          }))
+                        : [],
+                      lists: Array.isArray(s.lists) ? s.lists : [],
+                    }))
+                  : INITIAL_SPACES,
+                members: Array.isArray(w.members) ? w.members : SEED_USERS,
+              }))
+            : [INITIAL_WORKSPACE];
+
+          const rawTasks = Array.isArray(state.tasks)
+            ? (state.tasks as Task[]).map((t) => ({
+                ...t,
+                subtasks: Array.isArray(t.subtasks) ? t.subtasks : [],
+                tags: Array.isArray(t.tags) ? t.tags : [],
+                assignees: Array.isArray(t.assignees) ? t.assignees : [],
+                dependencies: Array.isArray(t.dependencies) ? t.dependencies : [],
+                orderIndex: typeof t.orderIndex === "number" ? t.orderIndex : 0,
+              }))
+            : INITIAL_TASKS;
+
+          const activeWs = rawWorkspaces[0];
+          const activeSpace = activeWs?.spaces[0];
+          const activeList =
+            activeSpace?.lists[0]?.id ||
+            activeSpace?.folders[0]?.lists[0]?.id ||
+            "";
+
+          return {
+            workspaces: rawWorkspaces,
+            tasks: rawTasks,
+            activeWorkspaceId: (typeof state.activeWorkspaceId === "string" && state.activeWorkspaceId) || activeWs?.id || "ws-main",
+            activeSpaceId: (typeof state.activeSpaceId === "string" && state.activeSpaceId) || activeSpace?.id || "space-eng",
+            activeListId: (typeof state.activeListId === "string" && state.activeListId) || activeList || "list-sprint-tasks",
+            activeView: (state.activeView as ViewMode) || "board",
+          };
+        }
+
+        return state;
+      },
       partialize: (state) => ({
         workspaces: state.workspaces,
         tasks: state.tasks,
