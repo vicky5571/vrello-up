@@ -1,17 +1,12 @@
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
 
 /**
- * Sanitizes rich text / HTML content before rendering to eliminate XSS risks.
+ * Sanitizes rich text / HTML content before rendering to eliminate XSS risks
+ * safely across both client-side and server-side (SSR / Server Actions / RSC) environments.
  */
 export function sanitizeHtml(dirty: string): string {
   if (!dirty) return "";
-  if (typeof window === "undefined") {
-    // Server-side fallback: basic strip
-    return dirty.replace(
-      /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-      "",
-    );
-  }
+
   return DOMPurify.sanitize(dirty, {
     ALLOWED_TAGS: [
       "p",
@@ -36,6 +31,10 @@ export function sanitizeHtml(dirty: string): string {
       "span",
       "div",
     ],
-    ALLOWED_ATTR: ["href", "target", "rel", "class", "style"],
+    ALLOWED_ATTR: ["href", "target", "rel", "class"],
+    ALLOW_DATA_ATTR: false,
+    FORBID_TAGS: ["script", "style", "iframe", "object", "embed"],
+    FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"],
   });
 }
+
