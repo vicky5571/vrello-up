@@ -7,7 +7,7 @@ import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { Calendar, CheckSquare, MoreHorizontal } from "lucide-react";
 import { formatDate, isOverdue, cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface BoardCardProps {
   task: Task;
@@ -42,6 +42,33 @@ export function BoardCard({
   });
 
   const [showMoveMenu, setShowMoveMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!showMoveMenu) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setShowMoveMenu(false);
+        buttonRef.current?.focus();
+      }
+    }
+
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMoveMenu(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMoveMenu]);
 
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -68,22 +95,31 @@ export function BoardCard({
         <PriorityBadge priority={task.priority} />
 
         {/* Accessible Move Menu (WCAG 2.2 AA single-pointer alternative) */}
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
+            ref={buttonRef}
             type="button"
+            aria-label="Move to status..."
+            aria-expanded={showMoveMenu}
+            aria-haspopup="true"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               setShowMoveMenu(!showMoveMenu);
             }}
             title="Move to status..."
-            className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className={cn(
+              "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:outline-hidden p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer",
+              showMoveMenu && "opacity-100"
+            )}
           >
             <MoreHorizontal className="w-3.5 h-3.5" />
           </button>
 
           {showMoveMenu && (
             <div
+              role="menu"
+              aria-label="Status choices"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
               className="absolute right-0 top-full mt-1 z-30 w-40 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl py-1 text-xs"
@@ -94,13 +130,14 @@ export function BoardCard({
               {statuses.map((st) => (
                 <button
                   key={st.id}
+                  role="menuitem"
                   type="button"
                   onClick={() => {
                     onMoveStatus(task.id, st.id);
                     setShowMoveMenu(false);
                   }}
                   className={cn(
-                    "w-full text-left px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium flex items-center gap-2 transition-colors cursor-pointer",
+                    "w-full text-left px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 focus:bg-slate-100 dark:focus:bg-slate-700 focus:outline-hidden font-medium flex items-center gap-2 transition-colors cursor-pointer",
                     task.statusId === st.id &&
                       "text-teal-600 dark:text-teal-400 font-bold"
                   )}
