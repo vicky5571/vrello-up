@@ -385,7 +385,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       deleteTask: (id) => {
         set((state) => ({
-          tasks: state.tasks.filter((t) => t.id !== id),
+          tasks: state.tasks
+            .filter((t) => t.id !== id)
+            .map((t) =>
+              t.dependencies && t.dependencies.includes(id)
+                ? {
+                    ...t,
+                    dependencies: t.dependencies.filter((depId) => depId !== id),
+                    updatedAt: new Date().toISOString(),
+                  }
+                : t,
+            ),
           selectedTaskId:
             state.selectedTaskId === id ? null : state.selectedTaskId,
         }));
