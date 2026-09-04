@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import {
   type Workspace,
   type Space,
+  type Folder,
   type List,
   type Task,
   type Status,
@@ -306,11 +307,41 @@ interface WorkspaceState {
   addDependency: (taskId: string, dependsOnTaskId: string) => boolean;
   removeDependency: (taskId: string, dependsOnTaskId: string) => void;
 
-  // Space & List Actions
+  // Space Actions
   createSpace: (name: string, icon: string, color: string) => Space;
+  updateSpace: (
+    spaceId: string,
+    updates: Partial<Pick<Space, "name" | "icon" | "color">>,
+  ) => void;
+  deleteSpace: (spaceId: string) => void;
+
+  // Folder Actions
+  createFolder: (spaceId: string, name: string) => Folder;
+  updateFolder: (spaceId: string, folderId: string, name: string) => void;
+  deleteFolder: (spaceId: string, folderId: string) => void;
+
+  // List Actions
   createList: (spaceId: string, name: string, folderId?: string) => List;
-  createFolder: (spaceId: string, name: string) => void;
+  updateList: (
+    spaceId: string,
+    listId: string,
+    updates: Partial<Pick<List, "name" | "icon" | "color">>,
+    folderId?: string,
+  ) => void;
+  deleteList: (spaceId: string, listId: string, folderId?: string) => void;
+
+  // Status Actions
   addStatusToSpace: (spaceId: string, name: string, color: string) => void;
+  updateStatus: (
+    spaceId: string,
+    statusId: string,
+    updates: Partial<Pick<Status, "name" | "color" | "category">>,
+  ) => void;
+  deleteStatus: (
+    spaceId: string,
+    statusId: string,
+    fallbackStatusId?: string,
+  ) => void;
 }
 
 /**
@@ -600,6 +631,143 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         return newSpace;
       },
 
+      updateSpace: (spaceId, updates) => {
+        set((state) => ({
+          workspaces: state.workspaces.map((w) =>
+            w.id === state.activeWorkspaceId
+              ? {
+                  ...w,
+                  spaces: w.spaces.map((s) =>
+                    s.id === spaceId ? { ...s, ...updates } : s,
+                  ),
+                }
+              : w,
+          ),
+        }));
+      },
+
+      deleteSpace: (spaceId) => {
+        const state = get();
+        const activeWs = state.workspaces.find(
+          (w) => w.id === state.activeWorkspaceId,
+        );
+        const spaceToDelete = activeWs?.spaces.find((s) => s.id === spaceId);
+        if (!spaceToDelete) return;
+
+        const listIdsToDelete = new Set<string>([
+          ...spaceToDelete.lists.map((l) => l.id),
+          ...spaceToDelete.folders.flatMap((f) => f.lists.map((l) => l.id)),
+        ]);
+
+        const remainingSpaces =
+          activeWs?.spaces.filter((s) => s.id !== spaceId) || [];
+        const nextSpace = remainingSpaces[0];
+        const nextListId =
+          nextSpace?.lists[0]?.id ||
+          nextSpace?.folders[0]?.lists[0]?.id ||
+          "";
+
+        set((prev) => ({
+          workspaces: prev.workspaces.map((w) =>
+            w.id === prev.activeWorkspaceId
+              ? { ...w, spaces: w.spaces.filter((s) => s.id !== spaceId) }
+              : w,
+          ),
+          tasks: prev.tasks.filter((t) => !listIdsToDelete.has(t.listId)),
+          activeSpaceId:
+            prev.activeSpaceId === spaceId
+              ? (nextSpace?.id || "")
+              : prev.activeSpaceId,
+          activeListId:
+            prev.activeSpaceId === spaceId ? nextListId : prev.activeListId,
+        }));
+      },
+
+      createFolder: (spaceId, name) => {
+        const newFolder: Folder = {
+          id: `folder-${Date.now()}`,
+          spaceId,
+          name,
+          lists: [],
+        };
+
+        set((state) => ({
+          workspaces: state.workspaces.map((w) => {
+            if (w.id !== state.activeWorkspaceId) return w;
+            return {
+              ...w,
+              spaces: w.spaces.map((s) =>
+                s.id === spaceId
+                  ? { ...s, folders: [...s.folders, newFolder] }
+                  : s,
+              ),
+            };
+          }),
+        }));
+        return newFolder;
+      },
+
+      updateFolder: (spaceId, folderId, name) => {
+        set((state) => ({
+          workspaces: state.workspaces.map((w) => {
+            if (w.id !== state.activeWorkspaceId) return w;
+            return {
+              ...w,
+              spaces: w.spaces.map((s) => {
+                if (s.id !== spaceId) return s;
+                return {
+                  ...s,
+                  folders: s.folders.map((f) =>
+                    f.id === folderId ? { ...f, name } : f,
+                  ),
+                };
+              }),
+            };
+          }),
+        }));
+      },
+
+      deleteFolder: (spaceId, folderId) => {
+        const state = get();
+        const activeWs = state.workspaces.find(
+          (w) => w.id === state.activeWorkspaceId,
+        );
+        const currentSpace = activeWs?.spaces.find((s) => s.id === spaceId);
+        const folderToDelete = currentSpace?.folders.find(
+          (f) => f.id === folderId,
+        );
+        if (!folderToDelete) return;
+
+        const folderListIds = new Set(folderToDelete.lists.map((l) => l.id));
+
+        let nextListId = state.activeListId;
+        if (folderListIds.has(state.activeListId)) {
+          nextListId =
+            currentSpace?.lists[0]?.id ||
+            currentSpace?.folders.find((f) => f.id !== folderId)?.lists[0]
+              ?.id ||
+            "";
+        }
+
+        set((prev) => ({
+          workspaces: prev.workspaces.map((w) => {
+            if (w.id !== prev.activeWorkspaceId) return w;
+            return {
+              ...w,
+              spaces: w.spaces.map((s) => {
+                if (s.id !== spaceId) return s;
+                return {
+                  ...s,
+                  folders: s.folders.filter((f) => f.id !== folderId),
+                };
+              }),
+            };
+          }),
+          tasks: prev.tasks.filter((t) => !folderListIds.has(t.listId)),
+          activeListId: nextListId,
+        }));
+      },
+
       createList: (spaceId, name, folderId) => {
         const newList: List = {
           id: `list-${Date.now()}`,
@@ -635,26 +803,88 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         return newList;
       },
 
-      createFolder: (spaceId, name) => {
-        const newFolder = {
-          id: `folder-${Date.now()}`,
-          spaceId,
-          name,
-          lists: [],
-        };
-
+      updateList: (spaceId, listId, updates, folderId) => {
         set((state) => ({
           workspaces: state.workspaces.map((w) => {
             if (w.id !== state.activeWorkspaceId) return w;
             return {
               ...w,
-              spaces: w.spaces.map((s) =>
-                s.id === spaceId
-                  ? { ...s, folders: [...s.folders, newFolder] }
-                  : s,
-              ),
+              spaces: w.spaces.map((s) => {
+                if (s.id !== spaceId) return s;
+                if (folderId) {
+                  return {
+                    ...s,
+                    folders: s.folders.map((f) =>
+                      f.id === folderId
+                        ? {
+                            ...f,
+                            lists: f.lists.map((l) =>
+                              l.id === listId ? { ...l, ...updates } : l,
+                            ),
+                          }
+                        : f,
+                    ),
+                  };
+                }
+                return {
+                  ...s,
+                  lists: s.lists.map((l) =>
+                    l.id === listId ? { ...l, ...updates } : l,
+                  ),
+                };
+              }),
             };
           }),
+        }));
+      },
+
+      deleteList: (spaceId, listId, folderId) => {
+        const state = get();
+        const activeWs = state.workspaces.find(
+          (w) => w.id === state.activeWorkspaceId,
+        );
+        const currentSpace = activeWs?.spaces.find((s) => s.id === spaceId);
+
+        let nextListId = state.activeListId;
+        if (state.activeListId === listId) {
+          const otherDirectLists =
+            currentSpace?.lists.filter((l) => l.id !== listId) || [];
+          const otherFolderLists =
+            currentSpace?.folders
+              .flatMap((f) => f.lists)
+              .filter((l) => l.id !== listId) || [];
+          nextListId = otherDirectLists[0]?.id || otherFolderLists[0]?.id || "";
+        }
+
+        set((prev) => ({
+          workspaces: prev.workspaces.map((w) => {
+            if (w.id !== prev.activeWorkspaceId) return w;
+            return {
+              ...w,
+              spaces: w.spaces.map((s) => {
+                if (s.id !== spaceId) return s;
+                if (folderId) {
+                  return {
+                    ...s,
+                    folders: s.folders.map((f) =>
+                      f.id === folderId
+                        ? {
+                            ...f,
+                            lists: f.lists.filter((l) => l.id !== listId),
+                          }
+                        : f,
+                    ),
+                  };
+                }
+                return {
+                  ...s,
+                  lists: s.lists.filter((l) => l.id !== listId),
+                };
+              }),
+            };
+          }),
+          tasks: prev.tasks.filter((t) => t.listId !== listId),
+          activeListId: nextListId,
         }));
       },
 
@@ -677,6 +907,57 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               }),
             };
           }),
+        }));
+      },
+
+      updateStatus: (spaceId, statusId, updates) => {
+        set((state) => ({
+          workspaces: state.workspaces.map((w) => {
+            if (w.id !== state.activeWorkspaceId) return w;
+            return {
+              ...w,
+              spaces: w.spaces.map((s) => {
+                if (s.id !== spaceId) return s;
+                return {
+                  ...s,
+                  statuses: s.statuses.map((st) =>
+                    st.id === statusId ? { ...st, ...updates } : st,
+                  ),
+                };
+              }),
+            };
+          }),
+        }));
+      },
+
+      deleteStatus: (spaceId, statusId, fallbackStatusId) => {
+        const state = get();
+        const activeWs = state.workspaces.find(
+          (w) => w.id === state.activeWorkspaceId,
+        );
+        const currentSpace = activeWs?.spaces.find((s) => s.id === spaceId);
+        const remainingStatuses =
+          currentSpace?.statuses.filter((st) => st.id !== statusId) || [];
+        const fallback =
+          fallbackStatusId || remainingStatuses[0]?.id || "status-todo";
+
+        set((prev) => ({
+          workspaces: prev.workspaces.map((w) => {
+            if (w.id !== prev.activeWorkspaceId) return w;
+            return {
+              ...w,
+              spaces: w.spaces.map((s) => {
+                if (s.id !== spaceId) return s;
+                return {
+                  ...s,
+                  statuses: s.statuses.filter((st) => st.id !== statusId),
+                };
+              }),
+            };
+          }),
+          tasks: prev.tasks.map((t) =>
+            t.statusId === statusId ? { ...t, statusId: fallback } : t,
+          ),
         }));
       },
     }),
