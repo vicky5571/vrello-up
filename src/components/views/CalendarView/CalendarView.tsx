@@ -12,7 +12,6 @@ import {
   endOfWeek,
   eachDayOfInterval,
   isSameMonth,
-  isSameDay,
   isToday,
 } from "date-fns";
 import {
@@ -51,6 +50,7 @@ export function CalendarView() {
   const endDate = endOfWeek(monthEnd);
 
   const days = eachDayOfInterval({ start: startDate, end: endDate });
+  const weekCount = Math.ceil(days.length / 7);
 
   // Apply filters
   const filteredTasks = tasks.filter((task) => {
@@ -125,22 +125,29 @@ export function CalendarView() {
         <div>Sat</div>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="flex-1 grid grid-cols-7 grid-rows-5 gap-px bg-slate-200 dark:bg-slate-800/80 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
+      {/* Calendar Grid (dynamically sized to match actual number of weeks: 4, 5, or 6) */}
+      <div
+        style={{ gridTemplateRows: `repeat(${weekCount}, minmax(0, 1fr))` }}
+        className="flex-1 grid grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800/80 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 min-h-0"
+      >
         {days.map((day, idx) => {
           const isCurrentMonth = isSameMonth(day, monthStart);
           const isCurrentDay = isToday(day);
+          const dayDateStr = format(day, "yyyy-MM-dd");
 
           const dayTasks = filteredTasks.filter((task) => {
             if (!task.dueDate) return false;
-            return isSameDay(new Date(task.dueDate), day);
+            const taskDateStr = task.dueDate.includes("T")
+              ? format(new Date(task.dueDate), "yyyy-MM-dd")
+              : task.dueDate;
+            return taskDateStr === dayDateStr;
           });
 
           return (
             <div
               key={idx}
               className={cn(
-                "bg-white dark:bg-slate-900 p-2 flex flex-col justify-between overflow-hidden transition-colors min-h-[90px]",
+                "bg-white dark:bg-slate-900 p-2 flex flex-col justify-between overflow-hidden transition-colors min-h-0",
                 !isCurrentMonth &&
                   "bg-slate-50/50 dark:bg-slate-950/40 text-slate-400",
               )}
@@ -164,7 +171,7 @@ export function CalendarView() {
               </div>
 
               {/* Tasks for the Day */}
-              <div className="space-y-1 mt-1 overflow-y-auto max-h-[80px]">
+              <div className="space-y-1 mt-1 overflow-y-auto flex-1 min-h-0">
                 {dayTasks.map((task) => {
                   const status = statuses.find((s) => s.id === task.statusId);
 
