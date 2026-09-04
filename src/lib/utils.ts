@@ -22,3 +22,14 @@ export function isOverdue(date: string | Date | undefined | null): boolean {
   today.setHours(0, 0, 0, 0);
   return d < today;
 }
+
+/**
+ * Generates collision-free IDs using standard Web Crypto randomUUID with fallback.
+ */
+export function generateId(prefix?: string): string {
+  const uuid =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  return prefix ? `${prefix}-${uuid}` : uuid;
+}

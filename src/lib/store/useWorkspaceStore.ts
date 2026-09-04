@@ -12,6 +12,7 @@ import {
   type User,
   type Tag,
 } from "@/types";
+import { generateId } from "@/lib/utils";
 
 // Default Seed Users
 export const SEED_USERS: User[] = [
@@ -427,7 +428,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }),
 
       createTask: (newTaskData) => {
-        const id = `task-${Date.now()}`;
+        const id = generateId("task");
         const now = new Date().toISOString();
         const newTask: Task = {
           ...newTaskData,
@@ -506,7 +507,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       addSubtask: (taskId, title) => {
         const newSubtask = {
-          id: `sub-${Date.now()}`,
+          id: generateId("sub"),
           title,
           completed: false,
           createdAt: new Date().toISOString(),
@@ -600,7 +601,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       createSpace: (name, icon, color) => {
-        const id = `space-${Date.now()}`;
+        const id = generateId("space");
         const newSpace: Space = {
           id,
           workspaceId: get().activeWorkspaceId,
@@ -611,7 +612,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           folders: [],
           lists: [
             {
-              id: `list-${Date.now()}`,
+              id: generateId("list"),
               spaceId: id,
               name: "General",
               icon: "List",
@@ -685,7 +686,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       createFolder: (spaceId, name) => {
         const newFolder: Folder = {
-          id: `folder-${Date.now()}`,
+          id: generateId("folder"),
           spaceId,
           name,
           lists: [],
@@ -770,7 +771,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       createList: (spaceId, name, folderId) => {
         const newList: List = {
-          id: `list-${Date.now()}`,
+          id: generateId("list"),
           spaceId,
           folderId,
           name,
@@ -897,7 +898,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               spaces: w.spaces.map((s) => {
                 if (s.id !== spaceId) return s;
                 const newStatus: Status = {
-                  id: `status-${Date.now()}`,
+                  id: generateId("status"),
                   name: name.toUpperCase(),
                   color,
                   category: "in_progress",
