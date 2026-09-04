@@ -59,10 +59,11 @@ export function TiptapEditor({
     },
   });
 
-  // Sync content if changed from outside
+  // Sync content if changed from outside (only when user is not actively typing)
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(sanitizeHtml(content));
+    if (!editor || editor.isDestroyed) return;
+    if (!editor.isFocused && content !== editor.getHTML()) {
+      editor.commands.setContent(sanitizeHtml(content), { emitUpdate: false });
     }
   }, [content, editor]);
 
