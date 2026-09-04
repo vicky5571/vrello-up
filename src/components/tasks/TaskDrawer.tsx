@@ -36,7 +36,17 @@ export function TaskDrawer() {
     activeSpaceId,
   } = useWorkspaceStore();
 
-  const task = tasks.find((t) => t.id === selectedTaskId);
+  const liveTask = tasks.find((t) => t.id === selectedTaskId);
+  const [displayedTask, setDisplayedTask] = useState(liveTask);
+
+  useEffect(() => {
+    if (liveTask) {
+      setDisplayedTask(liveTask);
+    }
+  }, [liveTask]);
+
+  const task = liveTask || displayedTask;
+
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const currentSpace = currentWorkspace?.spaces.find(
     (s) => s.id === activeSpaceId,
@@ -62,31 +72,33 @@ export function TaskDrawer() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedTaskId, setSelectedTaskId]);
 
-  if (!task) return null;
-
   const handleTitleBlur = () => {
-    if (title.trim() && title !== task.title) {
+    if (task && title.trim() && title !== task.title) {
       updateTask(task.id, { title: title.trim() });
       toast.success("Task title updated");
     }
   };
 
   const handleStatusChange = (newStatusId: string) => {
+    if (!task) return;
     updateTask(task.id, { statusId: newStatusId });
     toast.success("Status updated");
   };
 
   const handlePriorityChange = (newPriority: Priority) => {
+    if (!task) return;
     updateTask(task.id, { priority: newPriority });
     toast.success("Priority updated");
   };
 
   const handleDelete = () => {
+    if (!task) return;
     deleteTask(task.id);
     toast.success("Task deleted");
   };
 
   const toggleAssignee = (userId: string) => {
+    if (!task) return;
     const isAssigned = task.assignees.some((u) => u.id === userId);
     const updatedAssignees = isAssigned
       ? task.assignees.filter((u) => u.id !== userId)
@@ -99,7 +111,7 @@ export function TaskDrawer() {
 
   return (
     <AnimatePresence>
-      {selectedTaskId && (
+      {selectedTaskId && task && (
         <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
           {/* Backdrop */}
           <motion.div
