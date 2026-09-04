@@ -19,7 +19,7 @@ import {
 import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { BoardColumn } from "./BoardColumn";
 import { BoardCard } from "./BoardCard";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Task } from "@/types";
 
 export function BoardView() {
@@ -42,6 +42,7 @@ export function BoardView() {
   const statuses = currentSpace?.statuses || [];
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [localTasks, setLocalTasks] = useState<Task[] | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -54,40 +55,45 @@ export function BoardView() {
     }),
   );
 
-  // Apply filters
-  const filteredTasks = tasks.filter((task) => {
-    if (activeListId && task.listId !== activeListId) return false;
+  const displayTasks = localTasks || tasks;
 
-    // Search filter
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      const matchesTitle = task.title.toLowerCase().includes(q);
-      const matchesDesc = task.description.toLowerCase().includes(q);
-      if (!matchesTitle && !matchesDesc) return false;
-    }
+  // Apply filters and sort by orderIndex
+  const filteredTasks = useMemo<Task[]>(() => {
+    return displayTasks.filter((task: Task) => {
+      if (activeListId && task.listId !== activeListId) return false;
 
-    // Priority filter
-    if (
-      filters.priorities.length > 0 &&
-      !filters.priorities.includes(task.priority)
-    ) {
-      return false;
-    }
+      // Search filter
+      if (filters.search) {
+        const q = filters.search.toLowerCase();
+        const matchesTitle = task.title.toLowerCase().includes(q);
+        const matchesDesc = task.description.toLowerCase().includes(q);
+        if (!matchesTitle && !matchesDesc) return false;
+      }
 
-    // Status filter
-    if (
-      filters.statusIds.length > 0 &&
-      !filters.statusIds.includes(task.statusId)
-    ) {
-      return false;
-    }
+      // Priority filter
+      if (
+        filters.priorities.length > 0 &&
+        !filters.priorities.includes(task.priority)
+      ) {
+        return false;
+      }
 
-    return true;
-  });
+      // Status filter
+      if (
+        filters.statusIds.length > 0 &&
+        !filters.statusIds.includes(task.statusId)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [displayTasks, activeListId, filters]);
 
   const handleDragStart = (event: DragStartEvent) => {
     if (event.active.data.current?.type === "Task") {
       setActiveTask(event.active.data.current.task);
+      setLocalTasks(tasks);
     }
   };
 
@@ -106,61 +112,91 @@ export function BoardView() {
 
     if (!isActiveTask) return;
 
-    // Dropping a Task over another Task
-    if (isOverTask) {
-      const activeTaskItem = tasks.find((t) => t.id === activeId);
-      const overTaskItem = tasks.find((t) => t.id === overId);
+    // Buffer status change purely in local state (no store/localStorage writes)
+    setLocalTasks((prevTasks) => {
+      const current = prevTasks || tasks;
+      const activeTaskItem = current.find((t) => t.id === activeId);
+      if (!activeTaskItem) return current;
 
-      if (
-        activeTaskItem &&
-        overTaskItem &&
-        activeTaskItem.statusId !== overTaskItem.statusId
-      ) {
-        moveTaskStatus(activeId, overTaskItem.statusId);
-      }
-    }
+      let targetStatusId: string | null = null;
 
-    // Dropping a Task over a Column
-    if (isOverColumn) {
-      const activeTaskItem = tasks.find((t) => t.id === activeId);
-      if (activeTaskItem && activeTaskItem.statusId !== overId) {
-        moveTaskStatus(activeId, overId);
+      if (isOverTask) {
+        const overTaskItem = current.find((t) => t.id === overId);
+        if (overTaskItem) {
+          targetStatusId = overTaskItem.statusId;
+        }
+      } else if (isOverColumn) {
+        targetStatusId = overId;
       }
-    }
+
+      if (!targetStatusId || activeTaskItem.statusId === targetStatusId) {
+        return current;
+      }
+
+      return current.map((t) =>
+        t.id === activeId ? { ...t, statusId: targetStatusId! } : t,
+      );
+    });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveTask(null);
     const { active, over } = event;
-    if (!over) return;
+    setActiveTask(null);
+
+    if (!over) {
+      setLocalTasks(null);
+      return;
+    }
 
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    if (activeId === overId) return;
+    const currentTasks = localTasks || tasks;
+    const activeTaskItem = currentTasks.find((t) => t.id === activeId);
+    const originalTaskItem = tasks.find((t) => t.id === activeId);
 
-    const activeTaskItem = tasks.find((t) => t.id === activeId);
-    const overTaskItem = tasks.find((t) => t.id === overId);
+    if (!activeTaskItem || !originalTaskItem) {
+      setLocalTasks(null);
+      return;
+    }
 
-    if (
-      activeTaskItem &&
-      overTaskItem &&
-      activeTaskItem.statusId === overTaskItem.statusId
-    ) {
-      const columnTasks = tasks.filter(
-        (t) => t.statusId === activeTaskItem.statusId,
-      );
+    const isOverTask = over.data.current?.type === "Task";
+    const isOverColumn = over.data.current?.type === "Column";
+
+    let destinationStatusId = activeTaskItem.statusId;
+    if (isOverColumn) {
+      destinationStatusId = overId;
+    } else if (isOverTask) {
+      const overTaskItem = currentTasks.find((t) => t.id === overId);
+      if (overTaskItem) {
+        destinationStatusId = overTaskItem.statusId;
+      }
+    }
+
+    // 1. Commit status change to store if changed
+    if (originalTaskItem.statusId !== destinationStatusId) {
+      moveTaskStatus(activeId, destinationStatusId);
+    }
+
+    // 2. Commit reorder within destination column if dropped over a specific task
+    if (isOverTask && activeId !== overId) {
+      const columnTasks = currentTasks
+        .filter((t) => (t.id === activeId ? destinationStatusId : t.statusId) === destinationStatusId)
+        .sort((a, b) => a.orderIndex - b.orderIndex);
+
       const oldIndex = columnTasks.findIndex((t) => t.id === activeId);
       const newIndex = columnTasks.findIndex((t) => t.id === overId);
 
-      if (oldIndex !== -1 && newIndex !== -1) {
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
         const reordered = arrayMove(columnTasks, oldIndex, newIndex);
         reorderTasksInStatus(
-          activeTaskItem.statusId,
+          destinationStatusId,
           reordered.map((t) => t.id),
         );
       }
     }
+
+    setLocalTasks(null);
   };
 
   // Jitter-free collision detection: prioritize pointer location within container
@@ -195,9 +231,9 @@ export function BoardView() {
       >
         <div className="flex items-start gap-5 h-full min-w-max pb-6">
           {statuses.map((status) => {
-            const columnTasks = filteredTasks.filter(
-              (t) => t.statusId === status.id,
-            );
+            const columnTasks = filteredTasks
+              .filter((t) => t.statusId === status.id)
+              .sort((a, b) => a.orderIndex - b.orderIndex);
             return (
               <BoardColumn
                 key={status.id}
