@@ -7,26 +7,36 @@ import {
   ChevronDown,
   Plus,
   LayoutGrid,
+  Layout,
   Folder as FolderIcon,
   ListTodo,
   Layers,
   Code2,
   Palette,
   Sparkles,
+  Rocket,
+  Target,
+  Zap,
   Settings,
   PanelLeftClose,
   PanelLeft,
+  LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CreateSpaceModal } from "@/components/spaces/CreateSpaceModal";
 import { CreateListModal } from "@/components/spaces/CreateListModal";
 
-const ICON_MAP: Record<string, typeof Code2> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   Code2,
   Palette,
   Sparkles,
   Layers,
   LayoutGrid,
+  Layout,
+  Folder: FolderIcon,
+  Rocket,
+  Target,
+  Zap,
 };
 
 export function Sidebar() {

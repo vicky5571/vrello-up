@@ -3,7 +3,21 @@
 import { useState } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, Plus } from "lucide-react";
+import {
+  X,
+  Sparkles,
+  Plus,
+  Folder,
+  Layout,
+  LayoutGrid,
+  Code2,
+  Palette,
+  Rocket,
+  Target,
+  Zap,
+  Layers,
+  LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface CreateSpaceModalProps {
@@ -22,16 +36,20 @@ const SPACE_COLORS = [
   "#EF4444", // Red
 ];
 
-const SPACE_ICONS = [
-  "Folder",
-  "Layout",
-  "Code2",
-  "Palette",
-  "Sparkles",
-  "Rocket",
-  "Target",
-  "Zap",
-];
+const SPACE_ICON_MAP: Record<string, LucideIcon> = {
+  Folder,
+  Layout,
+  LayoutGrid,
+  Code2,
+  Palette,
+  Sparkles,
+  Rocket,
+  Target,
+  Zap,
+  Layers,
+};
+
+const SPACE_ICONS = Object.keys(SPACE_ICON_MAP);
 
 export function CreateSpaceModal({ isOpen, onClose }: CreateSpaceModalProps) {
   const { createSpace } = useWorkspaceStore();
@@ -107,20 +125,24 @@ export function CreateSpaceModal({ isOpen, onClose }: CreateSpaceModalProps) {
                   Icon
                 </label>
                 <div className="flex flex-wrap gap-1.5">
-                  {SPACE_ICONS.map((icon) => (
-                    <button
-                      type="button"
-                      key={icon}
-                      onClick={() => setSelectedIcon(icon)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                        selectedIcon === icon
-                          ? "bg-teal-500/20 text-teal-600 dark:text-teal-400 border-teal-500/50 shadow-xs"
-                          : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                      }`}
-                    >
-                      {icon}
-                    </button>
-                  ))}
+                  {SPACE_ICONS.map((icon) => {
+                    const IconComponent = SPACE_ICON_MAP[icon] || Layers;
+                    return (
+                      <button
+                        type="button"
+                        key={icon}
+                        onClick={() => setSelectedIcon(icon)}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                          selectedIcon === icon
+                            ? "bg-teal-500/20 text-teal-600 dark:text-teal-400 border-teal-500/50 shadow-xs"
+                            : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        }`}
+                      >
+                        <IconComponent className="w-3.5 h-3.5" />
+                        <span>{icon}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
