@@ -303,7 +303,7 @@ interface WorkspaceState {
   deleteSubtask: (taskId: string, subtaskId: string) => void;
 
   // Dependency Actions
-  addDependency: (taskId: string, dependsOnTaskId: string) => void;
+  addDependency: (taskId: string, dependsOnTaskId: string) => boolean;
   removeDependency: (taskId: string, dependsOnTaskId: string) => void;
 
   // Space & List Actions
@@ -311,6 +311,41 @@ interface WorkspaceState {
   createList: (spaceId: string, name: string, folderId?: string) => List;
   createFolder: (spaceId: string, name: string) => void;
   addStatusToSpace: (spaceId: string, name: string, color: string) => void;
+}
+
+/**
+ * Checks if making `taskId` depend on `dependsOnTaskId` would introduce a dependency cycle.
+ */
+export function wouldCreateCycle(
+  taskId: string,
+  dependsOnTaskId: string,
+  tasks: Task[],
+): boolean {
+  if (taskId === dependsOnTaskId) return true;
+
+  const taskMap = new Map<string, Task>(tasks.map((t) => [t.id, t]));
+  const visited = new Set<string>();
+  const queue: string[] = [dependsOnTaskId];
+
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    if (currentId === taskId) {
+      return true; // Cycle detected: dependsOnTaskId already reaches taskId
+    }
+    if (!visited.has(currentId)) {
+      visited.add(currentId);
+      const currentTask = taskMap.get(currentId);
+      if (currentTask?.dependencies) {
+        for (const depId of currentTask.dependencies) {
+          if (!visited.has(depId)) {
+            queue.push(depId);
+          }
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>()(
@@ -491,7 +526,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       addDependency: (taskId, dependsOnTaskId) => {
-        if (taskId === dependsOnTaskId) return;
+        if (taskId === dependsOnTaskId) return false;
+
+        const { tasks } = get();
+        if (wouldCreateCycle(taskId, dependsOnTaskId, tasks)) {
+          return false;
+        }
+
         set((state) => ({
           tasks: state.tasks.map((t) => {
             if (t.id === taskId) {
@@ -507,6 +548,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             return t;
           }),
         }));
+        return true;
       },
 
       removeDependency: (taskId, dependsOnTaskId) => {

@@ -347,16 +347,26 @@ export function GanttView() {
         toast.success(`Progress set to ${dragState.liveProgress}%`);
       } else if (dragState.type === "dependency") {
         if (dragState.targetTaskId) {
-          addDependency(dragState.targetTaskId, dragState.taskId);
           const sourceTask = scheduledTasks.find(
             (t) => t.id === dragState.taskId,
           );
           const targetTask = scheduledTasks.find(
             (t) => t.id === dragState.targetTaskId,
           );
-          toast.success(
-            `Linked: "${targetTask?.title}" is blocked by "${sourceTask?.title}"`,
+          const success = addDependency(
+            dragState.targetTaskId,
+            dragState.taskId,
           );
+
+          if (success) {
+            toast.success(
+              `Linked: "${targetTask?.title}" is blocked by "${sourceTask?.title}"`,
+            );
+          } else {
+            toast.error(
+              `Cannot link: circular dependency detected between "${targetTask?.title}" and "${sourceTask?.title}"`,
+            );
+          }
         }
       }
 
