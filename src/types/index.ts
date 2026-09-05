@@ -36,6 +36,25 @@ export interface Subtask {
   createdAt: string;
 }
 
+export interface TaskComment {
+  id: string;
+  taskId: string;
+  userId: string;
+  user: User;
+  content: string;
+  createdAt: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  taskId: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  action: string;
+  createdAt: string;
+}
+
 export interface Task {
   id: string;
   listId: string;
@@ -49,6 +68,8 @@ export interface Task {
   estimatedHours?: number;
   tags: Tag[];
   subtasks: Subtask[];
+  comments?: TaskComment[];
+  activities?: ActivityLog[];
   dependencies?: string[]; // IDs of tasks this task depends on (blocking)
   progress?: number; // 0 to 100 manual or calculated progress
   orderIndex: number;

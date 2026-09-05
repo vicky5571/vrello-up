@@ -6,6 +6,8 @@ import {
   type Folder,
   type List,
   type Task,
+  type TaskComment,
+  type ActivityLog,
   type Status,
   type ViewMode,
   type FilterOptions,
@@ -310,6 +312,11 @@ interface WorkspaceState {
   toggleSubtask: (taskId: string, subtaskId: string) => void;
   deleteSubtask: (taskId: string, subtaskId: string) => void;
 
+  // Comment & Activity Actions
+  addComment: (taskId: string, content: string, user?: User) => void;
+  deleteComment: (taskId: string, commentId: string) => void;
+  logActivity: (taskId: string, action: string, user?: User) => void;
+
   // Dependency Actions
   addDependency: (taskId: string, dependsOnTaskId: string) => boolean;
   removeDependency: (taskId: string, dependsOnTaskId: string) => void;
@@ -565,6 +572,80 @@ export const useWorkspaceStore = create<WorkspaceState>()(
                   updatedAt: new Date().toISOString(),
                 }
               : t,
+          ),
+        }));
+      },
+
+      addComment: (taskId, content, user = SEED_USERS[0]) => {
+        if (!content.trim()) return;
+        const now = new Date().toISOString();
+        const newComment: TaskComment = {
+          id: generateId("comment"),
+          taskId,
+          userId: user.id,
+          user,
+          content: content.trim(),
+          createdAt: now,
+        };
+
+        const newActivity: ActivityLog = {
+          id: generateId("act"),
+          taskId,
+          userId: user.id,
+          userName: user.name,
+          userAvatar: user.avatar,
+          action: "commented on this task",
+          createdAt: now,
+        };
+
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === taskId
+              ? {
+                  ...task,
+                  comments: [...(task.comments || []), newComment],
+                  activities: [newActivity, ...(task.activities || [])],
+                  updatedAt: now,
+                }
+              : task
+          ),
+        }));
+      },
+
+      deleteComment: (taskId, commentId) => {
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === taskId
+              ? {
+                  ...task,
+                  comments: (task.comments || []).filter((c) => c.id !== commentId),
+                  updatedAt: new Date().toISOString(),
+                }
+              : task
+          ),
+        }));
+      },
+
+      logActivity: (taskId, action, user = SEED_USERS[0]) => {
+        const newActivity: ActivityLog = {
+          id: generateId("act"),
+          taskId,
+          userId: user.id,
+          userName: user.name,
+          userAvatar: user.avatar,
+          action,
+          createdAt: new Date().toISOString(),
+        };
+
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            task.id === taskId
+              ? {
+                  ...task,
+                  activities: [newActivity, ...(task.activities || [])],
+                  updatedAt: new Date().toISOString(),
+                }
+              : task
           ),
         }));
       },
@@ -1008,6 +1089,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
                 subtasks: Array.isArray(t.subtasks) ? t.subtasks : [],
                 tags: Array.isArray(t.tags) ? t.tags : [],
                 assignees: Array.isArray(t.assignees) ? t.assignees : [],
+                comments: Array.isArray(t.comments) ? t.comments : [],
+                activities: Array.isArray(t.activities) ? t.activities : [],
                 dependencies: Array.isArray(t.dependencies) ? t.dependencies : [],
                 orderIndex: typeof t.orderIndex === "number" ? t.orderIndex : 0,
               }))

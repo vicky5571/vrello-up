@@ -13,9 +13,12 @@ import {
   CheckCircle,
   Clock,
   Link as LinkIcon,
+  MessageSquare,
+  FileText,
 } from "lucide-react";
 import { TiptapEditor } from "./TiptapEditor";
 import { SubtaskManager } from "./SubtaskManager";
+import { TaskActivityFeed } from "./TaskActivityFeed";
 import { formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
@@ -38,6 +41,7 @@ export function TaskDrawer() {
 
   const liveTask = tasks.find((t) => t.id === selectedTaskId);
   const [displayedTask, setDisplayedTask] = useState(liveTask);
+  const [activeTab, setActiveTab] = useState<"details" | "activity">("details");
 
   useEffect(() => {
     if (liveTask) {
@@ -128,7 +132,7 @@ export function TaskDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
-            className="relative z-10 w-full max-w-2xl h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
+            className="relative z-10 w-full max-w-2xl sm:max-w-3xl h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
           >
             {/* Header / Actions */}
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
@@ -159,20 +163,58 @@ export function TaskDrawer() {
               </div>
             </div>
 
+            {/* Tab Navigation (Details vs Activity & Comments) */}
+            <div className="px-6 pt-3 border-b border-slate-200/70 dark:border-slate-800 flex items-center gap-4 bg-slate-50/40 dark:bg-slate-900/40">
+              <button
+                type="button"
+                onClick={() => setActiveTab("details")}
+                className={`pb-2.5 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                  activeTab === "details"
+                    ? "border-[#7B68EE] text-[#7B68EE]"
+                    : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Task Details</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("activity")}
+                className={`pb-2.5 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+                  activeTab === "activity"
+                    ? "border-[#7B68EE] text-[#7B68EE]"
+                    : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Activity & Comments</span>
+                {(task.comments?.length || 0) > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-[#7B68EE]/20 text-[#7B68EE] font-bold">
+                    {task.comments?.length}
+                  </span>
+                )}
+              </button>
+            </div>
+
             {/* Content Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Editable Title */}
-              <div>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  onBlur={handleTitleBlur}
-                  onKeyDown={(e) => e.key === "Enter" && handleTitleBlur()}
-                  placeholder="Task title..."
-                  className="w-full text-lg font-bold bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#7B68EE] text-slate-900 dark:text-slate-100 focus:outline-hidden pb-1 transition-all"
-                />
-              </div>
+              {activeTab === "activity" ? (
+                <TaskActivityFeed task={task} />
+              ) : (
+                <>
+                  {/* Editable Title */}
+                  <div>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      onBlur={handleTitleBlur}
+                      onKeyDown={(e) => e.key === "Enter" && handleTitleBlur()}
+                      placeholder="Task title..."
+                      className="w-full text-lg font-bold bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#7B68EE] text-slate-900 dark:text-slate-100 focus:outline-hidden pb-1 transition-all"
+                    />
+                  </div>
 
               {/* Properties Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
@@ -347,6 +389,8 @@ export function TaskDrawer() {
                     })}
                   </div>
                 </div>
+              )}
+                </>
               )}
             </div>
 
