@@ -31,23 +31,25 @@ export default function WorkspacePage() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-[#0F1115] text-slate-900 dark:text-slate-100">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#0F1115] text-slate-900 dark:text-slate-100">
       {/* ClickUp Dark Left Dock (Global Rail) */}
       <GlobalRail />
 
-      {/* Hierarchical Sidebar */}
-      <Sidebar />
+      {/* Floating Canvas Area (Sidebar + Main Workspace) */}
+      <div className="flex-1 flex h-full overflow-hidden p-2 gap-2 bg-[#0F1115]">
+        {/* Floating Hierarchical Sidebar */}
+        <Sidebar />
 
-      {/* Main Workspace Stage */}
-      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#FAFBFC] dark:bg-[#0F1115]">
-        {/* Top Navigation */}
-        <TopNav />
+        {/* Floating Main Workspace Stage */}
+        <main className="flex-1 flex flex-col min-w-0 h-full rounded-xl bg-white dark:bg-[#18191B] border border-slate-200/80 dark:border-white/10 shadow-sm overflow-hidden">
+          {/* Top Navigation */}
+          <TopNav />
 
-        {/* Global Filter Bar */}
-        <FilterBar />
+          {/* Global Filter Bar */}
+          <FilterBar />
 
-        {/* View Transition Area */}
-        <div className="flex-1 overflow-hidden relative">
+          {/* View Transition Area */}
+          <div className="flex-1 overflow-hidden relative bg-[#FAFBFC] dark:bg-[#121316]">
           <AnimatePresence mode="wait">
             {activeView === "list" && (
               <motion.div
@@ -116,6 +118,7 @@ export default function WorkspacePage() {
           </AnimatePresence>
         </div>
       </main>
+      </div>
 
       {/* Slide-over Task Detail Drawer */}
       <TaskDrawer />
