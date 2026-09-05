@@ -83,7 +83,7 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="w-60 h-full rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#18191B] shadow-sm flex flex-col justify-between shrink-0 select-none overflow-hidden z-20">
+      <aside className="w-60 h-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#18191B] shadow-lg flex flex-col justify-between shrink-0 select-none overflow-hidden z-20">
         {/* Navigation Tree */}
         <div className="flex flex-col h-full overflow-hidden">
           {/* Spaces Section Header */}
