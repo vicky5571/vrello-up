@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { ListGroup } from "./ListGroup";
+import { CreateStatusModal } from "@/components/spaces/CreateStatusModal";
 import { Plus } from "lucide-react";
 
 export function ListView() {
@@ -16,10 +17,11 @@ export function ListView() {
     setSelectedTaskId,
     moveTaskStatus,
   } = useWorkspaceStore();
+  const [isCreateStatusOpen, setIsCreateStatusOpen] = useState(false);
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const currentSpace = currentWorkspace?.spaces.find(
-    (s) => s.id === activeSpaceId
+    (s) => s.id === activeSpaceId,
   );
   const statuses = currentSpace?.statuses || [];
 
@@ -84,6 +86,7 @@ export function ListView() {
         <div className="pt-2 pb-12">
           <button
             type="button"
+            onClick={() => setIsCreateStatusOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -91,6 +94,12 @@ export function ListView() {
           </button>
         </div>
       </div>
+
+      <CreateStatusModal
+        isOpen={isCreateStatusOpen}
+        spaceId={activeSpaceId}
+        onClose={() => setIsCreateStatusOpen(false)}
+      />
     </div>
   );
 }

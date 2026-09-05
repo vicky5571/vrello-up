@@ -17,9 +17,11 @@ import {
   MessageSquare,
   MoreHorizontal,
 } from "lucide-react";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { toggleAssigneeId } from "@/lib/tasks/inlineEditing";
+import { toast } from "sonner";
 
 interface ListGroupProps {
   status: Status;
@@ -28,6 +30,14 @@ interface ListGroupProps {
   onSelectTask: (taskId: string) => void;
   onMoveStatus: (taskId: string, statusId: string) => void;
 }
+
+const PRIORITY_OPTIONS: { value: Priority; label: string }[] = [
+  { value: "urgent", label: "Urgent" },
+  { value: "high", label: "High" },
+  { value: "normal", label: "Normal" },
+  { value: "low", label: "Low" },
+  { value: "none", label: "None" },
+];
 
 export function ListGroup({
   status,
@@ -41,13 +51,61 @@ export function ListGroup({
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { activeListId, createTask } = useWorkspaceStore();
+  const {
+    activeListId,
+    activeWorkspaceId,
+    workspaces,
+    createTask,
+    updateTask,
+  } = useWorkspaceStore();
+  const [openEditor, setOpenEditor] = useState<{
+    type: "priority" | "assignees";
+    taskId: string;
+  } | null>(null);
+
+  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
+  const members = currentWorkspace?.members || [];
 
   useEffect(() => {
     if (isAddingTask) {
       inputRef.current?.focus();
     }
   }, [isAddingTask]);
+
+  useEffect(() => {
+    if (!openEditor) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement;
+      const editor = target.closest("[data-inline-editor]");
+      if (
+        !editor ||
+        editor.getAttribute("data-inline-editor") !== openEditor.taskId
+      ) {
+        setOpenEditor(null);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenEditor(null);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openEditor]);
+
+  const handleAssigneeToggle = (task: Task, userId: string) => {
+    const selectedIds = toggleAssigneeId(
+      task.assignees.map((user) => user.id),
+      userId,
+    );
+    updateTask(task.id, {
+      assignees: members.filter((user) => selectedIds.includes(user.id)),
+    });
+  };
 
   const handleCreateTask = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -128,8 +186,8 @@ export function ListGroup({
             isProgress
               ? "bg-[#0073ea] text-white"
               : isDone
-              ? "bg-emerald-600 text-white"
-              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-slate-700"
+                ? "bg-emerald-600 text-white"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-slate-700",
           )}
         >
           {getStatusIcon(status.category)}
@@ -175,6 +233,15 @@ export function ListGroup({
               const isTaskDone =
                 status.category === "done" || status.category === "closed";
 
+              const taskStatus =
+                allStatuses.find(
+                  (candidate) => candidate.id === task.statusId,
+                ) || status;
+              const taskIsProgress = taskStatus.category === "in_progress";
+              const taskIsDone =
+                taskStatus.category === "done" ||
+                taskStatus.category === "closed";
+
               return (
                 <div
                   key={task.id}
@@ -190,7 +257,7 @@ export function ListGroup({
                         e.stopPropagation();
                         // Cycle to next status
                         const currentIndex = allStatuses.findIndex(
-                          (s) => s.id === task.statusId
+                          (s) => s.id === task.statusId,
                         );
                         const nextStatus =
                           allStatuses[(currentIndex + 1) % allStatuses.length];
@@ -215,7 +282,8 @@ export function ListGroup({
                     <span
                       className={cn(
                         "font-medium text-slate-800 dark:text-slate-200 truncate group-hover/row:text-[#0073ea] transition-colors",
-                        isTaskDone && "line-through text-slate-400 dark:text-slate-500"
+                        isTaskDone &&
+                          "line-through text-slate-400 dark:text-slate-500",
                       )}
                     >
                       {task.title}
@@ -231,21 +299,93 @@ export function ListGroup({
 
                   {/* Assignee Column */}
                   <div
+                    data-inline-editor={task.id}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center"
+                    className="relative flex items-center"
                   >
-                    {task.assignees.length > 0 ? (
-                      <div className="flex items-center gap-1.5">
-                        <UserAvatar user={task.assignees[0]} size="sm" />
-                        <span className="truncate text-slate-600 dark:text-slate-400 text-[11px]">
-                          {task.assignees[0].name.split(" ")[0]}
+                    <button
+                      type="button"
+                      aria-label={`Edit assignees for ${task.title}`}
+                      aria-haspopup="menu"
+                      aria-expanded={
+                        openEditor?.type === "assignees" &&
+                        openEditor.taskId === task.id
+                      }
+                      onClick={() =>
+                        setOpenEditor((current) =>
+                          current?.type === "assignees" &&
+                          current.taskId === task.id
+                            ? null
+                            : { type: "assignees", taskId: task.id },
+                        )
+                      }
+                      className="flex items-center gap-1.5 rounded-md p-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0073ea]"
+                    >
+                      {task.assignees.length > 0 ? (
+                        <>
+                          <div className="flex -space-x-1">
+                            {task.assignees.slice(0, 2).map((user) => (
+                              <UserAvatar key={user.id} user={user} size="sm" />
+                            ))}
+                          </div>
+                          <span className="truncate text-slate-600 dark:text-slate-400 text-[11px]">
+                            {task.assignees.length > 1
+                              ? `+${task.assignees.length - 1}`
+                              : task.assignees[0].name.split(" ")[0]}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="w-6 h-6 rounded-full border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:border-slate-400 hover:text-slate-600 transition-colors">
+                          <UserIcon className="w-3 h-3" aria-hidden="true" />
                         </span>
-                      </div>
-                    ) : (
-                      <div className="w-6 h-6 rounded-full border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:border-slate-400 hover:text-slate-600 transition-colors">
-                        <UserIcon className="w-3 h-3" />
-                      </div>
-                    )}
+                      )}
+                    </button>
+
+                    {openEditor?.type === "assignees" &&
+                      openEditor.taskId === task.id && (
+                        <div
+                          role="menu"
+                          aria-label={`Assignees for ${task.title}`}
+                          className="absolute left-0 top-full z-30 mt-1 w-52 rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+                        >
+                          <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Assign members
+                          </div>
+                          {members.map((user) => {
+                            const isAssigned = task.assignees.some(
+                              (assignee) => assignee.id === user.id,
+                            );
+                            return (
+                              <button
+                                key={user.id}
+                                type="button"
+                                role="menuitemcheckbox"
+                                aria-checked={isAssigned}
+                                onClick={() =>
+                                  handleAssigneeToggle(task, user.id)
+                                }
+                                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                              >
+                                <UserAvatar user={user} size="xs" />
+                                <span className="min-w-0 flex-1 truncate">
+                                  {user.name}
+                                </span>
+                                <span
+                                  aria-hidden="true"
+                                  className={cn(
+                                    "flex h-3.5 w-3.5 items-center justify-center rounded border text-[10px] text-white",
+                                    isAssigned
+                                      ? "border-[#0073ea] bg-[#0073ea]"
+                                      : "border-slate-300 dark:border-slate-600",
+                                  )}
+                                >
+                                  {isAssigned && "✓"}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                   </div>
 
                   {/* Due Date Column */}
@@ -253,27 +393,91 @@ export function ListGroup({
                     onClick={(e) => e.stopPropagation()}
                     className="flex items-center text-slate-500 dark:text-slate-400"
                   >
-                    {task.dueDate ? (
-                      <div className="flex items-center gap-1 text-[11px]">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{formatDate(task.dueDate)}</span>
-                      </div>
-                    ) : (
-                      <Calendar className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 hover:text-slate-500 transition-colors" />
-                    )}
+                    <label className="group/date flex cursor-pointer items-center gap-1 text-[11px]">
+                      <Calendar
+                        className="h-3.5 w-3.5 text-slate-400"
+                        aria-hidden="true"
+                      />
+                      <span className="sr-only">Due date for {task.title}</span>
+                      <input
+                        type="date"
+                        aria-label={`Due date for ${task.title}`}
+                        value={task.dueDate || ""}
+                        onChange={(e) =>
+                          updateTask(task.id, {
+                            dueDate: e.target.value || undefined,
+                          })
+                        }
+                        className="w-23 cursor-pointer rounded-md border border-transparent bg-transparent px-1 py-0.5 text-[11px] text-slate-500 transition-colors hover:border-slate-200 focus:border-[#0073ea] focus:outline-hidden dark:text-slate-400 dark:hover:border-slate-700"
+                      />
+                    </label>
                   </div>
 
                   {/* Priority Column */}
                   <div
+                    data-inline-editor={task.id}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center"
+                    className="relative flex items-center"
                   >
-                    <Flag
-                      className={cn(
-                        "w-3.5 h-3.5 transition-colors",
-                        getPriorityColor(task.priority)
+                    <button
+                      type="button"
+                      aria-label={`Change priority for ${task.title}`}
+                      aria-haspopup="menu"
+                      aria-expanded={
+                        openEditor?.type === "priority" &&
+                        openEditor.taskId === task.id
+                      }
+                      onClick={() =>
+                        setOpenEditor((current) =>
+                          current?.type === "priority" &&
+                          current.taskId === task.id
+                            ? null
+                            : { type: "priority", taskId: task.id },
+                        )
+                      }
+                      className="rounded-md p-1 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0073ea] dark:hover:bg-slate-800"
+                    >
+                      <Flag
+                        className={cn(
+                          "h-3.5 w-3.5 transition-colors",
+                          getPriorityColor(task.priority),
+                        )}
+                        aria-hidden="true"
+                      />
+                    </button>
+
+                    {openEditor?.type === "priority" &&
+                      openEditor.taskId === task.id && (
+                        <div
+                          role="menu"
+                          aria-label={`Priority for ${task.title}`}
+                          className="absolute left-0 top-full z-30 mt-1 w-32 rounded-lg border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+                        >
+                          {PRIORITY_OPTIONS.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              role="menuitemradio"
+                              aria-checked={task.priority === option.value}
+                              onClick={() => {
+                                updateTask(task.id, { priority: option.value });
+                                setOpenEditor(null);
+                                toast.success("Priority updated");
+                              }}
+                              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                            >
+                              <Flag
+                                className={cn(
+                                  "h-3.5 w-3.5",
+                                  getPriorityColor(option.value),
+                                )}
+                                aria-hidden="true"
+                              />
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
                       )}
-                    />
                   </div>
 
                   {/* Status Pill Dropdown */}
@@ -281,18 +485,34 @@ export function ListGroup({
                     onClick={(e) => e.stopPropagation()}
                     className="flex items-center"
                   >
-                    <div
+                    <select
+                      value={task.statusId}
+                      aria-label={`Status for ${task.title}`}
+                      onChange={(e) => {
+                        updateTask(task.id, { statusId: e.target.value });
+                        toast.success("Status updated");
+                      }}
                       className={cn(
-                        "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider truncate max-w-[120px]",
-                        isProgress
+                        "max-w-30 cursor-pointer rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0073ea]",
+                        taskIsProgress
                           ? "bg-[#0073ea] text-white"
-                          : isDone
-                          ? "bg-emerald-600 text-white"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-slate-700"
+                          : taskIsDone
+                            ? "bg-emerald-600 text-white"
+                            : "border border-slate-300/80 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
                       )}
+                      style={{
+                        color:
+                          taskIsProgress || taskIsDone
+                            ? "white"
+                            : taskStatus.color,
+                      }}
                     >
-                      <span className="truncate">{status.name}</span>
-                    </div>
+                      {allStatuses.map((candidate) => (
+                        <option key={candidate.id} value={candidate.id}>
+                          {candidate.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Comments Column */}
