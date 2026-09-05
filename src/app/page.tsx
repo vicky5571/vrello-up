@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { GlobalRail } from "@/components/layout/GlobalRail";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -14,7 +15,20 @@ import { TaskDrawer } from "@/components/tasks/TaskDrawer";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function WorkspacePage() {
+  const [isMounted, setIsMounted] = useState(false);
   const { activeView } = useWorkspaceStore();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return (
+      <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-[#0F1115] text-slate-900 dark:text-slate-100 items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-slate-300 dark:border-slate-700 border-t-[#7B68EE] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-[#0F1115] text-slate-900 dark:text-slate-100">
