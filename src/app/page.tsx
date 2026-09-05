@@ -12,11 +12,17 @@ import { TableView } from "@/components/views/TableView/TableView";
 import { CalendarView } from "@/components/views/CalendarView/CalendarView";
 import { GanttView } from "@/components/views/GanttView/GanttView";
 import { TaskDrawer } from "@/components/tasks/TaskDrawer";
+import { CommandPalette } from "@/components/layout/CommandPalette";
+import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function WorkspacePage() {
   const [isMounted, setIsMounted] = useState(false);
-  const { activeView } = useWorkspaceStore();
+  const {
+    activeView,
+    isCreateTaskModalOpen,
+    setCreateTaskModalOpen,
+  } = useWorkspaceStore();
 
   useEffect(() => {
     setIsMounted(true);
@@ -119,6 +125,15 @@ export default function WorkspacePage() {
 
       {/* Slide-over Task Detail Drawer */}
       <TaskDrawer />
+
+      {/* Global Command Palette (⌘K Quick Switcher) */}
+      <CommandPalette />
+
+      {/* Global Create Task Modal */}
+      <CreateTaskModal
+        isOpen={isCreateTaskModalOpen}
+        onClose={() => setCreateTaskModalOpen(false)}
+      />
     </div>
   );
 }

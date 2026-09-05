@@ -277,8 +277,14 @@ interface WorkspaceState {
   activeView: ViewMode;
   filters: FilterOptions;
   isSidebarOpen: boolean;
+  isCommandPaletteOpen: boolean;
+  isCreateTaskModalOpen: boolean;
 
   // Actions
+  setCommandPaletteOpen: (open: boolean) => void;
+  openCommandPalette: () => void;
+  closeCommandPalette: () => void;
+  setCreateTaskModalOpen: (open: boolean) => void;
   setActiveWorkspace: (id: string) => void;
   setActiveSpace: (id: string) => void;
   setActiveList: (id: string) => void;
@@ -391,6 +397,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       selectedTaskId: null,
       activeView: "list",
       isSidebarOpen: true,
+      isCommandPaletteOpen: false,
+      isCreateTaskModalOpen: false,
       filters: {
         search: "",
         statusIds: [],
@@ -399,6 +407,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         tagIds: [],
       },
 
+      setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
+      openCommandPalette: () => set({ isCommandPaletteOpen: true }),
+      closeCommandPalette: () => set({ isCommandPaletteOpen: false }),
+      setCreateTaskModalOpen: (open) => set({ isCreateTaskModalOpen: open }),
       setActiveWorkspace: (id) => set({ activeWorkspaceId: id }),
       setActiveSpace: (id) => {
         const space = get()

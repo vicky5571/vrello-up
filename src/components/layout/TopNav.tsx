@@ -20,8 +20,13 @@ import {
 } from "lucide-react";
 
 export function TopNav() {
-  const { workspaces, activeWorkspaceId, activeSpaceId, activeListId } =
-    useWorkspaceStore();
+  const {
+    workspaces,
+    activeWorkspaceId,
+    activeSpaceId,
+    activeListId,
+    openCommandPalette,
+  } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const currentSpace = currentWorkspace?.spaces.find(
@@ -70,18 +75,23 @@ export function TopNav() {
 
         {/* Center: Search Pill & AI Chats */}
         <div className="hidden md:flex items-center gap-2">
-          <div className="relative flex items-center">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400" />
+          <div
+            onClick={openCommandPalette}
+            className="relative flex items-center cursor-pointer group"
+          >
+            <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors" />
             <input
               type="text"
               readOnly
+              onClick={openCommandPalette}
               placeholder="Search ⌘K"
-              className="w-48 lg:w-56 pl-8 pr-3 py-1 text-xs rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 placeholder-slate-400 border border-transparent hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer focus:outline-hidden transition-all"
+              className="w-48 lg:w-56 pl-8 pr-3 py-1 text-xs rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 placeholder-slate-400 border border-transparent group-hover:border-slate-300 dark:group-hover:border-slate-700 cursor-pointer focus:outline-hidden transition-all shadow-2xs"
             />
           </div>
 
           <button
             type="button"
+            onClick={openCommandPalette}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/40 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors cursor-pointer"
           >
             <Sparkles className="w-3 h-3 text-purple-500" />
