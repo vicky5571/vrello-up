@@ -19,6 +19,7 @@ import {
   Layers,
   Link as LinkIcon,
   X,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
@@ -959,7 +960,10 @@ export function GanttView() {
           </div>
         ) : (
           <div className="flex items-center gap-2 text-slate-500">
-            <span className="font-medium">💡 Quick Tips:</span>
+            <span className="font-medium flex items-center gap-1">
+              <Info className="w-3.5 h-3.5 text-slate-400" />
+              Quick Tips:
+            </span>
             <span>
               Drag bar to move • Drag edges to resize • Drag right dot to link
               dependencies • Drag circle inside to change %

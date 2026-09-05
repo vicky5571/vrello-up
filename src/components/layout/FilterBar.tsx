@@ -7,43 +7,38 @@ import {
   Search,
   X,
   Filter,
-  Flame,
+  Columns3,
+  ListTree,
+  ChevronDown,
+  CheckCircle2,
+  SlidersHorizontal,
+  Plus,
   ArrowUp,
   Minus,
   ArrowDown,
+  Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const PRIORITIES: {
-  id: Priority;
-  label: string;
-  icon: typeof Flame;
-  color: string;
-}[] = [
-  { id: "urgent", label: "Urgent", icon: Flame, color: "text-red-500" },
-  { id: "high", label: "High", icon: ArrowUp, color: "text-orange-500" },
-  { id: "normal", label: "Normal", icon: Minus, color: "text-blue-500" },
-  { id: "low", label: "Low", icon: ArrowDown, color: "text-slate-400" },
-];
+import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 
 export function FilterBar() {
   const {
     filters,
     setFilters,
     resetFilters,
-    workspaces,
-    activeWorkspaceId,
-    activeSpaceId,
   } = useWorkspaceStore();
 
   const [searchValue, setSearchValue] = useState(filters.search);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
 
   // Sync local search when filters are cleared or changed externally
   useEffect(() => {
     setSearchValue(filters.search);
   }, [filters.search]);
 
-  // Debounce updating the global store by 200ms to avoid store/localStorage thrashing
+  // Debounce updating global store
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchValue !== filters.search) {
@@ -53,12 +48,6 @@ export function FilterBar() {
 
     return () => clearTimeout(timer);
   }, [searchValue, filters.search, setFilters]);
-
-  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = currentWorkspace?.spaces.find(
-    (s) => s.id === activeSpaceId,
-  );
-  const statuses = currentSpace?.statuses || [];
 
   const hasActiveFilters =
     filters.search.length > 0 ||
@@ -73,118 +62,193 @@ export function FilterBar() {
     setFilters({ priorities: newPriorities });
   };
 
-  const toggleStatus = (statusId: string) => {
-    const isSelected = filters.statusIds.includes(statusId);
-    const newStatusIds = isSelected
-      ? filters.statusIds.filter((s) => s !== statusId)
-      : [...filters.statusIds, statusId];
-    setFilters({ statusIds: newStatusIds });
-  };
-
-  const handleClearSearch = () => {
-    setSearchValue("");
-    setFilters({ search: "" });
-  };
-
   const handleResetFilters = () => {
     setSearchValue("");
+    setIsSearchOpen(false);
     resetFilters();
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 bg-white/70 dark:bg-slate-900/60 backdrop-blur-xs border-b border-slate-200 dark:border-slate-800 text-xs">
-      {/* Search Input */}
-      <div className="flex items-center gap-2 flex-1 min-w-[200px] max-w-sm">
-        <div className="relative w-full">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            placeholder="Search tasks by title or content..."
-            className="w-full pl-9 pr-7 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-transparent focus:border-teal-500/50 focus:bg-white dark:focus:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-xs focus:outline-hidden transition-all"
-          />
-          {searchValue && (
+    <>
+      <div className="flex items-center justify-between gap-3 px-4 py-1.5 bg-white/90 dark:bg-[#141721] border-b border-slate-200/70 dark:border-slate-800 text-xs select-none">
+        {/* Left Side: Grouping and View Options */}
+        <div className="flex items-center gap-1.5">
+          {/* Group: Status */}
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+          >
+            <span>Group: Status</span>
+            <ChevronDown className="w-3 h-3 text-slate-400" />
+          </button>
+
+          {/* Subtasks */}
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <ListTree className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Subtasks</span>
+          </button>
+
+          {/* Columns */}
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <Columns3 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Columns</span>
+          </button>
+        </div>
+
+        {/* Right Side: Filters, Search & Add Task CTA */}
+        <div className="flex items-center gap-1.5">
+          {/* Active Filters Clear Button */}
+          {hasActiveFilters && (
             <button
-              onClick={handleClearSearch}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              onClick={handleResetFilters}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 transition-colors cursor-pointer mr-1"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3 h-3" />
+              <span>Clear</span>
             </button>
           )}
-        </div>
-      </div>
 
-      {/* Priority Filters */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-slate-600 dark:text-slate-400 font-semibold text-[11px] uppercase tracking-wider flex items-center gap-1 mr-1">
-          <Filter className="w-3 h-3" /> Priority:
-        </span>
-        {PRIORITIES.map((p) => {
-          const Icon = p.icon;
-          const isSelected = filters.priorities.includes(p.id);
-          return (
+          {/* Filter Dropdown Toggle */}
+          <div className="relative">
             <button
-              key={p.id}
-              onClick={() => togglePriority(p.id)}
+              type="button"
+              onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
               className={cn(
-                "inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold border transition-all cursor-pointer",
-                isSelected
-                  ? "bg-slate-900 text-white dark:bg-teal-500/20 dark:text-teal-300 dark:border-teal-500/50"
-                  : "bg-slate-100/80 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700",
+                "inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer",
+                filters.priorities.length > 0
+                  ? "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               )}
             >
-              <Icon className={cn("w-3 h-3", p.color)} />
-              {p.label}
+              <Filter className="w-3.5 h-3.5" />
+              <span>Filter</span>
+              {filters.priorities.length > 0 && (
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+              )}
             </button>
-          );
-        })}
+
+            {/* Quick Priority Filter Popover */}
+            {isFilterMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-44 rounded-lg bg-white dark:bg-slate-900 shadow-lg border border-slate-200 dark:border-slate-800 py-1 z-50">
+                <div className="px-3 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Filter Priority
+                </div>
+                {[
+                  { id: "urgent", label: "Urgent", icon: Flame, color: "text-red-500" },
+                  { id: "high", label: "High", icon: ArrowUp, color: "text-amber-500" },
+                  { id: "normal", label: "Normal", icon: Minus, color: "text-blue-500" },
+                  { id: "low", label: "Low", icon: ArrowDown, color: "text-slate-400" },
+                ].map((p) => {
+                  const isChecked = filters.priorities.includes(p.id as Priority);
+                  const Icon = p.icon;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => togglePriority(p.id as Priority)}
+                      className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon className={cn("w-3.5 h-3.5", p.color)} />
+                        <span>{p.label}</span>
+                      </div>
+                      {isChecked && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Closed toggle */}
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Closed</span>
+          </button>
+
+          {/* Assignee Filter Button */}
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <div className="w-4 h-4 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-[9px]">
+              V
+            </div>
+            <span className="hidden md:inline">Assignee</span>
+          </button>
+
+          {/* Search Toggle / Input */}
+          <div className="relative flex items-center">
+            {isSearchOpen ? (
+              <div className="flex items-center relative">
+                <Search className="w-3.5 h-3.5 absolute left-2 text-slate-400" />
+                <input
+                  type="text"
+                  autoFocus
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  placeholder="Filter tasks..."
+                  className="w-36 sm:w-48 pl-7 pr-6 py-0.5 text-xs rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchValue("");
+                    setIsSearchOpen(false);
+                    setFilters({ search: "" });
+                  }}
+                  className="absolute right-1.5 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsSearchOpen(true)}
+                title="Search tasks"
+                className="p-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Customize */}
+          <button
+            type="button"
+            title="Customize view"
+            className="p-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+          </button>
+
+          {/* The ClickUp Signature Solid Black Add Task CTA */}
+          <button
+            type="button"
+            onClick={() => setIsCreateTaskOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium text-white bg-[#111318] hover:bg-black dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white transition-all cursor-pointer shadow-2xs ml-1"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Task</span>
+            <ChevronDown className="w-3 h-3 text-slate-400 dark:text-slate-600 ml-0.5" />
+          </button>
+        </div>
       </div>
 
-      {/* Status Filters */}
-      {statuses.length > 0 && (
-        <div className="hidden lg:flex items-center gap-1.5">
-          <span className="text-slate-600 dark:text-slate-400 font-semibold text-[11px] uppercase tracking-wider mr-1">
-            Status:
-          </span>
-          {statuses.map((st) => {
-            const isSelected = filters.statusIds.includes(st.id);
-            return (
-              <button
-                key={st.id}
-                onClick={() => toggleStatus(st.id)}
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-semibold border transition-all cursor-pointer",
-                  isSelected
-                    ? "text-white"
-                    : "bg-slate-100/80 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/60 hover:bg-slate-200 dark:hover:bg-slate-700",
-                )}
-                style={{
-                  backgroundColor: isSelected ? st.color : undefined,
-                  borderColor: isSelected ? st.color : undefined,
-                }}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: isSelected ? "#FFFFFF" : st.color }}
-                />
-                {st.name}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Reset Button */}
-      {hasActiveFilters && (
-        <button
-          onClick={handleResetFilters}
-          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold text-rose-700 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition-colors cursor-pointer"
-        >
-          <X className="w-3 h-3" />
-          Clear
-        </button>
-      )}
-    </div>
+      {/* Task Creation Modal */}
+      <CreateTaskModal
+        isOpen={isCreateTaskOpen}
+        onClose={() => setIsCreateTaskOpen(false)}
+      />
+    </>
   );
 }

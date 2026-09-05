@@ -1,26 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { ViewSwitcher } from "./ViewSwitcher";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { UserAvatar } from "@/components/ui/UserAvatar";
-import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
-import { Plus, ChevronRight } from "lucide-react";
-import { motion } from "framer-motion";
+import {
+  ChevronDown,
+  Search,
+  Sparkles,
+  Bot,
+  Zap,
+  Brain,
+  Share2,
+  Phone,
+  Video,
+  Star,
+  Folder as FolderIcon,
+  List as ListIcon,
+  Calendar,
+} from "lucide-react";
 
 export function TopNav() {
   const { workspaces, activeWorkspaceId, activeSpaceId, activeListId } =
     useWorkspaceStore();
 
-  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
-
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const currentSpace = currentWorkspace?.spaces.find(
-    (s) => s.id === activeSpaceId,
+    (s) => s.id === activeSpaceId
   );
 
-  let currentListName = "All Tasks";
+  let currentListName = "Project 1";
   if (currentSpace) {
     const list =
       currentSpace.lists.find((l) => l.id === activeListId) ||
@@ -31,64 +39,152 @@ export function TopNav() {
   }
 
   return (
-    <>
-      <header className="h-14 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-6 flex items-center justify-between gap-4 shrink-0 select-none">
-        {/* Breadcrumb Info */}
-        <div className="flex items-center gap-2 text-xs overflow-hidden">
-          <span className="font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
-            {currentWorkspace?.name}
-          </span>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 shrink-0">
-            {currentSpace && (
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: currentSpace.color }}
-              />
-            )}
-            {currentSpace?.name || "Space"}
-          </span>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span className="font-bold text-slate-900 dark:text-slate-100 truncate">
-            {currentListName}
-          </span>
-        </div>
+    <div className="flex flex-col shrink-0 select-none bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-slate-800">
+      {/* Tier 1: Global Workspace & Utility Bar */}
+      <header className="h-11 px-4 flex items-center justify-between gap-4 border-b border-slate-200/60 dark:border-slate-800/60">
+        {/* Left: Workspace dropdown */}
+        <div className="flex items-center gap-2">
+          {/* Green V Workspace Avatar */}
+          <div className="w-5 h-5 rounded bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shadow-2xs">
+            V
+          </div>
 
-        {/* Center View Switcher */}
-        <div className="hidden md:flex items-center">
-          <ViewSwitcher />
-        </div>
-
-        {/* Right Actions */}
-        <div className="flex items-center gap-3">
-          {/* New Task CTA */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setIsCreateTaskOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 shadow-sm shadow-teal-600/20 transition-all cursor-pointer"
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">New Task</span>
-          </motion.button>
+            <span className="truncate max-w-[220px]">
+              {currentWorkspace?.name || "Vicky Galih Pamungkas's Workspace"}
+            </span>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+          </button>
 
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
+          <button
+            type="button"
+            title="Toggle Calendar"
+            className="p-1 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer ml-0.5"
+          >
+            <Calendar className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Center: Search Pill & AI Chats */}
+        <div className="hidden md:flex items-center gap-2">
+          <div className="relative flex items-center">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400" />
+            <input
+              type="text"
+              readOnly
+              placeholder="Search ⌘K"
+              className="w-48 lg:w-56 pl-8 pr-3 py-1 text-xs rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 placeholder-slate-400 border border-transparent hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer focus:outline-hidden transition-all"
+            />
+          </div>
+
+          <button
+            type="button"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/40 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors cursor-pointer"
+          >
+            <Sparkles className="w-3 h-3 text-purple-500" />
+            <span>AI Chats</span>
+          </button>
+        </div>
+
+        {/* Right: Quick actions & user avatar */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            title="Start call"
+            className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <Phone className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
+            title="Start video"
+            className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <Video className="w-3.5 h-3.5" />
+          </button>
+
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-0.5" />
 
           {/* Theme Switcher */}
           <ThemeToggle />
 
-          {/* User Profile */}
-          <div className="flex items-center gap-2 pl-1">
-            <UserAvatar user={SEED_USERS[0]} size="md" />
+          {/* User Profile Avatar */}
+          <div className="w-6 h-6 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-bold text-[10px] ml-1 shadow-2xs">
+            VP
           </div>
         </div>
       </header>
 
-      {/* Quick Task Creation Modal */}
-      <CreateTaskModal
-        isOpen={isCreateTaskOpen}
-        onClose={() => setIsCreateTaskOpen(false)}
-      />
-    </>
+      {/* Tier 2: Space / Project Breadcrumbs & View Switcher Bar */}
+      <div className="px-4 py-1.5 flex flex-wrap items-center justify-between gap-3">
+        {/* Left: Breadcrumbs */}
+        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+          <div className="flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400">
+            <FolderIcon className="w-3.5 h-3.5 fill-blue-500/20" />
+            <span>{currentSpace?.name || "Team Space"}</span>
+          </div>
+
+          <span className="text-slate-400">/</span>
+
+          <div className="flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-100">
+            <ListIcon className="w-3.5 h-3.5 text-slate-500" />
+            <span>{currentListName}</span>
+            <ChevronDown className="w-3 h-3 text-slate-400 cursor-pointer" />
+          </div>
+
+          <button
+            type="button"
+            title="Favorite"
+            className="text-slate-300 hover:text-amber-400 transition-colors ml-1 cursor-pointer"
+          >
+            <Star className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Center: View Switcher Tabs */}
+        <div className="flex items-center">
+          <ViewSwitcher />
+        </div>
+
+        {/* Right: Quick Action Controls */}
+        <div className="hidden lg:flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
+          <button
+            type="button"
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <Bot className="w-3.5 h-3.5" />
+            <span>Agents</span>
+          </button>
+
+          <button
+            type="button"
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-500" />
+            <span>Automate</span>
+          </button>
+
+          <button
+            type="button"
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <Brain className="w-3.5 h-3.5 text-purple-500" />
+            <span>Brain²</span>
+          </button>
+
+          <button
+            type="button"
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-medium text-slate-700 dark:text-slate-200"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>Share</span>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

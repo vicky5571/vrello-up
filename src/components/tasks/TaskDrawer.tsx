@@ -134,7 +134,7 @@ export function TaskDrawer() {
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                 <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold uppercase tracking-wider text-[10px]">
-                  <Clock className="w-3 h-3 text-teal-500" />
+                  <Clock className="w-3 h-3 text-slate-500" />
                   TASK #{task.id.slice(-4)}
                 </span>
                 <span>•</span>
@@ -170,21 +170,21 @@ export function TaskDrawer() {
                   onBlur={handleTitleBlur}
                   onKeyDown={(e) => e.key === "Enter" && handleTitleBlur()}
                   placeholder="Task title..."
-                  className="w-full text-lg font-bold bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-teal-500 text-slate-900 dark:text-slate-100 focus:outline-hidden pb-1 transition-all"
+                  className="w-full text-lg font-bold bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#7B68EE] text-slate-900 dark:text-slate-100 focus:outline-hidden pb-1 transition-all"
                 />
               </div>
 
               {/* Properties Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800">
                 {/* Status */}
                 <div>
                   <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-                    <Layers className="w-3 h-3 text-teal-500" /> Status
+                    <Layers className="w-3 h-3 text-slate-500" /> Status
                   </label>
                   <select
                     value={task.statusId}
                     onChange={(e) => handleStatusChange(e.target.value)}
-                    className="w-full px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-teal-500 cursor-pointer"
+                    className="w-full px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-[#7B68EE] cursor-pointer"
                   >
                     {statuses.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -204,7 +204,7 @@ export function TaskDrawer() {
                     onChange={(e) =>
                       handlePriorityChange(e.target.value as Priority)
                     }
-                    className="w-full px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-teal-500 cursor-pointer"
+                    className="w-full px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-[#7B68EE] cursor-pointer"
                   >
                     <option value="urgent">Urgent</option>
                     <option value="high">High</option>
@@ -227,7 +227,7 @@ export function TaskDrawer() {
                         dueDate: e.target.value || undefined,
                       })
                     }
-                    className="w-full px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-teal-500"
+                    className="w-full px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-[#7B68EE]"
                   />
                 </div>
 
@@ -244,7 +244,7 @@ export function TaskDrawer() {
                         startDate: e.target.value || undefined,
                       })
                     }
-                    className="w-full px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-teal-500"
+                    className="w-full px-2 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-[#7B68EE]"
                   />
                 </div>
               </div>
@@ -252,7 +252,7 @@ export function TaskDrawer() {
               {/* Assignees Selector */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />{" "}
+                  <User className="w-3.5 h-3.5 text-slate-500" />{" "}
                   Assignees
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -265,15 +265,15 @@ export function TaskDrawer() {
                         key={user.id}
                         type="button"
                         onClick={() => toggleAssignee(user.id)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
                           isAssigned
-                            ? "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/40 shadow-xs"
+                            ? "bg-[#7B68EE]/10 text-[#7B68EE] border-[#7B68EE]/30 shadow-xs"
                             : "bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
                         }`}
                       >
                         <span
                           className={`w-2 h-2 rounded-full ${
-                            isAssigned ? "bg-teal-500" : "bg-slate-400"
+                            isAssigned ? "bg-[#7B68EE]" : "bg-slate-400"
                           }`}
                         />
                         {user.name}
@@ -310,7 +310,7 @@ export function TaskDrawer() {
               {task.dependencies && task.dependencies.length > 0 && (
                 <div className="pt-2">
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
-                    <LinkIcon className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                    <LinkIcon className="w-3.5 h-3.5 text-slate-500" />
                     <span>
                       Blocking Dependencies ({task.dependencies.length})
                     </span>
@@ -357,7 +357,7 @@ export function TaskDrawer() {
               </span>
               <button
                 onClick={() => setSelectedTaskId(null)}
-                className="px-4 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 font-semibold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
+                className="px-4 py-1.5 rounded-md bg-[#1E1F21] dark:bg-white hover:bg-[#2A2B2D] dark:hover:bg-slate-100 font-semibold text-white dark:text-slate-900 transition-colors cursor-pointer text-xs"
               >
                 Done
               </button>

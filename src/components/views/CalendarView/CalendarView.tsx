@@ -87,12 +87,12 @@ export function CalendarView() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <CalendarIcon className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            <CalendarIcon className="w-4 h-4 text-slate-700 dark:text-slate-300" />
             {format(currentMonth, "MMMM yyyy")}
           </h2>
           <button
             onClick={goToToday}
-            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+            className="px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
           >
             Today
           </button>
@@ -101,13 +101,13 @@ export function CalendarView() {
         <div className="flex items-center gap-1">
           <button
             onClick={prevMonth}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={nextMonth}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -128,7 +128,7 @@ export function CalendarView() {
       {/* Calendar Grid (dynamically sized to match actual number of weeks: 4, 5, or 6) */}
       <div
         style={{ gridTemplateRows: `repeat(${weekCount}, minmax(0, 1fr))` }}
-        className="flex-1 grid grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800/80 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 min-h-0"
+        className="flex-1 grid grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800/80 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 min-h-0"
       >
         {days.map((day, idx) => {
           const isCurrentMonth = isSameMonth(day, monthStart);
@@ -157,7 +157,7 @@ export function CalendarView() {
                   className={cn(
                     "text-xs font-semibold inline-flex items-center justify-center w-6 h-6 rounded-full",
                     isCurrentDay
-                      ? "bg-teal-600 text-white font-bold"
+                      ? "bg-[#0073ea] text-white font-bold"
                       : "text-slate-700 dark:text-slate-300",
                   )}
                 >
@@ -181,15 +181,15 @@ export function CalendarView() {
                       onClick={() => setSelectedTaskId(task.id)}
                       className="p-1 rounded-md text-[11px] font-semibold truncate cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-2xs"
                       style={{
-                        backgroundColor: `${status?.color || "#0D9488"}20`,
-                        color: status?.color || "#0D9488",
-                        border: `1px solid ${status?.color || "#0D9488"}40`,
+                        backgroundColor: `${status?.color || "#0073ea"}15`,
+                        color: status?.color || "#0073ea",
+                        border: `1px solid ${status?.color || "#0073ea"}30`,
                       }}
                       title={task.title}
                     >
                       <span
                         className="w-1.5 h-1.5 rounded-full shrink-0"
-                        style={{ backgroundColor: status?.color || "#0D9488" }}
+                        style={{ backgroundColor: status?.color || "#0073ea" }}
                       />
                       <span className="truncate">{task.title}</span>
                     </div>

@@ -74,7 +74,7 @@ export function TiptapEditor({
   }
 
   return (
-    <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/80 focus-within:ring-2 focus-within:ring-teal-500/50 transition-all">
+    <div className="border border-slate-200 dark:border-slate-800 rounded-md overflow-hidden bg-white dark:bg-slate-900/80 focus-within:ring-1 focus-within:ring-[#7B68EE] transition-all">
       {/* Editor Toolbar */}
       {editable && (
         <div className="flex flex-wrap items-center gap-0.5 p-1.5 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 text-xs">
@@ -84,7 +84,7 @@ export function TiptapEditor({
             className={cn(
               "p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors",
               editor.isActive("bold") &&
-                "bg-slate-200 dark:bg-slate-700 text-teal-600 dark:text-teal-400",
+                "bg-slate-200 dark:bg-slate-700 text-[#7B68EE] dark:text-[#7B68EE]",
             )}
             title="Bold"
           >
@@ -97,7 +97,7 @@ export function TiptapEditor({
             className={cn(
               "p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors",
               editor.isActive("italic") &&
-                "bg-slate-200 dark:bg-slate-700 text-teal-600 dark:text-teal-400",
+                "bg-slate-200 dark:bg-slate-700 text-[#7B68EE] dark:text-[#7B68EE]",
             )}
             title="Italic"
           >
@@ -110,7 +110,7 @@ export function TiptapEditor({
             className={cn(
               "p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors",
               editor.isActive("strike") &&
-                "bg-slate-200 dark:bg-slate-700 text-teal-600 dark:text-teal-400",
+                "bg-slate-200 dark:bg-slate-700 text-[#7B68EE] dark:text-[#7B68EE]",
             )}
             title="Strikethrough"
           >
@@ -127,7 +127,7 @@ export function TiptapEditor({
             className={cn(
               "p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors",
               editor.isActive("heading", { level: 1 }) &&
-                "bg-slate-200 dark:bg-slate-700 text-teal-600 dark:text-teal-400",
+                "bg-slate-200 dark:bg-slate-700 text-[#7B68EE] dark:text-[#7B68EE]",
             )}
             title="Heading 1"
           >
@@ -142,7 +142,7 @@ export function TiptapEditor({
             className={cn(
               "p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors",
               editor.isActive("heading", { level: 2 }) &&
-                "bg-slate-200 dark:bg-slate-700 text-teal-600 dark:text-teal-400",
+                "bg-slate-200 dark:bg-slate-700 text-[#7B68EE] dark:text-[#7B68EE]",
             )}
             title="Heading 2"
           >
@@ -157,7 +157,7 @@ export function TiptapEditor({
             className={cn(
               "p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors",
               editor.isActive("bulletList") &&
-                "bg-slate-200 dark:bg-slate-700 text-teal-600 dark:text-teal-400",
+                "bg-slate-200 dark:bg-slate-700 text-[#7B68EE] dark:text-[#7B68EE]",
             )}
             title="Bullet List"
           >
@@ -170,7 +170,7 @@ export function TiptapEditor({
             className={cn(
               "p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors",
               editor.isActive("orderedList") &&
-                "bg-slate-200 dark:bg-slate-700 text-teal-600 dark:text-teal-400",
+                "bg-slate-200 dark:bg-slate-700 text-[#7B68EE] dark:text-[#7B68EE]",
             )}
             title="Ordered List"
           >
@@ -183,7 +183,7 @@ export function TiptapEditor({
             className={cn(
               "p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors",
               editor.isActive("codeBlock") &&
-                "bg-slate-200 dark:bg-slate-700 text-teal-600 dark:text-teal-400",
+                "bg-slate-200 dark:bg-slate-700 text-[#7B68EE] dark:text-[#7B68EE]",
             )}
             title="Code Block"
           >
@@ -196,7 +196,7 @@ export function TiptapEditor({
             className={cn(
               "p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors",
               editor.isActive("blockquote") &&
-                "bg-slate-200 dark:bg-slate-700 text-teal-600 dark:text-teal-400",
+                "bg-slate-200 dark:bg-slate-700 text-[#7B68EE] dark:text-[#7B68EE]",
             )}
             title="Quote"
           >

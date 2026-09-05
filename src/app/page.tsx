@@ -1,9 +1,11 @@
 "use client";
 
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { GlobalRail } from "@/components/layout/GlobalRail";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { FilterBar } from "@/components/layout/FilterBar";
+import { ListView } from "@/components/views/ListView/ListView";
 import { BoardView } from "@/components/views/BoardView/BoardView";
 import { TableView } from "@/components/views/TableView/TableView";
 import { CalendarView } from "@/components/views/CalendarView/CalendarView";
@@ -15,12 +17,15 @@ export default function WorkspacePage() {
   const { activeView } = useWorkspaceStore();
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100">
+    <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-[#0F1115] text-slate-900 dark:text-slate-100">
+      {/* ClickUp Dark Left Dock (Global Rail) */}
+      <GlobalRail />
+
       {/* Hierarchical Sidebar */}
       <Sidebar />
 
       {/* Main Workspace Stage */}
-      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[#FAFBFC] dark:bg-[#0F1115]">
         {/* Top Navigation */}
         <TopNav />
 
@@ -30,6 +35,19 @@ export default function WorkspacePage() {
         {/* View Transition Area */}
         <div className="flex-1 overflow-hidden relative">
           <AnimatePresence mode="wait">
+            {activeView === "list" && (
+              <motion.div
+                key="list-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <ListView />
+              </motion.div>
+            )}
+
             {activeView === "board" && (
               <motion.div
                 key="board-view"

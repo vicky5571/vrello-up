@@ -262,7 +262,7 @@ const INITIAL_TASKS: Task[] = [
 const INITIAL_WORKSPACE: Workspace = {
   id: "ws-main",
   name: "Acme Product Workspace",
-  avatar: "🚀",
+  avatar: "V",
   spaces: INITIAL_SPACES,
   members: SEED_USERS,
 };
@@ -389,7 +389,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       activeListId: "list-sprint-tasks",
       tasks: INITIAL_TASKS,
       selectedTaskId: null,
-      activeView: "board",
+      activeView: "list",
       isSidebarOpen: true,
       filters: {
         search: "",
@@ -1014,7 +1014,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             activeWorkspaceId: (typeof state.activeWorkspaceId === "string" && state.activeWorkspaceId) || activeWs?.id || "ws-main",
             activeSpaceId: (typeof state.activeSpaceId === "string" && state.activeSpaceId) || activeSpace?.id || "space-eng",
             activeListId: (typeof state.activeListId === "string" && state.activeListId) || activeList || "list-sprint-tasks",
-            activeView: (state.activeView as ViewMode) || "board",
+            activeView: (state.activeView as ViewMode) || "list",
           };
         }
 

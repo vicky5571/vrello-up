@@ -64,13 +64,13 @@ export function BoardColumn({
   return (
     <div
       ref={setNodeRef}
-      className="w-72 sm:w-80 shrink-0 flex flex-col max-h-full rounded-2xl bg-slate-100/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800/80 overflow-hidden"
+      className="w-72 sm:w-80 shrink-0 flex flex-col max-h-full rounded-lg bg-slate-100/60 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 overflow-hidden"
     >
       {/* Column Header */}
-      <div className="p-3.5 flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/60">
+      <div className="p-3 flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/60">
         <div className="flex items-center gap-2">
           <StatusBadge status={status} size="sm" />
-          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-800">
+          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-1.5 py-0.2 rounded bg-slate-200/70 dark:bg-slate-800">
             {tasks.length}
           </span>
         </div>
@@ -78,19 +78,19 @@ export function BoardColumn({
         <button
           onClick={() => setIsAddingQuickTask(true)}
           title="Add task to column"
-          className="p-1 rounded-md text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+          className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
         </button>
       </div>
 
       {/* Task List (Droppable & Sortable) */}
-      <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 min-h-[150px]">
+      <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-[150px]">
         {/* Quick Add Form */}
         {isAddingQuickTask && (
           <form
             onSubmit={handleQuickAdd}
-            className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-teal-500 shadow-sm space-y-2"
+            className="p-2.5 rounded-lg bg-white dark:bg-[#18191B] border border-slate-300 dark:border-slate-700 shadow-xs space-y-2"
           >
             <input
               type="text"
@@ -98,19 +98,19 @@ export function BoardColumn({
               value={quickTitle}
               onChange={(e) => setQuickTitle(e.target.value)}
               placeholder="What needs to be done?"
-              className="w-full text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden"
+              className="w-full text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden"
             />
             <div className="flex items-center justify-end gap-1.5">
               <button
                 type="button"
                 onClick={() => setIsAddingQuickTask(false)}
-                className="px-2 py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                className="px-2 py-1 text-[11px] font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-2.5 py-1 text-[11px] font-bold text-white bg-teal-600 rounded-md hover:bg-teal-700"
+                className="px-2.5 py-1 text-[11px] font-medium text-white bg-[#111318] hover:bg-black dark:bg-slate-100 dark:text-slate-950 rounded-md transition-colors cursor-pointer"
               >
                 Save
               </button>

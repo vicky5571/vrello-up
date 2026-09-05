@@ -92,11 +92,11 @@ export function CreateTaskModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="relative z-10 w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 overflow-hidden"
+            className="relative z-10 w-full max-w-lg rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 overflow-hidden"
           >
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Plus className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <Plus className="w-4 h-4 text-slate-700 dark:text-slate-300" />
                 Create New Task
               </h2>
               <button
@@ -120,7 +120,7 @@ export function CreateTaskModal({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Implement drag-and-drop Kanban columns"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-sm focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition-all placeholder:text-slate-400"
+                  className="w-full px-3.5 py-2 rounded-md bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-sm focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE] transition-all placeholder:text-slate-400"
                 />
               </div>
 
@@ -134,7 +134,7 @@ export function CreateTaskModal({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Add details, acceptance criteria, or notes..."
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition-all placeholder:text-slate-400 resize-none"
+                  className="w-full px-3.5 py-2 rounded-md bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE] transition-all placeholder:text-slate-400 resize-none"
                 />
               </div>
 
@@ -143,12 +143,12 @@ export function CreateTaskModal({
                 {/* Status */}
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
-                    <Layers className="w-3 h-3 text-teal-500" /> Status
+                    <Layers className="w-3 h-3 text-slate-500" /> Status
                   </label>
                   <select
                     value={statusId}
                     onChange={(e) => setStatusId(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE]"
                   >
                     {statuses.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -166,7 +166,7 @@ export function CreateTaskModal({
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value as Priority)}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE]"
                   >
                     <option value="urgent">Urgent</option>
                     <option value="high">High</option>
@@ -185,7 +185,7 @@ export function CreateTaskModal({
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE]"
                   />
                 </div>
               </div>
@@ -209,13 +209,15 @@ export function CreateTaskModal({
                               : [...prev, user.id],
                           );
                         }}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-all cursor-pointer ${
                           isSelected
-                            ? "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30"
+                            ? "bg-[#7B68EE]/10 text-[#7B68EE] border-[#7B68EE]/30"
                             : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                         }`}
                       >
-                        <span className="w-2 h-2 rounded-full bg-teal-500" />
+                        <span
+                          className={`w-2 h-2 rounded-full ${isSelected ? "bg-[#7B68EE]" : "bg-slate-400"}`}
+                        />
                         {user.name}
                       </button>
                     );
@@ -228,7 +230,7 @@ export function CreateTaskModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="px-3.5 py-1.5 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   Cancel
                 </button>
@@ -236,9 +238,9 @@ export function CreateTaskModal({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-600/20 transition-all flex items-center gap-1.5"
+                  className="px-4 py-1.5 rounded-md text-xs font-bold text-white dark:text-slate-900 bg-[#1E1F21] dark:bg-white hover:bg-[#2A2B2D] dark:hover:bg-slate-100 shadow-sm transition-all flex items-center gap-1.5"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                   Create Task
                 </motion.button>
               </div>

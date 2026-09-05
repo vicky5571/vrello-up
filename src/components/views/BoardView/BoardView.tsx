@@ -223,6 +223,7 @@ export function BoardView() {
   return (
     <div className="flex-1 overflow-x-auto p-6 h-full">
       <DndContext
+        id="board-dnd-context"
         sensors={sensors}
         collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}

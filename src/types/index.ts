@@ -91,7 +91,7 @@ export interface Workspace {
   members: User[];
 }
 
-export type ViewMode = "board" | "table" | "calendar" | "gantt";
+export type ViewMode = "list" | "board" | "table" | "calendar" | "gantt";
 
 export interface FilterOptions {
   search: string;

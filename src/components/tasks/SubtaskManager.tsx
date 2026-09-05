@@ -39,13 +39,13 @@ export function SubtaskManager({
       {/* Subtasks Header & Progress Bar */}
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-2 font-semibold text-slate-700 dark:text-slate-300">
-          <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+          <CheckCircle2 className="w-4 h-4 text-slate-500" />
           <span>Subtasks & Checklists</span>
-          <span className="text-slate-600 dark:text-slate-400 text-[11px] font-bold">
+          <span className="text-slate-500 dark:text-slate-400 text-[11px] font-bold">
             ({completedCount}/{subtasks.length})
           </span>
         </div>
-        <span className="text-xs font-semibold text-teal-600 dark:text-teal-400">
+        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
           {progressPercent}%
         </span>
       </div>
@@ -57,7 +57,7 @@ export function SubtaskManager({
             initial={{ width: 0 }}
             animate={{ width: `${progressPercent}%` }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="h-full bg-teal-500 rounded-full"
+            className="h-full bg-[#7B68EE] rounded-full"
           />
         </div>
       )}
@@ -72,7 +72,7 @@ export function SubtaskManager({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.15 }}
-              className="group flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-teal-500/30 transition-all text-xs"
+              className="group flex items-center justify-between gap-2 p-2 rounded-md bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all text-xs"
             >
               <button
                 type="button"
@@ -80,7 +80,7 @@ export function SubtaskManager({
                 className="flex items-center gap-2.5 flex-1 text-left cursor-pointer"
               >
                 {subtask.completed ? (
-                  <CheckSquare className="w-4 h-4 text-teal-500 shrink-0" />
+                  <CheckSquare className="w-4 h-4 text-[#7B68EE] shrink-0" />
                 ) : (
                   <Square className="w-4 h-4 text-slate-400 shrink-0" />
                 )}
@@ -116,12 +116,12 @@ export function SubtaskManager({
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="+ Add a subtask..."
-          className="flex-1 px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+          className="flex-1 px-3 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE]"
         />
         <button
           type="submit"
           disabled={!newTitle.trim()}
-          className="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer"
+          className="px-3 py-1.5 rounded-md bg-[#1E1F21] dark:bg-white hover:bg-[#2A2B2D] dark:hover:bg-slate-100 disabled:opacity-40 text-white dark:text-slate-900 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
           Add

@@ -86,8 +86,8 @@ export function BoardCard({
       {...listeners}
       onClick={() => onSelect(task.id)}
       className={cn(
-        "group relative rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 p-3.5 shadow-xs hover:shadow-md hover:border-teal-500/40 cursor-grab active:cursor-grabbing select-none transition-[box-shadow,border-color] duration-150",
-        isDragging && "opacity-30 border-teal-500 shadow-xl"
+        "group relative rounded-lg bg-white dark:bg-[#18191B] border border-slate-200/90 dark:border-slate-800 p-3 shadow-2xs hover:shadow-xs hover:border-slate-300 dark:hover:border-slate-700 cursor-grab active:cursor-grabbing select-none transition-all duration-150",
+        isDragging && "opacity-30 border-blue-500 shadow-lg"
       )}
     >
       {/* Top Meta: Priority & Move Menu */}
@@ -109,7 +109,7 @@ export function BoardCard({
             }}
             title="Move to status..."
             className={cn(
-              "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:outline-hidden p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer",
+              "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-hidden p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer",
               showMoveMenu && "opacity-100"
             )}
           >
