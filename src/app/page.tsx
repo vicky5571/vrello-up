@@ -24,14 +24,14 @@ export default function WorkspacePage() {
 
   if (!isMounted) {
     return (
-      <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-[#0F1115] text-slate-900 dark:text-slate-100 items-center justify-center">
+      <div className="flex h-screen w-screen overflow-hidden bg-[#F0F1F4] dark:bg-[#0C0D0F] text-slate-900 dark:text-slate-100 items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-slate-300 dark:border-slate-700 border-t-[#7B68EE] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#060709] dark:bg-[#060709] p-2 gap-2 text-slate-900 dark:text-slate-100 select-none">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#F0F1F4] dark:bg-[#0C0D0F] p-2 gap-2 text-slate-900 dark:text-slate-100 select-none">
       {/* ClickUp Floating Dark Left Dock (Global Rail: Home, Planner, AI, Teams, More) */}
       <GlobalRail />
 
