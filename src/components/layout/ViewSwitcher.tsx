@@ -13,6 +13,7 @@ import {
   Building2,
   Store,
   ClipboardList,
+  FileText,
   Plus,
   LucideIcon,
 } from "lucide-react";
@@ -40,6 +41,7 @@ const MARKETING_VIEWS: ViewTabItem[] = [
   { id: "branches", label: "Branches", icon: Building2, iconColor: "text-cyan-500", isAvailable: true },
   { id: "outlets", label: "Outlets", icon: Store, iconColor: "text-orange-500", isAvailable: true },
   { id: "placements", label: "Placements", icon: ClipboardList, iconColor: "text-lime-500", isAvailable: true },
+  { id: "mous", label: "MOUs", icon: FileText, iconColor: "text-fuchsia-500", isAvailable: true },
 ];
 
 export function ViewSwitcher() {

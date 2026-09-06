@@ -140,7 +140,8 @@ export type ViewMode =
   | "channel"
   | "branches"
   | "outlets"
-  | "placements";
+  | "placements"
+  | "mous";
 
 export type GroupByOption = "status" | "priority" | "assignee";
 

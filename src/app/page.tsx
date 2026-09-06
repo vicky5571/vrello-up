@@ -66,6 +66,11 @@ const PlacementsView = dynamic(
     ),
   { ssr: false, loading: () => <ViewFallback /> },
 );
+const MousView = dynamic(
+  () =>
+    import("@/components/views/MousView/MousView").then((m) => m.MousView),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
 const TaskDrawer = dynamic(
   () => import("@/components/tasks/TaskDrawer").then((m) => m.TaskDrawer),
   { ssr: false },
@@ -249,6 +254,19 @@ export default function WorkspacePage() {
                 className="h-full w-full"
               >
                 <PlacementsView />
+              </motion.div>
+            )}
+
+            {activeView === "mous" && (
+              <motion.div
+                key="mous-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <MousView />
               </motion.div>
             )}
           </AnimatePresence>
