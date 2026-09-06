@@ -323,6 +323,7 @@ interface WorkspaceState {
   tags: Tag[];
   channelMessages: ChannelMessage[];
   selectedTaskId: string | null;
+  lastSelectedTaskId: string | null;
   activeView: ViewMode;
   currentUserId: string;
   filters: FilterOptions;
@@ -609,6 +610,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       tags: SEED_TAGS,
       channelMessages: INITIAL_CHANNEL_MESSAGES,
       selectedTaskId: null,
+      lastSelectedTaskId: null,
       activeView: "list",
       currentUserId: "user-1",
       isSidebarOpen: true,
@@ -657,7 +659,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
       setActiveList: (id) => set({ activeListId: id }),
       setActiveView: (view) => set({ activeView: view }),
-      setSelectedTaskId: (id) => set({ selectedTaskId: id }),
+      setSelectedTaskId: (id) =>
+        set((state) => ({
+          selectedTaskId: id,
+          lastSelectedTaskId: id ?? state.lastSelectedTaskId,
+        })),
       setCurrentUserId: (id) => set({ currentUserId: id }),
       toggleSidebar: () =>
         set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
@@ -757,6 +763,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             ),
           selectedTaskId:
             state.selectedTaskId === id ? null : state.selectedTaskId,
+          lastSelectedTaskId:
+            state.lastSelectedTaskId === id ? null : state.lastSelectedTaskId,
         }));
       },
 
@@ -1509,6 +1517,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             activeListId:
               space?.lists[0]?.id || space?.folders[0]?.lists[0]?.id || "",
             selectedTaskId: null,
+            lastSelectedTaskId: null,
           };
         });
         return true;

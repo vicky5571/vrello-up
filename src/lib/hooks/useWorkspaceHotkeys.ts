@@ -29,7 +29,39 @@ export function useWorkspaceHotkeys() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const state = useWorkspaceStore.getState();
 
+      // Esc closes one layer per press, even from inputs (mirrors HelpDocsModal).
+      if (e.key === "Escape") {
+        if (state.isCommandPaletteOpen) state.closeCommandPalette();
+        else if (state.isCreateTaskModalOpen) state.setCreateTaskModalOpen(false);
+        else if (state.isHelpDocsOpen) state.setHelpDocsOpen(false);
+        else if (state.isAiDrawerOpen) state.setAiDrawerOpen(false);
+        else if (state.selectedTaskId !== null) state.setSelectedTaskId(null);
+        return;
+      }
+
       if (isTypingTarget(e.target)) return;
+
+      // Space toggles the task drawer; never hijack buttons/links or modals.
+      if (e.key === " " && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const tag =
+          e.target instanceof HTMLElement ? e.target.tagName : "";
+        if (tag === "BUTTON" || tag === "A") return;
+        if (
+          state.isCommandPaletteOpen ||
+          state.isCreateTaskModalOpen ||
+          state.isHelpDocsOpen ||
+          state.isAiDrawerOpen
+        ) {
+          return;
+        }
+        e.preventDefault();
+        if (state.selectedTaskId !== null) state.setSelectedTaskId(null);
+        else if (state.lastSelectedTaskId) {
+          state.setSelectedTaskId(state.lastSelectedTaskId);
+        }
+        return;
+      }
+
       if (
         state.isCommandPaletteOpen ||
         state.isCreateTaskModalOpen ||

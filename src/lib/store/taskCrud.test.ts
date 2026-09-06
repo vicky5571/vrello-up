@@ -45,6 +45,19 @@ test("moveTaskStatus transitions status and order index", () => {
   api().deleteTask(created.id);
 });
 
+test("setSelectedTaskId remembers the last task for Space-toggle reopen", () => {
+  const created = makeTask("crud-select");
+  api().setSelectedTaskId(created.id);
+  assert.equal(api().lastSelectedTaskId, created.id);
+  api().setSelectedTaskId(null);
+  assert.equal(api().selectedTaskId, null);
+  assert.equal(api().lastSelectedTaskId, created.id);
+  api().setSelectedTaskId(created.id);
+  api().deleteTask(created.id);
+  assert.equal(api().selectedTaskId, null);
+  assert.equal(api().lastSelectedTaskId, null);
+});
+
 test("deleteTask clears selection and dependency references", () => {
   const a = makeTask("crud-dep-a");
   const b = makeTask("crud-dep-b");
