@@ -83,9 +83,9 @@ export function PlacementsView() {
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Bulk delete is gated on UPDATE_PLACEMENT (admin + staff, matching the
+  // Bulk delete is gated on CREATE_PLACEMENT (admin + staff, matching the
   // server route). The UI just avoids dead clicks for viewers.
-  const canManage = can("UPDATE_PLACEMENT");
+  const canManage = can("CREATE_PLACEMENT");
 
   const fetchPlacements = useCallback(async () => {
     setIsLoading(true);

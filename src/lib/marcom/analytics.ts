@@ -5,7 +5,6 @@ export interface ReportSummaryInput {
     completionRate?: number;
   } | null;
 }
-
 export interface ReportsSummary {
   total: number;
   totalActivities: number;
@@ -60,4 +59,45 @@ export function summarizeMouFunnel(mous: MouStatusInput[]): MouFunnel {
     funnel[status] = (funnel[status] ?? 0) + 1;
   }
   return funnel;
+}
+
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
+/**
+ * Calendar index of a report `month` value (January=0..December=11).
+ * Accepts bare names ("September") and dashboard-style labels
+ * ("September 2026"); unknown values yield -1 so they sort first
+ * instead of throwing.
+ */
+export function monthIndex(month: string): number {
+  const name = month.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
+  return MONTH_NAMES.findIndex((m) => m.toLowerCase() === name);
+}
+
+export interface ReportPeriodInput {
+  month: string;
+  year: number;
+}
+
+/** Oldest-first calendar order for completion trends and report lists. */
+export function compareReportPeriodAsc(a: ReportPeriodInput, b: ReportPeriodInput): number {
+  return a.year - b.year || monthIndex(a.month) - monthIndex(b.month);
+}
+
+/** Newest-first calendar order (mirrors the reports API listing). */
+export function compareReportPeriodDesc(a: ReportPeriodInput, b: ReportPeriodInput): number {
+  return b.year - a.year || monthIndex(b.month) - monthIndex(a.month);
 }

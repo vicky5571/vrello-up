@@ -222,8 +222,8 @@ const mouTypes = [
 const mouStatuses = [
   "DONE",
   "DONE",
-  "ON_PROGRESS",
-  "ON_PROGRESS",
+  "SUBMITTED",
+  "SUBMITTED",
   "SUBMITTED",
   "DRAFT",
   "REJECTED",

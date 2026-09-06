@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireMember } from "@/lib/marcom/auth";
 import { hasPermission } from "@/lib/marcom/guards";
+import { compareReportPeriodDesc } from "@/lib/marcom/analytics";
 
 async function requireReportWriter() {
   let role;
@@ -45,10 +46,14 @@ export async function GET(request: Request) {
     where.year = year;
   }
 
+  // `month` is a free-text label ("July 2026"), so lexical ORDER BY would
+  // sort alphabetically within a year. Fetch year-desc and finish in
+  // calendar order via the shared month-name index map.
   const reports = await prisma.monthlyReport.findMany({
     where,
-    orderBy: [{ year: "desc" }, { month: "asc" }],
+    orderBy: [{ year: "desc" }],
   });
+  reports.sort(compareReportPeriodDesc);
   return NextResponse.json({ total: reports.length, data: reports });
 }
 

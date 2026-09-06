@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireMember } from "@/lib/marcom/auth";
+import { hasPermission } from "@/lib/marcom/guards";
 
 const VALID_TYPES = ["POSTER", "SHOPBLIND", "BANNER", "BRANDING_SIGNBOARD", "OTHER_MATERIALS"] as const;
 
@@ -34,11 +35,15 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  let role;
   try {
-    await requireMember("ws-main");
+    role = await requireMember("ws-main");
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;
+  }
+  if (!hasPermission(role, "MANAGE_MASTER_DATA")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const body = await request.json();

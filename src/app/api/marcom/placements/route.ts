@@ -11,7 +11,7 @@ const placementInclude = {
   material: { select: { id: true, type: true, name: true } },
 } as const;
 
-async function requirePlacementWriter() {
+async function requirePlacementCreator() {
   let role;
   try {
     role = await requireMember("ws-main");
@@ -19,7 +19,7 @@ async function requirePlacementWriter() {
     if (e instanceof Response) throw e;
     throw e;
   }
-  if (!hasPermission(role, "UPDATE_PLACEMENT")) {
+  if (!hasPermission(role, "CREATE_PLACEMENT")) {
     throw Response.json({ error: "Forbidden" }, { status: 403 });
   }
 }
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await requirePlacementWriter();
+    await requirePlacementCreator();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;

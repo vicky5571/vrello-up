@@ -21,6 +21,19 @@ async function requirePlacementWriter() {
   }
 }
 
+async function requirePlacementCreator() {
+  let role;
+  try {
+    role = await requireMember("ws-main");
+  } catch (e) {
+    if (e instanceof Response) throw e;
+    throw e;
+  }
+  if (!hasPermission(role, "CREATE_PLACEMENT")) {
+    throw Response.json({ error: "Forbidden" }, { status: 403 });
+  }
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requirePlacementWriter();
@@ -70,7 +83,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requirePlacementWriter();
+    await requirePlacementCreator();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;

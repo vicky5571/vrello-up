@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import {
+  compareReportPeriodAsc,
   summarizeBranches,
   summarizeMouFunnel,
 } from "@/lib/marcom/analytics";
@@ -128,7 +129,7 @@ export function AnalyticsView() {
   const completionTrend = useMemo(
     () =>
       [...reports]
-        .sort((a, b) => a.year - b.year || a.month.localeCompare(b.month))
+        .sort(compareReportPeriodAsc)
         .map((r) => ({
           period: `${r.month} ${r.year}`,
           completionRate: r.summary?.completionRate ?? 0,

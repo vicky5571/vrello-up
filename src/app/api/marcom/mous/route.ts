@@ -2,9 +2,14 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireMember } from "@/lib/marcom/auth";
+import { hasPermission } from "@/lib/marcom/guards";
 import { MOU_STATUSES } from "@/lib/marcom/mouMachine";
 
 const VALID_STATUSES = MOU_STATUSES;
+// Creation is clamped to the entry of the approval flow: omitting status
+// yields the Prisma DRAFT default; only DRAFT/SUBMITTED are accepted so
+// callers cannot mint APPROVED/DONE rows and bypass the approval gate.
+const CREATABLE_STATUSES = ["DRAFT", "SUBMITTED"] as const;
 
 const mouInclude = {
   branch: { select: { id: true, code: true, name: true } },
@@ -48,11 +53,15 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  let role;
   try {
-    await requireMember("ws-main");
+    role = await requireMember("ws-main");
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;
+  }
+  if (!hasPermission(role, "CREATE_MOU")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const body = await request.json();
@@ -60,8 +69,8 @@ export async function POST(request: Request) {
   if (!branchId || !partnerName || !mouType) {
     return NextResponse.json({ error: "Missing required fields: branchId, partnerName, mouType" }, { status: 400 });
   }
-  if (status !== undefined && !VALID_STATUSES.includes(status)) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+  if (status !== undefined && !(CREATABLE_STATUSES as readonly string[]).includes(status)) {
+    return NextResponse.json({ error: "Invalid status: only DRAFT or SUBMITTED can be set on creation" }, { status: 400 });
   }
 
   try {
