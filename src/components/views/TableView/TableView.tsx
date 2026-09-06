@@ -91,6 +91,7 @@ export function TableView() {
     (s) => s.id === activeSpaceId,
   );
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
+  const members = currentWorkspace?.members || [];
 
   const [sorting, setSorting] = useState<SortingState>([
     { id: "title", desc: false },
@@ -366,6 +367,20 @@ export function TableView() {
     toast.success(`Updated priority for ${selectedRowIds.length} tasks`);
   };
 
+  const handleBulkAssign = (userId: string) => {
+    if (selectedRowIds.length === 0) return;
+    const user = members.find((m) => m.id === userId);
+    if (!user) return;
+    selectedRowIds.forEach((id) => {
+      const task = tasks.find((t) => t.id === id);
+      if (task && !task.assignees.some((a) => a.id === userId)) {
+        updateTask(id, { assignees: [...task.assignees, user] });
+      }
+    });
+    setRowSelection({});
+    toast.success(`Assigned ${user.name} to ${selectedRowIds.length} tasks`);
+  };
+
   const handleQuickAdd = (e: React.FormEvent, defaultStatusId?: string) => {
     e.preventDefault();
     if (!quickTitle.trim()) return;
@@ -493,6 +508,25 @@ export function TableView() {
               <option value="normal">Normal</option>
               <option value="low">Low</option>
               <option value="none">None</option>
+            </select>
+
+            {/* Assign Bulk */}
+            <select
+              onChange={(e) => {
+                if (e.target.value) handleBulkAssign(e.target.value);
+                e.target.value = "";
+              }}
+              defaultValue=""
+              className="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800 cursor-pointer focus:outline-hidden"
+            >
+              <option value="" disabled>
+                Assign to...
+              </option>
+              {members.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
             </select>
 
             {/* Delete Selected */}

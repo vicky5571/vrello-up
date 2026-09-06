@@ -59,6 +59,7 @@ export function Sidebar() {
     setActiveList,
     tasks,
     isSidebarOpen,
+    toggleSidebar,
     isHelpDocsOpen,
     setHelpDocsOpen,
     deleteSpace,
@@ -135,7 +136,12 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="w-60 h-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#18191B] shadow-lg flex flex-col justify-between shrink-0 select-none overflow-hidden z-20">
+      {/* Mobile backdrop: tap outside to close slide-over */}
+      <div
+        onClick={toggleSidebar}
+        className="fixed inset-0 z-40 bg-slate-950/40 md:hidden"
+      />
+      <aside className="fixed left-2 top-2 bottom-2 z-50 w-72 md:static md:z-20 md:w-60 md:h-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#18191B] shadow-lg flex flex-col justify-between shrink-0 select-none overflow-hidden">
         {/* Navigation Tree */}
         <div className="flex flex-col h-full overflow-hidden">
           {/* Spaces Section Header */}

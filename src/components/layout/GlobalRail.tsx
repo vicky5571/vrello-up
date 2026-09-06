@@ -74,7 +74,7 @@ export function GlobalRail() {
 
   return (
     <>
-      <aside className="w-[52px] shrink-0 h-full bg-[#0F1115] text-slate-400 flex flex-col items-center py-3 justify-between rounded-2xl border border-white/10 shadow-lg select-none z-30 overflow-hidden">
+      <aside className="hidden md:flex w-[52px] shrink-0 h-full bg-[#0F1115] text-slate-400 flex-col items-center py-3 justify-between rounded-2xl border border-white/10 shadow-lg select-none z-30 overflow-hidden">
         {/* Top Section: Toggle & Navigation */}
         <div className="flex flex-col items-center w-full gap-1">
           {/* Sidebar Toggle */}
