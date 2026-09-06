@@ -29,6 +29,12 @@ interface ListGroupProps {
   tasks: Task[];
   onSelectTask: (taskId: string) => void;
   onMoveStatus: (taskId: string, statusId: string) => void;
+  customHeader?: {
+    title: string;
+    icon?: React.ReactNode;
+    color?: string;
+    bgClass?: string;
+  };
 }
 
 const PRIORITY_OPTIONS: { value: Priority; label: string }[] = [
@@ -45,6 +51,7 @@ export function ListGroup({
   tasks,
   onSelectTask,
   onMoveStatus,
+  customHeader,
 }: ListGroupProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -179,20 +186,33 @@ export function ListGroup({
           )}
         </button>
 
-        {/* ClickUp Style Status Pill */}
-        <div
-          className={cn(
-            "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all shadow-2xs",
-            isProgress
-              ? "bg-[#0073ea] text-white"
-              : isDone
-                ? "bg-emerald-600 text-white"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-slate-700",
-          )}
-        >
-          {getStatusIcon(status.category)}
-          <span>{status.name}</span>
-        </div>
+        {/* Pill (Status or Custom Group Header) */}
+        {customHeader ? (
+          <div
+            className={cn(
+              "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all shadow-2xs text-white",
+              customHeader.bgClass || "bg-slate-700"
+            )}
+            style={customHeader.color ? { backgroundColor: customHeader.color } : undefined}
+          >
+            {customHeader.icon}
+            <span>{customHeader.title}</span>
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wider uppercase transition-all shadow-2xs",
+              isProgress
+                ? "bg-[#0073ea] text-white"
+                : isDone
+                  ? "bg-emerald-600 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/80 dark:border-slate-700",
+            )}
+          >
+            {getStatusIcon(status.category)}
+            <span>{status.name}</span>
+          </div>
+        )}
 
         {/* Task count */}
         <span className="text-xs text-slate-400 font-medium ml-1">

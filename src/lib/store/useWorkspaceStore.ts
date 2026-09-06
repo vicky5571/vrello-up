@@ -412,6 +412,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         priorities: [],
         assigneeIds: [],
         tagIds: [],
+        showClosed: true,
+        groupBy: "status",
       },
 
       setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
@@ -443,6 +445,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             priorities: [],
             assigneeIds: [],
             tagIds: [],
+            showClosed: true,
+            groupBy: "status",
           },
         }),
 

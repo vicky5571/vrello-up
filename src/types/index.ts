@@ -114,10 +114,14 @@ export interface Workspace {
 
 export type ViewMode = "list" | "board" | "table" | "calendar" | "gantt";
 
+export type GroupByOption = "status" | "priority" | "assignee";
+
 export interface FilterOptions {
   search: string;
   statusIds: string[];
   priorities: Priority[];
   assigneeIds: string[];
   tagIds: string[];
+  showClosed: boolean;
+  groupBy: GroupByOption;
 }

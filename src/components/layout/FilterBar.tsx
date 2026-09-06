@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import { Priority } from "@/types";
+import { Priority, GroupByOption } from "@/types";
 import {
   Search,
   X,
@@ -17,21 +17,62 @@ import {
   Minus,
   ArrowDown,
   Flame,
+  User as UserIcon,
+  Layers,
+  UserCheck,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 export function FilterBar() {
   const {
     filters,
     setFilters,
     resetFilters,
+    workspaces,
+    activeWorkspaceId,
   } = useWorkspaceStore();
 
   const [searchValue, setSearchValue] = useState(filters.search);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const [isGroupByMenuOpen, setIsGroupByMenuOpen] = useState(false);
+  const [isAssigneeMenuOpen, setIsAssigneeMenuOpen] = useState(false);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const currentWorkspace =
+    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
+  const members = currentWorkspace?.members || [];
+
+  // Close menus on outside click or Escape
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsFilterMenuOpen(false);
+        setIsGroupByMenuOpen(false);
+        setIsAssigneeMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsFilterMenuOpen(false);
+        setIsGroupByMenuOpen(false);
+        setIsAssigneeMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   // Sync local search when filters are cleared or changed externally
   useEffect(() => {
@@ -52,7 +93,9 @@ export function FilterBar() {
   const hasActiveFilters =
     filters.search.length > 0 ||
     filters.priorities.length > 0 ||
-    filters.statusIds.length > 0;
+    filters.statusIds.length > 0 ||
+    filters.assigneeIds.length > 0 ||
+    !filters.showClosed;
 
   const togglePriority = (priority: Priority) => {
     const isSelected = filters.priorities.includes(priority);
@@ -62,25 +105,85 @@ export function FilterBar() {
     setFilters({ priorities: newPriorities });
   };
 
+  const toggleAssignee = (assigneeId: string) => {
+    const isSelected = filters.assigneeIds.includes(assigneeId);
+    const newAssignees = isSelected
+      ? filters.assigneeIds.filter((id) => id !== assigneeId)
+      : [...filters.assigneeIds, assigneeId];
+    setFilters({ assigneeIds: newAssignees });
+  };
+
   const handleResetFilters = () => {
     setSearchValue("");
     setIsSearchOpen(false);
     resetFilters();
   };
 
+  const GROUP_BY_OPTIONS: { id: GroupByOption; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: "status", label: "Status", icon: Layers },
+    { id: "priority", label: "Priority", icon: Flame },
+    { id: "assignee", label: "Assignee", icon: UserIcon },
+  ];
+
+  const currentGroupOption =
+    GROUP_BY_OPTIONS.find((g) => g.id === filters.groupBy) || GROUP_BY_OPTIONS[0];
+  const GroupIcon = currentGroupOption.icon;
+
   return (
     <>
-      <div className="flex items-center justify-between gap-3 px-4 py-1.5 bg-white/90 dark:bg-[#141721] border-b border-slate-200/70 dark:border-slate-800 text-xs select-none">
+      <div
+        ref={containerRef}
+        className="flex items-center justify-between gap-3 px-4 py-1.5 bg-white/90 dark:bg-[#141721] border-b border-slate-200/70 dark:border-slate-800 text-xs select-none"
+      >
         {/* Left Side: Grouping and View Options */}
         <div className="flex items-center gap-1.5">
-          {/* Group: Status */}
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-          >
-            <span>Group: Status</span>
-            <ChevronDown className="w-3 h-3 text-slate-400" />
-          </button>
+          {/* Group By Switcher */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setIsGroupByMenuOpen(!isGroupByMenuOpen);
+                setIsFilterMenuOpen(false);
+                setIsAssigneeMenuOpen(false);
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            >
+              <GroupIcon className="w-3 h-3 text-slate-500" />
+              <span>Group: {currentGroupOption.label}</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+
+            {isGroupByMenuOpen && (
+              <div className="absolute left-0 top-full mt-1 w-44 rounded-lg bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Group Tasks By
+                </div>
+                {GROUP_BY_OPTIONS.map((opt) => {
+                  const Icon = opt.icon;
+                  const isSelected = filters.groupBy === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => {
+                        setFilters({ groupBy: opt.id });
+                        setIsGroupByMenuOpen(false);
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-3.5 h-3.5 text-slate-500" />
+                        <span className={cn(isSelected && "font-semibold text-slate-900 dark:text-slate-100")}>
+                          {opt.label}
+                        </span>
+                      </div>
+                      {isSelected && <Check className="w-3.5 h-3.5 text-[#0073ea]" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Subtasks */}
           <button
@@ -114,11 +217,15 @@ export function FilterBar() {
             </button>
           )}
 
-          {/* Filter Dropdown Toggle */}
+          {/* Priority Filter Dropdown */}
           <div className="relative">
             <button
               type="button"
-              onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+              onClick={() => {
+                setIsFilterMenuOpen(!isFilterMenuOpen);
+                setIsGroupByMenuOpen(false);
+                setIsAssigneeMenuOpen(false);
+              }}
               className={cn(
                 "inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer",
                 filters.priorities.length > 0
@@ -127,16 +234,17 @@ export function FilterBar() {
               )}
             >
               <Filter className="w-3.5 h-3.5" />
-              <span>Filter</span>
+              <span>Priority</span>
               {filters.priorities.length > 0 && (
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                <span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[9px] font-bold flex items-center justify-center">
+                  {filters.priorities.length}
+                </span>
               )}
             </button>
 
-            {/* Quick Priority Filter Popover */}
             {isFilterMenuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-44 rounded-lg bg-white dark:bg-slate-900 shadow-lg border border-slate-200 dark:border-slate-800 py-1 z-50">
-                <div className="px-3 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <div className="absolute right-0 top-full mt-1 w-44 rounded-lg bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                   Filter Priority
                 </div>
                 {[
@@ -150,8 +258,9 @@ export function FilterBar() {
                   return (
                     <button
                       key={p.id}
+                      type="button"
                       onClick={() => togglePriority(p.id as Priority)}
-                      className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
+                      className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
                         <Icon className={cn("w-3.5 h-3.5", p.color)} />
@@ -165,25 +274,95 @@ export function FilterBar() {
             )}
           </div>
 
-          {/* Closed toggle */}
+          {/* Closed Toggle Button */}
           <button
             type="button"
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            onClick={() => setFilters({ showClosed: !filters.showClosed })}
+            title={filters.showClosed ? "Click to hide closed tasks" : "Click to show closed tasks"}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer",
+              filters.showClosed
+                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60"
+                : "text-slate-400 line-through hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+            )}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Closed</span>
+            <span className="hidden md:inline">
+              {filters.showClosed ? "Closed: Shown" : "Closed: Hidden"}
+            </span>
           </button>
 
-          {/* Assignee Filter Button */}
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <div className="w-4 h-4 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-[9px]">
-              V
-            </div>
-            <span className="hidden md:inline">Assignee</span>
-          </button>
+          {/* Assignee Filter Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setIsAssigneeMenuOpen(!isAssigneeMenuOpen);
+                setIsFilterMenuOpen(false);
+                setIsGroupByMenuOpen(false);
+              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer",
+                filters.assigneeIds.length > 0
+                  ? "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              )}
+            >
+              <UserCheck className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+              <span className="hidden md:inline">Assignee</span>
+              {filters.assigneeIds.length > 0 && (
+                <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  {filters.assigneeIds.length}
+                </span>
+              )}
+            </button>
+
+            {isAssigneeMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-52 rounded-lg bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Filter by Assignee
+                </div>
+
+                {/* Quick: Unassigned */}
+                <button
+                  type="button"
+                  onClick={() => toggleAssignee("unassigned")}
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full border border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-400">
+                      <UserIcon className="w-2.5 h-2.5" />
+                    </span>
+                    <span>Unassigned</span>
+                  </div>
+                  {filters.assigneeIds.includes("unassigned") && (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-600" />
+                  )}
+                </button>
+
+                <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+
+                {/* Team Members */}
+                {members.map((member) => {
+                  const isChecked = filters.assigneeIds.includes(member.id);
+                  return (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => toggleAssignee(member.id)}
+                      className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <UserAvatar user={member} size="xs" />
+                        <span className="truncate">{member.name}</span>
+                      </div>
+                      {isChecked && <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Search Toggle / Input */}
           <div className="relative flex items-center">
@@ -231,7 +410,7 @@ export function FilterBar() {
             <SlidersHorizontal className="w-3.5 h-3.5" />
           </button>
 
-          {/* The ClickUp Signature Solid Black Add Task CTA */}
+          {/* ClickUp Solid Add Task CTA */}
           <button
             type="button"
             onClick={() => setIsCreateTaskOpen(true)}
