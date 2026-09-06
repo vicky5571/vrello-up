@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MarcomRole {
+  admin
+  staff
+  viewer
+}
+
+enum BranchStatus {
+  DONE
+  ON_PROGRESS
+  PENDING
+}
+
+enum MouStatus {
+  DRAFT
+  SUBMITTED
+  ON_PROGRESS
+  DONE
+  REJECTED
+  APPROVED
+}
+
+enum PlacementStatus {
+  NOT_STARTED
+  ON_PROGRESS
+  DONE
+  ISSUE
+}
+
+enum EventStatus {
+  UPCOMING
+  ON_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum OutletType {
+  TRADITIONAL
+  MODERN_RETAIL
+  EXCLUSIVE
+  CAMPUS_OUTLET
+}
+
+enum OutletTier {
+  TIER_1
+  TIER_2
+  TIER_3
+}
+
+enum MaterialType {
+  POSTER
+  SHOPBLIND
+  BANNER
+  BRANDING_SIGNBOARD
+  OTHER_MATERIALS
+}
+
+enum DocFileType {
+  PDF
+  XLSX
+  DOCX
+  ZIP
+  CSV
+  MP4
+  PNG
+  JPG
+}
+
+model WorkspaceMember {
+  workspaceId String
+  email       String
+  role        MarcomRole @default(viewer)
+  @@id([workspaceId, email])
+}
+
+model Branch {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  region String
+  city String
+  status BranchStatus @default(PENDING)
+  picName String @default("")
+  picPhone String @default("")
+  address String @default("")
+  outlets Outlet[]
+  mous Mou[]
+}
+
+model Outlet {
+  id String @id @default(cuid())
+  code String @unique
+  name String
+  type OutletType
+  tier OutletTier
+  address String @default("")
+  city String @default("")
+  picName String @default("")
+  picPhone String @default("")
+  active Boolean @default(true)
+  branchId String
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  placements Placement[]
+}
+
+model Material {
+  id String @id @default(cuid())
+  type MaterialType
+  name String
+  placements Placement[]
+}
+
+model Placement {
+  id String @id @default(cuid())
+  outletId String
+  outlet Outlet @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  materialId String
+  material Material @relation(fields: [materialId], references: [id])
+  status PlacementStatus @default(NOT_STARTED)
+  date DateTime?
+  picName String @default("")
+  photoUrl String @default("")
+  dimensions String @default("")
+  cost Float @default(0)
+  notes String @default("")
+}
+
+model Mou {
+  id String @id @default(cuid())
+  branchId String
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  outletName String @default("")
+  partnerName String
+  mouType String
+  submissionDate DateTime?
+  startDate DateTime?
+  endDate DateTime?
+  status MouStatus @default(DRAFT)
+  picName String @default("")
+  docPath String @default("")
+  compensationValue Float @default(0)
+  notes String @default("")
+}
+
+model MarcomEvent {
+  id String @id @default(cuid())
+  name String
+  date DateTime?
+  endDate DateTime?
+  location String @default("")
+  branchName String @default("")
+  picName String @default("")
+  eventType String
+  status EventStatus @default(UPCOMING)
+  budget Float @default(0)
+  attendeeCount Int @default(0)
+  targetAttendee Int @default(0)
+  notes String @default("")
+  footage EventFootage[]
+}
+
+model EventFootage {
+  id String @id @default(cuid())
+  eventId String
+  event MarcomEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  title String
+  filePath String
+  duration String @default("")
+}
+
+model DocumentItem {
+  id String @id @default(cuid())
+  name String
+  category String
+  period String @default("")
+  branchName String @default("")
+  ownerPic String @default("")
+  status String @default("Draft")
+  fileType DocFileType
+  fileSizeMb Float @default(0)
+  filePath String
+  description String @default("")
+}
+
+model MonthlyReport {
+  id String @id @default(cuid())
+  month String
+  year Int
+  summary Json @default("{}")
+  activities Json @default("[]")
+  achievements Json @default("[]")
+  keyIssues Json @default("[]")
+  actionPlans Json @default("[]")
+}
