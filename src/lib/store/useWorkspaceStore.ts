@@ -446,6 +446,17 @@ interface WorkspaceState {
 }
 
 /**
+ * Resolves the acting user: explicit argument wins, otherwise the active
+ * workspace member matching currentUserId, falling back to the seed user.
+ */
+function resolveActor(state: WorkspaceState, provided?: User): User {
+  if (provided) return provided;
+  const workspace = state.workspaces.find((w) => w.id === state.activeWorkspaceId);
+  return (
+    workspace?.members.find((m) => m.id === state.currentUserId) ?? SEED_USERS[0]
+  );
+}
+/**
  * Finds the space containing the given list (top-level or inside a folder).
  */
 function findSpaceForListId(
@@ -813,14 +824,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }));
       },
 
-      addComment: (taskId, content, user = SEED_USERS[0], attachments) => {
+      addComment: (taskId, content, user, attachments) => {
         if (!content.trim() && (!attachments || attachments.length === 0)) return;
+        const actor = resolveActor(get(), user);
         const now = new Date().toISOString();
         const newComment: TaskComment = {
           id: generateId("comment"),
           taskId,
-          userId: user.id,
-          user,
+          userId: actor.id,
+          user: actor,
           content: content.trim(),
           createdAt: now,
           attachments,
@@ -829,9 +841,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const newActivity: ActivityLog = {
           id: generateId("act"),
           taskId,
-          userId: user.id,
-          userName: user.name,
-          userAvatar: user.avatar,
+          userId: actor.id,
+          userName: actor.name,
+          userAvatar: actor.avatar,
           action: "commented on this task",
           createdAt: now,
         };
@@ -864,14 +876,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }));
       },
 
-      addChannelMessage: (channelId, content, user = SEED_USERS[0]) => {
+      addChannelMessage: (channelId, content, user) => {
         if (!content.trim()) return;
+        const actor = resolveActor(get(), user);
         const now = new Date().toISOString();
         const newMessage: ChannelMessage = {
           id: generateId("cmsg"),
           channelId,
-          userId: user.id,
-          user,
+          userId: actor.id,
+          user: actor,
           content: content.trim(),
           createdAt: now,
         };
@@ -880,13 +893,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }));
       },
 
-      logActivity: (taskId, action, user = SEED_USERS[0]) => {
+      logActivity: (taskId, action, user) => {
+        const actor = resolveActor(get(), user);
         const newActivity: ActivityLog = {
           id: generateId("act"),
           taskId,
-          userId: user.id,
-          userName: user.name,
-          userAvatar: user.avatar,
+          userId: actor.id,
+          userName: actor.name,
+          userAvatar: actor.avatar,
           action,
           createdAt: new Date().toISOString(),
         };
