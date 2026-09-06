@@ -11,6 +11,8 @@ import {
   Milestone,
   Hash,
   Building2,
+  Store,
+  ClipboardList,
   Plus,
   LucideIcon,
 } from "lucide-react";
@@ -36,6 +38,8 @@ const VIEWS: ViewTabItem[] = [
 
 const MARKETING_VIEWS: ViewTabItem[] = [
   { id: "branches", label: "Branches", icon: Building2, iconColor: "text-cyan-500", isAvailable: true },
+  { id: "outlets", label: "Outlets", icon: Store, iconColor: "text-orange-500", isAvailable: true },
+  { id: "placements", label: "Placements", icon: ClipboardList, iconColor: "text-lime-500", isAvailable: true },
 ];
 
 export function ViewSwitcher() {

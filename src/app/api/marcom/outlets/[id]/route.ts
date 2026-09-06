@@ -1,0 +1,83 @@
+import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/marcom/db";
+import { requireMember } from "@/lib/marcom/auth";
+import { hasPermission } from "@/lib/marcom/guards";
+
+const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET"] as const;
+const VALID_TIERS = ["TIER_1", "TIER_2", "TIER_3"] as const;
+const PATCHABLE_FIELDS = ["code", "name", "type", "tier", "branchId", "address", "city", "picName", "picPhone", "active"] as const;
+
+async function requireMasterData() {
+  let role;
+  try {
+    role = await requireMember("ws-main");
+  } catch (e) {
+    if (e instanceof Response) throw e;
+    throw e;
+  }
+  if (!hasPermission(role, "MANAGE_MASTER_DATA")) {
+    throw Response.json({ error: "Forbidden" }, { status: 403 });
+  }
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    await requireMasterData();
+  } catch (e) {
+    if (e instanceof Response) return e;
+    throw e;
+  }
+
+  const { id } = await params;
+  const body = await request.json();
+  const data: Record<string, unknown> = {};
+  for (const field of PATCHABLE_FIELDS) {
+    if (body?.[field] !== undefined) data[field] = body[field];
+  }
+  if (data.type !== undefined && !VALID_TYPES.includes(data.type as (typeof VALID_TYPES)[number])) {
+    return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+  }
+  if (data.tier !== undefined && !VALID_TIERS.includes(data.tier as (typeof VALID_TIERS)[number])) {
+    return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
+  }
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
+  }
+
+  try {
+    const outlet = await prisma.outlet.update({ where: { id }, data });
+    return NextResponse.json(outlet);
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+      return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
+    }
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return NextResponse.json({ error: "Outlet code already exists" }, { status: 409 });
+    }
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+      return NextResponse.json({ error: "Branch not found" }, { status: 400 });
+    }
+    throw e;
+  }
+}
+
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    await requireMasterData();
+  } catch (e) {
+    if (e instanceof Response) return e;
+    throw e;
+  }
+
+  const { id } = await params;
+  try {
+    await prisma.outlet.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+      return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
+    }
+    throw e;
+  }
+}

@@ -52,6 +52,20 @@ const BranchesView = dynamic(
     ),
   { ssr: false, loading: () => <ViewFallback /> },
 );
+const OutletsView = dynamic(
+  () =>
+    import("@/components/views/OutletsView/OutletsView").then(
+      (m) => m.OutletsView,
+    ),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
+const PlacementsView = dynamic(
+  () =>
+    import("@/components/views/PlacementsView/PlacementsView").then(
+      (m) => m.PlacementsView,
+    ),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
 const TaskDrawer = dynamic(
   () => import("@/components/tasks/TaskDrawer").then((m) => m.TaskDrawer),
   { ssr: false },
@@ -209,6 +223,32 @@ export default function WorkspacePage() {
                 className="h-full w-full"
               >
                 <BranchesView />
+              </motion.div>
+            )}
+
+            {activeView === "outlets" && (
+              <motion.div
+                key="outlets-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <OutletsView />
+              </motion.div>
+            )}
+
+            {activeView === "placements" && (
+              <motion.div
+                key="placements-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <PlacementsView />
               </motion.div>
             )}
           </AnimatePresence>

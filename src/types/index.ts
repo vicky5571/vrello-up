@@ -138,7 +138,9 @@ export type ViewMode =
   | "calendar"
   | "gantt"
   | "channel"
-  | "branches";
+  | "branches"
+  | "outlets"
+  | "placements";
 
 export type GroupByOption = "status" | "priority" | "assignee";
 
