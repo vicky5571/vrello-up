@@ -367,6 +367,10 @@ interface WorkspaceState {
   renameTag: (id: string, name: string) => void;
   deleteTag: (id: string) => void;
   toggleTaskTag: (taskId: string, tagId: string) => void;
+
+  // Member Actions
+  addWorkspaceMember: (name: string, email: string, role?: string) => User;
+  removeWorkspaceMember: (userId: string) => void;
 }
 
 /**
@@ -1112,6 +1116,33 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               tags: has ? t.tags.filter((tt) => tt.id !== tagId) : [...t.tags, tag],
             };
           }),
+        }));
+      },
+      addWorkspaceMember: (name, email, role = "Member") => {
+        const id = generateId("user");
+        const newMember: User = {
+          id,
+          name: name.trim(),
+          email: email.trim(),
+          role,
+          avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80`,
+        };
+        set((state) => ({
+          workspaces: state.workspaces.map((w) =>
+            w.id === state.activeWorkspaceId
+              ? { ...w, members: [...w.members, newMember] }
+              : w,
+          ),
+        }));
+        return newMember;
+      },
+      removeWorkspaceMember: (userId) => {
+        set((state) => ({
+          workspaces: state.workspaces.map((w) =>
+            w.id === state.activeWorkspaceId
+              ? { ...w, members: w.members.filter((m) => m.id !== userId) }
+              : w,
+          ),
         }));
       },
     }),
