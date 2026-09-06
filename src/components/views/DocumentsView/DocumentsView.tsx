@@ -28,7 +28,7 @@ import {
   type RowSelectionState,
   type ColumnSizingState,
 } from "@tanstack/react-table";
-import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn } from "@/lib/utils";
 
 export type DocFileType = "PDF" | "XLSX" | "DOCX" | "ZIP" | "CSV" | "MP4" | "PNG" | "JPG";
@@ -114,7 +114,7 @@ function DocumentPreview({ document }: { document: MarcomDocument }) {
 }
 
 export function DocumentsView() {
-  const { workspaces, activeWorkspaceId, currentUserId } = useWorkspaceStore();
+  const { can } = useMarcomPermissions();
 
   const [documents, setDocuments] = useState<MarcomDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -126,16 +126,9 @@ export function DocumentsView() {
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Bulk delete gating reads the workspace member role straight from the
-  // store. DELETE_DOCUMENT is admin-only, so only admins may delete.
-  // (The useMarcomPermissions() hook formalizes this in Task 9.)
-  const members = useMemo(
-    () =>
-      workspaces.find((w) => w.id === activeWorkspaceId)?.members ?? SEED_USERS,
-    [workspaces, activeWorkspaceId],
-  );
-  const me = members.find((m) => m.id === currentUserId) ?? members[0];
-  const canManage = me?.role === "admin";
+  // Bulk delete is gated on DELETE_DOCUMENT (admin-only, matching the
+  // server route). The UI just avoids dead clicks for other roles.
+  const canManage = can("DELETE_DOCUMENT");
 
   const fetchDocuments = useCallback(async () => {
     setIsLoading(true);

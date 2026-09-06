@@ -28,7 +28,7 @@ import {
   type RowSelectionState,
   type ColumnSizingState,
 } from "@tanstack/react-table";
-import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn } from "@/lib/utils";
 
 export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE";
@@ -73,7 +73,7 @@ const STATUS_STYLES: Record<MouStatus, string> = {
 };
 
 export function MousView() {
-  const { workspaces, activeWorkspaceId, currentUserId } = useWorkspaceStore();
+  const { can } = useMarcomPermissions();
 
   const [mous, setMous] = useState<MarcomMou[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,16 +85,9 @@ export function MousView() {
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Bulk delete gating reads the workspace member role straight from the
-  // store. DELETE_MOU is admin-only, so only admins may delete.
-  // (The useMarcomPermissions() hook formalizes this in Task 9.)
-  const members = useMemo(
-    () =>
-      workspaces.find((w) => w.id === activeWorkspaceId)?.members ?? SEED_USERS,
-    [workspaces, activeWorkspaceId],
-  );
-  const me = members.find((m) => m.id === currentUserId) ?? members[0];
-  const canManage = me?.role === "admin";
+  // Bulk delete is gated on DELETE_MOU (admin-only, matching the server
+  // route). The UI just avoids dead clicks for other roles.
+  const canManage = can("DELETE_MOU");
 
   const fetchMous = useCallback(async () => {
     setIsLoading(true);

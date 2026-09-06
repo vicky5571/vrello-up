@@ -28,7 +28,7 @@ import {
   type RowSelectionState,
   type ColumnSizingState,
 } from "@tanstack/react-table";
-import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn } from "@/lib/utils";
 
 export type PlacementStatus = "NOT_STARTED" | "ON_PROGRESS" | "DONE" | "ISSUE";
@@ -71,7 +71,7 @@ const STATUS_STYLES: Record<PlacementStatus, string> = {
 };
 
 export function PlacementsView() {
-  const { workspaces, activeWorkspaceId, currentUserId } = useWorkspaceStore();
+  const { can } = useMarcomPermissions();
 
   const [placements, setPlacements] = useState<MarcomPlacement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,17 +83,9 @@ export function PlacementsView() {
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Bulk delete gating reads the workspace member role straight from the
-  // store. Placement writes require UPDATE_PLACEMENT (admin + staff), so
-  // both roles may delete; viewers may not.
-  // (The useMarcomPermissions() hook formalizes this in Task 9.)
-  const members = useMemo(
-    () =>
-      workspaces.find((w) => w.id === activeWorkspaceId)?.members ?? SEED_USERS,
-    [workspaces, activeWorkspaceId],
-  );
-  const me = members.find((m) => m.id === currentUserId) ?? members[0];
-  const canManage = me?.role === "admin" || me?.role === "staff";
+  // Bulk delete is gated on UPDATE_PLACEMENT (admin + staff, matching the
+  // server route). The UI just avoids dead clicks for viewers.
+  const canManage = can("UPDATE_PLACEMENT");
 
   const fetchPlacements = useCallback(async () => {
     setIsLoading(true);

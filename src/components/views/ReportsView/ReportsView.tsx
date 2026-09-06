@@ -10,7 +10,7 @@ import {
   Plus,
   RefreshCw,
 } from "lucide-react";
-import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn } from "@/lib/utils";
 import { summarizeReports } from "@/lib/marcom/analytics";
 
@@ -99,7 +99,7 @@ function ReportSection({ title, items }: { title: string; items: unknown[] }) {
 }
 
 export function ReportsView() {
-  const { workspaces, activeWorkspaceId, currentUserId } = useWorkspaceStore();
+  const { can } = useMarcomPermissions();
 
   const [reports, setReports] = useState<MarcomReport[]>([]);
   const [documents, setDocuments] = useState<MarcomDocument[]>([]);
@@ -113,15 +113,9 @@ export function ReportsView() {
   const [totalActivities, setTotalActivities] = useState("");
   const [completionRate, setCompletionRate] = useState("");
 
-  // Report writes are gated on MANAGE_MASTER_DATA, which is admin-only.
-  // (The useMarcomPermissions() hook formalizes this in Task 9.)
-  const members = useMemo(
-    () =>
-      workspaces.find((w) => w.id === activeWorkspaceId)?.members ?? SEED_USERS,
-    [workspaces, activeWorkspaceId],
-  );
-  const me = members.find((m) => m.id === currentUserId) ?? members[0];
-  const canManage = me?.role === "admin";
+  // Report creation is gated on MANAGE_MASTER_DATA (admin-only, matching
+  // the server route). Export stays open to all roles (EXPORT_REPORTS).
+  const canManage = can("MANAGE_MASTER_DATA");
 
   const fetchReports = useCallback(async () => {
     setIsLoading(true);

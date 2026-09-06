@@ -13,3 +13,18 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
 export function hasPermission(role: MarcomRole, action: PermissionAction): boolean {
   return (rolePermissions[role] || []).includes(action);
 }
+
+/**
+ * Pure role resolution for the active workspace member. Unknown members
+ * (e.g. Google-login users absent from the store roster) and members
+ * without a recognized role default to `viewer` — fail-closed.
+ */
+export function resolveMarcomRole(
+  members: { id: string; role?: string }[],
+  currentUserId: string,
+): MarcomRole {
+  const role = members.find((m) => m.id === currentUserId)?.role;
+  return role === "admin" || role === "staff" || role === "viewer"
+    ? role
+    : "viewer";
+}

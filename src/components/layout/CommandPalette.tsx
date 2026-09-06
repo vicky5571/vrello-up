@@ -13,6 +13,13 @@ import {
   Table as TableIcon,
   Calendar,
   GanttChart,
+  Building2,
+  FileText,
+  ClipboardList,
+  Flag,
+  Files,
+  BarChart3,
+  TrendingUp,
   Plus,
   Folder as FolderIcon,
   Layers,
@@ -221,6 +228,13 @@ export function CommandPalette() {
       { id: "table", name: "Table Spreadsheet View", icon: TableIcon },
       { id: "calendar", name: "Calendar View", icon: Calendar },
       { id: "gantt", name: "Gantt Timeline View", icon: GanttChart },
+      { id: "branches", name: "Branches (Marketing)", icon: Building2 },
+      { id: "mous", name: "MOUs (Marketing)", icon: FileText },
+      { id: "placements", name: "Placements (Marketing)", icon: ClipboardList },
+      { id: "events", name: "Events (Marketing)", icon: Flag },
+      { id: "documents", name: "Documents (Marketing)", icon: Files },
+      { id: "reports", name: "Reports (Marketing)", icon: BarChart3 },
+      { id: "analytics", name: "Analytics (Marketing)", icon: TrendingUp },
     ];
 
     viewsList.forEach((v) => {
