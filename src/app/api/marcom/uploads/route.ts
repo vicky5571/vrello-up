@@ -6,6 +6,8 @@ import { requireMember } from "@/lib/marcom/auth";
 import { hasPermission } from "@/lib/marcom/guards";
 import {
   MAX_UPLOAD_BYTES,
+  UPLOAD_ROOT_DIRNAME,
+  resolveUploadPath,
   sanitizeFilename,
   validateUpload,
 } from "@/lib/marcom/upload";
@@ -64,9 +66,14 @@ export async function POST(request: Request) {
   }
 
   const stored = `${randomUUID()}-${sanitizeFilename(file.name)}`;
-  const dir = path.join(process.cwd(), "uploads", kind, id);
+  const root = path.join(process.cwd(), UPLOAD_ROOT_DIRNAME);
+  const dest = resolveUploadPath(root, kind, id, stored);
+  if (!dest) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  const dir = path.join(root, kind, id);
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, stored), bytes);
+  await writeFile(dest, bytes);
 
   return NextResponse.json(
     { filePath: `/api/marcom/files/${kind}/${id}/${stored}`, filename: stored },

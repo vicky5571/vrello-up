@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { validateUpload } from "./upload.ts";
+import { validateUpload, resolveUploadPath, isServableFilePath } from "./upload.ts";
 
 const MB = 1024 * 1024;
 
@@ -35,4 +35,28 @@ test("accepts pdf/png/jpg/mp4 at or under 25 MB", () => {
     );
   }
   assert.equal(validateUpload({ filename: "small.pdf", sizeBytes: 1024 }).ok, true);
+});
+
+test("resolveUploadPath keeps destinations inside the uploads root", () => {
+  const root = "/srv/app/uploads";
+  assert.equal(
+    resolveUploadPath(root, "documents", "abc123", "uuid-doc.pdf"),
+    `${root}/documents/abc123/uuid-doc.pdf`,
+  );
+  // Traversal in any segment escapes the root and must return null.
+  assert.equal(resolveUploadPath(root, "documents", "../../evil", "uuid-x.pdf"), null);
+  assert.equal(resolveUploadPath(root, "documents", "abc123", "../../../evil.pdf"), null);
+  assert.equal(resolveUploadPath(root, "..", "abc123", "uuid-x.pdf"), null);
+});
+
+test("isServableFilePath only allows the authenticated files prefix", () => {
+  assert.equal(isServableFilePath("/api/marcom/files/documents/abc/uuid-doc.pdf"), true);
+  assert.equal(isServableFilePath("/api/marcom/files/events/abc/uuid-clip.mp4"), true);
+  assert.equal(isServableFilePath("https://evil.example/x.pdf"), false);
+  assert.equal(isServableFilePath("http://evil.example/x.pdf"), false);
+  assert.equal(isServableFilePath("/etc/passwd"), false);
+  assert.equal(isServableFilePath("/api/marcom/other/x.pdf"), false);
+  assert.equal(isServableFilePath("/api/marcom/files/"), false);
+  assert.equal(isServableFilePath("/api/marcom/files/../secret.pdf"), false);
+  assert.equal(isServableFilePath("/api/marcom/files/documents/..\\x.pdf"), false);
 });

@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireMember } from "@/lib/marcom/auth";
 import { hasPermission } from "@/lib/marcom/guards";
+import { isServableFilePath } from "@/lib/marcom/upload";
 
 const VALID_FILE_TYPES = ["PDF", "XLSX", "DOCX", "ZIP", "CSV", "MP4", "PNG", "JPG"] as const;
 
@@ -67,6 +68,9 @@ export async function POST(request: Request) {
   }
   if (!VALID_FILE_TYPES.includes(fileType)) {
     return NextResponse.json({ error: "Invalid fileType" }, { status: 400 });
+  }
+  if (!isServableFilePath(filePath)) {
+    return NextResponse.json({ error: "Invalid filePath: must be served by /api/marcom/files/" }, { status: 400 });
   }
 
   const document = await prisma.documentItem.create({

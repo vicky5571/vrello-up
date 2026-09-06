@@ -1,3 +1,5 @@
+import path from "node:path";
+
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
 export const ALLOWED_UPLOAD_EXTENSIONS = ["pdf", "png", "jpg", "mp4"] as const;
@@ -48,4 +50,42 @@ export function sanitizeFilename(filename: string): string {
     .replace(/^\.+/, "")
     .slice(0, 180);
   return cleaned || "file";
+}
+
+// Local upload storage root (dirname) and the authenticated URL prefix that
+// serves it back via GET /api/marcom/files/[...path]. Document/event rows
+// must only reference files under this prefix — never external URLs.
+export const UPLOAD_ROOT_DIRNAME = "uploads";
+export const FILES_URL_PREFIX = "/api/marcom/files/";
+
+// Defense-in-depth write confinement: resolves the destination against the
+// uploads root and returns null when it escapes (mirrors the read side).
+// Pure (rootDir is injected) so it is unit-testable.
+export function resolveUploadPath(
+  rootDir: string,
+  kind: string,
+  id: string,
+  filename: string,
+): string | null {
+  const resolved = path.resolve(rootDir, kind, id, filename);
+  const root = path.resolve(rootDir);
+  if (resolved !== root && !resolved.startsWith(root + path.sep)) return null;
+  return resolved;
+}
+
+// Accepts only paths served by the authenticated files route. Rejects
+// external URLs, other API prefixes, and embedded traversal/backslashes.
+export function isServableFilePath(filePath: string): boolean {
+  if (typeof filePath !== "string") return false;
+  if (!filePath.startsWith(FILES_URL_PREFIX)) return false;
+  const rest = filePath.slice(FILES_URL_PREFIX.length);
+  if (!rest) return false;
+  if (
+    rest.includes("..") ||
+    rest.includes("\\") ||
+    rest.includes("\0")
+  ) {
+    return false;
+  }
+  return true;
 }
