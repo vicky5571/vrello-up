@@ -66,6 +66,7 @@ export function TaskDrawer() {
     (s) => s.id === activeSpaceId,
   );
   const statuses = currentSpace?.statuses || [];
+  const members = currentWorkspace?.members || SEED_USERS;
 
   const [title, setTitle] = useState("");
   const [newTagName, setNewTagName] = useState("");
@@ -121,7 +122,7 @@ export function TaskDrawer() {
     const isAssigned = task.assignees.some((u) => u.id === userId);
     const updatedAssignees = isAssigned
       ? task.assignees.filter((u) => u.id !== userId)
-      : [...task.assignees, SEED_USERS.find((u) => u.id === userId)!].filter(
+      : [...task.assignees, members.find((u) => u.id === userId)!].filter(
           Boolean,
         );
 
@@ -313,7 +314,7 @@ export function TaskDrawer() {
                   Assignees
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {SEED_USERS.map((user) => {
+                  {members.map((user) => {
                     const isAssigned = task.assignees.some(
                       (u) => u.id === user.id,
                     );

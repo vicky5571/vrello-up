@@ -32,6 +32,7 @@ export function CreateTaskModal({
     (s) => s.id === activeSpaceId,
   );
   const statuses = currentSpace?.statuses || [];
+  const members = currentWorkspace?.members || SEED_USERS;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -41,7 +42,7 @@ export function CreateTaskModal({
   );
   const [dueDate, setDueDate] = useState("");
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([
-    SEED_USERS[0].id,
+    members[0]?.id ?? SEED_USERS[0].id,
   ]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
@@ -52,7 +53,7 @@ export function CreateTaskModal({
       return;
     }
 
-    const assignedUsers = SEED_USERS.filter((u) =>
+    const assignedUsers = members.filter((u) =>
       selectedAssigneeIds.includes(u.id),
     );
 
@@ -198,7 +199,7 @@ export function CreateTaskModal({
                   Assign To
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {SEED_USERS.map((user) => {
+                  {members.map((user) => {
                     const isSelected = selectedAssigneeIds.includes(user.id);
                     return (
                       <button
