@@ -522,7 +522,6 @@ export function FilterBar() {
                         type="button"
                         onClick={() => {
                           setViewPreferences({ density: d });
-                          toast.success(`Density set to ${d}`);
                         }}
                         className={cn(
                           "py-1 rounded-md text-[11px] font-semibold capitalize transition-all cursor-pointer",
@@ -558,7 +557,6 @@ export function FilterBar() {
                             setViewPreferences({
                               visibleFields: { [field.key]: !isVisible },
                             });
-                            toast.success(`${field.label} ${isVisible ? "hidden" : "shown"}`);
                           }}
                           className="w-full flex items-center justify-between px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
                         >
