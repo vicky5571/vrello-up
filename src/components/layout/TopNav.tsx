@@ -28,10 +28,23 @@ import {
 import { toast } from "sonner";
 import { useSession, signOut } from "next-auth/react";
 import dynamic from "next/dynamic";
-import { AgentsModal } from "@/components/modals/AgentsModal";
-import { ShareModal } from "@/components/modals/ShareModal";
-import { CallModal } from "@/components/modals/CallModal";
-import { LoginModal } from "@/components/modals/LoginModal";
+
+const AgentsModal = dynamic(
+  () => import("@/components/modals/AgentsModal").then((m) => m.AgentsModal),
+  { ssr: false },
+);
+const ShareModal = dynamic(
+  () => import("@/components/modals/ShareModal").then((m) => m.ShareModal),
+  { ssr: false },
+);
+const CallModal = dynamic(
+  () => import("@/components/modals/CallModal").then((m) => m.CallModal),
+  { ssr: false },
+);
+const LoginModal = dynamic(
+  () => import("@/components/modals/LoginModal").then((m) => m.LoginModal),
+  { ssr: false },
+);
 
 const AutomationsModal = dynamic(
   () =>

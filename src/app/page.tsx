@@ -9,34 +9,53 @@ import { TopNav } from "@/components/layout/TopNav";
 import { FilterBar } from "@/components/layout/FilterBar";
 import { ListView } from "@/components/views/ListView/ListView";
 import { HomeView } from "@/components/views/HomeView/HomeView";
-import { BoardView } from "@/components/views/BoardView/BoardView";
 import { ChannelView } from "@/components/views/ChannelView/ChannelView";
-import { AiDrawer } from "@/components/ai/AiDrawer";
-import { CommandPalette } from "@/components/layout/CommandPalette";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { useWorkspaceHotkeys } from "@/lib/hooks/useWorkspaceHotkeys";
 import { startAutomationScheduler } from "@/lib/automations/scheduler";
 import { motion, AnimatePresence } from "framer-motion";
 
+function ViewFallback() {
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-2 border-slate-300 dark:border-slate-700 border-t-[#7B68EE] animate-spin" />
+    </div>
+  );
+}
+
+const BoardView = dynamic(
+  () =>
+    import("@/components/views/BoardView/BoardView").then((m) => m.BoardView),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
 const TableView = dynamic(
   () =>
     import("@/components/views/TableView/TableView").then((m) => m.TableView),
-  { ssr: false },
+  { ssr: false, loading: () => <ViewFallback /> },
 );
 const CalendarView = dynamic(
   () =>
     import("@/components/views/CalendarView/CalendarView").then(
       (m) => m.CalendarView,
     ),
-  { ssr: false },
+  { ssr: false, loading: () => <ViewFallback /> },
 );
 const GanttView = dynamic(
   () =>
     import("@/components/views/GanttView/GanttView").then((m) => m.GanttView),
-  { ssr: false },
+  { ssr: false, loading: () => <ViewFallback /> },
 );
 const TaskDrawer = dynamic(
   () => import("@/components/tasks/TaskDrawer").then((m) => m.TaskDrawer),
+  { ssr: false },
+);
+const AiDrawer = dynamic(
+  () => import("@/components/ai/AiDrawer").then((m) => m.AiDrawer),
+  { ssr: false },
+);
+const CommandPalette = dynamic(
+  () =>
+    import("@/components/layout/CommandPalette").then((m) => m.CommandPalette),
   { ssr: false },
 );
 

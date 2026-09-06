@@ -32,6 +32,42 @@ function automationActivities(taskId: string): string[] {
   );
 }
 
+test("rule-3 advances to review when all subtasks complete", () => {
+  const task = makeTask("rule3-fire", { statusId: "status-in-progress" });
+  api().addSubtask(task.id, "s1");
+  api().addSubtask(task.id, "s2");
+  const ids = (api().tasks.find((t) => t.id === task.id)?.subtasks ?? []).map(
+    (s) => s.id,
+  );
+  api().toggleSubtask(task.id, ids[0]);
+  assert.equal(
+    api().tasks.find((t) => t.id === task.id)?.statusId,
+    "status-in-progress",
+  );
+  api().toggleSubtask(task.id, ids[1]);
+  const stored = api().tasks.find((t) => t.id === task.id);
+  assert.equal(stored?.statusId, "status-review");
+  assert.ok(
+    automationActivities(task.id).some((a) => a.includes("all subtasks completed")),
+  );
+  assert.ok((api().automationRuns["rule-3"] || 0) >= 1);
+  api().deleteTask(task.id);
+});
+
+test("rule-3 stays quiet when disabled", () => {
+  api().setAutomationEnabled("rule-3", false);
+  const task = makeTask("rule3-off", { statusId: "status-in-progress" });
+  api().addSubtask(task.id, "s1");
+  const id = api().tasks.find((t) => t.id === task.id)?.subtasks[0]?.id;
+  api().toggleSubtask(task.id, id!);
+  assert.equal(
+    api().tasks.find((t) => t.id === task.id)?.statusId,
+    "status-in-progress",
+  );
+  api().deleteTask(task.id);
+  api().setAutomationEnabled("rule-3", true);
+});
+
 test("rule-1 assigns the lead and due date when priority becomes urgent", () => {
   const task = makeTask("rule1-fire");
   api().updateTask(task.id, { priority: "urgent" });
