@@ -434,6 +434,9 @@ interface WorkspaceState {
   // Member Actions
   addWorkspaceMember: (name: string, email: string, role?: string) => User;
   removeWorkspaceMember: (userId: string) => void;
+
+  // Backup Actions
+  importBackup: (data: unknown) => boolean;
 }
 
 /**
@@ -1243,6 +1246,49 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               : w,
           ),
         }));
+      },
+      importBackup: (data) => {
+        if (!data || typeof data !== "object") return false;
+        const backup = data as {
+          workspace?: Workspace;
+          tasks?: Task[];
+          tags?: Tag[];
+        };
+        const workspace = backup.workspace;
+        if (
+          !workspace ||
+          typeof workspace.id !== "string" ||
+          !Array.isArray(workspace.spaces)
+        ) {
+          return false;
+        }
+        const tasks = Array.isArray(backup.tasks) ? backup.tasks : [];
+        const tags = Array.isArray(backup.tags) ? backup.tags : [];
+        const normalized: Workspace = {
+          ...workspace,
+          members: Array.isArray(workspace.members)
+            ? workspace.members
+            : SEED_USERS,
+        };
+        set((state) => {
+          const exists = state.workspaces.some((w) => w.id === normalized.id);
+          const space = normalized.spaces[0];
+          return {
+            workspaces: exists
+              ? state.workspaces.map((w) =>
+                  w.id === normalized.id ? normalized : w,
+                )
+              : [...state.workspaces, normalized],
+            tasks,
+            tags,
+            activeWorkspaceId: normalized.id,
+            activeSpaceId: space?.id || "",
+            activeListId:
+              space?.lists[0]?.id || space?.folders[0]?.lists[0]?.id || "",
+            selectedTaskId: null,
+          };
+        });
+        return true;
       },
     }),
     {

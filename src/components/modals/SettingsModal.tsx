@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useTheme } from "next-themes";
@@ -15,6 +15,7 @@ import {
   Monitor,
   Check,
   Download,
+  Upload,
   ShieldCheck,
   LogIn,
 } from "lucide-react";
@@ -34,11 +35,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setCurrentUserId,
     tasks,
     tags,
+    importBackup,
   } = useWorkspaceStore();
 
   const { theme, setTheme } = useTheme();
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<"workspace" | "profile" | "appearance">("workspace");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
   const [workspaceName, setWorkspaceName] = useState(currentWorkspace?.name || "Acme Workspace");
@@ -60,6 +63,29 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Workspace backup downloaded successfully!");
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const parsed: unknown = JSON.parse(await file.text());
+      if (
+        !window.confirm(
+          `Restore backup from "${file.name}"? Tasks and tags will be replaced.`,
+        )
+      ) {
+        return;
+      }
+      if (importBackup(parsed)) {
+        toast.success("Workspace backup restored!");
+      } else {
+        toast.error("Invalid backup file — import aborted.");
+      }
+    } catch {
+      toast.error("Could not read backup file — import aborted.");
+    }
   };
 
   const handleSaveWorkspace = (e: React.FormEvent) => {
@@ -192,6 +218,32 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <Download className="w-3.5 h-3.5" />
                       Export JSON
                     </button>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                        Import Workspace Backup
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Restore spaces, lists, tasks, and tags from a JSON backup
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      Import JSON
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/json,.json"
+                      onChange={handleImportFile}
+                      className="hidden"
+                    />
                   </div>
 
                   <div className="flex justify-end pt-2">
