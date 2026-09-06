@@ -15,6 +15,7 @@ import { AiDrawer } from "@/components/ai/AiDrawer";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { useWorkspaceHotkeys } from "@/lib/hooks/useWorkspaceHotkeys";
+import { startAutomationScheduler } from "@/lib/automations/scheduler";
 import { motion, AnimatePresence } from "framer-motion";
 
 const TableView = dynamic(
@@ -52,6 +53,7 @@ export default function WorkspacePage() {
 
   useEffect(() => {
     setIsMounted(true);
+    return startAutomationScheduler();
   }, []);
 
   if (!isMounted) {

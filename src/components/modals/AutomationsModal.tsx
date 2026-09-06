@@ -23,15 +23,15 @@ const INITIAL_RULES: AutomationRule[] = [
     id: "rule-1",
     name: "Auto-assign Urgent Tasks",
     trigger: "When Priority changes to Urgent",
-    action: "Assign to Lead Architect & set Due Date to Today",
-    live: false,
+    action: "Assign to Lead Architect & set missing Due Date to Today",
+    live: true,
   },
   {
     id: "rule-2",
     name: "Completion Notification",
     trigger: "When Status changes to Complete",
     action: "Notify all assignees & log activity timestamp",
-    live: false,
+    live: true,
   },
   {
     id: "rule-3",
@@ -45,7 +45,7 @@ const INITIAL_RULES: AutomationRule[] = [
     name: "Overdue Escalation",
     trigger: "When Due Date passes without completion",
     action: "Escalate priority to Urgent & post warning in feed",
-    live: false,
+    live: true,
   },
 ];
 

@@ -459,7 +459,7 @@ function resolveActor(state: WorkspaceState, provided?: User): User {
 /**
  * Finds the space containing the given list (top-level or inside a folder).
  */
-function findSpaceForListId(
+export function findSpaceForListId(
   workspaces: Workspace[],
   listId: string,
 ): Space | undefined {
@@ -472,6 +472,35 @@ function findSpaceForListId(
     }
   }
   return undefined;
+}
+
+/**
+ * Finds the workspace containing the given list.
+ */
+export function findWorkspaceForListId(
+  workspaces: Workspace[],
+  listId: string,
+): Workspace | undefined {
+  if (!listId) return undefined;
+  return workspaces.find((w) =>
+    w.spaces.some(
+      (s) =>
+        s.lists.some((l) => l.id === listId) ||
+        s.folders.some((f) => f.lists.some((l) => l.id === listId)),
+    ),
+  );
+}
+
+/**
+ * Bumps the execution counter for an automation rule.
+ */
+function countAutomationRun(id: string) {
+  useWorkspaceStore.setState((s) => ({
+    automationRuns: {
+      ...s.automationRuns,
+      [id]: (s.automationRuns[id] || 0) + 1,
+    },
+  }));
 }
 /**
  * Checks if making `taskId` depend on `dependsOnTaskId` would introduce a dependency cycle.
@@ -675,6 +704,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       updateTask: (id, updates) => {
+        const prev = get().tasks.find((t) => t.id === id);
+        const escalatesToUrgent =
+          !!prev && updates.priority === "urgent" && prev.priority !== "urgent";
         set((state) => ({
           tasks: state.tasks.map((task) =>
             task.id === id
@@ -682,6 +714,32 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               : task,
           ),
         }));
+        // rule-1 "Auto-assign Urgent Tasks": assign the lead and ensure a
+        // due date of today. Nested updateTask can't refire (no priority key).
+        if (!escalatesToUrgent || !get().automationEnabled["rule-1"]) return;
+        const state = get();
+        const task = state.tasks.find((t) => t.id === id);
+        if (!task) return;
+        const workspace = findWorkspaceForListId(state.workspaces, task.listId);
+        const members =
+          workspace && workspace.members.length > 0
+            ? workspace.members
+            : SEED_USERS;
+        const lead =
+          members.find((m) => /lead|architect/i.test(m.role || "")) ??
+          members[0];
+        if (!lead) return;
+        state.updateTask(id, {
+          assignees: task.assignees.some((a) => a.id === lead.id)
+            ? task.assignees
+            : [...task.assignees, lead],
+          dueDate: task.dueDate ?? new Date().toISOString().slice(0, 10),
+        });
+        state.logActivity(
+          id,
+          `Automation assigned ${lead.name} and set due date to today (priority → Urgent)`,
+        );
+        countAutomationRun("rule-1");
       },
 
       deleteTask: (id) => {
@@ -703,6 +761,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       moveTaskStatus: (taskId, newStatusId, newOrderIndex) => {
+        const prev = get().tasks.find((t) => t.id === taskId);
         set((state) => {
           const task = state.tasks.find((t) => t.id === taskId);
           if (!task) return state;
@@ -722,6 +781,28 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
           return { tasks: updatedTasks };
         });
+        // rule-2 "Completion Notification": log completion with assignee count.
+        if (!prev || prev.statusId === newStatusId) return;
+        const state = get();
+        if (!state.automationEnabled["rule-2"]) return;
+        const task = state.tasks.find((t) => t.id === taskId);
+        if (!task) return;
+        const space = findSpaceForListId(state.workspaces, task.listId);
+        const oldCategory = space?.statuses.find(
+          (s) => s.id === prev.statusId,
+        )?.category;
+        const next = space?.statuses.find((s) => s.id === newStatusId);
+        const completed =
+          (next?.category === "done" || next?.category === "closed") &&
+          oldCategory !== "done" &&
+          oldCategory !== "closed";
+        if (!completed || !next) return;
+        const count = task.assignees.length;
+        state.logActivity(
+          taskId,
+          `Automation logged completion in ${next.name} — notified ${count} assignee${count === 1 ? "" : "s"}`,
+        );
+        countAutomationRun("rule-2");
       },
 
       reorderTasksInStatus: (statusId, orderedTaskIds) => {
