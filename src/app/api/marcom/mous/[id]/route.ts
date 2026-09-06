@@ -3,9 +3,9 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireMember } from "@/lib/marcom/auth";
 import { hasPermission } from "@/lib/marcom/guards";
-import { canTransitionMou, type MouStatus } from "@/lib/marcom/mouMachine";
+import { canTransitionMou, MOU_STATUSES, type MouStatus } from "@/lib/marcom/mouMachine";
 
-const VALID_STATUSES = ["DRAFT", "SUBMITTED", "ON_PROGRESS", "DONE", "REJECTED", "APPROVED"] as const;
+const VALID_STATUSES = MOU_STATUSES;
 const PATCHABLE_FIELDS = ["branchId", "outletName", "partnerName", "mouType", "submissionDate", "startDate", "endDate", "status", "picName", "docPath", "compensationValue", "notes"] as const;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireMember } from "@/lib/marcom/auth";
+import { MOU_STATUSES } from "@/lib/marcom/mouMachine";
 
-const VALID_STATUSES = ["DRAFT", "SUBMITTED", "ON_PROGRESS", "DONE", "REJECTED", "APPROVED"] as const;
+const VALID_STATUSES = MOU_STATUSES;
 
 const mouInclude = {
   branch: { select: { id: true, code: true, name: true } },
