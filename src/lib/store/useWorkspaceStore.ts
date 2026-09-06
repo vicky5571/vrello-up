@@ -13,6 +13,7 @@ import {
   type Status,
   type ViewMode,
   type FilterOptions,
+  type ViewPreferences,
   type User,
   type Tag,
 } from "@/types";
@@ -84,6 +85,17 @@ export const SEED_TAGS: Tag[] = [
   { id: "tag-perf", name: "Performance", color: "#F59E0B" },
   { id: "tag-security", name: "Security", color: "#EF4444" },
 ];
+
+export const DEFAULT_VIEW_PREFERENCES: ViewPreferences = {
+  density: "standard",
+  visibleFields: {
+    assignees: true,
+    priority: true,
+    dueDate: true,
+    tags: true,
+    subtasks: true,
+  },
+};
 
 const INITIAL_SPACES: Space[] = [
   {
@@ -313,6 +325,7 @@ interface WorkspaceState {
   activeView: ViewMode;
   currentUserId: string;
   filters: FilterOptions;
+  viewPreferences: ViewPreferences;
   isSidebarOpen: boolean;
   isCommandPaletteOpen: boolean;
   isCreateTaskModalOpen: boolean;
@@ -333,6 +346,11 @@ interface WorkspaceState {
   toggleSidebar: () => void;
   setFilters: (filters: Partial<FilterOptions>) => void;
   resetFilters: () => void;
+  setViewPreferences: (prefs: {
+    density?: ViewPreferences["density"];
+    visibleFields?: Partial<ViewPreferences["visibleFields"]>;
+  }) => void;
+  resetViewPreferences: () => void;
 
   // Task Actions
   createTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => Task;
@@ -475,6 +493,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         showClosed: true,
         groupBy: "status",
       },
+      viewPreferences: DEFAULT_VIEW_PREFERENCES,
 
       setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
       openCommandPalette: () => set({ isCommandPaletteOpen: true }),
@@ -511,6 +530,19 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             groupBy: "status",
           },
         }),
+      setViewPreferences: (prefs) =>
+        set((state) => ({
+          viewPreferences: {
+            ...state.viewPreferences,
+            ...prefs,
+            visibleFields: {
+              ...state.viewPreferences.visibleFields,
+              ...prefs.visibleFields,
+            },
+          },
+        })),
+      resetViewPreferences: () =>
+        set({ viewPreferences: DEFAULT_VIEW_PREFERENCES }),
 
       createTask: (newTaskData) => {
         const id = generateId("task");

@@ -1,6 +1,7 @@
 "use client";
 
 import { Task, Status } from "@/types";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
@@ -43,6 +44,8 @@ export const BoardCard = memo(function BoardCard({
   });
 
   const [showMoveMenu, setShowMoveMenu] = useState(false);
+  const { viewPreferences } = useWorkspaceStore();
+  const { visibleFields } = viewPreferences;
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -87,13 +90,18 @@ export const BoardCard = memo(function BoardCard({
       {...listeners}
       onClick={() => onSelect(task.id)}
       className={cn(
-        "group relative rounded-lg bg-white dark:bg-[#18191B] border border-slate-200/90 dark:border-slate-800 p-3 shadow-2xs hover:shadow-xs hover:border-slate-300 dark:hover:border-slate-700 cursor-grab active:cursor-grabbing select-none transition-all duration-150",
+        "group relative rounded-lg bg-white dark:bg-[#18191B] border border-slate-200/90 dark:border-slate-800 shadow-2xs hover:shadow-xs hover:border-slate-300 dark:hover:border-slate-700 cursor-grab active:cursor-grabbing select-none transition-all duration-150",
+        viewPreferences.density === "compact"
+          ? "p-2"
+          : viewPreferences.density === "relaxed"
+            ? "p-4"
+            : "p-3",
         isDragging && "opacity-30 border-blue-500 shadow-lg"
       )}
     >
       {/* Top Meta: Priority & Move Menu */}
       <div className="flex items-center justify-between gap-2 mb-2">
-        <PriorityBadge priority={task.priority} />
+        {visibleFields.priority ? <PriorityBadge priority={task.priority} /> : <span />}
 
         {/* Accessible Move Menu (WCAG 2.2 AA single-pointer alternative) */}
         <div className="relative" ref={menuRef}>
@@ -161,7 +169,7 @@ export const BoardCard = memo(function BoardCard({
       </h3>
 
       {/* Tags */}
-      {task.tags.length > 0 && (
+      {visibleFields.tags && task.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
           {task.tags.map((tag) => (
             <TagBadge key={tag.id} tag={tag} />
@@ -173,7 +181,7 @@ export const BoardCard = memo(function BoardCard({
       <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-600 dark:text-slate-400">
         <div className="flex items-center gap-3">
           {/* Subtasks Count */}
-          {task.subtasks.length > 0 && (
+          {visibleFields.subtasks && task.subtasks.length > 0 && (
             <span className="flex items-center gap-1 text-slate-500">
               <CheckSquare className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
               <span>
@@ -183,7 +191,7 @@ export const BoardCard = memo(function BoardCard({
           )}
 
           {/* Due Date */}
-          {task.dueDate && (
+          {visibleFields.dueDate && task.dueDate && (
             <span
               className={cn(
                 "flex items-center gap-1 font-medium",
@@ -197,7 +205,9 @@ export const BoardCard = memo(function BoardCard({
         </div>
 
         {/* Assignees */}
-        <AvatarGroup users={task.assignees} max={2} size="xs" />
+        {visibleFields.assignees && (
+          <AvatarGroup users={task.assignees} max={2} size="xs" />
+        )}
       </div>
     </div>
   );

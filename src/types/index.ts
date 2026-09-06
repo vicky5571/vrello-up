@@ -150,3 +150,18 @@ export interface FilterOptions {
   showClosed: boolean;
   groupBy: GroupByOption;
 }
+
+export type ViewDensity = "compact" | "standard" | "relaxed";
+
+export interface VisibleFields {
+  assignees: boolean;
+  priority: boolean;
+  dueDate: boolean;
+  tags: boolean;
+  subtasks: boolean;
+}
+
+export interface ViewPreferences {
+  density: ViewDensity;
+  visibleFields: VisibleFields;
+}

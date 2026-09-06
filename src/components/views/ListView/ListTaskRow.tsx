@@ -12,6 +12,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { toast } from "sonner";
 
@@ -63,6 +64,8 @@ export const ListTaskRow = memo(function ListTaskRow({
     null,
   );
   const editorRef = useRef<HTMLDivElement>(null);
+  const { viewPreferences } = useWorkspaceStore();
+  const { visibleFields } = viewPreferences;
 
   useEffect(() => {
     if (!openEditor) return;
@@ -96,7 +99,14 @@ export const ListTaskRow = memo(function ListTaskRow({
   return (
     <div
       onClick={() => onSelectTask(task.id)}
-      className="grid grid-cols-[1fr_110px_110px_90px_130px_90px_60px] items-center px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs text-slate-700 dark:text-slate-300 cursor-pointer group/row"
+      className={cn(
+        "grid grid-cols-[1fr_110px_110px_90px_130px_90px_60px] items-center px-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs text-slate-700 dark:text-slate-300 cursor-pointer group/row",
+        viewPreferences.density === "compact"
+          ? "py-1"
+          : viewPreferences.density === "relaxed"
+            ? "py-4"
+            : "py-2",
+      )}
     >
       {/* Name Column */}
       <div className="flex items-center gap-2.5 min-w-0 pr-4">
@@ -137,7 +147,7 @@ export const ListTaskRow = memo(function ListTaskRow({
           {task.title}
         </span>
 
-        {task.subtasks.length > 0 && (
+        {visibleFields.subtasks && task.subtasks.length > 0 && (
           <span className="shrink-0 text-[10px] text-slate-400 font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
             {task.subtasks.filter((s) => s.completed).length}/
             {task.subtasks.length}
@@ -151,7 +161,9 @@ export const ListTaskRow = memo(function ListTaskRow({
         onClick={(e) => e.stopPropagation()}
         className="relative flex items-center"
       >
-        <button
+        {visibleFields.assignees && (
+          <>
+            <button
           type="button"
           aria-label={`Edit assignees for ${task.title}`}
           aria-haspopup="menu"
@@ -221,7 +233,9 @@ export const ListTaskRow = memo(function ListTaskRow({
                 </button>
               );
             })}
-          </div>
+            </div>
+          )}
+          </>
         )}
       </div>
 
@@ -230,7 +244,8 @@ export const ListTaskRow = memo(function ListTaskRow({
         onClick={(e) => e.stopPropagation()}
         className="flex items-center text-slate-500 dark:text-slate-400"
       >
-        <label className="group/date flex cursor-pointer items-center gap-1 text-[11px]">
+        {visibleFields.dueDate && (
+          <label className="group/date flex cursor-pointer items-center gap-1 text-[11px]">
           <Calendar
             className="h-3.5 w-3.5 text-slate-400"
             aria-hidden="true"
@@ -248,6 +263,7 @@ export const ListTaskRow = memo(function ListTaskRow({
             className="w-23 cursor-pointer rounded-md border border-transparent bg-transparent px-1 py-0.5 text-[11px] text-slate-500 transition-colors hover:border-slate-200 focus:border-[#0073ea] focus:outline-hidden dark:text-slate-400 dark:hover:border-slate-700"
           />
         </label>
+        )}
       </div>
 
       {/* Priority Column */}
@@ -256,7 +272,9 @@ export const ListTaskRow = memo(function ListTaskRow({
         onClick={(e) => e.stopPropagation()}
         className="relative flex items-center"
       >
-        <button
+        {visibleFields.priority && (
+          <>
+            <button
           type="button"
           aria-label={`Change priority for ${task.title}`}
           aria-haspopup="menu"
@@ -307,6 +325,8 @@ export const ListTaskRow = memo(function ListTaskRow({
               </button>
             ))}
           </div>
+        )}
+          </>
         )}
       </div>
 

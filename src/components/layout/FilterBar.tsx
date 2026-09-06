@@ -33,6 +33,9 @@ export function FilterBar() {
     filters,
     setFilters,
     resetFilters,
+    viewPreferences,
+    setViewPreferences,
+    resetViewPreferences,
     workspaces,
     activeWorkspaceId,
     tags,
@@ -47,15 +50,7 @@ export function FilterBar() {
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
 
-  // View Preferences State
-  const [density, setDensity] = useState<"compact" | "standard" | "relaxed">("standard");
-  const [visibleFields, setVisibleFields] = useState({
-    assignees: true,
-    priority: true,
-    dueDate: true,
-    tags: true,
-    subtasks: true,
-  });
+  const { density, visibleFields } = viewPreferences;
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -526,7 +521,7 @@ export function FilterBar() {
                         key={d}
                         type="button"
                         onClick={() => {
-                          setDensity(d);
+                          setViewPreferences({ density: d });
                           toast.success(`Density set to ${d}`);
                         }}
                         className={cn(
@@ -560,10 +555,9 @@ export function FilterBar() {
                           key={field.key}
                           type="button"
                           onClick={() => {
-                            setVisibleFields((prev) => ({
-                              ...prev,
-                              [field.key]: !isVisible,
-                            }));
+                            setViewPreferences({
+                              visibleFields: { [field.key]: !isVisible },
+                            });
                             toast.success(`${field.label} ${isVisible ? "hidden" : "shown"}`);
                           }}
                           className="w-full flex items-center justify-between px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
@@ -586,14 +580,7 @@ export function FilterBar() {
                   <button
                     type="button"
                     onClick={() => {
-                      setDensity("standard");
-                      setVisibleFields({
-                        assignees: true,
-                        priority: true,
-                        dueDate: true,
-                        tags: true,
-                        subtasks: true,
-                      });
+                      resetViewPreferences();
                       setIsCustomizeOpen(false);
                       toast.success("View preferences reset to default");
                     }}
