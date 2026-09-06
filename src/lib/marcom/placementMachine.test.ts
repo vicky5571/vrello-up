@@ -8,4 +8,5 @@ test("placement lifecycle", () => {
   assert.equal(canTransitionPlacement("NOT_STARTED", "DONE"), false);
   assert.equal(canTransitionPlacement("ON_PROGRESS", "ISSUE"), true);
   assert.equal(canTransitionPlacement("DONE", "ON_PROGRESS"), false);
+  assert.equal(canTransitionPlacement("DONE", "ISSUE"), false);
 });
