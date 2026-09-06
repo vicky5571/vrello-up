@@ -59,6 +59,8 @@ export function Sidebar() {
     setActiveList,
     tasks,
     isSidebarOpen,
+    isHelpDocsOpen,
+    setHelpDocsOpen,
     deleteSpace,
     deleteFolder,
     deleteList,
@@ -74,7 +76,6 @@ export function Sidebar() {
   });
 
   // Modal States
-  const [isHelpDocsOpen, setIsHelpDocsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCreateSpaceOpen, setIsCreateSpaceOpen] = useState(false);
   const [editSpaceModalState, setEditSpaceModalState] = useState<{
@@ -627,7 +628,7 @@ export function Sidebar() {
           <div className="p-3 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
             <button
               type="button"
-              onClick={() => setIsHelpDocsOpen(true)}
+              onClick={() => setHelpDocsOpen(true)}
               className="flex items-center gap-1.5 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
             >
               <HelpCircle className="w-3.5 h-3.5 text-indigo-500" />
@@ -685,7 +686,7 @@ export function Sidebar() {
 
       <HelpDocsModal
         isOpen={isHelpDocsOpen}
-        onClose={() => setIsHelpDocsOpen(false)}
+        onClose={() => setHelpDocsOpen(false)}
       />
 
       <SettingsModal

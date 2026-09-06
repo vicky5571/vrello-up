@@ -17,6 +17,7 @@ import { TaskDrawer } from "@/components/tasks/TaskDrawer";
 import { AiDrawer } from "@/components/ai/AiDrawer";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
+import { useWorkspaceHotkeys } from "@/lib/hooks/useWorkspaceHotkeys";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function WorkspacePage() {
@@ -25,7 +26,10 @@ export default function WorkspacePage() {
     activeView,
     isCreateTaskModalOpen,
     setCreateTaskModalOpen,
+    isFilterBarOpen,
   } = useWorkspaceStore();
+
+  useWorkspaceHotkeys();
 
   useEffect(() => {
     setIsMounted(true);
@@ -53,7 +57,7 @@ export default function WorkspacePage() {
         <TopNav />
 
         {/* Global Filter Bar (workspace views only) */}
-        {activeView !== "home" && <FilterBar />}
+        {activeView !== "home" && isFilterBarOpen && <FilterBar />}
 
         {/* View Transition Area */}
         <div className="flex-1 overflow-hidden relative bg-[#FAFBFC] dark:bg-[#121316]">
