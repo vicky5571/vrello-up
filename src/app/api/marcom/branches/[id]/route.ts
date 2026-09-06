@@ -48,6 +48,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
       return NextResponse.json({ error: "Branch not found" }, { status: 404 });
     }
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return NextResponse.json({ error: "Branch code already exists" }, { status: 409 });
+    }
     throw e;
   }
 }
