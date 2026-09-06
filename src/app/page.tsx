@@ -71,6 +71,20 @@ const MousView = dynamic(
     import("@/components/views/MousView/MousView").then((m) => m.MousView),
   { ssr: false, loading: () => <ViewFallback /> },
 );
+const EventsView = dynamic(
+  () =>
+    import("@/components/views/EventsView/EventsView").then(
+      (m) => m.EventsView,
+    ),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
+const DocumentsView = dynamic(
+  () =>
+    import("@/components/views/DocumentsView/DocumentsView").then(
+      (m) => m.DocumentsView,
+    ),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
 const TaskDrawer = dynamic(
   () => import("@/components/tasks/TaskDrawer").then((m) => m.TaskDrawer),
   { ssr: false },
@@ -267,6 +281,32 @@ export default function WorkspacePage() {
                 className="h-full w-full"
               >
                 <MousView />
+              </motion.div>
+            )}
+
+            {activeView === "events" && (
+              <motion.div
+                key="events-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <EventsView />
+              </motion.div>
+            )}
+
+            {activeView === "documents" && (
+              <motion.div
+                key="documents-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <DocumentsView />
               </motion.div>
             )}
           </AnimatePresence>

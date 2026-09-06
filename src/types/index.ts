@@ -141,7 +141,9 @@ export type ViewMode =
   | "branches"
   | "outlets"
   | "placements"
-  | "mous";
+  | "mous"
+  | "events"
+  | "documents";
 
 export type GroupByOption = "status" | "priority" | "assignee";
 
