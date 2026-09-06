@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { GlobalRail } from "@/components/layout/GlobalRail";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -9,16 +10,34 @@ import { FilterBar } from "@/components/layout/FilterBar";
 import { ListView } from "@/components/views/ListView/ListView";
 import { HomeView } from "@/components/views/HomeView/HomeView";
 import { BoardView } from "@/components/views/BoardView/BoardView";
-import { TableView } from "@/components/views/TableView/TableView";
-import { CalendarView } from "@/components/views/CalendarView/CalendarView";
-import { GanttView } from "@/components/views/GanttView/GanttView";
 import { ChannelView } from "@/components/views/ChannelView/ChannelView";
-import { TaskDrawer } from "@/components/tasks/TaskDrawer";
 import { AiDrawer } from "@/components/ai/AiDrawer";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { useWorkspaceHotkeys } from "@/lib/hooks/useWorkspaceHotkeys";
 import { motion, AnimatePresence } from "framer-motion";
+
+const TableView = dynamic(
+  () =>
+    import("@/components/views/TableView/TableView").then((m) => m.TableView),
+  { ssr: false },
+);
+const CalendarView = dynamic(
+  () =>
+    import("@/components/views/CalendarView/CalendarView").then(
+      (m) => m.CalendarView,
+    ),
+  { ssr: false },
+);
+const GanttView = dynamic(
+  () =>
+    import("@/components/views/GanttView/GanttView").then((m) => m.GanttView),
+  { ssr: false },
+);
+const TaskDrawer = dynamic(
+  () => import("@/components/tasks/TaskDrawer").then((m) => m.TaskDrawer),
+  { ssr: false },
+);
 
 export default function WorkspacePage() {
   const [isMounted, setIsMounted] = useState(false);

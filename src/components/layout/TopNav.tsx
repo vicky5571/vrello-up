@@ -26,11 +26,19 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSession, signOut } from "next-auth/react";
+import dynamic from "next/dynamic";
 import { AgentsModal } from "@/components/modals/AgentsModal";
-import { AutomationsModal } from "@/components/modals/AutomationsModal";
 import { ShareModal } from "@/components/modals/ShareModal";
 import { CallModal } from "@/components/modals/CallModal";
 import { LoginModal } from "@/components/modals/LoginModal";
+
+const AutomationsModal = dynamic(
+  () =>
+    import("@/components/modals/AutomationsModal").then(
+      (m) => m.AutomationsModal,
+    ),
+  { ssr: false },
+);
 
 export function TopNav() {
   const {
