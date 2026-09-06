@@ -1,4 +1,4 @@
-import { FilterOptions, Status, Task } from "@/types";
+import type { FilterOptions, Status, Task } from "@/types";
 
 export function matchesFilters(
   task: Task,

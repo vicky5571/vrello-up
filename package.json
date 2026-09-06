@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test"
+    "test": "node --test --import ./test/register-alias.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
