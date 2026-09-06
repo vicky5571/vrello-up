@@ -437,8 +437,30 @@ interface WorkspaceState {
 
   // Backup Actions
   importBackup: (data: unknown) => boolean;
+
+  // Automation Actions
+  automationEnabled: Record<string, boolean>;
+  automationRuns: Record<string, number>;
+  setAutomationEnabled: (id: string, enabled: boolean) => void;
 }
 
+/**
+ * Finds the space containing the given list (top-level or inside a folder).
+ */
+function findSpaceForListId(
+  workspaces: Workspace[],
+  listId: string,
+): Space | undefined {
+  if (!listId) return undefined;
+  for (const w of workspaces) {
+    for (const s of w.spaces) {
+      if (s.lists.some((l) => l.id === listId)) return s;
+      if (s.folders.some((f) => f.lists.some((l) => l.id === listId)))
+        return s;
+    }
+  }
+  return undefined;
+}
 /**
  * Checks if making `taskId` depend on `dependsOnTaskId` would introduce a dependency cycle.
  */
@@ -493,6 +515,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       isAiDrawerOpen: false,
       isHelpDocsOpen: false,
       isFilterBarOpen: true,
+      automationEnabled: {
+        "rule-1": true,
+        "rule-2": true,
+        "rule-3": true,
+        "rule-4": false,
+      },
+      automationRuns: {},
+      setAutomationEnabled: (id, enabled) =>
+        set((state) => ({
+          automationEnabled: { ...state.automationEnabled, [id]: enabled },
+        })),
       filters: {
         search: "",
         statusIds: [],
@@ -654,6 +687,16 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       toggleSubtask: (taskId, subtaskId) => {
+        const task = get().tasks.find((t) => t.id === taskId);
+        const target = task?.subtasks.find((st) => st.id === subtaskId);
+        const completesAll =
+          !!task &&
+          !!target &&
+          !target.completed &&
+          task.subtasks.length > 0 &&
+          task.subtasks.every(
+            (st) => st.id === subtaskId || st.completed,
+          );
         set((state) => ({
           tasks: state.tasks.map((t) =>
             t.id === taskId
@@ -668,6 +711,29 @@ export const useWorkspaceStore = create<WorkspaceState>()(
                 }
               : t,
           ),
+        }));
+        // rule-3 "Subtask Progress Sync": all subtasks done on an
+        // in-progress task advances it to the space's review status.
+        if (!completesAll) return;
+        const state = get();
+        if (!state.automationEnabled["rule-3"]) return;
+        const updated = state.tasks.find((t) => t.id === taskId);
+        if (!updated) return;
+        const space = findSpaceForListId(state.workspaces, updated.listId);
+        const current = space?.statuses.find((s) => s.id === updated.statusId);
+        if (!current || current.category !== "in_progress") return;
+        const review = space!.statuses.find((s) => s.category === "review");
+        if (!review || review.id === updated.statusId) return;
+        state.moveTaskStatus(taskId, review.id);
+        state.logActivity(
+          taskId,
+          `Automation moved task to ${review.name} — all subtasks completed`,
+        );
+        set((s) => ({
+          automationRuns: {
+            ...s.automationRuns,
+            "rule-3": (s.automationRuns["rule-3"] || 0) + 1,
+          },
         }));
       },
 

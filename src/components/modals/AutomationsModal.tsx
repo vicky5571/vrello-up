@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Zap, Plus, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 
 interface AutomationsModalProps {
   isOpen: boolean;
@@ -15,8 +15,7 @@ interface AutomationRule {
   name: string;
   trigger: string;
   action: string;
-  enabled: boolean;
-  runCount: number;
+  live: boolean;
 }
 
 const INITIAL_RULES: AutomationRule[] = [
@@ -25,50 +24,41 @@ const INITIAL_RULES: AutomationRule[] = [
     name: "Auto-assign Urgent Tasks",
     trigger: "When Priority changes to Urgent",
     action: "Assign to Lead Architect & set Due Date to Today",
-    enabled: true,
-    runCount: 14,
+    live: false,
   },
   {
     id: "rule-2",
     name: "Completion Notification",
     trigger: "When Status changes to Complete",
     action: "Notify all assignees & log activity timestamp",
-    enabled: true,
-    runCount: 38,
+    live: false,
   },
   {
     id: "rule-3",
     name: "Subtask Progress Sync",
     trigger: "When all subtasks are marked completed",
     action: "Advance task status from In Progress to In Review",
-    enabled: true,
-    runCount: 22,
+    live: true,
   },
   {
     id: "rule-4",
     name: "Overdue Escalation",
     trigger: "When Due Date passes without completion",
     action: "Escalate priority to Urgent & post warning in feed",
-    enabled: false,
-    runCount: 5,
+    live: false,
   },
 ];
 
 export function AutomationsModal({ isOpen, onClose }: AutomationsModalProps) {
-  const [rules, setRules] = useState<AutomationRule[]>(INITIAL_RULES);
+  const { automationEnabled, automationRuns, setAutomationEnabled } =
+    useWorkspaceStore();
 
   const toggleRule = (id: string) => {
-    setRules((prev) =>
-      prev.map((r) => {
-        if (r.id === id) {
-          const newState = !r.enabled;
-          toast.success(
-            `Automation "${r.name}" ${newState ? "activated" : "deactivated"}`,
-          );
-          return { ...r, enabled: newState };
-        }
-        return r;
-      }),
+    const rule = INITIAL_RULES.find((r) => r.id === id);
+    const newState = !automationEnabled[id];
+    setAutomationEnabled(id, newState);
+    toast.success(
+      `Automation "${rule?.name ?? id}" ${newState ? "activated" : "deactivated"}`,
     );
   };
 
@@ -135,7 +125,10 @@ export function AutomationsModal({ isOpen, onClose }: AutomationsModalProps) {
 
             {/* Rules List */}
             <div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto">
-              {rules.map((rule) => (
+              {INITIAL_RULES.map((rule) => {
+                const enabled = automationEnabled[rule.id] ?? false;
+                const runCount = automationRuns[rule.id] ?? 0;
+                return (
                 <div
                   key={rule.id}
                   className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all space-y-2.5"
@@ -145,8 +138,13 @@ export function AutomationsModal({ isOpen, onClose }: AutomationsModalProps) {
                       <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
                         {rule.name}
                       </span>
+                      {!rule.live && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                          Soon
+                        </span>
+                      )}
                       <span className="text-[10px] text-slate-400">
-                        • Triggered {rule.runCount} times
+                        • Triggered {runCount} times
                       </span>
                     </div>
 
@@ -154,14 +152,14 @@ export function AutomationsModal({ isOpen, onClose }: AutomationsModalProps) {
                       type="button"
                       onClick={() => toggleRule(rule.id)}
                       className={`w-10 h-6 rounded-full transition-colors p-0.5 cursor-pointer relative ${
-                        rule.enabled
+                        enabled
                           ? "bg-emerald-600"
                           : "bg-slate-300 dark:bg-slate-700"
                       }`}
                     >
                       <div
                         className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                          rule.enabled ? "translate-x-4" : "translate-x-0"
+                          enabled ? "translate-x-4" : "translate-x-0"
                         }`}
                       />
                     </button>
@@ -177,7 +175,8 @@ export function AutomationsModal({ isOpen, onClose }: AutomationsModalProps) {
                     </span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Footer */}

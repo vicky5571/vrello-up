@@ -4,6 +4,13 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Bot, Play, Cpu } from "lucide-react";
 import { toast } from "sonner";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import {
+  formatBlockers,
+  formatSprintSummary,
+  isTaskDone,
+} from "@/lib/ai/brain";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface AgentsModalProps {
   isOpen: boolean;
@@ -18,6 +25,7 @@ interface AgentItem {
   iconColor: string;
   enabled: boolean;
   lastRun: string;
+  lastOutput?: string;
 }
 
 const INITIAL_AGENTS: AgentItem[] = [
@@ -61,6 +69,13 @@ const INITIAL_AGENTS: AgentItem[] = [
 
 export function AgentsModal({ isOpen, onClose }: AgentsModalProps) {
   const [agents, setAgents] = useState<AgentItem[]>(INITIAL_AGENTS);
+  const { tasks, workspaces, activeWorkspaceId, activeSpaceId } =
+    useWorkspaceStore();
+
+  const statuses =
+    workspaces
+      .find((w) => w.id === activeWorkspaceId)
+      ?.spaces.find((s) => s.id === activeSpaceId)?.statuses ?? [];
 
   const toggleAgent = (id: string) => {
     setAgents((prev) =>
@@ -77,8 +92,65 @@ export function AgentsModal({ isOpen, onClose }: AgentsModalProps) {
     );
   };
 
-  const handleRunNow = (agentName: string) => {
-    toast.success(`Triggered manual execution for ${agentName}`);
+  const handleRunNow = (agent: AgentItem) => {
+    if (!agent.enabled) {
+      toast.info(`${agent.name} is paused — enable it to run.`);
+      return;
+    }
+    let output: string;
+    switch (agent.id) {
+      case "triage": {
+        const open = tasks.filter((t) => !isTaskDone(t, statuses));
+        const untriaged = open.filter((t) => t.priority === "none");
+        output =
+          untriaged.length === 0
+            ? `All ${open.length} open tasks have a priority set. Nothing to triage. 🎉`
+            : [
+                `${untriaged.length} of ${open.length} open tasks need triage (no priority):`,
+                ...untriaged
+                  .slice(0, 8)
+                  .map((t) => `• "${t.title}"`),
+                ...(untriaged.length > 8
+                  ? [`…and ${untriaged.length - 8} more`]
+                  : []),
+              ].join("\n");
+        break;
+      }
+      case "blocker":
+        output = formatBlockers(tasks, statuses);
+        break;
+      case "summarizer":
+        output = formatSprintSummary(tasks, statuses);
+        break;
+      case "security": {
+        const hits = tasks.filter(
+          (t) =>
+            sanitizeHtml(t.title) !== t.title ||
+            sanitizeHtml(t.description) !== t.description,
+        );
+        output =
+          hits.length === 0
+            ? `Scanned ${tasks.length} tasks — no disallowed markup found. Inputs are clean. 🎉`
+            : [
+                `${hits.length} task${hits.length > 1 ? "s" : ""} contain markup that sanitization would strip:`,
+                ...hits.slice(0, 8).map((t) => `• "${t.title}"`),
+                ...(hits.length > 8
+                  ? [`…and ${hits.length - 8} more`]
+                  : []),
+              ].join("\n");
+        break;
+      }
+      default:
+        output = "Unknown agent.";
+    }
+    setAgents((prev) =>
+      prev.map((a) =>
+        a.id === agent.id
+          ? { ...a, lastRun: "Just now", lastOutput: output }
+          : a,
+      ),
+    );
+    toast.success(`${agent.name} finished — see results below.`);
   };
 
   return (
@@ -153,13 +225,18 @@ export function AgentsModal({ isOpen, onClose }: AgentsModalProps) {
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                         {agent.description}
                       </p>
+                      {agent.lastOutput && (
+                        <pre className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-2 text-[11px] leading-relaxed text-slate-700 dark:text-slate-300">
+                          {agent.lastOutput}
+                        </pre>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0 pt-0.5">
                     <button
                       type="button"
-                      onClick={() => handleRunNow(agent.name)}
+                      onClick={() => handleRunNow(agent)}
                       className="p-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                       title="Run agent now"
                     >
