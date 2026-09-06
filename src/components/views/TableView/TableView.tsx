@@ -150,6 +150,14 @@ export function TableView() {
         return false;
       }
 
+      // Tags filter
+      if (
+        filters.tagIds.length > 0 &&
+        !task.tags.some((tag) => filters.tagIds.includes(tag.id))
+      ) {
+        return false;
+      }
+
       return true;
     });
   }, [tasks, activeListId, filters]);

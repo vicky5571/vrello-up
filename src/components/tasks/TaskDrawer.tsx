@@ -15,11 +15,14 @@ import {
   Link as LinkIcon,
   MessageSquare,
   FileText,
+  Tags,
+  Plus,
+  Check,
 } from "lucide-react";
 import { TiptapEditor } from "./TiptapEditor";
 import { SubtaskManager } from "./SubtaskManager";
 import { TaskActivityFeed } from "./TaskActivityFeed";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 
@@ -37,6 +40,11 @@ export function TaskDrawer() {
     workspaces,
     activeWorkspaceId,
     activeSpaceId,
+    tags,
+    createTag,
+    renameTag,
+    deleteTag,
+    toggleTaskTag,
   } = useWorkspaceStore();
 
   const liveTask = tasks.find((t) => t.id === selectedTaskId);
@@ -58,6 +66,9 @@ export function TaskDrawer() {
   const statuses = currentSpace?.statuses || [];
 
   const [title, setTitle] = useState("");
+  const [newTagName, setNewTagName] = useState("");
+  const [newTagColor, setNewTagColor] = useState("#3B82F6");
+  const [isManagingTags, setIsManagingTags] = useState(false);
 
   useEffect(() => {
     if (task) {
@@ -323,6 +334,143 @@ export function TaskDrawer() {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Tags */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Tags className="w-3.5 h-3.5 text-slate-500" /> Tags
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsManagingTags(!isManagingTags)}
+                    className="text-[11px] font-semibold text-slate-400 hover:text-[#7B68EE] transition-colors cursor-pointer"
+                  >
+                    {isManagingTags ? "Done" : "Manage"}
+                  </button>
+                </div>
+
+                {isManagingTags ? (
+                  <div className="space-y-1.5">
+                    {tags.map((tag) => (
+                      <div
+                        key={tag.id}
+                        className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800"
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full shrink-0"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        <input
+                          type="text"
+                          defaultValue={tag.name}
+                          key={`${tag.id}-${tag.name}`}
+                          onBlur={(e) => {
+                            if (e.target.value.trim() && e.target.value.trim() !== tag.name) {
+                              renameTag(tag.id, e.target.value);
+                              toast.success("Tag renamed");
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") e.currentTarget.blur();
+                          }}
+                          className="flex-1 min-w-0 bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-hidden border-b border-transparent focus:border-[#7B68EE]"
+                        />
+                        <button
+                          type="button"
+                          title={`Delete tag "${tag.name}"`}
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                `Delete tag "${tag.name}"? It will be removed from all tasks.`,
+                              )
+                            ) {
+                              deleteTag(tag.id);
+                              toast.success("Tag deleted");
+                            }
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer shrink-0"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="color"
+                        value={newTagColor}
+                        onChange={(e) => setNewTagColor(e.target.value)}
+                        aria-label="Choose tag color"
+                        className="h-7 w-9 cursor-pointer rounded border-0 bg-transparent p-0 shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={newTagName}
+                        onChange={(e) => setNewTagName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && newTagName.trim()) {
+                            createTag(newTagName, newTagColor);
+                            toast.success(`Tag "${newTagName.trim()}" created`);
+                            setNewTagName("");
+                          }
+                        }}
+                        placeholder="New tag name…"
+                        className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE]"
+                      />
+                      <button
+                        type="button"
+                        disabled={!newTagName.trim()}
+                        onClick={() => {
+                          createTag(newTagName, newTagColor);
+                          toast.success(`Tag "${newTagName.trim()}" created`);
+                          setNewTagName("");
+                        }}
+                        className="p-1.5 rounded-lg bg-[#7B68EE] text-white hover:bg-[#6a5ae0] disabled:opacity-40 transition-colors cursor-pointer shrink-0"
+                        title="Create tag"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {tags.length === 0 && (
+                      <span className="text-[11px] text-slate-400">
+                        No tags yet — click Manage to create one.
+                      </span>
+                    )}
+                    {tags.map((tag) => {
+                      const isSelected =
+                        task?.tags.some((tt) => tt.id === tag.id) ?? false;
+                      return (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          disabled={!task}
+                          onClick={() => task && toggleTaskTag(task.id, tag.id)}
+                          className={cn(
+                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-all cursor-pointer disabled:cursor-default",
+                            !isSelected &&
+                              "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-200/70 dark:hover:bg-slate-700",
+                          )}
+                          style={
+                            isSelected
+                              ? {
+                                  backgroundColor: `${tag.color}15`,
+                                  color: tag.color,
+                                  borderColor: `${tag.color}60`,
+                                }
+                              : undefined
+                          }
+                        >
+                          {isSelected && <Check className="w-3 h-3" />}
+                          {tag.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Rich-Text Description */}

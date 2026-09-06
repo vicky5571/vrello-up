@@ -24,6 +24,7 @@ export function CreateTaskModal({
     workspaces,
     activeWorkspaceId,
     createTask,
+    tags,
   } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
@@ -42,6 +43,7 @@ export function CreateTaskModal({
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([
     SEED_USERS[0].id,
   ]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +64,7 @@ export function CreateTaskModal({
       priority,
       assignees: assignedUsers,
       dueDate: dueDate || undefined,
-      tags: [],
+      tags: tags.filter((t) => selectedTagIds.includes(t.id)),
       subtasks: [],
       orderIndex: 0,
     });
@@ -219,6 +221,47 @@ export function CreateTaskModal({
                           className={`w-2 h-2 rounded-full ${isSelected ? "bg-[#7B68EE]" : "bg-slate-400"}`}
                         />
                         {user.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+                  Tags
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {tags.map((tag) => {
+                    const isSelected = selectedTagIds.includes(tag.id);
+                    return (
+                      <button
+                        type="button"
+                        key={tag.id}
+                        onClick={() => {
+                          setSelectedTagIds((prev) =>
+                            isSelected
+                              ? prev.filter((id) => id !== tag.id)
+                              : [...prev, tag.id],
+                          );
+                        }}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-all cursor-pointer ${
+                          isSelected
+                            ? ""
+                            : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        }`}
+                        style={
+                          isSelected
+                            ? {
+                                backgroundColor: `${tag.color}15`,
+                                color: tag.color,
+                                borderColor: `${tag.color}60`,
+                              }
+                            : undefined
+                        }
+                      >
+                        {tag.name}
                       </button>
                     );
                   })}

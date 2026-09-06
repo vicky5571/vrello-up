@@ -4,6 +4,7 @@ import { Task, Status } from "@/types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
+import { TagBadge } from "@/components/ui/TagBadge";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { Calendar, CheckSquare, MoreHorizontal } from "lucide-react";
 import { formatDate, isOverdue, cn } from "@/lib/utils";
@@ -163,17 +164,7 @@ export function BoardCard({
       {task.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-3">
           {task.tags.map((tag) => (
-            <span
-              key={tag.id}
-              className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
-              style={{
-                backgroundColor: `${tag.color}15`,
-                color: tag.color,
-                border: `1px solid ${tag.color}30`,
-              }}
-            >
-              {tag.name}
-            </span>
+            <TagBadge key={tag.id} tag={tag} />
           ))}
         </div>
       )}

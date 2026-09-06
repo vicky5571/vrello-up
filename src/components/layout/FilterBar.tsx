@@ -21,6 +21,7 @@ import {
   Layers,
   UserCheck,
   Check,
+  Tags,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
@@ -33,6 +34,7 @@ export function FilterBar() {
     resetFilters,
     workspaces,
     activeWorkspaceId,
+    tags,
   } = useWorkspaceStore();
 
   const [searchValue, setSearchValue] = useState(filters.search);
@@ -40,6 +42,7 @@ export function FilterBar() {
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [isGroupByMenuOpen, setIsGroupByMenuOpen] = useState(false);
   const [isAssigneeMenuOpen, setIsAssigneeMenuOpen] = useState(false);
+  const [isTagMenuOpen, setIsTagMenuOpen] = useState(false);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -55,6 +58,7 @@ export function FilterBar() {
         setIsFilterMenuOpen(false);
         setIsGroupByMenuOpen(false);
         setIsAssigneeMenuOpen(false);
+        setIsTagMenuOpen(false);
       }
     };
 
@@ -63,6 +67,7 @@ export function FilterBar() {
         setIsFilterMenuOpen(false);
         setIsGroupByMenuOpen(false);
         setIsAssigneeMenuOpen(false);
+        setIsTagMenuOpen(false);
       }
     };
 
@@ -95,6 +100,7 @@ export function FilterBar() {
     filters.priorities.length > 0 ||
     filters.statusIds.length > 0 ||
     filters.assigneeIds.length > 0 ||
+    filters.tagIds.length > 0 ||
     !filters.showClosed;
 
   const togglePriority = (priority: Priority) => {
@@ -111,6 +117,14 @@ export function FilterBar() {
       ? filters.assigneeIds.filter((id) => id !== assigneeId)
       : [...filters.assigneeIds, assigneeId];
     setFilters({ assigneeIds: newAssignees });
+  };
+
+  const toggleTag = (tagId: string) => {
+    const isSelected = filters.tagIds.includes(tagId);
+    const newTagIds = isSelected
+      ? filters.tagIds.filter((id) => id !== tagId)
+      : [...filters.tagIds, tagId];
+    setFilters({ tagIds: newTagIds });
   };
 
   const handleResetFilters = () => {
@@ -145,6 +159,7 @@ export function FilterBar() {
                 setIsGroupByMenuOpen(!isGroupByMenuOpen);
                 setIsFilterMenuOpen(false);
                 setIsAssigneeMenuOpen(false);
+                setIsTagMenuOpen(false);
               }}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/80 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             >
@@ -225,6 +240,7 @@ export function FilterBar() {
                 setIsFilterMenuOpen(!isFilterMenuOpen);
                 setIsGroupByMenuOpen(false);
                 setIsAssigneeMenuOpen(false);
+                setIsTagMenuOpen(false);
               }}
               className={cn(
                 "inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer",
@@ -300,6 +316,7 @@ export function FilterBar() {
                 setIsAssigneeMenuOpen(!isAssigneeMenuOpen);
                 setIsFilterMenuOpen(false);
                 setIsGroupByMenuOpen(false);
+                setIsTagMenuOpen(false);
               }}
               className={cn(
                 "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer",
@@ -357,6 +374,66 @@ export function FilterBar() {
                         <span className="truncate">{member.name}</span>
                       </div>
                       {isChecked && <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Tags Filter Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setIsTagMenuOpen(!isTagMenuOpen);
+                setIsFilterMenuOpen(false);
+                setIsGroupByMenuOpen(false);
+                setIsAssigneeMenuOpen(false);
+              }}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer",
+                filters.tagIds.length > 0
+                  ? "bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300 border border-teal-200/80 dark:border-teal-800/60"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              )}
+            >
+              <Tags className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+              <span className="hidden md:inline">Tags</span>
+              {filters.tagIds.length > 0 && (
+                <span className="w-4 h-4 rounded-full bg-teal-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  {filters.tagIds.length}
+                </span>
+              )}
+            </button>
+
+            {isTagMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-52 rounded-lg bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Filter by Tag
+                </div>
+                {tags.length === 0 && (
+                  <div className="px-3 py-2 text-xs text-slate-400">
+                    No tags yet — create one from any task.
+                  </div>
+                )}
+                {tags.map((tag) => {
+                  const isChecked = filters.tagIds.includes(tag.id);
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => toggleTag(tag.id)}
+                      className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="w-2.5 h-2.5 rounded-sm shrink-0"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        <span className="truncate">{tag.name}</span>
+                      </div>
+                      {isChecked && <Check className="w-3.5 h-3.5 text-teal-600 shrink-0" />}
                     </button>
                   );
                 })}

@@ -71,12 +71,20 @@ export function CalendarView() {
       return false;
     }
 
-    if (
-      filters.statusIds.length > 0 &&
-      !filters.statusIds.includes(task.statusId)
-    ) {
-      return false;
-    }
+      if (
+        filters.statusIds.length > 0 &&
+        !filters.statusIds.includes(task.statusId)
+      ) {
+        return false;
+      }
+
+      // Tags filter
+      if (
+        filters.tagIds.length > 0 &&
+        !task.tags.some((tag) => filters.tagIds.includes(tag.id))
+      ) {
+        return false;
+      }
 
     return true;
   });

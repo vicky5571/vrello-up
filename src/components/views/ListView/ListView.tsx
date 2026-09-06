@@ -71,6 +71,14 @@ export function ListView() {
         return false;
       }
 
+      // Tags filter
+      if (
+        filters.tagIds.length > 0 &&
+        !task.tags.some((tag) => filters.tagIds.includes(tag.id))
+      ) {
+        return false;
+      }
+
       // Assignee filter
       if (filters.assigneeIds.length > 0) {
         const matchesUnassigned =

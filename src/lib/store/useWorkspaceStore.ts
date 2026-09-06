@@ -275,6 +275,7 @@ interface WorkspaceState {
   activeSpaceId: string;
   activeListId: string;
   tasks: Task[];
+  tags: Tag[];
   selectedTaskId: string | null;
   activeView: ViewMode;
   currentUserId: string;
@@ -360,6 +361,12 @@ interface WorkspaceState {
     statusId: string,
     fallbackStatusId?: string,
   ) => void;
+
+  // Tag Actions
+  createTag: (name: string, color: string) => Tag;
+  renameTag: (id: string, name: string) => void;
+  deleteTag: (id: string) => void;
+  toggleTaskTag: (taskId: string, tagId: string) => void;
 }
 
 /**
@@ -405,6 +412,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       activeSpaceId: "space-eng",
       activeListId: "list-sprint-tasks",
       tasks: INITIAL_TASKS,
+      tags: SEED_TAGS,
       selectedTaskId: null,
       activeView: "list",
       currentUserId: "user-1",
@@ -1066,6 +1074,46 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           ),
         }));
       },
+
+      createTag: (name, color) => {
+        const tag: Tag = { id: generateId("tag"), name: name.trim(), color };
+        set((state) => ({ tags: [...state.tags, tag] }));
+        return tag;
+      },
+      renameTag: (id, name) => {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        set((state) => ({
+          tags: state.tags.map((t) => (t.id === id ? { ...t, name: trimmed } : t)),
+          tasks: state.tasks.map((t) => ({
+            ...t,
+            tags: t.tags.map((tt) => (tt.id === id ? { ...tt, name: trimmed } : tt)),
+          })),
+        }));
+      },
+      deleteTag: (id) => {
+        set((state) => ({
+          tags: state.tags.filter((t) => t.id !== id),
+          tasks: state.tasks.map((t) => ({
+            ...t,
+            tags: t.tags.filter((tt) => tt.id !== id),
+          })),
+        }));
+      },
+      toggleTaskTag: (taskId, tagId) => {
+        const tag = get().tags.find((t) => t.id === tagId);
+        if (!tag) return;
+        set((state) => ({
+          tasks: state.tasks.map((t) => {
+            if (t.id !== taskId) return t;
+            const has = t.tags.some((tt) => tt.id === tagId);
+            return {
+              ...t,
+              tags: has ? t.tags.filter((tt) => tt.id !== tagId) : [...t.tags, tag],
+            };
+          }),
+        }));
+      },
     }),
     {
       name: "vrelloup-workspace-storage",
@@ -1135,6 +1183,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         activeListId: state.activeListId,
         activeView: state.activeView,
         currentUserId: state.currentUserId,
+        tags: state.tags,
       }),
     },
   ),
