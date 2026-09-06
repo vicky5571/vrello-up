@@ -15,8 +15,11 @@ import {
   Monitor,
   Check,
   Download,
+  ShieldCheck,
+  LogIn,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -34,6 +37,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   } = useWorkspaceStore();
 
   const { theme, setTheme } = useTheme();
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<"workspace" | "profile" | "appearance">("workspace");
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
@@ -202,11 +206,49 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               )}
 
               {activeTab === "profile" && (
-                <div className="space-y-3">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Select which team member identity to simulate in this session:
-                  </p>
-                  <div className="space-y-2">
+                <div className="space-y-4">
+                  {/* Google OAuth Account Card */}
+                  <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-slate-100">
+                        <ShieldCheck className="w-4 h-4 text-indigo-500" />
+                        <span>Google OAuth Account</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        {session?.user
+                          ? `Connected as ${session.user.email}`
+                          : "No Google account linked to this session"}
+                      </p>
+                    </div>
+
+                    {session?.user ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          signOut({ redirect: false });
+                          toast.success("Disconnected Google account");
+                        }}
+                        className="px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-semibold hover:bg-red-100 transition-colors cursor-pointer"
+                      >
+                        Disconnect
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => signIn("google")}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <LogIn className="w-3.5 h-3.5" />
+                        <span>Connect Google</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                      Or switch active team member identity:
+                    </p>
+                    <div className="space-y-2">
                     {(currentWorkspace?.members || SEED_USERS).map((user) => {
                       const isSelected = user.id === currentUserId;
                       return (
@@ -239,7 +281,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     })}
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
               {activeTab === "appearance" && (
                 <div className="space-y-4">
