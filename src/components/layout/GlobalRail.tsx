@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 
 export function GlobalRail() {
-  const { isSidebarOpen, toggleSidebar, openCommandPalette } = useWorkspaceStore();
+  const { isSidebarOpen, toggleSidebar, setAiDrawerOpen } = useWorkspaceStore();
   const [activeTab, setActiveTab] = useState<string>("home");
 
   const NAV_ITEMS = [
@@ -54,7 +54,7 @@ export function GlobalRail() {
               onClick={() => {
                 setActiveTab(item.id);
                 if (item.id === "ai") {
-                  openCommandPalette();
+                  setAiDrawerOpen(true);
                 }
               }}
               className={cn(

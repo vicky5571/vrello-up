@@ -26,6 +26,7 @@ export function TopNav() {
     activeSpaceId,
     activeListId,
     openCommandPalette,
+    setAiDrawerOpen,
   } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
@@ -91,7 +92,7 @@ export function TopNav() {
 
           <button
             type="button"
-            onClick={openCommandPalette}
+            onClick={() => setAiDrawerOpen(true)}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/40 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors cursor-pointer"
           >
             <Sparkles className="w-3 h-3 text-purple-500" />

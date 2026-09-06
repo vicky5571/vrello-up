@@ -12,6 +12,7 @@ import { TableView } from "@/components/views/TableView/TableView";
 import { CalendarView } from "@/components/views/CalendarView/CalendarView";
 import { GanttView } from "@/components/views/GanttView/GanttView";
 import { TaskDrawer } from "@/components/tasks/TaskDrawer";
+import { AiDrawer } from "@/components/ai/AiDrawer";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { motion, AnimatePresence } from "framer-motion";
@@ -125,6 +126,9 @@ export default function WorkspacePage() {
 
       {/* Slide-over Task Detail Drawer */}
       <TaskDrawer />
+
+      {/* AI Assistant Drawer (Brain²) */}
+      <AiDrawer />
 
       {/* Global Command Palette (⌘K Quick Switcher) */}
       <CommandPalette />
