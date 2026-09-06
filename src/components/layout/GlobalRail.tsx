@@ -16,7 +16,8 @@ import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 
 export function GlobalRail() {
-  const { isSidebarOpen, toggleSidebar, setAiDrawerOpen } = useWorkspaceStore();
+  const { isSidebarOpen, toggleSidebar, setAiDrawerOpen, activeView, setActiveView } =
+    useWorkspaceStore();
   const [activeTab, setActiveTab] = useState<string>("home");
 
   const NAV_ITEMS = [
@@ -47,12 +48,17 @@ export function GlobalRail() {
         {/* Navigation Items */}
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const isActive = activeTab === item.id;
+          // Home reflects the real view so the highlight survives view switches elsewhere
+          const isActive =
+            item.id === "home" ? activeView === "home" : activeTab === item.id;
           return (
             <button
               key={item.id}
               onClick={() => {
                 setActiveTab(item.id);
+                if (item.id === "home") {
+                  setActiveView("home");
+                }
                 if (item.id === "ai") {
                   setAiDrawerOpen(true);
                 }

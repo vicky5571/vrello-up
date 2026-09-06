@@ -277,6 +277,7 @@ interface WorkspaceState {
   tasks: Task[];
   selectedTaskId: string | null;
   activeView: ViewMode;
+  currentUserId: string;
   filters: FilterOptions;
   isSidebarOpen: boolean;
   isCommandPaletteOpen: boolean;
@@ -294,6 +295,7 @@ interface WorkspaceState {
   setActiveList: (id: string) => void;
   setActiveView: (view: ViewMode) => void;
   setSelectedTaskId: (id: string | null) => void;
+  setCurrentUserId: (id: string) => void;
   toggleSidebar: () => void;
   setFilters: (filters: Partial<FilterOptions>) => void;
   resetFilters: () => void;
@@ -405,6 +407,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       tasks: INITIAL_TASKS,
       selectedTaskId: null,
       activeView: "list",
+      currentUserId: "user-1",
       isSidebarOpen: true,
       isCommandPaletteOpen: false,
       isCreateTaskModalOpen: false,
@@ -436,6 +439,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setActiveList: (id) => set({ activeListId: id }),
       setActiveView: (view) => set({ activeView: view }),
       setSelectedTaskId: (id) => set({ selectedTaskId: id }),
+      setCurrentUserId: (id) => set({ currentUserId: id }),
       toggleSidebar: () =>
         set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
 
@@ -1130,6 +1134,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         activeSpaceId: state.activeSpaceId,
         activeListId: state.activeListId,
         activeView: state.activeView,
+        currentUserId: state.currentUserId,
       }),
     },
   ),

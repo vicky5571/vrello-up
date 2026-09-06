@@ -112,7 +112,7 @@ export interface Workspace {
   members: User[];
 }
 
-export type ViewMode = "list" | "board" | "table" | "calendar" | "gantt";
+export type ViewMode = "home" | "list" | "board" | "table" | "calendar" | "gantt";
 
 export type GroupByOption = "status" | "priority" | "assignee";
 

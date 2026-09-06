@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { FilterBar } from "@/components/layout/FilterBar";
 import { ListView } from "@/components/views/ListView/ListView";
+import { HomeView } from "@/components/views/HomeView/HomeView";
 import { BoardView } from "@/components/views/BoardView/BoardView";
 import { TableView } from "@/components/views/TableView/TableView";
 import { CalendarView } from "@/components/views/CalendarView/CalendarView";
@@ -50,12 +51,24 @@ export default function WorkspacePage() {
         {/* Top Navigation */}
         <TopNav />
 
-        {/* Global Filter Bar */}
-        <FilterBar />
+        {/* Global Filter Bar (workspace views only) */}
+        {activeView !== "home" && <FilterBar />}
 
         {/* View Transition Area */}
         <div className="flex-1 overflow-hidden relative bg-[#FAFBFC] dark:bg-[#121316]">
           <AnimatePresence mode="wait">
+            {activeView === "home" && (
+              <motion.div
+                key="home-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <HomeView />
+              </motion.div>
+            )}
             {activeView === "list" && (
               <motion.div
                 key="list-view"

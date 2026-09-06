@@ -109,6 +109,39 @@ export function formatBlockers(tasks: Task[], statuses: Status[]): string {
   ].join("\n");
 }
 
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+/** Open tasks due today (calendar-day compare, format-agnostic). */
+export function getDueToday(tasks: Task[], statuses: Status[]): Task[] {
+  const today = new Date();
+  return tasks.filter((t) => {
+    if (!t.dueDate || isTaskDone(t, statuses)) return false;
+    const d = new Date(t.dueDate);
+    return !isNaN(d.getTime()) && isSameDay(d, today);
+  });
+}
+
+/** Open tasks assigned to the user, soonest due first (undated last). */
+export function getAssignedTo(
+  tasks: Task[],
+  statuses: Status[],
+  userId: string,
+): Task[] {
+  const time = (t: Task) => {
+    const d = t.dueDate ? new Date(t.dueDate).getTime() : NaN;
+    return isNaN(d) ? Number.MAX_SAFE_INTEGER : d;
+  };
+  return tasks
+    .filter((t) => !isTaskDone(t, statuses) && t.assignees.some((u) => u.id === userId))
+    .sort((a, b) => time(a) - time(b));
+}
+
 const SUBTASK_TEMPLATES: { match: RegExp; steps: string[] }[] = [
   {
     match: /design|ui|ux|mockup|figma/i,

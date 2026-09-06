@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { ViewSwitcher } from "./ViewSwitcher";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import {
   ChevronDown,
   Search,
@@ -14,6 +16,7 @@ import {
   Phone,
   Video,
   Star,
+  Check,
   Folder as FolderIcon,
   List as ListIcon,
   Calendar,
@@ -27,9 +30,43 @@ export function TopNav() {
     activeListId,
     openCommandPalette,
     setAiDrawerOpen,
+    currentUserId,
+    setCurrentUserId,
   } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
+  const members = currentWorkspace?.members ?? [];
+  const me = members.find((u) => u.id === currentUserId) ?? members[0];
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close user menu on outside click or Escape
+  useEffect(() => {
+    if (!isUserMenuOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsUserMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isUserMenuOpen]);
+
+  const initials = me
+    ? me.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "?";
   const currentSpace = currentWorkspace?.spaces.find(
     (s) => s.id === activeSpaceId
   );
@@ -123,9 +160,44 @@ export function TopNav() {
           {/* Theme Switcher */}
           <ThemeToggle />
 
-          {/* User Profile Avatar */}
-          <div className="w-6 h-6 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-bold text-[10px] ml-1 shadow-2xs">
-            VP
+          {/* User Profile Avatar + Switcher */}
+          <div ref={userMenuRef} className="relative ml-1">
+            <button
+              type="button"
+              title={me ? `Signed in as ${me.name} — switch user` : "Switch user"}
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              className="w-6 h-6 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-bold text-[10px] shadow-2xs cursor-pointer"
+            >
+              {initials}
+            </button>
+
+            {isUserMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-52 rounded-lg bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Switch user
+                </div>
+                {members.map((u) => {
+                  const isCurrent = u.id === me?.id;
+                  return (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => {
+                        setCurrentUserId(u.id);
+                        setIsUserMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                    >
+                      <UserAvatar user={u} size="xs" showTooltip={false} />
+                      <span className="flex-1 min-w-0 truncate text-slate-700 dark:text-slate-200">
+                        {u.name}
+                      </span>
+                      {isCurrent && <Check className="w-3.5 h-3.5 text-[#0073ea] shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </header>

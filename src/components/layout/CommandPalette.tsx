@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import {
   Search,
   X,
+  Home as HomeIcon,
   List as ListIcon,
   Kanban,
   Table as TableIcon,
@@ -214,6 +215,7 @@ export function CommandPalette() {
 
     // 3. Views
     const viewsList: { id: ViewMode; name: string; icon: React.ComponentType<{ className?: string }> }[] = [
+      { id: "home", name: "Home Dashboard", icon: HomeIcon },
       { id: "list", name: "List View", icon: ListIcon },
       { id: "board", name: "Board (Kanban) View", icon: Kanban },
       { id: "table", name: "Table Spreadsheet View", icon: TableIcon },
