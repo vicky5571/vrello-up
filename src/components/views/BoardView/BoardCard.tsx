@@ -8,7 +8,7 @@ import { TagBadge } from "@/components/ui/TagBadge";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { Calendar, CheckSquare, MoreHorizontal } from "lucide-react";
 import { formatDate, isOverdue, cn } from "@/lib/utils";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 
 interface BoardCardProps {
   task: Task;
@@ -17,7 +17,7 @@ interface BoardCardProps {
   onMoveStatus: (taskId: string, statusId: string) => void;
 }
 
-export function BoardCard({
+export const BoardCard = memo(function BoardCard({
   task,
   statuses,
   onSelect,
@@ -201,4 +201,4 @@ export function BoardCard({
       </div>
     </div>
   );
-}
+});

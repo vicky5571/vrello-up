@@ -9,7 +9,7 @@ import {
 import { BoardCard } from "./BoardCard";
 import { Plus } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 
 interface BoardColumnProps {
@@ -20,7 +20,7 @@ interface BoardColumnProps {
   onMoveStatus: (taskId: string, statusId: string) => void;
 }
 
-export function BoardColumn({
+export const BoardColumn = memo(function BoardColumn({
   status,
   allStatuses,
   tasks,
@@ -138,4 +138,4 @@ export function BoardColumn({
       </div>
     </div>
   );
-}
+});

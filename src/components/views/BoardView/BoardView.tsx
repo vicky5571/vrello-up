@@ -39,7 +39,10 @@ export function BoardView() {
   const currentSpace = currentWorkspace?.spaces.find(
     (s) => s.id === activeSpaceId,
   );
-  const statuses = currentSpace?.statuses || [];
+  const statuses = useMemo(
+    () => currentSpace?.statuses || [],
+    [currentSpace?.statuses],
+  );
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[] | null>(null);
@@ -97,6 +100,26 @@ export function BoardView() {
       return true;
     });
   }, [displayTasks, activeListId, filters]);
+
+  // Memoize task buckets by status to prevent re-filtering & re-sorting on each render/drag frame
+  const tasksByStatus = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const s of statuses) {
+      map.set(s.id, []);
+    }
+    for (const t of filteredTasks) {
+      const list = map.get(t.statusId);
+      if (list) {
+        list.push(t);
+      } else {
+        map.set(t.statusId, [t]);
+      }
+    }
+    for (const [, list] of map) {
+      list.sort((a, b) => a.orderIndex - b.orderIndex);
+    }
+    return map;
+  }, [filteredTasks, statuses]);
 
   const handleDragStart = (event: DragStartEvent) => {
     if (event.active.data.current?.type === "Task") {
@@ -239,21 +262,16 @@ export function BoardView() {
         onDragEnd={handleDragEnd}
       >
         <div className="flex items-start gap-5 h-full min-w-max pb-6">
-          {statuses.map((status) => {
-            const columnTasks = filteredTasks
-              .filter((t) => t.statusId === status.id)
-              .sort((a, b) => a.orderIndex - b.orderIndex);
-            return (
-              <BoardColumn
-                key={status.id}
-                status={status}
-                allStatuses={statuses}
-                tasks={columnTasks}
-                onSelectTask={setSelectedTaskId}
-                onMoveStatus={moveTaskStatus}
-              />
-            );
-          })}
+          {statuses.map((status) => (
+            <BoardColumn
+              key={status.id}
+              status={status}
+              allStatuses={statuses}
+              tasks={tasksByStatus.get(status.id) || []}
+              onSelectTask={setSelectedTaskId}
+              onMoveStatus={moveTaskStatus}
+            />
+          ))}
         </div>
 
         {/* Active dragging overlay preview */}
