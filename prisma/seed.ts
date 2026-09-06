@@ -1,3 +1,6 @@
+// SEED POLICY: dev/demo only — never run against production.
+// Production starts empty; members join via invite/Google login.
+// Keep this file out of the deploy pipeline.
 import { PrismaClient, Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
