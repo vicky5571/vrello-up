@@ -21,6 +21,7 @@ import { BoardColumn } from "./BoardColumn";
 import { BoardCard } from "./BoardCard";
 import { useState, useMemo } from "react";
 import { Task } from "@/types";
+import { matchesFilters } from "@/lib/tasks/filterTasks";
 
 export function BoardView() {
   const {
@@ -65,41 +66,9 @@ export function BoardView() {
     return displayTasks.filter((task: Task) => {
       if (activeListId && task.listId !== activeListId) return false;
 
-      // Search filter
-      if (filters.search) {
-        const q = filters.search.toLowerCase();
-        const matchesTitle = task.title.toLowerCase().includes(q);
-        const matchesDesc = task.description.toLowerCase().includes(q);
-        if (!matchesTitle && !matchesDesc) return false;
-      }
-
-      // Priority filter
-      if (
-        filters.priorities.length > 0 &&
-        !filters.priorities.includes(task.priority)
-      ) {
-        return false;
-      }
-
-      // Status filter
-      if (
-        filters.statusIds.length > 0 &&
-        !filters.statusIds.includes(task.statusId)
-      ) {
-        return false;
-      }
-
-      // Tags filter
-      if (
-        filters.tagIds.length > 0 &&
-        !task.tags.some((tag) => filters.tagIds.includes(tag.id))
-      ) {
-        return false;
-      }
-
-      return true;
+      return matchesFilters(task, filters, statuses);
     });
-  }, [displayTasks, activeListId, filters]);
+  }, [displayTasks, activeListId, filters, statuses]);
 
   // Memoize task buckets by status to prevent re-filtering & re-sorting on each render/drag frame
   const tasksByStatus = useMemo(() => {

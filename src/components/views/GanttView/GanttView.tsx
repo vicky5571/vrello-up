@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { Task } from "@/types";
+import { matchesFilters } from "@/lib/tasks/filterTasks";
 import { toast } from "sonner";
 
 type ZoomLevel = "day" | "week" | "month";
@@ -121,38 +122,9 @@ export function GanttView() {
     return tasks.filter((task) => {
       if (activeListId && task.listId !== activeListId) return false;
 
-      if (filters.search) {
-        const q = filters.search.toLowerCase();
-        const matchesTitle = task.title.toLowerCase().includes(q);
-        const matchesDesc = task.description.toLowerCase().includes(q);
-        if (!matchesTitle && !matchesDesc) return false;
-      }
-
-      if (
-        filters.priorities.length > 0 &&
-        !filters.priorities.includes(task.priority)
-      ) {
-        return false;
-      }
-
-      if (
-        filters.statusIds.length > 0 &&
-        !filters.statusIds.includes(task.statusId)
-      ) {
-        return false;
-      }
-
-      // Tags filter
-      if (
-        filters.tagIds.length > 0 &&
-        !task.tags.some((tag) => filters.tagIds.includes(tag.id))
-      ) {
-        return false;
-      }
-
-      return true;
+      return matchesFilters(task, filters, statuses);
     });
-  }, [tasks, activeListId, filters]);
+  }, [tasks, activeListId, filters, statuses]);
 
   // Scheduled tasks (tasks on the Gantt canvas)
   const scheduledTasks = useMemo(() => {

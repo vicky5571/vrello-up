@@ -15,6 +15,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { matchesFilters } from "@/lib/tasks/filterTasks";
 
 export function ListView() {
   const {
@@ -50,60 +51,7 @@ export function ListView() {
         return false;
       }
 
-      // Search filter
-      if (filters.search) {
-        const query = filters.search.toLowerCase();
-        const matchesTitle = task.title.toLowerCase().includes(query);
-        const matchesDesc = task.description.toLowerCase().includes(query);
-        if (!matchesTitle && !matchesDesc) return false;
-      }
-
-      // Priority filter
-      if (
-        filters.priorities.length > 0 &&
-        !filters.priorities.includes(task.priority)
-      ) {
-        return false;
-      }
-
-      // Status filter
-      if (
-        filters.statusIds.length > 0 &&
-        !filters.statusIds.includes(task.statusId)
-      ) {
-        return false;
-      }
-
-      // Tags filter
-      if (
-        filters.tagIds.length > 0 &&
-        !task.tags.some((tag) => filters.tagIds.includes(tag.id))
-      ) {
-        return false;
-      }
-
-      // Assignee filter
-      if (filters.assigneeIds.length > 0) {
-        const matchesUnassigned =
-          filters.assigneeIds.includes("unassigned") && task.assignees.length === 0;
-        const matchesUser = task.assignees.some((u) =>
-          filters.assigneeIds.includes(u.id),
-        );
-        if (!matchesUnassigned && !matchesUser) return false;
-      }
-
-      // Closed tasks filter
-      if (filters.showClosed === false) {
-        const taskStatus = statuses.find((s) => s.id === task.statusId);
-        if (
-          taskStatus &&
-          (taskStatus.category === "done" || taskStatus.category === "closed")
-        ) {
-          return false;
-        }
-      }
-
-      return true;
+      return matchesFilters(task, filters, statuses);
     });
   }, [tasks, activeListId, filters, statuses]);
 

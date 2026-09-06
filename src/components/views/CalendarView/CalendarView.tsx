@@ -20,6 +20,7 @@ import {
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { matchesFilters } from "@/lib/tasks/filterTasks";
 
 export function CalendarView() {
   const {
@@ -57,36 +58,7 @@ export function CalendarView() {
     if (!task.dueDate) return false;
     if (activeListId && task.listId !== activeListId) return false;
 
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      const matchesTitle = task.title.toLowerCase().includes(q);
-      const matchesDesc = task.description.toLowerCase().includes(q);
-      if (!matchesTitle && !matchesDesc) return false;
-    }
-
-    if (
-      filters.priorities.length > 0 &&
-      !filters.priorities.includes(task.priority)
-    ) {
-      return false;
-    }
-
-      if (
-        filters.statusIds.length > 0 &&
-        !filters.statusIds.includes(task.statusId)
-      ) {
-        return false;
-      }
-
-      // Tags filter
-      if (
-        filters.tagIds.length > 0 &&
-        !task.tags.some((tag) => filters.tagIds.includes(tag.id))
-      ) {
-        return false;
-      }
-
-    return true;
+    return matchesFilters(task, filters, statuses);
   });
 
   return (
