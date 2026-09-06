@@ -1420,6 +1420,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       partialize: (state) => ({
         workspaces: state.workspaces,
         tasks: state.tasks,
+        channelMessages: state.channelMessages,
         activeWorkspaceId: state.activeWorkspaceId,
         activeSpaceId: state.activeSpaceId,
         activeListId: state.activeListId,
