@@ -20,15 +20,23 @@ interface TaskActivityFeedProps {
 type FeedFilter = "all" | "comments" | "activity";
 
 export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
-  const { addComment, deleteComment } = useWorkspaceStore();
+  const {
+    addComment,
+    deleteComment,
+    currentUserId,
+    workspaces,
+    activeWorkspaceId,
+  } = useWorkspaceStore();
   const [commentText, setCommentText] = useState("");
   const [filter, setFilter] = useState<FeedFilter>("all");
 
   const comments = task.comments || [];
   const activities = task.activities || [];
 
-  // Current logged in user (default to lead user)
-  const currentUser = SEED_USERS[0];
+  // Current logged in user from active workspace or seed fallback
+  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
+  const members = currentWorkspace?.members || SEED_USERS;
+  const currentUser = members.find((u) => u.id === currentUserId) || members[0];
 
   const handlePostComment = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
