@@ -12,6 +12,7 @@ import { BoardView } from "@/components/views/BoardView/BoardView";
 import { TableView } from "@/components/views/TableView/TableView";
 import { CalendarView } from "@/components/views/CalendarView/CalendarView";
 import { GanttView } from "@/components/views/GanttView/GanttView";
+import { ChannelView } from "@/components/views/ChannelView/ChannelView";
 import { TaskDrawer } from "@/components/tasks/TaskDrawer";
 import { AiDrawer } from "@/components/ai/AiDrawer";
 import { CommandPalette } from "@/components/layout/CommandPalette";
@@ -131,6 +132,19 @@ export default function WorkspacePage() {
                 className="h-full w-full"
               >
                 <GanttView />
+              </motion.div>
+            )}
+
+            {activeView === "channel" && (
+              <motion.div
+                key="channel-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <ChannelView />
               </motion.div>
             )}
           </AnimatePresence>

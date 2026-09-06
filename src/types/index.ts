@@ -55,6 +55,15 @@ export interface ActivityLog {
   createdAt: string;
 }
 
+export interface ChannelMessage {
+  id: string;
+  channelId: string;
+  userId: string;
+  user: User;
+  content: string;
+  createdAt: string;
+}
+
 export interface Task {
   id: string;
   listId: string;
@@ -112,7 +121,14 @@ export interface Workspace {
   members: User[];
 }
 
-export type ViewMode = "home" | "list" | "board" | "table" | "calendar" | "gantt";
+export type ViewMode =
+  | "home"
+  | "list"
+  | "board"
+  | "table"
+  | "calendar"
+  | "gantt"
+  | "channel";
 
 export type GroupByOption = "status" | "priority" | "assignee";
 

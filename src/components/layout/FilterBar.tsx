@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { toast } from "sonner";
 
 export function FilterBar() {
   const {
@@ -43,7 +44,18 @@ export function FilterBar() {
   const [isGroupByMenuOpen, setIsGroupByMenuOpen] = useState(false);
   const [isAssigneeMenuOpen, setIsAssigneeMenuOpen] = useState(false);
   const [isTagMenuOpen, setIsTagMenuOpen] = useState(false);
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+
+  // View Preferences State
+  const [density, setDensity] = useState<"compact" | "standard" | "relaxed">("standard");
+  const [visibleFields, setVisibleFields] = useState({
+    assignees: true,
+    priority: true,
+    dueDate: true,
+    tags: true,
+    subtasks: true,
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +71,7 @@ export function FilterBar() {
         setIsGroupByMenuOpen(false);
         setIsAssigneeMenuOpen(false);
         setIsTagMenuOpen(false);
+        setIsCustomizeOpen(false);
       }
     };
 
@@ -68,6 +81,7 @@ export function FilterBar() {
         setIsGroupByMenuOpen(false);
         setIsAssigneeMenuOpen(false);
         setIsTagMenuOpen(false);
+        setIsCustomizeOpen(false);
       }
     };
 
@@ -478,14 +492,119 @@ export function FilterBar() {
             )}
           </div>
 
-          {/* Customize */}
-          <button
-            type="button"
-            title="Customize view"
-            className="p-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-          </button>
+          {/* Customize View Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setIsCustomizeOpen(!isCustomizeOpen);
+                setIsFilterMenuOpen(false);
+                setIsGroupByMenuOpen(false);
+                setIsAssigneeMenuOpen(false);
+                setIsTagMenuOpen(false);
+              }}
+              title="Customize view"
+              className={cn(
+                "p-1 rounded-md transition-colors cursor-pointer",
+                isCustomizeOpen
+                  ? "bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+              )}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+            </button>
+
+            {isCustomizeOpen && (
+              <div className="absolute right-0 top-full mt-1 w-56 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 p-2.5 z-50 text-xs space-y-3">
+                <div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Row Density
+                  </div>
+                  <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                    {(["compact", "standard", "relaxed"] as const).map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => {
+                          setDensity(d);
+                          toast.success(`Density set to ${d}`);
+                        }}
+                        className={cn(
+                          "py-1 rounded-md text-[11px] font-semibold capitalize transition-all cursor-pointer",
+                          density === d
+                            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
+                            : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                        )}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                    Visible Fields
+                  </div>
+                  <div className="space-y-1">
+                    {[
+                      { key: "assignees", label: "Assignees" },
+                      { key: "priority", label: "Priority Badges" },
+                      { key: "dueDate", label: "Due Dates" },
+                      { key: "tags", label: "Tags" },
+                      { key: "subtasks", label: "Subtask Progress" },
+                    ].map((field) => {
+                      const isVisible = visibleFields[field.key as keyof typeof visibleFields];
+                      return (
+                        <button
+                          key={field.key}
+                          type="button"
+                          onClick={() => {
+                            setVisibleFields((prev) => ({
+                              ...prev,
+                              [field.key]: !isVisible,
+                            }));
+                            toast.success(`${field.label} ${isVisible ? "hidden" : "shown"}`);
+                          }}
+                          className="w-full flex items-center justify-between px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                        >
+                          <span className="text-slate-700 dark:text-slate-300 font-medium text-xs">
+                            {field.label}
+                          </span>
+                          {isVisible ? (
+                            <Check className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                          ) : (
+                            <span className="w-3.5 h-3.5 rounded-sm border border-slate-300 dark:border-slate-700" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDensity("standard");
+                      setVisibleFields({
+                        assignees: true,
+                        priority: true,
+                        dueDate: true,
+                        tags: true,
+                        subtasks: true,
+                      });
+                      setIsCustomizeOpen(false);
+                      toast.success("View preferences reset to default");
+                    }}
+                    className="w-full py-1 text-center text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                  >
+                    Reset to Default
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* ClickUp Solid Add Task CTA */}
           <button

@@ -8,6 +8,7 @@ import {
   type Task,
   type TaskComment,
   type ActivityLog,
+  type ChannelMessage,
   type Status,
   type ViewMode,
   type FilterOptions,
@@ -261,6 +262,36 @@ const INITIAL_TASKS: Task[] = [
   },
 ];
 
+const INITIAL_CHANNEL_MESSAGES: ChannelMessage[] = [
+  {
+    id: "msg-1",
+    channelId: "list-sprint-tasks",
+    userId: "user-1",
+    user: SEED_USERS[0],
+    content:
+      "🚀 Sprint 42 kickoff is underway! We're prioritizing Framer Motion animations and Table View interactive cells.",
+    createdAt: "2026-08-28T09:00:00.000Z",
+  },
+  {
+    id: "msg-2",
+    channelId: "list-sprint-tasks",
+    userId: "user-2",
+    user: SEED_USERS[1],
+    content:
+      "I've linked the TanStack table column schemas. Testing inline cell editing now.",
+    createdAt: "2026-08-28T10:15:00.000Z",
+  },
+  {
+    id: "msg-3",
+    channelId: "list-sprint-tasks",
+    userId: "user-3",
+    user: SEED_USERS[2],
+    content:
+      "Checked the dark mode palette contrast against WCAG 2.2 AA. All OLED tokens are verified! 👍",
+    createdAt: "2026-08-28T11:30:00.000Z",
+  },
+];
+
 const INITIAL_WORKSPACE: Workspace = {
   id: "ws-main",
   name: "Acme Product Workspace",
@@ -276,6 +307,7 @@ interface WorkspaceState {
   activeListId: string;
   tasks: Task[];
   tags: Tag[];
+  channelMessages: ChannelMessage[];
   selectedTaskId: string | null;
   activeView: ViewMode;
   currentUserId: string;
@@ -321,6 +353,9 @@ interface WorkspaceState {
   addComment: (taskId: string, content: string, user?: User) => void;
   deleteComment: (taskId: string, commentId: string) => void;
   logActivity: (taskId: string, action: string, user?: User) => void;
+
+  // Channel Actions
+  addChannelMessage: (channelId: string, content: string, user?: User) => void;
 
   // Dependency Actions
   addDependency: (taskId: string, dependsOnTaskId: string) => boolean;
@@ -417,6 +452,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       activeListId: "list-sprint-tasks",
       tasks: INITIAL_TASKS,
       tags: SEED_TAGS,
+      channelMessages: INITIAL_CHANNEL_MESSAGES,
       selectedTaskId: null,
       activeView: "list",
       currentUserId: "user-1",
@@ -647,6 +683,22 @@ export const useWorkspaceStore = create<WorkspaceState>()(
                 }
               : task
           ),
+        }));
+      },
+
+      addChannelMessage: (channelId, content, user = SEED_USERS[0]) => {
+        if (!content.trim()) return;
+        const now = new Date().toISOString();
+        const newMessage: ChannelMessage = {
+          id: generateId("cmsg"),
+          channelId,
+          userId: user.id,
+          user,
+          content: content.trim(),
+          createdAt: now,
+        };
+        set((state) => ({
+          channelMessages: [...(state.channelMessages || []), newMessage],
         }));
       },
 
