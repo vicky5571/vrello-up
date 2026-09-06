@@ -143,7 +143,9 @@ export type ViewMode =
   | "placements"
   | "mous"
   | "events"
-  | "documents";
+  | "documents"
+  | "reports"
+  | "analytics";
 
 export type GroupByOption = "status" | "priority" | "assignee";
 

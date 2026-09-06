@@ -85,6 +85,20 @@ const DocumentsView = dynamic(
     ),
   { ssr: false, loading: () => <ViewFallback /> },
 );
+const ReportsView = dynamic(
+  () =>
+    import("@/components/views/ReportsView/ReportsView").then(
+      (m) => m.ReportsView,
+    ),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
+const AnalyticsView = dynamic(
+  () =>
+    import("@/components/views/AnalyticsView/AnalyticsView").then(
+      (m) => m.AnalyticsView,
+    ),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
 const TaskDrawer = dynamic(
   () => import("@/components/tasks/TaskDrawer").then((m) => m.TaskDrawer),
   { ssr: false },
@@ -307,6 +321,32 @@ export default function WorkspacePage() {
                 className="h-full w-full"
               >
                 <DocumentsView />
+              </motion.div>
+            )}
+
+            {activeView === "reports" && (
+              <motion.div
+                key="reports-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <ReportsView />
+              </motion.div>
+            )}
+
+            {activeView === "analytics" && (
+              <motion.div
+                key="analytics-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <AnalyticsView />
               </motion.div>
             )}
           </AnimatePresence>
