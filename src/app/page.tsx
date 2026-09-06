@@ -45,6 +45,13 @@ const GanttView = dynamic(
     import("@/components/views/GanttView/GanttView").then((m) => m.GanttView),
   { ssr: false, loading: () => <ViewFallback /> },
 );
+const BranchesView = dynamic(
+  () =>
+    import("@/components/views/BranchesView/BranchesView").then(
+      (m) => m.BranchesView,
+    ),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
 const TaskDrawer = dynamic(
   () => import("@/components/tasks/TaskDrawer").then((m) => m.TaskDrawer),
   { ssr: false },
@@ -189,6 +196,19 @@ export default function WorkspacePage() {
                 className="h-full w-full"
               >
                 <ChannelView />
+              </motion.div>
+            )}
+
+            {activeView === "branches" && (
+              <motion.div
+                key="branches-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <BranchesView />
               </motion.div>
             )}
           </AnimatePresence>

@@ -28,7 +28,7 @@ export const SEED_USERS: User[] = [
     email: "alex@vrelloup.dev",
     avatar:
       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-    role: "Lead Architect",
+    role: "admin",
   },
   {
     id: "user-2",
@@ -36,7 +36,7 @@ export const SEED_USERS: User[] = [
     email: "sarah@vrelloup.dev",
     avatar:
       "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80",
-    role: "Senior Frontend Engineer",
+    role: "staff",
   },
   {
     id: "user-3",
@@ -44,7 +44,7 @@ export const SEED_USERS: User[] = [
     email: "marcus@vrelloup.dev",
     avatar:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-    role: "Product Designer",
+    role: "staff",
   },
 ];
 
@@ -434,7 +434,7 @@ interface WorkspaceState {
   toggleTaskTag: (taskId: string, tagId: string) => void;
 
   // Member Actions
-  addWorkspaceMember: (name: string, email: string, role?: string) => User;
+  addWorkspaceMember: (name: string, email: string, role?: User["role"]) => User;
   removeWorkspaceMember: (userId: string) => void;
 
   // Backup Actions
@@ -732,8 +732,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             ? workspace.members
             : SEED_USERS;
         const lead =
-          members.find((m) => /lead|architect/i.test(m.role || "")) ??
-          members[0];
+          members.find((m) => m.role === "admin") ?? members[0];
         if (!lead) return;
         state.updateTask(id, {
           assignees: task.assignees.some((a) => a.id === lead.id)
@@ -1451,7 +1450,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }),
         }));
       },
-      addWorkspaceMember: (name, email, role = "Member") => {
+      addWorkspaceMember: (name, email, role = "staff") => {
         const id = generateId("user");
         const newMember: User = {
           id,

@@ -20,7 +20,7 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
-  role?: string;
+  role?: "admin" | "staff" | "viewer";
 }
 
 export interface Tag {
@@ -137,7 +137,8 @@ export type ViewMode =
   | "table"
   | "calendar"
   | "gantt"
-  | "channel";
+  | "channel"
+  | "branches";
 
 export type GroupByOption = "status" | "priority" | "assignee";
 

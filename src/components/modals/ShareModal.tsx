@@ -158,7 +158,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                     </div>
 
                     <select
-                      defaultValue={member.role?.includes("Lead") ? "Admin" : "Editor"}
+                      defaultValue={member.role === "admin" ? "Admin" : "Editor"}
                       className="px-2 py-1 rounded text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer focus:outline-hidden"
                     >
                       <option value="Admin">Full Access (Admin)</option>

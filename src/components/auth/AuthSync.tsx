@@ -28,7 +28,6 @@ export function AuthSync() {
         name,
         email,
         avatar,
-        role: "Verified Google Account",
       };
 
       const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);

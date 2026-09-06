@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, UserPlus, Mail, User, Shield, Copy, Check, Send } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { type User as WorkspaceUser } from "@/types";
 import { toast } from "sonner";
 
 interface InviteModalProps {
@@ -17,7 +18,7 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("Frontend Engineer");
+  const [role, setRole] = useState<WorkspaceUser["role"]>("staff");
   const [copied, setCopied] = useState(false);
 
   const currentWorkspace =
@@ -129,22 +130,18 @@ export function InviteModal({ isOpen, onClose }: InviteModalProps) {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Role / Title
+                  Role
                 </label>
                 <div className="relative flex items-center">
                   <Shield className="w-4 h-4 absolute left-3 text-slate-400" />
                   <select
                     value={role}
-                    onChange={(e) => setRole(e.target.value)}
+                    onChange={(e) => setRole(e.target.value as WorkspaceUser["role"])}
                     className="w-full pl-9 pr-3 py-2 rounded-lg text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:border-[#0073ea] cursor-pointer"
                   >
-                    <option value="Lead Architect">Lead Architect (Admin)</option>
-                    <option value="Senior Frontend Engineer">Senior Frontend Engineer</option>
-                    <option value="Fullstack Engineer">Fullstack Engineer</option>
-                    <option value="Product Designer">Product Designer</option>
-                    <option value="Product Manager">Product Manager</option>
-                    <option value="QA Engineer">QA Engineer</option>
-                    <option value="Guest">Guest (Read Only)</option>
+                    <option value="admin">Admin</option>
+                    <option value="staff">Staff</option>
+                    <option value="viewer">Viewer (Read Only)</option>
                   </select>
                 </div>
               </div>

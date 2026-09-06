@@ -84,7 +84,6 @@ export function ChannelView() {
           email: "agent@vrelloup.ai",
           avatar:
             "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80",
-          role: "Autonomous Assistant",
         };
         const aiReplies = [
           `I analyzed the current ${tasks.length} active tasks in this list. All critical path dependencies look healthy!`,
@@ -157,7 +156,7 @@ export function ChannelView() {
 
           {filteredMessages.map((msg) => {
             const isMe = msg.userId === currentUserId;
-            const isAi = msg.user.role === "Autonomous Assistant" || msg.userId === "user-ai";
+            const isAi = msg.userId === "user-ai";
 
             return (
               <div
