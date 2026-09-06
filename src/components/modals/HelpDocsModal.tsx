@@ -27,7 +27,7 @@ const SHORTCUTS = [
   { key: "N / C", label: "Create New Task" },
   { key: "Space", label: "Toggle Task Slide-Over Drawer" },
   { key: "1 - 5", label: "Quick Switch Views (List, Board, Calendar, Gantt, Home)" },
-  { key: "Marketing tabs", label: "Open Branches, MOUs, Placements, Events, Documents, Reports, Analytics (tab bar or ⌘/Ctrl + K search)" },
+  { key: "Marketing tabs", label: "Open Branches, Outlets, MOUs, Placements, Events, Documents, Reports, Analytics (tab bar or ⌘/Ctrl + K search)" },
   { key: "Esc", label: "Close Active Modal / Drawer" },
   { key: "?", label: "Open Help & Documentation" },
   { key: "⌘ + Shift + F", label: "Toggle Workspace Filter Bar" },
