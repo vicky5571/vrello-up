@@ -36,6 +36,14 @@ export interface Subtask {
   createdAt: string;
 }
 
+export interface TaskCommentAttachment {
+  id: string;
+  name: string;
+  size: string;
+  url?: string;
+  type?: string;
+}
+
 export interface TaskComment {
   id: string;
   taskId: string;
@@ -43,6 +51,7 @@ export interface TaskComment {
   user: User;
   content: string;
   createdAt: string;
+  attachments?: TaskCommentAttachment[];
 }
 
 export interface ActivityLog {

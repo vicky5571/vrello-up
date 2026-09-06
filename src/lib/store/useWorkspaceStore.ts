@@ -7,6 +7,7 @@ import {
   type List,
   type Task,
   type TaskComment,
+  type TaskCommentAttachment,
   type ActivityLog,
   type ChannelMessage,
   type Status,
@@ -350,7 +351,12 @@ interface WorkspaceState {
   deleteSubtask: (taskId: string, subtaskId: string) => void;
 
   // Comment & Activity Actions
-  addComment: (taskId: string, content: string, user?: User) => void;
+  addComment: (
+    taskId: string,
+    content: string,
+    user?: User,
+    attachments?: TaskCommentAttachment[],
+  ) => void;
   deleteComment: (taskId: string, commentId: string) => void;
   logActivity: (taskId: string, action: string, user?: User) => void;
 
@@ -636,8 +642,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }));
       },
 
-      addComment: (taskId, content, user = SEED_USERS[0]) => {
-        if (!content.trim()) return;
+      addComment: (taskId, content, user = SEED_USERS[0], attachments) => {
+        if (!content.trim() && (!attachments || attachments.length === 0)) return;
         const now = new Date().toISOString();
         const newComment: TaskComment = {
           id: generateId("comment"),
@@ -646,6 +652,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           user,
           content: content.trim(),
           createdAt: now,
+          attachments,
         };
 
         const newActivity: ActivityLog = {

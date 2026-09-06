@@ -18,6 +18,7 @@ import {
   Tags,
   Plus,
   Check,
+  Search,
 } from "lucide-react";
 import { TiptapEditor } from "./TiptapEditor";
 import { SubtaskManager } from "./SubtaskManager";
@@ -36,6 +37,7 @@ export function TaskDrawer() {
     addSubtask,
     toggleSubtask,
     deleteSubtask,
+    addDependency,
     removeDependency,
     workspaces,
     activeWorkspaceId,
@@ -69,6 +71,8 @@ export function TaskDrawer() {
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState("#3B82F6");
   const [isManagingTags, setIsManagingTags] = useState(false);
+  const [isAddingDep, setIsAddingDep] = useState(false);
+  const [depSearch, setDepSearch] = useState("");
 
   useEffect(() => {
     if (task) {
@@ -497,14 +501,90 @@ export function TaskDrawer() {
               </div>
 
               {/* Dependencies & Blockers Section */}
-              {task.dependencies && task.dependencies.length > 0 && (
-                <div className="pt-2">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                     <LinkIcon className="w-3.5 h-3.5 text-slate-500" />
                     <span>
-                      Blocking Dependencies ({task.dependencies.length})
+                      Blocking Dependencies ({(task.dependencies || []).length})
                     </span>
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingDep(!isAddingDep);
+                      setDepSearch("");
+                    }}
+                    className="text-[11px] font-semibold text-[#7B68EE] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    {isAddingDep ? "Cancel" : "Add Blocker"}
+                  </button>
+                </div>
+
+                {/* Add Dependency Search Dropdown */}
+                {isAddingDep && (
+                  <div className="p-3 mb-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        autoFocus
+                        value={depSearch}
+                        onChange={(e) => setDepSearch(e.target.value)}
+                        placeholder="Search tasks to add as blocker..."
+                        className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE]"
+                      />
+                    </div>
+
+                    <div className="max-h-36 overflow-y-auto space-y-1">
+                      {tasks
+                        .filter(
+                          (t) =>
+                            t.id !== task.id &&
+                            !(task.dependencies || []).includes(t.id) &&
+                            t.title.toLowerCase().includes(depSearch.toLowerCase())
+                        )
+                        .map((candidate) => (
+                          <button
+                            key={candidate.id}
+                            type="button"
+                            onClick={() => {
+                              const success = addDependency(task.id, candidate.id);
+                              if (success) {
+                                toast.success(`Waiting on "${candidate.title}"`);
+                                setIsAddingDep(false);
+                                setDepSearch("");
+                              } else {
+                                toast.error("Cannot add dependency: circular loop detected");
+                              }
+                            }}
+                            className="w-full text-left p-2 rounded-lg hover:bg-slate-200/70 dark:hover:bg-slate-700 flex items-center justify-between text-xs transition-colors cursor-pointer"
+                          >
+                            <span className="truncate font-medium text-slate-800 dark:text-slate-200">
+                              {candidate.title}
+                            </span>
+                            <span className="text-[10px] text-slate-400 shrink-0 ml-2">
+                              #{candidate.id.slice(-4)}
+                            </span>
+                          </button>
+                        ))}
+                      {tasks.filter(
+                        (t) =>
+                          t.id !== task.id &&
+                          !(task.dependencies || []).includes(t.id) &&
+                          t.title.toLowerCase().includes(depSearch.toLowerCase())
+                      ).length === 0 && (
+                        <p className="text-[11px] text-slate-400 text-center py-2">
+                          No matching tasks found
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Existing Dependencies List */}
+                {task.dependencies && task.dependencies.length > 0 ? (
                   <div className="space-y-1.5">
                     {task.dependencies.map((depId) => {
                       const blocker = tasks.find((t) => t.id === depId);
@@ -536,8 +616,14 @@ export function TaskDrawer() {
                       );
                     })}
                   </div>
-                </div>
-              )}
+                ) : (
+                  !isAddingDep && (
+                    <p className="text-[11px] text-slate-400">
+                      No blocking dependencies. This task can be started immediately.
+                    </p>
+                  )
+                )}
+              </div>
                 </>
               )}
             </div>

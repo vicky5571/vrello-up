@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Task, TaskComment, ActivityLog } from "@/types";
+import { useState, useRef, useEffect } from "react";
+import { Task, TaskComment, ActivityLog, TaskCommentAttachment } from "@/types";
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import {
@@ -9,6 +9,13 @@ import {
   Activity,
   Send,
   Trash2,
+  Paperclip,
+  AtSign,
+  X,
+  FileIcon,
+  ImageIcon,
+  FileCode,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -27,8 +34,14 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
     workspaces,
     activeWorkspaceId,
   } = useWorkspaceStore();
+
   const [commentText, setCommentText] = useState("");
   const [filter, setFilter] = useState<FeedFilter>("all");
+  const [pendingAttachments, setPendingAttachments] = useState<TaskCommentAttachment[]>([]);
+  const [isMentionOpen, setIsMentionOpen] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const mentionMenuRef = useRef<HTMLDivElement>(null);
 
   const comments = task.comments || [];
   const activities = task.activities || [];
@@ -38,12 +51,30 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
   const members = currentWorkspace?.members || SEED_USERS;
   const currentUser = members.find((u) => u.id === currentUserId) || members[0];
 
+  // Close mention menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (mentionMenuRef.current && !mentionMenuRef.current.contains(e.target as Node)) {
+        setIsMentionOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handlePostComment = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!commentText.trim()) return;
+    if (!commentText.trim() && pendingAttachments.length === 0) return;
 
-    addComment(task.id, commentText.trim(), currentUser);
+    addComment(
+      task.id,
+      commentText.trim(),
+      currentUser,
+      pendingAttachments.length > 0 ? pendingAttachments : undefined
+    );
     setCommentText("");
+    setPendingAttachments([]);
+    setIsMentionOpen(false);
     toast.success("Comment added");
   };
 
@@ -52,6 +83,43 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
       e.preventDefault();
       handlePostComment();
     }
+  };
+
+  const handleInsertMention = (name: string) => {
+    setCommentText((prev) => {
+      const trimmed = prev.trimEnd();
+      return `${trimmed ? trimmed + " " : ""}@${name} `;
+    });
+    setIsMentionOpen(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newAttachments: TaskCommentAttachment[] = Array.from(files).map((file) => {
+      const sizeInKb = Math.round(file.size / 1024);
+      const sizeStr = sizeInKb > 1024 ? `${(sizeInKb / 1024).toFixed(1)} MB` : `${sizeInKb} KB`;
+
+      return {
+        id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        name: file.name,
+        size: sizeStr,
+        type: file.type,
+        url: URL.createObjectURL(file),
+      };
+    });
+
+    setPendingAttachments((prev) => [...prev, ...newAttachments]);
+    toast.success(`Attached ${files.length} file${files.length > 1 ? "s" : ""}`);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemovePendingAttachment = (id: string) => {
+    setPendingAttachments((prev) => prev.filter((a) => a.id !== id));
   };
 
   // Combine and sort feed entries
@@ -108,6 +176,33 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
     }
   };
 
+  const renderHighlightedContent = (content: string) => {
+    const parts = content.split(/(@[A-Za-z0-9_ -]+)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("@")) {
+        return (
+          <span
+            key={i}
+            className="inline-block px-1.5 py-0.2 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold text-[11px]"
+          >
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  const getAttachmentIcon = (type?: string, name: string = "") => {
+    if (type?.startsWith("image/") || /\.(png|jpe?g|gif|webp|svg)$/i.test(name)) {
+      return <ImageIcon className="w-3.5 h-3.5 text-blue-500" />;
+    }
+    if (/\.(ts|tsx|js|jsx|json|html|css|py|rs)$/i.test(name)) {
+      return <FileCode className="w-3.5 h-3.5 text-amber-500" />;
+    }
+    return <FileIcon className="w-3.5 h-3.5 text-slate-500" />;
+  };
+
   return (
     <div className="flex flex-col h-full space-y-4">
       {/* Sub-header Filter Tabs */}
@@ -155,7 +250,7 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
       {/* New Comment Input Box */}
       <form
         onSubmit={handlePostComment}
-        className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2 focus-within:border-[#7B68EE] transition-colors"
+        className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-3 space-y-2.5 focus-within:border-[#7B68EE] transition-colors relative"
       >
         <div className="flex items-start gap-2.5">
           <UserAvatar user={currentUser} size="sm" />
@@ -163,24 +258,120 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Write a comment or update... (⌘ + Enter to post)"
+            placeholder="Write a comment or @mention a teammate... (⌘ + Enter to post)"
             rows={2}
             className="flex-1 bg-transparent text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden resize-none"
           />
         </div>
 
-        <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
-          <span className="text-[10px] text-slate-400">
-            Press <kbd className="font-mono">⌘↵</kbd> to submit
-          </span>
-          <button
-            type="submit"
-            disabled={!commentText.trim()}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-[#1E1F21] dark:bg-white text-white dark:text-[#1E1F21] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-black dark:hover:bg-slate-200 transition-all cursor-pointer shadow-2xs"
-          >
-            <Send className="w-3 h-3" />
-            <span>Comment</span>
-          </button>
+        {/* Pending Upload Attachments Chips */}
+        {pendingAttachments.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {pendingAttachments.map((att) => (
+              <div
+                key={att.id}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs shadow-2xs"
+              >
+                {getAttachmentIcon(att.type, att.name)}
+                <span className="font-medium text-slate-800 dark:text-slate-200 max-w-[140px] truncate text-[11px]">
+                  {att.name}
+                </span>
+                <span className="text-[10px] text-slate-400">({att.size})</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemovePendingAttachment(att.id)}
+                  className="p-0.5 rounded text-slate-400 hover:text-red-500 transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Hidden File Input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          onChange={handleFileChange}
+          className="hidden"
+        />
+
+        {/* Action Controls & Mention Popover */}
+        <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-slate-800/60 relative">
+          <div className="flex items-center gap-1">
+            {/* Mention Button */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsMentionOpen(!isMentionOpen)}
+                className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                title="Mention a teammate (@)"
+              >
+                <AtSign className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Mention Dropdown */}
+              {isMentionOpen && (
+                <div
+                  ref={mentionMenuRef}
+                  className="absolute left-0 bottom-8 z-30 w-48 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-1 text-xs space-y-0.5"
+                >
+                  <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Mention Member
+                  </div>
+                  {members.map((member) => (
+                    <button
+                      key={member.id}
+                      type="button"
+                      onClick={() => handleInsertMention(member.name)}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-left transition-colors cursor-pointer"
+                    >
+                      <UserAvatar user={member} size="xs" />
+                      <span className="truncate font-semibold text-slate-800 dark:text-slate-200">
+                        {member.name}
+                      </span>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleInsertMention("Brain² AI")}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-left transition-colors text-indigo-600 dark:text-indigo-400 font-bold cursor-pointer"
+                  >
+                    <span className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center text-[10px]">
+                      🤖
+                    </span>
+                    <span>Brain² AI</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Attach File Button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1 rounded-lg text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-200/60 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              title="Attach files or documents"
+            >
+              <Paperclip className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-slate-400 hidden sm:inline">
+              Press <kbd className="font-mono">⌘↵</kbd> to submit
+            </span>
+            <button
+              type="submit"
+              disabled={!commentText.trim() && pendingAttachments.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-[#1E1F21] dark:bg-white text-white dark:text-[#1E1F21] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-black dark:hover:bg-slate-200 transition-all cursor-pointer shadow-2xs"
+            >
+              <Send className="w-3 h-3" />
+              <span>Comment</span>
+            </button>
+          </div>
         </div>
       </form>
 
@@ -201,7 +392,7 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
                   className="group flex items-start gap-2.5 p-3 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 shadow-2xs"
                 >
                   <UserAvatar user={c.user} size="sm" />
-                  <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex-1 min-w-0 space-y-1.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
@@ -223,9 +414,44 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
                         <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words leading-relaxed">
-                      {c.content}
-                    </p>
+
+                    {c.content && (
+                      <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words leading-relaxed">
+                        {renderHighlightedContent(c.content)}
+                      </p>
+                    )}
+
+                    {/* Render Attachments */}
+                    {c.attachments && c.attachments.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {c.attachments.map((att) => (
+                          <div
+                            key={att.id}
+                            className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          >
+                            <div className="p-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                              {getAttachmentIcon(att.type, att.name)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-semibold text-slate-800 dark:text-slate-200 max-w-[150px] truncate text-[11px]">
+                                {att.name}
+                              </div>
+                              <div className="text-[10px] text-slate-400">{att.size}</div>
+                            </div>
+                            {att.url && (
+                              <a
+                                href={att.url}
+                                download={att.name}
+                                title="Download attachment"
+                                className="p-1 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors ml-1"
+                              >
+                                <Download className="w-3 h-3" />
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
