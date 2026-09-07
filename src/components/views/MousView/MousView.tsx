@@ -51,6 +51,8 @@ export function MousView() {
   const [modalMou, setModalMou] = useState<Partial<MarcomMou> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const MOU_TYPES = ["Compensation", "Exclusive Branding", "Event Sponsorship", "Space Rental", "Joint Promotion"] as const;
+
   const canManage = can("DELETE_MOU");
   const canCreate = can("CREATE_MOU");
   const canApprove = can("APPROVE_MOU");
@@ -211,7 +213,7 @@ export function MousView() {
         deleteRequiresMessage="Delete requires admin role"
         onDeleteOne={deleteOne}
         canAdd={canCreate}
-        onAdd={() => setModalMou({ branchId: branches[0]?.id || "", partnerName: "", mouType: "EXCLUSIVE_OUTLET", outletName: "", startDate: new Date().toISOString().slice(0, 10), endDate: "", picName: "", docPath: "", compensationValue: undefined, notes: "" })}
+        onAdd={() => setModalMou({ branchId: branches[0]?.id || "", partnerName: "", mouType: "Compensation", outletName: "", startDate: new Date().toISOString().slice(0, 10), endDate: "", picName: "", docPath: "", compensationValue: undefined, notes: "" })}
         addLabel="Add MOU"
         addIcon={Plus}
         addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors shadow-2xs cursor-pointer"
@@ -297,7 +299,11 @@ export function MousView() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">MOU Type *</label>
-                  <input type="text" required placeholder="e.g. EXCLUSIVE_OUTLET" value={modalMou.mouType || ""} onChange={(e) => setModalMou({ ...modalMou, mouType: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
+                  <select required value={modalMou.mouType || "Compensation"} onChange={(e) => setModalMou({ ...modalMou, mouType: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer">
+                    {MOU_TYPES.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
