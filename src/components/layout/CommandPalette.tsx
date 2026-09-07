@@ -32,14 +32,22 @@ import {
   CheckCircle2,
   Flame,
   CornerDownLeft,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fuzzyFilter, fuzzyScore } from "@/lib/productivity/fuzzy";
 import { Priority, ViewMode } from "@/types";
+
+interface MarcomHit {
+  id: string;
+  name: string;
+  detail?: string;
+}
 
 interface PaletteItem {
   id: string;
   title: string;
-  category: "tasks" | "navigation" | "views" | "actions";
+  category: "tasks" | "branches" | "outlets" | "mous" | "navigation" | "views" | "actions";
   subtitle?: string;
   icon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   iconColor?: string;
@@ -63,11 +71,15 @@ export function CommandPalette() {
     setSelectedTaskId,
     toggleSidebar,
     setCreateTaskModalOpen,
+    setExportCenterOpen,
   } = useWorkspaceStore();
 
   const { theme, setTheme } = useTheme();
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [branches, setBranches] = useState<MarcomHit[]>([]);
+  const [outlets, setOutlets] = useState<MarcomHit[]>([]);
+  const [mous, setMous] = useState<MarcomHit[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -103,22 +115,60 @@ export function CommandPalette() {
     }
   }, [isCommandPaletteOpen]);
 
+  // Marcom directory for universal jump: branches, outlets, MOUs.
+  // Fetched lazily on open; failures degrade to tasks/navigation/views.
+  useEffect(() => {
+    if (!isCommandPaletteOpen) return;
+    let cancelled = false;
+    const pick = (prefix: string, rows: unknown[]): MarcomHit[] =>
+      (Array.isArray(rows) ? rows : [])
+        .filter((r): r is Record<string, unknown> => !!r && typeof r === "object")
+        .map((r) => {
+          const rawId = typeof r.id === "string" ? r.id : "";
+          const name =
+            [r.partnerName, r.name].find((v) => typeof v === "string") || rawId;
+          const detail =
+            [r.code, r.status, r.city].find((v) => typeof v === "string") || undefined;
+          return { id: `${prefix}${rawId}`, name, detail };
+        })
+        .filter((h) => !!h.name);
+    Promise.all([
+      fetch("/api/marcom/branches").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+      fetch("/api/marcom/outlets").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+      fetch("/api/marcom/mous").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+    ]).then(([b, o, m]) => {
+      if (cancelled) return;
+      setBranches(pick("branch:", b.data));
+      setOutlets(pick("outlet:", o.data));
+      setMous(pick("mou:", m.data));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isCommandPaletteOpen]);
+
   // Build searchable items list
   const allItems = useMemo<PaletteItem[]>(() => {
     const items: PaletteItem[] = [];
-    const q = query.trim().toLowerCase();
-
-    // 1. Tasks
-    const matchingTasks = tasks.filter((t) => {
+    // ">" prefix narrows to runnable actions (e.g. "> new task").
+    const raw = query.trim();
+    const actionsOnly = raw.startsWith(">");
+    const q = (actionsOnly ? raw.slice(1) : raw).trim();
+    const match = (texts: (string | undefined | null)[]) => {
       if (!q) return true;
-      const titleMatch = t.title.toLowerCase().includes(q);
-      const descMatch = t.description.toLowerCase().includes(q);
-      const tagMatch = t.tags.some((tag) => tag.name.toLowerCase().includes(q));
-      return titleMatch || descMatch || tagMatch;
-    });
+      return texts.some((t) => !!t && fuzzyScore(q, t) >= 0);
+    };
+
+    // 1. Tasks (fuzzy across title, description, tags)
+    const matchingTasks = fuzzyFilter(
+      q,
+      tasks,
+      (t) => [t.title, t.description, ...t.tags.map((tag) => tag.name)],
+      6,
+    );
 
     // Take top 6 task matches
-    matchingTasks.slice(0, 6).forEach((task) => {
+    matchingTasks.forEach((task) => {
       const status = allStatuses.find((s) => s.id === task.statusId);
       // Find list name
       let listName = "General";
@@ -150,7 +200,7 @@ export function CommandPalette() {
 
     // 2. Navigation (Spaces & Lists)
     for (const space of currentWorkspace?.spaces || []) {
-      if (!q || space.name.toLowerCase().includes(q)) {
+      if (match([space.name])) {
         items.push({
           id: `space-${space.id}`,
           title: space.name,
@@ -167,7 +217,7 @@ export function CommandPalette() {
 
       // Direct Lists
       for (const list of space.lists) {
-        if (!q || list.name.toLowerCase().includes(q)) {
+        if (match([list.name])) {
           items.push({
             id: `list-${list.id}`,
             title: list.name,
@@ -185,7 +235,7 @@ export function CommandPalette() {
 
       // Folders & Folder Lists
       for (const folder of space.folders) {
-        if (!q || folder.name.toLowerCase().includes(q)) {
+        if (match([folder.name])) {
           items.push({
             id: `folder-${folder.id}`,
             title: folder.name,
@@ -203,7 +253,7 @@ export function CommandPalette() {
         }
 
         for (const list of folder.lists) {
-          if (!q || list.name.toLowerCase().includes(q)) {
+          if (match([list.name])) {
             items.push({
               id: `folder-list-${list.id}`,
               title: list.name,
@@ -219,6 +269,34 @@ export function CommandPalette() {
           }
         }
       }
+    }
+
+    // 2b. Marcom directory (fuzzy jump to branches, outlets, MOUs)
+    const marcomSections: {
+      rows: MarcomHit[];
+      category: PaletteItem["category"];
+      view: ViewMode;
+      viewLabel: string;
+      icon: React.ComponentType<{ className?: string }>;
+    }[] = [
+      { rows: branches, category: "branches", view: "branches", viewLabel: "Branch", icon: Building2 },
+      { rows: outlets, category: "outlets", view: "outlets", viewLabel: "Outlet", icon: Store },
+      { rows: mous, category: "mous", view: "mous", viewLabel: "MOU", icon: FileText },
+    ];
+    for (const section of marcomSections) {
+      fuzzyFilter(q, section.rows, (r) => [r.name, r.detail ?? ""], 4).forEach((hit) => {
+        items.push({
+          id: hit.id,
+          title: hit.name,
+          category: section.category,
+          subtitle: hit.detail ? `${section.viewLabel} • ${hit.detail}` : section.viewLabel,
+          icon: section.icon,
+          onSelect: () => {
+            setActiveView(section.view);
+            closeCommandPalette();
+          },
+        });
+      });
     }
 
     // 3. Views
@@ -239,27 +317,36 @@ export function CommandPalette() {
       { id: "analytics", name: "Analytics (Marketing)", icon: TrendingUp },
     ];
 
-    viewsList.forEach((v) => {
-      if (!q || v.name.toLowerCase().includes(q) || v.id.includes(q)) {
-        items.push({
-          id: `view-${v.id}`,
-          title: `Switch to ${v.name}`,
-          category: "views",
-          icon: v.icon,
-          onSelect: () => {
-            setActiveView(v.id);
-            closeCommandPalette();
-          },
-        });
-      }
+    const matchingViews = fuzzyFilter(
+      q,
+      viewsList,
+      (v) => [v.name, v.id],
+      14,
+    );
+    matchingViews.forEach((v) => {
+      items.push({
+        id: `view-${v.id}`,
+        title: `Switch to ${v.name}`,
+        category: "views",
+        icon: v.icon,
+        onSelect: () => {
+          setActiveView(v.id);
+          closeCommandPalette();
+        },
+      });
     });
 
     // 4. Quick Actions
-    const actions: { id: string; title: string; subtitle?: string; icon: React.ComponentType<{ className?: string }>; onSelect: () => void }[] = [
+    const goTo = (view: ViewMode) => () => {
+      setActiveView(view);
+      closeCommandPalette();
+    };
+    const actions: { id: string; title: string; subtitle?: string; keywords?: string; icon: React.ComponentType<{ className?: string }>; onSelect: () => void }[] = [
       {
         id: "action-create-task",
-        title: "Create New Task",
+        title: "+ New Task",
         subtitle: "Add a task to the active list",
+        keywords: "create new task add",
         icon: Plus,
         onSelect: () => {
           closeCommandPalette();
@@ -267,9 +354,45 @@ export function CommandPalette() {
         },
       },
       {
+        id: "action-goto-mous",
+        title: "Go to MOUs",
+        subtitle: "Open the MOU partnership pipeline",
+        keywords: "mou mous partnerships",
+        icon: FileText,
+        onSelect: goTo("mous"),
+      },
+      {
+        id: "action-goto-reports",
+        title: "Go to Reports",
+        subtitle: "Open monthly reports",
+        keywords: "reports monthly",
+        icon: BarChart3,
+        onSelect: goTo("reports"),
+      },
+      {
+        id: "action-goto-placements",
+        title: "Go to Placements",
+        subtitle: "Open outlet branding placements",
+        keywords: "placements branding outlets",
+        icon: ClipboardList,
+        onSelect: goTo("placements"),
+      },
+      {
+        id: "action-export-center",
+        title: "Open Export Center",
+        subtitle: "Reports, placements & MOUs → PDF / Excel",
+        keywords: "export pdf excel csv download",
+        icon: Download,
+        onSelect: () => {
+          closeCommandPalette();
+          setExportCenterOpen(true);
+        },
+      },
+      {
         id: "action-toggle-theme",
-        title: `Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`,
-        subtitle: `Currently using ${theme === "dark" ? "Dark" : "Light"} theme`,
+        title: `Toggle Dark Mode`,
+        subtitle: `Currently using ${theme === "dark" ? "Dark" : "Light"} theme — switch to ${theme === "dark" ? "Light" : "Dark"}`,
+        keywords: "theme dark light mode toggle",
         icon: theme === "dark" ? Sun : Moon,
         onSelect: () => {
           setTheme(theme === "dark" ? "light" : "dark");
@@ -288,23 +411,25 @@ export function CommandPalette() {
       },
     ];
 
-    actions.forEach((act) => {
-      if (!q || act.title.toLowerCase().includes(q) || act.id.includes(q)) {
-        items.push({
-          id: act.id,
-          title: act.title,
-          category: "actions",
-          subtitle: act.subtitle,
-          icon: act.icon,
-          onSelect: act.onSelect,
-        });
-      }
+    fuzzyFilter(q, actions, (act) => [act.title, act.subtitle ?? "", act.keywords ?? "", act.id], 12).forEach((act) => {
+      items.push({
+        id: act.id,
+        title: act.title,
+        category: "actions",
+        subtitle: act.subtitle,
+        icon: act.icon,
+        onSelect: act.onSelect,
+      });
     });
 
-    return items;
+    // ">" prefix narrows the palette to runnable actions only.
+    return actionsOnly ? items.filter((i) => i.category === "actions") : items;
   }, [
     query,
     tasks,
+    branches,
+    outlets,
+    mous,
     currentWorkspace,
     allStatuses,
     theme,
@@ -315,6 +440,7 @@ export function CommandPalette() {
     setActiveView,
     toggleSidebar,
     setCreateTaskModalOpen,
+    setExportCenterOpen,
     closeCommandPalette,
   ]);
 
@@ -374,6 +500,9 @@ export function CommandPalette() {
 
   const CATEGORY_LABELS: Record<PaletteItem["category"], string> = {
     tasks: "Tasks",
+    branches: "Branches",
+    outlets: "Outlets",
+    mous: "MOUs",
     navigation: "Spaces & Lists",
     views: "Switch View",
     actions: "Actions",

@@ -46,18 +46,60 @@ export function runOverdueEscalation(): number {
   return escalated;
 }
 
+const notifiedEvents = new Set<string>();
+
+export async function checkUpcomingEvents(): Promise<number> {
+  if (typeof window === "undefined") return 0;
+  const state = useWorkspaceStore.getState();
+  const hasEventRule = state.customAutomations.some(
+    (r) => r.enabled && r.trigger === "event:in_3_days",
+  );
+  if (!hasEventRule) return 0;
+
+  try {
+    const res = await fetch("/api/marcom/events?status=UPCOMING");
+    if (!res.ok) return 0;
+    const events = await res.json();
+    if (!Array.isArray(events)) return 0;
+
+    const now = Date.now();
+    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+    let triggered = 0;
+
+    for (const ev of events) {
+      if (!ev.startDate || notifiedEvents.has(ev.id)) continue;
+      const eventTime = new Date(ev.startDate).getTime();
+      const diff = eventTime - now;
+      if (diff > 0 && diff <= threeDaysMs) {
+        notifiedEvents.add(ev.id);
+        await state.runAutomationsForTrigger("event:in_3_days", {
+          eventId: ev.id,
+          eventTitle: ev.name,
+        });
+        triggered++;
+      }
+    }
+    return triggered;
+  } catch {
+    return 0;
+  }
+}
+
 let timer: ReturnType<typeof setInterval> | null = null;
 
 /**
- * Polls rule-4 on an interval (plus once immediately). Call once from the
- * page level; the returned function stops the loop.
+ * Polls automations (rule-4 overdue and custom event triggers) on an interval.
  */
 export function startAutomationScheduler(
   intervalMs = 60_000,
 ): () => void {
   runOverdueEscalation();
+  checkUpcomingEvents();
   if (timer === null) {
-    timer = setInterval(runOverdueEscalation, intervalMs);
+    timer = setInterval(() => {
+      runOverdueEscalation();
+      checkUpcomingEvents();
+    }, intervalMs);
   }
   return stopAutomationScheduler;
 }

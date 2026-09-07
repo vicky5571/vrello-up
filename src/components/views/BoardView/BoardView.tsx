@@ -19,7 +19,8 @@ import {
 import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { BoardColumn } from "./BoardColumn";
 import { BoardCard } from "./BoardCard";
-import { useState, useMemo } from "react";
+import { BulkActionBar } from "@/components/tasks/BulkActionBar";
+import { useState, useMemo, useCallback } from "react";
 import { Task } from "@/types";
 import { matchesFilters } from "@/lib/tasks/filterTasks";
 
@@ -34,6 +35,9 @@ export function BoardView() {
     setSelectedTaskId,
     moveTaskStatus,
     reorderTasksInStatus,
+    selectedTaskIds,
+    toggleTaskSelection,
+    setTaskSelection,
   } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
@@ -43,6 +47,25 @@ export function BoardView() {
   const statuses = useMemo(
     () => currentSpace?.statuses || [],
     [currentSpace?.statuses],
+  );
+  const members = useMemo(
+    () => currentWorkspace?.members || [],
+    [currentWorkspace?.members],
+  );
+
+  // Column select-all toggles: add the column when partially selected,
+  // remove it when fully selected.
+  const handleToggleSelectAll = useCallback(
+    (taskIds: string[]) => {
+      const selected = new Set(selectedTaskIds);
+      const allSelected = taskIds.every((id) => selected.has(id));
+      if (allSelected) {
+        setTaskSelection(selectedTaskIds.filter((id) => !taskIds.includes(id)));
+      } else {
+        setTaskSelection([...selectedTaskIds, ...taskIds]);
+      }
+    },
+    [selectedTaskIds, setTaskSelection],
   );
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -239,9 +262,18 @@ export function BoardView() {
               tasks={tasksByStatus.get(status.id) || []}
               onSelectTask={setSelectedTaskId}
               onMoveStatus={moveTaskStatus}
+              selectedIds={selectedTaskIds}
+              onToggleSelect={toggleTaskSelection}
+              onToggleSelectAll={handleToggleSelectAll}
             />
           ))}
         </div>
+
+        <BulkActionBar
+          selectedIds={selectedTaskIds}
+          statuses={statuses}
+          members={members}
+        />
 
         {/* Active dragging overlay preview */}
         <DragOverlay dropAnimation={dropAnimationConfig}>

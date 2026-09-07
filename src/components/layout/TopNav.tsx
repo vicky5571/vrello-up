@@ -5,6 +5,7 @@ import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { ViewSwitcher } from "./ViewSwitcher";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { NotificationCenter } from "./NotificationCenter";
 import {
   ChevronDown,
   Search,
@@ -21,6 +22,7 @@ import {
   List as ListIcon,
   Calendar,
   Building2,
+  Download,
   LogIn,
   ShieldCheck,
   Menu,
@@ -68,6 +70,7 @@ export function TopNav() {
     toggleSidebar,
     currentUserId,
     setCurrentUserId,
+    setExportCenterOpen,
   } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
@@ -293,6 +296,18 @@ export function TopNav() {
             </button>
 
             <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-0.5" />
+
+            {/* Notification & Activity Center */}
+            <NotificationCenter />
+
+            <button
+              type="button"
+              onClick={() => setExportCenterOpen(true)}
+              title="Export Center — reports, placements & MOUs to PDF / Excel"
+              className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </button>
 
             {/* Theme Switcher */}
             <ThemeToggle />

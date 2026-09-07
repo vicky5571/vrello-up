@@ -11,6 +11,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { cn } from "@/lib/utils";
 import { summarizeReports } from "@/lib/marcom/analytics";
 
@@ -100,6 +101,7 @@ function ReportSection({ title, items }: { title: string; items: unknown[] }) {
 
 export function ReportsView() {
   const { can } = useMarcomPermissions();
+  const { setExportCenterOpen } = useWorkspaceStore();
 
   const [reports, setReports] = useState<MarcomReport[]>([]);
   const [documents, setDocuments] = useState<MarcomDocument[]>([]);
@@ -228,6 +230,15 @@ export function ReportsView() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setExportCenterOpen(true)}
+            title="Open Export Center — PDF summaries & Excel sheets"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700 cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export Center</span>
+          </button>
           <button
             type="button"
             onClick={handleExportAll}

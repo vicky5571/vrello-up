@@ -18,6 +18,9 @@ interface BoardColumnProps {
   tasks: Task[];
   onSelectTask: (taskId: string) => void;
   onMoveStatus: (taskId: string, statusId: string) => void;
+  selectedIds: string[];
+  onToggleSelect: (taskId: string) => void;
+  onToggleSelectAll: (taskIds: string[]) => void;
 }
 
 export const BoardColumn = memo(function BoardColumn({
@@ -26,6 +29,9 @@ export const BoardColumn = memo(function BoardColumn({
   tasks,
   onSelectTask,
   onMoveStatus,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
 }: BoardColumnProps) {
   const { setNodeRef } = useDroppable({
     id: status.id,
@@ -60,6 +66,9 @@ export const BoardColumn = memo(function BoardColumn({
   };
 
   const taskIds = tasks.map((t) => t.id);
+  const selectedSet = new Set(selectedIds);
+  const selectedInColumn = tasks.filter((t) => selectedSet.has(t.id)).length;
+  const allColumnSelected = tasks.length > 0 && selectedInColumn === tasks.length;
 
   return (
     <div
@@ -69,6 +78,23 @@ export const BoardColumn = memo(function BoardColumn({
       {/* Column Header */}
       <div className="p-3 flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/60">
         <div className="flex items-center gap-2">
+          {tasks.length > 0 && (
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={allColumnSelected}
+              aria-label={`Select all tasks in ${status.name}`}
+              onClick={() => onToggleSelectAll(taskIds)}
+              title={allColumnSelected ? "Deselect column" : "Select column for batch actions"}
+              className={
+                allColumnSelected
+                  ? "flex w-3.5 h-3.5 items-center justify-center rounded border border-indigo-500 bg-indigo-500 text-[9px] text-white cursor-pointer"
+                  : "flex w-3.5 h-3.5 items-center justify-center rounded border border-slate-300 dark:border-slate-600 text-white cursor-pointer hover:border-indigo-400 transition-colors"
+              }
+            >
+              {allColumnSelected && "✓"}
+            </button>
+          )}
           <StatusBadge status={status} size="sm" />
           <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-1.5 py-0.2 rounded bg-slate-200/70 dark:bg-slate-800">
             {tasks.length}
@@ -126,6 +152,8 @@ export const BoardColumn = memo(function BoardColumn({
               statuses={allStatuses}
               onSelect={onSelectTask}
               onMoveStatus={onMoveStatus}
+              selected={selectedSet.has(task.id)}
+              onToggleSelect={onToggleSelect}
             />
           ))}
         </SortableContext>

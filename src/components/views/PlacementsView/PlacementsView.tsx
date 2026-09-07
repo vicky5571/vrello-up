@@ -8,6 +8,7 @@ import {
   ArrowUpDown,
   ClipboardList,
   ChevronDown,
+  Download,
   Layers,
   RefreshCw,
   Trash2,
@@ -77,7 +78,7 @@ const STATUS_STYLES: Record<PlacementStatus, string> = {
 
 export function PlacementsView() {
   const { can } = useMarcomPermissions();
-  const { tasks, createTask, setSelectedTaskId, workspaces, activeWorkspaceId } =
+  const { tasks, createTask, setSelectedTaskId, workspaces, activeWorkspaceId, setExportCenterOpen } =
     useWorkspaceStore();
 
   const [placements, setPlacements] = useState<MarcomPlacement[]>([]);
@@ -419,6 +420,15 @@ export function PlacementsView() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setExportCenterOpen(true)}
+            title="Open Export Center — PDF summaries & Excel sheets"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export</span>
+          </button>
           {canManage && (
             <button
               type="button"

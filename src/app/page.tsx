@@ -121,6 +121,10 @@ const CommandPalette = dynamic(
     import("@/components/layout/CommandPalette").then((m) => m.CommandPalette),
   { ssr: false },
 );
+const ExportCenter = dynamic(
+  () => import("@/components/layout/ExportCenter").then((m) => m.ExportCenter),
+  { ssr: false },
+);
 
 export default function WorkspacePage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -386,6 +390,9 @@ export default function WorkspacePage() {
 
       {/* Global Command Palette (⌘K Quick Switcher) */}
       <CommandPalette />
+
+      {/* Export Center (reports / placements / MOUs → PDF & Excel) */}
+      <ExportCenter />
 
       {/* Global Create Task Modal */}
       <CreateTaskModal

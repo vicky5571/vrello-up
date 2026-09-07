@@ -6,6 +6,7 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  Download,
   FileText,
   ChevronDown,
   Layers,
@@ -14,7 +15,9 @@ import {
   X,
   Plus,
   Edit2,
+  CheckCircle,
 } from "lucide-react";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import {
   tableFeatures,
   useTable,
@@ -76,6 +79,7 @@ const STATUS_STYLES: Record<MouStatus, string> = {
 
 export function MousView() {
   const { can } = useMarcomPermissions();
+  const { setExportCenterOpen } = useWorkspaceStore();
 
   const [mous, setMous] = useState<MarcomMou[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,6 +98,37 @@ export function MousView() {
   // route). The UI just avoids dead clicks for other roles.
   const canManage = can("DELETE_MOU");
   const canCreate = can("CREATE_MOU");
+  const canApprove = can("APPROVE_MOU");
+
+  const handleStatusTransition = async (mou: MarcomMou, nextStatus: MouStatus) => {
+    try {
+      const res = await fetch(`/api/marcom/mous/${mou.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Failed to transition MOU to ${nextStatus}`);
+      }
+      toast.success(`MOU status updated to ${nextStatus}`);
+
+      if (nextStatus === "APPROVED") {
+        const triggered = await useWorkspaceStore.getState().runAutomationsForTrigger("mou:approved", {
+          mouId: mou.id,
+          partnerName: mou.partnerName,
+          branchId: mou.branchId,
+        });
+        if (triggered > 0) {
+          toast.info(`Automations triggered: created setup task for ${mou.partnerName}`);
+        }
+      }
+
+      await fetchMous();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update status");
+    }
+  };
 
   const fetchMous = useCallback(async () => {
     setIsLoading(true);
@@ -350,6 +385,15 @@ export function MousView() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setExportCenterOpen(true)}
+            title="Open Export Center — PDF summaries & Excel sheets"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export</span>
+          </button>
           {canCreate && (
             <button
               type="button"
@@ -562,8 +606,48 @@ export function MousView() {
                           </div>
                         </div>
 
-                        {canCreate && (
-                          <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-end">
+                        <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-end gap-2">
+                          {mou.status === "DRAFT" && canCreate && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusTransition(mou, "SUBMITTED");
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-colors shadow-2xs cursor-pointer"
+                            >
+                              <span>Submit for Approval</span>
+                            </button>
+                          )}
+
+                          {mou.status === "SUBMITTED" && canApprove && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusTransition(mou, "APPROVED");
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Approve MOU</span>
+                            </button>
+                          )}
+
+                          {mou.status === "APPROVED" && canCreate && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusTransition(mou, "DONE");
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-colors shadow-2xs cursor-pointer"
+                            >
+                              <span>Mark Done</span>
+                            </button>
+                          )}
+
+                          {canCreate && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -575,8 +659,8 @@ export function MousView() {
                               <Edit2 className="w-3.5 h-3.5 text-fuchsia-600" />
                               <span>Edit MOU</span>
                             </button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

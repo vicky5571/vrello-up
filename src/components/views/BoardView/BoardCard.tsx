@@ -17,6 +17,8 @@ interface BoardCardProps {
   statuses: Status[];
   onSelect: (taskId: string) => void;
   onMoveStatus: (taskId: string, statusId: string) => void;
+  selected?: boolean;
+  onToggleSelect?: (taskId: string) => void;
 }
 
 export const BoardCard = memo(function BoardCard({
@@ -24,6 +26,8 @@ export const BoardCard = memo(function BoardCard({
   statuses,
   onSelect,
   onMoveStatus,
+  selected = false,
+  onToggleSelect,
 }: BoardCardProps) {
   const {
     attributes,
@@ -98,12 +102,35 @@ export const BoardCard = memo(function BoardCard({
           : viewPreferences.density === "relaxed"
             ? "p-4"
             : "p-3",
-        isDragging && "opacity-30 border-blue-500 shadow-lg"
+        isDragging && "opacity-30 border-blue-500 shadow-lg",
+        selected && "border-indigo-400 dark:border-indigo-500 ring-1 ring-indigo-400/60"
       )}
     >
       {/* Top Meta: Priority, Platform & Move Menu */}
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-1.5 flex-wrap">
+          {onToggleSelect && (
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={selected}
+              aria-label={`Select task ${task.title}`}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSelect(task.id);
+              }}
+              title="Select for batch actions"
+              className={cn(
+                "flex w-4 h-4 items-center justify-center rounded border text-[10px] text-white transition-all cursor-pointer shrink-0",
+                selected
+                  ? "border-indigo-500 bg-indigo-500 opacity-100"
+                  : "border-slate-300 dark:border-slate-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
+              )}
+            >
+              {selected && "✓"}
+            </button>
+          )}
           {visibleFields.priority ? <PriorityBadge priority={task.priority} /> : null}
           {task.postPlatform && (
             <PlatformBadge

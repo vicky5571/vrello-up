@@ -198,3 +198,27 @@ export interface ViewPreferences {
   density: ViewDensity;
   visibleFields: VisibleFields;
 }
+
+export type AutomationTrigger =
+  | "mou:approved"
+  | "event:in_3_days"
+  | "task:priority_urgent"
+  | "task:status_done"
+  | "task:subtasks_completed"
+  | "task:overdue";
+
+export type AutomationAction =
+  | "create_field_ops_task"
+  | "notify_marcom_lead_high"
+  | "assign_lead_architect_today"
+  | "advance_status_review";
+
+export interface CustomAutomationRule {
+  id: string;
+  name: string;
+  trigger: AutomationTrigger;
+  action: AutomationAction;
+  enabled: boolean;
+  runCount: number;
+  createdAt: string;
+}

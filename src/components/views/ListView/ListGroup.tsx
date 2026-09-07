@@ -22,6 +22,9 @@ interface ListGroupProps {
   tasks: Task[];
   onSelectTask: (taskId: string) => void;
   onMoveStatus: (taskId: string, statusId: string) => void;
+  selectedIds: string[];
+  onToggleSelect: (taskId: string) => void;
+  onToggleSelectAll: (taskIds: string[]) => void;
   customHeader?: {
     title: string;
     icon?: React.ReactNode;
@@ -36,6 +39,9 @@ export const ListGroup = memo(function ListGroup({
   tasks,
   onSelectTask,
   onMoveStatus,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
   customHeader,
 }: ListGroupProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -124,6 +130,11 @@ export const ListGroup = memo(function ListGroup({
   const isProgress = status.category === "in_progress";
   const isDone = status.category === "done" || status.category === "closed";
 
+  const groupIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const allGroupSelected =
+    groupIds.length > 0 && groupIds.every((id) => selectedSet.has(id));
+
   return (
     <div className="mb-6 select-none">
       {/* Group Header */}
@@ -179,6 +190,26 @@ export const ListGroup = memo(function ListGroup({
           {tasks.length}
         </span>
 
+        {/* Group batch select-all */}
+        {tasks.length > 0 && (
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={allGroupSelected}
+            aria-label={`Select all tasks in ${customHeader?.title ?? status.name}`}
+            onClick={() => onToggleSelectAll(groupIds)}
+            title={allGroupSelected ? "Deselect group" : "Select group for batch actions"}
+            className={cn(
+              "flex w-3.5 h-3.5 items-center justify-center rounded border text-[9px] text-white transition-all cursor-pointer ml-1",
+              allGroupSelected
+                ? "border-indigo-500 bg-indigo-500 opacity-100"
+                : "border-slate-300 dark:border-slate-600 opacity-0 group-hover/header:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
+            )}
+          >
+            {allGroupSelected && "✓"}
+          </button>
+        )}
+
         {/* Quick Add icon in group header */}
         <button
           onClick={() => {
@@ -195,7 +226,8 @@ export const ListGroup = memo(function ListGroup({
       {isExpanded && (
         <div className="mt-1 border-t border-slate-200/70 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 rounded-lg overflow-hidden border">
           {/* Column Titles Bar */}
-          <div className="grid grid-cols-[1fr_110px_110px_90px_130px_90px_60px] items-center px-4 py-2 border-b border-slate-200/70 dark:border-slate-800/80 text-[11px] font-medium text-slate-400 bg-slate-50/50 dark:bg-slate-800/20">
+          <div className="grid grid-cols-[28px_1fr_110px_110px_90px_130px_90px_60px] items-center px-4 py-2 border-b border-slate-200/70 dark:border-slate-800/80 text-[11px] font-medium text-slate-400 bg-slate-50/50 dark:bg-slate-800/20">
+            <div />
             <div>Name</div>
             <div>Assignee</div>
             <div>Due date</div>
@@ -220,6 +252,8 @@ export const ListGroup = memo(function ListGroup({
                 onMoveStatus={onMoveStatus}
                 onAssigneeToggle={handleAssigneeToggle}
                 onUpdateTask={handleUpdateTask}
+                selected={selectedSet.has(task.id)}
+                onToggleSelect={onToggleSelect}
               />
             ))}
 

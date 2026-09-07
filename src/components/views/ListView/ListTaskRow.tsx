@@ -27,6 +27,8 @@ export interface ListTaskRowProps {
   onMoveStatus: (taskId: string, statusId: string) => void;
   onAssigneeToggle: (task: Task, userId: string) => void;
   onUpdateTask: (taskId: string, updates: Partial<Task>) => void;
+  selected?: boolean;
+  onToggleSelect?: (taskId: string) => void;
 }
 
 const PRIORITY_OPTIONS: { value: Priority; label: string }[] = [
@@ -61,6 +63,8 @@ export const ListTaskRow = memo(function ListTaskRow({
   onMoveStatus,
   onAssigneeToggle,
   onUpdateTask,
+  selected = false,
+  onToggleSelect,
 }: ListTaskRowProps) {
   const [openEditor, setOpenEditor] = useState<"priority" | "assignees" | null>(
     null,
@@ -102,7 +106,8 @@ export const ListTaskRow = memo(function ListTaskRow({
     <div
       onClick={() => onSelectTask(task.id)}
       className={cn(
-        "grid grid-cols-[1fr_110px_110px_90px_130px_90px_60px] items-center px-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs text-slate-700 dark:text-slate-300 cursor-pointer group/row",
+        "grid grid-cols-[28px_1fr_110px_110px_90px_130px_90px_60px] items-center px-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs text-slate-700 dark:text-slate-300 cursor-pointer group/row",
+        selected && "bg-indigo-50/60 dark:bg-indigo-950/20 hover:bg-indigo-50 dark:hover:bg-indigo-950/30",
         viewPreferences.density === "compact"
           ? "py-1"
           : viewPreferences.density === "relaxed"
@@ -110,6 +115,27 @@ export const ListTaskRow = memo(function ListTaskRow({
             : "py-2",
       )}
     >
+      {/* Batch Select Checkbox */}
+      <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+        {onToggleSelect && (
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={selected}
+            aria-label={`Select task ${task.title}`}
+            onClick={() => onToggleSelect(task.id)}
+            title="Select for batch actions"
+            className={cn(
+              "flex w-3.5 h-3.5 items-center justify-center rounded border text-[9px] text-white transition-all cursor-pointer",
+              selected
+                ? "border-indigo-500 bg-indigo-500 opacity-100"
+                : "border-slate-300 dark:border-slate-600 opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
+            )}
+          >
+            {selected && "✓"}
+          </button>
+        )}
+      </div>
       {/* Name Column */}
       <div className="flex items-center gap-2.5 min-w-0 pr-4">
         {/* Status Toggle Dot */}

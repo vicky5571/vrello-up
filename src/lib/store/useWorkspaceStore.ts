@@ -17,6 +17,8 @@ import {
   type ViewPreferences,
   type User,
   type Tag,
+  type AutomationTrigger,
+  type CustomAutomationRule,
 } from "@/types";
 import { generateId } from "@/lib/utils";
 
@@ -487,6 +489,7 @@ interface WorkspaceState {
   channelMessages: ChannelMessage[];
   selectedTaskId: string | null;
   lastSelectedTaskId: string | null;
+  selectedTaskIds: string[];
   activeView: ViewMode;
   currentUserId: string;
   filters: FilterOptions;
@@ -497,6 +500,8 @@ interface WorkspaceState {
   isAiDrawerOpen: boolean;
   isHelpDocsOpen: boolean;
   isFilterBarOpen: boolean;
+  isExportCenterOpen: boolean;
+  lastSeenNotificationsAt: string | null;
 
   // Actions
   setCommandPaletteOpen: (open: boolean) => void;
@@ -506,6 +511,8 @@ interface WorkspaceState {
   setCreateTaskModalOpen: (open: boolean) => void;
   setHelpDocsOpen: (open: boolean) => void;
   setFilterBarOpen: (open: boolean) => void;
+  setExportCenterOpen: (open: boolean) => void;
+  setLastSeenNotificationsAt: (iso: string) => void;
   setActiveWorkspace: (id: string) => void;
   setActiveSpace: (id: string) => void;
   setActiveList: (id: string) => void;
@@ -531,6 +538,10 @@ interface WorkspaceState {
   // Task Actions
   createTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => Task;
   updateTask: (id: string, updates: Partial<Task>) => void;
+  bulkUpdateTasks: (ids: string[], updates: Partial<Task>) => void;
+  toggleTaskSelection: (id: string) => void;
+  setTaskSelection: (ids: string[]) => void;
+  clearTaskSelection: () => void;
   deleteTask: (id: string) => void;
   moveTaskStatus: (
     taskId: string,
@@ -614,6 +625,16 @@ interface WorkspaceState {
   automationEnabled: Record<string, boolean>;
   automationRuns: Record<string, number>;
   setAutomationEnabled: (id: string, enabled: boolean) => void;
+  customAutomations: CustomAutomationRule[];
+  addCustomAutomation: (
+    rule: Omit<CustomAutomationRule, "id" | "runCount" | "createdAt">,
+  ) => CustomAutomationRule;
+  removeCustomAutomation: (id: string) => void;
+  toggleCustomAutomation: (id: string, enabled?: boolean) => void;
+  runAutomationsForTrigger: (
+    trigger: AutomationTrigger,
+    payload?: Record<string, unknown>,
+  ) => Promise<number>;
 }
 
 /**
@@ -815,6 +836,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       channelMessages: INITIAL_CHANNEL_MESSAGES,
       selectedTaskId: null,
       lastSelectedTaskId: null,
+      selectedTaskIds: [],
       activeView: "list",
       currentUserId: "user-1",
       isSidebarOpen: true,
@@ -823,6 +845,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       isAiDrawerOpen: false,
       isHelpDocsOpen: false,
       isFilterBarOpen: true,
+      isExportCenterOpen: false,
+      lastSeenNotificationsAt: null,
       presenceByTaskId: {},
       automationEnabled: {
         "rule-1": true,
@@ -835,6 +859,174 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set((state) => ({
           automationEnabled: { ...state.automationEnabled, [id]: enabled },
         })),
+      customAutomations: [],
+      addCustomAutomation: (ruleData) => {
+        const id = generateId("rule");
+        const newRule: CustomAutomationRule = {
+          ...ruleData,
+          id,
+          runCount: 0,
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({
+          customAutomations: [...state.customAutomations, newRule],
+        }));
+        return newRule;
+      },
+      removeCustomAutomation: (id) =>
+        set((state) => ({
+          customAutomations: state.customAutomations.filter((r) => r.id !== id),
+        })),
+      toggleCustomAutomation: (id, enabled) =>
+        set((state) => ({
+          customAutomations: state.customAutomations.map((r) =>
+            r.id === id ? { ...r, enabled: enabled ?? !r.enabled } : r,
+          ),
+        })),
+      runAutomationsForTrigger: async (trigger, payload = {}) => {
+        const state = get();
+        const activeRules = state.customAutomations.filter(
+          (r) => r.enabled && r.trigger === trigger,
+        );
+        if (activeRules.length === 0) return 0;
+
+        let executedCount = 0;
+        const currentWorkspace =
+          state.workspaces.find((w) => w.id === state.activeWorkspaceId) ||
+          state.workspaces[0];
+        const defaultSpace = currentWorkspace?.spaces[0];
+        const defaultListId =
+          defaultSpace?.lists[0]?.id || state.activeListId || "list-sprint-tasks";
+        const defaultStatusId = defaultSpace?.statuses[0]?.id || "status-todo";
+        const actor = resolveActor(state);
+
+        for (const rule of activeRules) {
+          switch (rule.action) {
+            case "create_field_ops_task": {
+              const partner = (payload.partnerName as string) || "Partner";
+              const mouId = (payload.mouId as string) || "";
+              const taskTitle = `Setup & Execution: MOU ${partner}`;
+              const newTask = state.createTask({
+                listId: defaultListId,
+                title: taskTitle,
+                description: `Automated setup task generated from approved MOU #${mouId || "N/A"}. Automatically assigned to Field Operations PIC.`,
+                statusId: defaultStatusId,
+                priority: "high",
+                orderIndex: 0,
+                relatedMarcomId: mouId || undefined,
+                assignees: [actor],
+                subtasks: [
+                  {
+                    id: generateId("st"),
+                    title: "Branch outreach & venue confirmation",
+                    completed: false,
+                    createdAt: new Date().toISOString(),
+                  },
+                  {
+                    id: generateId("st"),
+                    title: "Field operations equipment verification",
+                    completed: false,
+                    createdAt: new Date().toISOString(),
+                  },
+                ],
+                tags: [{ id: "tag-ops", name: "Operations", color: "#059669" }],
+              });
+              state.logActivity(
+                newTask.id,
+                "Automation created setup task in Field Operations assigned to branch PIC",
+              );
+              executedCount++;
+              break;
+            }
+
+            case "notify_marcom_lead_high": {
+              const taskId = payload.taskId as string | undefined;
+              const eventTitle =
+                (payload.eventTitle as string) ||
+                (payload.title as string) ||
+                "Upcoming Event";
+              if (taskId) {
+                state.updateTask(taskId, { priority: "urgent" });
+                state.logActivity(
+                  taskId,
+                  "Automation notified Marcom Lead & flagged priority to High",
+                );
+              } else {
+                const alertTask = state.createTask({
+                  listId: defaultListId,
+                  title: `URGENT: Event in 3 Days - ${eventTitle}`,
+                  description: `Automated notice: Event date is within 3 days. Marcom Lead notified and flagged to High/Urgent priority.`,
+                  statusId: defaultStatusId,
+                  priority: "urgent",
+                  orderIndex: 0,
+                  assignees: [actor],
+                  subtasks: [],
+                  tags: [
+                    { id: "tag-alert", name: "Urgent Alert", color: "#DC2626" },
+                  ],
+                });
+                state.logActivity(
+                  alertTask.id,
+                  "Automation notified Marcom Lead & flagged priority to High",
+                );
+              }
+              executedCount++;
+              break;
+            }
+
+            case "assign_lead_architect_today": {
+              const taskId = payload.taskId as string | undefined;
+              if (taskId) {
+                const today = new Date().toISOString().slice(0, 10);
+                state.updateTask(taskId, {
+                  assignees: [actor],
+                  dueDate: today,
+                });
+                state.logActivity(
+                  taskId,
+                  "Automation assigned Lead Architect & set due date to today",
+                );
+                executedCount++;
+              }
+              break;
+            }
+
+            case "advance_status_review": {
+              const taskId = payload.taskId as string | undefined;
+              if (taskId) {
+                const targetTask = state.tasks.find((t) => t.id === taskId);
+                const space = targetTask
+                  ? findSpaceForListId(state.workspaces, targetTask.listId)
+                  : defaultSpace;
+                const reviewStatus =
+                  space?.statuses.find(
+                    (s) =>
+                      s.category === "review" ||
+                      s.name.toLowerCase().includes("review"),
+                  ) || space?.statuses[0];
+                if (reviewStatus) {
+                  state.updateTask(taskId, { statusId: reviewStatus.id });
+                  state.logActivity(
+                    taskId,
+                    `Automation advanced status to ${reviewStatus.name}`,
+                  );
+                  executedCount++;
+                }
+              }
+              break;
+            }
+          }
+
+          // Bump rule execution count
+          set((s) => ({
+            customAutomations: s.customAutomations.map((r) =>
+              r.id === rule.id ? { ...r, runCount: (r.runCount || 0) + 1 } : r,
+            ),
+          }));
+        }
+
+        return executedCount;
+      },
       filters: {
         search: "",
         statusIds: [],
@@ -853,6 +1045,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setCreateTaskModalOpen: (open) => set({ isCreateTaskModalOpen: open }),
       setHelpDocsOpen: (open) => set({ isHelpDocsOpen: open }),
       setFilterBarOpen: (open) => set({ isFilterBarOpen: open }),
+      setExportCenterOpen: (open) => set({ isExportCenterOpen: open }),
+      setLastSeenNotificationsAt: (iso) =>
+        set({ lastSeenNotificationsAt: iso }),
       setActiveWorkspace: (id) => set({ activeWorkspaceId: id }),
       setActiveSpace: (id) => {
         const space = get()
@@ -1013,9 +1208,31 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             state.selectedTaskId === id ? null : state.selectedTaskId,
           lastSelectedTaskId:
             state.lastSelectedTaskId === id ? null : state.lastSelectedTaskId,
+          selectedTaskIds: state.selectedTaskIds.filter((t) => t !== id),
         }));
         syncDeleteTask(id);
       },
+
+      bulkUpdateTasks: (ids, updates) => {
+        if (ids.length === 0) return;
+        const targets = new Set(ids);
+        const now = new Date().toISOString();
+        set((state) => ({
+          tasks: state.tasks.map((task) =>
+            targets.has(task.id) ? { ...task, ...updates, updatedAt: now } : task,
+          ),
+        }));
+        for (const id of targets) syncUpdateTask(id, updates);
+      },
+
+      toggleTaskSelection: (id) =>
+        set((state) => ({
+          selectedTaskIds: state.selectedTaskIds.includes(id)
+            ? state.selectedTaskIds.filter((t) => t !== id)
+            : [...state.selectedTaskIds, id],
+        })),
+      setTaskSelection: (ids) => set({ selectedTaskIds: [...new Set(ids)] }),
+      clearTaskSelection: () => set({ selectedTaskIds: [] }),
 
       moveTaskStatus: (taskId, newStatusId, newOrderIndex) => {
         const prev = get().tasks.find((t) => t.id === taskId);
@@ -1861,6 +2078,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         activeView: state.activeView,
         currentUserId: state.currentUserId,
         tags: state.tags,
+        customAutomations: state.customAutomations,
+        automationEnabled: state.automationEnabled,
+        automationRuns: state.automationRuns,
+        lastSeenNotificationsAt: state.lastSeenNotificationsAt,
       }),
     },
   ),

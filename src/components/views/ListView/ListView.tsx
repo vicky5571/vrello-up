@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { ListGroup } from "./ListGroup";
 import { CreateStatusModal } from "@/components/spaces/CreateStatusModal";
+import { BulkActionBar } from "@/components/tasks/BulkActionBar";
 import { Priority, Status, User } from "@/types";
 import {
   Plus,
@@ -27,6 +28,10 @@ export function ListView() {
     filters,
     setSelectedTaskId,
     moveTaskStatus,
+    selectedTaskIds,
+    toggleTaskSelection,
+    setTaskSelection,
+    clearTaskSelection,
   } = useWorkspaceStore();
   const [isCreateStatusOpen, setIsCreateStatusOpen] = useState(false);
 
@@ -106,9 +111,54 @@ export function ListView() {
     }));
   }, [filteredTasks, filters.groupBy, statuses]);
 
+  // Group select-all toggles: add the group when partially selected,
+  // remove it when fully selected.
+  const handleToggleSelectAll = useCallback(
+    (taskIds: string[]) => {
+      const selected = new Set(selectedTaskIds);
+      const allSelected = taskIds.every((id) => selected.has(id));
+      if (allSelected) {
+        setTaskSelection(selectedTaskIds.filter((id) => !taskIds.includes(id)));
+      } else {
+        setTaskSelection([...selectedTaskIds, ...taskIds]);
+      }
+    },
+    [selectedTaskIds, setTaskSelection],
+  );
+
+  const groupProps = {
+    selectedIds: selectedTaskIds,
+    onToggleSelect: toggleTaskSelection,
+    onToggleSelectAll: handleToggleSelectAll,
+  };
+
   return (
     <div className="flex-1 overflow-y-auto px-8 py-6 h-full bg-[#FAFBFC] dark:bg-[#0F1115]">
       <div className="max-w-7xl mx-auto">
+        {/* Batch selection toolbar */}
+        {filteredTasks.length > 0 && (
+          <div className="flex items-center gap-2 mb-3 text-[11px] text-slate-400">
+            {selectedTaskIds.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => setTaskSelection(filteredTasks.map((t) => t.id))}
+                className="font-medium hover:text-indigo-500 transition-colors cursor-pointer"
+              >
+                Select all {filteredTasks.length} tasks
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={clearTaskSelection}
+                className="font-medium hover:text-indigo-500 transition-colors cursor-pointer"
+              >
+                Clear selection ({selectedTaskIds.length})
+              </button>
+            )}
+            <span className="text-slate-300 dark:text-slate-700">·</span>
+            <span>Tip: hover any row and tick the checkbox for batch actions</span>
+          </div>
+        )}
         {/* Render By Group Mode */}
         {filters.groupBy === "priority" && (
           <>
@@ -120,6 +170,7 @@ export function ListView() {
                 tasks={pGroup.tasks}
                 onSelectTask={setSelectedTaskId}
                 onMoveStatus={moveTaskStatus}
+                {...groupProps}
                 customHeader={{
                   title: pGroup.label,
                   icon: pGroup.icon,
@@ -140,6 +191,7 @@ export function ListView() {
                 tasks={memberTasks}
                 onSelectTask={setSelectedTaskId}
                 onMoveStatus={moveTaskStatus}
+                {...groupProps}
                 customHeader={{
                   title: member.name,
                   icon: <UserAvatar user={member} size="xs" />,
@@ -155,6 +207,7 @@ export function ListView() {
               tasks={assigneeGroups.unassignedTasks}
               onSelectTask={setSelectedTaskId}
               onMoveStatus={moveTaskStatus}
+              {...groupProps}
               customHeader={{
                 title: "Unassigned",
                 icon: <UserIcon className="w-3 h-3 text-slate-300" />,
@@ -174,6 +227,7 @@ export function ListView() {
                 tasks={statusTasks}
                 onSelectTask={setSelectedTaskId}
                 onMoveStatus={moveTaskStatus}
+                {...groupProps}
               />
             ))}
 
@@ -196,6 +250,12 @@ export function ListView() {
         isOpen={isCreateStatusOpen}
         spaceId={activeSpaceId}
         onClose={() => setIsCreateStatusOpen(false)}
+      />
+
+      <BulkActionBar
+        selectedIds={selectedTaskIds}
+        statuses={statuses}
+        members={members}
       />
     </div>
   );
