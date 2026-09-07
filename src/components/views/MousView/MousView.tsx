@@ -204,7 +204,7 @@ export function MousView() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branchId, partnerName, mouType, outletName: outletName || "", startDate: startDate || undefined, endDate: endDate || undefined, picName: picName || "", docPath: docPath || "", compensationValue: compensationValue != null ? Number(compensationValue) : undefined, notes: notes || "" }),
+        body: JSON.stringify({ branchId, partnerName, mouType, outletName: outletName || "", startDate: startDate || undefined, endDate: endDate || undefined, picName: picName || "", docPath: docPath || "", compensationValue: compensationValue != null ? Math.max(0, Number(compensationValue)) : 0, notes: notes || "" }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -354,7 +354,13 @@ export function MousView() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">End Date</label>
-                  <input type="date" value={modalMou.endDate ? modalMou.endDate.slice(0, 10) : ""} onChange={(e) => setModalMou({ ...modalMou, endDate: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
+                  <input
+                    type="date"
+                    min={modalMou.startDate ? modalMou.startDate.slice(0, 10) : undefined}
+                    value={modalMou.endDate ? modalMou.endDate.slice(0, 10) : ""}
+                    onChange={(e) => setModalMou({ ...modalMou, endDate: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -365,7 +371,7 @@ export function MousView() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Compensation (Rp)</label>
-                    {modalMou.compensationValue ? (
+                    {typeof modalMou.compensationValue === "number" && !isNaN(modalMou.compensationValue) ? (
                       <span className="text-[11px] font-mono font-medium text-fuchsia-600 dark:text-fuchsia-400">
                         {formatIDR(modalMou.compensationValue)}
                       </span>
@@ -377,7 +383,8 @@ export function MousView() {
                     placeholder="e.g. 5000000"
                     value={modalMou.compensationValue != null ? String(modalMou.compensationValue) : ""}
                     onChange={(e) => {
-                      const val = e.target.value ? Math.max(0, Number(e.target.value)) : undefined;
+                      const num = Number(e.target.value);
+                      const val = e.target.value ? Math.max(0, isNaN(num) ? 0 : num) : undefined;
                       setModalMou({ ...modalMou, compensationValue: val });
                     }}
                     className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
