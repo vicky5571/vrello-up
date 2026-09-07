@@ -193,7 +193,7 @@ export function BranchesView() {
                 STATUS_STYLES[row.original.status] ?? STATUS_STYLES.PENDING,
               )}
             >
-              {row.original.status.replace("_", " ")}
+              {row.original.status.replaceAll("_", " ")}
             </span>
           ),
         }),

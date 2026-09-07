@@ -203,7 +203,7 @@ export function OutletsView() {
           minSize: 70,
           cell: ({ row }) => (
             <span className="text-slate-700 dark:text-slate-300">
-              {row.original.tier.replace("_", " ")}
+              {row.original.tier.replaceAll("_", " ")}
             </span>
           ),
         }),
