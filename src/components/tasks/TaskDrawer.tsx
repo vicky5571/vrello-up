@@ -67,6 +67,8 @@ export function TaskDrawer() {
     renameTag,
     deleteTag,
     toggleTaskTag,
+    presenceByTaskId,
+    currentUserId,
   } = useWorkspaceStore();
 
   const liveTask = tasks.find((t) => t.id === selectedTaskId);
@@ -80,6 +82,9 @@ export function TaskDrawer() {
   }, [liveTask]);
 
   const task = liveTask || displayedTask;
+  const viewers = task
+    ? (presenceByTaskId[task.id] || []).filter((u) => u.id !== currentUserId)
+    : [];
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const currentSpace = currentWorkspace?.spaces.find(
@@ -259,7 +264,29 @@ export function TaskDrawer() {
                 <span>Created {formatDate(task.createdAt)}</span>
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
+                {viewers.length > 0 && (
+                  <div
+                    title={`Viewing now: ${viewers.map((v) => v.name).join(", ")}`}
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-semibold"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>
+                      {viewers[0].name}{" "}
+                      {viewers.length > 1 ? `+${viewers.length - 1}` : "viewing"}
+                    </span>
+                    <div className="flex -space-x-1.5 ml-0.5">
+                      {viewers.slice(0, 3).map((v) => (
+                        <img
+                          key={v.id}
+                          src={v.avatar}
+                          alt={v.name}
+                          className="w-3.5 h-3.5 rounded-full ring-1 ring-white dark:ring-slate-900 object-cover"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <button
                   onClick={handleDelete}
                   title="Delete Task"

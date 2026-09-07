@@ -12,6 +12,7 @@ import { HomeView } from "@/components/views/HomeView/HomeView";
 import { ChannelView } from "@/components/views/ChannelView/ChannelView";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { useWorkspaceHotkeys } from "@/lib/hooks/useWorkspaceHotkeys";
+import { useRealtime } from "@/lib/hooks/useRealtime";
 import { startAutomationScheduler } from "@/lib/automations/scheduler";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -131,9 +132,11 @@ export default function WorkspacePage() {
   } = useWorkspaceStore();
 
   useWorkspaceHotkeys();
+  useRealtime();
 
   useEffect(() => {
     setIsMounted(true);
+    useWorkspaceStore.getState().fetchServerTasks?.();
     return startAutomationScheduler();
   }, []);
 

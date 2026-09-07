@@ -200,3 +200,78 @@ model MonthlyReport {
   keyIssues Json @default("[]")
   actionPlans Json @default("[]")
 }
+
+model WorkspaceItem {
+  id String @id @default(cuid())
+  name String
+  avatar String @default("")
+  members Json @default("[]")
+  spaces SpaceItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SpaceItem {
+  id String @id @default(cuid())
+  workspaceId String
+  workspace WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name String
+  icon String @default("folder")
+  color String @default("#64748B")
+  statuses Json @default("[]")
+  folders Json @default("[]")
+  lists ListItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ListItem {
+  id String @id @default(cuid())
+  spaceId String
+  space SpaceItem @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  folderId String?
+  name String
+  color String @default("#64748B")
+  icon String @default("list")
+  tasks TaskItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TaskItem {
+  id String @id @default(cuid())
+  listId String
+  list ListItem @relation(fields: [listId], references: [id], onDelete: Cascade)
+  title String
+  description String @default("")
+  statusId String
+  priority String @default("normal")
+  dueDate String?
+  startDate String?
+  estimatedHours Float?
+  orderIndex Int @default(0)
+  relatedMarcomId String?
+  postPlatform String?
+  postFormat String?
+  mediaUrl String?
+  progress Float?
+  assignees Json @default("[]")
+  tags Json @default("[]")
+  subtasks Json @default("[]")
+  dependencies Json @default("[]")
+  attachments Json @default("[]")
+  comments TaskCommentItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TaskCommentItem {
+  id String @id @default(cuid())
+  taskId String
+  task TaskItem @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId String
+  user Json
+  content String
+  attachments Json @default("[]")
+  createdAt DateTime @default(now())
+}

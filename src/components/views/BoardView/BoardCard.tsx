@@ -45,8 +45,9 @@ export const BoardCard = memo(function BoardCard({
   });
 
   const [showMoveMenu, setShowMoveMenu] = useState(false);
-  const { viewPreferences } = useWorkspaceStore();
+  const { viewPreferences, presenceByTaskId, currentUserId } = useWorkspaceStore();
   const { visibleFields } = viewPreferences;
+  const viewers = (presenceByTaskId[task.id] || []).filter((u) => u.id !== currentUserId);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -113,10 +114,32 @@ export const BoardCard = memo(function BoardCard({
           )}
         </div>
 
-        {/* Accessible Move Menu (WCAG 2.2 AA single-pointer alternative) */}
-        <div className="relative" ref={menuRef}>
-          <button
-            ref={buttonRef}
+        <div className="flex items-center gap-1.5">
+          {viewers.length > 0 && (
+            <div
+              title={`Viewing now: ${viewers.map((u) => u.name).join(", ")}`}
+              className="flex items-center -space-x-1.5 mr-0.5"
+            >
+              {viewers.slice(0, 3).map((v) => (
+                <img
+                  key={v.id}
+                  src={v.avatar}
+                  alt={v.name}
+                  className="w-4 h-4 rounded-full ring-2 ring-emerald-500 animate-pulse object-cover"
+                />
+              ))}
+              {viewers.length > 3 && (
+                <span className="w-4 h-4 rounded-full bg-emerald-600 text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-emerald-500">
+                  +{viewers.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Accessible Move Menu (WCAG 2.2 AA single-pointer alternative) */}
+          <div className="relative" ref={menuRef}>
+            <button
+              ref={buttonRef}
             type="button"
             aria-label="Move to status..."
             aria-expanded={showMoveMenu}
@@ -172,6 +195,7 @@ export const BoardCard = memo(function BoardCard({
           )}
         </div>
       </div>
+    </div>
 
       {/* Media Thumbnail (if content post) */}
       {task.mediaUrl && (

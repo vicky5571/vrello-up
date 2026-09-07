@@ -520,6 +520,13 @@ interface WorkspaceState {
     visibleFields?: Partial<ViewPreferences["visibleFields"]>;
   }) => void;
   resetViewPreferences: () => void;
+  fetchServerTasks: () => Promise<void>;
+
+  // Realtime Presence & Remote Sync
+  presenceByTaskId: Record<string, User[]>;
+  setPresenceByTaskId: (presence: Record<string, User[]>) => void;
+  applyRemoteTaskUpsert: (task: Task) => void;
+  applyRemoteTaskDelete: (taskId: string) => void;
 
   // Task Actions
   createTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => Task;
@@ -762,6 +769,40 @@ export const quotaAwareStorage: StateStorage = {
   },
 };
 
+function syncCreateTask(task: Task) {
+  if (typeof window === "undefined") return;
+  fetch("/api/tasks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(task),
+  }).catch((err) => console.warn("[vrello sync] failed to persist task creation:", err));
+}
+
+function syncUpdateTask(id: string, updates: Partial<Task>) {
+  if (typeof window === "undefined") return;
+  fetch(`/api/tasks/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  }).catch((err) => console.warn("[vrello sync] failed to persist task update:", err));
+}
+
+function syncDeleteTask(id: string) {
+  if (typeof window === "undefined") return;
+  fetch(`/api/tasks/${id}`, {
+    method: "DELETE",
+  }).catch((err) => console.warn("[vrello sync] failed to persist task deletion:", err));
+}
+
+function syncAddComment(taskId: string, comment: TaskComment) {
+  if (typeof window === "undefined") return;
+  fetch(`/api/tasks/${taskId}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(comment),
+  }).catch((err) => console.warn("[vrello sync] failed to persist comment:", err));
+}
+
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
     (set, get) => ({
@@ -782,6 +823,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       isAiDrawerOpen: false,
       isHelpDocsOpen: false,
       isFilterBarOpen: true,
+      presenceByTaskId: {},
       automationEnabled: {
         "rule-1": true,
         "rule-2": true,
@@ -859,6 +901,48 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       resetViewPreferences: () =>
         set({ viewPreferences: DEFAULT_VIEW_PREFERENCES }),
 
+      fetchServerTasks: async () => {
+        if (typeof window === "undefined") return;
+        try {
+          const res = await fetch("/api/tasks");
+          if (!res.ok) return;
+          const data = await res.json();
+          if (Array.isArray(data.tasks) && data.tasks.length > 0) {
+            set((state) => ({
+              tasks: data.tasks,
+              workspaces:
+                Array.isArray(data.workspaces) && data.workspaces.length > 0
+                  ? data.workspaces
+                  : state.workspaces,
+            }));
+          }
+        } catch (err) {
+          console.warn("[vrello sync] failed to fetch tasks from server:", err);
+        }
+      },
+
+      setPresenceByTaskId: (presenceByTaskId) => set({ presenceByTaskId }),
+
+      applyRemoteTaskUpsert: (incomingTask) =>
+        set((state) => {
+          const exists = state.tasks.some((t) => t.id === incomingTask.id);
+          if (exists) {
+            return {
+              tasks: state.tasks.map((t) =>
+                t.id === incomingTask.id ? incomingTask : t,
+              ),
+            };
+          }
+          return { tasks: [incomingTask, ...state.tasks] };
+        }),
+
+      applyRemoteTaskDelete: (taskId) =>
+        set((state) => ({
+          tasks: state.tasks.filter((t) => t.id !== taskId),
+          selectedTaskId:
+            state.selectedTaskId === taskId ? null : state.selectedTaskId,
+        })),
+
       createTask: (newTaskData) => {
         const id = generateId("task");
         const now = new Date().toISOString();
@@ -869,6 +953,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           updatedAt: now,
         };
         set((state) => ({ tasks: [newTask, ...state.tasks] }));
+        syncCreateTask(newTask);
         return newTask;
       },
 
@@ -883,6 +968,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               : task,
           ),
         }));
+        syncUpdateTask(id, updates);
         // rule-1 "Auto-assign Urgent Tasks": assign the lead and ensure a
         // due date of today. Nested updateTask can't refire (no priority key).
         if (!escalatesToUrgent || !get().automationEnabled["rule-1"]) return;
@@ -928,6 +1014,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           lastSelectedTaskId:
             state.lastSelectedTaskId === id ? null : state.lastSelectedTaskId,
         }));
+        syncDeleteTask(id);
       },
 
       moveTaskStatus: (taskId, newStatusId, newOrderIndex) => {
@@ -950,6 +1037,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           });
 
           return { tasks: updatedTasks };
+        });
+        syncUpdateTask(taskId, {
+          statusId: newStatusId,
+          orderIndex: newOrderIndex,
         });
         // rule-2 "Completion Notification": log completion with assignee count.
         if (!prev || prev.statusId === newStatusId) return;
@@ -1008,6 +1099,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               : t,
           ),
         }));
+        const t = get().tasks.find((task) => task.id === taskId);
+        if (t) syncUpdateTask(taskId, { subtasks: t.subtasks });
       },
 
       toggleSubtask: (taskId, subtaskId) => {
@@ -1036,6 +1129,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               : t,
           ),
         }));
+        const tAfter = get().tasks.find((task) => task.id === taskId);
+        if (tAfter) syncUpdateTask(taskId, { subtasks: tAfter.subtasks });
         // rule-3 "Subtask Progress Sync": all subtasks done on an
         // in-progress task advances it to the space's review status.
         if (!completesAll) return;
@@ -1073,6 +1168,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               : t,
           ),
         }));
+        const t = get().tasks.find((task) => task.id === taskId);
+        if (t) syncUpdateTask(taskId, { subtasks: t.subtasks });
       },
 
       addComment: (taskId, content, user, attachments) => {
@@ -1111,6 +1208,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               : task
           ),
         }));
+        syncAddComment(taskId, newComment);
       },
 
       deleteComment: (taskId, commentId) => {
