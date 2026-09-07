@@ -145,6 +145,7 @@ model Mou {
   endDate DateTime?
   status MouStatus @default(DRAFT)
   picName String @default("")
+  picPhone String @default("")
   docPath String @default("")
   compensationValue Float @default(0)
   notes String @default("")

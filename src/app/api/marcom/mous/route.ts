@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   }
   if (query) {
     const contains = { contains: query, mode: "insensitive" as const };
-    where.OR = [{ partnerName: contains }, { mouType: contains }, { outletName: contains }, { picName: contains }, { notes: contains }];
+    where.OR = [{ partnerName: contains }, { mouType: contains }, { outletName: contains }, { picName: contains }, { picPhone: contains }, { notes: contains }];
   }
 
   const mous = await prisma.mou.findMany({
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { branchId, outletName, partnerName, mouType, submissionDate, startDate, endDate, status, picName, docPath, compensationValue, notes } = body ?? {};
+  const { branchId, outletName, partnerName, mouType, submissionDate, startDate, endDate, status, picName, picPhone, docPath, compensationValue, notes } = body ?? {};
   if (!branchId || !partnerName || !mouType) {
     return NextResponse.json({ error: "Missing required fields: branchId, partnerName, mouType" }, { status: 400 });
   }
@@ -84,7 +84,8 @@ export async function POST(request: Request) {
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
         status,
-        picName,
+        picName: picName ?? "",
+        picPhone: picPhone ?? "",
         docPath,
         compensationValue,
         notes,

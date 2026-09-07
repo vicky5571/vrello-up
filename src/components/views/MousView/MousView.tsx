@@ -24,6 +24,7 @@ export interface MarcomMou {
   endDate: string | null;
   status: MouStatus;
   picName: string;
+  picPhone: string;
   docPath: string;
   compensationValue: number;
   notes: string;
@@ -187,7 +188,7 @@ export function MousView() {
   const handleSaveMou = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!modalMou) return;
-    const { id, branchId, partnerName, mouType, outletName, startDate, endDate, picName, docPath, compensationValue, notes } = modalMou;
+    const { id, branchId, partnerName, mouType, outletName, startDate, endDate, picName, picPhone, docPath, compensationValue, notes } = modalMou;
     if (!branchId || !partnerName || !mouType) {
       toast.error("Branch, Partner Name, and MOU Type are required");
       return;
@@ -204,7 +205,7 @@ export function MousView() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branchId, partnerName, mouType, outletName: outletName || "", startDate: startDate || undefined, endDate: endDate || undefined, picName: picName || "", docPath: docPath || "", compensationValue: compensationValue != null ? Math.max(0, Number(compensationValue)) : 0, notes: notes || "" }),
+        body: JSON.stringify({ branchId, partnerName, mouType, outletName: outletName || "", startDate: startDate || undefined, endDate: endDate || undefined, picName: picName || "", picPhone: picPhone || "", docPath: docPath || "", compensationValue: compensationValue != null ? Math.max(0, Number(compensationValue)) : 0, notes: notes || "" }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -243,7 +244,7 @@ export function MousView() {
         deleteRequiresMessage="Delete requires admin role"
         onDeleteOne={deleteOne}
         canAdd={canCreate}
-        onAdd={() => setModalMou({ branchId: branches[0]?.id || "", partnerName: "", mouType: "Compensation", outletName: "", startDate: new Date().toISOString().slice(0, 10), endDate: "", picName: "", docPath: "", compensationValue: undefined, notes: "" })}
+        onAdd={() => setModalMou({ branchId: branches[0]?.id || "", partnerName: "", mouType: "Compensation", outletName: "", startDate: new Date().toISOString().slice(0, 10), endDate: "", picName: "", picPhone: "", docPath: "", compensationValue: undefined, notes: "" })}
         addLabel="Add MOU"
         addIcon={Plus}
         addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors shadow-2xs cursor-pointer"
@@ -262,7 +263,12 @@ export function MousView() {
               </div>
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC</div>
-                <div className="text-slate-700 dark:text-slate-300">{mou.picName || "—"}</div>
+                <div className="text-slate-700 dark:text-slate-300">
+                  {mou.picName || "—"}
+                  {mou.picPhone ? (
+                    <span className="text-slate-400 dark:text-slate-500 ml-1">({mou.picPhone})</span>
+                  ) : null}
+                </div>
               </div>
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Period</div>
@@ -369,27 +375,31 @@ export function MousView() {
                   <input type="text" placeholder="e.g. Hendra" value={modalMou.picName || ""} onChange={(e) => setModalMou({ ...modalMou, picName: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
                 </div>
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Compensation (Rp)</label>
-                    {typeof modalMou.compensationValue === "number" && !isNaN(modalMou.compensationValue) ? (
-                      <span className="text-[11px] font-mono font-medium text-fuchsia-600 dark:text-fuchsia-400">
-                        {formatIDR(modalMou.compensationValue)}
-                      </span>
-                    ) : null}
-                  </div>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="e.g. 5000000"
-                    value={modalMou.compensationValue != null ? String(modalMou.compensationValue) : ""}
-                    onChange={(e) => {
-                      const num = Number(e.target.value);
-                      const val = e.target.value ? Math.max(0, isNaN(num) ? 0 : num) : undefined;
-                      setModalMou({ ...modalMou, compensationValue: val });
-                    }}
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
-                  />
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">PIC Phone</label>
+                  <input type="text" placeholder="e.g. +62 812 3456 7890" value={modalMou.picPhone || ""} onChange={(e) => setModalMou({ ...modalMou, picPhone: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
                 </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Compensation (Rp)</label>
+                  {typeof modalMou.compensationValue === "number" && !isNaN(modalMou.compensationValue) ? (
+                    <span className="text-[11px] font-mono font-medium text-fuchsia-600 dark:text-fuchsia-400">
+                      {formatIDR(modalMou.compensationValue)}
+                    </span>
+                  ) : null}
+                </div>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 5000000"
+                  value={modalMou.compensationValue != null ? String(modalMou.compensationValue) : ""}
+                  onChange={(e) => {
+                    const num = Number(e.target.value);
+                    const val = e.target.value ? Math.max(0, isNaN(num) ? 0 : num) : undefined;
+                    setModalMou({ ...modalMou, compensationValue: val });
+                  }}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
+                />
               </div>
               <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3 bg-slate-50/50 dark:bg-slate-800/50 space-y-2">
                 <div className="flex items-center justify-between">
