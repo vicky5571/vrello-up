@@ -13,6 +13,8 @@ import {
   Trash2,
   X,
   CheckSquare,
+  Plus,
+  Edit2,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 
@@ -87,6 +89,10 @@ export function PlacementsView() {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [outletsList, setOutletsList] = useState<{ id: string; name: string }[]>([]);
+  const [materialsList, setMaterialsList] = useState<{ id: string; name: string }[]>([]);
+  const [modalPlacement, setModalPlacement] = useState<Partial<MarcomPlacement> | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const canManage = can("CREATE_PLACEMENT");
 
@@ -150,10 +156,23 @@ export function PlacementsView() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/marcom/placements");
-      if (!res.ok) throw new Error(`Request failed (${res.status})`);
-      const json = await res.json();
-      setPlacements(Array.isArray(json.data) ? json.data : []);
+      const [resPlacements, resOutlets, resMaterials] = await Promise.all([
+        fetch("/api/marcom/placements"),
+        fetch("/api/marcom/outlets"),
+        fetch("/api/marcom/materials"),
+      ]);
+      if (!resPlacements.ok) throw new Error(`Request failed (${resPlacements.status})`);
+      const jsonPlacements = await resPlacements.json();
+      setPlacements(Array.isArray(jsonPlacements.data) ? jsonPlacements.data : []);
+
+      if (resOutlets.ok) {
+        const jsonOutlets = await resOutlets.json();
+        setOutletsList(Array.isArray(jsonOutlets.data) ? jsonOutlets.data : []);
+      }
+      if (resMaterials.ok) {
+        const jsonMaterials = await resMaterials.json();
+        setMaterialsList(Array.isArray(jsonMaterials.data) ? jsonMaterials.data : []);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load placements");
     } finally {
@@ -341,6 +360,49 @@ export function PlacementsView() {
     }
   };
 
+  const handleSavePlacement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalPlacement) return;
+    const { id, outletId, materialId, status, dimensions, cost, picName, notes, photoUrl, date } = modalPlacement;
+    if (!outletId || !materialId) {
+      toast.error("Outlet and Material are required");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const isEdit = Boolean(id);
+      const url = isEdit ? `/api/marcom/placements/${id}` : "/api/marcom/placements";
+      const method = isEdit ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          outletId,
+          materialId,
+          status: status || "NOT_STARTED",
+          dimensions: dimensions || "",
+          cost: cost != null ? Number(cost) : undefined,
+          picName: picName || "",
+          notes: notes || "",
+          photoUrl: photoUrl || "",
+          date: date || new Date().toISOString(),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Failed to save placement (${res.status})`);
+      }
+      toast.success(`Placement ${isEdit ? "updated" : "created"} successfully`);
+      setModalPlacement(null);
+      await fetchPlacements();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save placement");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const allRows = table.getRowModel().rows;
 
   return (
@@ -356,16 +418,40 @@ export function PlacementsView() {
             {placements.length} {placements.length === 1 ? "placement" : "placements"}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={fetchPlacements}
-          disabled={isLoading}
-          title="Refresh placements"
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
-        >
-          <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
-          <span>Refresh</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {canManage && (
+            <button
+              type="button"
+              onClick={() =>
+                setModalPlacement({
+                  outletId: outletsList[0]?.id || "",
+                  materialId: materialsList[0]?.id || "",
+                  status: "NOT_STARTED",
+                  dimensions: "",
+                  cost: undefined,
+                  picName: "",
+                  notes: "",
+                  photoUrl: "",
+                  date: new Date().toISOString().slice(0, 10),
+                })
+              }
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Placement</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={fetchPlacements}
+            disabled={isLoading}
+            title="Refresh placements"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* Bulk Action Bar (Visible when rows are selected) */}
@@ -526,17 +612,32 @@ export function PlacementsView() {
                           <span className="text-[11px] text-slate-500 dark:text-slate-400">
                             Track installation checklist & operations in workspace:
                           </span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleTrackAsTask(placement);
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer"
-                          >
-                            <CheckSquare className="w-3.5 h-3.5" />
-                            <span>Track as Task Progress</span>
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {canManage && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setModalPlacement(placement);
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer"
+                              >
+                                <Edit2 className="w-3.5 h-3.5 text-lime-600" />
+                                <span>Edit Placement</span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTrackAsTask(placement);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer"
+                            >
+                              <CheckSquare className="w-3.5 h-3.5" />
+                              <span>Track as Task Progress</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -555,6 +656,169 @@ export function PlacementsView() {
           )}
         </div>
       </div>
+
+      {/* Create / Edit Placement Modal */}
+      {modalPlacement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-lime-600" />
+                {modalPlacement.id ? "Edit Placement" : "Add New Placement"}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setModalPlacement(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePlacement} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Outlet *
+                  </label>
+                  <select
+                    required
+                    value={modalPlacement.outletId || ""}
+                    onChange={(e) => setModalPlacement({ ...modalPlacement, outletId: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
+                  >
+                    <option value="">Select Outlet...</option>
+                    {outletsList.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Material *
+                  </label>
+                  <select
+                    required
+                    value={modalPlacement.materialId || ""}
+                    onChange={(e) => setModalPlacement({ ...modalPlacement, materialId: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
+                  >
+                    <option value="">Select Material...</option>
+                    {materialsList.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={modalPlacement.status || "NOT_STARTED"}
+                    onChange={(e) => setModalPlacement({ ...modalPlacement, status: e.target.value as PlacementStatus })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
+                  >
+                    <option value="NOT_STARTED">Not Started</option>
+                    <option value="ON_PROGRESS">On Progress</option>
+                    <option value="DONE">Done</option>
+                    <option value="ISSUE">Issue</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Dimensions
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 2x1 meter"
+                    value={modalPlacement.dimensions || ""}
+                    onChange={(e) => setModalPlacement({ ...modalPlacement, dimensions: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Cost (Rp)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 250000"
+                    value={modalPlacement.cost != null ? String(modalPlacement.cost) : ""}
+                    onChange={(e) => setModalPlacement({ ...modalPlacement, cost: e.target.value ? Number(e.target.value) : undefined })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    PIC Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Budi"
+                    value={modalPlacement.picName || ""}
+                    onChange={(e) => setModalPlacement({ ...modalPlacement, picName: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Photo / Proof URL (optional)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={modalPlacement.photoUrl || ""}
+                  onChange={(e) => setModalPlacement({ ...modalPlacement, photoUrl: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Additional installation requirements..."
+                  value={modalPlacement.notes || ""}
+                  onChange={(e) => setModalPlacement({ ...modalPlacement, notes: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setModalPlacement(null)}
+                  disabled={isSaving}
+                  className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+                >
+                  {isSaving ? "Saving..." : modalPlacement.id ? "Update Placement" : "Create Placement"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

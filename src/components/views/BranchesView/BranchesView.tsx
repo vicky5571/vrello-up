@@ -12,6 +12,8 @@ import {
   RefreshCw,
   Trash2,
   X,
+  Plus,
+  Edit2,
 } from "lucide-react";
 import {
   tableFeatures,
@@ -80,6 +82,8 @@ export function BranchesView() {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [modalBranch, setModalBranch] = useState<Partial<MarcomBranch> | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Bulk delete is gated on MANAGE_MASTER_DATA (admin-only, matching the
   // server route). The UI just avoids dead clicks for other roles.
@@ -301,6 +305,48 @@ export function BranchesView() {
     }
   };
 
+  const handleSaveBranch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalBranch) return;
+    const { id, code, name, region, city, status, picName, picPhone, address } = modalBranch;
+    if (!code || !name || !region || !city) {
+      toast.error("Code, name, region, and city are required");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const isEdit = Boolean(id);
+      const url = isEdit ? `/api/marcom/branches/${id}` : "/api/marcom/branches";
+      const method = isEdit ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          name,
+          region,
+          city,
+          status: status || "PENDING",
+          picName: picName || "",
+          picPhone: picPhone || "",
+          address: address || "",
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Failed to save branch (${res.status})`);
+      }
+      toast.success(`Branch ${isEdit ? "updated" : "created"} successfully`);
+      setModalBranch(null);
+      await fetchBranches();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save branch");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const allRows = table.getRowModel().rows;
 
   return (
@@ -316,16 +362,39 @@ export function BranchesView() {
             {branches.length} {branches.length === 1 ? "branch" : "branches"}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={fetchBranches}
-          disabled={isLoading}
-          title="Refresh branches"
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
-        >
-          <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
-          <span>Refresh</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {canManage && (
+            <button
+              type="button"
+              onClick={() =>
+                setModalBranch({
+                  code: "",
+                  name: "",
+                  region: "",
+                  city: "",
+                  status: "PENDING",
+                  picName: "",
+                  picPhone: "",
+                  address: "",
+                })
+              }
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-2xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Branch</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={fetchBranches}
+            disabled={isLoading}
+            title="Refresh branches"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* Bulk Action Bar (Visible when rows are selected) */}
@@ -481,6 +550,22 @@ export function BranchesView() {
                             </div>
                           </div>
                         </div>
+
+                        {canManage && (
+                          <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-end">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setModalBranch(branch);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer"
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-cyan-600" />
+                              <span>Edit Branch</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -498,6 +583,160 @@ export function BranchesView() {
           )}
         </div>
       </div>
+
+      {/* Create / Edit Branch Modal */}
+      {modalBranch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-cyan-600" />
+                {modalBranch.id ? "Edit Branch" : "Add New Branch"}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setModalBranch(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBranch} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Branch Code *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. BR-JKT-01"
+                    value={modalBranch.code || ""}
+                    onChange={(e) => setModalBranch({ ...modalBranch, code: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={modalBranch.status || "PENDING"}
+                    onChange={(e) => setModalBranch({ ...modalBranch, status: e.target.value as BranchStatus })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="ON_PROGRESS">On Progress</option>
+                    <option value="DONE">Done</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Branch Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Jakarta Pusat Hub"
+                  value={modalBranch.name || ""}
+                  onChange={(e) => setModalBranch({ ...modalBranch, name: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Region *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. DKI Jakarta"
+                    value={modalBranch.region || ""}
+                    onChange={(e) => setModalBranch({ ...modalBranch, region: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Jakarta"
+                    value={modalBranch.city || ""}
+                    onChange={(e) => setModalBranch({ ...modalBranch, city: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    PIC Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Budi Santoso"
+                    value={modalBranch.picName || ""}
+                    onChange={(e) => setModalBranch({ ...modalBranch, picName: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    PIC Phone
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. +62 812 3456 7890"
+                    value={modalBranch.picPhone || ""}
+                    onChange={(e) => setModalBranch({ ...modalBranch, picPhone: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Address
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Jl. Sudirman No. 12"
+                  value={modalBranch.address || ""}
+                  onChange={(e) => setModalBranch({ ...modalBranch, address: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setModalBranch(null)}
+                  disabled={isSaving}
+                  className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+                >
+                  {isSaving ? "Saving..." : modalBranch.id ? "Update Branch" : "Create Branch"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

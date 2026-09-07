@@ -13,6 +13,8 @@ import {
   Trash2,
   X,
   CheckSquare,
+  Plus,
+  Edit2,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 
@@ -86,12 +88,18 @@ function isVideo(path: string) {
   return path.toLowerCase().endsWith(".mp4");
 }
 
+interface BranchOption {
+  id: string;
+  name: string;
+}
+
 export function EventsView() {
   const { can } = useMarcomPermissions();
   const { tasks, createTask, setSelectedTaskId, workspaces, activeWorkspaceId } =
     useWorkspaceStore();
 
   const [events, setEvents] = useState<MarcomEvent[]>([]);
+  const [branches, setBranches] = useState<BranchOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -100,6 +108,8 @@ export function EventsView() {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [modalEvent, setModalEvent] = useState<Partial<MarcomEvent> | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const canManage = can("CREATE_EVENT");
 
@@ -162,15 +172,22 @@ export function EventsView() {
     setSelectedTaskId(task.id);
   };
 
-
   const fetchEvents = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/marcom/events");
-      if (!res.ok) throw new Error(`Request failed (${res.status})`);
-      const json = await res.json();
-      setEvents(Array.isArray(json.data) ? json.data : []);
+      const [resEvents, resBranches] = await Promise.all([
+        fetch("/api/marcom/events"),
+        fetch("/api/marcom/branches"),
+      ]);
+      if (!resEvents.ok) throw new Error(`Request failed (${resEvents.status})`);
+      const jsonEvents = await resEvents.json();
+      setEvents(Array.isArray(jsonEvents.data) ? jsonEvents.data : []);
+
+      if (resBranches.ok) {
+        const jsonBranches = await resBranches.json();
+        setBranches(Array.isArray(jsonBranches.data) ? jsonBranches.data : []);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load events");
     } finally {
@@ -181,6 +198,69 @@ export function EventsView() {
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
+
+  const handleSaveEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!modalEvent) return;
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const name = (formData.get("name") as string)?.trim();
+    const eventType = (formData.get("eventType") as string)?.trim();
+    const branchName = (formData.get("branchName") as string)?.trim() || undefined;
+    const date = (formData.get("date") as string)?.trim() || undefined;
+    const endDate = (formData.get("endDate") as string)?.trim() || undefined;
+    const location = (formData.get("location") as string)?.trim() || undefined;
+    const picName = (formData.get("picName") as string)?.trim() || undefined;
+    const budget = Number(formData.get("budget")) || 0;
+    const attendeeCount = Number(formData.get("attendeeCount")) || 0;
+    const targetAttendee = Number(formData.get("targetAttendee")) || 0;
+    const status = (formData.get("status") as string)?.trim() || "UPCOMING";
+    const notes = (formData.get("notes") as string)?.trim() || undefined;
+
+    if (!name || !eventType) {
+      toast.error("Event Name and Type are required");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const isEditing = Boolean(modalEvent.id);
+      const url = isEditing ? `/api/marcom/events/${modalEvent.id}` : "/api/marcom/events";
+      const method = isEditing ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          eventType,
+          branchName,
+          date,
+          endDate,
+          location,
+          picName,
+          budget,
+          attendeeCount,
+          targetAttendee,
+          status,
+          notes,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Failed with status ${res.status}`);
+      }
+
+      toast.success(isEditing ? "Event updated successfully" : "Event created successfully");
+      setModalEvent(null);
+      await fetchEvents();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save event");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const columns = useMemo(
     () =>
@@ -358,16 +438,38 @@ export function EventsView() {
             {events.length} {events.length === 1 ? "event" : "events"}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={fetchEvents}
-          disabled={isLoading}
-          title="Refresh events"
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
-        >
-          <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
-          <span>Refresh</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {canManage && (
+            <button
+              type="button"
+              onClick={() =>
+                setModalEvent({
+                  name: "",
+                  eventType: "Launch",
+                  branchName: branches[0]?.name || "",
+                  status: "UPCOMING",
+                  budget: 0,
+                  targetAttendee: 100,
+                  attendeeCount: 0,
+                })
+              }
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow-xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Event</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={fetchEvents}
+            disabled={isLoading}
+            title="Refresh events"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* Bulk Action Bar (Visible when rows are selected) */}
@@ -538,17 +640,32 @@ export function EventsView() {
                           <span className="text-[11px] text-slate-500 dark:text-slate-400">
                             Track event permits, logistics, setup, and social coverage:
                           </span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleTrackAsTask(event);
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer"
-                          >
-                            <CheckSquare className="w-3.5 h-3.5" />
-                            <span>Track as Task Progress</span>
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {canManage && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setModalEvent(event);
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer"
+                              >
+                                <Edit2 className="w-3.5 h-3.5 text-teal-600" />
+                                <span>Edit Event</span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTrackAsTask(event);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer"
+                            >
+                              <CheckSquare className="w-3.5 h-3.5" />
+                              <span>Track as Task Progress</span>
+                            </button>
+                          </div>
                         </div>
 
                         {event.footage && event.footage.length > 0 && (
@@ -604,6 +721,224 @@ export function EventsView() {
           )}
         </div>
       </div>
+
+      {/* Create / Edit Event Modal */}
+      {modalEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#18191B] border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/80 dark:border-slate-800">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Flag className="w-4 h-4 text-teal-600" />
+                <span>{modalEvent.id ? "Edit Event" : "Create New Event"}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setModalEvent(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEvent} className="p-5 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Event Name *
+                </label>
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  defaultValue={modalEvent.name || ""}
+                  placeholder="e.g., Grand Opening & Product Showcase"
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Event Type *
+                  </label>
+                  <input
+                    name="eventType"
+                    type="text"
+                    required
+                    defaultValue={modalEvent.eventType || "Launch"}
+                    placeholder="Launch, Workshop, Exhibition..."
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Branch
+                  </label>
+                  <select
+                    name="branchName"
+                    defaultValue={modalEvent.branchName || branches[0]?.name || ""}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                  >
+                    <option value="">No branch</option>
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.name}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Start Date
+                  </label>
+                  <input
+                    name="date"
+                    type="date"
+                    defaultValue={
+                      modalEvent.date ? modalEvent.date.slice(0, 10) : ""
+                    }
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    End Date
+                  </label>
+                  <input
+                    name="endDate"
+                    type="date"
+                    defaultValue={
+                      modalEvent.endDate ? modalEvent.endDate.slice(0, 10) : ""
+                    }
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Location
+                  </label>
+                  <input
+                    name="location"
+                    type="text"
+                    defaultValue={modalEvent.location || ""}
+                    placeholder="e.g., Main Atrium or Branch Plaza"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    PIC / Contact Person
+                  </label>
+                  <input
+                    name="picName"
+                    type="text"
+                    defaultValue={modalEvent.picName || ""}
+                    placeholder="e.g., Sarah Jenkins"
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Status
+                  </label>
+                  <select
+                    name="status"
+                    defaultValue={modalEvent.status || "UPCOMING"}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                  >
+                    <option value="UPCOMING">UPCOMING</option>
+                    <option value="ON_PROGRESS">ON_PROGRESS</option>
+                    <option value="COMPLETED">COMPLETED</option>
+                    <option value="CANCELLED">CANCELLED</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Target Attendees
+                  </label>
+                  <input
+                    name="targetAttendee"
+                    type="number"
+                    min="0"
+                    defaultValue={modalEvent.targetAttendee ?? 100}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Actual Attendees
+                  </label>
+                  <input
+                    name="attendeeCount"
+                    type="number"
+                    min="0"
+                    defaultValue={modalEvent.attendeeCount ?? 0}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Budget (IDR)
+                </label>
+                <input
+                  name="budget"
+                  type="number"
+                  min="0"
+                  defaultValue={modalEvent.budget ?? 0}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Notes
+                </label>
+                <textarea
+                  name="notes"
+                  rows={2}
+                  defaultValue={modalEvent.notes || ""}
+                  placeholder="Special instructions, vendor info, permit notes..."
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalEvent(null)}
+                  disabled={isSaving}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{modalEvent.id ? "Save Changes" : "Create Event"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
