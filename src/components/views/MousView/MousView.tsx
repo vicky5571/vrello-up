@@ -290,12 +290,13 @@ export function MousView() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Branch *</label>
-                  <select required value={modalMou.branchId || ""} onChange={(e) => setModalMou({ ...modalMou, branchId: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer">
-                    <option value="">Select Branch...</option>
+                  <select required value={modalMou.branchId || ""} onChange={(e) => setModalMou({ ...modalMou, branchId: e.target.value })} disabled={isLoading} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer disabled:opacity-50">
+                    <option value="">{isLoading ? "Loading branches..." : "Select Branch..."}</option>
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>{b.name} ({b.code})</option>
                     ))}
                   </select>
+                  {branches.length === 0 && !isLoading && <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-400">No branches available — create a branch first.</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">MOU Type *</label>
@@ -346,7 +347,7 @@ export function MousView() {
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button type="button" onClick={() => setModalMou(null)} disabled={isSaving} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
-                <button type="submit" disabled={isSaving} className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50">{isSaving ? "Saving..." : modalMou.id ? "Update MOU" : "Create MOU"}</button>
+                <button type="submit" disabled={isSaving || isLoading || branches.length === 0} title={branches.length === 0 ? "Loading branches..." : undefined} className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{isSaving ? "Saving..." : modalMou.id ? "Update MOU" : "Create MOU"}</button>
               </div>
             </form>
           </div>
