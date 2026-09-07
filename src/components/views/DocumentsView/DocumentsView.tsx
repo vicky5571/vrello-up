@@ -99,10 +99,15 @@ export function DocumentsView() {
     if (!file || !modalDocument) return;
     setIsUploading(true);
     try {
-      const docId = modalDocument.id || `doc-${Date.now()}`;
+      // ponytail: upload namespace is opaque — not the doc id. For edits reuse
+      // the doc id so re-uploads stay in the same folder; for creates use a
+      // stable "new" namespace so the path doesn't look like a doc id and
+      // doesn't orphan into a fake doc-xxx folder when the server mints the
+      // real doc id on save.
+      const uploadId = modalDocument.id || "new";
       const fd = new FormData();
       fd.append("kind", "documents");
-      fd.append("id", docId);
+      fd.append("id", uploadId);
       fd.append("file", file);
       const res = await fetch("/api/marcom/uploads", { method: "POST", body: fd });
       if (!res.ok) {
