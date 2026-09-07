@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { RotateCcw, Trash2, X } from "lucide-react";
+import { Modal } from "@/components/ui/Modal";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 
 function deletedAgo(iso: string): string {
@@ -91,25 +91,13 @@ export function TrashModal() {
   };
 
   return (
-    <AnimatePresence>
-      {isTrashOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={close}
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs"
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -10 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
-            role="dialog"
-            aria-label="Trash"
-            className="relative z-10 w-full max-w-lg rounded-2xl bg-white dark:bg-[#18191B] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[70vh]"
-          >
+    <Modal
+      isOpen={isTrashOpen}
+      onClose={close}
+      label="Trash"
+      showCloseButton={false}
+      panelClassName="max-w-lg flex flex-col max-h-[70vh]"
+    >
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/80 dark:border-white/10">
               <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                 Trash
@@ -183,9 +171,6 @@ export function TrashModal() {
                 ))
               )}
             </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+    </Modal>
   );
 }

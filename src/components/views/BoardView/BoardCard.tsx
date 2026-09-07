@@ -87,6 +87,8 @@ export const BoardCard = memo(function BoardCard({
 
   const completedSubtasks = task.subtasks.filter((st) => st.completed).length;
   const overdue = isOverdue(task.dueDate);
+  const currentStatusName =
+    statuses.find((s) => s.id === task.statusId)?.name ?? "unknown status";
 
   return (
     <div
@@ -168,7 +170,7 @@ export const BoardCard = memo(function BoardCard({
             <button
               ref={buttonRef}
             type="button"
-            aria-label="Move to status..."
+            aria-label={`Move ${task.title} to another status (currently ${currentStatusName})`}
             aria-expanded={showMoveMenu}
             aria-haspopup="true"
             onPointerDown={(e) => e.stopPropagation()}

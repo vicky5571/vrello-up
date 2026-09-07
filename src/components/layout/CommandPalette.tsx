@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fuzzyFilter, fuzzyScore } from "@/lib/productivity/fuzzy";
+import { useFocusTrap } from "@/components/ui/useFocusTrap";
 import { Priority, ViewMode } from "@/types";
 
 interface MarcomHit {
@@ -84,6 +85,13 @@ export function CommandPalette() {
   const [mous, setMous] = useState<MarcomHit[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Focus trap + return-focus; initial focus lands on the search input
+  // (first focusable). Escape is also handled here for non-input focus.
+  useFocusTrap(dialogRef, isCommandPaletteOpen, {
+    onEscape: closeCommandPalette,
+  });
 
   const currentWorkspace =
     workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
@@ -108,12 +116,11 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isCommandPaletteOpen, openCommandPalette, closeCommandPalette]);
 
-  // Focus input when opened
+  // Reset query when opened (focus is handled by the focus trap).
   useEffect(() => {
     if (isCommandPaletteOpen) {
       setQuery("");
       setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isCommandPaletteOpen]);
 
@@ -525,7 +532,14 @@ export function CommandPalette() {
   return (
     <AnimatePresence>
       {isCommandPaletteOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4">
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Command palette"
+          tabIndex={-1}
+          className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] px-4 focus:outline-hidden"
+        >
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -549,6 +563,12 @@ export function CommandPalette() {
               <input
                 ref={inputRef}
                 type="text"
+                role="combobox"
+                aria-expanded="true"
+                aria-controls="cmd-palette-listbox"
+                aria-activedescendant={`cmd-option-${selectedIndex}`}
+                aria-autocomplete="list"
+                aria-label="Search tasks, branches, outlets, MOUs, and actions"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -572,6 +592,9 @@ export function CommandPalette() {
             {/* Results List */}
             <div
               ref={listRef}
+              id="cmd-palette-listbox"
+              role="listbox"
+              aria-label="Search results"
               className="flex-1 overflow-y-auto p-2 divide-y divide-transparent space-y-3"
             >
               {allItems.length === 0 ? (
@@ -602,6 +625,9 @@ export function CommandPalette() {
                             return (
                               <div
                                 key={item.id}
+                                id={`cmd-option-${itemGlobalIndex}`}
+                                role="option"
+                                aria-selected={isSelected}
                                 data-index={itemGlobalIndex}
                                 onClick={item.onSelect}
                                 onMouseEnter={() =>

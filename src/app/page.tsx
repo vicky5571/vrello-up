@@ -14,7 +14,7 @@ import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { useWorkspaceHotkeys } from "@/lib/hooks/useWorkspaceHotkeys";
 import { useRealtime } from "@/lib/hooks/useRealtime";
 import { startAutomationScheduler } from "@/lib/automations/scheduler";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 
 function ViewFallback() {
   return (
@@ -157,7 +157,15 @@ export default function WorkspacePage() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#F0F1F4] dark:bg-[#0C0D0F] p-2 gap-2 text-slate-900 dark:text-slate-100 select-none">
+    <MotionConfig reducedMotion="user">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#F0F1F4] dark:bg-[#0C0D0F] p-2 gap-2 text-slate-900 dark:text-slate-100">
+      {/* Skip link: keyboard users jump straight to the workspace stage. */}
+      <a
+        href="#workspace-main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[60] focus:rounded-lg focus:bg-indigo-600 focus:px-3 focus:py-2 focus:text-xs focus:font-bold focus:text-white"
+      >
+        Skip to main content
+      </a>
       {/* ClickUp Floating Dark Left Dock (Global Rail: Home, Planner, AI, Teams, More) */}
       <GlobalRail />
 
@@ -165,7 +173,7 @@ export default function WorkspacePage() {
       <Sidebar />
 
       {/* Floating Main Workspace Stage */}
-      <main className="flex-1 flex flex-col min-w-0 h-full rounded-2xl bg-white dark:bg-[#18191B] border border-slate-200/80 dark:border-white/10 shadow-lg overflow-hidden">
+      <main id="workspace-main" tabIndex={-1} className="flex-1 flex flex-col min-w-0 h-full rounded-2xl bg-white dark:bg-[#18191B] border border-slate-200/80 dark:border-white/10 shadow-lg overflow-hidden focus:outline-hidden">
         {/* Top Navigation */}
         <TopNav />
 
@@ -407,5 +415,6 @@ export default function WorkspacePage() {
         onClose={() => setCreateTaskModalOpen(false)}
       />
     </div>
+    </MotionConfig>
   );
 }

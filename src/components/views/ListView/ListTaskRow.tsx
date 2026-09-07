@@ -152,7 +152,8 @@ export const ListTaskRow = memo(function ListTaskRow({
               onMoveStatus(task.id, nextStatus.id);
             }
           }}
-          title="Click to advance status"
+          aria-label={`Status for ${task.title}: ${taskStatus.name}. Activate to advance.`}
+          title={`Status: ${taskStatus.name} — click to advance`}
           className="shrink-0 p-0.5 rounded-full hover:scale-110 transition-transform cursor-pointer"
         >
           {isTaskDone ? (
@@ -309,7 +310,8 @@ export const ListTaskRow = memo(function ListTaskRow({
           <>
             <button
           type="button"
-          aria-label={`Change priority for ${task.title}`}
+          aria-label={`Priority for ${task.title}: ${task.priority}. Activate to change.`}
+          title={`Priority: ${task.priority}`}
           aria-haspopup="menu"
           aria-expanded={openEditor === "priority"}
           onClick={() =>

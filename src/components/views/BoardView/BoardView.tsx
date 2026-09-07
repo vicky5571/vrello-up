@@ -20,7 +20,7 @@ import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { BoardColumn } from "./BoardColumn";
 import { BoardCard } from "./BoardCard";
 import { BulkActionBar } from "@/components/tasks/BulkActionBar";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { Task } from "@/types";
 import { matchesFilters } from "@/lib/tasks/filterTasks";
 
@@ -70,6 +70,9 @@ export function BoardView() {
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[] | null>(null);
+  // Screen-reader announcements for drag-and-drop (sight-only otherwise).
+  const [announcement, setAnnouncement] = useState("");
+  const lastAnnouncedStatus = useRef<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -113,10 +116,15 @@ export function BoardView() {
     return map;
   }, [filteredTasks, statuses]);
 
+  const statusName = (id: string) =>
+    statuses.find((s) => s.id === id)?.name ?? "unknown status";
+
   const handleDragStart = (event: DragStartEvent) => {
     if (event.active.data.current?.type === "Task") {
-      setActiveTask(event.active.data.current.task);
+      const task = event.active.data.current.task as Task;
+      setActiveTask(task);
       setLocalTasks(tasks);
+      setAnnouncement(`Picked up ${task.title}.`);
     }
   };
 
@@ -134,6 +142,29 @@ export function BoardView() {
     const isOverColumn = over.data.current?.type === "Column";
 
     if (!isActiveTask) return;
+
+    // Announce column moves for screen readers (kept outside the updater).
+    const snapshot = localTasks || tasks;
+    const dragged = snapshot.find((t) => t.id === activeId);
+    const overTask = isOverTask
+      ? snapshot.find((t) => t.id === overId)
+      : undefined;
+    const announcedStatusId = overTask
+      ? overTask.statusId
+      : isOverColumn
+        ? overId
+        : null;
+    if (
+      dragged &&
+      announcedStatusId &&
+      dragged.statusId !== announcedStatusId &&
+      announcedStatusId !== lastAnnouncedStatus.current
+    ) {
+      lastAnnouncedStatus.current = announcedStatusId;
+      setAnnouncement(
+        `${dragged.title} moved to ${statusName(announcedStatusId)}.`,
+      );
+    }
 
     // Buffer status change purely in local state (no store/localStorage writes)
     setLocalTasks((prevTasks) => {
@@ -165,9 +196,11 @@ export function BoardView() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTask(null);
+    lastAnnouncedStatus.current = null;
 
     if (!over) {
       setLocalTasks(null);
+      setAnnouncement("Drag cancelled. Task returned to its column.");
       return;
     }
 
@@ -199,6 +232,11 @@ export function BoardView() {
     // 1. Commit status change to store if changed
     if (originalTaskItem.statusId !== destinationStatusId) {
       moveTaskStatus(activeId, destinationStatusId);
+      setAnnouncement(
+        `${activeTaskItem.title} dropped into ${statusName(destinationStatusId)}.`,
+      );
+    } else {
+      setAnnouncement(`${activeTaskItem.title} reordered.`);
     }
 
     // 2. Commit reorder within destination column if dropped over a specific task
@@ -245,6 +283,10 @@ export function BoardView() {
 
   return (
     <div className="flex-1 overflow-x-auto p-6 h-full">
+      {/* Polite live region: announces drag operations to screen readers. */}
+      <div aria-live="polite" role="status" className="sr-only">
+        {announcement}
+      </div>
       <DndContext
         id="board-dnd-context"
         sensors={sensors}
