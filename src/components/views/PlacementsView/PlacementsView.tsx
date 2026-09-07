@@ -60,11 +60,12 @@ export function PlacementsView() {
     }
     const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
     const members = currentWorkspace?.members || [];
+    const statusId = "status-in-progress";
     const task = createTask({
       listId: "list-field-ops",
       title: `[Placement] ${placement.material?.name || "Branding"} - ${placement.outlet?.name || "Outlet"}`,
       description: `<p><strong>Material:</strong> ${placement.material?.name || "N/A"}</p><p><strong>Dimensions:</strong> ${placement.dimensions || "To be measured"}</p><p><strong>PIC:</strong> ${placement.picName || "Unassigned"}</p><p>${placement.notes || ""}</p>`,
-      statusId: "status-in-progress",
+      statusId,
       priority: placement.status === "ISSUE" ? "urgent" : "normal",
       assignees: members[0] ? [members[0]] : [],
       relatedMarcomId: placement.id,
@@ -76,7 +77,7 @@ export function PlacementsView() {
         { id: `st-place-${Date.now()}-3`, title: "Logistics dispatch & on-site installation", completed: false, createdAt: new Date().toISOString() },
         { id: `st-place-${Date.now()}-4`, title: "Upload verified installation photo proof", completed: false, createdAt: new Date().toISOString() },
       ],
-      orderIndex: tasks.length,
+      orderIndex: Math.max(-1, ...tasks.filter((t) => t.statusId === statusId).map((t) => t.orderIndex)) + 1,
     });
     toast.success("Production task created in Field Operations!");
     setSelectedTaskId(task.id);

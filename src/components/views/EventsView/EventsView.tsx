@@ -78,11 +78,12 @@ export function EventsView() {
     const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
     const members = currentWorkspace?.members || [];
     const firstFootage = event.footage?.[0]?.filePath;
+    const statusId = event.status === "COMPLETED" ? "status-done" : "status-in-progress";
     const task = createTask({
       listId: "list-field-ops",
       title: `[Event] ${event.name} (${event.branchName})`,
       description: `<p><strong>Location:</strong> ${event.location || "TBD"}</p><p><strong>Target Attendees:</strong> ${event.targetAttendee}</p><p><strong>Budget:</strong> Rp ${event.budget.toLocaleString()}</p><p>${event.notes || ""}</p>`,
-      statusId: event.status === "COMPLETED" ? "status-done" : "status-in-progress",
+      statusId,
       priority: event.status === "UPCOMING" ? "high" : "normal",
       assignees: members[0] ? [members[0]] : [],
       dueDate: event.date ? event.date.slice(0, 10) : undefined,
@@ -96,7 +97,7 @@ export function EventsView() {
         { id: `st-ev-${Date.now()}-3`, title: "Capture 4K video footage & b-roll clips", completed: Boolean(event.footage?.length), createdAt: new Date().toISOString() },
         { id: `st-ev-${Date.now()}-4`, title: "Compile attendee counts & post event summary", completed: false, createdAt: new Date().toISOString() },
       ],
-      orderIndex: tasks.length,
+      orderIndex: Math.max(-1, ...tasks.filter((t) => t.statusId === statusId).map((t) => t.orderIndex)) + 1,
     });
     toast.success("Event execution task created in Field Operations!");
     setSelectedTaskId(task.id);
