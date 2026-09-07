@@ -96,10 +96,12 @@ const FORMAT_ICONS: Record<PostFormat, typeof Video> = {
 
 export function EventsView({ initialTab = "events" }: { initialTab?: "events" | "content" } = {}) {
   const { can } = useMarcomPermissions();
-  const { tasks, createTask, setSelectedTaskId, workspaces, activeWorkspaceId } = useWorkspaceStore();
+  const { tasks, createTask, setSelectedTaskId, workspaces, activeWorkspaceId, activeSpaceId, activeListId } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
   const members = currentWorkspace?.members || [];
+  const currentSpace = currentWorkspace?.spaces.find((s) => s.id === activeSpaceId);
+  const statuses = currentSpace?.statuses || [];
 
   const [events, setEvents] = useState<MarcomEvent[]>([]);
   const [branches, setBranches] = useState<BranchOption[]>([]);
@@ -239,6 +241,7 @@ export function EventsView({ initialTab = "events" }: { initialTab?: "events" | 
     }
     setIsSaving(true);
     try {
+      // 1) Create the canonical MarcomEvent (so it appears in Events table)
       const res = await fetch("/api/marcom/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -258,12 +261,37 @@ export function EventsView({ initialTab = "events" }: { initialTab?: "events" | 
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || `Failed to create post (${res.status})`);
       }
+      const createdEvent: MarcomEvent = await res.json();
+      // 2) Also create the linked Task so it appears in Board/List (single source, two projections)
+      const targetListId = activeListId || "list-content-planner";
+      const defaultStatus = statuses[0]?.id || "status-todo";
+      const task = createTask({
+        listId: targetListId,
+        title: postTitle.trim(),
+        description: postDescription.trim() ? `<p>${postDescription.trim()}</p>` : "<p>Draft post copy...</p>",
+        statusId: defaultStatus,
+        priority: "normal",
+        assignees: members[0] ? [members[0]] : [],
+        dueDate: postScheduledDate,
+        postPlatform,
+        postFormat,
+        mediaUrl: postMediaUrl.trim() || undefined,
+        relatedMarcomId: createdEvent.id,
+        tags: [],
+        subtasks: [
+          { id: `sub-${Date.now()}-1`, title: "Write caption & copy", completed: false, createdAt: new Date().toISOString() },
+          { id: `sub-${Date.now()}-2`, title: "Visual asset production / video cut", completed: false, createdAt: new Date().toISOString() },
+          { id: `sub-${Date.now()}-3`, title: "Stakeholder approval & schedule", completed: false, createdAt: new Date().toISOString() },
+        ],
+        orderIndex: Math.max(-1, ...tasks.filter((t) => t.postPlatform != null).map((t) => t.orderIndex)) + 1,
+      });
       toast.success("Content post added to schedule!");
       setPostTitle("");
       setPostDescription("");
       setPostMediaUrl("");
       setIsCreatePostModalOpen(false);
       await fetchEvents();
+      setSelectedTaskId(task.id);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create post");
     } finally {
