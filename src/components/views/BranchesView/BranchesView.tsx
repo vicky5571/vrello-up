@@ -532,9 +532,19 @@ export function BranchesView() {
                   <div key={row.id}>
                     <div
                       onClick={() => toggleExpand(branch.id)}
+                      onKeyDown={(e) => {
+                        if (e.target !== e.currentTarget) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleExpand(branch.id);
+                        }
+                      }}
                       role="row"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
+                      aria-controls={`branch-detail-${branch.id}`}
                       className={cn(
-                        "flex items-center px-4 py-2.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer text-xs",
+                        "flex items-center px-4 py-2.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer text-xs focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500",
                         row.getIsSelected() && "bg-teal-50/40 dark:bg-teal-950/20",
                       )}
                     >
@@ -550,7 +560,10 @@ export function BranchesView() {
                       ))}
                     </div>
                     {isExpanded && (
-                      <div className="px-4 py-3 bg-slate-50/60 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800/60">
+                      <div
+                        id={`branch-detail-${branch.id}`}
+                        className="px-4 py-3 bg-slate-50/60 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800/60"
+                      >
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                           <div>
                             <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
