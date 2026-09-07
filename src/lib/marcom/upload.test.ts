@@ -43,6 +43,10 @@ test("resolveUploadPath keeps destinations inside the uploads root", () => {
     resolveUploadPath(root, "documents", "abc123", "uuid-doc.pdf"),
     `${root}/documents/abc123/uuid-doc.pdf`,
   );
+  assert.equal(
+    resolveUploadPath(root, "tasks", "task-101", "clip.mp4"),
+    `${root}/tasks/task-101/clip.mp4`,
+  );
   // Traversal in any segment escapes the root and must return null.
   assert.equal(resolveUploadPath(root, "documents", "../../evil", "uuid-x.pdf"), null);
   assert.equal(resolveUploadPath(root, "documents", "abc123", "../../../evil.pdf"), null);

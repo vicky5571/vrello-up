@@ -12,7 +12,7 @@ import {
   validateUpload,
 } from "@/lib/marcom/upload";
 
-const VALID_KINDS = ["documents", "events"] as const;
+const VALID_KINDS = ["documents", "events", "tasks"] as const;
 
 export async function POST(request: Request) {
   let role;
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     !(VALID_KINDS as readonly string[]).includes(kind)
   ) {
     return NextResponse.json(
-      { error: "Invalid kind: expected documents or events" },
+      { error: "Invalid kind: expected documents, events, or tasks" },
       { status: 400 },
     );
   }
@@ -76,7 +76,12 @@ export async function POST(request: Request) {
   await writeFile(dest, bytes);
 
   return NextResponse.json(
-    { filePath: `/api/marcom/files/${kind}/${id}/${stored}`, filename: stored },
+    {
+      filePath: `/api/marcom/files/${kind}/${id}/${stored}`,
+      filename: stored,
+      originalName: file.name,
+      sizeBytes: file.size,
+    },
     { status: 201 },
   );
 }

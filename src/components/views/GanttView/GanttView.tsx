@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
+import { PlatformBadge } from "@/components/ui/PlatformBadge";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { Task } from "@/types";
 import { matchesFilters } from "@/lib/tasks/filterTasks";
@@ -517,6 +518,13 @@ export function GanttView() {
                         className="w-2 h-2 rounded-full shrink-0"
                         style={{ backgroundColor: status?.color || "#0D9488" }}
                       />
+                      {task.postPlatform && (
+                        <PlatformBadge
+                          platform={task.postPlatform}
+                          format={task.postFormat}
+                          compact
+                        />
+                      )}
                       <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
                         {task.title}
                       </span>
@@ -851,6 +859,13 @@ export function GanttView() {
                             className="w-1.5 h-1.5 rounded-full shrink-0"
                             style={{ backgroundColor: statusColor }}
                           />
+                          {task.postPlatform && (
+                            <PlatformBadge
+                              platform={task.postPlatform}
+                              format={task.postFormat}
+                              compact
+                            />
+                          )}
                           <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                             {task.title}
                           </span>

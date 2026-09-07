@@ -12,7 +12,10 @@ import {
   RefreshCw,
   Trash2,
   X,
+  CheckSquare,
 } from "lucide-react";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+
 import {
   tableFeatures,
   useTable,
@@ -72,6 +75,8 @@ const STATUS_STYLES: Record<PlacementStatus, string> = {
 
 export function PlacementsView() {
   const { can } = useMarcomPermissions();
+  const { tasks, createTask, setSelectedTaskId, workspaces, activeWorkspaceId } =
+    useWorkspaceStore();
 
   const [placements, setPlacements] = useState<MarcomPlacement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,9 +88,63 @@ export function PlacementsView() {
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Bulk delete is gated on CREATE_PLACEMENT (admin + staff, matching the
-  // server route). The UI just avoids dead clicks for viewers.
   const canManage = can("CREATE_PLACEMENT");
+
+  const handleTrackAsTask = (placement: MarcomPlacement) => {
+    const existing = tasks.find((t) => t.relatedMarcomId === placement.id);
+    if (existing) {
+      setSelectedTaskId(existing.id);
+      toast.info("Opened existing production task");
+      return;
+    }
+
+    const currentWorkspace =
+      workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
+    const members = currentWorkspace?.members || [];
+
+    const task = createTask({
+      listId: "list-field-ops",
+      title: `[Placement] ${placement.material?.name || "Branding"} - ${placement.outlet?.name || "Outlet"}`,
+      description: `<p><strong>Material:</strong> ${placement.material?.name || "N/A"}</p><p><strong>Dimensions:</strong> ${placement.dimensions || "To be measured"}</p><p><strong>PIC:</strong> ${placement.picName || "Unassigned"}</p><p>${placement.notes || ""}</p>`,
+      statusId: "status-in-progress",
+      priority: placement.status === "ISSUE" ? "urgent" : "normal",
+      assignees: members[0] ? [members[0]] : [],
+      relatedMarcomId: placement.id,
+      mediaUrl: placement.photoUrl || undefined,
+      tags: [],
+      subtasks: [
+        {
+          id: `st-place-${Date.now()}-1`,
+          title: `Survey outlet site & confirm dimensions: ${placement.dimensions || "N/A"}`,
+          completed: false,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: `st-place-${Date.now()}-2`,
+          title: "Artwork design & print vendor proof approval",
+          completed: false,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: `st-place-${Date.now()}-3`,
+          title: "Logistics dispatch & on-site installation",
+          completed: false,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: `st-place-${Date.now()}-4`,
+          title: "Upload verified installation photo proof",
+          completed: false,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      orderIndex: tasks.length,
+    });
+
+    toast.success("Production task created in Field Operations!");
+    setSelectedTaskId(task.id);
+  };
+
 
   const fetchPlacements = useCallback(async () => {
     setIsLoading(true);
@@ -461,6 +520,23 @@ export function PlacementsView() {
                               {placement.notes || "—"}
                             </div>
                           </div>
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            Track installation checklist & operations in workspace:
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTrackAsTask(placement);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer"
+                          >
+                            <CheckSquare className="w-3.5 h-3.5" />
+                            <span>Track as Task Progress</span>
+                          </button>
                         </div>
                       </div>
                     )}

@@ -1,0 +1,104 @@
+import { PostPlatform, PostFormat } from "@/types";
+import { cn } from "@/lib/utils";
+
+interface PlatformBadgeProps {
+  platform?: PostPlatform;
+  format?: PostFormat;
+  className?: string;
+  compact?: boolean;
+}
+
+const PLATFORM_MAP: Record<
+  PostPlatform,
+  { label: string; icon: string; bg: string; text: string; border: string }
+> = {
+  instagram: {
+    label: "Instagram",
+    icon: "📸",
+    bg: "bg-pink-500/10 dark:bg-pink-500/20",
+    text: "text-pink-600 dark:text-pink-400",
+    border: "border-pink-500/30",
+  },
+  tiktok: {
+    label: "TikTok",
+    icon: "🎵",
+    bg: "bg-cyan-500/10 dark:bg-cyan-500/20",
+    text: "text-cyan-600 dark:text-cyan-400",
+    border: "border-cyan-500/30",
+  },
+  youtube: {
+    label: "YouTube",
+    icon: "▶️",
+    bg: "bg-red-500/10 dark:bg-red-500/20",
+    text: "text-red-600 dark:text-red-400",
+    border: "border-red-500/30",
+  },
+  linkedin: {
+    label: "LinkedIn",
+    icon: "💼",
+    bg: "bg-blue-500/10 dark:bg-blue-500/20",
+    text: "text-blue-600 dark:text-blue-400",
+    border: "border-blue-500/30",
+  },
+  facebook: {
+    label: "Facebook",
+    icon: "👥",
+    bg: "bg-indigo-500/10 dark:bg-indigo-500/20",
+    text: "text-indigo-600 dark:text-indigo-400",
+    border: "border-indigo-500/30",
+  },
+  press: {
+    label: "Press",
+    icon: "📰",
+    bg: "bg-emerald-500/10 dark:bg-emerald-500/20",
+    text: "text-emerald-600 dark:text-emerald-400",
+    border: "border-emerald-500/30",
+  },
+};
+
+export function PlatformBadge({
+  platform,
+  format,
+  className,
+  compact = false,
+}: PlatformBadgeProps) {
+  if (!platform) return null;
+
+  const item = PLATFORM_MAP[platform] || PLATFORM_MAP.instagram;
+
+  if (compact) {
+    return (
+      <span
+        title={`${item.label} ${format ? `(${format})` : ""}`}
+        className={cn(
+          "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border",
+          item.bg,
+          item.text,
+          item.border,
+          className,
+        )}
+      >
+        <span>{item.icon}</span>
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0",
+        item.bg,
+        item.text,
+        item.border,
+        className,
+      )}
+    >
+      <span>{item.icon}</span>
+      <span>{item.label}</span>
+      {format && (
+        <span className="opacity-70 capitalize font-medium">· {format}</span>
+      )}
+    </span>
+  );
+}
+

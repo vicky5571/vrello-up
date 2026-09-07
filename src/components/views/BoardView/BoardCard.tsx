@@ -6,8 +6,9 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import { TagBadge } from "@/components/ui/TagBadge";
+import { PlatformBadge } from "@/components/ui/PlatformBadge";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
-import { Calendar, CheckSquare, MoreHorizontal } from "lucide-react";
+import { Calendar, CheckSquare, MoreHorizontal, Play, Paperclip } from "lucide-react";
 import { formatDate, isOverdue, cn } from "@/lib/utils";
 import { useState, useRef, useEffect, memo } from "react";
 
@@ -99,9 +100,18 @@ export const BoardCard = memo(function BoardCard({
         isDragging && "opacity-30 border-blue-500 shadow-lg"
       )}
     >
-      {/* Top Meta: Priority & Move Menu */}
+      {/* Top Meta: Priority, Platform & Move Menu */}
       <div className="flex items-center justify-between gap-2 mb-2">
-        {visibleFields.priority ? <PriorityBadge priority={task.priority} /> : <span />}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {visibleFields.priority ? <PriorityBadge priority={task.priority} /> : null}
+          {task.postPlatform && (
+            <PlatformBadge
+              platform={task.postPlatform}
+              format={task.postFormat}
+              compact
+            />
+          )}
+        </div>
 
         {/* Accessible Move Menu (WCAG 2.2 AA single-pointer alternative) */}
         <div className="relative" ref={menuRef}>
@@ -163,6 +173,34 @@ export const BoardCard = memo(function BoardCard({
         </div>
       </div>
 
+      {/* Media Thumbnail (if content post) */}
+      {task.mediaUrl && (
+        <div className="mb-2.5 overflow-hidden rounded-md bg-slate-100 dark:bg-slate-850 aspect-video max-h-28 relative">
+          {task.mediaUrl.endsWith(".mp4") ? (
+            <>
+              <video
+                src={task.mediaUrl}
+                preload="metadata"
+                className="w-full h-full object-cover pointer-events-none"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                <span className="p-1 rounded-full bg-black/60 text-white shadow-xs">
+                  <Play className="w-3 h-3 fill-white" />
+                </span>
+              </div>
+            </>
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={task.mediaUrl}
+              alt={task.title}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          )}
+        </div>
+      )}
+
       {/* Task Title */}
       <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 line-clamp-2 mb-3 leading-snug">
         {task.title}
@@ -187,6 +225,17 @@ export const BoardCard = memo(function BoardCard({
               <span>
                 {completedSubtasks}/{task.subtasks.length}
               </span>
+            </span>
+          )}
+
+          {/* Attachments / Footage Count */}
+          {task.attachments && task.attachments.length > 0 && (
+            <span
+              className="flex items-center gap-1 text-slate-500"
+              title={`${task.attachments.length} footage/file attachment(s)`}
+            >
+              <Paperclip className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+              <span>{task.attachments.length}</span>
             </span>
           )}
 

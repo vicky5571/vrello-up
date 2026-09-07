@@ -160,7 +160,31 @@ const INITIAL_SPACES: Space[] = [
       },
     ],
   },
+  {
+    id: "space-marcom",
+    workspaceId: "ws-main",
+    name: "Marketing & Campaigns",
+    icon: "Sparkles",
+    color: "#EC4899",
+    statuses: DEFAULT_STATUSES,
+    folders: [],
+    lists: [
+      {
+        id: "list-content-planner",
+        spaceId: "space-marcom",
+        name: "Social & Content Calendar",
+        icon: "Calendar",
+      },
+      {
+        id: "list-field-ops",
+        spaceId: "space-marcom",
+        name: "Field Operations & Setup",
+        icon: "Layers",
+      },
+    ],
+  },
 ];
+
 
 const INITIAL_TASKS: Task[] = [
   {
@@ -273,6 +297,145 @@ const INITIAL_TASKS: Task[] = [
     orderIndex: 0,
     createdAt: "2026-08-28T00:00:00.000Z",
     updatedAt: "2026-08-28T00:00:00.000Z",
+  },
+  {
+    id: "post-1",
+    listId: "list-sprint-tasks",
+    title: "Launch Teaser Reel: VrelloUp 2.0 Feature Drop",
+    description:
+      "<p>Highlight fluid animations, ClickUp/Trello hybrid views, and real-time sprint blocker analytics. #Productivity #TechLaunch</p>",
+    statusId: "status-in-progress",
+    priority: "high",
+    assignees: [SEED_USERS[1]],
+    dueDate: "2026-09-10",
+    startDate: "2026-09-08",
+    postPlatform: "instagram",
+    postFormat: "reel",
+    mediaUrl:
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
+    tags: [SEED_TAGS[1]],
+    subtasks: [
+      {
+        id: "sp-1",
+        title: "Record 4K 60fps screen recording",
+        completed: true,
+        createdAt: "2026-09-07",
+      },
+      {
+        id: "sp-2",
+        title: "Add motion captions and sound design",
+        completed: true,
+        createdAt: "2026-09-07",
+      },
+      {
+        id: "sp-3",
+        title: "Schedule post on Meta Business Suite",
+        completed: false,
+        createdAt: "2026-09-07",
+      },
+    ],
+    orderIndex: 0,
+    createdAt: "2026-09-07T00:00:00.000Z",
+    updatedAt: "2026-09-07T00:00:00.000Z",
+  },
+  {
+    id: "post-2",
+    listId: "list-sprint-tasks",
+    title: "TikTok Behind-the-Scenes: Field Officer Solo Roadshow",
+    description:
+      "<p>Day in the life of field marketing officers inspecting outlet branding signboards in Solo Central Java. #FieldOps #BehindTheScenes</p>",
+    statusId: "status-todo",
+    priority: "normal",
+    assignees: [SEED_USERS[2]],
+    dueDate: "2026-09-14",
+    postPlatform: "tiktok",
+    postFormat: "reel",
+    mediaUrl:
+      "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=800&auto=format&fit=crop&q=80",
+    tags: [SEED_TAGS[0]],
+    subtasks: [
+      {
+        id: "sp-4",
+        title: "Curate event footage clips",
+        completed: false,
+        createdAt: "2026-09-07",
+      },
+      {
+        id: "sp-5",
+        title: "Draft TikTok hook & trending audio",
+        completed: false,
+        createdAt: "2026-09-07",
+      },
+    ],
+    orderIndex: 1,
+    createdAt: "2026-09-07T00:00:00.000Z",
+    updatedAt: "2026-09-07T00:00:00.000Z",
+  },
+  {
+    id: "post-3",
+    listId: "list-sprint-tasks",
+    title: "YouTube Deep Dive: ClickUp & Trello Hybrid Workflow",
+    description:
+      "<p>Walkthrough comparing multi-view capabilities (List, Board, Calendar, Gantt, Table) in VrelloUp. #Tutorial #Productivity</p>",
+    statusId: "status-review",
+    priority: "urgent",
+    assignees: [SEED_USERS[0]],
+    dueDate: "2026-09-08",
+    postPlatform: "youtube",
+    postFormat: "carousel",
+    mediaUrl:
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",
+    tags: [SEED_TAGS[1]],
+    subtasks: [
+      {
+        id: "sp-6",
+        title: "Rough cut video edit",
+        completed: true,
+        createdAt: "2026-09-07",
+      },
+      {
+        id: "sp-7",
+        title: "Chapter timestamps & thumbnail",
+        completed: false,
+        createdAt: "2026-09-07",
+      },
+    ],
+    orderIndex: 2,
+    createdAt: "2026-09-07T00:00:00.000Z",
+    updatedAt: "2026-09-07T00:00:00.000Z",
+  },
+  {
+    id: "post-4",
+    listId: "list-sprint-tasks",
+    title: "LinkedIn Product Update: VrelloUp Q3 Release Notes",
+    description:
+      "<p>Official announcement detailing sprint planning, task dependencies, and marketing integration. #SaaS #ProductUpdate</p>",
+    statusId: "status-done",
+    priority: "normal",
+    assignees: [SEED_USERS[0], SEED_USERS[1]],
+    dueDate: "2026-09-04",
+    postPlatform: "linkedin",
+    postFormat: "article",
+    mediaUrl:
+      "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&auto=format&fit=crop&q=80",
+    tags: [SEED_TAGS[2]],
+    subtasks: [
+      {
+        id: "sp-8",
+        title: "Copy proofreading",
+        completed: true,
+        createdAt: "2026-09-07",
+      },
+      {
+        id: "sp-9",
+        title: "Publish to company page",
+        completed: true,
+        createdAt: "2026-09-07",
+      },
+    ],
+    orderIndex: 3,
+    createdAt: "2026-09-07T00:00:00.000Z",
+    updatedAt: "2026-09-07T00:00:00.000Z",
   },
 ];
 
@@ -1551,7 +1714,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               }))
             : [INITIAL_WORKSPACE];
 
-          const rawTasks = Array.isArray(state.tasks)
+          let rawTasks = Array.isArray(state.tasks)
             ? (state.tasks as Task[]).map((t) => ({
                 ...t,
                 subtasks: Array.isArray(t.subtasks) ? t.subtasks : [],
@@ -1563,6 +1726,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
                 orderIndex: typeof t.orderIndex === "number" ? t.orderIndex : 0,
               }))
             : INITIAL_TASKS;
+
+          // Merge seeded posts if missing from persisted tasks
+          const existingTaskIds = new Set(rawTasks.map((t) => t.id));
+          const missingSeeds = INITIAL_TASKS.filter((t) => !existingTaskIds.has(t.id));
+          if (missingSeeds.length > 0) {
+            rawTasks = [...rawTasks, ...missingSeeds];
+          }
 
           const activeWs = rawWorkspaces[0];
           const activeSpace = activeWs?.spaces[0];

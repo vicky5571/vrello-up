@@ -171,6 +171,19 @@ export function CalendarView() {
                         className="w-1.5 h-1.5 rounded-full shrink-0"
                         style={{ backgroundColor: status?.color || "#0073ea" }}
                       />
+                      {task.postPlatform && (
+                        <span
+                          className="text-[10px] shrink-0"
+                          title={`Scheduled on ${task.postPlatform}`}
+                        >
+                          {task.postPlatform === "instagram" && "📸"}
+                          {task.postPlatform === "tiktok" && "🎵"}
+                          {task.postPlatform === "youtube" && "▶️"}
+                          {task.postPlatform === "linkedin" && "💼"}
+                          {task.postPlatform === "facebook" && "👥"}
+                          {task.postPlatform === "press" && "📰"}
+                        </span>
+                      )}
                       <span className="truncate">{task.title}</span>
                     </div>
                   );

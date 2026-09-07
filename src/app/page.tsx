@@ -99,6 +99,14 @@ const AnalyticsView = dynamic(
     ),
   { ssr: false, loading: () => <ViewFallback /> },
 );
+const ContentPlannerView = dynamic(
+  () =>
+    import("@/components/views/ContentPlannerView/ContentPlannerView").then(
+      (m) => m.ContentPlannerView,
+    ),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
+
 const TaskDrawer = dynamic(
   () => import("@/components/tasks/TaskDrawer").then((m) => m.TaskDrawer),
   { ssr: false },
@@ -245,6 +253,20 @@ export default function WorkspacePage() {
                 <ChannelView />
               </motion.div>
             )}
+
+            {activeView === "content" && (
+              <motion.div
+                key="content-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <ContentPlannerView />
+              </motion.div>
+            )}
+
 
             {activeView === "branches" && (
               <motion.div

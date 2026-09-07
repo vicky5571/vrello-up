@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { PlatformBadge } from "@/components/ui/PlatformBadge";
 import { matchesFilters } from "@/lib/tasks/filterTasks";
 import { toast } from "sonner";
 import {
@@ -256,6 +257,25 @@ export function TableView() {
             );
           },
         }),
+        columnHelper.accessor("postPlatform", {
+          id: "platform",
+          header: "Platform",
+          size: 130,
+          minSize: 100,
+          cell: ({ row }) => {
+            const task = row.original;
+            if (!task.postPlatform) {
+              return <span className="text-slate-400 text-xs">—</span>;
+            }
+            return (
+              <PlatformBadge
+                platform={task.postPlatform}
+                format={task.postFormat}
+                compact
+              />
+            );
+          },
+        }),
         columnHelper.accessor("assignees", {
           id: "assignees",
           header: "Assignees",
@@ -279,14 +299,19 @@ export function TableView() {
               <input
                 type="date"
                 value={task.dueDate || ""}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  try {
+                    e.currentTarget.showPicker();
+                  } catch {}
+                }}
                 onChange={(e) =>
                   updateTask(task.id, {
                     dueDate: e.target.value || undefined,
                   })
                 }
                 className={cn(
-                  "px-1 py-0.5 rounded-md bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-700 text-xs focus:outline-hidden",
+                  "px-1 py-0.5 rounded-md bg-transparent border border-transparent hover:border-slate-200 dark:hover:border-slate-700 text-xs focus:outline-hidden cursor-pointer",
                   overdue && "text-red-500 font-semibold",
                 )}
               />

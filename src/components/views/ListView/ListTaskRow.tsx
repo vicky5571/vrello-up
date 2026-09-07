@@ -14,7 +14,9 @@ import {
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { PlatformBadge } from "@/components/ui/PlatformBadge";
 import { toast } from "sonner";
+
 
 export interface ListTaskRowProps {
   task: Task;
@@ -146,6 +148,11 @@ export const ListTaskRow = memo(function ListTaskRow({
         >
           {task.title}
         </span>
+
+        {task.postPlatform && (
+          <PlatformBadge platform={task.postPlatform} format={task.postFormat} />
+        )}
+
 
         {visibleFields.subtasks && task.subtasks.length > 0 && (
           <span className="shrink-0 text-[10px] text-slate-400 font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">

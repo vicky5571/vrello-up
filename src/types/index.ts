@@ -36,6 +36,15 @@ export interface Subtask {
   createdAt: string;
 }
 
+export interface TaskAttachment {
+  id: string;
+  name: string;
+  sizeBytes: number;
+  type: "video" | "image" | "document" | "other";
+  url: string;
+  uploadedAt: string;
+}
+
 export interface TaskCommentAttachment {
   id: string;
   name: string;
@@ -73,6 +82,16 @@ export interface ChannelMessage {
   createdAt: string;
 }
 
+export type PostPlatform =
+  | "instagram"
+  | "tiktok"
+  | "youtube"
+  | "linkedin"
+  | "facebook"
+  | "press";
+
+export type PostFormat = "reel" | "carousel" | "image" | "story" | "article";
+
 export interface Task {
   id: string;
   listId: string;
@@ -90,6 +109,11 @@ export interface Task {
   activities?: ActivityLog[];
   dependencies?: string[]; // IDs of tasks this task depends on (blocking)
   progress?: number; // 0 to 100 manual or calculated progress
+  postPlatform?: PostPlatform;
+  postFormat?: PostFormat;
+  mediaUrl?: string;
+  attachments?: TaskAttachment[];
+  relatedMarcomId?: string;
   orderIndex: number;
   createdAt: string;
   updatedAt: string;
@@ -138,6 +162,7 @@ export type ViewMode =
   | "calendar"
   | "gantt"
   | "channel"
+  | "content"
   | "branches"
   | "outlets"
   | "placements"

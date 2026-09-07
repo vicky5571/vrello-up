@@ -2,21 +2,23 @@
 
 import { useState } from "react";
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
-import { Priority } from "@/types";
+import { Priority, PostPlatform, PostFormat } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Calendar, Flame, Layers } from "lucide-react";
+import { X, Plus, Calendar, Flame, Layers, Share2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultStatusId?: string;
+  initialPostOptions?: boolean;
 }
 
 export function CreateTaskModal({
   isOpen,
   onClose,
   defaultStatusId,
+  initialPostOptions = false,
 }: CreateTaskModalProps) {
   const {
     activeListId,
@@ -45,6 +47,14 @@ export function CreateTaskModal({
     members[0]?.id ?? SEED_USERS[0].id,
   ]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [postPlatform, setPostPlatform] = useState<PostPlatform | "">(
+    initialPostOptions ? "instagram" : "",
+  );
+  const [postFormat, setPostFormat] = useState<PostFormat | "">(
+    initialPostOptions ? "reel" : "",
+  );
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [showPostOptions, setShowPostOptions] = useState(initialPostOptions);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,11 +78,18 @@ export function CreateTaskModal({
       tags: tags.filter((t) => selectedTagIds.includes(t.id)),
       subtasks: [],
       orderIndex: 0,
+      postPlatform: postPlatform || undefined,
+      postFormat: postFormat || undefined,
+      mediaUrl: mediaUrl.trim() || undefined,
     });
 
     toast.success("Task created successfully!");
     setTitle("");
     setDescription("");
+    setPostPlatform(initialPostOptions ? "instagram" : "");
+    setPostFormat(initialPostOptions ? "reel" : "");
+    setMediaUrl("");
+    setShowPostOptions(initialPostOptions);
     onClose();
   };
 
@@ -181,14 +198,19 @@ export function CreateTaskModal({
 
                 {/* Due Date */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1 cursor-pointer">
                     <Calendar className="w-3 h-3 text-blue-500" /> Due Date
                   </label>
                   <input
                     type="date"
                     value={dueDate}
+                    onClick={(e) => {
+                      try {
+                        e.currentTarget.showPicker();
+                      } catch {}
+                    }}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE]"
+                    className="w-full px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE] cursor-pointer"
                   />
                 </div>
               </div>
@@ -267,6 +289,74 @@ export function CreateTaskModal({
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Content / Social Planning (Optional Toggle) */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowPostOptions(!showPostOptions)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline cursor-pointer"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  {showPostOptions ? "Hide Content / Social Options" : "+ Add Social Post / Content Details"}
+                </button>
+
+                {showPostOptions && (
+                  <div className="mt-2.5 p-3.5 rounded-lg bg-teal-50/40 dark:bg-teal-950/20 border border-teal-200/70 dark:border-teal-800/50 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                          Platform
+                        </label>
+                        <select
+                          value={postPlatform}
+                          onChange={(e) => setPostPlatform(e.target.value as PostPlatform | "")}
+                          className="w-full px-2.5 py-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+                        >
+                          <option value="">None</option>
+                          <option value="instagram">Instagram</option>
+                          <option value="tiktok">TikTok</option>
+                          <option value="youtube">YouTube</option>
+                          <option value="linkedin">LinkedIn</option>
+                          <option value="facebook">Facebook</option>
+                          <option value="press">Press / PR</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                          Format
+                        </label>
+                        <select
+                          value={postFormat}
+                          onChange={(e) => setPostFormat(e.target.value as PostFormat | "")}
+                          className="w-full px-2.5 py-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+                        >
+                          <option value="">Default</option>
+                          <option value="reel">Reel / Video</option>
+                          <option value="carousel">Carousel</option>
+                          <option value="image">Image / Graphic</option>
+                          <option value="story">Story</option>
+                          <option value="article">Article / Press</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Media URL (Asset / Preview Image)
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://images.unsplash.com/... or media link"
+                        value={mediaUrl}
+                        onChange={(e) => setMediaUrl(e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-teal-500"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Modal Actions */}

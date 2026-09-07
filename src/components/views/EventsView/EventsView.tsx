@@ -12,7 +12,10 @@ import {
   RefreshCw,
   Trash2,
   X,
+  CheckSquare,
 } from "lucide-react";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+
 import {
   tableFeatures,
   useTable,
@@ -85,6 +88,8 @@ function isVideo(path: string) {
 
 export function EventsView() {
   const { can } = useMarcomPermissions();
+  const { tasks, createTask, setSelectedTaskId, workspaces, activeWorkspaceId } =
+    useWorkspaceStore();
 
   const [events, setEvents] = useState<MarcomEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -96,9 +101,67 @@ export function EventsView() {
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Bulk delete is gated on CREATE_EVENT (admin + staff, matching the
-  // server route). The UI just avoids dead clicks for viewers.
   const canManage = can("CREATE_EVENT");
+
+  const handleTrackAsTask = (event: MarcomEvent) => {
+    const existing = tasks.find((t) => t.relatedMarcomId === event.id);
+    if (existing) {
+      setSelectedTaskId(existing.id);
+      toast.info("Opened existing event execution task");
+      return;
+    }
+
+    const currentWorkspace =
+      workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
+    const members = currentWorkspace?.members || [];
+
+    const firstFootage = event.footage?.[0]?.filePath;
+
+    const task = createTask({
+      listId: "list-field-ops",
+      title: `[Event] ${event.name} (${event.branchName})`,
+      description: `<p><strong>Location:</strong> ${event.location || "TBD"}</p><p><strong>Target Attendees:</strong> ${event.targetAttendee}</p><p><strong>Budget:</strong> Rp ${event.budget.toLocaleString()}</p><p>${event.notes || ""}</p>`,
+      statusId: event.status === "COMPLETED" ? "status-done" : "status-in-progress",
+      priority: event.status === "UPCOMING" ? "high" : "normal",
+      assignees: members[0] ? [members[0]] : [],
+      dueDate: event.date ? event.date.slice(0, 10) : undefined,
+      startDate: event.date ? event.date.slice(0, 10) : undefined,
+      relatedMarcomId: event.id,
+      mediaUrl: firstFootage || undefined,
+      tags: [],
+      subtasks: [
+        {
+          id: `st-ev-${Date.now()}-1`,
+          title: `Venue booking & local permits (${event.location || "Venue"})`,
+          completed: false,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: `st-ev-${Date.now()}-2`,
+          title: "Stage, sound, & branding production setup",
+          completed: false,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: `st-ev-${Date.now()}-3`,
+          title: "Capture 4K video footage & b-roll clips",
+          completed: Boolean(event.footage?.length),
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: `st-ev-${Date.now()}-4`,
+          title: "Compile attendee counts & post event summary",
+          completed: false,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      orderIndex: tasks.length,
+    });
+
+    toast.success("Event execution task created in Field Operations!");
+    setSelectedTaskId(task.id);
+  };
+
 
   const fetchEvents = useCallback(async () => {
     setIsLoading(true);
@@ -470,6 +533,24 @@ export function EventsView() {
                             </div>
                           </div>
                         </div>
+
+                        <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            Track event permits, logistics, setup, and social coverage:
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTrackAsTask(event);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer"
+                          >
+                            <CheckSquare className="w-3.5 h-3.5" />
+                            <span>Track as Task Progress</span>
+                          </button>
+                        </div>
+
                         {event.footage && event.footage.length > 0 && (
                           <div className="mt-3">
                             <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1.5">

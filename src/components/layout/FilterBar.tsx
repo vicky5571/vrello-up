@@ -22,6 +22,7 @@ import {
   UserCheck,
   Check,
   Tags,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
@@ -38,6 +39,7 @@ export function FilterBar() {
     resetViewPreferences,
     workspaces,
     activeWorkspaceId,
+    activeView,
     tags,
   } = useWorkspaceStore();
 
@@ -591,15 +593,27 @@ export function FilterBar() {
             )}
           </div>
 
-          {/* ClickUp Solid Add Task CTA */}
+          {/* ClickUp Solid Add Task CTA / Plan Post CTA */}
           <button
             type="button"
             onClick={() => setIsCreateTaskOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium text-white bg-[#111318] hover:bg-black dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white transition-all cursor-pointer shadow-2xs ml-1"
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold text-white transition-all cursor-pointer shadow-2xs ml-1",
+              activeView === "content"
+                ? "bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 shadow-xs"
+                : "bg-[#111318] hover:bg-black dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white"
+            )}
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Task</span>
-            <ChevronDown className="w-3 h-3 text-slate-400 dark:text-slate-600 ml-0.5" />
+            {activeView === "content" ? (
+              <Sparkles className="w-3.5 h-3.5" />
+            ) : (
+              <Plus className="w-3.5 h-3.5" />
+            )}
+            <span>{activeView === "content" ? "Plan Post" : "Add Task"}</span>
+            <ChevronDown className={cn(
+              "w-3 h-3 ml-0.5",
+              activeView === "content" ? "text-pink-200" : "text-slate-400 dark:text-slate-600"
+            )} />
           </button>
         </div>
       </div>
@@ -608,6 +622,7 @@ export function FilterBar() {
       <CreateTaskModal
         isOpen={isCreateTaskOpen}
         onClose={() => setIsCreateTaskOpen(false)}
+        initialPostOptions={activeView === "content"}
       />
     </>
   );

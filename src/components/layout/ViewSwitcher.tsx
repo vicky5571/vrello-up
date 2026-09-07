@@ -19,6 +19,7 @@ import {
   BarChart3,
   TrendingUp,
   Plus,
+  Sparkles,
   LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ const VIEWS: ViewTabItem[] = [
 ];
 
 const MARKETING_VIEWS: ViewTabItem[] = [
+  { id: "content", label: "Content Planner", icon: Sparkles, iconColor: "text-pink-500", isAvailable: true },
   { id: "branches", label: "Branches", icon: Building2, iconColor: "text-cyan-500", isAvailable: true },
   { id: "outlets", label: "Outlets", icon: Store, iconColor: "text-orange-500", isAvailable: true },
   { id: "placements", label: "Placements", icon: ClipboardList, iconColor: "text-lime-500", isAvailable: true },
