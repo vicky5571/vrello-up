@@ -409,6 +409,13 @@ export function DocumentsView() {
       toast.error("Only workspace admins can delete documents");
       return;
     }
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        `Permanently delete ${selectedRowIds.length} ${selectedRowIds.length === 1 ? "document" : "documents"}? This cannot be undone.`,
+      )
+    )
+      return;
     setIsDeleting(true);
     try {
       const results = await Promise.all(
@@ -419,14 +426,19 @@ export function DocumentsView() {
           return res.ok;
         }),
       );
-      const deleted = results.filter(Boolean).length;
-      if (deleted < selectedRowIds.length) {
-        toast.error(`${deleted}/${selectedRowIds.length} documents deleted`);
+      const succeeded = selectedRowIds.filter((_, i) => results[i]);
+      const failed = selectedRowIds.filter((_, i) => !results[i]);
+      if (failed.length === 0) {
+        toast.success(`${succeeded.length} ${succeeded.length === 1 ? "document" : "documents"} deleted`);
+      } else if (succeeded.length === 0) {
+        toast.error(`Failed to delete ${failed.length} ${failed.length === 1 ? "document" : "documents"}`);
       } else {
-        toast.success(`${deleted} ${deleted === 1 ? "document" : "documents"} deleted`);
+        toast.error(`${succeeded.length}/${selectedRowIds.length} documents deleted — ${failed.length} failed`);
       }
-      if (expandedId && selectedRowIds.includes(expandedId)) setExpandedId(null);
-      setRowSelection({});
+      if (expandedId && succeeded.includes(expandedId)) setExpandedId(null);
+      setRowSelection(
+        failed.length ? Object.fromEntries(failed.map((id) => [id, true])) : {},
+      );
       await fetchDocuments();
     } finally {
       setIsDeleting(false);
@@ -522,33 +534,41 @@ export function DocumentsView() {
 
       {/* Main Table Container */}
       <div className="rounded-lg border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#18191B] shadow-2xs overflow-x-auto">
-        <div style={{ minWidth: `${table.getTotalSize()}px` }}>
+        <div style={{ minWidth: `${table.getTotalSize()}px` }} role="table" aria-label="Documents">
           {/* Table Header Row */}
           {table.getHeaderGroups().map((headerGroup) => (
             <div
               key={headerGroup.id}
+              role="row"
               className="flex items-center px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-500 dark:text-slate-400 select-none"
             >
               {headerGroup.headers.map((header) => {
                 const canSort = header.column.getCanSort();
                 const isSorted = header.column.getIsSorted();
+                const sortDirection =
+                  isSorted === "asc"
+                    ? "ascending"
+                    : isSorted === "desc"
+                      ? "descending"
+                      : "none";
 
                 return (
                   <div
                     key={header.id}
+                    role="columnheader"
+                    aria-sort={canSort ? sortDirection : undefined}
                     style={{ width: `${header.getSize()}px` }}
                     className="relative flex items-center gap-1.5 shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden"
                   >
-                    <div
-                      onClick={header.column.getToggleSortingHandler()}
-                      className={cn(
-                        "flex items-center gap-1.5 truncate",
-                        canSort && "cursor-pointer hover:text-slate-900 dark:hover:text-white",
-                      )}
-                    >
-                      <table.FlexRender header={header} />
-                      {canSort && (
-                        <span className="shrink-0">
+                    {canSort ? (
+                      <button
+                        type="button"
+                        onClick={header.column.getToggleSortingHandler()}
+                        aria-label={`Sort by ${header.id}`}
+                        className="flex items-center gap-1.5 truncate cursor-pointer hover:text-slate-900 dark:hover:text-white focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500 rounded"
+                      >
+                        <table.FlexRender header={header} />
+                        <span className="shrink-0" aria-hidden="true">
                           {isSorted === "asc" ? (
                             <ArrowUp className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                           ) : isSorted === "desc" ? (
@@ -557,8 +577,12 @@ export function DocumentsView() {
                             <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-40 hover:opacity-100" />
                           )}
                         </span>
-                      )}
-                    </div>
+                      </button>
+                    ) : (
+                      <span className="flex items-center gap-1.5 truncate">
+                        <table.FlexRender header={header} />
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -592,6 +616,7 @@ export function DocumentsView() {
                   <div key={row.id}>
                     <div
                       onClick={() => toggleExpand(document.id)}
+                      role="row"
                       className={cn(
                         "flex items-center px-4 py-2.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer text-xs",
                         row.getIsSelected() && "bg-teal-50/40 dark:bg-teal-950/20",
@@ -600,6 +625,7 @@ export function DocumentsView() {
                       {row.getVisibleCells().map((cell) => (
                         <div
                           key={cell.id}
+                          role="cell"
                           style={{ width: `${cell.column.getSize()}px` }}
                           className="shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden"
                         >

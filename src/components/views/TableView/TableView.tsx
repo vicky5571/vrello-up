@@ -580,33 +580,41 @@ export function TableView() {
 
       {/* Main Table Container */}
       <div className="rounded-lg border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#18191B] shadow-2xs overflow-x-auto">
-        <div style={{ minWidth: `${table.getTotalSize()}px` }}>
+        <div style={{ minWidth: `${table.getTotalSize()}px` }} role="table" aria-label="Tasks">
           {/* Table Header Row */}
           {table.getHeaderGroups().map((headerGroup) => (
             <div
               key={headerGroup.id}
+              role="row"
               className="flex items-center px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-500 dark:text-slate-400 select-none"
             >
               {headerGroup.headers.map((header) => {
                 const canSort = header.column.getCanSort();
                 const isSorted = header.column.getIsSorted();
+                const sortDirection =
+                  isSorted === "asc"
+                    ? "ascending"
+                    : isSorted === "desc"
+                      ? "descending"
+                      : "none";
 
                 return (
                   <div
                     key={header.id}
+                    role="columnheader"
+                    aria-sort={canSort ? sortDirection : undefined}
                     style={{ width: `${header.getSize()}px` }}
                     className="relative flex items-center gap-1.5 shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden"
                   >
-                    <div
-                      onClick={header.column.getToggleSortingHandler()}
-                      className={cn(
-                        "flex items-center gap-1.5 truncate",
-                        canSort && "cursor-pointer hover:text-slate-900 dark:hover:text-white",
-                      )}
-                    >
-                      <table.FlexRender header={header} />
-                      {canSort && (
-                        <span className="shrink-0">
+                    {canSort ? (
+                      <button
+                        type="button"
+                        onClick={header.column.getToggleSortingHandler()}
+                        aria-label={`Sort by ${header.id}`}
+                        className="flex items-center gap-1.5 truncate cursor-pointer hover:text-slate-900 dark:hover:text-white focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500 rounded"
+                      >
+                        <table.FlexRender header={header} />
+                        <span className="shrink-0" aria-hidden="true">
                           {isSorted === "asc" ? (
                             <ArrowUp className="w-3 h-3 text-blue-600 dark:text-blue-400" />
                           ) : isSorted === "desc" ? (
@@ -615,12 +623,18 @@ export function TableView() {
                             <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-40 hover:opacity-100" />
                           )}
                         </span>
-                      )}
-                    </div>
+                      </button>
+                    ) : (
+                      <span className="flex items-center gap-1.5 truncate">
+                        <table.FlexRender header={header} />
+                      </span>
+                    )}
 
-                    {/* Column Resizer Handle */}
+                    {/* Column Resizer Handle (pointer-only enhancement;
+                        columns stay fully usable at default widths) */}
                     {header.column.getCanResize() && (
                       <div
+                        aria-hidden="true"
                         onMouseDown={header.getResizeHandler()}
                         onTouchStart={header.getResizeHandler()}
                         onClick={(e) => e.stopPropagation()}
@@ -650,9 +664,11 @@ export function TableView() {
                   className="divide-y divide-slate-100 dark:divide-slate-800/40"
                 >
                   {/* Status Group Header */}
-                  <div
+                  <button
+                    type="button"
                     onClick={() => toggleGroup(status.id)}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-50/50 dark:bg-slate-800/30 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800/60 transition-colors"
+                    aria-expanded={!isCollapsed}
+                    className="w-full text-left flex items-center gap-2 px-4 py-2 bg-slate-50/50 dark:bg-slate-800/30 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800/60 transition-colors"
                   >
                     <ChevronDown
                       className={cn(
@@ -665,13 +681,14 @@ export function TableView() {
                       {statusRows.length}{" "}
                       {statusRows.length === 1 ? "task" : "tasks"}
                     </span>
-                  </div>
+                  </button>
 
                   {/* Task Rows */}
                   {!isCollapsed &&
                     statusRows.map((row) => (
                       <div
                         key={row.id}
+                        role="row"
                         onClick={() => setSelectedTaskId(row.original.id)}
                         className={cn(
                           "flex items-center px-4 py-2.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer text-xs",
@@ -681,6 +698,7 @@ export function TableView() {
                         {row.getVisibleCells().map((cell) => (
                           <div
                             key={cell.id}
+                            role="cell"
                             style={{ width: `${cell.column.getSize()}px` }}
                             className="shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden"
                           >
