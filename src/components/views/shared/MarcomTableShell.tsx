@@ -7,8 +7,11 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
   Layers,
   RefreshCw,
+  Search,
   Trash2,
   X,
 } from "lucide-react";
@@ -25,6 +28,7 @@ import {
   type SortingState,
   type RowSelectionState,
   type ColumnSizingState,
+  type PaginationState,
 } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
 
@@ -104,11 +108,19 @@ export function MarcomTableShell<T extends object & { id: string }>({
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
+
+  const filteredData = useMemo(() => {
+    const q = globalFilter.trim().toLowerCase();
+    if (!q) return data;
+    return data.filter((row) => JSON.stringify(row).toLowerCase().includes(q));
+  }, [data, globalFilter]);
 
   const table = useTable({
     features: marcomFeatures,
     columns: columns as any,
-    data,
+    data: filteredData,
     columnResizeMode: "onChange",
     enableColumnResizing: true,
     state: { sorting, rowSelection, columnSizing },
@@ -162,6 +174,23 @@ export function MarcomTableShell<T extends object & { id: string }>({
 
   const allRows = table.getRowModel().rows;
 
+  // Reset to first page when filter or data size changes
+  const filteredCount = filteredData.length;
+  const pageCount = Math.max(1, Math.ceil(filteredCount / pagination.pageSize));
+  const clampedPageIndex = Math.min(pagination.pageIndex, pageCount - 1);
+  if (clampedPageIndex !== pagination.pageIndex) {
+    // Defer to avoid render-phase setState warning; will correct next render
+    setTimeout(() => setPagination((p) => ({ ...p, pageIndex: clampedPageIndex })), 0);
+  }
+  const start = clampedPageIndex * pagination.pageSize;
+  const end = Math.min(start + pagination.pageSize, filteredCount);
+  const paginatedRows = allRows.slice(start, end);
+
+  const handleFilterChange = (v: string) => {
+    setGlobalFilter(v);
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
+  };
+
   return (
     <div className="flex-1 overflow-auto p-6">
       {/* Header */}
@@ -170,10 +199,20 @@ export function MarcomTableShell<T extends object & { id: string }>({
           <TitleIcon className="w-4 h-4 text-slate-500" />
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</h2>
           <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-            {data.length} {data.length === 1 ? (countLabel?.singular ?? entityName) : (countLabel?.plural ?? entityPlural)}
+            {filteredCount !== data.length ? `${filteredCount}/${data.length}` : `${data.length}`} {filteredCount === 1 ? (countLabel?.singular ?? entityName) : (countLabel?.plural ?? entityPlural)}
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <div className="relative hidden sm:flex items-center">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
+            <input
+              type="search"
+              placeholder={`Search ${entityPlural}...`}
+              value={globalFilter}
+              onChange={(e) => handleFilterChange(e.target.value)}
+              className="w-44 lg:w-56 pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
           {headerExtra}
           {canAdd && onAdd && addLabel && (
             <button
@@ -198,6 +237,19 @@ export function MarcomTableShell<T extends object & { id: string }>({
             <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
             <span>Refresh</span>
           </button>
+        </div>
+      </div>
+      {/* Mobile search */}
+      <div className="sm:hidden mb-3">
+        <div className="relative flex items-center">
+          <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
+          <input
+            type="search"
+            placeholder={`Search ${entityPlural}...`}
+            value={globalFilter}
+            onChange={(e) => handleFilterChange(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
         </div>
       </div>
 
@@ -289,9 +341,15 @@ export function MarcomTableShell<T extends object & { id: string }>({
               <span className="text-rose-500 font-semibold">Failed to load {entityPlural}: {error}</span>
               <button type="button" onClick={() => onRefresh()} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer">Retry</button>
             </div>
+          ) : filteredCount === 0 ? (
+            <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
+              <Search className="w-8 h-8 text-slate-300 dark:text-slate-700" />
+              <span>No {entityPlural} match “{globalFilter}”.</span>
+              <button type="button" onClick={() => handleFilterChange("")} className="mt-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer">Clear search</button>
+            </div>
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
-              {allRows.map((row) => {
+              {paginatedRows.map((row) => {
                 const isExpanded = (expandedId as string) === (row as any).original.id;
                 return (
                   <div key={(row as any).id}>
@@ -338,6 +396,36 @@ export function MarcomTableShell<T extends object & { id: string }>({
           )}
         </div>
       </div>
+      {/* Pagination */}
+      {!isLoading && !error && filteredCount > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-1 text-xs text-slate-500 dark:text-slate-400">
+          <span>
+            Showing {filteredCount === 0 ? 0 : start + 1}–{end} of {filteredCount} {filteredCount === 1 ? entityName : entityPlural}
+            {selectedRowIds.length > 0 && ` · ${selectedRowIds.length} selected`}
+          </span>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5">
+              Rows
+              <select
+                value={pagination.pageSize}
+                onChange={(e) => setPagination({ pageIndex: 0, pageSize: Number(e.target.value) })}
+                className="px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 cursor-pointer"
+              >
+                {[10, 25, 50, 100].map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </label>
+            <span className="tabular-nums">Page {clampedPageIndex + 1} of {pageCount}</span>
+            <button type="button" onClick={() => setPagination((p) => ({ ...p, pageIndex: Math.max(0, p.pageIndex - 1) }))} disabled={clampedPageIndex === 0} className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer" aria-label="Previous page">
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button type="button" onClick={() => setPagination((p) => ({ ...p, pageIndex: Math.min(pageCount - 1, p.pageIndex + 1) }))} disabled={clampedPageIndex >= pageCount - 1} className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer" aria-label="Next page">
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
