@@ -162,7 +162,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                         <span className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
                           {plan.price}
                         </span>
-                        <span className="text-xs text-slate-400 font-medium">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                           {plan.period}
                         </span>
                       </div>
@@ -206,7 +206,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             </div>
 
             {/* Bottom Footer Assurance */}
-            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-2">
               <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                 <ShieldCheck className="w-4 h-4 text-emerald-500" />
                 <span>Enterprise SOC2 Type II Certified & End-to-End Encrypted</span>

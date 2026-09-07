@@ -218,7 +218,7 @@ export function AgentsModal({ isOpen, onClose }: AgentsModalProps) {
                         <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
                           {agent.name}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-medium">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                           • Last run: {agent.lastRun}
                         </span>
                       </div>
@@ -264,7 +264,7 @@ export function AgentsModal({ isOpen, onClose }: AgentsModalProps) {
             </div>
 
             {/* Footer */}
-            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>All agents operate in offline background mode with zero token costs.</span>
               <button
                 type="button"

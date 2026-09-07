@@ -149,7 +149,7 @@ export function HomeView() {
               </span>
             </header>
             {assigned.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">
                 Nothing assigned — enjoy the clear plate. 🎉
               </p>
             ) : (
@@ -181,7 +181,7 @@ export function HomeView() {
               </span>
             </header>
             {dueToday.length === 0 && overdue.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">
                 <CheckCircle2 className="w-4 h-4 inline text-emerald-500" /> All
                 clear — no deadlines today.
               </p>
@@ -221,7 +221,7 @@ export function HomeView() {
               Sprint Progress
             </h2>
             {summary.total === 0 || !donut ? (
-              <p className="text-xs text-slate-400 py-4 text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">
                 No tasks yet.
               </p>
             ) : (
@@ -236,7 +236,7 @@ export function HomeView() {
                     <span className="text-lg font-bold text-slate-900 dark:text-slate-100">
                       {summary.pct}%
                     </span>
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">
                       {summary.done}/{summary.total} done
                     </span>
                   </div>

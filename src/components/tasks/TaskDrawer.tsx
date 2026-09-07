@@ -520,7 +520,7 @@ export function TaskDrawer() {
                       <button
                         type="button"
                         onClick={() => updateTask(task.id, { mediaUrl: undefined })}
-                        className="text-[10px] text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                        className="text-[10px] text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
                       >
                         Remove Cover
                       </button>
@@ -565,7 +565,7 @@ export function TaskDrawer() {
                       <Paperclip className="w-3 h-3 text-teal-600" />
                       Footage & Attachments ({(task.attachments || []).length})
                     </label>
-                    <span className="text-[10px] text-slate-400">Max 25MB per file (MP4, PNG, JPG, PDF)</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">Max 25MB per file (MP4, PNG, JPG, PDF)</span>
                   </div>
 
                   {/* Hidden File Input */}
@@ -644,7 +644,7 @@ export function TaskDrawer() {
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-slate-400">
+                                <div className="text-[10px] text-slate-500 dark:text-slate-400">
                                   {formatBytes(att.sizeBytes)} • {att.uploadedAt ? formatDate(att.uploadedAt) : "Uploaded"}
                                 </div>
                               </div>
@@ -744,7 +744,7 @@ export function TaskDrawer() {
                   <button
                     type="button"
                     onClick={() => setIsManagingTags(!isManagingTags)}
-                    className="text-[11px] font-semibold text-slate-400 hover:text-[#7B68EE] transition-colors cursor-pointer"
+                    className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-[#7B68EE] transition-colors cursor-pointer"
                   >
                     {isManagingTags ? "Done" : "Manage"}
                   </button>
@@ -835,7 +835,7 @@ export function TaskDrawer() {
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {tags.length === 0 && (
-                      <span className="text-[11px] text-slate-400">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
                         No tags yet — click Manage to create one.
                       </span>
                     )}
@@ -959,7 +959,7 @@ export function TaskDrawer() {
                             <span className="truncate font-medium text-slate-800 dark:text-slate-200">
                               {candidate.title}
                             </span>
-                            <span className="text-[10px] text-slate-400 shrink-0 ml-2">
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0 ml-2">
                               #{candidate.id.slice(-4)}
                             </span>
                           </button>
@@ -970,7 +970,7 @@ export function TaskDrawer() {
                           !(task.dependencies || []).includes(t.id) &&
                           t.title.toLowerCase().includes(depSearch.toLowerCase())
                       ).length === 0 && (
-                        <p className="text-[11px] text-slate-400 text-center py-2">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 text-center py-2">
                           No matching tasks found
                         </p>
                       )}
@@ -1013,7 +1013,7 @@ export function TaskDrawer() {
                   </div>
                 ) : (
                   !isAddingDep && (
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       No blocking dependencies. This task can be started immediately.
                     </p>
                   )
@@ -1083,7 +1083,7 @@ export function TaskDrawer() {
                   )}
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1">
                   <span>{formatBytes(previewAttachment.sizeBytes)}</span>
                   <div className="flex items-center gap-3">
                     {(previewAttachment.type === "video" || previewAttachment.type === "image") &&

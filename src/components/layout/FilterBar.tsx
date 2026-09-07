@@ -181,7 +181,7 @@ export function FilterBar() {
 
             {isGroupByMenuOpen && (
               <div className="absolute left-0 top-full mt-1 w-44 rounded-lg bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50">
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Group Tasks By
                 </div>
                 {GROUP_BY_OPTIONS.map((opt) => {
@@ -271,7 +271,7 @@ export function FilterBar() {
 
             {isFilterMenuOpen && (
               <div className="absolute right-0 top-full mt-1 w-44 rounded-lg bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50">
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Filter Priority
                 </div>
                 {[
@@ -347,7 +347,7 @@ export function FilterBar() {
 
             {isAssigneeMenuOpen && (
               <div className="absolute right-0 top-full mt-1 w-52 rounded-lg bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50">
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Filter by Assignee
                 </div>
 
@@ -420,11 +420,11 @@ export function FilterBar() {
 
             {isTagMenuOpen && (
               <div className="absolute right-0 top-full mt-1 w-52 rounded-lg bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50">
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Filter by Tag
                 </div>
                 {tags.length === 0 && (
-                  <div className="px-3 py-2 text-xs text-slate-400">
+                  <div className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
                     No tags yet — create one from any task.
                   </div>
                 )}
@@ -514,7 +514,7 @@ export function FilterBar() {
             {isCustomizeOpen && (
               <div className="absolute right-0 top-full mt-1 w-56 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 p-2.5 z-50 text-xs space-y-3">
                 <div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                     Row Density
                   </div>
                   <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
@@ -539,7 +539,7 @@ export function FilterBar() {
                 </div>
 
                 <div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                     Visible Fields
                   </div>
                   <div className="space-y-1">

@@ -192,7 +192,7 @@ export function TableView() {
                   {task.title}
                 </span>
                 {task.subtasks.length > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 shrink-0">
+                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
                     <CheckSquare className="w-3 h-3 text-teal-500" />
                     {completedSubtasks}/{task.subtasks.length}
                   </span>
@@ -266,7 +266,7 @@ export function TableView() {
           cell: ({ row }) => {
             const task = row.original;
             if (!task.postPlatform) {
-              return <span className="text-slate-400 text-xs">—</span>;
+              return <span className="text-slate-500 dark:text-slate-400 text-xs">—</span>;
             }
             return (
               <PlatformBadge
@@ -453,7 +453,7 @@ export function TableView() {
 
             {showColumnMenu && (
               <div className="absolute left-0 mt-1 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg p-2 z-30 animate-in fade-in zoom-in-95 duration-100">
-                <div className="text-[11px] font-semibold text-slate-400 px-2 py-1 mb-1 border-b border-slate-100 dark:border-slate-800">
+                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-2 py-1 mb-1 border-b border-slate-100 dark:border-slate-800">
                   Toggle Columns
                 </div>
                 <div className="space-y-1">
@@ -661,7 +661,7 @@ export function TableView() {
                       )}
                     />
                     <StatusBadge status={status} size="sm" />
-                    <span className="text-[11px] font-bold text-slate-400">
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                       {statusRows.length}{" "}
                       {statusRows.length === 1 ? "task" : "tasks"}
                     </span>
@@ -696,7 +696,7 @@ export function TableView() {
 
           {/* Empty state */}
           {filteredTasks.length === 0 && (
-            <div className="p-12 text-center text-slate-400 text-xs flex flex-col items-center gap-2">
+            <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
               <Layers className="w-8 h-8 text-slate-300 dark:text-slate-700" />
               <span>No tasks found matching current filters.</span>
             </div>

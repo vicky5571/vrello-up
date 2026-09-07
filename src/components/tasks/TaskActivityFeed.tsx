@@ -276,7 +276,7 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
                 <span className="font-medium text-slate-800 dark:text-slate-200 max-w-[140px] truncate text-[11px]">
                   {att.name}
                 </span>
-                <span className="text-[10px] text-slate-400">({att.size})</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">({att.size})</span>
                 <button
                   type="button"
                   onClick={() => handleRemovePendingAttachment(att.id)}
@@ -318,7 +318,7 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
                   ref={mentionMenuRef}
                   className="absolute left-0 bottom-8 z-30 w-48 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-1 text-xs space-y-0.5"
                 >
-                  <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="px-2 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Mention Member
                   </div>
                   {members.map((member) => (
@@ -360,7 +360,7 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-slate-400 hidden sm:inline">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 hidden sm:inline">
               Press <kbd className="font-mono">⌘↵</kbd> to submit
             </span>
             <button
@@ -378,7 +378,7 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
       {/* Feed List */}
       <div className="space-y-3 pt-1">
         {feedItems.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-400">
+          <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
             <MessageSquare className="w-6 h-6 mx-auto mb-1.5 text-slate-400/40" />
             <p>No activity or comments yet</p>
           </div>
@@ -398,7 +398,7 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
                         <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                           {c.user?.name || "Team Member"}
                         </span>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
                           • {formatTime(c.createdAt)}
                         </span>
                       </div>
@@ -436,7 +436,7 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
                               <div className="font-semibold text-slate-800 dark:text-slate-200 max-w-[150px] truncate text-[11px]">
                                 {att.name}
                               </div>
-                              <div className="text-[10px] text-slate-400">{att.size}</div>
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400">{att.size}</div>
                             </div>
                             {att.url && (
                               <a
@@ -471,7 +471,7 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
                     </span>
                     <span className="truncate">{a.action}</span>
                   </div>
-                  <span className="text-[10px] text-slate-400 shrink-0">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
                     {formatTime(a.createdAt)}
                   </span>
                 </div>

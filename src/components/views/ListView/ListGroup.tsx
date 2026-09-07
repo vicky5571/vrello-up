@@ -186,7 +186,7 @@ export const ListGroup = memo(function ListGroup({
         )}
 
         {/* Task count */}
-        <span className="text-xs text-slate-400 font-medium ml-1">
+        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
           {tasks.length}
         </span>
 
@@ -226,7 +226,7 @@ export const ListGroup = memo(function ListGroup({
       {isExpanded && (
         <div className="mt-1 border-t border-slate-200/70 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 rounded-lg overflow-hidden border">
           {/* Column Titles Bar */}
-          <div className="grid grid-cols-[28px_1fr_110px_110px_90px_130px_90px_60px] items-center px-4 py-2 border-b border-slate-200/70 dark:border-slate-800/80 text-[11px] font-medium text-slate-400 bg-slate-50/50 dark:bg-slate-800/20">
+          <div className="grid grid-cols-[28px_1fr_110px_110px_90px_130px_90px_60px] items-center px-4 py-2 border-b border-slate-200/70 dark:border-slate-800/80 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/20">
             <div />
             <div>Name</div>
             <div>Assignee</div>
@@ -284,7 +284,7 @@ export const ListGroup = memo(function ListGroup({
               <button
                 type="button"
                 onClick={() => setIsAddingTask(true)}
-                className="w-full flex items-center gap-2 px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors cursor-pointer text-left"
+                className="w-full flex items-center gap-2 px-4 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors cursor-pointer text-left"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add task</span>

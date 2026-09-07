@@ -185,7 +185,7 @@ export function HelpDocsModal({ isOpen, onClose }: HelpDocsModalProps) {
                     </div>
                   ))}
                   {filteredShortcuts.length === 0 && (
-                    <p className="text-xs text-slate-400 col-span-2 py-6 text-center">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 col-span-2 py-6 text-center">
                       No shortcuts found matching &quot;{searchQuery}&quot;
                     </p>
                   )}
@@ -216,7 +216,7 @@ export function HelpDocsModal({ isOpen, onClose }: HelpDocsModalProps) {
                     );
                   })}
                   {filteredGuides.length === 0 && (
-                    <p className="text-xs text-slate-400 py-6 text-center">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 py-6 text-center">
                       No guides found matching &quot;{searchQuery}&quot;
                     </p>
                   )}

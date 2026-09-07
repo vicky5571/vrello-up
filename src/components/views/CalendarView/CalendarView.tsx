@@ -95,7 +95,7 @@ export function CalendarView() {
       </div>
 
       {/* Calendar Days Header */}
-      <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 pb-2 text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+      <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 pb-2 text-center text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
         <div>Sun</div>
         <div>Mon</div>
         <div>Tue</div>
@@ -144,7 +144,7 @@ export function CalendarView() {
                   {format(day, "d")}
                 </span>
                 {dayTasks.length > 0 && (
-                  <span className="text-[10px] font-bold text-slate-400">
+                  <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                     {dayTasks.length} {dayTasks.length === 1 ? "task" : "tasks"}
                   </span>
                 )}

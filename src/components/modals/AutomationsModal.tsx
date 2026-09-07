@@ -183,7 +183,7 @@ export function AutomationsModal({ isOpen, onClose }: AutomationsModalProps) {
                               <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400">
                                 Custom
                               </span>
-                              <span className="text-[10px] text-slate-400">
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400">
                                 • Triggered {recipe.runCount || 0} times
                               </span>
                             </div>
@@ -255,7 +255,7 @@ export function AutomationsModal({ isOpen, onClose }: AutomationsModalProps) {
                                   Soon
                                 </span>
                               )}
-                              <span className="text-[10px] text-slate-400">
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400">
                                 • Triggered {runCount} times
                               </span>
                             </div>
@@ -294,7 +294,7 @@ export function AutomationsModal({ isOpen, onClose }: AutomationsModalProps) {
               </div>
 
               {/* Footer */}
-              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-400">
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span>Automations execute synchronously inside the Zustand event dispatcher.</span>
                 <button
                   type="button"

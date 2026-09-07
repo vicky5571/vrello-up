@@ -203,7 +203,7 @@ export function TopNav() {
 
               {isWsMenuOpen && (
                 <div className="absolute left-0 top-full mt-1 w-60 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Workspaces
                   </div>
                   {workspaces.map((ws) => {
@@ -353,7 +353,7 @@ export function TopNav() {
                         <div className="font-bold text-slate-800 dark:text-slate-200 truncate">
                           {session?.user?.name || me.name}
                         </div>
-                        <div className="text-[10px] text-slate-400 truncate">
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                           {session?.user?.email || me.email}
                         </div>
                       </div>
@@ -391,7 +391,7 @@ export function TopNav() {
                     )}
                   </div>
 
-                  <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="px-2 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Simulate Profile
                   </div>
                   {members.map((u) => {
@@ -446,7 +446,7 @@ export function TopNav() {
 
               {isListMenuOpen && allListsInSpace.length > 0 && (
                 <div className="absolute left-0 top-full mt-1 w-52 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50">
-                  <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Lists in {currentSpace?.name}
                   </div>
                   {allListsInSpace.map((l) => {

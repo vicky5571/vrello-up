@@ -196,7 +196,7 @@ export function NotificationCenter() {
               type="button"
               onClick={() => setLastSeenNotificationsAt(new Date().toISOString())}
               disabled={allNotifs.length === 0}
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-indigo-500 transition-colors cursor-pointer disabled:opacity-40"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-500 transition-colors cursor-pointer disabled:opacity-40"
             >
               <CheckCheck className="w-3.5 h-3.5" />
               Mark all read
@@ -205,7 +205,7 @@ export function NotificationCenter() {
 
           <div className="max-h-96 overflow-y-auto p-2 space-y-3">
             {grouped.length === 0 ? (
-              <div className="py-10 text-center text-xs text-slate-400">
+              <div className="py-10 text-center text-xs text-slate-500 dark:text-slate-400">
                 <Bell className="w-6 h-6 mx-auto mb-2 text-slate-300 dark:text-slate-700" />
                 <p className="font-medium">You&apos;re all caught up</p>
                 <p className="text-[11px] mt-0.5">
@@ -218,7 +218,7 @@ export function NotificationCenter() {
                 const Icon = meta.icon;
                 return (
                   <div key={kind}>
-                    <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <div className="px-2 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {meta.label} ({items.length})
                     </div>
                     <div className="space-y-0.5">
@@ -249,11 +249,11 @@ export function NotificationCenter() {
                               {n.title}
                             </span>
                             {n.body && (
-                              <span className="block text-[11px] text-slate-400 truncate mt-0.5">
+                              <span className="block text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                                 {n.body}
                               </span>
                             )}
-                            <span className="block text-[10px] text-slate-400 mt-0.5">
+                            <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                               {timeAgo(n.createdAt)}
                             </span>
                           </span>

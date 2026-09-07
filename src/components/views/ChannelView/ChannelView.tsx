@@ -177,12 +177,12 @@ export function ChannelView() {
                         </span>
                       )}
                       {isMe && (
-                        <span className="text-[10px] text-slate-400 font-normal">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">
                           (You)
                         </span>
                       )}
                     </span>
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">
                       {msg.createdAt
                         ? format(new Date(msg.createdAt), "MMM d, h:mm a")
                         : "Just now"}
@@ -285,7 +285,7 @@ export function ChannelView() {
                   <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
                     {member.name}
                   </div>
-                  <div className="text-[10px] text-slate-400 truncate">
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                     {member.role || "Member"}
                   </div>
                 </div>

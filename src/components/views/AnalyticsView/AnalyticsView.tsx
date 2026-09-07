@@ -67,7 +67,7 @@ function ChartCard({
       <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
         {title}
       </div>
-      <div className="text-[11px] text-slate-400 mb-3">{subtitle}</div>
+      <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">{subtitle}</div>
       {children}
     </div>
   );
@@ -147,7 +147,7 @@ export function AnalyticsView() {
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
             Analytics
           </h2>
-          <span className="text-[11px] font-bold text-slate-400">
+          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
             {branchCompletion.done}/{branchCompletion.total} branches done ·{" "}
             {branchCompletion.completionRate}%
           </span>

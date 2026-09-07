@@ -109,7 +109,7 @@ export function TeamsModal({ isOpen, onClose, onOpenInvite }: TeamsModalProps) {
             {/* Member Directory List */}
             <div className="flex-1 overflow-y-auto p-6 space-y-3">
               {filteredMembers.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-400">
+                <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">
                   No team members matching your search.
                 </div>
               ) : (
@@ -157,7 +157,7 @@ export function TeamsModal({ isOpen, onClose, onOpenInvite }: TeamsModalProps) {
                           <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
                             {assignedTasks.length} {assignedTasks.length === 1 ? "task" : "tasks"}
                           </div>
-                          <div className="text-[10px] text-slate-400">
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400">
                             assigned
                           </div>
                         </div>

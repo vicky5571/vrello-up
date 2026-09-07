@@ -51,7 +51,7 @@ function DatasetCard({ icon: Icon, title, description, count, onCsv, onPdf }: Da
         </span>
         <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{title}</span>
         {count !== null && (
-          <span className="ml-auto text-[11px] font-semibold text-slate-400">
+          <span className="ml-auto text-[11px] font-semibold text-slate-500 dark:text-slate-400">
             {count} {count === 1 ? "row" : "rows"}
           </span>
         )}

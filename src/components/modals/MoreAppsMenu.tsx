@@ -138,7 +138,7 @@ export function MoreAppsMenu({
 
             {/* Quick View Switchers */}
             <div className="py-2.5 space-y-1 border-b border-slate-100 dark:border-slate-800">
-              <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Workspaces Views
               </div>
               <div className="grid grid-cols-2 gap-1 px-1">

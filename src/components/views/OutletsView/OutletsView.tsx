@@ -369,7 +369,7 @@ export function OutletsView() {
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
             Outlets
           </h2>
-          <span className="text-[11px] font-bold text-slate-400">
+          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
             {outlets.length} {outlets.length === 1 ? "outlet" : "outlets"}
           </span>
         </div>
@@ -538,7 +538,7 @@ export function OutletsView() {
                       <div className="px-4 py-3 bg-slate-50/60 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800/60">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                           <div>
-                            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-0.5">
+                            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
                               Address
                             </div>
                             <div className="text-slate-700 dark:text-slate-300">
@@ -546,7 +546,7 @@ export function OutletsView() {
                             </div>
                           </div>
                           <div>
-                            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-0.5">
+                            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
                               PIC
                             </div>
                             <div className="text-slate-700 dark:text-slate-300">
@@ -554,7 +554,7 @@ export function OutletsView() {
                             </div>
                           </div>
                           <div>
-                            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-0.5">
+                            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
                               PIC Phone
                             </div>
                             <div className="text-slate-700 dark:text-slate-300">
@@ -588,7 +588,7 @@ export function OutletsView() {
 
           {/* Empty state */}
           {!isLoading && !error && outlets.length === 0 && (
-            <div className="p-12 text-center text-slate-400 text-xs flex flex-col items-center gap-2">
+            <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
               <Layers className="w-8 h-8 text-slate-300 dark:text-slate-700" />
               <span>No outlets found.</span>
             </div>

@@ -101,7 +101,7 @@ export function TrashModal() {
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/80 dark:border-white/10">
               <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                 Trash
-                <span className="ml-1.5 text-[11px] font-semibold text-slate-400">
+                <span className="ml-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                   {trash.length} {trash.length === 1 ? "task" : "tasks"}
                 </span>
               </h2>
@@ -128,7 +128,7 @@ export function TrashModal() {
 
             <div className="flex-1 overflow-y-auto p-3 space-y-1">
               {trash.length === 0 ? (
-                <div className="py-10 text-center text-xs text-slate-400">
+                <div className="py-10 text-center text-xs text-slate-500 dark:text-slate-400">
                   <Trash2 className="w-6 h-6 mx-auto mb-2 text-slate-300 dark:text-slate-700" />
                   <p className="font-medium">Trash is empty</p>
                   <p className="text-[11px] mt-0.5">
@@ -146,7 +146,7 @@ export function TrashModal() {
                       <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
                         {task.title}
                       </div>
-                      <div className="text-[11px] text-slate-400 truncate">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                         {listNameFor(task.listId)} · deleted {deletedAgo(deletedAt)}
                       </div>
                     </div>

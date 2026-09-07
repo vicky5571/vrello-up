@@ -123,7 +123,7 @@ export function ViewSwitcher() {
           type="button"
           onClick={() => setIsAddViewOpen(true)}
           title="Add or configure View"
-          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 rounded-md transition-colors cursor-pointer ml-0.5"
+          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 rounded-md transition-colors cursor-pointer ml-0.5"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>View</span>

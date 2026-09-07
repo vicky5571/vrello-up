@@ -550,7 +550,7 @@ export function GanttView() {
               })}
 
               {scheduledTasks.length === 0 && (
-                <div className="p-8 text-center text-xs text-slate-400">
+                <div className="p-8 text-center text-xs text-slate-500 dark:text-slate-400">
                   No scheduled tasks.
                 </div>
               )}
@@ -602,7 +602,7 @@ export function GanttView() {
                           "bg-teal-50/80 dark:bg-teal-950/30 font-bold",
                       )}
                     >
-                      <span className="text-[10px] font-semibold text-slate-400 uppercase">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase">
                         {format(day, "EEE")}
                       </span>
                       <span
@@ -915,7 +915,7 @@ export function GanttView() {
               })}
 
               {scheduledTasks.length === 0 && (
-                <div className="h-48 flex items-center justify-center text-xs text-slate-400">
+                <div className="h-48 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400">
                   No scheduled timeline tasks found.
                 </div>
               )}

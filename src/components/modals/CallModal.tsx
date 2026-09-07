@@ -85,7 +85,7 @@ export function CallModal({ isOpen, mode, onClose }: CallModalProps) {
                   <h3 className="text-sm font-bold">
                     {mode === "video" ? "Team Video Meeting" : "Live Audio Huddle"}
                   </h3>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     Sprint 42 Sync • {members.length} participants active
                   </p>
                 </div>
@@ -131,7 +131,7 @@ export function CallModal({ isOpen, mode, onClose }: CallModalProps) {
                   <span className="text-xs font-semibold mt-2 truncate max-w-[120px] text-slate-200">
                     {member.name}
                   </span>
-                  <span className="text-[10px] text-slate-400 truncate">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                     {member.role || "Member"}
                   </span>
                 </div>

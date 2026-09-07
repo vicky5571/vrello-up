@@ -182,7 +182,7 @@ export const ListTaskRow = memo(function ListTaskRow({
 
 
         {visibleFields.subtasks && task.subtasks.length > 0 && (
-          <span className="shrink-0 text-[10px] text-slate-400 font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
+          <span className="shrink-0 text-[10px] text-slate-500 dark:text-slate-400 font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
             {task.subtasks.filter((s) => s.completed).length}/
             {task.subtasks.length}
           </span>
@@ -235,7 +235,7 @@ export const ListTaskRow = memo(function ListTaskRow({
             aria-label={`Assignees for ${task.title}`}
             className="absolute left-0 top-full z-30 mt-1 w-52 rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
           >
-            <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Assign members
             </div>
             {members.map((user) => {

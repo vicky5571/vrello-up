@@ -170,7 +170,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
                 <div className="relative flex items-center justify-center my-3">
                   <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
-                  <span className="bg-white dark:bg-slate-900 px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  <span className="bg-white dark:bg-slate-900 px-3 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
                     Or Demo Locally
                   </span>
                 </div>

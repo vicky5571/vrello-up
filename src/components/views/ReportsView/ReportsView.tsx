@@ -81,7 +81,7 @@ function downloadJson(filename: string, payload: unknown) {
 function ReportSection({ title, items }: { title: string; items: unknown[] }) {
   return (
     <div>
-      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">
+      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
         {title} ({items.length})
       </div>
       {items.length === 0 ? (
@@ -225,7 +225,7 @@ export function ReportsView() {
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
             Reports
           </h2>
-          <span className="text-[11px] font-bold text-slate-400">
+          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
             {reports.length} {reports.length === 1 ? "report" : "reports"}
           </span>
         </div>
@@ -273,7 +273,7 @@ export function ReportsView() {
             key={card.label}
             className="rounded-lg border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#18191B] px-4 py-3 shadow-2xs"
           >
-            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {card.label}
             </div>
             <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -406,7 +406,7 @@ export function ReportsView() {
                         <ReportSection title="Action plans" items={report.actionPlans ?? []} />
                       </div>
                       <div className="mt-3">
-                        <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400 mb-1">
+                        <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
                           Supporting documents ({supporting.length})
                         </div>
                         {supporting.length === 0 ? (
@@ -453,7 +453,7 @@ export function ReportsView() {
         )}
 
         {!isLoading && !error && reports.length === 0 && (
-          <div className="p-12 text-center text-slate-400 text-xs flex flex-col items-center gap-2">
+          <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
             <Layers className="w-8 h-8 text-slate-300 dark:text-slate-700" />
             <span>No reports found.</span>
           </div>

@@ -137,7 +137,7 @@ export function ListView() {
       <div className="max-w-7xl mx-auto">
         {/* Batch selection toolbar */}
         {filteredTasks.length > 0 && (
-          <div className="flex items-center gap-2 mb-3 text-[11px] text-slate-400">
+          <div className="flex items-center gap-2 mb-3 text-[11px] text-slate-500 dark:text-slate-400">
             {selectedTaskIds.length === 0 ? (
               <button
                 type="button"

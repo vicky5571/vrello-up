@@ -151,7 +151,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                         <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                           {member.name}
                         </div>
-                        <div className="text-[10px] text-slate-400 truncate">
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                           {member.email}
                         </div>
                       </div>
