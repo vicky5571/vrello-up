@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search } from "lucide-react";
+import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn, formatIDR } from "@/lib/utils";
@@ -51,15 +51,50 @@ export function MousView() {
   const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>([]);
   const [outletsList, setOutletsList] = useState<{ id: string; name: string; code?: string; branchId: string }[]>([]);
   const [branchSearch, setBranchSearch] = useState("");
+  const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
   const [modalMou, setModalMou] = useState<Partial<MarcomMou> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  const branchDropdownRef = useRef<HTMLDivElement | null>(null);
+  const branchTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const branchSearchInputRef = useRef<HTMLInputElement | null>(null);
 
   const MOU_TYPES = ["Compensation", "Exclusive Branding", "Event Sponsorship", "Space Rental", "Joint Promotion"] as const;
 
   const canManage = can("DELETE_MOU");
   const canCreate = can("CREATE_MOU");
   const canApprove = can("APPROVE_MOU");
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (branchDropdownRef.current && !branchDropdownRef.current.contains(event.target as Node)) {
+        setIsBranchDropdownOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && isBranchDropdownOpen) {
+        setIsBranchDropdownOpen(false);
+        branchTriggerRef.current?.focus();
+      }
+    }
+    if (isBranchDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isBranchDropdownOpen]);
+
+  useEffect(() => {
+    if (isBranchDropdownOpen) {
+      setTimeout(() => {
+        branchSearchInputRef.current?.focus();
+      }, 50);
+    }
+  }, [isBranchDropdownOpen]);
 
   const handleStatusTransition = async (mou: MarcomMou, nextStatus: MouStatus) => {
     try {
@@ -119,15 +154,14 @@ export function MousView() {
   }, [fetchMous]);
 
   const filteredBranches = useMemo(() => {
-    if (branches.length <= 20 || !branchSearch.trim()) return branches;
+    if (!branchSearch.trim()) return branches;
     const q = branchSearch.toLowerCase();
-    const matches = branches.filter((b) => b.name.toLowerCase().includes(q) || b.code.toLowerCase().includes(q));
-    if (modalMou?.branchId && !matches.some((b) => b.id === modalMou.branchId)) {
-      const selected = branches.find((b) => b.id === modalMou.branchId);
-      if (selected) return [selected, ...matches];
-    }
-    return matches;
-  }, [branches, branchSearch, modalMou?.branchId]);
+    return branches.filter((b) => b.name.toLowerCase().includes(q) || b.code.toLowerCase().includes(q));
+  }, [branches, branchSearch]);
+
+  const selectedBranch = useMemo(() => {
+    return branches.find((b) => b.id === modalMou?.branchId);
+  }, [branches, modalMou?.branchId]);
 
   const availableOutlets = useMemo(() => {
     if (!modalMou?.branchId) return outletsList;
@@ -240,6 +274,7 @@ export function MousView() {
       }
       toast.success(`MOU ${isEdit ? "updated" : "created"} successfully`);
       setModalMou(null);
+      setIsBranchDropdownOpen(false);
       setBranchSearch("");
       await fetchMous();
     } catch (err) {
@@ -273,6 +308,7 @@ export function MousView() {
         onDeleteOne={deleteOne}
         canAdd={canCreate}
         onAdd={() => {
+          setIsBranchDropdownOpen(false);
           setBranchSearch("");
           setModalMou({ branchId: branches[0]?.id || "", partnerName: "", mouType: "Compensation", outletName: "", startDate: new Date().toISOString().slice(0, 10), endDate: "", picName: "", picPhone: "", docPath: "", compensationValue: undefined, notes: "" });
         }}
@@ -333,7 +369,7 @@ export function MousView() {
                 </button>
               )}
               {canCreate && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); setBranchSearch(""); setModalMou(mou); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
+                <button type="button" onClick={(e) => { e.stopPropagation(); setIsBranchDropdownOpen(false); setBranchSearch(""); setModalMou(mou); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
                   <Edit2 className="w-3.5 h-3.5 text-fuchsia-600" />
                   <span>Edit MOU</span>
                 </button>
@@ -352,41 +388,129 @@ export function MousView() {
                 <FileText className="w-4 h-4 text-fuchsia-600" />
                 {modalMou.id ? "Edit MOU" : "Add New MOU"}
               </h2>
-              <button type="button" onClick={() => { setModalMou(null); setBranchSearch(""); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">✕</button>
+              <button type="button" onClick={() => { setModalMou(null); setIsBranchDropdownOpen(false); setBranchSearch(""); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">✕</button>
             </div>
             <form onSubmit={handleSaveMou} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="mou-branch" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <div className="relative" ref={branchDropdownRef}>
+                  <label htmlFor="mou-branch-trigger" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Branch <span className="text-rose-500 ml-0.5" aria-hidden="true">*</span>
                   </label>
-                  {branches.length > 20 && (
-                    <div className="relative mb-1.5">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
-                      <input
-                        type="text"
-                        placeholder="Search branch..."
-                        aria-label="Filter branch options"
-                        value={branchSearch}
-                        onChange={(e) => setBranchSearch(e.target.value)}
-                        className="w-full pl-7 pr-2.5 py-1 text-[11px] rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-fuchsia-500"
-                      />
-                    </div>
-                  )}
-                  <select
-                    id="mou-branch"
+                  <button
+                    id="mou-branch-trigger"
+                    ref={branchTriggerRef}
+                    type="button"
+                    onClick={() => setIsBranchDropdownOpen((prev) => !prev)}
+                    disabled={isLoading || branches.length === 0}
+                    className="w-full flex items-center justify-between px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer disabled:opacity-50 text-left"
+                    aria-haspopup="listbox"
+                    aria-expanded={isBranchDropdownOpen}
+                  >
+                    <span className={cn("truncate flex items-center gap-1.5", !selectedBranch && "text-slate-400")}>
+                      {selectedBranch ? (
+                        <>
+                          <span className="truncate font-medium">{selectedBranch.name}</span>
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-200/60 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 shrink-0">
+                            {selectedBranch.code}
+                          </span>
+                        </>
+                      ) : isLoading ? (
+                        "Loading branches..."
+                      ) : (
+                        "Select Branch..."
+                      )}
+                    </span>
+                    <ChevronDown className={cn("w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200", isBranchDropdownOpen && "rotate-180")} />
+                  </button>
+
+                  <input
+                    type="text"
+                    tabIndex={-1}
                     required
                     aria-required="true"
                     value={modalMou.branchId || ""}
-                    onChange={(e) => setModalMou({ ...modalMou, branchId: e.target.value })}
-                    disabled={isLoading}
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer disabled:opacity-50"
-                  >
-                    <option value="">{isLoading ? "Loading branches..." : "Select Branch..."}</option>
-                    {filteredBranches.map((b) => (
-                      <option key={b.id} value={b.id}>{b.name} ({b.code})</option>
-                    ))}
-                  </select>
+                    onChange={() => {}}
+                    className="sr-only"
+                    onFocus={() => branchTriggerRef.current?.focus()}
+                  />
+
+                  {isBranchDropdownOpen && (
+                    <div className="absolute left-0 top-full mt-1 w-full rounded-xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 py-1.5 z-50">
+                      <div className="px-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                          <input
+                            ref={branchSearchInputRef}
+                            type="text"
+                            placeholder="Search branch name or code..."
+                            value={branchSearch}
+                            onChange={(e) => setBranchSearch(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                if (filteredBranches.length > 0) {
+                                  setModalMou((prev) => (prev ? { ...prev, branchId: filteredBranches[0].id } : null));
+                                  setIsBranchDropdownOpen(false);
+                                  setBranchSearch("");
+                                  branchTriggerRef.current?.focus();
+                                }
+                              }
+                            }}
+                            className="w-full pl-8 pr-7 py-1 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-fuchsia-500"
+                          />
+                          {branchSearch && (
+                            <button
+                              type="button"
+                              onClick={() => setBranchSearch("")}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-xs p-0.5"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="max-h-48 overflow-y-auto p-1 space-y-0.5" role="listbox">
+                        {filteredBranches.length === 0 ? (
+                          <div className="px-3 py-3 text-xs text-slate-400 text-center">
+                            No branches matching &ldquo;{branchSearch}&rdquo;
+                          </div>
+                        ) : (
+                          filteredBranches.map((b) => {
+                            const isSelected = modalMou.branchId === b.id;
+                            return (
+                              <button
+                                key={b.id}
+                                type="button"
+                                role="option"
+                                aria-selected={isSelected}
+                                onClick={() => {
+                                  setModalMou((prev) => (prev ? { ...prev, branchId: b.id } : null));
+                                  setIsBranchDropdownOpen(false);
+                                  setBranchSearch("");
+                                  branchTriggerRef.current?.focus();
+                                }}
+                                className={cn(
+                                  "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors cursor-pointer",
+                                  isSelected
+                                    ? "bg-fuchsia-50 dark:bg-fuchsia-950/50 text-fuchsia-700 dark:text-fuchsia-300 font-semibold"
+                                    : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
+                                )}
+                              >
+                                <div className="flex items-center gap-2 truncate">
+                                  <span className="truncate">{b.name}</span>
+                                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700 shrink-0">
+                                    {b.code}
+                                  </span>
+                                </div>
+                                {isSelected && <Check className="w-3.5 h-3.5 text-fuchsia-600 shrink-0 ml-2" />}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {branches.length === 0 && !isLoading && <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-400">No branches available — create a branch first.</p>}
                 </div>
                 <div>
@@ -571,7 +695,7 @@ export function MousView() {
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => { setModalMou(null); setBranchSearch(""); }} disabled={isSaving || isUploading} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
+                <button type="button" onClick={() => { setModalMou(null); setIsBranchDropdownOpen(false); setBranchSearch(""); }} disabled={isSaving || isUploading} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
                 <button type="submit" disabled={isSaving || isUploading || isLoading || branches.length === 0} title={branches.length === 0 ? "Loading branches..." : isUploading ? "Uploading document..." : undefined} className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{isSaving ? "Saving..." : isUploading ? "Uploading..." : modalMou.id ? "Update MOU" : "Create MOU"}</button>
               </div>
             </form>
