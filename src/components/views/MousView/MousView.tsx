@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { FileText, Download, Plus, Edit2, CheckCircle } from "lucide-react";
+import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn, formatIDR } from "@/lib/utils";
@@ -50,6 +50,7 @@ export function MousView() {
   const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>([]);
   const [modalMou, setModalMou] = useState<Partial<MarcomMou> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const MOU_TYPES = ["Compensation", "Exclusive Branding", "Event Sponsorship", "Space Rental", "Joint Promotion"] as const;
 
@@ -157,6 +158,31 @@ export function MousView() {
       ]),
     [],
   );
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !modalMou) return;
+    setIsUploading(true);
+    try {
+      const uploadId = modalMou.id || "new";
+      const fd = new FormData();
+      fd.append("kind", "documents");
+      fd.append("id", uploadId);
+      fd.append("file", file);
+      const res = await fetch("/api/marcom/uploads", { method: "POST", body: fd });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to upload file");
+      }
+      const data = await res.json();
+      setModalMou((prev) => (prev ? { ...prev, docPath: data.filePath } : null));
+      toast.success("Document uploaded successfully");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSaveMou = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -358,17 +384,43 @@ export function MousView() {
                   />
                 </div>
               </div>
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3 bg-slate-50/50 dark:bg-slate-800/50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <Upload className="w-3.5 h-3.5 text-fuchsia-600" />
+                    <span>Upload Document (PDF, Images, up to 25MB)</span>
+                  </span>
+                  {isUploading && (
+                    <span className="text-xs text-fuchsia-600 flex items-center gap-1 font-medium">
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                      Uploading...
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-fuchsia-50 dark:file:bg-fuchsia-950/40 file:text-fuchsia-700 dark:file:text-fuchsia-300 hover:file:bg-fuchsia-100 cursor-pointer disabled:opacity-50"
+                />
+              </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Document URL / Path</label>
-                <input type="text" placeholder="e.g. /uploads/documents/mou_2026.pdf" value={modalMou.docPath || ""} onChange={(e) => setModalMou({ ...modalMou, docPath: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
+                <input
+                  type="text"
+                  placeholder="Auto-filled from upload, or enter /api/... or Google Drive URL"
+                  value={modalMou.docPath || ""}
+                  onChange={(e) => setModalMou({ ...modalMou, docPath: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Notes</label>
                 <textarea rows={2} placeholder="Additional partnership commitments..." value={modalMou.notes || ""} onChange={(e) => setModalMou({ ...modalMou, notes: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setModalMou(null)} disabled={isSaving} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
-                <button type="submit" disabled={isSaving || isLoading || branches.length === 0} title={branches.length === 0 ? "Loading branches..." : undefined} className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{isSaving ? "Saving..." : modalMou.id ? "Update MOU" : "Create MOU"}</button>
+                <button type="button" onClick={() => setModalMou(null)} disabled={isSaving || isUploading} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
+                <button type="submit" disabled={isSaving || isUploading || isLoading || branches.length === 0} title={branches.length === 0 ? "Loading branches..." : isUploading ? "Uploading document..." : undefined} className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{isSaving ? "Saving..." : isUploading ? "Uploading..." : modalMou.id ? "Update MOU" : "Create MOU"}</button>
               </div>
             </form>
           </div>
