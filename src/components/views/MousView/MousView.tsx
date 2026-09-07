@@ -166,6 +166,10 @@ export function MousView() {
       toast.error("Branch, Partner Name, and MOU Type are required");
       return;
     }
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+      toast.error("End date must be on or after start date");
+      return;
+    }
     setIsSaving(true);
     try {
       const isEdit = Boolean(id);
@@ -333,8 +337,25 @@ export function MousView() {
                   <input type="text" placeholder="e.g. Hendra" value={modalMou.picName || ""} onChange={(e) => setModalMou({ ...modalMou, picName: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Compensation (Rp)</label>
-                  <input type="number" placeholder="e.g. 5000000" value={modalMou.compensationValue != null ? String(modalMou.compensationValue) : ""} onChange={(e) => setModalMou({ ...modalMou, compensationValue: e.target.value ? Number(e.target.value) : undefined })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Compensation (Rp)</label>
+                    {modalMou.compensationValue ? (
+                      <span className="text-[11px] font-mono font-medium text-fuchsia-600 dark:text-fuchsia-400">
+                        {formatIDR(modalMou.compensationValue)}
+                      </span>
+                    ) : null}
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 5000000"
+                    value={modalMou.compensationValue != null ? String(modalMou.compensationValue) : ""}
+                    onChange={(e) => {
+                      const val = e.target.value ? Math.max(0, Number(e.target.value)) : undefined;
+                      setModalMou({ ...modalMou, compensationValue: val });
+                    }}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
+                  />
                 </div>
               </div>
               <div>
