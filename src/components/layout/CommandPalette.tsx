@@ -33,6 +33,7 @@ import {
   Flame,
   CornerDownLeft,
   Download,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fuzzyFilter, fuzzyScore } from "@/lib/productivity/fuzzy";
@@ -72,6 +73,7 @@ export function CommandPalette() {
     toggleSidebar,
     setCreateTaskModalOpen,
     setExportCenterOpen,
+    setTrashOpen,
   } = useWorkspaceStore();
 
   const { theme, setTheme } = useTheme();
@@ -389,6 +391,17 @@ export function CommandPalette() {
         },
       },
       {
+        id: "action-open-trash",
+        title: "Open Trash",
+        subtitle: "Restore soft-deleted tasks",
+        keywords: "trash deleted restore recover bin",
+        icon: Trash2,
+        onSelect: () => {
+          closeCommandPalette();
+          setTrashOpen(true);
+        },
+      },
+      {
         id: "action-toggle-theme",
         title: `Toggle Dark Mode`,
         subtitle: `Currently using ${theme === "dark" ? "Dark" : "Light"} theme — switch to ${theme === "dark" ? "Light" : "Dark"}`,
@@ -441,6 +454,7 @@ export function CommandPalette() {
     toggleSidebar,
     setCreateTaskModalOpen,
     setExportCenterOpen,
+    setTrashOpen,
     closeCommandPalette,
   ]);
 

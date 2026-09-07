@@ -20,6 +20,7 @@ import {
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
 import { matchesFilters } from "@/lib/tasks/filterTasks";
+import { toastTaskDeleted } from "@/lib/tasks/deleteUndo";
 import { toast } from "sonner";
 import {
   tableFeatures,
@@ -333,7 +334,7 @@ export function TableView() {
                 onClick={(e) => {
                   e.stopPropagation();
                   deleteTask(row.original.id);
-                  toast.success("Task deleted");
+                  toastTaskDeleted([row.original.id]);
                 }}
                 className="p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
                 title="Delete task"
@@ -375,7 +376,7 @@ export function TableView() {
     if (selectedRowIds.length === 0) return;
     selectedRowIds.forEach((id) => deleteTask(id));
     setRowSelection({});
-    toast.success(`${selectedRowIds.length} tasks deleted`);
+    toastTaskDeleted(selectedRowIds);
   };
 
   const handleBulkStatusChange = (statusId: string) => {

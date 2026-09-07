@@ -125,6 +125,10 @@ const ExportCenter = dynamic(
   () => import("@/components/layout/ExportCenter").then((m) => m.ExportCenter),
   { ssr: false },
 );
+const TrashModal = dynamic(
+  () => import("@/components/tasks/TrashModal").then((m) => m.TrashModal),
+  { ssr: false },
+);
 
 export default function WorkspacePage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -393,6 +397,9 @@ export default function WorkspacePage() {
 
       {/* Export Center (reports / placements / MOUs → PDF & Excel) */}
       <ExportCenter />
+
+      {/* Trash (soft-deleted tasks → restore or delete forever) */}
+      <TrashModal />
 
       {/* Global Create Task Modal */}
       <CreateTaskModal

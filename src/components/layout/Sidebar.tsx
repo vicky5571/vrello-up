@@ -62,6 +62,8 @@ export function Sidebar() {
     toggleSidebar,
     isHelpDocsOpen,
     setHelpDocsOpen,
+    trash,
+    setTrashOpen,
     deleteSpace,
     deleteFolder,
     deleteList,
@@ -640,14 +642,30 @@ export function Sidebar() {
               <HelpCircle className="w-3.5 h-3.5 text-indigo-500" />
               <span>Help & Docs</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setIsSettingsOpen(true)}
-              title="Workspace & Account Settings"
-              className="p-1 rounded hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
-            >
-              <Settings className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setTrashOpen(true)}
+                title="Trash — restore deleted tasks"
+                aria-label={`Trash${trash.length > 0 ? `, ${trash.length} deleted tasks` : ""}`}
+                className="relative p-1 rounded hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                {trash.length > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-3.5 h-3.5 px-0.5 rounded-full bg-slate-500 text-white text-[8px] font-bold flex items-center justify-center">
+                    {trash.length > 9 ? "9+" : trash.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsSettingsOpen(true)}
+                title="Workspace & Account Settings"
+                className="p-1 rounded hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                <Settings className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

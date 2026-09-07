@@ -36,6 +36,7 @@ import { TiptapEditor } from "./TiptapEditor";
 import { SubtaskManager } from "./SubtaskManager";
 import { TaskActivityFeed } from "./TaskActivityFeed";
 import { formatDate, cn } from "@/lib/utils";
+import { toastTaskDeleted } from "@/lib/tasks/deleteUndo";
 import { toast } from "sonner";
 import { useState, useEffect, useRef } from "react";
 
@@ -217,7 +218,7 @@ export function TaskDrawer() {
   const handleDelete = () => {
     if (!task) return;
     deleteTask(task.id);
-    toast.success("Task deleted");
+    toastTaskDeleted([task.id]);
   };
 
   const toggleAssignee = (userId: string) => {

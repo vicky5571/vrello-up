@@ -490,6 +490,7 @@ interface WorkspaceState {
   selectedTaskId: string | null;
   lastSelectedTaskId: string | null;
   selectedTaskIds: string[];
+  trash: TrashedTask[];
   activeView: ViewMode;
   currentUserId: string;
   filters: FilterOptions;
@@ -501,6 +502,7 @@ interface WorkspaceState {
   isHelpDocsOpen: boolean;
   isFilterBarOpen: boolean;
   isExportCenterOpen: boolean;
+  isTrashOpen: boolean;
   lastSeenNotificationsAt: string | null;
 
   // Actions
@@ -512,6 +514,7 @@ interface WorkspaceState {
   setHelpDocsOpen: (open: boolean) => void;
   setFilterBarOpen: (open: boolean) => void;
   setExportCenterOpen: (open: boolean) => void;
+  setTrashOpen: (open: boolean) => void;
   setLastSeenNotificationsAt: (iso: string) => void;
   setActiveWorkspace: (id: string) => void;
   setActiveSpace: (id: string) => void;
@@ -538,11 +541,17 @@ interface WorkspaceState {
   // Task Actions
   createTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => Task;
   updateTask: (id: string, updates: Partial<Task>) => void;
+  deleteTask: (id: string) => void;
   bulkUpdateTasks: (ids: string[], updates: Partial<Task>) => void;
   toggleTaskSelection: (id: string) => void;
   setTaskSelection: (ids: string[]) => void;
   clearTaskSelection: () => void;
-  deleteTask: (id: string) => void;
+
+  // Trash Actions (soft-delete with restore)
+  restoreTasks: (ids: string[]) => number;
+  permanentlyDeleteTask: (id: string) => void;
+  emptyTrash: () => void;
+  purgeExpiredTrash: () => void;
   moveTaskStatus: (
     taskId: string,
     newStatusId: string,
@@ -824,6 +833,17 @@ function syncAddComment(taskId: string, comment: TaskComment) {
   }).catch((err) => console.warn("[vrello sync] failed to persist comment:", err));
 }
 
+export interface TrashedTask {
+  task: Task;
+  deletedAt: string;
+}
+
+/** Trash keeps at most this many soft-deleted tasks (newest first). */
+export const TRASH_LIMIT = 50;
+
+/** Soft-deleted tasks older than this are auto-purged when trash is touched. */
+export const TRASH_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
     (set, get) => ({
@@ -837,6 +857,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       selectedTaskId: null,
       lastSelectedTaskId: null,
       selectedTaskIds: [],
+      trash: [],
       activeView: "list",
       currentUserId: "user-1",
       isSidebarOpen: true,
@@ -846,6 +867,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       isHelpDocsOpen: false,
       isFilterBarOpen: true,
       isExportCenterOpen: false,
+      isTrashOpen: false,
       lastSeenNotificationsAt: null,
       presenceByTaskId: {},
       automationEnabled: {
@@ -1046,6 +1068,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setHelpDocsOpen: (open) => set({ isHelpDocsOpen: open }),
       setFilterBarOpen: (open) => set({ isFilterBarOpen: open }),
       setExportCenterOpen: (open) => set({ isExportCenterOpen: open }),
+      setTrashOpen: (open) => set({ isTrashOpen: open }),
       setLastSeenNotificationsAt: (iso) =>
         set({ lastSeenNotificationsAt: iso }),
       setActiveWorkspace: (id) => set({ activeWorkspaceId: id }),
@@ -1192,6 +1215,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       deleteTask: (id) => {
+        const doomed = get().tasks.find((t) => t.id === id);
+        const now = new Date().toISOString();
         set((state) => ({
           tasks: state.tasks
             .filter((t) => t.id !== id)
@@ -1200,17 +1225,62 @@ export const useWorkspaceStore = create<WorkspaceState>()(
                 ? {
                     ...t,
                     dependencies: t.dependencies.filter((depId) => depId !== id),
-                    updatedAt: new Date().toISOString(),
+                    updatedAt: now,
                   }
                 : t,
             ),
+          // Soft-delete: keep a snapshot in trash for restore/undo.
+          // Dependency links into the deleted task are pruned and are
+          // not re-attached on restore (restore only revives the task).
+          trash: doomed
+            ? [{ task: doomed, deletedAt: now }, ...(state.trash ?? [])].slice(
+                0,
+                TRASH_LIMIT,
+              )
+            : (state.trash ?? []),
           selectedTaskId:
             state.selectedTaskId === id ? null : state.selectedTaskId,
           lastSelectedTaskId:
             state.lastSelectedTaskId === id ? null : state.lastSelectedTaskId,
           selectedTaskIds: state.selectedTaskIds.filter((t) => t !== id),
         }));
+        // The server mirrors live tasks only; trash itself stays local.
         syncDeleteTask(id);
+      },
+
+      restoreTasks: (ids) => {
+        if (ids.length === 0) return 0;
+        const targets = new Set(ids);
+        const entries = (get().trash ?? []).filter((e) => targets.has(e.task.id));
+        if (entries.length === 0) return 0;
+        const revivedIds = new Set(entries.map((e) => e.task.id));
+        const now = new Date().toISOString();
+        set((state) => ({
+          trash: (state.trash ?? []).filter((e) => !revivedIds.has(e.task.id)),
+          tasks: [
+            ...entries.map((e) => ({ ...e.task, updatedAt: now })),
+            ...state.tasks,
+          ],
+        }));
+        // Re-persist revived tasks; the earlier soft-delete removed them.
+        for (const entry of entries) syncCreateTask({ ...entry.task, updatedAt: now });
+        return entries.length;
+      },
+
+      permanentlyDeleteTask: (id) =>
+        set((state) => ({
+          trash: (state.trash ?? []).filter((e) => e.task.id !== id),
+        })),
+
+      emptyTrash: () => set({ trash: [] }),
+
+      purgeExpiredTrash: () => {
+        const cutoff = Date.now() - TRASH_RETENTION_MS;
+        set((state) => ({
+          trash: (state.trash ?? []).filter(
+            (e) => new Date(e.deletedAt).getTime() >= cutoff,
+          ),
+        }));
       },
 
       bulkUpdateTasks: (ids, updates) => {
@@ -2071,6 +2141,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       partialize: (state) => ({
         workspaces: state.workspaces,
         tasks: state.tasks,
+        trash: state.trash ?? [],
         channelMessages: state.channelMessages,
         activeWorkspaceId: state.activeWorkspaceId,
         activeSpaceId: state.activeSpaceId,

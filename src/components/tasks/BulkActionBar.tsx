@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { toast } from "sonner";
 import { CheckCheck, Trash2, X } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { toastTaskDeleted } from "@/lib/tasks/deleteUndo";
 import type { Priority, Status, User } from "@/types";
 
 interface BulkActionBarProps {
@@ -19,7 +19,6 @@ interface BulkActionBarProps {
  */
 export function BulkActionBar({ selectedIds, statuses, members }: BulkActionBarProps) {
   const { bulkUpdateTasks, clearTaskSelection, deleteTask } = useWorkspaceStore();
-  const [isDeleting, setIsDeleting] = useState(false);
 
   if (selectedIds.length === 0) return null;
   const count = selectedIds.length;
@@ -29,21 +28,12 @@ export function BulkActionBar({ selectedIds, statuses, members }: BulkActionBarP
     toast.success(`${label} applied to ${count} ${count === 1 ? "task" : "tasks"}`);
   };
 
+  // Soft-delete: tasks land in Trash with a 6s Undo — no blocking confirm.
   const handleBulkDelete = () => {
-    if (isDeleting) return;
-    const confirmed =
-      typeof window === "undefined"
-        ? false
-        : window.confirm(`Delete ${count} selected ${count === 1 ? "task" : "tasks"}? This cannot be undone.`);
-    if (!confirmed) return;
-    setIsDeleting(true);
-    try {
-      selectedIds.forEach((id) => deleteTask(id));
-      clearTaskSelection();
-      toast.success(`${count} ${count === 1 ? "task" : "tasks"} deleted`);
-    } finally {
-      setIsDeleting(false);
-    }
+    const ids = [...selectedIds];
+    ids.forEach((id) => deleteTask(id));
+    clearTaskSelection();
+    toastTaskDeleted(ids);
   };
 
   const selectClass =
@@ -138,9 +128,8 @@ export function BulkActionBar({ selectedIds, statuses, members }: BulkActionBarP
       <button
         type="button"
         onClick={handleBulkDelete}
-        disabled={isDeleting}
-        title="Delete selected tasks"
-        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer disabled:opacity-50"
+        title="Delete selected tasks (recoverable from Trash)"
+        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
       >
         <Trash2 className="w-3.5 h-3.5" />
         Delete
