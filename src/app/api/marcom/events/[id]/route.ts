@@ -5,7 +5,7 @@ import { requireMember } from "@/lib/marcom/auth";
 import { hasPermission } from "@/lib/marcom/guards";
 
 const VALID_STATUSES = ["UPCOMING", "ON_PROGRESS", "COMPLETED", "CANCELLED"] as const;
-const PATCHABLE_FIELDS = ["name", "date", "endDate", "location", "branchName", "picName", "eventType", "status", "budget", "attendeeCount", "targetAttendee", "notes"] as const;
+const PATCHABLE_FIELDS = ["name", "date", "endDate", "location", "branchName", "picName", "eventType", "status", "budget", "attendeeCount", "targetAttendee", "notes", "postPlatform", "postFormat", "mediaUrl"] as const;
 
 const eventInclude = {
   footage: true,

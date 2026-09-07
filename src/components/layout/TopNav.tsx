@@ -422,7 +422,7 @@ export function TopNav() {
         </header>
 
         {/* Tier 2: Space / Project Breadcrumbs & View Switcher Bar */}
-        <div className="px-4 py-1.5 flex items-center justify-between gap-3 overflow-hidden">
+        <div className="px-4 py-1.5 flex items-center justify-between gap-3 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
           {/* Left: Breadcrumbs */}
           <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 shrink-0">
             <div className="flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400">
@@ -497,45 +497,45 @@ export function TopNav() {
           <div className="min-w-0 flex-1 flex items-center">
             <ViewSwitcher />
           </div>
+        </div>
 
-          {/* Right: Quick Action Controls */}
-          <div className="hidden lg:flex items-center shrink-0 gap-1 text-xs text-slate-600 dark:text-slate-400">
-            <button
-              type="button"
-              onClick={() => setIsAgentsOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <Bot className="w-3.5 h-3.5 text-purple-500" />
-              <span>Agents</span>
-            </button>
+        {/* Tier 3: Quick Action Controls (Below View Switcher) */}
+        <div className="px-4 py-1 flex items-center justify-end gap-1.5 text-xs text-slate-600 dark:text-slate-400 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setIsAgentsOpen(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <Bot className="w-3.5 h-3.5 text-purple-500" />
+            <span>Agents</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setIsAutomationsOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
-              <span>Automate</span>
-            </button>
+          <button
+            type="button"
+            onClick={() => setIsAutomationsOpen(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-500" />
+            <span>Automate</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setAiDrawerOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <Brain className="w-3.5 h-3.5 text-purple-500" />
-              <span>Brain²</span>
-            </button>
+          <button
+            type="button"
+            onClick={() => setAiDrawerOpen(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <Brain className="w-3.5 h-3.5 text-purple-500" />
+            <span>Brain²</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setIsShareOpen(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-medium text-slate-700 dark:text-slate-200"
-            >
-              <Share2 className="w-3.5 h-3.5 text-blue-500" />
-              <span>Share</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsShareOpen(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-medium text-slate-700 dark:text-slate-200"
+          >
+            <Share2 className="w-3.5 h-3.5 text-blue-500" />
+            <span>Share</span>
+          </button>
         </div>
       </div>
 

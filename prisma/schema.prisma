@@ -164,6 +164,10 @@ model MarcomEvent {
   attendeeCount Int @default(0)
   targetAttendee Int @default(0)
   notes String @default("")
+  // Content Planner fields — unified with Events so both use MarcomEvent
+  postPlatform String?
+  postFormat String?
+  mediaUrl String?
   footage EventFootage[]
 }
 

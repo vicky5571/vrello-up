@@ -65,7 +65,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { name, date, endDate, location, branchName, picName, eventType, status, budget, attendeeCount, targetAttendee, notes } = body ?? {};
+  const { name, date, endDate, location, branchName, picName, eventType, status, budget, attendeeCount, targetAttendee, notes, postPlatform, postFormat, mediaUrl } = body ?? {};
   if (!name || !eventType) {
     return NextResponse.json({ error: "Missing required fields: name, eventType" }, { status: 400 });
   }
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
   }
 
   const event = await prisma.marcomEvent.create({
-    data: { name, date, endDate, location, branchName, picName, eventType, status, budget, attendeeCount, targetAttendee, notes },
+    data: { name, date, endDate, location, branchName, picName, eventType, status, budget, attendeeCount, targetAttendee, notes, postPlatform, postFormat, mediaUrl },
     include: eventInclude,
   });
   return NextResponse.json(event, { status: 201 });
