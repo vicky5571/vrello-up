@@ -133,7 +133,7 @@ export function ListView() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto px-8 py-6 h-full bg-[#FAFBFC] dark:bg-[#0F1115]">
+    <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 h-full bg-[#FAFBFC] dark:bg-[#0F1115]">
       <div className="max-w-7xl mx-auto">
         {/* Batch selection toolbar */}
         {filteredTasks.length > 0 && (

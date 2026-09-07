@@ -225,8 +225,11 @@ export const ListGroup = memo(function ListGroup({
 
       {isExpanded && (
         <div className="mt-1 border-t border-slate-200/70 dark:border-slate-800/80 bg-white dark:bg-slate-900/40 rounded-lg overflow-hidden border">
+          {/* Horizontal scroll on narrow screens; rows keep a 680px floor
+              so the fixed 7-column grid never crushes (Board pattern). */}
+          <div className="overflow-x-auto">
           {/* Column Titles Bar */}
-          <div className="grid grid-cols-[28px_1fr_110px_110px_90px_130px_90px_60px] items-center px-4 py-2 border-b border-slate-200/70 dark:border-slate-800/80 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/20">
+          <div className="grid grid-cols-[28px_1fr_110px_110px_90px_130px_90px_60px] min-w-[680px] items-center px-4 py-2 border-b border-slate-200/70 dark:border-slate-800/80 text-[11px] font-medium text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/20">
             <div />
             <div>Name</div>
             <div>Assignee</div>
@@ -240,7 +243,7 @@ export const ListGroup = memo(function ListGroup({
           </div>
 
           {/* Task Rows */}
-          <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800/60 min-w-[680px]">
             {tasks.map((task) => (
               <ListTaskRow
                 key={task.id}
@@ -290,6 +293,7 @@ export const ListGroup = memo(function ListGroup({
                 <span>Add task</span>
               </button>
             )}
+          </div>
           </div>
         </div>
       )}
