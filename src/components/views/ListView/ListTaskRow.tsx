@@ -126,10 +126,10 @@ export const ListTaskRow = memo(function ListTaskRow({
             onClick={() => onToggleSelect(task.id)}
             title="Select for batch actions"
             className={cn(
-              "flex w-3.5 h-3.5 items-center justify-center rounded border text-[9px] text-white transition-all cursor-pointer",
+              "flex w-6 h-6 items-center justify-center rounded-md border text-[11px] text-white transition-all cursor-pointer",
               selected
                 ? "border-indigo-500 bg-indigo-500 opacity-100"
-                : "border-slate-300 dark:border-slate-600 opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
+                : "border-slate-300 dark:border-slate-600 opacity-0 group-hover/row:opacity-100 max-md:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
             )}
           >
             {selected && "✓"}
@@ -410,7 +410,7 @@ export const ListTaskRow = memo(function ListTaskRow({
             e.stopPropagation();
             onSelectTask(task.id);
           }}
-          className="opacity-0 group-hover/row:opacity-100 p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-opacity cursor-pointer"
+          className="opacity-0 group-hover/row:opacity-100 max-md:opacity-100 p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-opacity cursor-pointer"
         >
           <MoreHorizontal className="w-3.5 h-3.5" />
         </button>

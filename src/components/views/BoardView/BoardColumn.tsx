@@ -88,8 +88,8 @@ export const BoardColumn = memo(function BoardColumn({
               title={allColumnSelected ? "Deselect column" : "Select column for batch actions"}
               className={
                 allColumnSelected
-                  ? "flex w-3.5 h-3.5 items-center justify-center rounded border border-indigo-500 bg-indigo-500 text-[9px] text-white cursor-pointer"
-                  : "flex w-3.5 h-3.5 items-center justify-center rounded border border-slate-300 dark:border-slate-600 text-white cursor-pointer hover:border-indigo-400 transition-colors"
+                  ? "flex w-6 h-6 items-center justify-center rounded-md border border-indigo-500 bg-indigo-500 text-[11px] text-white cursor-pointer"
+                  : "flex w-6 h-6 items-center justify-center rounded-md border border-slate-300 dark:border-slate-600 text-white cursor-pointer hover:border-indigo-400 transition-colors"
               }
             >
               {allColumnSelected && "✓"}

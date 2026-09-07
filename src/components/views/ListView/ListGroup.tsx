@@ -200,10 +200,10 @@ export const ListGroup = memo(function ListGroup({
             onClick={() => onToggleSelectAll(groupIds)}
             title={allGroupSelected ? "Deselect group" : "Select group for batch actions"}
             className={cn(
-              "flex w-3.5 h-3.5 items-center justify-center rounded border text-[9px] text-white transition-all cursor-pointer ml-1",
+              "flex w-6 h-6 items-center justify-center rounded-md border text-[11px] text-white transition-all cursor-pointer ml-1",
               allGroupSelected
                 ? "border-indigo-500 bg-indigo-500 opacity-100"
-                : "border-slate-300 dark:border-slate-600 opacity-0 group-hover/header:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
+                : "border-slate-300 dark:border-slate-600 opacity-0 group-hover/header:opacity-100 max-md:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
             )}
           >
             {allGroupSelected && "✓"}
@@ -217,7 +217,7 @@ export const ListGroup = memo(function ListGroup({
             setIsAddingTask(true);
           }}
           title="Add task to status"
-          className="opacity-0 group-hover/header:opacity-100 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-opacity ml-1 cursor-pointer"
+          className="opacity-0 group-hover/header:opacity-100 max-md:opacity-100 p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-opacity ml-1 cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
         </button>

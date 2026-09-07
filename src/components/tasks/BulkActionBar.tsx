@@ -139,7 +139,7 @@ export function BulkActionBar({ selectedIds, statuses, members }: BulkActionBarP
         type="button"
         onClick={clearTaskSelection}
         title="Clear selection"
-        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
       >
         <X className="w-3.5 h-3.5" />
       </button>

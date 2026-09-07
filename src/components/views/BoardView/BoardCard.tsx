@@ -124,10 +124,10 @@ export const BoardCard = memo(function BoardCard({
               }}
               title="Select for batch actions"
               className={cn(
-                "flex w-4 h-4 items-center justify-center rounded border text-[10px] text-white transition-all cursor-pointer shrink-0",
+                "flex w-6 h-6 items-center justify-center rounded-md border text-[11px] text-white transition-all cursor-pointer shrink-0",
                 selected
                   ? "border-indigo-500 bg-indigo-500 opacity-100"
-                  : "border-slate-300 dark:border-slate-600 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
+                  : "border-slate-300 dark:border-slate-600 opacity-0 group-hover:opacity-100 max-md:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
               )}
             >
               {selected && "✓"}
@@ -180,7 +180,7 @@ export const BoardCard = memo(function BoardCard({
             }}
             title="Move to status..."
             className={cn(
-              "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-hidden p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer",
+              "opacity-0 group-hover:opacity-100 max-md:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-hidden p-1.5 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer",
               showMoveMenu && "opacity-100"
             )}
           >

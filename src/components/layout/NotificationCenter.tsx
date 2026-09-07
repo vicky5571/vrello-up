@@ -171,7 +171,7 @@ export function NotificationCenter() {
         title="Notifications & activity"
         aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ""}`}
         aria-expanded={isOpen}
-        className="relative p-1.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        className="relative p-2.5 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
       >
         <Bell className="w-3.5 h-3.5" />
         {unread > 0 && (

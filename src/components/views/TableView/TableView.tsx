@@ -336,7 +336,7 @@ export function TableView() {
                   deleteTask(row.original.id);
                   toastTaskDeleted([row.original.id]);
                 }}
-                className="p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                className="p-1.5 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
                 title="Delete task"
               >
                 <Trash2 className="w-3.5 h-3.5" />
