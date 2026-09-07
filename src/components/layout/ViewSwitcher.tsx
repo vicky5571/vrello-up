@@ -74,7 +74,7 @@ function ViewTabButton({
       }}
       disabled={!view.isAvailable}
       className={cn(
-        "relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer select-none whitespace-nowrap",
+        "relative flex items-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-[34px] sm:min-h-0 rounded-md text-xs font-medium transition-colors cursor-pointer select-none whitespace-nowrap shrink-0",
         isActive
           ? "text-slate-900 dark:text-slate-100 font-semibold bg-slate-100 dark:bg-slate-800"
           : view.isAvailable
@@ -94,7 +94,7 @@ export function ViewSwitcher() {
 
   return (
     <>
-      <div className="flex items-center gap-0.5 overflow-x-auto no-scrollbar">
+      <div className="w-full flex items-center gap-0.5 overflow-x-auto no-scrollbar py-0.5 [mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)] [-webkit-mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)]">
         {VIEWS.map((view) => (
           <ViewTabButton
             key={view.id}
@@ -106,7 +106,7 @@ export function ViewSwitcher() {
 
         {/* Marketing group */}
         <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-1 shrink-0" />
-        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 px-1 select-none whitespace-nowrap">
+        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500 px-1 select-none whitespace-nowrap shrink-0">
           Marketing
         </span>
         {MARKETING_VIEWS.map((view) => (
@@ -123,7 +123,7 @@ export function ViewSwitcher() {
           type="button"
           onClick={() => setIsAddViewOpen(true)}
           title="Add or configure View"
-          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 rounded-md transition-colors cursor-pointer ml-0.5"
+          className="flex items-center gap-1 px-2.5 py-2 sm:py-1.5 min-h-[34px] sm:min-h-0 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 rounded-md transition-colors cursor-pointer ml-0.5 shrink-0"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>View</span>

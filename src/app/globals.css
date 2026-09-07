@@ -102,6 +102,15 @@ body {
   background: rgba(148, 163, 184, 0.6);
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Tiptap / Rich Text Styles */
 .tiptap {
   outline: none;

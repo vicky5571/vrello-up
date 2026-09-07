@@ -422,9 +422,9 @@ export function TopNav() {
         </header>
 
         {/* Tier 2: Space / Project Breadcrumbs & View Switcher Bar */}
-        <div className="px-4 py-1.5 flex flex-wrap items-center justify-between gap-3">
+        <div className="px-4 py-1.5 flex items-center justify-between gap-3 overflow-hidden">
           {/* Left: Breadcrumbs */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
+          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 shrink-0">
             <div className="flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400">
               <FolderIcon className="w-3.5 h-3.5 fill-blue-500/20" />
               <span>{currentSpace?.name || "Team Space"}</span>
@@ -494,12 +494,12 @@ export function TopNav() {
           </div>
 
           {/* Center: View Switcher Tabs */}
-          <div className="flex items-center">
+          <div className="min-w-0 flex-1 flex items-center">
             <ViewSwitcher />
           </div>
 
           {/* Right: Quick Action Controls */}
-          <div className="hidden lg:flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
+          <div className="hidden lg:flex items-center shrink-0 gap-1 text-xs text-slate-600 dark:text-slate-400">
             <button
               type="button"
               onClick={() => setIsAgentsOpen(true)}
