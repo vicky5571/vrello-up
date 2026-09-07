@@ -7,6 +7,7 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Layers,
@@ -371,11 +372,20 @@ export function MarcomTableShell<T extends object & { id: string }>({
                         (row as any).getIsSelected() && "bg-teal-50/40 dark:bg-teal-950/20",
                       )}
                     >
-                      {(row as any).getVisibleCells().map((cell: any) => (
-                        <div key={cell.id} role="cell" style={{ width: `${cell.column.getSize()}px` }} className="shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden">
-                          <table.FlexRender cell={cell} />
-                        </div>
-                      ))}
+                      {(row as any).getVisibleCells().map((cell: any) => {
+                        const isExpander = (cell.column as any).id === "expander";
+                        return (
+                          <div key={cell.id} role="cell" style={{ width: `${cell.column.getSize()}px` }} className="shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden">
+                            {isExpander ? (
+                              <div className="flex justify-end">
+                                <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", isExpanded && "rotate-180")} />
+                              </div>
+                            ) : (
+                              <table.FlexRender cell={cell} />
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                     {isExpanded && renderExpanded && (
                       <div id={`${entityName}-detail-${(row as any).original.id}`} className="px-4 py-3 bg-slate-50/60 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800/60">
