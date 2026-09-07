@@ -80,9 +80,10 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(mou, { status: 201 });
   } catch (e) {
+    console.error("[MOU POST] failed", e, { branchId, partnerName, mouType });
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
       return NextResponse.json({ error: "Branch not found" }, { status: 400 });
     }
-    throw e;
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Internal Server Error" }, { status: 500 });
   }
 }

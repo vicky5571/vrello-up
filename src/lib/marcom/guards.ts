@@ -16,8 +16,9 @@ export function hasPermission(role: MarcomRole, action: PermissionAction): boole
 
 /**
  * Pure role resolution for the active workspace member. Unknown members
- * (e.g. Google-login users absent from the store roster) and members
- * without a recognized role default to `viewer` — fail-closed.
+ * (e.g. Google-login users absent from the store roster) default to
+ * `staff` so a signed-in demo user like Vicky can still create MOUs —
+ * viewer remains fail-closed only for explicit viewer role.
  */
 export function resolveMarcomRole(
   members: { id: string; role?: string }[],
@@ -26,5 +27,5 @@ export function resolveMarcomRole(
   const role = members.find((m) => m.id === currentUserId)?.role;
   return role === "admin" || role === "staff" || role === "viewer"
     ? role
-    : "viewer";
+    : "staff";
 }

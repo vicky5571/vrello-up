@@ -31,6 +31,7 @@ import {
   type ColumnSizingState,
   type PaginationState,
 } from "@tanstack/react-table";
+import { sortFns } from "@tanstack/table-core";
 import { cn } from "@/lib/utils";
 
 // Shared TanStack features for all marcom tables —
@@ -124,6 +125,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
     data: filteredData,
     columnResizeMode: "onChange",
     enableColumnResizing: true,
+    sortingFns: sortFns,
     state: { sorting, rowSelection, columnSizing },
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
@@ -193,7 +195,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
   };
 
   return (
-    <div className="flex-1 overflow-auto p-4 md:p-6">
+    <div className="h-full overflow-y-auto p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-3 gap-3">
         <div className="flex items-center gap-2">
