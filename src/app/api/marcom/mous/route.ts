@@ -75,7 +75,20 @@ export async function POST(request: Request) {
 
   try {
     const mou = await prisma.mou.create({
-      data: { branchId, outletName, partnerName, mouType, submissionDate, startDate, endDate, status, picName, docPath, compensationValue, notes },
+      data: {
+        branchId,
+        outletName,
+        partnerName,
+        mouType,
+        submissionDate: submissionDate ? new Date(submissionDate) : undefined,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
+        status,
+        picName,
+        docPath,
+        compensationValue,
+        notes,
+      },
       include: mouInclude,
     });
     return NextResponse.json(mou, { status: 201 });

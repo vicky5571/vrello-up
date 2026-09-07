@@ -74,7 +74,23 @@ export async function POST(request: Request) {
   }
 
   const event = await prisma.marcomEvent.create({
-    data: { name, date, endDate, location, branchName, picName, eventType, status, budget, attendeeCount, targetAttendee, notes, postPlatform, postFormat, mediaUrl },
+    data: {
+      name,
+      date: date ? new Date(date) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      location,
+      branchName,
+      picName,
+      eventType,
+      status,
+      budget,
+      attendeeCount,
+      targetAttendee,
+      notes,
+      postPlatform,
+      postFormat,
+      mediaUrl,
+    },
     include: eventInclude,
   });
   return NextResponse.json(event, { status: 201 });

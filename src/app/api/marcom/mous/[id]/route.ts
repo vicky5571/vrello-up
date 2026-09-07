@@ -21,7 +21,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const body = await request.json();
   const data: Record<string, unknown> = {};
   for (const field of PATCHABLE_FIELDS) {
-    if (body?.[field] !== undefined) data[field] = body[field];
+    if (body?.[field] !== undefined) {
+      if ((field === "startDate" || field === "endDate" || field === "submissionDate") && typeof body[field] === "string") {
+        data[field] = body[field] ? new Date(body[field] as string) : null;
+      } else {
+        data[field] = body[field];
+      }
+    }
   }
   if (data.status !== undefined && !VALID_STATUSES.includes(data.status as (typeof VALID_STATUSES)[number])) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });

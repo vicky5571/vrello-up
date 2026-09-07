@@ -125,13 +125,14 @@ export function MarcomTableShell<T extends object & { id: string }>({
     data: filteredData,
     columnResizeMode: "onChange",
     enableColumnResizing: true,
-    sortingFns: sortFns,
+    // @ts-ignore — v9 types narrow sortingFns to feature map, runtime needs it for alphanumeric
+    sortingFns: sortFns as any,
     state: { sorting, rowSelection, columnSizing },
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
     onColumnSizingChange: setColumnSizing,
     getRowId,
-  });
+  } as any);
 
   const selectedRowIds = useMemo(
     () => Object.keys(rowSelection).filter((id) => rowSelection[id]),
