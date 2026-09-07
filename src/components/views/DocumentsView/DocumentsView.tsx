@@ -123,35 +123,39 @@ export function DocumentsView() {
     }
   };
 
-  const handleSaveDocument = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveDocument = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!modalDocument) return;
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const name = (formData.get("name") as string)?.trim();
-    const category = (formData.get("category") as string)?.trim();
-    const period = (formData.get("period") as string)?.trim() || undefined;
-    const branchName = (formData.get("branchName") as string)?.trim() || undefined;
-    const ownerPic = (formData.get("ownerPic") as string)?.trim() || undefined;
-    const status = (formData.get("status") as string)?.trim() || "Active";
-    const fileType = (formData.get("fileType") as string)?.trim() as DocFileType;
-    const filePath = (formData.get("filePath") as string)?.trim();
-    const fileSizeMb = Number(formData.get("fileSizeMb")) || 0;
-    const description = (formData.get("description") as string)?.trim() || undefined;
-    if (!name || !category || !fileType || !filePath) {
+    const { id, name, category, period, branchName, ownerPic, status, fileType, filePath, fileSizeMb, description } = modalDocument;
+    if (!name?.trim() || !category?.trim() || !fileType || !filePath?.trim()) {
       toast.error("Name, Category, File Type, and File Path are required");
       return;
     }
-    if (!filePath.startsWith("/api/marcom/files/")) {
+    if (!filePath!.trim().startsWith("/api/marcom/files/")) {
       toast.error("File path must start with /api/marcom/files/ (upload a file or use valid path)");
       return;
     }
     setIsSaving(true);
     try {
-      const isEditing = Boolean(modalDocument.id);
-      const url = isEditing ? `/api/marcom/documents/${modalDocument.id}` : "/api/marcom/documents";
+      const isEditing = Boolean(id);
+      const url = isEditing ? `/api/marcom/documents/${id}` : "/api/marcom/documents";
       const method = isEditing ? "PATCH" : "POST";
-      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, category, period, branchName, ownerPic, status, fileType, filePath, fileSizeMb, description }) });
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name!.trim(),
+          category: category!.trim(),
+          period: period?.trim() || undefined,
+          branchName: branchName?.trim() || undefined,
+          ownerPic: ownerPic?.trim() || undefined,
+          status: status || "Active",
+          fileType,
+          filePath: filePath!.trim(),
+          fileSizeMb: Number(fileSizeMb) || 0,
+          description: description?.trim() || undefined,
+        }),
+      });
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
         throw new Error(errJson.error || `Failed with status ${res.status}`);
@@ -289,16 +293,16 @@ export function DocumentsView() {
             <form onSubmit={handleSaveDocument} className="p-5 space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Document Name *</label>
-                <input name="name" type="text" required defaultValue={modalDocument.name || ""} placeholder="e.g., Brand Guidelines 2025" className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                <input type="text" required placeholder="e.g., Brand Guidelines 2025" value={modalDocument.name || ""} onChange={(e) => setModalDocument({ ...modalDocument, name: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Category *</label>
-                  <input name="category" type="text" required defaultValue={modalDocument.category || "Brand Guidelines"} placeholder="Brand Guidelines, SOP, Contract..." className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <input type="text" required placeholder="Brand Guidelines, SOP, Contract..." value={modalDocument.category || "Brand Guidelines"} onChange={(e) => setModalDocument({ ...modalDocument, category: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Branch</label>
-                  <select name="branchName" defaultValue={modalDocument.branchName || branches[0]?.name || ""} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                  <select value={modalDocument.branchName || branches[0]?.name || ""} onChange={(e) => setModalDocument({ ...modalDocument, branchName: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
                     <option value="">No branch (HQ / Global)</option>
                     {branches.map((b) => <option key={b.id} value={b.name}>{b.name}</option>)}
                   </select>
@@ -307,15 +311,15 @@ export function DocumentsView() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Period</label>
-                  <input name="period" type="text" defaultValue={modalDocument.period || ""} placeholder="e.g., 2025" className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <input type="text" placeholder="e.g., 2025" value={modalDocument.period || ""} onChange={(e) => setModalDocument({ ...modalDocument, period: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Owner / PIC</label>
-                  <input name="ownerPic" type="text" defaultValue={modalDocument.ownerPic || ""} placeholder="e.g., Design Team" className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <input type="text" placeholder="e.g., Design Team" value={modalDocument.ownerPic || ""} onChange={(e) => setModalDocument({ ...modalDocument, ownerPic: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Status</label>
-                  <select name="status" defaultValue={modalDocument.status || "Active"} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                  <select value={modalDocument.status || "Active"} onChange={(e) => setModalDocument({ ...modalDocument, status: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
                     <option value="Active">Active</option>
                     <option value="Archived">Archived</option>
                     <option value="Draft">Draft</option>
@@ -335,7 +339,7 @@ export function DocumentsView() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">File Type *</label>
-                  <select name="fileType" defaultValue={modalDocument.fileType || "PDF"} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                  <select value={modalDocument.fileType || "PDF"} onChange={(e) => setModalDocument({ ...modalDocument, fileType: e.target.value as DocFileType })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
                     <option value="PDF">PDF</option>
                     <option value="PNG">PNG</option>
                     <option value="JPG">JPG</option>
@@ -348,16 +352,16 @@ export function DocumentsView() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">File Size (MB)</label>
-                  <input name="fileSizeMb" type="number" step="0.01" min="0" defaultValue={modalDocument.fileSizeMb ?? 0} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <input type="number" step="0.01" min="0" value={modalDocument.fileSizeMb ?? 0} onChange={(e) => setModalDocument({ ...modalDocument, fileSizeMb: e.target.value ? Number(e.target.value) : 0 })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">File Path * (Must begin with /api/marcom/files/)</label>
-                <input name="filePath" type="text" required defaultValue={modalDocument.filePath || ""} placeholder="/api/marcom/files/documents/..." className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                <input type="text" required placeholder="/api/marcom/files/documents/..." value={modalDocument.filePath || ""} onChange={(e) => setModalDocument({ ...modalDocument, filePath: e.target.value })} className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Description</label>
-                <textarea name="description" rows={2} defaultValue={modalDocument.description || ""} placeholder="Document purpose, revisions, notes..." className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none" />
+                <textarea rows={2} placeholder="Document purpose, revisions, notes..." value={modalDocument.description || ""} onChange={(e) => setModalDocument({ ...modalDocument, description: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none" />
               </div>
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setModalDocument(null)} disabled={isSaving} className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50">Cancel</button>

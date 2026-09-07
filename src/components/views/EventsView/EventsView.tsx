@@ -125,33 +125,37 @@ export function EventsView() {
     fetchEvents();
   }, [fetchEvents]);
 
-  const handleSaveEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!modalEvent) return;
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const name = (formData.get("name") as string)?.trim();
-    const eventType = (formData.get("eventType") as string)?.trim();
-    const branchName = (formData.get("branchName") as string)?.trim() || undefined;
-    const date = (formData.get("date") as string)?.trim() || undefined;
-    const endDate = (formData.get("endDate") as string)?.trim() || undefined;
-    const location = (formData.get("location") as string)?.trim() || undefined;
-    const picName = (formData.get("picName") as string)?.trim() || undefined;
-    const budget = Number(formData.get("budget")) || 0;
-    const attendeeCount = Number(formData.get("attendeeCount")) || 0;
-    const targetAttendee = Number(formData.get("targetAttendee")) || 0;
-    const status = (formData.get("status") as string)?.trim() || "UPCOMING";
-    const notes = (formData.get("notes") as string)?.trim() || undefined;
-    if (!name || !eventType) {
+    const { id, name, eventType, branchName, date, endDate, location, picName, budget, attendeeCount, targetAttendee, status, notes } = modalEvent;
+    if (!name?.trim() || !eventType?.trim()) {
       toast.error("Event Name and Type are required");
       return;
     }
     setIsSaving(true);
     try {
-      const isEditing = Boolean(modalEvent.id);
-      const url = isEditing ? `/api/marcom/events/${modalEvent.id}` : "/api/marcom/events";
+      const isEditing = Boolean(id);
+      const url = isEditing ? `/api/marcom/events/${id}` : "/api/marcom/events";
       const method = isEditing ? "PATCH" : "POST";
-      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, eventType, branchName, date, endDate, location, picName, budget, attendeeCount, targetAttendee, status, notes }) });
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name!.trim(),
+          eventType: eventType!.trim(),
+          branchName: branchName?.trim() || undefined,
+          date: date?.trim() || undefined,
+          endDate: endDate?.trim() || undefined,
+          location: location?.trim() || undefined,
+          picName: picName?.trim() || undefined,
+          budget: Number(budget) || 0,
+          attendeeCount: Number(attendeeCount) || 0,
+          targetAttendee: Number(targetAttendee) || 0,
+          status: status || "UPCOMING",
+          notes: notes?.trim() || undefined,
+        }),
+      });
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
         throw new Error(errJson.error || `Failed with status ${res.status}`);
@@ -306,16 +310,16 @@ export function EventsView() {
             <form onSubmit={handleSaveEvent} className="p-5 space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Event Name *</label>
-                <input name="name" type="text" required defaultValue={modalEvent.name || ""} placeholder="e.g., Grand Opening & Product Showcase" className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                <input type="text" required placeholder="e.g., Grand Opening & Product Showcase" value={modalEvent.name || ""} onChange={(e) => setModalEvent({ ...modalEvent, name: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Event Type *</label>
-                  <input name="eventType" type="text" required defaultValue={modalEvent.eventType || "Launch"} placeholder="Launch, Workshop, Exhibition..." className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <input type="text" required placeholder="Launch, Workshop, Exhibition..." value={modalEvent.eventType || "Launch"} onChange={(e) => setModalEvent({ ...modalEvent, eventType: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Branch</label>
-                  <select name="branchName" defaultValue={modalEvent.branchName || branches[0]?.name || ""} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                  <select value={modalEvent.branchName || branches[0]?.name || ""} onChange={(e) => setModalEvent({ ...modalEvent, branchName: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
                     <option value="">No branch</option>
                     {branches.map((b) => <option key={b.id} value={b.name}>{b.name}</option>)}
                   </select>
@@ -324,27 +328,27 @@ export function EventsView() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Start Date</label>
-                  <input name="date" type="date" defaultValue={modalEvent.date ? modalEvent.date.slice(0, 10) : ""} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <input type="date" value={modalEvent.date ? modalEvent.date.slice(0, 10) : ""} onChange={(e) => setModalEvent({ ...modalEvent, date: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">End Date</label>
-                  <input name="endDate" type="date" defaultValue={modalEvent.endDate ? modalEvent.endDate.slice(0, 10) : ""} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <input type="date" value={modalEvent.endDate ? modalEvent.endDate.slice(0, 10) : ""} onChange={(e) => setModalEvent({ ...modalEvent, endDate: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Location</label>
-                  <input name="location" type="text" defaultValue={modalEvent.location || ""} placeholder="e.g., Main Atrium or Branch Plaza" className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <input type="text" placeholder="e.g., Main Atrium or Branch Plaza" value={modalEvent.location || ""} onChange={(e) => setModalEvent({ ...modalEvent, location: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">PIC / Contact Person</label>
-                  <input name="picName" type="text" defaultValue={modalEvent.picName || ""} placeholder="e.g., Sarah Jenkins" className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <input type="text" placeholder="e.g., Sarah Jenkins" value={modalEvent.picName || ""} onChange={(e) => setModalEvent({ ...modalEvent, picName: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Status</label>
-                  <select name="status" defaultValue={modalEvent.status || "UPCOMING"} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                  <select value={modalEvent.status || "UPCOMING"} onChange={(e) => setModalEvent({ ...modalEvent, status: e.target.value as EventStatus })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
                     <option value="UPCOMING">UPCOMING</option>
                     <option value="ON_PROGRESS">ON_PROGRESS</option>
                     <option value="COMPLETED">COMPLETED</option>
@@ -353,20 +357,20 @@ export function EventsView() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Target Attendees</label>
-                  <input name="targetAttendee" type="number" min="0" defaultValue={modalEvent.targetAttendee ?? 100} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <input type="number" min="0" value={modalEvent.targetAttendee ?? 100} onChange={(e) => setModalEvent({ ...modalEvent, targetAttendee: e.target.value ? Number(e.target.value) : 0 })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Actual Attendees</label>
-                  <input name="attendeeCount" type="number" min="0" defaultValue={modalEvent.attendeeCount ?? 0} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <input type="number" min="0" value={modalEvent.attendeeCount ?? 0} onChange={(e) => setModalEvent({ ...modalEvent, attendeeCount: e.target.value ? Number(e.target.value) : 0 })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Budget (IDR)</label>
-                <input name="budget" type="number" min="0" defaultValue={modalEvent.budget ?? 0} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                <input type="number" min="0" value={modalEvent.budget ?? 0} onChange={(e) => setModalEvent({ ...modalEvent, budget: e.target.value ? Number(e.target.value) : 0 })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Notes</label>
-                <textarea name="notes" rows={2} defaultValue={modalEvent.notes || ""} placeholder="Special instructions, vendor info, permit notes..." className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none" />
+                <textarea rows={2} placeholder="Special instructions, vendor info, permit notes..." value={modalEvent.notes || ""} onChange={(e) => setModalEvent({ ...modalEvent, notes: e.target.value })} className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none" />
               </div>
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setModalEvent(null)} disabled={isSaving} className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:opacity-50">Cancel</button>
