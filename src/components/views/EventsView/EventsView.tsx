@@ -29,7 +29,6 @@ import {
   columnResizingFeature,
   rowSelectionFeature,
   type SortingState,
-  type ColumnVisibilityState,
   type RowSelectionState,
   type ColumnSizingState,
 } from "@tanstack/react-table";
@@ -65,7 +64,7 @@ export interface MarcomEvent {
   footage: EventFootage[];
 }
 
-// Register features for TanStack Table v9 (same setup as TableView).
+// Register features for TanStack Table v9 — only what this view actually uses.
 const features = tableFeatures({
   rowSortingFeature,
   sortedRowModel: createSortedRowModel(),
@@ -104,7 +103,6 @@ export function EventsView() {
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([{ id: "name", desc: false }]);
-  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -375,9 +373,8 @@ export function EventsView() {
     data: events,
     columnResizeMode: "onChange",
     enableColumnResizing: true,
-    state: { sorting, columnVisibility, rowSelection, columnSizing },
+    state: { sorting, rowSelection, columnSizing },
     onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onColumnSizingChange: setColumnSizing,
     getRowId: (row) => row.id,
