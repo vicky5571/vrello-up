@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw } from "lucide-react";
+import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn, formatIDR } from "@/lib/utils";
@@ -49,6 +49,8 @@ export function MousView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [outletsList, setOutletsList] = useState<{ id: string; name: string; code?: string; branchId: string }[]>([]);
+  const [branchSearch, setBranchSearch] = useState("");
   const [modalMou, setModalMou] = useState<Partial<MarcomMou> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -89,13 +91,21 @@ export function MousView() {
     setIsLoading(true);
     setError(null);
     try {
-      const [resMous, resBranches] = await Promise.all([fetch("/api/marcom/mous"), fetch("/api/marcom/branches")]);
+      const [resMous, resBranches, resOutlets] = await Promise.all([
+        fetch("/api/marcom/mous"),
+        fetch("/api/marcom/branches"),
+        fetch("/api/marcom/outlets"),
+      ]);
       if (!resMous.ok) throw new Error(`Request failed (${resMous.status})`);
       const jsonMous = await resMous.json();
       setMous(Array.isArray(jsonMous.data) ? jsonMous.data : []);
       if (resBranches.ok) {
         const jsonBranches = await resBranches.json();
         setBranches(Array.isArray(jsonBranches.data) ? jsonBranches.data : []);
+      }
+      if (resOutlets.ok) {
+        const jsonOutlets = await resOutlets.json();
+        setOutletsList(Array.isArray(jsonOutlets.data) ? jsonOutlets.data : []);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load MOUs");
@@ -107,6 +117,23 @@ export function MousView() {
   useEffect(() => {
     fetchMous();
   }, [fetchMous]);
+
+  const filteredBranches = useMemo(() => {
+    if (branches.length <= 20 || !branchSearch.trim()) return branches;
+    const q = branchSearch.toLowerCase();
+    const matches = branches.filter((b) => b.name.toLowerCase().includes(q) || b.code.toLowerCase().includes(q));
+    if (modalMou?.branchId && !matches.some((b) => b.id === modalMou.branchId)) {
+      const selected = branches.find((b) => b.id === modalMou.branchId);
+      if (selected) return [selected, ...matches];
+    }
+    return matches;
+  }, [branches, branchSearch, modalMou?.branchId]);
+
+  const availableOutlets = useMemo(() => {
+    if (!modalMou?.branchId) return outletsList;
+    const branchOutlets = outletsList.filter((o) => o.branchId === modalMou.branchId);
+    return branchOutlets.length > 0 ? branchOutlets : outletsList;
+  }, [outletsList, modalMou?.branchId]);
 
   const columns = useMemo(
     () =>
@@ -213,6 +240,7 @@ export function MousView() {
       }
       toast.success(`MOU ${isEdit ? "updated" : "created"} successfully`);
       setModalMou(null);
+      setBranchSearch("");
       await fetchMous();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save MOU");
@@ -244,7 +272,10 @@ export function MousView() {
         deleteRequiresMessage="Delete requires admin role"
         onDeleteOne={deleteOne}
         canAdd={canCreate}
-        onAdd={() => setModalMou({ branchId: branches[0]?.id || "", partnerName: "", mouType: "Compensation", outletName: "", startDate: new Date().toISOString().slice(0, 10), endDate: "", picName: "", picPhone: "", docPath: "", compensationValue: undefined, notes: "" })}
+        onAdd={() => {
+          setBranchSearch("");
+          setModalMou({ branchId: branches[0]?.id || "", partnerName: "", mouType: "Compensation", outletName: "", startDate: new Date().toISOString().slice(0, 10), endDate: "", picName: "", picPhone: "", docPath: "", compensationValue: undefined, notes: "" });
+        }}
         addLabel="Add MOU"
         addIcon={Plus}
         addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors shadow-2xs cursor-pointer"
@@ -256,25 +287,26 @@ export function MousView() {
         }
         renderExpanded={(mou) => (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC Name</div>
+                <div className="font-medium text-slate-900 dark:text-slate-100">{mou.picName || "—"}</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC Phone</div>
+                <div className="text-slate-700 dark:text-slate-300">{mou.picPhone || "—"}</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Period</div>
+                <div className="text-slate-700 dark:text-slate-300">
+                  {mou.startDate ? mou.startDate.slice(0, 10) : "—"} to {mou.endDate ? mou.endDate.slice(0, 10) : "—"}
+                </div>
+              </div>
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Outlet</div>
                 <div className="text-slate-700 dark:text-slate-300">{mou.outletName || "—"}</div>
               </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC</div>
-                <div className="text-slate-700 dark:text-slate-300">
-                  {mou.picName || "—"}
-                  {mou.picPhone ? (
-                    <span className="text-slate-400 dark:text-slate-500 ml-1">({mou.picPhone})</span>
-                  ) : null}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Period</div>
-                <div className="text-slate-700 dark:text-slate-300">{mou.startDate ? new Date(mou.startDate).toLocaleDateString() : "—"} {" → "} {mou.endDate ? new Date(mou.endDate).toLocaleDateString() : "—"}</div>
-              </div>
-              <div>
+              <div className="sm:col-span-2">
                 <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Document</div>
                 <div className="text-slate-700 dark:text-slate-300">{mou.docPath || "—"}</div>
               </div>
@@ -301,7 +333,7 @@ export function MousView() {
                 </button>
               )}
               {canCreate && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); setModalMou(mou); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
+                <button type="button" onClick={(e) => { e.stopPropagation(); setBranchSearch(""); setModalMou(mou); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
                   <Edit2 className="w-3.5 h-3.5 text-fuchsia-600" />
                   <span>Edit MOU</span>
                 </button>
@@ -320,23 +352,55 @@ export function MousView() {
                 <FileText className="w-4 h-4 text-fuchsia-600" />
                 {modalMou.id ? "Edit MOU" : "Add New MOU"}
               </h2>
-              <button type="button" onClick={() => setModalMou(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">✕</button>
+              <button type="button" onClick={() => { setModalMou(null); setBranchSearch(""); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">✕</button>
             </div>
             <form onSubmit={handleSaveMou} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Branch *</label>
-                  <select required value={modalMou.branchId || ""} onChange={(e) => setModalMou({ ...modalMou, branchId: e.target.value })} disabled={isLoading} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer disabled:opacity-50">
+                  <label htmlFor="mou-branch" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Branch <span className="text-rose-500 ml-0.5" aria-hidden="true">*</span>
+                  </label>
+                  {branches.length > 20 && (
+                    <div className="relative mb-1.5">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Search branch..."
+                        aria-label="Filter branch options"
+                        value={branchSearch}
+                        onChange={(e) => setBranchSearch(e.target.value)}
+                        className="w-full pl-7 pr-2.5 py-1 text-[11px] rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-fuchsia-500"
+                      />
+                    </div>
+                  )}
+                  <select
+                    id="mou-branch"
+                    required
+                    aria-required="true"
+                    value={modalMou.branchId || ""}
+                    onChange={(e) => setModalMou({ ...modalMou, branchId: e.target.value })}
+                    disabled={isLoading}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer disabled:opacity-50"
+                  >
                     <option value="">{isLoading ? "Loading branches..." : "Select Branch..."}</option>
-                    {branches.map((b) => (
+                    {filteredBranches.map((b) => (
                       <option key={b.id} value={b.id}>{b.name} ({b.code})</option>
                     ))}
                   </select>
                   {branches.length === 0 && !isLoading && <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-400">No branches available — create a branch first.</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">MOU Type *</label>
-                  <select required value={modalMou.mouType || "Compensation"} onChange={(e) => setModalMou({ ...modalMou, mouType: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer">
+                  <label htmlFor="mou-type" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    MOU Type <span className="text-rose-500 ml-0.5" aria-hidden="true">*</span>
+                  </label>
+                  <select
+                    id="mou-type"
+                    required
+                    aria-required="true"
+                    value={modalMou.mouType || "Compensation"}
+                    onChange={(e) => setModalMou({ ...modalMou, mouType: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer"
+                  >
                     {MOU_TYPES.map((t) => (
                       <option key={t} value={t}>{t}</option>
                     ))}
@@ -345,22 +409,59 @@ export function MousView() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Partner Name *</label>
-                  <input type="text" required placeholder="e.g. PT Kemitraan Jaya" value={modalMou.partnerName || ""} onChange={(e) => setModalMou({ ...modalMou, partnerName: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
+                  <label htmlFor="mou-partner-name" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Partner Name <span className="text-rose-500 ml-0.5" aria-hidden="true">*</span>
+                  </label>
+                  <input
+                    id="mou-partner-name"
+                    type="text"
+                    required
+                    aria-required="true"
+                    placeholder="e.g. PT Kemitraan Jaya"
+                    value={modalMou.partnerName || ""}
+                    onChange={(e) => setModalMou({ ...modalMou, partnerName: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Outlet Name</label>
-                  <input type="text" placeholder="e.g. Toko Berkah" value={modalMou.outletName || ""} onChange={(e) => setModalMou({ ...modalMou, outletName: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
+                  <label htmlFor="mou-outlet-name" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Outlet Name
+                  </label>
+                  <input
+                    id="mou-outlet-name"
+                    type="text"
+                    list="mou-outlets-list"
+                    placeholder="e.g. Toko Berkah"
+                    value={modalMou.outletName || ""}
+                    onChange={(e) => setModalMou({ ...modalMou, outletName: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
+                  />
+                  <datalist id="mou-outlets-list">
+                    {availableOutlets.map((o) => (
+                      <option key={o.id} value={o.name} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Start Date</label>
-                  <input type="date" value={modalMou.startDate ? modalMou.startDate.slice(0, 10) : ""} onChange={(e) => setModalMou({ ...modalMou, startDate: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
+                  <label htmlFor="mou-start-date" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Start Date
+                  </label>
+                  <input
+                    id="mou-start-date"
+                    type="date"
+                    value={modalMou.startDate ? modalMou.startDate.slice(0, 10) : ""}
+                    onChange={(e) => setModalMou({ ...modalMou, startDate: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">End Date</label>
+                  <label htmlFor="mou-end-date" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    End Date
+                  </label>
                   <input
+                    id="mou-end-date"
                     type="date"
                     min={modalMou.startDate ? modalMou.startDate.slice(0, 10) : undefined}
                     value={modalMou.endDate ? modalMou.endDate.slice(0, 10) : ""}
@@ -371,17 +472,37 @@ export function MousView() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">PIC Name</label>
-                  <input type="text" placeholder="e.g. Hendra" value={modalMou.picName || ""} onChange={(e) => setModalMou({ ...modalMou, picName: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
+                  <label htmlFor="mou-pic-name" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    PIC Name
+                  </label>
+                  <input
+                    id="mou-pic-name"
+                    type="text"
+                    placeholder="e.g. Hendra"
+                    value={modalMou.picName || ""}
+                    onChange={(e) => setModalMou({ ...modalMou, picName: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">PIC Phone</label>
-                  <input type="text" placeholder="e.g. +62 812 3456 7890" value={modalMou.picPhone || ""} onChange={(e) => setModalMou({ ...modalMou, picPhone: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
+                  <label htmlFor="mou-pic-phone" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    PIC Phone
+                  </label>
+                  <input
+                    id="mou-pic-phone"
+                    type="text"
+                    placeholder="e.g. +62 812 3456 7890"
+                    value={modalMou.picPhone || ""}
+                    onChange={(e) => setModalMou({ ...modalMou, picPhone: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
+                  />
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Compensation (Rp)</label>
+                  <label htmlFor="mou-compensation" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Compensation (Rp)
+                  </label>
                   {typeof modalMou.compensationValue === "number" && !isNaN(modalMou.compensationValue) ? (
                     <span className="text-[11px] font-mono font-medium text-fuchsia-600 dark:text-fuchsia-400">
                       {formatIDR(modalMou.compensationValue)}
@@ -389,6 +510,7 @@ export function MousView() {
                   ) : null}
                 </div>
                 <input
+                  id="mou-compensation"
                   type="number"
                   min="0"
                   placeholder="e.g. 5000000"
@@ -403,10 +525,10 @@ export function MousView() {
               </div>
               <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3 bg-slate-50/50 dark:bg-slate-800/50 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <label htmlFor="mou-file-upload" className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer">
                     <Upload className="w-3.5 h-3.5 text-fuchsia-600" />
                     <span>Upload Document (PDF, Images, up to 25MB)</span>
-                  </span>
+                  </label>
                   {isUploading && (
                     <span className="text-xs text-fuchsia-600 flex items-center gap-1 font-medium">
                       <RefreshCw className="w-3 h-3 animate-spin" />
@@ -415,6 +537,7 @@ export function MousView() {
                   )}
                 </div>
                 <input
+                  id="mou-file-upload"
                   type="file"
                   onChange={handleFileUpload}
                   disabled={isUploading}
@@ -422,8 +545,11 @@ export function MousView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Document URL / Path</label>
+                <label htmlFor="mou-doc-path" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Document URL / Path
+                </label>
                 <input
+                  id="mou-doc-path"
                   type="text"
                   placeholder="Auto-filled from upload, or enter /api/... or Google Drive URL"
                   value={modalMou.docPath || ""}
@@ -432,11 +558,20 @@ export function MousView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Notes</label>
-                <textarea rows={2} placeholder="Additional partnership commitments..." value={modalMou.notes || ""} onChange={(e) => setModalMou({ ...modalMou, notes: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500" />
+                <label htmlFor="mou-notes" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  id="mou-notes"
+                  rows={2}
+                  placeholder="Additional partnership commitments..."
+                  value={modalMou.notes || ""}
+                  onChange={(e) => setModalMou({ ...modalMou, notes: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
+                />
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setModalMou(null)} disabled={isSaving || isUploading} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
+                <button type="button" onClick={() => { setModalMou(null); setBranchSearch(""); }} disabled={isSaving || isUploading} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
                 <button type="submit" disabled={isSaving || isUploading || isLoading || branches.length === 0} title={branches.length === 0 ? "Loading branches..." : isUploading ? "Uploading document..." : undefined} className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{isSaving ? "Saving..." : isUploading ? "Uploading..." : modalMou.id ? "Update MOU" : "Create MOU"}</button>
               </div>
             </form>
