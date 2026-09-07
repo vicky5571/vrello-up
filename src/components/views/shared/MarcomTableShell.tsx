@@ -193,7 +193,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
   };
 
   return (
-    <div className="flex-1 overflow-auto p-6">
+    <div className="flex-1 overflow-auto p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-3 gap-3">
         <div className="flex items-center gap-2">
@@ -402,6 +402,16 @@ export function MarcomTableShell<T extends object & { id: string }>({
             <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
               <Layers className="w-8 h-8 text-slate-300 dark:text-slate-700" />
               <span>{emptyLabel}</span>
+              {canAdd && onAdd && addLabel && (
+                <button
+                  type="button"
+                  onClick={onAdd}
+                  className={addClassName ? `mt-2 ${addClassName}` : "mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-2xs cursor-pointer"}
+                >
+                  {AddIcon && <AddIcon className="w-3.5 h-3.5" />}
+                  <span>{addLabel}</span>
+                </button>
+              )}
             </div>
           )}
         </div>

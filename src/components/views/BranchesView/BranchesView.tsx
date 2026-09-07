@@ -148,12 +148,20 @@ export function BranchesView() {
           cell: ({ row }) => {
             const progress = row.original.progress;
             if (progress == null) return <span className="text-slate-400">—</span>;
+            const pct = Math.round(Math.min(100, Math.max(0, progress)));
             return (
               <div className="flex items-center gap-2">
-                <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div className="h-full rounded-full bg-teal-500" style={{ width: `${Math.min(100, Math.max(0, progress))}%` }} />
+                <div
+                  role="progressbar"
+                  aria-valuenow={pct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`Progress ${pct}%`}
+                  className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
+                >
+                  <div className="h-full rounded-full bg-teal-500" style={{ width: `${pct}%` }} />
                 </div>
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">{Math.round(progress)}%</span>
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">{pct}%</span>
               </div>
             );
           },

@@ -23,6 +23,14 @@ export function isOverdue(date: string | Date | undefined | null): boolean {
   return d < today;
 }
 
+export function formatIDR(value: number): string {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 /**
  * Generates collision-free IDs using standard Web Crypto randomUUID with fallback.
  */

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { FileText, Download, Plus, Edit2, CheckCircle } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
-import { cn } from "@/lib/utils";
+import { cn, formatIDR } from "@/lib/utils";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
@@ -143,8 +143,8 @@ export function MousView() {
         columnHelper.accessor("compensationValue", {
           id: "value",
           header: "Value",
-          size: 130, minSize: 100,
-          cell: ({ row }) => <span className="text-slate-700 dark:text-slate-300">{typeof row.original.compensationValue === "number" ? row.original.compensationValue.toLocaleString() : "—"}</span>,
+          size: 150, minSize: 120,
+          cell: ({ row }) => <span className="text-slate-700 dark:text-slate-300">{typeof row.original.compensationValue === "number" ? formatIDR(row.original.compensationValue) : "—"}</span>,
         }),
         columnHelper.display({
           id: "expander",

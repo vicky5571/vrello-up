@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { ClipboardList, Download, Plus, Edit2, CheckSquare } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
-import { cn } from "@/lib/utils";
+import { cn, formatIDR } from "@/lib/utils";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
@@ -158,8 +158,8 @@ export function PlacementsView() {
         columnHelper.accessor("cost", {
           id: "cost",
           header: "Cost",
-          size: 120, minSize: 90,
-          cell: ({ row }) => <span className="text-slate-700 dark:text-slate-300">{typeof row.original.cost === "number" ? row.original.cost.toLocaleString() : "—"}</span>,
+          size: 140, minSize: 110,
+          cell: ({ row }) => <span className="text-slate-700 dark:text-slate-300">{typeof row.original.cost === "number" ? formatIDR(row.original.cost) : "—"}</span>,
         }),
         columnHelper.display({
           id: "expander",

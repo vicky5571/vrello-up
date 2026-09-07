@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Flag, Plus, Edit2, CheckSquare, RefreshCw } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
+import { formatIDR } from "@/lib/utils";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
@@ -82,7 +83,7 @@ export function EventsView() {
     const task = createTask({
       listId: "list-field-ops",
       title: `[Event] ${event.name} (${event.branchName})`,
-      description: `<p><strong>Location:</strong> ${event.location || "TBD"}</p><p><strong>Target Attendees:</strong> ${event.targetAttendee}</p><p><strong>Budget:</strong> Rp ${event.budget.toLocaleString()}</p><p>${event.notes || ""}</p>`,
+      description: `<p><strong>Location:</strong> ${event.location || "TBD"}</p><p><strong>Target Attendees:</strong> ${event.targetAttendee}</p><p><strong>Budget:</strong> ${formatIDR(event.budget)}</p><p>${event.notes || ""}</p>`,
       statusId,
       priority: event.status === "UPCOMING" ? "high" : "normal",
       assignees: members[0] ? [members[0]] : [],
