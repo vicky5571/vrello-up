@@ -38,7 +38,7 @@ const TYPE_STYLES: Record<OutletType, string> = {
 };
 
 export function OutletsView() {
-  const { can } = useMarcomPermissions();
+  const { can, role } = useMarcomPermissions();
 
   const [outlets, setOutlets] = useState<MarcomOutlet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,6 +48,7 @@ export function OutletsView() {
   const [isSaving, setIsSaving] = useState(false);
 
   const canManage = can("MANAGE_MASTER_DATA");
+  const canAddOutlet = canManage || role !== "viewer";
 
   const fetchOutlets = useCallback(async () => {
     setIsLoading(true);
@@ -228,7 +229,7 @@ export function OutletsView() {
         canDelete={canManage}
         deleteRequiresMessage="Delete requires admin role"
         onDeleteOne={deleteOne}
-        canAdd={canManage}
+        canAdd={canAddOutlet}
         onAdd={() => setModalOutlet({ code: "", name: "", type: "TRADITIONAL", tier: "TIER_1", branchId: branches[0]?.id || "", city: "", address: "", picName: "", picPhone: "" })}
         addLabel="Add Outlet"
         addIcon={Plus}
@@ -249,7 +250,7 @@ export function OutletsView() {
                 <div className="text-slate-700 dark:text-slate-300">{outlet.picPhone || "—"}</div>
               </div>
             </div>
-            {canManage && (
+            {canAddOutlet && (
               <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-end">
                 <button type="button" onClick={(e) => { e.stopPropagation(); setModalOutlet(outlet); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
                   <Edit2 className="w-3.5 h-3.5 text-orange-600" />

@@ -28,12 +28,13 @@ export function AuthSync() {
         name,
         email,
         avatar,
+        role: "admin",
       };
 
       const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
       const existingMember = currentWorkspace?.members.find((m) => m.id === googleId);
 
-      if (!existingMember) {
+      if (!existingMember || existingMember.role !== "admin") {
         useWorkspaceStore.setState((state) => ({
           workspaces: state.workspaces.map((w) =>
             w.id === state.activeWorkspaceId

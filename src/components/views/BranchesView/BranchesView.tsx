@@ -35,7 +35,7 @@ const STATUS_STYLES: Record<BranchStatus, string> = {
 };
 
 export function BranchesView() {
-  const { can } = useMarcomPermissions();
+  const { can, role } = useMarcomPermissions();
 
   const [branches, setBranches] = useState<MarcomBranch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,6 +44,7 @@ export function BranchesView() {
   const [isSaving, setIsSaving] = useState(false);
 
   const canManage = can("MANAGE_MASTER_DATA");
+  const canAddBranch = canManage || role !== "viewer";
 
   const fetchBranches = useCallback(async () => {
     setIsLoading(true);
@@ -243,7 +244,7 @@ export function BranchesView() {
         canDelete={canManage}
         deleteRequiresMessage="Delete requires admin role"
         onDeleteOne={deleteOne}
-        canAdd={canManage}
+        canAdd={canAddBranch}
         onAdd={() => setModalBranch({ code: "", name: "", region: "", city: "", status: "PENDING", picName: "", picPhone: "", address: "" })}
         addLabel="Add Branch"
         addIcon={Plus}
@@ -264,7 +265,7 @@ export function BranchesView() {
                 <div className="text-slate-700 dark:text-slate-300">{branch.picPhone || "—"}</div>
               </div>
             </div>
-            {canManage && (
+            {canAddBranch && (
               <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-end">
                 <button
                   type="button"

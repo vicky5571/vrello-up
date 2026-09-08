@@ -2078,6 +2078,18 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       name: "vrelloup-workspace-storage",
       version: 1,
       storage: createJSONStorage(() => quotaAwareStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state && Array.isArray(state.workspaces)) {
+          state.workspaces = state.workspaces.map((w) => ({
+            ...w,
+            members: (w.members || []).map((m) => {
+              if (m.id === "user-1" && !m.role) return { ...m, role: "admin" as const };
+              if (m.id.startsWith("google-") && !m.role) return { ...m, role: "admin" as const };
+              return m;
+            }),
+          }));
+        }
+      },
       migrate: (persistedState: unknown, version: number) => {
         const state = (persistedState || {}) as Record<string, unknown>;
 
