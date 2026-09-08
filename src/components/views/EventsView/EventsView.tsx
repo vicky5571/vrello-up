@@ -1603,30 +1603,35 @@ export function EventsView({
             </button>
           </div>
 
-          {/* Quick Search */}
-          <div className="relative hidden sm:flex items-center">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
-            <input
-              type="search"
-              placeholder="Search activities..."
-              value={marcomFilters["events"] || ""}
-              onChange={(e) => setMarcomFilter("events", e.target.value)}
-              className="w-44 lg:w-56 pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+          {/* Cards-only Controls (In Table view, MarcomTableShell provides its own header controls) */}
+          {viewMode === "cards" && (
+            <>
+              {/* Quick Search */}
+              <div className="relative hidden sm:flex items-center">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
+                <input
+                  type="search"
+                  placeholder="Search activities..."
+                  value={marcomFilters["events"] || ""}
+                  onChange={(e) => setMarcomFilter("events", e.target.value)}
+                  className="w-44 lg:w-56 pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
 
-          {/* Unified Create Button */}
-          {canManage && (
-            <button
-              type="button"
-              onClick={() =>
-                openCreateModal(channelFilter === "on_ground" ? "on_ground" : "social")
-              }
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-700 hover:to-indigo-700 transition-all shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>New Activity</span>
-            </button>
+              {/* Unified Create Button */}
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    openCreateModal(channelFilter === "on_ground" ? "on_ground" : "social")
+                  }
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 hover:from-pink-700 hover:to-indigo-700 transition-all shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New Activity</span>
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
