@@ -130,6 +130,16 @@ const TrashModal = dynamic(
   { ssr: false },
 );
 
+const NO_FILTER_BAR_VIEWS = new Set<string>([
+  "home",
+  "mous",
+  "documents",
+  "placements",
+  "outlets",
+  "analytics",
+  "reports",
+]);
+
 export default function WorkspacePage() {
   const [isMounted, setIsMounted] = useState(false);
   const {
@@ -178,7 +188,7 @@ export default function WorkspacePage() {
         <TopNav />
 
         {/* Global Filter Bar (workspace views only) */}
-        {activeView !== "home" && isFilterBarOpen && <FilterBar />}
+        {!NO_FILTER_BAR_VIEWS.has(activeView) && isFilterBarOpen && <FilterBar />}
 
         {/* View Transition Area */}
         <div className="flex-1 overflow-hidden relative bg-[#FAFBFC] dark:bg-[#121316]">

@@ -29,6 +29,16 @@ import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { toast } from "sonner";
 
+const NO_FILTER_BAR_VIEWS = new Set<string>([
+  "home",
+  "mous",
+  "documents",
+  "placements",
+  "outlets",
+  "analytics",
+  "reports",
+]);
+
 export function FilterBar() {
   const {
     filters,
@@ -153,6 +163,10 @@ export function FilterBar() {
   const currentGroupOption =
     GROUP_BY_OPTIONS.find((g) => g.id === filters.groupBy) || GROUP_BY_OPTIONS[0];
   const GroupIcon = currentGroupOption.icon;
+
+  if (NO_FILTER_BAR_VIEWS.has(activeView)) {
+    return null;
+  }
 
   return (
     <>
