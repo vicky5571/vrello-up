@@ -320,6 +320,8 @@ export function CreateTaskModal({
                           <option value="youtube">YouTube</option>
                           <option value="linkedin">LinkedIn</option>
                           <option value="facebook">Facebook</option>
+                          <option value="twitter">Twitter / X</option>
+                          <option value="blog">Blog</option>
                           <option value="press">Press / PR</option>
                         </select>
                       </div>
@@ -339,6 +341,7 @@ export function CreateTaskModal({
                           <option value="image">Image / Graphic</option>
                           <option value="story">Story</option>
                           <option value="article">Article / Press</option>
+                          <option value="thread">Thread</option>
                         </select>
                       </div>
                     </div>

@@ -47,6 +47,20 @@ const PLATFORM_MAP: Record<
     text: "text-indigo-600 dark:text-indigo-400",
     border: "border-indigo-500/30",
   },
+  twitter: {
+    label: "Twitter / X",
+    icon: "𝕏",
+    bg: "bg-slate-500/10 dark:bg-slate-500/20",
+    text: "text-slate-700 dark:text-slate-300",
+    border: "border-slate-500/30",
+  },
+  blog: {
+    label: "Blog",
+    icon: "✍️",
+    bg: "bg-amber-500/10 dark:bg-amber-500/20",
+    text: "text-amber-600 dark:text-amber-400",
+    border: "border-amber-500/30",
+  },
   press: {
     label: "Press",
     icon: "📰",

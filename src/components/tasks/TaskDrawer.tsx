@@ -483,6 +483,8 @@ export function TaskDrawer() {
                       <option value="youtube">YouTube</option>
                       <option value="linkedin">LinkedIn</option>
                       <option value="facebook">Facebook</option>
+                      <option value="twitter">Twitter / X</option>
+                      <option value="blog">Blog</option>
                       <option value="press">Press / Media PR</option>
                     </select>
                   </div>
@@ -506,6 +508,7 @@ export function TaskDrawer() {
                       <option value="image">Single Image / Poster</option>
                       <option value="story">Story</option>
                       <option value="article">Article / Press Release</option>
+                      <option value="thread">Thread</option>
                     </select>
                   </div>
                 </div>

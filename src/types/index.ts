@@ -88,9 +88,11 @@ export type PostPlatform =
   | "youtube"
   | "linkedin"
   | "facebook"
+  | "twitter"
+  | "blog"
   | "press";
 
-export type PostFormat = "reel" | "carousel" | "image" | "story" | "article";
+export type PostFormat = "reel" | "carousel" | "image" | "story" | "article" | "thread";
 
 export interface Task {
   id: string;

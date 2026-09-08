@@ -16,10 +16,13 @@ import {
   Clock,
   Calendar,
   Play,
+  Flame,
+  MessageSquare,
+  Trash2,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
-import { PostPlatform, PostFormat } from "@/types";
+import { PostPlatform, PostFormat, Priority } from "@/types";
 import { formatDate, cn } from "@/lib/utils";
 import { formatIDR } from "@/lib/utils";
 import {
@@ -83,6 +86,8 @@ const PLATFORM_CONFIG: Record<PostPlatform, { label: string; bg: string; text: s
   youtube: { label: "YouTube", bg: "bg-red-500/10 dark:bg-red-500/20", text: "text-red-600 dark:text-red-400", border: "border-red-500/30", icon: "▶️" },
   linkedin: { label: "LinkedIn", bg: "bg-blue-500/10 dark:bg-blue-500/20", text: "text-blue-600 dark:text-blue-400", border: "border-blue-500/30", icon: "💼" },
   facebook: { label: "Facebook", bg: "bg-indigo-500/10 dark:bg-indigo-500/20", text: "text-indigo-600 dark:text-indigo-400", border: "border-indigo-500/30", icon: "👥" },
+  twitter: { label: "Twitter / X", bg: "bg-slate-500/10 dark:bg-slate-500/20", text: "text-slate-700 dark:text-slate-300", border: "border-slate-500/30", icon: "𝕏" },
+  blog: { label: "Blog", bg: "bg-amber-500/10 dark:bg-amber-500/20", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/30", icon: "✍️" },
   press: { label: "Press Release", bg: "bg-emerald-500/10 dark:bg-emerald-500/20", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-500/30", icon: "📰" },
 };
 
@@ -92,11 +97,18 @@ const FORMAT_ICONS: Record<PostFormat, typeof Video> = {
   image: ImageIcon,
   story: Clock,
   article: FileText,
+  thread: MessageSquare,
 };
+
+const DEFAULT_POST_SUBTASKS = [
+  "Write caption & copy",
+  "Visual asset production / video cut",
+  "Stakeholder approval & schedule",
+];
 
 export function EventsView({ initialTab = "events" }: { initialTab?: "events" | "content" } = {}) {
   const { can } = useMarcomPermissions();
-  const { tasks, createTask, setSelectedTaskId, workspaces, activeWorkspaceId, activeSpaceId, activeListId } = useWorkspaceStore();
+  const { tasks, createTask, setSelectedTaskId, workspaces, activeWorkspaceId, activeSpaceId, activeListId, tags } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
   const members = currentWorkspace?.members || [];
@@ -120,6 +132,33 @@ export function EventsView({ initialTab = "events" }: { initialTab?: "events" | 
   const [postFormat, setPostFormat] = useState<PostFormat>("reel");
   const [postScheduledDate, setPostScheduledDate] = useState(new Date().toISOString().slice(0, 10));
   const [postMediaUrl, setPostMediaUrl] = useState("");
+  const [postAssigneeIds, setPostAssigneeIds] = useState<string[]>([]);
+  const [postPriority, setPostPriority] = useState<Priority>("normal");
+  const [postStatusId, setPostStatusId] = useState<string>("");
+  const [postTagIds, setPostTagIds] = useState<string[]>([]);
+  const [postSubtasks, setPostSubtasks] = useState<{ id: string; title: string }[]>(() =>
+    DEFAULT_POST_SUBTASKS.map((title, i) => ({ id: `sub-init-${i}`, title }))
+  );
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+
+  const handleAddSubtask = () => {
+    if (!newSubtaskTitle.trim()) return;
+    setPostSubtasks((prev) => [
+      ...prev,
+      { id: `sub-${Date.now()}`, title: newSubtaskTitle.trim() },
+    ]);
+    setNewSubtaskTitle("");
+  };
+
+  const handleUpdateSubtask = (id: string, newTitle: string) => {
+    setPostSubtasks((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, title: newTitle } : s))
+    );
+  };
+
+  const handleRemoveSubtask = (id: string) => {
+    setPostSubtasks((prev) => prev.filter((s) => s.id !== id));
+  };
 
   const canManage = can("CREATE_EVENT");
 
@@ -264,31 +303,43 @@ export function EventsView({ initialTab = "events" }: { initialTab?: "events" | 
       const createdEvent: MarcomEvent = await res.json();
       // 2) Also create the linked Task so it appears in Board/List (single source, two projections)
       const targetListId = activeListId || "list-content-planner";
-      const defaultStatus = statuses[0]?.id || "status-todo";
+      const targetStatus = postStatusId || statuses[0]?.id || "status-todo";
+      const assignedUsers = members.filter((u) => postAssigneeIds.includes(u.id));
+      const selectedTags = (tags || []).filter((t) => postTagIds.includes(t.id));
+
       const task = createTask({
         listId: targetListId,
         title: postTitle.trim(),
         description: postDescription.trim() ? `<p>${postDescription.trim()}</p>` : "<p>Draft post copy...</p>",
-        statusId: defaultStatus,
-        priority: "normal",
-        assignees: members[0] ? [members[0]] : [],
+        statusId: targetStatus,
+        priority: postPriority,
+        assignees: assignedUsers.length > 0 ? assignedUsers : (members[0] ? [members[0]] : []),
         dueDate: postScheduledDate,
         postPlatform,
         postFormat,
         mediaUrl: postMediaUrl.trim() || undefined,
         relatedMarcomId: createdEvent.id,
-        tags: [],
-        subtasks: [
-          { id: `sub-${Date.now()}-1`, title: "Write caption & copy", completed: false, createdAt: new Date().toISOString() },
-          { id: `sub-${Date.now()}-2`, title: "Visual asset production / video cut", completed: false, createdAt: new Date().toISOString() },
-          { id: `sub-${Date.now()}-3`, title: "Stakeholder approval & schedule", completed: false, createdAt: new Date().toISOString() },
-        ],
+        tags: selectedTags,
+        subtasks: postSubtasks
+          .filter((s) => s.title.trim().length > 0)
+          .map((s, idx) => ({
+            id: `sub-${Date.now()}-${idx}`,
+            title: s.title.trim(),
+            completed: false,
+            createdAt: new Date().toISOString(),
+          })),
         orderIndex: Math.max(-1, ...tasks.filter((t) => t.postPlatform != null).map((t) => t.orderIndex)) + 1,
       });
       toast.success("Content post added to schedule!");
       setPostTitle("");
       setPostDescription("");
       setPostMediaUrl("");
+      setPostAssigneeIds(members[0] ? [members[0].id] : []);
+      setPostPriority("normal");
+      setPostStatusId(statuses[0]?.id || "status-todo");
+      setPostTagIds([]);
+      setPostSubtasks(DEFAULT_POST_SUBTASKS.map((title, i) => ({ id: `sub-init-${i}`, title })));
+      setNewSubtaskTitle("");
       setIsCreatePostModalOpen(false);
       await fetchEvents();
       setSelectedTaskId(task.id);
@@ -464,7 +515,14 @@ export function EventsView({ initialTab = "events" }: { initialTab?: "events" | 
                   );
                 })}
               </div>
-              <button type="button" onClick={() => setIsCreatePostModalOpen(true)} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-pink-600 hover:bg-pink-700 transition-colors shadow-xs cursor-pointer">New Post</button>
+              <button
+                type="button"
+                onClick={() => setIsCreatePostModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 shadow-xs transition-all cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>New Post</span>
+              </button>
             </div>
           </div>
 
@@ -633,59 +691,329 @@ export function EventsView({ initialTab = "events" }: { initialTab?: "events" | 
 
       {isCreatePostModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-pink-500" />
                 Schedule New Content Post
               </h2>
-              <button type="button" onClick={() => setIsCreatePostModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">✕</button>
+              <button
+                type="button"
+                onClick={() => setIsCreatePostModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
             <form onSubmit={handleCreatePost} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Post Title / Concept *</label>
-                <input type="text" required placeholder="e.g. Behind-the-Scenes: Field Officer Solo Roadshow" value={postTitle} onChange={(e) => setPostTitle(e.target.value)} className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500" />
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Post Title / Concept *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Behind-the-Scenes: Field Officer Solo Roadshow"
+                  value={postTitle}
+                  onChange={(e) => setPostTitle(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500"
+                />
               </div>
+
+              {/* Status, Priority, Publish Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                    <Layers className="w-3 h-3 text-slate-500" /> Status
+                  </label>
+                  <select
+                    value={postStatusId || statuses[0]?.id || "status-todo"}
+                    onChange={(e) => setPostStatusId(e.target.value)}
+                    className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                  >
+                    {statuses.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-orange-500" /> Priority
+                  </label>
+                  <select
+                    value={postPriority}
+                    onChange={(e) => setPostPriority(e.target.value as Priority)}
+                    className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                  >
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="normal">Normal</option>
+                    <option value="low">Low</option>
+                    <option value="none">None</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-blue-500" /> Publish Date
+                  </label>
+                  <input
+                    type="date"
+                    value={postScheduledDate}
+                    onChange={(e) => setPostScheduledDate(e.target.value)}
+                    className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500"
+                  />
+                </div>
+              </div>
+
+              {/* Platform and Format */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Platform</label>
-                  <select value={postPlatform} onChange={(e) => setPostPlatform(e.target.value as PostPlatform)} className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer">
+                  <select
+                    value={postPlatform}
+                    onChange={(e) => setPostPlatform(e.target.value as PostPlatform)}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                  >
                     <option value="instagram">Instagram</option>
                     <option value="tiktok">TikTok</option>
                     <option value="youtube">YouTube</option>
                     <option value="linkedin">LinkedIn</option>
                     <option value="facebook">Facebook</option>
+                    <option value="twitter">Twitter / X</option>
+                    <option value="blog">Blog</option>
                     <option value="press">Press Release</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Format</label>
-                  <select value={postFormat} onChange={(e) => setPostFormat(e.target.value as PostFormat)} className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer">
+                  <select
+                    value={postFormat}
+                    onChange={(e) => setPostFormat(e.target.value as PostFormat)}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                  >
                     <option value="reel">Reel / Video</option>
                     <option value="carousel">Carousel</option>
                     <option value="image">Single Image</option>
                     <option value="story">Story</option>
                     <option value="article">Article / Press</option>
+                    <option value="thread">Thread</option>
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Publish / Target Date</label>
-                  <input type="date" value={postScheduledDate} onChange={(e) => setPostScheduledDate(e.target.value)} className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Media / Thumbnail URL (optional)</label>
-                  <input type="url" placeholder="https://..." value={postMediaUrl} onChange={(e) => setPostMediaUrl(e.target.value)} className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500" />
-                </div>
-              </div>
+
+              {/* Media URL */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Draft Copy / Hashtags</label>
-                <textarea rows={3} placeholder="Enter draft caption, hook, and campaign hashtags..." value={postDescription} onChange={(e) => setPostDescription(e.target.value)} className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500" />
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Media / Thumbnail URL (optional)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={postMediaUrl}
+                  onChange={(e) => setPostMediaUrl(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500"
+                />
               </div>
+
+              {/* Assignees Selection */}
+              {members.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Assign To
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {members.map((user) => {
+                      const isSelected = postAssigneeIds.includes(user.id);
+                      return (
+                        <button
+                          type="button"
+                          key={user.id}
+                          onClick={() => {
+                            setPostAssigneeIds((prev) =>
+                              isSelected ? prev.filter((id) => id !== user.id) : [...prev, user.id]
+                            );
+                          }}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer",
+                            isSelected
+                              ? "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/30"
+                              : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                          )}
+                        >
+                          <span
+                            className={cn("w-1.5 h-1.5 rounded-full", isSelected ? "bg-pink-500" : "bg-slate-400")}
+                          />
+                          {user.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Tags Multi-select */}
+              {tags && tags.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Tags
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {tags.map((tag) => {
+                      const isSelected = postTagIds.includes(tag.id);
+                      return (
+                        <button
+                          type="button"
+                          key={tag.id}
+                          onClick={() => {
+                            setPostTagIds((prev) =>
+                              isSelected ? prev.filter((id) => id !== tag.id) : [...prev, tag.id]
+                            );
+                          }}
+                          className={cn(
+                            "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-all cursor-pointer",
+                            isSelected
+                              ? ""
+                              : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                          )}
+                          style={
+                            isSelected
+                              ? {
+                                  backgroundColor: `${tag.color}15`,
+                                  color: tag.color,
+                                  borderColor: `${tag.color}60`,
+                                }
+                              : undefined
+                          }
+                        >
+                          {tag.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Draft Copy */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Draft Copy / Hashtags
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Enter draft caption, hook, and campaign hashtags..."
+                  value={postDescription}
+                  onChange={(e) => setPostDescription(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500"
+                />
+              </div>
+
+              {/* Production Checklist / Subtasks */}
+              <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <CheckSquare className="w-3.5 h-3.5 text-pink-500" />
+                    Production Subtasks ({postSubtasks.length})
+                  </label>
+                  {postSubtasks.length === 0 ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPostSubtasks(
+                          DEFAULT_POST_SUBTASKS.map((title, i) => ({
+                            id: `sub-init-${Date.now()}-${i}`,
+                            title,
+                          }))
+                        )
+                      }
+                      className="text-[11px] text-pink-600 hover:text-pink-700 font-semibold cursor-pointer"
+                    >
+                      + Restore defaults
+                    </button>
+                  ) : (
+                    <span className="text-[10px] text-slate-400">
+                      Editable checklist
+                    </span>
+                  )}
+                </div>
+
+                {/* Subtask list */}
+                {postSubtasks.length > 0 && (
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-0.5">
+                    {postSubtasks.map((sub, idx) => (
+                      <div
+                        key={sub.id}
+                        className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 group focus-within:ring-1 focus-within:ring-pink-500 focus-within:border-pink-500"
+                      >
+                        <span className="text-[10px] font-medium text-slate-400 w-4 text-center shrink-0">
+                          {idx + 1}.
+                        </span>
+                        <input
+                          type="text"
+                          value={sub.title}
+                          onChange={(e) => handleUpdateSubtask(sub.id, e.target.value)}
+                          placeholder="Subtask title..."
+                          className="flex-1 bg-transparent text-xs text-slate-800 dark:text-slate-200 focus:outline-none placeholder:text-slate-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSubtask(sub.id)}
+                          className="text-slate-400 hover:text-rose-500 p-0.5 rounded transition-colors cursor-pointer shrink-0"
+                          title="Remove subtask"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new subtask input */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newSubtaskTitle}
+                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddSubtask();
+                      }
+                    }}
+                    placeholder="+ Add custom subtask..."
+                    className="flex-1 px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-pink-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddSubtask}
+                    disabled={!newSubtaskTitle.trim()}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-40 transition-colors cursor-pointer shrink-0 flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setIsCreatePostModalOpen(false)} className="px-3.5 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
-                <button type="submit" className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-pink-600 hover:bg-pink-700 transition-colors shadow-xs cursor-pointer">Add to Schedule</button>
+                <button
+                  type="button"
+                  onClick={() => setIsCreatePostModalOpen(false)}
+                  className="px-3.5 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Add to Schedule</span>
+                </button>
               </div>
             </form>
           </div>
