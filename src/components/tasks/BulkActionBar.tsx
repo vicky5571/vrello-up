@@ -90,11 +90,21 @@ export function BulkActionBar({ selectedIds, statuses, members }: BulkActionBarP
         </select>
       </label>
 
-      <label className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+      <label className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 cursor-pointer">
         Due
         <input
           type="date"
           aria-label="Bulk change due date"
+          onClick={(e) => {
+            try {
+              e.currentTarget.showPicker();
+            } catch {}
+          }}
+          onFocus={(e) => {
+            try {
+              e.currentTarget.showPicker();
+            } catch {}
+          }}
           onChange={(e) => {
             apply("Due date", { dueDate: e.target.value || undefined });
             e.target.value = "";

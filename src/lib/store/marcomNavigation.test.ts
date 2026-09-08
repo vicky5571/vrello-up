@@ -151,4 +151,87 @@ test("Events KPI calculation computes upcoming 30-day events, committed budget, 
   assert.equal(expectedReach, 1700);
 });
 
+test("Campaigns & Content unified segregation and KPI calculations", () => {
+  const sampleActivities = [
+    {
+      id: "c1",
+      name: "Viral Reels Showcase",
+      eventType: "Content",
+      postPlatform: "instagram",
+      postFormat: "reel",
+      status: "UPCOMING",
+      budget: 0,
+      targetAttendee: 0,
+    },
+    {
+      id: "c2",
+      name: "TikTok Product Cutdown",
+      eventType: "Content",
+      postPlatform: "tiktok",
+      postFormat: "reel",
+      status: "ON_PROGRESS",
+      budget: 0,
+      targetAttendee: 0,
+    },
+    {
+      id: "c3",
+      name: "Cancelled Campaign",
+      eventType: "Content",
+      postPlatform: "youtube",
+      status: "CANCELLED",
+      budget: 0,
+      targetAttendee: 0,
+    },
+    {
+      id: "e1",
+      name: "Grand Opening Expo",
+      eventType: "Launch",
+      postPlatform: null,
+      status: "UPCOMING",
+      budget: 45000000,
+      targetAttendee: 800,
+    },
+    {
+      id: "e2",
+      name: "Roadshow Bandung",
+      eventType: "Roadshow",
+      postPlatform: null,
+      status: "COMPLETED",
+      budget: 20000000,
+      targetAttendee: 400,
+    },
+  ];
+
+  const isSocial = (e: (typeof sampleActivities)[0]) =>
+    Boolean(e.postPlatform) || e.eventType?.toLowerCase() === "content";
+
+  const socialActivities = sampleActivities.filter(isSocial);
+  const onGroundActivities = sampleActivities.filter((e) => !isSocial(e));
+
+  assert.equal(socialActivities.length, 3);
+  assert.equal(onGroundActivities.length, 2);
+
+  const activeActivities = sampleActivities.filter(
+    (e) => e.status === "UPCOMING" || e.status === "ON_PROGRESS"
+  ).length;
+
+  const socialQueueCount = sampleActivities.filter(
+    (e) => e.status !== "CANCELLED" && isSocial(e)
+  ).length;
+
+  const totalCommittedBudget = sampleActivities
+    .filter((e) => e.status !== "CANCELLED")
+    .reduce((acc, e) => acc + (e.budget || 0), 0);
+
+  const totalReach = sampleActivities
+    .filter((e) => e.status !== "CANCELLED")
+    .reduce((acc, e) => acc + (e.targetAttendee || 0), 0);
+
+  assert.equal(activeActivities, 3); // c1, c2, e1
+  assert.equal(socialQueueCount, 2); // c1, c2 (c3 cancelled)
+  assert.equal(totalCommittedBudget, 65000000); // e1 (45m) + e2 (20m)
+  assert.equal(totalReach, 1200); // 800 + 400
+});
+
+
 

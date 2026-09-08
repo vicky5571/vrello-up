@@ -415,6 +415,11 @@ export function TaskDrawer() {
                         e.currentTarget.showPicker();
                       } catch {}
                     }}
+                    onFocus={(e) => {
+                      try {
+                        e.currentTarget.showPicker();
+                      } catch {}
+                    }}
                     onChange={(e) =>
                       updateTask(task.id, {
                         dueDate: e.target.value || undefined,
@@ -437,6 +442,11 @@ export function TaskDrawer() {
                     type="date"
                     value={task.startDate || ""}
                     onClick={(e) => {
+                      try {
+                        e.currentTarget.showPicker();
+                      } catch {}
+                    }}
+                    onFocus={(e) => {
                       try {
                         e.currentTarget.showPicker();
                       } catch {}

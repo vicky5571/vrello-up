@@ -669,7 +669,7 @@ export function Sidebar() {
                     className="overflow-hidden pl-3 border-l border-slate-200/70 dark:border-slate-800/80 ml-3.5 space-y-0.5 py-0.5"
                   >
                     {MARKETING_VIEWS.map((mv) => {
-                      const isItemActive = activeView === mv.id;
+                      const isItemActive = activeView === mv.id || (mv.id === "events" && activeView === "content");
                       const Icon = mv.icon;
 
                       return (

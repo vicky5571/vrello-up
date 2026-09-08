@@ -140,6 +140,7 @@ const TrashModal = dynamic(
 const NO_FILTER_BAR_VIEWS = new Set<string>([
   "home",
   "channel",
+  "content",
   "branches",
   "outlets",
   "placements",
@@ -165,7 +166,22 @@ export default function WorkspacePage() {
   useEffect(() => {
     setIsMounted(true);
     useWorkspaceStore.getState().fetchServerTasks?.();
-    return startAutomationScheduler();
+
+    const handleDateInputClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target instanceof HTMLInputElement && target.type === "date") {
+        try {
+          target.showPicker();
+        } catch {}
+      }
+    };
+    document.addEventListener("click", handleDateInputClick);
+
+    const cleanupScheduler = startAutomationScheduler();
+    return () => {
+      document.removeEventListener("click", handleDateInputClick);
+      cleanupScheduler();
+    };
   }, []);
 
   if (!isMounted) {

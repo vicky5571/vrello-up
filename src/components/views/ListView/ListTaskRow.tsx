@@ -289,6 +289,16 @@ export const ListTaskRow = memo(function ListTaskRow({
             type="date"
             aria-label={`Due date for ${task.title}`}
             value={task.dueDate || ""}
+            onClick={(e) => {
+              try {
+                e.currentTarget.showPicker();
+              } catch {}
+            }}
+            onFocus={(e) => {
+              try {
+                e.currentTarget.showPicker();
+              } catch {}
+            }}
             onChange={(e) =>
               onUpdateTask(task.id, {
                 dueDate: e.target.value || undefined,

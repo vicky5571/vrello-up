@@ -401,6 +401,10 @@ export function PlacementsView() {
                 </div>
               </div>
               <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 cursor-pointer">Date</label>
+                <input type="date" value={modalPlacement.date ? modalPlacement.date.slice(0, 10) : ""} onClick={(e) => { try { e.currentTarget.showPicker(); } catch {} }} onFocus={(e) => { try { e.currentTarget.showPicker(); } catch {} }} onChange={(e) => setModalPlacement({ ...modalPlacement, date: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer" />
+              </div>
+              <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Photo / Proof URL (optional)</label>
                 <input type="url" placeholder="https://..." value={modalPlacement.photoUrl || ""} onChange={(e) => setModalPlacement({ ...modalPlacement, photoUrl: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500" />
               </div>

@@ -209,6 +209,11 @@ export function CreateTaskModal({
                         e.currentTarget.showPicker();
                       } catch {}
                     }}
+                    onFocus={(e) => {
+                      try {
+                        e.currentTarget.showPicker();
+                      } catch {}
+                    }}
                     onChange={(e) => setDueDate(e.target.value)}
                     className="w-full px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE] cursor-pointer"
                   />

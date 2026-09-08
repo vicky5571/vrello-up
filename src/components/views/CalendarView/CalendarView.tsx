@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import {
   format,
@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { matchesFilters } from "@/lib/tasks/filterTasks";
@@ -31,6 +32,7 @@ export function CalendarView() {
     activeWorkspaceId,
     filters,
     setSelectedTaskId,
+    setActiveView,
   } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
@@ -40,6 +42,38 @@ export function CalendarView() {
   const statuses = currentSpace?.statuses || [];
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showMarketing, setShowMarketing] = useState(true);
+  const [marketingItems, setMarketingItems] = useState<
+    { id: string; title: string; date: string; icon: string; view: "events" | "mous" }[]
+  >([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/marcom/events").then((r) => (r.ok ? r.json() : { data: [] })),
+      fetch("/api/marcom/mous").then((r) => (r.ok ? r.json() : { data: [] })),
+    ])
+      .then(([eventsRes, mousRes]) => {
+        const items: { id: string; title: string; date: string; icon: string; view: "events" | "mous" }[] = [];
+        (eventsRes.data || []).forEach((e: { id: string; name: string; date?: string; endDate?: string; postPlatform?: string }) => {
+          const d = e.date ? format(new Date(e.date), "yyyy-MM-dd") : null;
+          const endD = e.endDate ? format(new Date(e.endDate), "yyyy-MM-dd") : null;
+          const icon = e.postPlatform
+            ? e.postPlatform === "instagram" ? "📸"
+            : e.postPlatform === "tiktok" ? "🎵"
+            : e.postPlatform === "youtube" ? "▶️"
+            : "📱"
+            : "🎪";
+          if (d) items.push({ id: e.id, title: e.name, date: d, icon, view: "events" });
+          if (endD && endD !== d) items.push({ id: `${e.id}-end`, title: `End: ${e.name}`, date: endD, icon, view: "events" });
+        });
+        (mousRes.data || []).forEach((m: { id: string; partnerName: string; endDate?: string }) => {
+          const d = m.endDate ? format(new Date(m.endDate), "yyyy-MM-dd") : null;
+          if (d) items.push({ id: m.id, title: `MOU: ${m.partnerName}`, date: d, icon: "📜", view: "mous" });
+        });
+        setMarketingItems(items);
+      })
+      .catch(() => {});
+  }, []);
 
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -75,6 +109,24 @@ export function CalendarView() {
             className="px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
           >
             Today
+          </button>
+          <button
+            onClick={() => setShowMarketing(!showMarketing)}
+            className={cn(
+              "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer flex items-center gap-1.5 border",
+              showMarketing
+                ? "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/30 hover:bg-pink-500/20"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-transparent hover:text-slate-600 dark:hover:text-slate-300"
+            )}
+            title="Toggle marketing campaigns, events & MOU deadlines"
+          >
+            <Megaphone className="w-3.5 h-3.5" />
+            <span>Marketing Dates</span>
+            {marketingItems.length > 0 && (
+              <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-pink-500/20 text-pink-700 dark:text-pink-300">
+                {marketingItems.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -123,6 +175,11 @@ export function CalendarView() {
             return taskDateStr === dayDateStr;
           });
 
+          const dayMarketing = showMarketing
+            ? marketingItems.filter((item) => item.date === dayDateStr)
+            : [];
+          const totalItems = dayTasks.length + dayMarketing.length;
+
           return (
             <div
               key={idx}
@@ -143,15 +200,26 @@ export function CalendarView() {
                 >
                   {format(day, "d")}
                 </span>
-                {dayTasks.length > 0 && (
+                {totalItems > 0 && (
                   <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                    {dayTasks.length} {dayTasks.length === 1 ? "task" : "tasks"}
+                    {totalItems} {totalItems === 1 ? "item" : "items"}
                   </span>
                 )}
               </div>
 
-              {/* Tasks for the Day */}
+              {/* Tasks & Marketing for the Day */}
               <div className="space-y-1 mt-1 overflow-y-auto flex-1 min-h-0">
+                {dayMarketing.map((item) => (
+                  <div
+                    key={`${item.view}-${item.id}`}
+                    onClick={() => setActiveView(item.view)}
+                    className="p-1 rounded-md text-[11px] font-semibold truncate cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-2xs bg-pink-500/10 text-pink-700 dark:text-pink-300 border border-pink-500/30"
+                    title={`${item.title} (Open in ${item.view === "events" ? "Campaigns & Content" : "MOUs"})`}
+                  >
+                    <span className="text-[10px] shrink-0">{item.icon}</span>
+                    <span className="truncate">{item.title}</span>
+                  </div>
+                ))}
                 {dayTasks.map((task) => {
                   const status = statuses.find((s) => s.id === task.statusId);
 

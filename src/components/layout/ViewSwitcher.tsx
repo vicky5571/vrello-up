@@ -18,8 +18,6 @@ import {
   BarChart3,
   TrendingUp,
   Plus,
-  Sparkles,
-  CalendarRange,
   ChevronDown,
   Megaphone,
   Check,
@@ -46,12 +44,11 @@ const VIEWS: ViewTabItem[] = [
 ];
 
 export const MARKETING_VIEWS: ViewTabItem[] = [
-  { id: "content", label: "Content Planner", icon: Sparkles, iconColor: "text-pink-500", isAvailable: true },
+  { id: "events", label: "Campaigns & Content", icon: Megaphone, iconColor: "text-pink-500", isAvailable: true },
   { id: "branches", label: "Branches", icon: Building2, iconColor: "text-cyan-500", isAvailable: true },
   { id: "outlets", label: "Outlets", icon: Store, iconColor: "text-orange-500", isAvailable: true },
   { id: "placements", label: "Placements", icon: ClipboardList, iconColor: "text-lime-500", isAvailable: true },
   { id: "mous", label: "MOUs", icon: FileText, iconColor: "text-fuchsia-500", isAvailable: true },
-  { id: "events", label: "Events", icon: CalendarRange, iconColor: "text-rose-500", isAvailable: true },
   { id: "documents", label: "Documents", icon: Files, iconColor: "text-sky-500", isAvailable: true },
   { id: "reports", label: "Reports", icon: BarChart3, iconColor: "text-indigo-500", isAvailable: true },
   { id: "analytics", label: "Analytics", icon: TrendingUp, iconColor: "text-teal-500", isAvailable: true },
@@ -98,7 +95,9 @@ export function ViewSwitcher() {
   const marketingDropdownRef = useRef<HTMLDivElement>(null);
 
   // Check if active view is one of marketing views
-  const activeMarketingView = MARKETING_VIEWS.find((v) => v.id === activeView);
+  const activeMarketingView =
+    MARKETING_VIEWS.find((v) => v.id === activeView) ||
+    (activeView === "content" ? MARKETING_VIEWS.find((v) => v.id === "events") : undefined);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -162,7 +161,7 @@ export function ViewSwitcher() {
               </div>
               {MARKETING_VIEWS.map((mv) => {
                 const Icon = mv.icon;
-                const isSelected = activeView === mv.id;
+                const isSelected = activeView === mv.id || (mv.id === "events" && activeView === "content");
                 return (
                   <button
                     key={mv.id}

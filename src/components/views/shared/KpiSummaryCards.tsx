@@ -8,7 +8,7 @@ export interface KpiCardItem {
   value: string | number;
   helper?: string;
   icon: React.ComponentType<{ className?: string }>;
-  color?: "blue" | "amber" | "emerald" | "violet" | "teal" | "rose" | "orange" | "indigo";
+  color?: "blue" | "amber" | "emerald" | "violet" | "teal" | "rose" | "orange" | "indigo" | "pink";
 }
 
 const COLOR_MAP: Record<
@@ -43,6 +43,10 @@ const COLOR_MAP: Record<
     bg: "bg-rose-500/10 dark:bg-rose-500/20",
     text: "text-rose-600 dark:text-rose-400",
   },
+  pink: {
+    bg: "bg-pink-500/10 dark:bg-pink-500/20",
+    text: "text-pink-600 dark:text-pink-400",
+  },
   indigo: {
     bg: "bg-indigo-500/10 dark:bg-indigo-500/20",
     text: "text-indigo-600 dark:text-indigo-400",
@@ -53,10 +57,17 @@ export function KpiSummaryCards({ items }: { items: KpiCardItem[] }) {
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-3",
+        items.length === 2 && "sm:grid-cols-2",
+        items.length === 3 && "sm:grid-cols-3",
+        items.length >= 4 && "sm:grid-cols-2 lg:grid-cols-4"
+      )}
+    >
       {items.map((item, idx) => {
         const Icon = item.icon;
-        const colorStyles = COLOR_MAP[item.color || "blue"];
+        const colorStyles = (item.color && COLOR_MAP[item.color]) || COLOR_MAP.blue;
 
         return (
           <div
