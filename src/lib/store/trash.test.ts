@@ -89,3 +89,12 @@ test("trash is capped at TRASH_LIMIT entries", () => {
   assert.ok(api().trash.length <= TRASH_LIMIT);
   api().emptyTrash();
 });
+
+test("isTrashOpen defaults to false and setTrashOpen toggles state", () => {
+  api().setTrashOpen(false);
+  assert.equal(api().isTrashOpen, false);
+  api().setTrashOpen(true);
+  assert.equal(api().isTrashOpen, true);
+  api().setTrashOpen(false);
+  assert.equal(api().isTrashOpen, false);
+});

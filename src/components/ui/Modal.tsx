@@ -59,6 +59,8 @@ export function Modal({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <dialog
       ref={dialogRef}
@@ -66,6 +68,7 @@ export function Modal({
       onClick={handleBackdropClick}
       aria-label={label}
       className={cn(
+        "[&:not([open])]:hidden",
         "backdrop:bg-slate-950/60 backdrop:backdrop-blur-xs",
         "fixed inset-0 m-auto z-50 p-0 rounded-2xl bg-white dark:bg-[#18191B] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden focus:outline-hidden",
         "open:animate-in open:fade-in-0 open:zoom-in-95 duration-150",

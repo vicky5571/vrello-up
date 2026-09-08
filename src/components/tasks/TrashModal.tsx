@@ -42,6 +42,8 @@ export function TrashModal() {
 
   const close = () => setTrashOpen(false);
 
+  if (!isTrashOpen) return null;
+
   const listNameFor = (listId: string): string => {
     for (const w of workspaces) {
       for (const s of w.spaces) {

@@ -661,8 +661,8 @@ export function EventsView({
     return res.ok;
   }, []);
 
-  // Filtered Activities
-  const filteredEvents = useMemo(() => {
+  // Base channel-filtered activities (used as base data for Table view and Cards view)
+  const channelEvents = useMemo(() => {
     const q = (marcomFilters["events"] || "").trim().toLowerCase();
     const matchesQuery = (e: MarcomEvent) =>
       !q ||
@@ -684,8 +684,6 @@ export function EventsView({
       });
 
     return events.filter((e) => {
-      if (!matchesQuery(e)) return false;
-
       if (hasChannelMatch) {
         const isSocial = isSocialActivity(e);
         if (channelFilter === "social" && !isSocial) return false;
@@ -699,6 +697,21 @@ export function EventsView({
       return true;
     });
   }, [events, channelFilter, selectedPlatform, marcomFilters]);
+
+  // Search-filtered activities for Cards view
+  const cardsEvents = useMemo(() => {
+    const q = (marcomFilters["events"] || "").trim().toLowerCase();
+    if (!q) return channelEvents;
+    return channelEvents.filter(
+      (e) =>
+        e.name.toLowerCase().includes(q) ||
+        Boolean(e.location && e.location.toLowerCase().includes(q)) ||
+        Boolean(e.branchName && e.branchName.toLowerCase().includes(q)) ||
+        Boolean(e.picName && e.picName.toLowerCase().includes(q)) ||
+        Boolean(e.eventType && e.eventType.toLowerCase().includes(q)) ||
+        Boolean(e.notes && e.notes.toLowerCase().includes(q))
+    );
+  }, [channelEvents, marcomFilters]);
 
   // Unified KPI Summary
   const kpiItems = useMemo(() => {
@@ -1628,7 +1641,7 @@ export function EventsView({
 
           {/* Cards Grid */}
           <div className="flex-1 overflow-y-auto p-6">
-            {filteredEvents.length === 0 ? (
+            {cardsEvents.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-8">
                 <span className="p-3 rounded-2xl bg-pink-50 dark:bg-pink-950/40 text-pink-500 mb-3">
                   <Megaphone className="w-6 h-6" />
@@ -1653,7 +1666,7 @@ export function EventsView({
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredEvents.map((item) => {
+                {cardsEvents.map((item) => {
                   const isSocial = isSocialActivity(item);
 
                   if (isSocial) {
@@ -1872,7 +1885,7 @@ export function EventsView({
       ) : (
         /* Table View */
         <MarcomTableShell
-          data={filteredEvents}
+          data={channelEvents}
           columns={columns}
           getRowId={(row) => row.id}
           initialSorting={[{ id: "name", desc: false }]}
