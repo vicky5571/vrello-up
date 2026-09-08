@@ -18,7 +18,7 @@ export interface MarcomBranch {
   name: string;
   region: string;
   city: string;
-  status: BranchStatus;
+  status?: BranchStatus;
   picName: string;
   picPhone: string;
   address: string;
@@ -27,12 +27,6 @@ export interface MarcomBranch {
 }
 
 const columnHelper = createMarcomColumnHelper<MarcomBranch>();
-
-const STATUS_STYLES: Record<BranchStatus, string> = {
-  DONE: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  ON_PROGRESS: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  PENDING: "bg-slate-500/10 text-slate-500 dark:text-slate-400",
-};
 
 export function BranchesView() {
   const { can, role } = useMarcomPermissions();
@@ -121,17 +115,6 @@ export function BranchesView() {
         }),
         columnHelper.accessor("region", { id: "region", header: "Region", size: 140, minSize: 100 }),
         columnHelper.accessor("city", { id: "city", header: "City", size: 140, minSize: 100 }),
-        columnHelper.accessor("status", {
-          id: "status",
-          header: "Status",
-          size: 130,
-          minSize: 110,
-          cell: ({ row }) => (
-            <span className={cn("inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold", STATUS_STYLES[row.original.status] ?? STATUS_STYLES.PENDING)}>
-              {row.original.status.replaceAll("_", " ")}
-            </span>
-          ),
-        }),
         columnHelper.display({
           id: "outlets",
           header: "Outlets",
@@ -245,7 +228,7 @@ export function BranchesView() {
         deleteRequiresMessage="Delete requires admin role"
         onDeleteOne={deleteOne}
         canAdd={canAddBranch}
-        onAdd={() => setModalBranch({ code: "", name: "", region: "", city: "", status: "PENDING", picName: "", picPhone: "", address: "" })}
+        onAdd={() => setModalBranch({ code: "", name: "", region: "", city: "", picName: "", picPhone: "", address: "" })}
         addLabel="Add Branch"
         addIcon={Plus}
         addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-2xs cursor-pointer"
@@ -302,17 +285,9 @@ export function BranchesView() {
                   <input type="text" required placeholder="e.g. BR-JKT-01" value={modalBranch.code || ""} onChange={(e) => setModalBranch({ ...modalBranch, code: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Status</label>
-                  <select value={modalBranch.status || "PENDING"} onChange={(e) => setModalBranch({ ...modalBranch, status: e.target.value as BranchStatus })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500 cursor-pointer">
-                    <option value="PENDING">Pending</option>
-                    <option value="ON_PROGRESS">On Progress</option>
-                    <option value="DONE">Done</option>
-                  </select>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Branch Name *</label>
+                  <input type="text" required placeholder="e.g. Jakarta Pusat Hub" value={modalBranch.name || ""} onChange={(e) => setModalBranch({ ...modalBranch, name: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500" />
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Branch Name *</label>
-                <input type="text" required placeholder="e.g. Jakarta Pusat Hub" value={modalBranch.name || ""} onChange={(e) => setModalBranch({ ...modalBranch, name: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
