@@ -27,6 +27,7 @@ import {
   FolderPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MARKETING_VIEWS } from "@/components/layout/ViewSwitcher";
 import { CreateSpaceModal } from "@/components/spaces/CreateSpaceModal";
 import { EditSpaceModal } from "@/components/spaces/EditSpaceModal";
 import { CreateListModal } from "@/components/spaces/CreateListModal";
@@ -55,8 +56,10 @@ export function Sidebar() {
     activeWorkspaceId,
     activeSpaceId,
     activeListId,
+    activeView,
     setActiveSpace,
     setActiveList,
+    setActiveView,
     tasks,
     isSidebarOpen,
     toggleSidebar,
@@ -77,6 +80,8 @@ export function Sidebar() {
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
     "folder-sprint": true,
   });
+
+  const [isMarketingExpanded, setIsMarketingExpanded] = useState(true);
 
   // Modal States
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -630,6 +635,63 @@ export function Sidebar() {
                 </div>
               );
             })}
+
+            {/* Marketing & Ops Section */}
+            <div className="pt-2">
+              <div
+                onClick={() => setIsMarketingExpanded(!isMarketingExpanded)}
+                className="group flex items-center justify-between px-2 py-1.5 rounded-md text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors select-none"
+              >
+                <div className="flex items-center gap-1.5 overflow-hidden">
+                  <motion.span
+                    animate={{ rotate: isMarketingExpanded ? 0 : -90 }}
+                    transition={{ duration: 0.15 }}
+                    className="inline-block"
+                  >
+                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                  </motion.span>
+                  <span className="text-[11px] uppercase tracking-wider font-semibold">
+                    Marketing & Ops
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
+                  {MARKETING_VIEWS.length}
+                </span>
+              </div>
+
+              <AnimatePresence initial={false}>
+                {isMarketingExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="overflow-hidden pl-3 border-l border-slate-200/70 dark:border-slate-800/80 ml-3.5 space-y-0.5 py-0.5"
+                  >
+                    {MARKETING_VIEWS.map((mv) => {
+                      const isItemActive = activeView === mv.id;
+                      const Icon = mv.icon;
+
+                      return (
+                        <div
+                          key={mv.id}
+                          onClick={() => setActiveView(mv.id)}
+                          className={cn(
+                            "flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium cursor-pointer transition-colors",
+                            isItemActive
+                              ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
+                              : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
+                          )}
+                        >
+                          <Icon className={cn("w-3.5 h-3.5 shrink-0", mv.iconColor)} />
+                          <span className="truncate">{mv.label}</span>
+                        </div>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Bottom Settings / Help */}

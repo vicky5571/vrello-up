@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Building2, Plus, Edit2 } from "lucide-react";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
-import { cn } from "@/lib/utils";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
