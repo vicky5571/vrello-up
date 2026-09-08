@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { ViewMode } from "@/types";
+import { useDropdown } from "@/components/ui/useDropdown";
 import {
   List as ListIcon,
   Kanban,
@@ -92,25 +93,15 @@ export function ViewSwitcher() {
   const { activeView, setActiveView } = useWorkspaceStore();
   const [isAddViewOpen, setIsAddViewOpen] = useState(false);
   const [isMarketingOpen, setIsMarketingOpen] = useState(false);
-  const marketingDropdownRef = useRef<HTMLDivElement>(null);
+  const marketingDropdownRef = useDropdown<HTMLDivElement>({
+    isOpen: isMarketingOpen,
+    onClose: () => setIsMarketingOpen(false),
+  });
 
   // Check if active view is one of marketing views
   const activeMarketingView =
     MARKETING_VIEWS.find((v) => v.id === activeView) ||
     (activeView === "content" ? MARKETING_VIEWS.find((v) => v.id === "events") : undefined);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        marketingDropdownRef.current &&
-        !marketingDropdownRef.current.contains(e.target as Node)
-      ) {
-        setIsMarketingOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   return (
     <>

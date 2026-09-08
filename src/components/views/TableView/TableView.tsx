@@ -2,7 +2,8 @@
 
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { Priority, Task } from "@/types";
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo } from "react";
+import { useDropdown } from "@/components/ui/useDropdown";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { isOverdue, cn } from "@/lib/utils";
 import {
@@ -104,25 +105,10 @@ export function TableView() {
   const [quickTitle, setQuickTitle] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [showColumnMenu, setShowColumnMenu] = useState(false);
-  const columnMenuRef = useRef<HTMLDivElement>(null);
-
-  // Close column visibility menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        columnMenuRef.current &&
-        !columnMenuRef.current.contains(event.target as Node)
-      ) {
-        setShowColumnMenu(false);
-      }
-    }
-    if (showColumnMenu) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showColumnMenu]);
+  const columnMenuRef = useDropdown<HTMLDivElement>({
+    isOpen: showColumnMenu,
+    onClose: () => setShowColumnMenu(false),
+  });
 
   const toggleGroup = (statusId: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [statusId]: !prev[statusId] }));

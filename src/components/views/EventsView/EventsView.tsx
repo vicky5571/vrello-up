@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   Flag,
@@ -338,13 +339,35 @@ export function EventsView({
       setEventTargetAttendee(activity.targetAttendee || 100);
       setEventAttendeeCount(activity.attendeeCount || 0);
     }
-
-    setIsModalOpen(true);
   };
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsModalOpen(false);
+    setEditId(null);
     setCreatePostModalOpen(false);
+  }, [setCreatePostModalOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && (editId || isModalOpen)) {
+        closeModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editId, isModalOpen, closeModal]);
+
+  const handleDeleteActivity = async () => {
+    if (!editId) return;
+    if (!confirm("Are you sure you want to delete this activity?")) return;
+    const ok = await deleteOne(editId);
+    if (ok) {
+      toast.success("Activity deleted successfully");
+      closeModal();
+      await fetchEvents();
+    } else {
+      toast.error("Failed to delete activity");
+    }
   };
 
   const handleAddSubtask = () => {
@@ -882,6 +905,520 @@ export function EventsView({
     []
   );
 
+  const editingEvent = editId ? events.find((e) => e.id === editId) : null;
+
+  const renderActivityForm = (isDrawer = false) => (
+    <form onSubmit={handleSaveActivity} className="space-y-3.5">
+              {/* Common Activity Title */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  {modalChannel === "social" ? "Post Title / Concept *" : "Event Name *"}
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder={
+                    modalChannel === "social"
+                      ? "e.g. Behind-the-Scenes: Field Officer Solo Roadshow"
+                      : "e.g. Grand Opening & Community Expo"
+                  }
+                  value={activityName}
+                  onChange={(e) => setActivityName(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500"
+                />
+              </div>
+
+              {/* SOCIAL MEDIA FIELDS */}
+              {modalChannel === "social" ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                        <Layers className="w-3 h-3 text-slate-500" /> Status
+                      </label>
+                      <select
+                        value={activityStatus}
+                        onChange={(e) => setActivityStatus(e.target.value as EventStatus)}
+                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                      >
+                        <option value="UPCOMING">UPCOMING</option>
+                        <option value="ON_PROGRESS">ON_PROGRESS</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
+                        <Flame className="w-3 h-3 text-orange-500" /> Priority
+                      </label>
+                      <select
+                        value={postPriority}
+                        onChange={(e) => setPostPriority(e.target.value as Priority)}
+                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                      >
+                        <option value="urgent">Urgent</option>
+                        <option value="high">High</option>
+                        <option value="normal">Normal</option>
+                        <option value="low">Low</option>
+                        <option value="none">None</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1 cursor-pointer">
+                        <Calendar className="w-3 h-3 text-blue-500" /> Publish Date
+                      </label>
+                      <input
+                        type="date"
+                        value={postDate}
+                        onClick={(e) => {
+                          try {
+                            e.currentTarget.showPicker();
+                          } catch {}
+                        }}
+                        onFocus={(e) => {
+                          try {
+                            e.currentTarget.showPicker();
+                          } catch {}
+                        }}
+                        onChange={(e) => setPostDate(e.target.value)}
+                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Platform
+                      </label>
+                      <select
+                        value={postPlatform}
+                        onChange={(e) => setPostPlatform(e.target.value as PostPlatform)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                      >
+                        {Object.keys(PLATFORM_CONFIG).map((p) => (
+                          <option key={p} value={p}>
+                            {PLATFORM_CONFIG[p as PostPlatform].icon} {PLATFORM_CONFIG[p as PostPlatform].label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Format
+                      </label>
+                      <select
+                        value={postFormat}
+                        onChange={(e) => setPostFormat(e.target.value as PostFormat)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                      >
+                        <option value="reel">Reel / Video</option>
+                        <option value="carousel">Carousel</option>
+                        <option value="image">Single Image</option>
+                        <option value="story">Story</option>
+                        <option value="article">Article / Press</option>
+                        <option value="thread">Thread</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Branch selector */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Featured Branch (optional)
+                    </label>
+                    <select
+                      value={activityBranchName}
+                      onChange={(e) => setActivityBranchName(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                    >
+                      <option value="">National / General (No branch)</option>
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.name}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Media URL */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Media / Thumbnail URL (optional)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      value={postMediaUrl}
+                      onChange={(e) => setPostMediaUrl(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500"
+                    />
+                  </div>
+
+                  {/* Assignees */}
+                  {members.length > 0 && (
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Assign To
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {members.map((user) => {
+                          const isSelected = postAssigneeIds.includes(user.id);
+                          return (
+                            <button
+                              type="button"
+                              key={user.id}
+                              onClick={() => {
+                                setPostAssigneeIds((prev) =>
+                                  isSelected ? prev.filter((id) => id !== user.id) : [...prev, user.id]
+                                );
+                              }}
+                              className={cn(
+                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer",
+                                isSelected
+                                  ? "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/30"
+                                  : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  "w-1.5 h-1.5 rounded-full",
+                                  isSelected ? "bg-pink-500" : "bg-slate-400"
+                                )}
+                              />
+                              {user.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Draft Copy */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Draft Copy / Hashtags / Notes
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Enter draft caption, hashtags, and production notes..."
+                      value={activityNotes}
+                      onChange={(e) => setActivityNotes(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 resize-none"
+                    />
+                  </div>
+
+                  {/* Production Subtasks Checklist (only when creating) */}
+                  {!editId && (
+                    <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                          <CheckSquare className="w-3.5 h-3.5 text-pink-500" />
+                          Production Subtasks ({postSubtasks.length})
+                        </label>
+                        {postSubtasks.length === 0 ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPostSubtasks(
+                                DEFAULT_POST_SUBTASKS.map((title, i) => ({
+                                  id: `sub-init-${Date.now()}-${i}`,
+                                  title,
+                                }))
+                              )
+                            }
+                            className="text-[11px] text-pink-600 hover:text-pink-700 font-semibold cursor-pointer"
+                          >
+                            + Restore defaults
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">Editable checklist</span>
+                        )}
+                      </div>
+
+                      {postSubtasks.length > 0 && (
+                        <div className="space-y-1.5 max-h-36 overflow-y-auto pr-0.5">
+                          {postSubtasks.map((sub, idx) => (
+                            <div
+                              key={sub.id}
+                              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 group focus-within:ring-1 focus-within:ring-pink-500"
+                            >
+                              <span className="text-[10px] font-medium text-slate-400 w-4 text-center shrink-0">
+                                {idx + 1}.
+                              </span>
+                              <input
+                                type="text"
+                                value={sub.title}
+                                onChange={(e) => handleUpdateSubtask(sub.id, e.target.value)}
+                                placeholder="Subtask title..."
+                                className="flex-1 bg-transparent text-xs text-slate-800 dark:text-slate-200 focus:outline-none placeholder:text-slate-400"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSubtask(sub.id)}
+                                className="text-slate-400 hover:text-rose-500 p-0.5 rounded transition-colors cursor-pointer shrink-0"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={newSubtaskTitle}
+                          onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddSubtask();
+                            }
+                          }}
+                          placeholder="+ Add custom subtask..."
+                          className="flex-1 px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-pink-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddSubtask}
+                          disabled={!newSubtaskTitle.trim()}
+                          className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-40 transition-colors cursor-pointer shrink-0 flex items-center gap-1"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* ON-GROUND ACTIVATION FIELDS */
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Event Type *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Launch, Workshop, Exhibition..."
+                        value={eventType}
+                        onChange={(e) => setEventType(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Branch
+                      </label>
+                      <select
+                        value={activityBranchName}
+                        onChange={(e) => setActivityBranchName(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                      >
+                        <option value="">No branch</option>
+                        {branches.map((b) => (
+                          <option key={b.id} value={b.name}>
+                            {b.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 cursor-pointer">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={eventStartDate}
+                        onClick={(e) => {
+                          try {
+                            e.currentTarget.showPicker();
+                          } catch {}
+                        }}
+                        onFocus={(e) => {
+                          try {
+                            e.currentTarget.showPicker();
+                          } catch {}
+                        }}
+                        onChange={(e) => setEventStartDate(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 cursor-pointer">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={eventEndDate}
+                        onClick={(e) => {
+                          try {
+                            e.currentTarget.showPicker();
+                          } catch {}
+                        }}
+                        onFocus={(e) => {
+                          try {
+                            e.currentTarget.showPicker();
+                          } catch {}
+                        }}
+                        onChange={(e) => setEventEndDate(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Location / Venue
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Main Atrium, Solo Paragon"
+                        value={eventLocation}
+                        onChange={(e) => setEventLocation(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        PIC / Contact Person
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Sarah Jenkins"
+                        value={eventPicName}
+                        onChange={(e) => setEventPicName(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Status
+                      </label>
+                      <select
+                        value={activityStatus}
+                        onChange={(e) => setActivityStatus(e.target.value as EventStatus)}
+                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                      >
+                        <option value="UPCOMING">UPCOMING</option>
+                        <option value="ON_PROGRESS">ON_PROGRESS</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Target Attendees
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={eventTargetAttendee}
+                        onChange={(e) => setEventTargetAttendee(Number(e.target.value) || 0)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Actual Attendees
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={eventAttendeeCount}
+                        onChange={(e) => setEventAttendeeCount(Number(e.target.value) || 0)}
+                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Budget (IDR)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={eventBudget}
+                      onChange={(e) => setEventBudget(Number(e.target.value) || 0)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Event Logistics & Notes
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="Special instructions, vendor info, permit notes..."
+                      value={activityNotes}
+                      onChange={(e) => setActivityNotes(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 resize-none"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Form Action Buttons */}
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                {isDrawer && editId ? (
+                  <button
+                    type="button"
+                    onClick={handleDeleteActivity}
+                    className="text-xs font-semibold text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors cursor-pointer px-2 py-1 flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
+                  </button>
+                ) : (
+                  <div />
+                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="px-3.5 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className={cn(
+                      "px-4 py-1.5 text-xs rounded-xl font-bold text-white transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5",
+                      modalChannel === "social"
+                        ? "bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
+                        : "bg-teal-600 hover:bg-teal-700"
+                    )}
+                  >
+                    {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                    <span>
+                      {editId
+                        ? "Save Changes"
+                        : modalChannel === "social"
+                        ? "Schedule Social Post"
+                        : "Create Activation"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </form>
+  );
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#FAFBFC] dark:bg-[#121316]">
       {/* View Switcher & Channel Filter Header */}
@@ -1410,14 +1947,14 @@ export function EventsView({
         />
       )}
 
-      {/* Unified New / Edit Activity Modal */}
-      {isModalOpen && (
+      {/* 1. Center Modal for Creating New Activity */}
+      {isModalOpen && !editId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
           <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#18191B] border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Megaphone className="w-4 h-4 text-pink-500" />
-                <span>{editId ? "Edit Activity" : "Create New Activity"}</span>
+                <span>Create New Activity</span>
               </h2>
               <button
                 type="button"
@@ -1429,535 +1966,120 @@ export function EventsView({
             </div>
 
             {/* Top Channel Switcher: Social Media vs On-Ground Activation */}
-            {!editId && (
-              <div className="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
-                <button
-                  type="button"
-                  onClick={() => setModalChannel("social")}
-                  className={cn(
-                    "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer",
-                    modalChannel === "social"
-                      ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                  )}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Social Media Post</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModalChannel("on_ground")}
-                  className={cn(
-                    "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer",
-                    modalChannel === "on_ground"
-                      ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-2xs"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                  )}
-                >
-                  <Flag className="w-3.5 h-3.5" />
-                  <span>On-Ground Activation</span>
-                </button>
-              </div>
-            )}
+            <div className="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setModalChannel("social")}
+                className={cn(
+                  "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+                  modalChannel === "social"
+                    ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                )}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Social Media Post</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalChannel("on_ground")}
+                className={cn(
+                  "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer",
+                  modalChannel === "on_ground"
+                    ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                )}
+              >
+                <Flag className="w-3.5 h-3.5" />
+                <span>On-Ground Activation</span>
+              </button>
+            </div>
 
-            <form onSubmit={handleSaveActivity} className="space-y-3.5">
-              {/* Common Activity Title */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  {modalChannel === "social" ? "Post Title / Concept *" : "Event Name *"}
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder={
-                    modalChannel === "social"
-                      ? "e.g. Behind-the-Scenes: Field Officer Solo Roadshow"
-                      : "e.g. Grand Opening & Community Expo"
-                  }
-                  value={activityName}
-                  onChange={(e) => setActivityName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500"
-                />
-              </div>
-
-              {/* SOCIAL MEDIA FIELDS */}
-              {modalChannel === "social" ? (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
-                        <Layers className="w-3 h-3 text-slate-500" /> Status
-                      </label>
-                      <select
-                        value={activityStatus}
-                        onChange={(e) => setActivityStatus(e.target.value as EventStatus)}
-                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-                      >
-                        <option value="UPCOMING">UPCOMING</option>
-                        <option value="ON_PROGRESS">ON_PROGRESS</option>
-                        <option value="COMPLETED">COMPLETED</option>
-                        <option value="CANCELLED">CANCELLED</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
-                        <Flame className="w-3 h-3 text-orange-500" /> Priority
-                      </label>
-                      <select
-                        value={postPriority}
-                        onChange={(e) => setPostPriority(e.target.value as Priority)}
-                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-                      >
-                        <option value="urgent">Urgent</option>
-                        <option value="high">High</option>
-                        <option value="normal">Normal</option>
-                        <option value="low">Low</option>
-                        <option value="none">None</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1 cursor-pointer">
-                        <Calendar className="w-3 h-3 text-blue-500" /> Publish Date
-                      </label>
-                      <input
-                        type="date"
-                        value={postDate}
-                        onClick={(e) => {
-                          try {
-                            e.currentTarget.showPicker();
-                          } catch {}
-                        }}
-                        onFocus={(e) => {
-                          try {
-                            e.currentTarget.showPicker();
-                          } catch {}
-                        }}
-                        onChange={(e) => setPostDate(e.target.value)}
-                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Platform
-                      </label>
-                      <select
-                        value={postPlatform}
-                        onChange={(e) => setPostPlatform(e.target.value as PostPlatform)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-                      >
-                        {Object.keys(PLATFORM_CONFIG).map((p) => (
-                          <option key={p} value={p}>
-                            {PLATFORM_CONFIG[p as PostPlatform].icon} {PLATFORM_CONFIG[p as PostPlatform].label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Format
-                      </label>
-                      <select
-                        value={postFormat}
-                        onChange={(e) => setPostFormat(e.target.value as PostFormat)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-                      >
-                        <option value="reel">Reel / Video</option>
-                        <option value="carousel">Carousel</option>
-                        <option value="image">Single Image</option>
-                        <option value="story">Story</option>
-                        <option value="article">Article / Press</option>
-                        <option value="thread">Thread</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Branch selector */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Featured Branch (optional)
-                    </label>
-                    <select
-                      value={activityBranchName}
-                      onChange={(e) => setActivityBranchName(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-                    >
-                      <option value="">National / General (No branch)</option>
-                      {branches.map((b) => (
-                        <option key={b.id} value={b.name}>
-                          {b.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Media URL */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Media / Thumbnail URL (optional)
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://..."
-                      value={postMediaUrl}
-                      onChange={(e) => setPostMediaUrl(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500"
-                    />
-                  </div>
-
-                  {/* Assignees */}
-                  {members.length > 0 && (
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                        Assign To
-                      </label>
-                      <div className="flex flex-wrap gap-1.5">
-                        {members.map((user) => {
-                          const isSelected = postAssigneeIds.includes(user.id);
-                          return (
-                            <button
-                              type="button"
-                              key={user.id}
-                              onClick={() => {
-                                setPostAssigneeIds((prev) =>
-                                  isSelected ? prev.filter((id) => id !== user.id) : [...prev, user.id]
-                                );
-                              }}
-                              className={cn(
-                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer",
-                                isSelected
-                                  ? "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/30"
-                                  : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  "w-1.5 h-1.5 rounded-full",
-                                  isSelected ? "bg-pink-500" : "bg-slate-400"
-                                )}
-                              />
-                              {user.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Draft Copy */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Draft Copy / Hashtags / Notes
-                    </label>
-                    <textarea
-                      rows={3}
-                      placeholder="Enter draft caption, hashtags, and production notes..."
-                      value={activityNotes}
-                      onChange={(e) => setActivityNotes(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 resize-none"
-                    />
-                  </div>
-
-                  {/* Production Subtasks Checklist (only when creating) */}
-                  {!editId && (
-                    <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                          <CheckSquare className="w-3.5 h-3.5 text-pink-500" />
-                          Production Subtasks ({postSubtasks.length})
-                        </label>
-                        {postSubtasks.length === 0 ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setPostSubtasks(
-                                DEFAULT_POST_SUBTASKS.map((title, i) => ({
-                                  id: `sub-init-${Date.now()}-${i}`,
-                                  title,
-                                }))
-                              )
-                            }
-                            className="text-[11px] text-pink-600 hover:text-pink-700 font-semibold cursor-pointer"
-                          >
-                            + Restore defaults
-                          </button>
-                        ) : (
-                          <span className="text-[10px] text-slate-400">Editable checklist</span>
-                        )}
-                      </div>
-
-                      {postSubtasks.length > 0 && (
-                        <div className="space-y-1.5 max-h-36 overflow-y-auto pr-0.5">
-                          {postSubtasks.map((sub, idx) => (
-                            <div
-                              key={sub.id}
-                              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 group focus-within:ring-1 focus-within:ring-pink-500"
-                            >
-                              <span className="text-[10px] font-medium text-slate-400 w-4 text-center shrink-0">
-                                {idx + 1}.
-                              </span>
-                              <input
-                                type="text"
-                                value={sub.title}
-                                onChange={(e) => handleUpdateSubtask(sub.id, e.target.value)}
-                                placeholder="Subtask title..."
-                                className="flex-1 bg-transparent text-xs text-slate-800 dark:text-slate-200 focus:outline-none placeholder:text-slate-400"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveSubtask(sub.id)}
-                                className="text-slate-400 hover:text-rose-500 p-0.5 rounded transition-colors cursor-pointer shrink-0"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={newSubtaskTitle}
-                          onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleAddSubtask();
-                            }
-                          }}
-                          placeholder="+ Add custom subtask..."
-                          className="flex-1 px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-pink-500"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleAddSubtask}
-                          disabled={!newSubtaskTitle.trim()}
-                          className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-40 transition-colors cursor-pointer shrink-0 flex items-center gap-1"
-                        >
-                          <Plus className="w-3 h-3" />
-                          <span>Add</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                /* ON-GROUND ACTIVATION FIELDS */
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Event Type *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Launch, Workshop, Exhibition..."
-                        value={eventType}
-                        onChange={(e) => setEventType(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Branch
-                      </label>
-                      <select
-                        value={activityBranchName}
-                        onChange={(e) => setActivityBranchName(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
-                      >
-                        <option value="">No branch</option>
-                        {branches.map((b) => (
-                          <option key={b.id} value={b.name}>
-                            {b.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 cursor-pointer">
-                        Start Date
-                      </label>
-                      <input
-                        type="date"
-                        value={eventStartDate}
-                        onClick={(e) => {
-                          try {
-                            e.currentTarget.showPicker();
-                          } catch {}
-                        }}
-                        onFocus={(e) => {
-                          try {
-                            e.currentTarget.showPicker();
-                          } catch {}
-                        }}
-                        onChange={(e) => setEventStartDate(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 cursor-pointer">
-                        End Date
-                      </label>
-                      <input
-                        type="date"
-                        value={eventEndDate}
-                        onClick={(e) => {
-                          try {
-                            e.currentTarget.showPicker();
-                          } catch {}
-                        }}
-                        onFocus={(e) => {
-                          try {
-                            e.currentTarget.showPicker();
-                          } catch {}
-                        }}
-                        onChange={(e) => setEventEndDate(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Location / Venue
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Main Atrium, Solo Paragon"
-                        value={eventLocation}
-                        onChange={(e) => setEventLocation(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        PIC / Contact Person
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Sarah Jenkins"
-                        value={eventPicName}
-                        onChange={(e) => setEventPicName(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Status
-                      </label>
-                      <select
-                        value={activityStatus}
-                        onChange={(e) => setActivityStatus(e.target.value as EventStatus)}
-                        className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
-                      >
-                        <option value="UPCOMING">UPCOMING</option>
-                        <option value="ON_PROGRESS">ON_PROGRESS</option>
-                        <option value="COMPLETED">COMPLETED</option>
-                        <option value="CANCELLED">CANCELLED</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Target Attendees
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={eventTargetAttendee}
-                        onChange={(e) => setEventTargetAttendee(Number(e.target.value) || 0)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Actual Attendees
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={eventAttendeeCount}
-                        onChange={(e) => setEventAttendeeCount(Number(e.target.value) || 0)}
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Budget (IDR)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={eventBudget}
-                      onChange={(e) => setEventBudget(Number(e.target.value) || 0)}
-                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Event Logistics & Notes
-                    </label>
-                    <textarea
-                      rows={2}
-                      placeholder="Special instructions, vendor info, permit notes..."
-                      value={activityNotes}
-                      onChange={(e) => setActivityNotes(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 resize-none"
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Modal Buttons */}
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="px-3.5 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className={cn(
-                    "px-4 py-1.5 text-xs rounded-xl font-bold text-white transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5",
-                    modalChannel === "social"
-                      ? "bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
-                      : "bg-teal-600 hover:bg-teal-700"
-                  )}
-                >
-                  {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  <span>
-                    {editId
-                      ? "Save Changes"
-                      : modalChannel === "social"
-                      ? "Schedule Social Post"
-                      : "Create Activation"}
-                  </span>
-                </button>
-              </div>
-            </form>
+            {renderActivityForm(false)}
           </div>
         </div>
       )}
+
+      {/* 2. Slide-Over Right Drawer for Viewing / Editing Activity */}
+      <AnimatePresence>
+        {Boolean(editId) && (
+          <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeModal}
+              className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs"
+            />
+
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              className="relative z-10 w-full max-w-xl sm:max-w-2xl h-full bg-white dark:bg-[#18191B] border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
+            >
+              {/* Drawer Header */}
+              <div className="p-4 sm:px-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-xl shrink-0">
+                    {modalChannel === "social"
+                      ? postPlatform === "instagram" ? "📸"
+                      : postPlatform === "tiktok" ? "🎵"
+                      : postPlatform === "youtube" ? "▶️"
+                      : "📱"
+                      : "🎪"}
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                      {activityName || "Activity Details"}
+                    </h2>
+                    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400">
+                      <span className="uppercase tracking-wider">
+                        {modalChannel === "social" ? `${postPlatform} ${postFormat}` : `${eventType} Event`}
+                      </span>
+                      {activityBranchName && (
+                        <>
+                          <span>•</span>
+                          <span>{activityBranchName}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  {editingEvent && (
+                    <button
+                      type="button"
+                      onClick={() => handleTrackAsTask(editingEvent)}
+                      className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Link or open in operational tasks"
+                    >
+                      <Layers className="w-3.5 h-3.5 text-blue-500" />
+                      <span className="hidden sm:inline">
+                        {tasks.some((t) => t.relatedMarcomId === editingEvent.id) ? "View Task" : "Link Task"}
+                      </span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              {/* Drawer Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                {renderActivityForm(true)}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

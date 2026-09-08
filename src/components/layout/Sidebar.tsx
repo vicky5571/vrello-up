@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
+import { useDropdown } from "@/components/ui/useDropdown";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { type Space } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
@@ -114,17 +115,10 @@ export function Sidebar() {
 
   // Context Menu State
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setActiveMenuId(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const menuRef = useDropdown<HTMLDivElement>({
+    isOpen: Boolean(activeMenuId),
+    onClose: () => setActiveMenuId(null),
+  });
 
   const currentWorkspace =
     workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];

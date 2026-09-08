@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+import { useDropdown } from "@/components/ui/useDropdown";
 import { Task, TaskComment, ActivityLog, TaskCommentAttachment } from "@/types";
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
 import { UserAvatar } from "@/components/ui/UserAvatar";
@@ -41,7 +42,10 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
   const [isMentionOpen, setIsMentionOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const mentionMenuRef = useRef<HTMLDivElement>(null);
+  const mentionMenuRef = useDropdown<HTMLDivElement>({
+    isOpen: isMentionOpen,
+    onClose: () => setIsMentionOpen(false),
+  });
 
   const comments = task.comments || [];
   const activities = task.activities || [];
@@ -50,17 +54,6 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const members = currentWorkspace?.members || SEED_USERS;
   const currentUser = members.find((u) => u.id === currentUserId) || members[0];
-
-  // Close mention menu on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (mentionMenuRef.current && !mentionMenuRef.current.contains(e.target as Node)) {
-        setIsMentionOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handlePostComment = (e?: React.FormEvent) => {
     if (e) e.preventDefault();

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useDropdown } from "@/components/ui/useDropdown";
 import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -67,8 +68,13 @@ export function MousView() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const branchDropdownRef = useRef<HTMLDivElement | null>(null);
   const branchTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const branchDropdownRef = useDropdown<HTMLDivElement>({
+    isOpen: isBranchDropdownOpen,
+    onClose: () => setIsBranchDropdownOpen(false),
+    triggerRef: branchTriggerRef,
+    closeOnEscape: true,
+  });
   const branchSearchInputRef = useRef<HTMLInputElement | null>(null);
 
   const MOU_TYPES = ["Compensation", "Exclusive Branding", "Event Sponsorship", "Space Rental", "Joint Promotion"] as const;
@@ -76,28 +82,6 @@ export function MousView() {
   const canManage = can("DELETE_MOU");
   const canCreate = can("CREATE_MOU");
   const canApprove = can("APPROVE_MOU");
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (branchDropdownRef.current && !branchDropdownRef.current.contains(event.target as Node)) {
-        setIsBranchDropdownOpen(false);
-      }
-    }
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && isBranchDropdownOpen) {
-        setIsBranchDropdownOpen(false);
-        branchTriggerRef.current?.focus();
-      }
-    }
-    if (isBranchDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleKeyDown);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isBranchDropdownOpen]);
 
   useEffect(() => {
     if (isBranchDropdownOpen) {

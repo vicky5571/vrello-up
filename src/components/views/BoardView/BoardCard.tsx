@@ -10,7 +10,8 @@ import { PlatformBadge } from "@/components/ui/PlatformBadge";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
 import { Calendar, CheckSquare, MoreHorizontal, Play, Paperclip } from "lucide-react";
 import { formatDate, isOverdue, cn } from "@/lib/utils";
-import { useState, useRef, useEffect, memo } from "react";
+import { useState, useRef, memo } from "react";
+import { useDropdown } from "@/components/ui/useDropdown";
 
 interface BoardCardProps {
   task: Task;
@@ -52,33 +53,13 @@ export const BoardCard = memo(function BoardCard({
   const { viewPreferences, presenceByTaskId, currentUserId } = useWorkspaceStore();
   const { visibleFields } = viewPreferences;
   const viewers = (presenceByTaskId[task.id] || []).filter((u) => u.id !== currentUserId);
-  const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!showMoveMenu) return;
-
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        setShowMoveMenu(false);
-        buttonRef.current?.focus();
-      }
-    }
-
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowMoveMenu(false);
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showMoveMenu]);
+  const menuRef = useDropdown<HTMLDivElement>({
+    isOpen: showMoveMenu,
+    onClose: () => setShowMoveMenu(false),
+    triggerRef: buttonRef,
+    closeOnEscape: true,
+  });
 
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -189,6 +170,7 @@ export const BoardCard = memo(function BoardCard({
 
           {showMoveMenu && (
             <div
+              ref={menuRef}
               role="menu"
               aria-label="Status choices"
               onPointerDown={(e) => e.stopPropagation()}
