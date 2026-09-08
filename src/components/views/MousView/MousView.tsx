@@ -33,6 +33,15 @@ export interface MarcomMou {
 
 const columnHelper = createMarcomColumnHelper<MarcomMou>();
 
+const MOU_STATUS_CHIPS: { label: string; value: string }[] = [
+  { label: "All", value: "ALL" },
+  { label: "Draft", value: "DRAFT" },
+  { label: "Submitted", value: "SUBMITTED" },
+  { label: "Approved", value: "APPROVED" },
+  { label: "Done", value: "DONE" },
+  { label: "Rejected", value: "REJECTED" },
+];
+
 const STATUS_STYLES: Record<MouStatus, string> = {
   DRAFT: "bg-slate-500/10 text-slate-500 dark:text-slate-400",
   SUBMITTED: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
@@ -48,6 +57,7 @@ export function MousView() {
   const [mous, setMous] = useState<MarcomMou[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>([]);
   const [outletsList, setOutletsList] = useState<{ id: string; name: string; code?: string; branchId: string }[]>([]);
   const [branchSearch, setBranchSearch] = useState("");
@@ -122,36 +132,50 @@ export function MousView() {
     }
   };
 
-  const fetchMous = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [resMous, resBranches, resOutlets] = await Promise.all([
-        fetch("/api/marcom/mous"),
-        fetch("/api/marcom/branches"),
-        fetch("/api/marcom/outlets"),
-      ]);
-      if (!resMous.ok) throw new Error(`Request failed (${resMous.status})`);
-      const jsonMous = await resMous.json();
-      setMous(Array.isArray(jsonMous.data) ? jsonMous.data : []);
-      if (resBranches.ok) {
-        const jsonBranches = await resBranches.json();
-        setBranches(Array.isArray(jsonBranches.data) ? jsonBranches.data : []);
+  const fetchMous = useCallback(
+    async (statusFilter = selectedStatus) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams();
+        if (statusFilter && statusFilter !== "ALL") {
+          params.set("status", statusFilter);
+        }
+        const mousUrl = `/api/marcom/mous${params.toString() ? `?${params.toString()}` : ""}`;
+        const [resMous, resBranches, resOutlets] = await Promise.all([
+          fetch(mousUrl),
+          fetch("/api/marcom/branches"),
+          fetch("/api/marcom/outlets"),
+        ]);
+        if (!resMous.ok) throw new Error(`Request failed (${resMous.status})`);
+        const jsonMous = await resMous.json();
+        setMous(Array.isArray(jsonMous.data) ? jsonMous.data : []);
+        if (resBranches.ok) {
+          const jsonBranches = await resBranches.json();
+          setBranches(Array.isArray(jsonBranches.data) ? jsonBranches.data : []);
+        }
+        if (resOutlets.ok) {
+          const jsonOutlets = await resOutlets.json();
+          setOutletsList(Array.isArray(jsonOutlets.data) ? jsonOutlets.data : []);
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load MOUs");
+      } finally {
+        setIsLoading(false);
       }
-      if (resOutlets.ok) {
-        const jsonOutlets = await resOutlets.json();
-        setOutletsList(Array.isArray(jsonOutlets.data) ? jsonOutlets.data : []);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load MOUs");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [selectedStatus],
+  );
 
   useEffect(() => {
-    fetchMous();
-  }, [fetchMous]);
+    fetchMous(selectedStatus);
+  }, [fetchMous, selectedStatus]);
+
+  const handleStatusFilter = (status: string) => {
+    const next = selectedStatus === status && status !== "ALL" ? "ALL" : status;
+    setSelectedStatus(next);
+    fetchMous(next);
+  };
 
   const filteredBranches = useMemo(() => {
     if (!branchSearch.trim()) return branches;
@@ -474,6 +498,29 @@ export function MousView() {
             </div>
           </>
         )}
+        filterBar={
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
+            {MOU_STATUS_CHIPS.map((chip) => {
+              const isActive = selectedStatus === chip.value;
+              return (
+                <button
+                  key={chip.value}
+                  type="button"
+                  onClick={() => handleStatusFilter(chip.value)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
+                    isActive
+                      ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
+                  )}
+                >
+                  {chip.label}
+                </button>
+              );
+            })}
+          </div>
+        }
         searchTerm={marcomFilters["mous"] || ""}
         onSearchChange={(q) => setMarcomFilter("mous", q)}
         emptyLabel="No MOUs found."

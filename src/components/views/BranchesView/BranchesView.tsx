@@ -36,30 +36,56 @@ export function BranchesView() {
   const [branches, setBranches] = useState<MarcomBranch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<string>("ALL");
+  const [availableRegions, setAvailableRegions] = useState<string[]>([
+    "Banten",
+    "Central Java",
+    "DI Yogyakarta",
+    "DKI Jakarta",
+    "East Java",
+    "West Java",
+  ]);
   const [modalBranch, setModalBranch] = useState<Partial<MarcomBranch> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const canManage = can("MANAGE_MASTER_DATA");
   const canAddBranch = canManage || role !== "viewer";
 
-  const fetchBranches = useCallback(async () => {
+  const fetchBranches = useCallback(async (regionFilter = selectedRegion) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/marcom/branches");
+      const params = new URLSearchParams();
+      if (regionFilter && regionFilter !== "ALL") {
+        params.set("region", regionFilter);
+      }
+      const url = `/api/marcom/branches${params.toString() ? `?${params.toString()}` : ""}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
       const json = await res.json();
-      setBranches(Array.isArray(json.data) ? json.data : []);
+      const list = Array.isArray(json.data) ? json.data : [];
+      setBranches(list);
+      if (regionFilter === "ALL") {
+        const found = Array.from(new Set(list.map((b: MarcomBranch) => b.region).filter(Boolean))) as string[];
+        if (found.length > 0) {
+          setAvailableRegions((prev) => Array.from(new Set([...prev, ...found])).sort());
+        }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load branches");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedRegion]);
 
   useEffect(() => {
-    fetchBranches();
-  }, [fetchBranches]);
+    fetchBranches(selectedRegion);
+  }, [fetchBranches, selectedRegion]);
+
+  const handleRegionChange = (newRegion: string) => {
+    setSelectedRegion(newRegion);
+    fetchBranches(newRegion);
+  };
 
   const columns = useMemo(
     () =>
@@ -294,6 +320,35 @@ export function BranchesView() {
         addLabel="Add Branch"
         addIcon={Plus}
         addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-2xs cursor-pointer"
+        filterBar={
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-slate-500 dark:text-slate-400">Region:</span>
+              <select
+                value={selectedRegion}
+                onChange={(e) => handleRegionChange(e.target.value)}
+                aria-label="Filter by region"
+                className="px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+              >
+                <option value="ALL">All Regions</option>
+                {availableRegions.map((reg) => (
+                  <option key={reg} value={reg}>
+                    {reg}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selectedRegion !== "ALL" && (
+              <button
+                type="button"
+                onClick={() => handleRegionChange("ALL")}
+                className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 underline font-medium cursor-pointer"
+              >
+                Reset Region
+              </button>
+            )}
+          </div>
+        }
         renderExpanded={(branch) => (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">

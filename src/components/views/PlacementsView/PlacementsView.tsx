@@ -30,6 +30,14 @@ export interface MarcomPlacement {
 
 const columnHelper = createMarcomColumnHelper<MarcomPlacement>();
 
+const PLACEMENT_STATUS_CHIPS: { label: string; value: string }[] = [
+  { label: "All", value: "ALL" },
+  { label: "Not Started", value: "NOT_STARTED" },
+  { label: "On Progress", value: "ON_PROGRESS" },
+  { label: "Done", value: "DONE" },
+  { label: "Issue", value: "ISSUE" },
+];
+
 const STATUS_STYLES: Record<PlacementStatus, string> = {
   NOT_STARTED: "bg-slate-500/10 text-slate-500 dark:text-slate-400",
   ON_PROGRESS: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
@@ -54,6 +62,7 @@ export function PlacementsView() {
   const [placements, setPlacements] = useState<MarcomPlacement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [outletsList, setOutletsList] = useState<{ id: string; name: string }[]>([]);
   const [materialsList, setMaterialsList] = useState<{ id: string; name: string }[]>([]);
   const [modalPlacement, setModalPlacement] = useState<Partial<MarcomPlacement> | null>(null);
@@ -93,36 +102,50 @@ export function PlacementsView() {
     setSelectedTaskId(task.id);
   };
 
-  const fetchPlacements = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [resPlacements, resOutlets, resMaterials] = await Promise.all([
-        fetch("/api/marcom/placements"),
-        fetch("/api/marcom/outlets"),
-        fetch("/api/marcom/materials"),
-      ]);
-      if (!resPlacements.ok) throw new Error(`Request failed (${resPlacements.status})`);
-      const jsonPlacements = await resPlacements.json();
-      setPlacements(Array.isArray(jsonPlacements.data) ? jsonPlacements.data : []);
-      if (resOutlets.ok) {
-        const jsonOutlets = await resOutlets.json();
-        setOutletsList(Array.isArray(jsonOutlets.data) ? jsonOutlets.data : []);
+  const fetchPlacements = useCallback(
+    async (statusFilter = selectedStatus) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams();
+        if (statusFilter && statusFilter !== "ALL") {
+          params.set("status", statusFilter);
+        }
+        const placementsUrl = `/api/marcom/placements${params.toString() ? `?${params.toString()}` : ""}`;
+        const [resPlacements, resOutlets, resMaterials] = await Promise.all([
+          fetch(placementsUrl),
+          fetch("/api/marcom/outlets"),
+          fetch("/api/marcom/materials"),
+        ]);
+        if (!resPlacements.ok) throw new Error(`Request failed (${resPlacements.status})`);
+        const jsonPlacements = await resPlacements.json();
+        setPlacements(Array.isArray(jsonPlacements.data) ? jsonPlacements.data : []);
+        if (resOutlets.ok) {
+          const jsonOutlets = await resOutlets.json();
+          setOutletsList(Array.isArray(jsonOutlets.data) ? jsonOutlets.data : []);
+        }
+        if (resMaterials.ok) {
+          const jsonMaterials = await resMaterials.json();
+          setMaterialsList(Array.isArray(jsonMaterials.data) ? jsonMaterials.data : []);
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load placements");
+      } finally {
+        setIsLoading(false);
       }
-      if (resMaterials.ok) {
-        const jsonMaterials = await resMaterials.json();
-        setMaterialsList(Array.isArray(jsonMaterials.data) ? jsonMaterials.data : []);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load placements");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [selectedStatus],
+  );
 
   useEffect(() => {
-    fetchPlacements();
-  }, [fetchPlacements]);
+    fetchPlacements(selectedStatus);
+  }, [fetchPlacements, selectedStatus]);
+
+  const handleStatusFilter = (status: string) => {
+    const next = selectedStatus === status && status !== "ALL" ? "ALL" : status;
+    setSelectedStatus(next);
+    fetchPlacements(next);
+  };
 
   const columns = useMemo(
     () =>
@@ -297,6 +320,29 @@ export function PlacementsView() {
             </div>
           </>
         )}
+        filterBar={
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
+            {PLACEMENT_STATUS_CHIPS.map((chip) => {
+              const isActive = selectedStatus === chip.value;
+              return (
+                <button
+                  key={chip.value}
+                  type="button"
+                  onClick={() => handleStatusFilter(chip.value)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
+                    isActive
+                      ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
+                  )}
+                >
+                  {chip.label}
+                </button>
+              );
+            })}
+          </div>
+        }
         searchTerm={marcomFilters["placements"] || ""}
         onSearchChange={(q) => setMarcomFilter("placements", q)}
         emptyLabel="No placements found."

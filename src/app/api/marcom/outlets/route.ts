@@ -17,7 +17,8 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const branchId = searchParams.get("branchId");
-  const type = searchParams.get("type");
+  const rawType = searchParams.get("type");
+  const type = rawType === "OFFICIAL_STORE" ? "EXCLUSIVE" : rawType;
   const tier = searchParams.get("tier");
   const query = searchParams.get("q")?.toLowerCase();
 

@@ -46,6 +46,8 @@ export function OutletsView() {
   const [outlets, setOutlets] = useState<MarcomOutlet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<string>("ALL");
+  const [selectedType, setSelectedType] = useState<string>("ALL");
   const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>([]);
   const [modalOutlet, setModalOutlet] = useState<Partial<MarcomOutlet> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -53,28 +55,55 @@ export function OutletsView() {
   const canManage = can("MANAGE_MASTER_DATA");
   const canAddOutlet = canManage || role !== "viewer";
 
-  const fetchOutlets = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [resOutlets, resBranches] = await Promise.all([fetch("/api/marcom/outlets"), fetch("/api/marcom/branches")]);
-      if (!resOutlets.ok) throw new Error(`Request failed (${resOutlets.status})`);
-      const jsonOutlets = await resOutlets.json();
-      setOutlets(Array.isArray(jsonOutlets.data) ? jsonOutlets.data : []);
-      if (resBranches.ok) {
-        const jsonBranches = await resBranches.json();
-        setBranches(Array.isArray(jsonBranches.data) ? jsonBranches.data : []);
+  const fetchOutlets = useCallback(
+    async (branchFilter = selectedBranch, typeFilter = selectedType) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams();
+        if (branchFilter && branchFilter !== "ALL") params.set("branchId", branchFilter);
+        if (typeFilter && typeFilter !== "ALL") params.set("type", typeFilter);
+        const outletsUrl = `/api/marcom/outlets${params.toString() ? `?${params.toString()}` : ""}`;
+
+        const [resOutlets, resBranches] = await Promise.all([
+          fetch(outletsUrl),
+          fetch("/api/marcom/branches"),
+        ]);
+        if (!resOutlets.ok) throw new Error(`Request failed (${resOutlets.status})`);
+        const jsonOutlets = await resOutlets.json();
+        setOutlets(Array.isArray(jsonOutlets.data) ? jsonOutlets.data : []);
+        if (resBranches.ok) {
+          const jsonBranches = await resBranches.json();
+          setBranches(Array.isArray(jsonBranches.data) ? jsonBranches.data : []);
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load outlets");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load outlets");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [selectedBranch, selectedType],
+  );
 
   useEffect(() => {
-    fetchOutlets();
-  }, [fetchOutlets]);
+    fetchOutlets(selectedBranch, selectedType);
+  }, [fetchOutlets, selectedBranch, selectedType]);
+
+  const handleBranchChange = (newBranch: string) => {
+    setSelectedBranch(newBranch);
+    fetchOutlets(newBranch, selectedType);
+  };
+
+  const handleTypeChange = (newType: string) => {
+    setSelectedType(newType);
+    fetchOutlets(selectedBranch, newType);
+  };
+
+  const handleResetFilters = () => {
+    setSelectedBranch("ALL");
+    setSelectedType("ALL");
+    fetchOutlets("ALL", "ALL");
+  };
 
   const columns = useMemo(
     () =>
@@ -271,6 +300,50 @@ export function OutletsView() {
         addLabel="Add Outlet"
         addIcon={Plus}
         addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
+        filterBar={
+          <div className="flex flex-wrap items-center gap-2.5 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-slate-500 dark:text-slate-400">Branch:</span>
+              <select
+                value={selectedBranch}
+                onChange={(e) => handleBranchChange(e.target.value)}
+                aria-label="Filter by branch"
+                className="max-w-[190px] sm:max-w-[240px] px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 truncate cursor-pointer"
+              >
+                <option value="ALL">All Branches</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name} ({b.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-slate-500 dark:text-slate-400">Store Type:</span>
+              <select
+                value={selectedType}
+                onChange={(e) => handleTypeChange(e.target.value)}
+                aria-label="Filter by store type"
+                className="px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+              >
+                <option value="ALL">All Store Types</option>
+                <option value="TRADITIONAL">Traditional</option>
+                <option value="MODERN_RETAIL">Modern Retail</option>
+                <option value="EXCLUSIVE">Official Store / Exclusive</option>
+                <option value="CAMPUS_OUTLET">Campus Outlet</option>
+              </select>
+            </div>
+            {(selectedBranch !== "ALL" || selectedType !== "ALL") && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 underline font-medium cursor-pointer"
+              >
+                Reset Filters
+              </button>
+            )}
+          </div>
+        }
         renderExpanded={(outlet) => (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
@@ -306,7 +379,7 @@ export function OutletsView() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setMarcomFilter("outlets", outlet.branch?.name || "");
+                        handleBranchChange(outlet.branchId);
                       }}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
                     >

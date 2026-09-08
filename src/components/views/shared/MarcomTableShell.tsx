@@ -73,6 +73,7 @@ interface MarcomTableShellProps<T extends object & { id: string }> {
   addIcon?: React.ComponentType<{ className?: string }>;
   addClassName?: string;
   headerExtra?: React.ReactNode;
+  filterBar?: React.ReactNode;
   // expansion
   renderExpanded?: (row: T) => React.ReactNode;
   getIsExpanded?: (row: T) => boolean;
@@ -105,6 +106,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
   addIcon: AddIcon,
   addClassName,
   headerExtra,
+  filterBar,
   renderExpanded,
   searchTerm,
   onSearchChange,
@@ -265,6 +267,13 @@ export function MarcomTableShell<T extends object & { id: string }>({
           />
         </div>
       </div>
+
+      {/* Structured Filter Bar */}
+      {filterBar && (
+        <div className="flex flex-wrap items-center gap-2.5 mb-3 p-2 sm:p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60">
+          {filterBar}
+        </div>
+      )}
 
       {/* Bulk Action Bar */}
       {selectedRowIds.length > 0 && (
