@@ -37,11 +37,11 @@ test("setSelectedBranchId opens and closes branch detail drawer target", () => {
 });
 
 test("outlets API normalizes OFFICIAL_STORE alias to EXCLUSIVE", () => {
-  const rawType = "OFFICIAL_STORE";
+  const rawType: string = "OFFICIAL_STORE";
   const normalizedType = rawType === "OFFICIAL_STORE" ? "EXCLUSIVE" : rawType;
   assert.equal(normalizedType, "EXCLUSIVE");
 
-  const standardType = "MODERN_RETAIL";
+  const standardType: string = "MODERN_RETAIL";
   const normalizedStandard = standardType === "OFFICIAL_STORE" ? "EXCLUSIVE" : standardType;
   assert.equal(normalizedStandard, "MODERN_RETAIL");
 });
@@ -231,6 +231,41 @@ test("Campaigns & Content unified segregation and KPI calculations", () => {
   assert.equal(socialQueueCount, 2); // c1, c2 (c3 cancelled)
   assert.equal(totalCommittedBudget, 65000000); // e1 (45m) + e2 (20m)
   assert.equal(totalReach, 1200); // 800 + 400
+});
+
+test("navigateToMarcom navigates to events with search filter", () => {
+  api().navigateToMarcom("events", "Viral Reels Showcase");
+  assert.equal(api().activeView, "events");
+  assert.equal(api().marcomFilters["events"], "Viral Reels Showcase");
+});
+
+test("unified command palette fuzzy search across Tasks, Outlets, Branches, MOUs, and Campaigns", async () => {
+  // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
+  const { fuzzyFilter } = await import("../productivity/fuzzy.ts");
+
+  const sampleMasterData = [
+    { type: "task", name: "Fix login authentication", detail: "General / Core" },
+    { type: "branch", name: "Bandung Hub", detail: "West Java" },
+    { type: "outlet", name: "Toko Berkah Elektronik", detail: "Bandung Hub" },
+    { type: "mou", name: "PT Mitra Solusi Digital", detail: "APPROVED" },
+    { type: "campaign", name: "Viral Reels Launch", detail: "Campaign • Content" },
+  ];
+
+  // Test fuzzy search on each domain
+  const taskHits = fuzzyFilter("auth", sampleMasterData, (i) => [i.name, i.detail]);
+  assert.equal(taskHits[0]?.name, "Fix login authentication");
+
+  const branchHits = fuzzyFilter("bandung", sampleMasterData, (i) => [i.name, i.detail]);
+  assert.ok(branchHits.some((h) => h.name === "Bandung Hub"));
+
+  const outletHits = fuzzyFilter("berkah", sampleMasterData, (i) => [i.name, i.detail]);
+  assert.equal(outletHits[0]?.name, "Toko Berkah Elektronik");
+
+  const mouHits = fuzzyFilter("mitra", sampleMasterData, (i) => [i.name, i.detail]);
+  assert.equal(mouHits[0]?.name, "PT Mitra Solusi Digital");
+
+  const campaignHits = fuzzyFilter("reels", sampleMasterData, (i) => [i.name, i.detail]);
+  assert.equal(campaignHits[0]?.name, "Viral Reels Launch");
 });
 
 

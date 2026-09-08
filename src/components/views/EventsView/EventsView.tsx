@@ -27,6 +27,7 @@ import {
   TableProperties,
   MapPin,
   Building2,
+  Search,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -209,6 +210,8 @@ export function EventsView({
     tags,
     isCreatePostModalOpen,
     setCreatePostModalOpen,
+    marcomFilters,
+    setMarcomFilter,
   } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
@@ -635,6 +638,7 @@ export function EventsView({
 
   // Filtered Activities
   const filteredEvents = useMemo(() => {
+    const q = (marcomFilters["events"] || "").trim().toLowerCase();
     return events.filter((e) => {
       const isSocial = isSocialActivity(e);
       if (channelFilter === "social" && !isSocial) return false;
@@ -644,9 +648,20 @@ export function EventsView({
         if (e.postPlatform !== selectedPlatform) return false;
       }
 
+      if (q) {
+        const matches =
+          e.name.toLowerCase().includes(q) ||
+          (e.location && e.location.toLowerCase().includes(q)) ||
+          (e.branchName && e.branchName.toLowerCase().includes(q)) ||
+          (e.picName && e.picName.toLowerCase().includes(q)) ||
+          (e.eventType && e.eventType.toLowerCase().includes(q)) ||
+          (e.notes && e.notes.toLowerCase().includes(q));
+        if (!matches) return false;
+      }
+
       return true;
     });
-  }, [events, channelFilter, selectedPlatform]);
+  }, [events, channelFilter, selectedPlatform, marcomFilters]);
 
   // Unified KPI Summary
   const kpiItems = useMemo(() => {
@@ -1538,6 +1553,18 @@ export function EventsView({
             </button>
           </div>
 
+          {/* Quick Search */}
+          <div className="relative hidden sm:flex items-center">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
+            <input
+              type="search"
+              placeholder="Search activities..."
+              value={marcomFilters["events"] || ""}
+              onChange={(e) => setMarcomFilter("events", e.target.value)}
+              className="w-44 lg:w-56 pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
           {/* Unified Create Button */}
           {canManage && (
             <button
@@ -1830,6 +1857,8 @@ export function EventsView({
           addIcon={Plus}
           addClassName="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-pink-600 to-indigo-600 hover:from-pink-700 hover:to-indigo-700 transition-all shadow-xs cursor-pointer"
           kpiBar={<KpiSummaryCards items={kpiItems} />}
+          searchTerm={marcomFilters["events"] || ""}
+          onSearchChange={(val) => setMarcomFilter("events", val)}
           renderExpanded={(activity) => {
             const isSocial = isSocialActivity(activity);
             return (

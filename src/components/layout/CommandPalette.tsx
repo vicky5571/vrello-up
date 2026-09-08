@@ -42,6 +42,7 @@ import { Priority, ViewMode } from "@/types";
 
 interface MarcomHit {
   id: string;
+  rawId: string;
   name: string;
   detail?: string;
 }
@@ -49,7 +50,7 @@ interface MarcomHit {
 interface PaletteItem {
   id: string;
   title: string;
-  category: "tasks" | "branches" | "outlets" | "mous" | "navigation" | "views" | "actions";
+  category: "tasks" | "branches" | "outlets" | "mous" | "campaigns" | "navigation" | "views" | "actions";
   subtitle?: string;
   icon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   iconColor?: string;
@@ -71,6 +72,8 @@ export function CommandPalette() {
     setActiveList,
     setActiveView,
     setSelectedTaskId,
+    setSelectedBranchId,
+    navigateToMarcom,
     toggleSidebar,
     setCreateTaskModalOpen,
     setExportCenterOpen,
@@ -83,6 +86,7 @@ export function CommandPalette() {
   const [branches, setBranches] = useState<MarcomHit[]>([]);
   const [outlets, setOutlets] = useState<MarcomHit[]>([]);
   const [mous, setMous] = useState<MarcomHit[]>([]);
+  const [campaigns, setCampaigns] = useState<MarcomHit[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -124,7 +128,7 @@ export function CommandPalette() {
     }
   }, [isCommandPaletteOpen]);
 
-  // Marcom directory for universal jump: branches, outlets, MOUs.
+  // Marcom directory for universal jump: branches, outlets, MOUs, campaigns.
   // Fetched lazily on open; failures degrade to tasks/navigation/views.
   useEffect(() => {
     if (!isCommandPaletteOpen) return;
@@ -137,19 +141,21 @@ export function CommandPalette() {
           const name =
             [r.partnerName, r.name].find((v) => typeof v === "string") || rawId;
           const detail =
-            [r.code, r.status, r.city].find((v) => typeof v === "string") || undefined;
-          return { id: `${prefix}${rawId}`, name, detail };
+            [r.code, r.status, r.city, r.eventType, r.branchName].find((v) => typeof v === "string") || undefined;
+          return { id: `${prefix}${rawId}`, rawId, name, detail };
         })
         .filter((h) => !!h.name);
     Promise.all([
       fetch("/api/marcom/branches").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
       fetch("/api/marcom/outlets").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
       fetch("/api/marcom/mous").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
-    ]).then(([b, o, m]) => {
+      fetch("/api/marcom/events").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+    ]).then(([b, o, m, e]) => {
       if (cancelled) return;
       setBranches(pick("branch:", b.data));
       setOutlets(pick("outlet:", o.data));
       setMous(pick("mou:", m.data));
+      setCampaigns(pick("campaign:", e.data));
     });
     return () => {
       cancelled = true;
@@ -280,7 +286,7 @@ export function CommandPalette() {
       }
     }
 
-    // 2b. Marcom directory (fuzzy jump to branches, outlets, MOUs)
+    // 2b. Marcom directory (fuzzy jump to branches, outlets, MOUs, campaigns)
     const marcomSections: {
       rows: MarcomHit[];
       category: PaletteItem["category"];
@@ -291,6 +297,7 @@ export function CommandPalette() {
       { rows: branches, category: "branches", view: "branches", viewLabel: "Branch", icon: Building2 },
       { rows: outlets, category: "outlets", view: "outlets", viewLabel: "Outlet", icon: Store },
       { rows: mous, category: "mous", view: "mous", viewLabel: "MOU", icon: FileText },
+      { rows: campaigns, category: "campaigns", view: "events", viewLabel: "Campaign", icon: Megaphone },
     ];
     for (const section of marcomSections) {
       fuzzyFilter(q, section.rows, (r) => [r.name, r.detail ?? ""], 4).forEach((hit) => {
@@ -301,7 +308,10 @@ export function CommandPalette() {
           subtitle: hit.detail ? `${section.viewLabel} • ${hit.detail}` : section.viewLabel,
           icon: section.icon,
           onSelect: () => {
-            setActiveView(section.view);
+            navigateToMarcom(section.view, hit.name);
+            if (section.category === "branches" && hit.rawId) {
+              setSelectedBranchId(hit.rawId);
+            }
             closeCommandPalette();
           },
         });
@@ -369,6 +379,14 @@ export function CommandPalette() {
         keywords: "mou mous partnerships",
         icon: FileText,
         onSelect: goTo("mous"),
+      },
+      {
+        id: "action-goto-campaigns",
+        title: "Go to Campaigns & Content",
+        subtitle: "Open marketing campaigns and social media calendar",
+        keywords: "campaigns events content marketing social",
+        icon: Megaphone,
+        onSelect: goTo("events"),
       },
       {
         id: "action-goto-reports",
@@ -450,11 +468,14 @@ export function CommandPalette() {
     branches,
     outlets,
     mous,
+    campaigns,
     currentWorkspace,
     allStatuses,
     theme,
     setTheme,
     setSelectedTaskId,
+    setSelectedBranchId,
+    navigateToMarcom,
     setActiveSpace,
     setActiveList,
     setActiveView,
@@ -524,6 +545,7 @@ export function CommandPalette() {
     branches: "Branches",
     outlets: "Outlets",
     mous: "MOUs",
+    campaigns: "Campaigns & Content",
     navigation: "Spaces & Lists",
     views: "Switch View",
     actions: "Actions",
@@ -568,11 +590,11 @@ export function CommandPalette() {
                 aria-controls="cmd-palette-listbox"
                 aria-activedescendant={`cmd-option-${selectedIndex}`}
                 aria-autocomplete="list"
-                aria-label="Search tasks, branches, outlets, MOUs, and actions"
+                aria-label="Search tasks, branches, outlets, MOUs, campaigns, and actions"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type a command or search tasks, spaces, views..."
+                placeholder="Type a command or search tasks, branches, outlets, MOUs, campaigns..."
                 className="flex-1 bg-transparent text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden"
               />
               {query && (
