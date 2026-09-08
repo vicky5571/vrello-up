@@ -125,7 +125,6 @@ export function MarcomTableShell<T extends object & { id: string }>({
     data: filteredData,
     columnResizeMode: "onChange",
     enableColumnResizing: true,
-    // @ts-expect-error — v9 types narrow sortingFns to feature map, runtime needs it for alphanumeric
     sortingFns: sortFns as any,
     state: { sorting, rowSelection, columnSizing },
     onSortingChange: setSorting,

@@ -498,6 +498,7 @@ interface WorkspaceState {
   isSidebarOpen: boolean;
   isCommandPaletteOpen: boolean;
   isCreateTaskModalOpen: boolean;
+  isCreatePostModalOpen: boolean;
   isAiDrawerOpen: boolean;
   isHelpDocsOpen: boolean;
   isFilterBarOpen: boolean;
@@ -511,6 +512,7 @@ interface WorkspaceState {
   closeCommandPalette: () => void;
   setAiDrawerOpen: (open: boolean) => void;
   setCreateTaskModalOpen: (open: boolean) => void;
+  setCreatePostModalOpen: (open: boolean) => void;
   setHelpDocsOpen: (open: boolean) => void;
   setFilterBarOpen: (open: boolean) => void;
   setExportCenterOpen: (open: boolean) => void;
@@ -863,6 +865,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       isSidebarOpen: true,
       isCommandPaletteOpen: false,
       isCreateTaskModalOpen: false,
+      isCreatePostModalOpen: false,
       isAiDrawerOpen: false,
       isHelpDocsOpen: false,
       isFilterBarOpen: true,
@@ -1065,6 +1068,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       closeCommandPalette: () => set({ isCommandPaletteOpen: false }),
       setAiDrawerOpen: (open) => set({ isAiDrawerOpen: open }),
       setCreateTaskModalOpen: (open) => set({ isCreateTaskModalOpen: open }),
+      setCreatePostModalOpen: (open) => set({ isCreatePostModalOpen: open }),
       setHelpDocsOpen: (open) => set({ isHelpDocsOpen: open }),
       setFilterBarOpen: (open) => set({ isFilterBarOpen: open }),
       setExportCenterOpen: (open) => set({ isExportCenterOpen: open }),

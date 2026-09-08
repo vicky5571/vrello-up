@@ -51,6 +51,7 @@ export function FilterBar() {
     activeWorkspaceId,
     activeView,
     tags,
+    setCreatePostModalOpen,
   } = useWorkspaceStore();
 
   const [searchValue, setSearchValue] = useState(filters.search);
@@ -607,10 +608,16 @@ export function FilterBar() {
             )}
           </div>
 
-          {/* ClickUp Solid Add Task CTA / Plan Post CTA */}
+          {/* ClickUp Solid Add Task CTA / New Post CTA */}
           <button
             type="button"
-            onClick={() => setIsCreateTaskOpen(true)}
+            onClick={() => {
+              if (activeView === "content") {
+                setCreatePostModalOpen(true);
+              } else {
+                setIsCreateTaskOpen(true);
+              }
+            }}
             className={cn(
               "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold text-white transition-all cursor-pointer shadow-2xs ml-1",
               activeView === "content"
@@ -623,7 +630,7 @@ export function FilterBar() {
             ) : (
               <Plus className="w-3.5 h-3.5" />
             )}
-            <span>{activeView === "content" ? "Plan Post" : "Add Task"}</span>
+            <span>{activeView === "content" ? "New Post" : "Add Task"}</span>
             <ChevronDown className={cn(
               "w-3 h-3 ml-0.5",
               activeView === "content" ? "text-pink-200" : "text-slate-400 dark:text-slate-600"
@@ -636,7 +643,6 @@ export function FilterBar() {
       <CreateTaskModal
         isOpen={isCreateTaskOpen}
         onClose={() => setIsCreateTaskOpen(false)}
-        initialPostOptions={activeView === "content"}
       />
     </>
   );

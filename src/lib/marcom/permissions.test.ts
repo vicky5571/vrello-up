@@ -15,18 +15,18 @@ test("resolves the active member's role", () => {
   assert.equal(resolveMarcomRole(roster, "user-3"), "viewer");
 });
 
-test("unknown members default to viewer (fail-closed)", () => {
-  assert.equal(resolveMarcomRole(roster, "google-user-9"), "viewer");
-  assert.equal(resolveMarcomRole([], "user-1"), "viewer");
+test("unknown members default to staff (demo/signed-in fallback)", () => {
+  assert.equal(resolveMarcomRole(roster, "google-user-9"), "staff");
+  assert.equal(resolveMarcomRole([], "user-1"), "staff");
 });
 
-test("members without a recognized role default to viewer", () => {
+test("members without a recognized role default to staff", () => {
   assert.equal(
     resolveMarcomRole([{ id: "user-x", role: "owner" }], "user-x"),
-    "viewer",
+    "staff",
   );
   assert.equal(
     resolveMarcomRole([{ id: "user-x", role: undefined }], "user-x"),
-    "viewer",
+    "staff",
   );
 });

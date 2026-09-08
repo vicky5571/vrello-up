@@ -132,12 +132,15 @@ const TrashModal = dynamic(
 
 const NO_FILTER_BAR_VIEWS = new Set<string>([
   "home",
-  "mous",
-  "documents",
-  "placements",
+  "channel",
+  "branches",
   "outlets",
-  "analytics",
+  "placements",
+  "mous",
+  "events",
+  "documents",
   "reports",
+  "analytics",
 ]);
 
 export default function WorkspacePage() {
