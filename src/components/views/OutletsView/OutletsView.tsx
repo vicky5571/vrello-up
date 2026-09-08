@@ -18,7 +18,7 @@ export interface MarcomOutlet {
   code: string;
   name: string;
   type: OutletType;
-  tier: OutletTier;
+  tier?: OutletTier;
   address: string;
   city: string;
   picName: string;
@@ -134,13 +134,6 @@ export function OutletsView() {
             </span>
           ),
         }),
-        columnHelper.accessor("tier", {
-          id: "tier",
-          header: "Tier",
-          size: 90,
-          minSize: 70,
-          cell: ({ row }) => <span className="text-slate-700 dark:text-slate-300">{row.original.tier.replaceAll("_", " ")}</span>,
-        }),
         columnHelper.accessor("city", { id: "city", header: "City", size: 140, minSize: 100 }),
         columnHelper.display({
           id: "branch",
@@ -191,7 +184,7 @@ export function OutletsView() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, name, type, tier, branchId, city: city || "", address: address || "", picName: picName || "", picPhone: picPhone || "" }),
+        body: JSON.stringify({ code, name, type, tier: modalOutlet.tier || "TIER_1", branchId, city: city || "", address: address || "", picName: picName || "", picPhone: picPhone || "" }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -230,7 +223,7 @@ export function OutletsView() {
         deleteRequiresMessage="Delete requires admin role"
         onDeleteOne={deleteOne}
         canAdd={canAddOutlet}
-        onAdd={() => setModalOutlet({ code: "", name: "", type: "TRADITIONAL", tier: "TIER_1", branchId: branches[0]?.id || "", city: "", address: "", picName: "", picPhone: "" })}
+        onAdd={() => setModalOutlet({ code: "", name: "", type: "TRADITIONAL", branchId: branches[0]?.id || "", city: "", address: "", picName: "", picPhone: "" })}
         addLabel="Add Outlet"
         addIcon={Plus}
         addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
@@ -289,11 +282,11 @@ export function OutletsView() {
                   </select>
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Outlet Name *</label>
-                <input type="text" required placeholder="e.g. Toko Berkah Mandiri" value={modalOutlet.name || ""} onChange={(e) => setModalOutlet({ ...modalOutlet, name: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500" />
-              </div>
               <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Outlet Name *</label>
+                  <input type="text" required placeholder="e.g. Toko Berkah Mandiri" value={modalOutlet.name || ""} onChange={(e) => setModalOutlet({ ...modalOutlet, name: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500" />
+                </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Type *</label>
                   <select value={modalOutlet.type || "TRADITIONAL"} onChange={(e) => setModalOutlet({ ...modalOutlet, type: e.target.value as OutletType })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer">
@@ -301,14 +294,6 @@ export function OutletsView() {
                     <option value="MODERN_RETAIL">Modern Retail</option>
                     <option value="EXCLUSIVE">Exclusive</option>
                     <option value="CAMPUS_OUTLET">Campus Outlet</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tier *</label>
-                  <select value={modalOutlet.tier || "TIER_1"} onChange={(e) => setModalOutlet({ ...modalOutlet, tier: e.target.value as OutletTier })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer">
-                    <option value="TIER_1">Tier 1</option>
-                    <option value="TIER_2">Tier 2</option>
-                    <option value="TIER_3">Tier 3</option>
                   </select>
                 </div>
               </div>
