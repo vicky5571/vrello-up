@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -360,6 +360,31 @@ export function EventsView({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [editId, isModalOpen, closeModal]);
 
+  // Auto-switch channel to "all" if search filter arrives from external navigation (e.g. Command Palette)
+  // and has matches in other channels but not the currently selected channel tab.
+  const prevEventsFilter = useRef(marcomFilters["events"]);
+  useEffect(() => {
+    if (prevEventsFilter.current !== marcomFilters["events"]) {
+      prevEventsFilter.current = marcomFilters["events"];
+      const q = (marcomFilters["events"] || "").trim().toLowerCase();
+      if (!q || channelFilter === "all" || events.length === 0) return;
+      const hasCurrentHit = events.some((e) => {
+        const isSocial = isSocialActivity(e);
+        if (channelFilter === "social" && !isSocial) return false;
+        if (channelFilter === "on_ground" && isSocial) return false;
+        return (
+          e.name.toLowerCase().includes(q) ||
+          Boolean(e.branchName?.toLowerCase().includes(q)) ||
+          Boolean(e.location?.toLowerCase().includes(q))
+        );
+      });
+      if (!hasCurrentHit) {
+        setChannelFilter("all");
+        setSelectedPlatform("all");
+      }
+    }
+  }, [marcomFilters, events, channelFilter]);
+
   const handleDeleteActivity = async () => {
     if (!editId) return;
     if (!confirm("Are you sure you want to delete this activity?")) return;
@@ -639,24 +664,36 @@ export function EventsView({
   // Filtered Activities
   const filteredEvents = useMemo(() => {
     const q = (marcomFilters["events"] || "").trim().toLowerCase();
+    const matchesQuery = (e: MarcomEvent) =>
+      !q ||
+      e.name.toLowerCase().includes(q) ||
+      Boolean(e.location && e.location.toLowerCase().includes(q)) ||
+      Boolean(e.branchName && e.branchName.toLowerCase().includes(q)) ||
+      Boolean(e.picName && e.picName.toLowerCase().includes(q)) ||
+      Boolean(e.eventType && e.eventType.toLowerCase().includes(q)) ||
+      Boolean(e.notes && e.notes.toLowerCase().includes(q));
+
+    const hasChannelMatch =
+      !q ||
+      channelFilter === "all" ||
+      events.some((e) => {
+        const isSocial = isSocialActivity(e);
+        if (channelFilter === "social" && !isSocial) return false;
+        if (channelFilter === "on_ground" && isSocial) return false;
+        return matchesQuery(e);
+      });
+
     return events.filter((e) => {
-      const isSocial = isSocialActivity(e);
-      if (channelFilter === "social" && !isSocial) return false;
-      if (channelFilter === "on_ground" && isSocial) return false;
+      if (!matchesQuery(e)) return false;
 
-      if (channelFilter !== "on_ground" && selectedPlatform !== "all") {
-        if (e.postPlatform !== selectedPlatform) return false;
-      }
+      if (hasChannelMatch) {
+        const isSocial = isSocialActivity(e);
+        if (channelFilter === "social" && !isSocial) return false;
+        if (channelFilter === "on_ground" && isSocial) return false;
 
-      if (q) {
-        const matches =
-          e.name.toLowerCase().includes(q) ||
-          (e.location && e.location.toLowerCase().includes(q)) ||
-          (e.branchName && e.branchName.toLowerCase().includes(q)) ||
-          (e.picName && e.picName.toLowerCase().includes(q)) ||
-          (e.eventType && e.eventType.toLowerCase().includes(q)) ||
-          (e.notes && e.notes.toLowerCase().includes(q));
-        if (!matches) return false;
+        if (channelFilter !== "on_ground" && selectedPlatform !== "all") {
+          if (e.postPlatform !== selectedPlatform) return false;
+        }
       }
 
       return true;

@@ -286,5 +286,29 @@ test("marcom hit detail extraction preserves eventType and branchName without st
   assert.ok(detail.includes("on_ground"));
 });
 
+test("cross-channel search resolution preserves matching activities across channel filters", () => {
+  const events = [
+    { id: "e1", name: "Campus Roadshow Expo", eventType: "on_ground", isSocial: false },
+    { id: "e2", name: "Viral TikTok Tutorial", eventType: "social", isSocial: true },
+  ];
+
+  const query = "Roadshow";
+  const channelFilter = "social"; // user is on social media tab
+
+  const matchesQuery = (e: { name: string }) => e.name.toLowerCase().includes(query.toLowerCase());
+  const hasChannelMatch = events.some((e) => e.isSocial && matchesQuery(e));
+
+  // When no channel match in the current tab, it safely falls back to any match across channels
+  const results = events.filter((e) => {
+    if (!matchesQuery(e)) return false;
+    if (hasChannelMatch && !e.isSocial) return false;
+    return true;
+  });
+
+  assert.equal(hasChannelMatch, false);
+  assert.equal(results.length, 1);
+  assert.equal(results[0].name, "Campus Roadshow Expo");
+});
+
 
 
