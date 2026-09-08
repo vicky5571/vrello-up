@@ -505,6 +505,8 @@ interface WorkspaceState {
   isExportCenterOpen: boolean;
   isTrashOpen: boolean;
   lastSeenNotificationsAt: string | null;
+  marcomFilters: Record<string, string>;
+  selectedBranchId: string | null;
 
   // Actions
   setCommandPaletteOpen: (open: boolean) => void;
@@ -523,6 +525,9 @@ interface WorkspaceState {
   setActiveList: (id: string) => void;
   setActiveView: (view: ViewMode) => void;
   setSelectedTaskId: (id: string | null) => void;
+  setSelectedBranchId: (id: string | null) => void;
+  setMarcomFilter: (view: string, query: string) => void;
+  navigateToMarcom: (view: ViewMode, search?: string) => void;
   setCurrentUserId: (id: string) => void;
   toggleSidebar: () => void;
   setFilters: (filters: Partial<FilterOptions>) => void;
@@ -872,6 +877,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       isExportCenterOpen: false,
       isTrashOpen: false,
       lastSeenNotificationsAt: null,
+      marcomFilters: {},
+      selectedBranchId: null,
       presenceByTaskId: {},
       automationEnabled: {
         "rule-1": true,
@@ -1090,6 +1097,19 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set((state) => ({
           selectedTaskId: id,
           lastSelectedTaskId: id ?? state.lastSelectedTaskId,
+        })),
+      setSelectedBranchId: (id) => set({ selectedBranchId: id }),
+      setMarcomFilter: (view, query) =>
+        set((state) => ({
+          marcomFilters: { ...state.marcomFilters, [view]: query },
+        })),
+      navigateToMarcom: (view, search) =>
+        set((state) => ({
+          activeView: view,
+          marcomFilters:
+            search !== undefined
+              ? { ...state.marcomFilters, [view]: search }
+              : state.marcomFilters,
         })),
       setCurrentUserId: (id) => set({ currentUserId: id }),
       toggleSidebar: () =>

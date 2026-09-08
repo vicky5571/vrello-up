@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Building2, Plus, Edit2 } from "lucide-react";
+import { Building2, Plus, Edit2, Store, FileText } from "lucide-react";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import {
   MarcomTableShell,
@@ -22,6 +23,7 @@ export interface MarcomBranch {
   picPhone: string;
   address: string;
   outletCount?: number;
+  mouCount?: number;
   progress?: number;
 }
 
@@ -29,6 +31,7 @@ const columnHelper = createMarcomColumnHelper<MarcomBranch>();
 
 export function BranchesView() {
   const { can, role } = useMarcomPermissions();
+  const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId } = useWorkspaceStore();
 
   const [branches, setBranches] = useState<MarcomBranch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,7 +103,17 @@ export function BranchesView() {
           size: 100,
           minSize: 80,
           cell: ({ row }) => (
-            <span className="font-semibold text-slate-900 dark:text-slate-100">{row.original.code}</span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedBranchId(row.original.id);
+              }}
+              className="font-semibold text-slate-900 dark:text-slate-100 hover:text-cyan-600 dark:hover:text-cyan-400 hover:underline cursor-pointer text-left"
+              title="View branch drawer"
+            >
+              {row.original.code}
+            </button>
           ),
         }),
         columnHelper.accessor("name", {
@@ -109,7 +122,17 @@ export function BranchesView() {
           size: 220,
           minSize: 140,
           cell: ({ row }) => (
-            <span className="truncate text-slate-700 dark:text-slate-300">{row.original.name}</span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedBranchId(row.original.id);
+              }}
+              className="truncate text-slate-700 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium hover:underline cursor-pointer text-left"
+              title="View branch drawer"
+            >
+              {row.original.name}
+            </button>
           ),
         }),
         columnHelper.accessor("region", { id: "region", header: "Region", size: 140, minSize: 100 }),
@@ -117,10 +140,50 @@ export function BranchesView() {
         columnHelper.display({
           id: "outlets",
           header: "Outlets",
+          size: 95,
+          minSize: 75,
+          enableSorting: false,
+          cell: ({ row }) => {
+            const count = row.original.outletCount ?? 0;
+            return (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToMarcom("outlets", row.original.name);
+                }}
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-xs text-orange-600 dark:text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 transition-colors cursor-pointer"
+                title={`Jump to Outlets view filtered to ${row.original.name}`}
+              >
+                <Store className="w-3 h-3" />
+                <span>{count}</span>
+              </button>
+            );
+          },
+        }),
+        columnHelper.display({
+          id: "mous",
+          header: "MOUs",
           size: 90,
           minSize: 70,
           enableSorting: false,
-          cell: ({ row }) => <span className="text-slate-500 dark:text-slate-400">{row.original.outletCount ?? "—"}</span>,
+          cell: ({ row }) => {
+            const count = row.original.mouCount ?? 0;
+            return (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToMarcom("mous", row.original.name);
+                }}
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-xs text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors cursor-pointer"
+                title={`Jump to MOUs view filtered to ${row.original.name}`}
+              >
+                <FileText className="w-3 h-3" />
+                <span>{count}</span>
+              </button>
+            );
+          },
         }),
         columnHelper.display({
           id: "progress",
@@ -163,7 +226,7 @@ export function BranchesView() {
           ),
         }),
       ]),
-    [],
+    [navigateToMarcom, setSelectedBranchId],
   );
 
   const handleSaveBranch = async (e: React.FormEvent) => {
@@ -247,8 +310,43 @@ export function BranchesView() {
                 <div className="text-slate-700 dark:text-slate-300">{branch.picPhone || "—"}</div>
               </div>
             </div>
-            {canAddBranch && (
-              <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-end">
+            <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateToMarcom("outlets", branch.name);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <Store className="w-3.5 h-3.5 text-orange-500" />
+                  <span>View Outlets ({branch.outletCount ?? 0})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateToMarcom("mous", branch.name);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-fuchsia-700 dark:text-fuchsia-300 bg-fuchsia-50 dark:bg-fuchsia-950/40 border border-fuchsia-200 dark:border-fuchsia-800 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/40 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5 text-fuchsia-500" />
+                  <span>View MOUs ({branch.mouCount ?? 0})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedBranchId(branch.id);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-cyan-500" />
+                  <span>Branch Details Drawer</span>
+                </button>
+              </div>
+              {canAddBranch && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -260,10 +358,12 @@ export function BranchesView() {
                   <Edit2 className="w-3.5 h-3.5 text-cyan-600" />
                   <span>Edit Branch</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </>
         )}
+        searchTerm={marcomFilters["branches"] || ""}
+        onSearchChange={(q) => setMarcomFilter("branches", q)}
         emptyLabel="No branches found."
       />
 

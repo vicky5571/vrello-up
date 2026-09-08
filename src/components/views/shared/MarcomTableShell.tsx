@@ -76,6 +76,9 @@ interface MarcomTableShellProps<T extends object & { id: string }> {
   // expansion
   renderExpanded?: (row: T) => React.ReactNode;
   getIsExpanded?: (row: T) => boolean;
+  // search/filter control
+  searchTerm?: string;
+  onSearchChange?: (term: string) => void;
   // empty
   emptyLabel?: string;
 }
@@ -103,6 +106,8 @@ export function MarcomTableShell<T extends object & { id: string }>({
   addClassName,
   headerExtra,
   renderExpanded,
+  searchTerm,
+  onSearchChange,
   emptyLabel = `No ${entityPlural} found.`,
 }: MarcomTableShellProps<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
@@ -110,7 +115,8 @@ export function MarcomTableShell<T extends object & { id: string }>({
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [internalFilter, setInternalFilter] = useState("");
+  const globalFilter = searchTerm !== undefined ? searchTerm : internalFilter;
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
 
   const filteredData = useMemo(() => {
@@ -190,7 +196,11 @@ export function MarcomTableShell<T extends object & { id: string }>({
   const paginatedRows = allRows.slice(start, end);
 
   const handleFilterChange = (v: string) => {
-    setGlobalFilter(v);
+    if (onSearchChange) {
+      onSearchChange(v);
+    } else {
+      setInternalFilter(v);
+    }
     setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 

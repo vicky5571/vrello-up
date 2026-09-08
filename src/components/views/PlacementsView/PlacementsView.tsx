@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardList, Download, Plus, Edit2, CheckSquare } from "lucide-react";
+import { ClipboardList, Download, Plus, Edit2, CheckSquare, Store } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn, formatIDR } from "@/lib/utils";
@@ -39,7 +39,17 @@ const STATUS_STYLES: Record<PlacementStatus, string> = {
 
 export function PlacementsView() {
   const { can } = useMarcomPermissions();
-  const { tasks, createTask, setSelectedTaskId, workspaces, activeWorkspaceId, setExportCenterOpen } = useWorkspaceStore();
+  const {
+    tasks,
+    createTask,
+    setSelectedTaskId,
+    workspaces,
+    activeWorkspaceId,
+    setExportCenterOpen,
+    marcomFilters,
+    setMarcomFilter,
+    navigateToMarcom,
+  } = useWorkspaceStore();
 
   const [placements, setPlacements] = useState<MarcomPlacement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -135,7 +145,25 @@ export function PlacementsView() {
           id: "outlet",
           header: "Outlet",
           size: 220, minSize: 140,
-          cell: ({ row }) => <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{row.original.outlet?.name ?? row.original.outletId}</span>,
+          cell: ({ row }) => {
+            const outletName = row.original.outlet?.name;
+            return (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (outletName) {
+                    navigateToMarcom("outlets", outletName);
+                  }
+                }}
+                className="truncate font-semibold text-slate-900 dark:text-slate-100 hover:text-orange-600 dark:hover:text-orange-400 hover:underline cursor-pointer flex items-center gap-1.5 text-left"
+                title={outletName ? `Jump to Outlets view for "${outletName}"` : undefined}
+              >
+                <Store className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                <span className="truncate">{outletName ?? row.original.outletId}</span>
+              </button>
+            );
+          },
         }),
         columnHelper.display({
           id: "material",
@@ -168,7 +196,7 @@ export function PlacementsView() {
           cell: () => <div className="flex justify-end"><span className="w-4 h-4 text-slate-400 flex items-center justify-center">›</span></div>,
         }),
       ]),
-    [],
+    [navigateToMarcom],
   );
 
   const handleSavePlacement = async (e: React.FormEvent) => {
@@ -269,6 +297,8 @@ export function PlacementsView() {
             </div>
           </>
         )}
+        searchTerm={marcomFilters["placements"] || ""}
+        onSearchChange={(q) => setMarcomFilter("placements", q)}
         emptyLabel="No placements found."
       />
 

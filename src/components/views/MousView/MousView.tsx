@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check } from "lucide-react";
+import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn, formatIDR } from "@/lib/utils";
@@ -43,7 +43,7 @@ const STATUS_STYLES: Record<MouStatus, string> = {
 
 export function MousView() {
   const { can } = useMarcomPermissions();
-  const { setExportCenterOpen } = useWorkspaceStore();
+  const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId, setExportCenterOpen } = useWorkspaceStore();
 
   const [mous, setMous] = useState<MarcomMou[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -189,14 +189,66 @@ export function MousView() {
         columnHelper.display({
           id: "partner",
           header: "Partner",
-          size: 220, minSize: 140,
-          cell: ({ row }) => <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{row.original.partnerName}</span>,
+          size: 190, minSize: 130,
+          cell: ({ row }) => (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMarcomFilter("mous", row.original.partnerName);
+              }}
+              className="truncate font-semibold text-slate-900 dark:text-slate-100 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 hover:underline cursor-pointer text-left"
+              title={`Filter MOUs by partner "${row.original.partnerName}"`}
+            >
+              {row.original.partnerName}
+            </button>
+          ),
+        }),
+        columnHelper.display({
+          id: "outlet",
+          header: "Outlet",
+          size: 170, minSize: 120,
+          enableSorting: false,
+          cell: ({ row }) => {
+            const name = row.original.outletName;
+            if (!name) return <span className="text-slate-400">—</span>;
+            return (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToMarcom("outlets", name);
+                }}
+                className="truncate font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:underline cursor-pointer flex items-center gap-1.5 text-left"
+                title={`Jump to Outlets view for "${name}"`}
+              >
+                <Store className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{name}</span>
+              </button>
+            );
+          },
         }),
         columnHelper.display({
           id: "branch",
           header: "Branch",
-          size: 200, minSize: 140, enableSorting: false,
-          cell: ({ row }) => <span className="truncate text-slate-700 dark:text-slate-300">{row.original.branch?.name ?? row.original.branchId}</span>,
+          size: 170, minSize: 120, enableSorting: false,
+          cell: ({ row }) => {
+            const name = row.original.branch?.name ?? row.original.branchId;
+            return (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedBranchId(row.original.branchId);
+                }}
+                className="truncate text-slate-700 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 hover:underline cursor-pointer flex items-center gap-1.5 text-left"
+                title={`Open branch details for "${name}"`}
+              >
+                <Building2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{name}</span>
+              </button>
+            );
+          },
         }),
         columnHelper.accessor("mouType", { id: "type", header: "Type", size: 160, minSize: 120 }),
         columnHelper.accessor("status", {
@@ -218,7 +270,7 @@ export function MousView() {
           cell: () => <div className="flex justify-end"><span className="w-4 h-4 text-slate-400 flex items-center justify-center">›</span></div>,
         }),
       ]),
-    [],
+    [navigateToMarcom, setMarcomFilter, setSelectedBranchId],
   );
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -340,7 +392,22 @@ export function MousView() {
               </div>
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Outlet</div>
-                <div className="text-slate-700 dark:text-slate-300">{mou.outletName || "—"}</div>
+                {mou.outletName ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateToMarcom("outlets", mou.outletName);
+                    }}
+                    className="inline-flex items-center gap-1 font-semibold text-orange-600 dark:text-orange-400 hover:underline cursor-pointer text-xs"
+                    title={`Jump to Outlets view for "${mou.outletName}"`}
+                  >
+                    <Store className="w-3.5 h-3.5" />
+                    <span>{mou.outletName} →</span>
+                  </button>
+                ) : (
+                  <div className="text-slate-400">—</div>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Document</div>
@@ -351,32 +418,64 @@ export function MousView() {
                 <div className="text-slate-700 dark:text-slate-300">{mou.notes || "—"}</div>
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-end gap-2">
-              {mou.status === "DRAFT" && canCreate && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); handleStatusTransition(mou, "SUBMITTED"); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-colors shadow-2xs cursor-pointer">
-                  <span>Submit for Approval</span>
-                </button>
-              )}
-              {mou.status === "SUBMITTED" && canApprove && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); handleStatusTransition(mou, "APPROVED"); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Approve MOU</span>
-                </button>
-              )}
-              {mou.status === "APPROVED" && canCreate && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); handleStatusTransition(mou, "DONE"); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-colors shadow-2xs cursor-pointer">
-                  <span>Mark Done</span>
-                </button>
-              )}
-              {canCreate && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); setIsBranchDropdownOpen(false); setBranchSearch(""); setModalMou(mou); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
-                  <Edit2 className="w-3.5 h-3.5 text-fuchsia-600" />
-                  <span>Edit MOU</span>
-                </button>
-              )}
+            <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {mou.outletName && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateToMarcom("outlets", mou.outletName);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors shadow-2xs cursor-pointer"
+                  >
+                    <Store className="w-3.5 h-3.5 text-orange-500" />
+                    <span>View Outlet</span>
+                  </button>
+                )}
+                {mou.branch && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedBranchId(mou.branchId);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 transition-colors shadow-2xs cursor-pointer"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-cyan-500" />
+                    <span>Branch Details</span>
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {mou.status === "DRAFT" && canCreate && (
+                  <button type="button" onClick={(e) => { e.stopPropagation(); handleStatusTransition(mou, "SUBMITTED"); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-colors shadow-2xs cursor-pointer">
+                    <span>Submit for Approval</span>
+                  </button>
+                )}
+                {mou.status === "SUBMITTED" && canApprove && (
+                  <button type="button" onClick={(e) => { e.stopPropagation(); handleStatusTransition(mou, "APPROVED"); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Approve MOU</span>
+                  </button>
+                )}
+                {mou.status === "APPROVED" && canCreate && (
+                  <button type="button" onClick={(e) => { e.stopPropagation(); handleStatusTransition(mou, "DONE"); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-colors shadow-2xs cursor-pointer">
+                    <span>Mark Done</span>
+                  </button>
+                )}
+                {canCreate && (
+                  <button type="button" onClick={(e) => { e.stopPropagation(); setIsBranchDropdownOpen(false); setBranchSearch(""); setModalMou(mou); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
+                    <Edit2 className="w-3.5 h-3.5 text-fuchsia-600" />
+                    <span>Edit MOU</span>
+                  </button>
+                )}
+              </div>
             </div>
           </>
         )}
+        searchTerm={marcomFilters["mous"] || ""}
+        onSearchChange={(q) => setMarcomFilter("mous", q)}
         emptyLabel="No MOUs found."
       />
 

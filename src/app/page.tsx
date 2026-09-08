@@ -112,6 +112,13 @@ const TaskDrawer = dynamic(
   () => import("@/components/tasks/TaskDrawer").then((m) => m.TaskDrawer),
   { ssr: false },
 );
+const BranchDetailDrawer = dynamic(
+  () =>
+    import("@/components/branches/BranchDetailDrawer").then(
+      (m) => m.BranchDetailDrawer,
+    ),
+  { ssr: false },
+);
 const AiDrawer = dynamic(
   () => import("@/components/ai/AiDrawer").then((m) => m.AiDrawer),
   { ssr: false },
@@ -409,6 +416,9 @@ export default function WorkspacePage() {
 
       {/* Slide-over Task Detail Drawer */}
       <TaskDrawer />
+
+      {/* Slide-over Branch Detail Drawer */}
+      <BranchDetailDrawer />
 
       {/* AI Assistant Drawer (Brain²) */}
       <AiDrawer />

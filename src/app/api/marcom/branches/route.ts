@@ -35,8 +35,19 @@ export async function GET(request: Request) {
     where.OR = [{ name: contains }, { city: contains }, { code: contains }, { picName: contains }];
   }
 
-  const branches = await prisma.branch.findMany({ where, orderBy: { code: "asc" } });
-  return NextResponse.json({ total: branches.length, data: branches });
+  const branches = await prisma.branch.findMany({
+    where,
+    orderBy: { code: "asc" },
+    include: {
+      _count: { select: { outlets: true, mous: true } },
+    },
+  });
+  const data = branches.map((b) => ({
+    ...b,
+    outletCount: b._count?.outlets ?? 0,
+    mouCount: b._count?.mous ?? 0,
+  }));
+  return NextResponse.json({ total: data.length, data });
 }
 
 export async function POST(request: Request) {

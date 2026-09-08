@@ -20,6 +20,39 @@ async function requireMasterData() {
   }
 }
 
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    await requireMember("ws-main");
+  } catch (e) {
+    if (e instanceof Response) return e;
+    throw e;
+  }
+
+  const { id } = await params;
+  try {
+    const branch = await prisma.branch.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { outlets: true, mous: true } },
+        outlets: { select: { id: true, code: true, name: true, type: true, city: true, active: true }, orderBy: { code: "asc" } },
+        mous: { select: { id: true, partnerName: true, mouType: true, status: true, compensationValue: true }, orderBy: { id: "desc" } },
+      },
+    });
+    if (!branch) {
+      return NextResponse.json({ error: "Branch not found" }, { status: 404 });
+    }
+    return NextResponse.json({
+      data: {
+        ...branch,
+        outletCount: branch._count.outlets,
+        mouCount: branch._count.mous,
+      },
+    });
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Failed to fetch branch" }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireMasterData();

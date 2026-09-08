@@ -46,9 +46,16 @@ export async function GET(request: Request) {
   const outlets = await prisma.outlet.findMany({
     where,
     orderBy: { code: "asc" },
-    include: { branch: { select: { id: true, code: true, name: true } } },
+    include: {
+      branch: { select: { id: true, code: true, name: true, city: true, region: true, picName: true, picPhone: true, address: true } },
+      _count: { select: { placements: true } },
+    },
   });
-  return NextResponse.json({ total: outlets.length, data: outlets });
+  const data = outlets.map((o) => ({
+    ...o,
+    placementCount: o._count?.placements ?? 0,
+  }));
+  return NextResponse.json({ total: data.length, data });
 }
 
 export async function POST(request: Request) {

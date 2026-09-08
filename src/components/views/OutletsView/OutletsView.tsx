@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Store, Plus, Edit2 } from "lucide-react";
+import { Store, Plus, Edit2, Building2, ClipboardList, Filter } from "lucide-react";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn } from "@/lib/utils";
 import {
@@ -26,6 +27,7 @@ export interface MarcomOutlet {
   active: boolean;
   branchId: string;
   branch?: { id: string; code: string; name: string };
+  placementCount?: number;
 }
 
 const columnHelper = createMarcomColumnHelper<MarcomOutlet>();
@@ -39,6 +41,7 @@ const TYPE_STYLES: Record<OutletType, string> = {
 
 export function OutletsView() {
   const { can, role } = useMarcomPermissions();
+  const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId } = useWorkspaceStore();
 
   const [outlets, setOutlets] = useState<MarcomOutlet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -138,10 +141,51 @@ export function OutletsView() {
         columnHelper.display({
           id: "branch",
           header: "Branch",
-          size: 180,
-          minSize: 120,
+          size: 190,
+          minSize: 130,
           enableSorting: false,
-          cell: ({ row }) => <span className="truncate text-slate-700 dark:text-slate-300">{row.original.branch?.name ?? "—"}</span>,
+          cell: ({ row }) => {
+            const branch = row.original.branch;
+            if (!branch) return <span className="text-slate-400">—</span>;
+            return (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedBranchId(row.original.branchId);
+                }}
+                className="truncate font-semibold text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 hover:underline cursor-pointer flex items-center gap-1.5 text-left"
+                title={`Open ${branch.name} detail drawer`}
+              >
+                <Building2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{branch.name}</span>
+              </button>
+            );
+          },
+        }),
+        columnHelper.display({
+          id: "placements",
+          header: "Placements",
+          size: 110,
+          minSize: 80,
+          enableSorting: false,
+          cell: ({ row }) => {
+            const count = row.original.placementCount ?? 0;
+            return (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToMarcom("placements", row.original.name);
+                }}
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-xs text-lime-600 dark:text-lime-400 bg-lime-500/10 hover:bg-lime-500/20 transition-colors cursor-pointer"
+                title={`Jump to Placements view for ${row.original.name}`}
+              >
+                <ClipboardList className="w-3 h-3" />
+                <span>{count}</span>
+              </button>
+            );
+          },
         }),
         columnHelper.display({
           id: "active",
@@ -165,7 +209,7 @@ export function OutletsView() {
           cell: () => <div className="flex justify-end"><span className="w-4 h-4 text-slate-400 flex items-center justify-center">›</span></div>,
         }),
       ]),
-    [],
+    [navigateToMarcom, setSelectedBranchId],
   );
 
   const handleSaveOutlet = async (e: React.FormEvent) => {
@@ -243,16 +287,57 @@ export function OutletsView() {
                 <div className="text-slate-700 dark:text-slate-300">{outlet.picPhone || "—"}</div>
               </div>
             </div>
-            {canAddOutlet && (
-              <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-end">
+            <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {outlet.branch && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedBranchId(outlet.branchId);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 transition-colors shadow-2xs cursor-pointer"
+                    >
+                      <Building2 className="w-3.5 h-3.5 text-cyan-500" />
+                      <span>Branch Details ({outlet.branch.name})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMarcomFilter("outlets", outlet.branch?.name || "");
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
+                    >
+                      <Filter className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Filter by this Branch</span>
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateToMarcom("placements", outlet.name);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-lime-700 dark:text-lime-300 bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 hover:bg-lime-100 dark:hover:bg-lime-900/40 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <ClipboardList className="w-3.5 h-3.5 text-lime-500" />
+                  <span>View Placements ({outlet.placementCount ?? 0})</span>
+                </button>
+              </div>
+              {canAddOutlet && (
                 <button type="button" onClick={(e) => { e.stopPropagation(); setModalOutlet(outlet); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
                   <Edit2 className="w-3.5 h-3.5 text-orange-600" />
                   <span>Edit Outlet</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </>
         )}
+        searchTerm={marcomFilters["outlets"] || ""}
+        onSearchChange={(q) => setMarcomFilter("outlets", q)}
         emptyLabel="No outlets found."
       />
 
