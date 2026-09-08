@@ -141,7 +141,10 @@ export function CommandPalette() {
           const name =
             [r.partnerName, r.name].find((v) => typeof v === "string") || rawId;
           const detail =
-            [r.code, r.status, r.city, r.eventType, r.branchName].find((v) => typeof v === "string") || undefined;
+            [r.code, r.eventType, r.branchName, r.city, r.status]
+              .filter((v): v is string => typeof v === "string" && v.length > 0)
+              .slice(0, 2)
+              .join(" • ") || undefined;
           return { id: `${prefix}${rawId}`, rawId, name, detail };
         })
         .filter((h) => !!h.name);

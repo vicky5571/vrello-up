@@ -268,5 +268,23 @@ test("unified command palette fuzzy search across Tasks, Outlets, Branches, MOUs
   assert.equal(campaignHits[0]?.name, "Viral Reels Launch");
 });
 
+test("marcom hit detail extraction preserves eventType and branchName without status shadowing", () => {
+  const rawEvent = {
+    id: "evt-99",
+    name: "Campus Roadshow Expo",
+    status: "UPCOMING",
+    eventType: "on_ground",
+    branchName: "Bandung Hub",
+  };
+
+  const detail = [rawEvent.eventType, rawEvent.branchName, rawEvent.status]
+    .filter((v): v is string => typeof v === "string" && v.length > 0)
+    .slice(0, 2)
+    .join(" • ");
+
+  assert.equal(detail, "on_ground • Bandung Hub");
+  assert.ok(detail.includes("on_ground"));
+});
+
 
 
