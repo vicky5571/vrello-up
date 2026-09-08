@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2 } from "lucide-react";
+import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn, formatIDR } from "@/lib/utils";
@@ -10,6 +10,7 @@ import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
+import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
 
 export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE";
 
@@ -365,6 +366,36 @@ export function MousView() {
     return res.ok;
   }, []);
 
+  const kpiItems = useMemo(() => {
+    const activeCount = mous.filter((m) => m.status === "APPROVED").length;
+    const pendingCount = mous.filter((m) => m.status === "SUBMITTED").length;
+    const totalValue = mous.reduce((acc, m) => acc + (m.compensationValue || 0), 0);
+
+    return [
+      {
+        label: "Active MOUs",
+        value: activeCount,
+        helper: "Approved agreements",
+        icon: CheckCircle,
+        color: "emerald" as const,
+      },
+      {
+        label: "Pending Approval",
+        value: pendingCount,
+        helper: "Submitted for review",
+        icon: Clock,
+        color: "amber" as const,
+      },
+      {
+        label: "Total Compensation Value",
+        value: formatIDR(totalValue),
+        helper: "Across all partnerships",
+        icon: Coins,
+        color: "blue" as const,
+      },
+    ];
+  }, [mous]);
+
   return (
     <>
       <MarcomTableShell
@@ -372,13 +403,14 @@ export function MousView() {
         columns={columns}
         getRowId={(row) => row.id}
         initialSorting={[{ id: "partner", desc: false }]}
-        title="MOUs"
+        title="MOUs & Partnerships"
         titleIcon={FileText}
+        countLabel={{ singular: "MOU", plural: "MOUs" }}
         entityName="MOU"
         entityPlural="MOUs"
         isLoading={isLoading}
         error={error}
-        onRefresh={fetchMous}
+        onRefresh={() => fetchMous(selectedStatus)}
         canDelete={canManage}
         deleteRequiresMessage="Delete requires admin role"
         onDeleteOne={deleteOne}
@@ -386,9 +418,9 @@ export function MousView() {
         onAdd={() => {
           setIsBranchDropdownOpen(false);
           setBranchSearch("");
-          setModalMou({ branchId: branches[0]?.id || "", partnerName: "", mouType: "Compensation", outletName: "", startDate: new Date().toISOString().slice(0, 10), endDate: "", picName: "", picPhone: "", docPath: "", compensationValue: undefined, notes: "" });
+          setModalMou({ branchId: branches[0]?.id || "", partnerName: "", mouType: "Compensation", outletName: "", startDate: new Date().toISOString().slice(0, 10), endDate: "", picName: "", picPhone: "", docPath: "", compensationValue: undefined, notes: "", status: "DRAFT" });
         }}
-        addLabel="Add MOU"
+        addLabel="New MOU"
         addIcon={Plus}
         addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors shadow-2xs cursor-pointer"
         headerExtra={
@@ -397,6 +429,7 @@ export function MousView() {
             <span>Export</span>
           </button>
         }
+        kpiBar={<KpiSummaryCards items={kpiItems} />}
         renderExpanded={(mou) => (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">

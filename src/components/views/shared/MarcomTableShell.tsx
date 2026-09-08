@@ -74,6 +74,7 @@ interface MarcomTableShellProps<T extends object & { id: string }> {
   addClassName?: string;
   headerExtra?: React.ReactNode;
   filterBar?: React.ReactNode;
+  kpiBar?: React.ReactNode;
   // expansion
   renderExpanded?: (row: T) => React.ReactNode;
   getIsExpanded?: (row: T) => boolean;
@@ -107,6 +108,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
   addClassName,
   headerExtra,
   filterBar,
+  kpiBar,
   renderExpanded,
   searchTerm,
   onSearchChange,
@@ -208,6 +210,9 @@ export function MarcomTableShell<T extends object & { id: string }>({
 
   return (
     <div className="h-full overflow-y-auto p-4 md:p-6">
+      {/* KPI Summary Cards */}
+      {kpiBar && <div className="mb-4">{kpiBar}</div>}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-3 gap-3">
         <div className="flex items-center gap-2">

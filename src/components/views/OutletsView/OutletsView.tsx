@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Store, Plus, Edit2, Building2, ClipboardList, Filter } from "lucide-react";
+import { Store, Plus, Edit2, Building2, ClipboardList, Filter, Layers } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
+import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
 
 export type OutletType = "TRADITIONAL" | "MODERN_RETAIL" | "EXCLUSIVE" | "CAMPUS_OUTLET";
 export type OutletTier = "TIER_1" | "TIER_2" | "TIER_3";
@@ -278,6 +279,36 @@ export function OutletsView() {
     return res.ok;
   }, []);
 
+  const kpiItems = useMemo(() => {
+    const totalOutlets = outlets.length;
+    const activeBranchesCovered = new Set(outlets.map((o) => o.branchId).filter(Boolean)).size;
+    const placementsInstalled = outlets.reduce((acc, o) => acc + (o.placementCount || 0), 0);
+
+    return [
+      {
+        label: "Total Outlets",
+        value: totalOutlets,
+        helper: "Registered store network",
+        icon: Store,
+        color: "orange" as const,
+      },
+      {
+        label: "Active Branches Covered",
+        value: activeBranchesCovered,
+        helper: "Regional hub coverage",
+        icon: Building2,
+        color: "teal" as const,
+      },
+      {
+        label: "Placements Installed",
+        value: placementsInstalled,
+        helper: "Branding materials active",
+        icon: Layers,
+        color: "emerald" as const,
+      },
+    ];
+  }, [outlets]);
+
   return (
     <>
       <MarcomTableShell
@@ -300,6 +331,7 @@ export function OutletsView() {
         addLabel="Add Outlet"
         addIcon={Plus}
         addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
+        kpiBar={<KpiSummaryCards items={kpiItems} />}
         filterBar={
           <div className="flex flex-wrap items-center gap-2.5 text-xs">
             <div className="flex items-center gap-1.5">

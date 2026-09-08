@@ -19,6 +19,8 @@ import {
   Flame,
   MessageSquare,
   Trash2,
+  Users,
+  Coins,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -29,6 +31,7 @@ import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
+import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
 
 export type EventStatus = "UPCOMING" | "ON_PROGRESS" | "COMPLETED" | "CANCELLED";
 
@@ -412,6 +415,49 @@ export function EventsView({ initialTab = "events" }: { initialTab?: "events" | 
     return res.ok;
   }, []);
 
+  const kpiItems = useMemo(() => {
+    const now = new Date();
+    const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const upcomingCount = events.filter((e) => {
+      if (e.status === "CANCELLED") return false;
+      if (!e.date) return e.status === "UPCOMING";
+      const d = new Date(e.date);
+      return d >= now && d <= in30Days;
+    }).length;
+
+    const totalBudget = events
+      .filter((e) => e.status !== "CANCELLED")
+      .reduce((acc, e) => acc + (e.budget || 0), 0);
+
+    const expectedReach = events
+      .filter((e) => e.status !== "CANCELLED")
+      .reduce((acc, e) => acc + (e.targetAttendee || e.attendeeCount || 0), 0);
+
+    return [
+      {
+        label: "Upcoming (Next 30 Days)",
+        value: upcomingCount,
+        helper: "Scheduled campaign events",
+        icon: Calendar,
+        color: "teal" as const,
+      },
+      {
+        label: "Total Budget Committed",
+        value: formatIDR(totalBudget),
+        helper: "Active event allocations",
+        icon: Coins,
+        color: "amber" as const,
+      },
+      {
+        label: "Expected Reach",
+        value: `${expectedReach.toLocaleString()} attendees`,
+        helper: "Targeted audience total",
+        icon: Users,
+        color: "violet" as const,
+      },
+    ];
+  }, [events]);
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#FAFBFC] dark:bg-[#121316]">
       {/* Tab switcher */}
@@ -444,6 +490,7 @@ export function EventsView({ initialTab = "events" }: { initialTab?: "events" | 
           addLabel="Add Event"
           addIcon={Plus}
           addClassName="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow-xs cursor-pointer"
+          kpiBar={<KpiSummaryCards items={kpiItems} />}
           renderExpanded={(event) => (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">

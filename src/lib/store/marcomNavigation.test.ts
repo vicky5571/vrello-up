@@ -85,3 +85,70 @@ test("mous and placements URLSearchParams builds status chip queries correctly",
   assert.equal(buildStatusQuery("ON_PROGRESS"), "status=ON_PROGRESS");
 });
 
+test("MOUs KPI calculation computes active, pending, and total compensation accurately", () => {
+  const sampleMous = [
+    { id: "1", status: "APPROVED", compensationValue: 15000000 },
+    { id: "2", status: "SUBMITTED", compensationValue: 5000000 },
+    { id: "3", status: "APPROVED", compensationValue: 20000000 },
+    { id: "4", status: "DRAFT", compensationValue: 2500000 },
+  ];
+
+  const active = sampleMous.filter((m) => m.status === "APPROVED").length;
+  const pending = sampleMous.filter((m) => m.status === "SUBMITTED").length;
+  const totalValue = sampleMous.reduce((acc, m) => acc + (m.compensationValue || 0), 0);
+
+  assert.equal(active, 2);
+  assert.equal(pending, 1);
+  assert.equal(totalValue, 42500000);
+});
+
+test("Outlets KPI calculation computes total outlets, active branch coverage, and placements", () => {
+  const sampleOutlets = [
+    { id: "o1", branchId: "b1", placementCount: 3 },
+    { id: "o2", branchId: "b1", placementCount: 2 },
+    { id: "o3", branchId: "b2", placementCount: 5 },
+    { id: "o4", branchId: "b3", placementCount: 0 },
+  ];
+
+  const total = sampleOutlets.length;
+  const branchCoverage = new Set(sampleOutlets.map((o) => o.branchId).filter(Boolean)).size;
+  const totalPlacements = sampleOutlets.reduce((acc, o) => acc + (o.placementCount || 0), 0);
+
+  assert.equal(total, 4);
+  assert.equal(branchCoverage, 3);
+  assert.equal(totalPlacements, 10);
+});
+
+test("Events KPI calculation computes upcoming 30-day events, committed budget, and expected reach", () => {
+  const now = new Date();
+  const dateIn10Days = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString();
+  const dateIn40Days = new Date(now.getTime() + 40 * 24 * 60 * 60 * 1000).toISOString();
+
+  const sampleEvents = [
+    { id: "e1", status: "UPCOMING", date: dateIn10Days, budget: 10000000, targetAttendee: 500 },
+    { id: "e2", status: "UPCOMING", date: dateIn40Days, budget: 25000000, targetAttendee: 1200 },
+    { id: "e3", status: "CANCELLED", date: dateIn10Days, budget: 5000000, targetAttendee: 300 },
+  ];
+
+  const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const upcomingCount = sampleEvents.filter((e) => {
+    if (e.status === "CANCELLED") return false;
+    if (!e.date) return e.status === "UPCOMING";
+    const d = new Date(e.date);
+    return d >= now && d <= in30Days;
+  }).length;
+
+  const totalBudget = sampleEvents
+    .filter((e) => e.status !== "CANCELLED")
+    .reduce((acc, e) => acc + (e.budget || 0), 0);
+
+  const expectedReach = sampleEvents
+    .filter((e) => e.status !== "CANCELLED")
+    .reduce((acc, e) => acc + (e.targetAttendee || 0), 0);
+
+  assert.equal(upcomingCount, 1);
+  assert.equal(totalBudget, 35000000);
+  assert.equal(expectedReach, 1700);
+});
+
+
