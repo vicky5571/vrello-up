@@ -78,205 +78,217 @@ model WorkspaceMember {
   workspaceId String
   email       String
   role        MarcomRole @default(viewer)
+
   @@id([workspaceId, email])
 }
 
 model Branch {
-  id String @id @default(cuid())
-  code String @unique
-  name String
-  region String
-  city String
-  status BranchStatus @default(PENDING)
-  picName String @default("")
-  picPhone String @default("")
-  address String @default("")
-  outlets Outlet[]
-  mous Mou[]
+  id       String       @id @default(cuid())
+  code     String       @unique
+  name     String
+  region   String
+  city     String
+  status   BranchStatus @default(PENDING)
+  picName  String       @default("")
+  picPhone String       @default("")
+  address  String       @default("")
+  outlets  Outlet[]
+  mous     Mou[]
 }
 
 model Outlet {
-  id String @id @default(cuid())
-  code String @unique
-  name String
-  type OutletType
-  tier OutletTier
-  address String @default("")
-  city String @default("")
-  picName String @default("")
-  picPhone String @default("")
-  active Boolean @default(true)
-  branchId String
-  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  id         String      @id @default(cuid())
+  code       String      @unique
+  name       String
+  type       OutletType
+  tier       OutletTier
+  address    String      @default("")
+  city       String      @default("")
+  picName    String      @default("")
+  picPhone   String      @default("")
+  active     Boolean     @default(true)
+  branchId   String
+  branch     Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
   placements Placement[]
 }
 
 model Material {
-  id String @id @default(cuid())
-  type MaterialType
-  name String
+  id         String       @id @default(cuid())
+  type       MaterialType
+  name       String
   placements Placement[]
 }
 
 model Placement {
-  id String @id @default(cuid())
-  outletId String
-  outlet Outlet @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  id         String          @id @default(cuid())
+  outletId   String
+  outlet     Outlet          @relation(fields: [outletId], references: [id], onDelete: Cascade)
   materialId String
-  material Material @relation(fields: [materialId], references: [id])
-  status PlacementStatus @default(NOT_STARTED)
-  date DateTime?
-  picName String @default("")
-  photoUrl String @default("")
-  dimensions String @default("")
-  cost Float @default(0)
-  notes String @default("")
+  material   Material        @relation(fields: [materialId], references: [id])
+  status     PlacementStatus @default(NOT_STARTED)
+  date       DateTime?
+  picName    String          @default("")
+  photoUrl   String          @default("")
+  dimensions String          @default("")
+  cost       Float           @default(0)
+  notes      String          @default("")
 }
 
 model Mou {
-  id String @id @default(cuid())
-  branchId String
-  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  outletName String @default("")
-  partnerName String
-  mouType String
-  submissionDate DateTime?
-  startDate DateTime?
-  endDate DateTime?
-  status MouStatus @default(DRAFT)
-  picName String @default("")
-  picPhone String @default("")
-  docPath String @default("")
-  compensationValue Float @default(0)
-  notes String @default("")
+  id                String    @id @default(cuid())
+  branchId          String
+  branch            Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  outletName        String    @default("")
+  partnerName       String
+  mouType           String
+  submissionDate    DateTime?
+  startDate         DateTime?
+  endDate           DateTime?
+  status            MouStatus @default(DRAFT)
+  picName           String    @default("")
+  picPhone          String    @default("")
+  docPath           String    @default("")
+  compensationValue Float     @default(0)
+  notes             String    @default("")
 }
 
 model MarcomEvent {
-  id String @id @default(cuid())
-  name String
-  date DateTime?
-  endDate DateTime?
-  location String @default("")
-  branchName String @default("")
-  picName String @default("")
-  eventType String
-  status EventStatus @default(UPCOMING)
-  budget Float @default(0)
-  attendeeCount Int @default(0)
-  targetAttendee Int @default(0)
-  notes String @default("")
+  id             String         @id @default(cuid())
+  name           String
+  date           DateTime?
+  endDate        DateTime?
+  location       String         @default("")
+  branchName     String         @default("")
+  picName        String         @default("")
+  eventType      String
+  status         EventStatus    @default(UPCOMING)
+  budget         Float          @default(0)
+  attendeeCount  Int            @default(0)
+  targetAttendee Int            @default(0)
+  notes          String         @default("")
   // Content Planner fields — unified with Events so both use MarcomEvent
-  postPlatform String?
-  postFormat String?
-  mediaUrl String?
-  footage EventFootage[]
+  postPlatform   String?
+  postFormat     String?
+  mediaUrl       String?
+  footage        EventFootage[]
 }
 
 model EventFootage {
-  id String @id @default(cuid())
-  eventId String
-  event MarcomEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  title String
+  id       String      @id @default(cuid())
+  eventId  String
+  event    MarcomEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  title    String
   filePath String
-  duration String @default("")
+  duration String      @default("")
 }
 
 model DocumentItem {
-  id String @id @default(cuid())
-  name String
-  category String
-  period String @default("")
-  branchName String @default("")
-  ownerPic String @default("")
-  status String @default("Draft")
-  fileType DocFileType
-  fileSizeMb Float @default(0)
-  filePath String
-  description String @default("")
+  id          String      @id @default(cuid())
+  name        String
+  category    String
+  period      String      @default("")
+  branchName  String      @default("")
+  ownerPic    String      @default("")
+  status      String      @default("Draft")
+  fileType    DocFileType
+  fileSizeMb  Float       @default(0)
+  filePath    String
+  description String      @default("")
 }
 
 model MonthlyReport {
-  id String @id @default(cuid())
-  month String
-  year Int
-  summary Json @default("{}")
-  activities Json @default("[]")
-  achievements Json @default("[]")
-  keyIssues Json @default("[]")
-  actionPlans Json @default("[]")
+  id           String @id @default(cuid())
+  month        String
+  year         Int
+  summary      Json   @default("{}")
+  activities   Json   @default("[]")
+  achievements Json   @default("[]")
+  keyIssues    Json   @default("[]")
+  actionPlans  Json   @default("[]")
 }
 
 model WorkspaceItem {
-  id String @id @default(cuid())
-  name String
-  avatar String @default("")
-  members Json @default("[]")
-  spaces SpaceItem[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String      @id @default(cuid())
+  name      String
+  avatar    String      @default("")
+  members   Json        @default("[]")
+  spaces    SpaceItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
 
 model SpaceItem {
-  id String @id @default(cuid())
+  id          String        @id @default(cuid())
   workspaceId String
-  workspace WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name String
-  icon String @default("folder")
-  color String @default("#64748B")
-  statuses Json @default("[]")
-  folders Json @default("[]")
-  lists ListItem[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  workspace   WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String
+  icon        String        @default("folder")
+  color       String        @default("#64748B")
+  statuses    Json          @default("[]")
+  folders     FolderItem[]
+  lists       ListItem[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model FolderItem {
+  id        String     @id @default(cuid())
+  spaceId   String
+  space     SpaceItem  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  name      String
+  lists     ListItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model ListItem {
-  id String @id @default(cuid())
-  spaceId String
-  space SpaceItem @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  folderId String?
-  name String
-  color String @default("#64748B")
-  icon String @default("list")
-  tasks TaskItem[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String      @id @default(cuid())
+  spaceId   String
+  space     SpaceItem   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  folderId  String?
+  folder    FolderItem? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  name      String
+  color     String      @default("#64748B")
+  icon      String      @default("list")
+  tasks     TaskItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
 
 model TaskItem {
-  id String @id @default(cuid())
-  listId String
-  list ListItem @relation(fields: [listId], references: [id], onDelete: Cascade)
-  title String
-  description String @default("")
-  statusId String
-  priority String @default("normal")
-  dueDate String?
-  startDate String?
-  estimatedHours Float?
-  orderIndex Int @default(0)
+  id              String            @id @default(cuid())
+  listId          String
+  list            ListItem          @relation(fields: [listId], references: [id], onDelete: Cascade)
+  title           String
+  description     String            @default("")
+  statusId        String
+  priority        String            @default("normal")
+  dueDate         String?
+  startDate       String?
+  estimatedHours  Float?
+  orderIndex      Int               @default(0)
   relatedMarcomId String?
-  postPlatform String?
-  postFormat String?
-  mediaUrl String?
-  progress Float?
-  assignees Json @default("[]")
-  tags Json @default("[]")
-  subtasks Json @default("[]")
-  dependencies Json @default("[]")
-  attachments Json @default("[]")
-  comments TaskCommentItem[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  postPlatform    String?
+  postFormat      String?
+  mediaUrl        String?
+  progress        Float?
+  assignees       Json              @default("[]")
+  tags            Json              @default("[]")
+  subtasks        Json              @default("[]")
+  dependencies    Json              @default("[]")
+  attachments     Json              @default("[]")
+  comments        TaskCommentItem[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 }
 
 model TaskCommentItem {
-  id String @id @default(cuid())
-  taskId String
-  task TaskItem @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  userId String
-  user Json
-  content String
-  attachments Json @default("[]")
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  taskId      String
+  task        TaskItem @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId      String
+  user        Json
+  content     String
+  attachments Json     @default("[]")
+  createdAt   DateTime @default(now())
 }

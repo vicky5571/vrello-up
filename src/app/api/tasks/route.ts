@@ -36,22 +36,14 @@ async function ensureSeedData() {
             icon: "Code2",
             color: "#0D9488",
             statuses: JSON.parse(JSON.stringify(DEFAULT_STATUSES)),
-            folders: [
-              {
-                id: "folder-sprint",
-                spaceId: "space-eng",
-                name: "Sprint 42",
-                lists: [
-                  {
-                    id: "list-sprint-tasks",
-                    spaceId: "space-eng",
-                    folderId: "folder-sprint",
-                    name: "Sprint Backlog",
-                    icon: "ListTodo",
-                  },
-                ],
-              },
-            ],
+            folders: {
+              create: [
+                {
+                  id: "folder-sprint",
+                  name: "Sprint 42",
+                },
+              ],
+            },
             lists: {
               create: [
                 {
@@ -79,7 +71,6 @@ async function ensureSeedData() {
             icon: "Palette",
             color: "#8B5CF6",
             statuses: JSON.parse(JSON.stringify(DEFAULT_STATUSES)),
-            folders: [],
             lists: {
               create: [
                 {
@@ -101,7 +92,6 @@ async function ensureSeedData() {
             icon: "Sparkles",
             color: "#EC4899",
             statuses: JSON.parse(JSON.stringify(DEFAULT_STATUSES)),
-            folders: [],
             lists: {
               create: [
                 {
@@ -207,6 +197,11 @@ export async function GET() {
         include: {
           spaces: {
             include: {
+              folders: {
+                include: {
+                  lists: true,
+                },
+              },
               lists: true,
             },
           },
@@ -228,23 +223,39 @@ export async function GET() {
       name: ws.name,
       avatar: ws.avatar || undefined,
       members: (ws.members as unknown as User[]) || [],
-      spaces: ws.spaces.map((sp) => ({
-        id: sp.id,
-        workspaceId: sp.workspaceId,
-        name: sp.name,
-        icon: sp.icon,
-        color: sp.color,
-        statuses: (sp.statuses as unknown as Status[]) || DEFAULT_STATUSES,
-        folders: (sp.folders as unknown as Folder[]) || [],
-        lists: sp.lists.map((l) => ({
-          id: l.id,
-          spaceId: l.spaceId,
-          folderId: l.folderId || undefined,
-          name: l.name,
-          color: l.color,
-          icon: l.icon,
-        })),
-      })),
+      spaces: ws.spaces.map((sp) => {
+        // Direct lists: lists that do not belong to any folder
+        const directLists = sp.lists.filter((l) => !l.folderId);
+        return {
+          id: sp.id,
+          workspaceId: sp.workspaceId,
+          name: sp.name,
+          icon: sp.icon,
+          color: sp.color,
+          statuses: (sp.statuses as unknown as Status[]) || DEFAULT_STATUSES,
+          folders: sp.folders.map((f) => ({
+            id: f.id,
+            spaceId: f.spaceId,
+            name: f.name,
+            lists: f.lists.map((l) => ({
+              id: l.id,
+              spaceId: l.spaceId,
+              folderId: l.folderId || undefined,
+              name: l.name,
+              color: l.color,
+              icon: l.icon,
+            })),
+          })),
+          lists: directLists.map((l) => ({
+            id: l.id,
+            spaceId: l.spaceId,
+            folderId: undefined,
+            name: l.name,
+            color: l.color,
+            icon: l.icon,
+          })),
+        };
+      }),
     }));
 
     // Format tasks to match frontend Task shape
