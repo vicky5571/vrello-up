@@ -149,12 +149,16 @@ export function TopNav() {
 
   let currentListName = "Project 1";
   if (currentSpace) {
-    const list =
-      currentSpace.lists.find((l) => l.id === activeListId) ||
-      currentSpace.folders
-        .flatMap((f) => f.lists)
-        .find((l) => l.id === activeListId);
-    if (list) currentListName = list.name;
+    if (!activeListId) {
+      currentListName = "All Tasks";
+    } else {
+      const list =
+        currentSpace.lists.find((l) => l.id === activeListId) ||
+        currentSpace.folders
+          .flatMap((f) => f.lists)
+          .find((l) => l.id === activeListId);
+      if (list) currentListName = list.name;
+    }
   }
 
   const toggleFavorite = () => {
@@ -449,6 +453,26 @@ export function TopNav() {
                   <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Lists in {currentSpace?.name}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveList(null);
+                      setIsListMenuOpen(false);
+                      toast.success(`Switched to all tasks in "${currentSpace?.name}"`);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ListIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate font-medium text-slate-700 dark:text-slate-200">
+                        All Tasks
+                      </span>
+                    </div>
+                    {!activeListId && (
+                      <Check className="w-3.5 h-3.5 text-[#0073ea] shrink-0" />
+                    )}
+                  </button>
+                  <div className="my-1 border-t border-slate-200/60 dark:border-slate-800/60" />
                   {allListsInSpace.map((l) => {
                     const isSelected = l.id === activeListId;
                     return (

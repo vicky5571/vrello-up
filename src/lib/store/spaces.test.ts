@@ -1,7 +1,7 @@
 import test, { beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { useWorkspaceStore, DEFAULT_STATUSES } from "./useWorkspaceStore.ts";
+import { useWorkspaceStore, DEFAULT_STATUSES, getSpaceListIds } from "./useWorkspaceStore.ts";
 
 const api = () => useWorkspaceStore.getState();
 
@@ -10,7 +10,7 @@ let snapshot: {
   tasks: ReturnType<typeof api>["tasks"];
   activeWorkspaceId: string;
   activeSpaceId: string;
-  activeListId: string;
+  activeListId: string | null;
 };
 
 beforeEach(() => {
@@ -209,4 +209,148 @@ test("addStatusToSpace appends uppercase status with category in_progress and se
   assert.equal(addedStatus?.color, "#F59E0B");
   assert.equal(addedStatus?.category, "in_progress");
   assert.equal(addedStatus?.order, initialStatusCount);
+});
+
+test("setActiveSpace resets activeListId to null to represent entire space aggregate view", () => {
+  const space = api().createSpace("Aggregate View Space", "Layers", "#3B82F6");
+  const list2 = api().createList(space.id, "Backlog");
+  api().setActiveList(list2.id);
+  assert.equal(api().activeListId, list2.id);
+
+  api().setActiveSpace(space.id);
+  assert.equal(api().activeSpaceId, space.id);
+  assert.equal(api().activeListId, null);
+});
+
+test("getSpaceListIds collects all direct and folder-nested list IDs", () => {
+  const space = api().createSpace("Tree Space", "Layers", "#3B82F6");
+  const directList1 = space.lists[0]; // General
+  const directList2 = api().createList(space.id, "Direct List 2");
+  const folder = api().createFolder(space.id, "Sprint Folder");
+  const folderList = api().createList(space.id, "Folder List 1", folder.id);
+
+  const currentSpace = api().workspaces
+    .flatMap((w) => w.spaces)
+    .find((s) => s.id === space.id);
+
+  const listIds = getSpaceListIds(currentSpace);
+  assert.equal(listIds.length, 3);
+  assert.ok(listIds.includes(directList1.id));
+  assert.ok(listIds.includes(directList2.id));
+  assert.ok(listIds.includes(folderList.id));
+
+  // Should handle null / undefined gracefully
+  assert.deepEqual(getSpaceListIds(null), []);
+  assert.deepEqual(getSpaceListIds(undefined), []);
+});
+
+test("space-level aggregation includes tasks across all lists in space and excludes other spaces", () => {
+  const spaceA = api().createSpace("Space A", "Layers", "#3B82F6");
+  const spaceAList2 = api().createList(spaceA.id, "List A2");
+  const spaceAFolder = api().createFolder(spaceA.id, "Folder A");
+  const spaceAList3 = api().createList(spaceA.id, "List A3", spaceAFolder.id);
+
+  const spaceB = api().createSpace("Space B", "Target", "#EF4444");
+
+  const taskA1 = api().createTask({
+    listId: spaceA.lists[0].id,
+    title: "Task in A1",
+    description: "",
+    statusId: "status-todo",
+    priority: "normal",
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 0,
+  });
+
+  const taskA2 = api().createTask({
+    listId: spaceAList2.id,
+    title: "Task in A2",
+    description: "",
+    statusId: "status-todo",
+    priority: "normal",
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 1,
+  });
+
+  const taskA3 = api().createTask({
+    listId: spaceAList3.id,
+    title: "Task in A3 (Folder)",
+    description: "",
+    statusId: "status-todo",
+    priority: "normal",
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 2,
+  });
+
+  const taskB = api().createTask({
+    listId: spaceB.lists[0].id,
+    title: "Task in Space B",
+    description: "",
+    statusId: "status-todo",
+    priority: "normal",
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 0,
+  });
+
+  // Switch to Space A aggregate view
+  api().setActiveSpace(spaceA.id);
+  assert.equal(api().activeListId, null);
+
+  const currentSpace = api().workspaces
+    .flatMap((w) => w.spaces)
+    .find((s) => s.id === api().activeSpaceId);
+  const spaceListIds = new Set(getSpaceListIds(currentSpace));
+
+  // Filter tasks using view filter logic
+  const aggregateTasks = api().tasks.filter((t) => {
+    if (api().activeListId) {
+      return t.listId === api().activeListId;
+    }
+    return spaceListIds.has(t.listId);
+  });
+
+  const aggregateTaskIds = aggregateTasks.map((t) => t.id);
+  assert.ok(aggregateTaskIds.includes(taskA1.id));
+  assert.ok(aggregateTaskIds.includes(taskA2.id));
+  assert.ok(aggregateTaskIds.includes(taskA3.id));
+  assert.equal(aggregateTaskIds.includes(taskB.id), false);
+
+  // When filtering down to a specific list in Space A
+  api().setActiveList(spaceAList2.id);
+  const specificListTasks = api().tasks.filter((t) => {
+    if (api().activeListId) {
+      return t.listId === api().activeListId;
+    }
+    return spaceListIds.has(t.listId);
+  });
+  assert.equal(specificListTasks.length, 1);
+  assert.equal(specificListTasks[0].id, taskA2.id);
+});
+
+test("createTask defaults listId to active space's first list when activeListId is null", () => {
+  const space = api().createSpace("Auto List Space", "Zap", "#10B981");
+  api().setActiveSpace(space.id);
+  assert.equal(api().activeListId, null);
+
+  // Create task without specifying listId
+  const created = api().createTask({
+    title: "Task created in space aggregate view",
+    description: "",
+    statusId: "status-todo",
+    priority: "normal",
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 0,
+  });
+
+  assert.equal(created.listId, space.lists[0].id);
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useWorkspaceStore, getSpaceListIds } from "@/lib/store/useWorkspaceStore";
 import {
   DndContext,
   DragOverlay,
@@ -52,13 +52,17 @@ export function BoardView() {
     () => currentWorkspace?.members || [],
     [currentWorkspace?.members],
   );
+  const spaceListIds = useMemo(
+    () => new Set(getSpaceListIds(currentSpace)),
+    [currentSpace],
+  );
 
   // Column select-all toggles: add the column when partially selected,
   // remove it when fully selected.
   const handleToggleSelectAll = useCallback(
     (taskIds: string[]) => {
       const selected = new Set(selectedTaskIds);
-      const allSelected = taskIds.every((id) => selected.has(id));
+      const allSelected = taskIds.length > 0 && taskIds.every((id) => selected.has(id));
       if (allSelected) {
         setTaskSelection(selectedTaskIds.filter((id) => !taskIds.includes(id)));
       } else {
@@ -90,11 +94,15 @@ export function BoardView() {
   // Apply filters and sort by orderIndex
   const filteredTasks = useMemo<Task[]>(() => {
     return displayTasks.filter((task: Task) => {
-      if (activeListId && task.listId !== activeListId) return false;
+      if (activeListId) {
+        if (task.listId !== activeListId) return false;
+      } else if (!spaceListIds.has(task.listId)) {
+        return false;
+      }
 
       return matchesFilters(task, filters, statuses);
     });
-  }, [displayTasks, activeListId, filters, statuses]);
+  }, [displayTasks, activeListId, spaceListIds, filters, statuses]);
 
   // Memoize task buckets by status to prevent re-filtering & re-sorting on each render/drag frame
   const tasksByStatus = useMemo(() => {

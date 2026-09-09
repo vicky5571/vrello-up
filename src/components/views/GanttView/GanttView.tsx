@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useWorkspaceStore, getSpaceListIds } from "@/lib/store/useWorkspaceStore";
 import {
   format,
   addDays,
@@ -85,6 +85,10 @@ export function GanttView() {
     (s) => s.id === activeSpaceId,
   );
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
+  const spaceListIds = useMemo(
+    () => new Set(getSpaceListIds(currentSpace)),
+    [currentSpace],
+  );
 
   // Timeline viewport state
   const [startDate, setStartDate] = useState(() =>
@@ -121,11 +125,15 @@ export function GanttView() {
   // Apply search/priority/status filters
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
-      if (activeListId && task.listId !== activeListId) return false;
+      if (activeListId) {
+        if (task.listId !== activeListId) return false;
+      } else if (!spaceListIds.has(task.listId)) {
+        return false;
+      }
 
       return matchesFilters(task, filters, statuses);
     });
-  }, [tasks, activeListId, filters, statuses]);
+  }, [tasks, activeListId, spaceListIds, filters, statuses]);
 
   // Scheduled tasks (tasks on the Gantt canvas)
   const scheduledTasks = useMemo(() => {

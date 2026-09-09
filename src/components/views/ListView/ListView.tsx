@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useWorkspaceStore, getSpaceListIds } from "@/lib/store/useWorkspaceStore";
 import { ListGroup } from "./ListGroup";
 import { CreateStatusModal } from "@/components/spaces/CreateStatusModal";
 import { BulkActionBar } from "@/components/tasks/BulkActionBar";
@@ -47,18 +47,24 @@ export function ListView() {
     () => currentWorkspace?.members || [],
     [currentWorkspace?.members],
   );
+  const spaceListIds = useMemo(
+    () => new Set(getSpaceListIds(currentSpace)),
+    [currentSpace],
+  );
 
   // Filter tasks based on search, priority, status, assignee, closed toggle, and activeListId
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
-      // List scoping
-      if (activeListId && task.listId !== activeListId) {
+      // List or Space scoping
+      if (activeListId) {
+        if (task.listId !== activeListId) return false;
+      } else if (!spaceListIds.has(task.listId)) {
         return false;
       }
 
       return matchesFilters(task, filters, statuses);
     });
-  }, [tasks, activeListId, filters, statuses]);
+  }, [tasks, activeListId, spaceListIds, filters, statuses]);
 
   // Fallback status for groups created by priority/assignee
   const defaultStatus: Status = statuses[0] || {

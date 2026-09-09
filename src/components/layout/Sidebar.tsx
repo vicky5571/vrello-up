@@ -164,7 +164,7 @@ export function Sidebar() {
           {/* Spaces List */}
           <div className="flex-1 overflow-y-auto px-2 space-y-1">
             {currentWorkspace?.spaces.map((space) => {
-              const isSpaceActive = activeSpaceId === space.id;
+              const isSpaceActive = activeSpaceId === space.id && !activeListId;
               const isExpanded = !!expandedSpaces[space.id];
               const Icon = ICON_MAP[space.icon] || Layers;
               const isSpaceMenuOpen = activeMenuId === `space-${space.id}`;
@@ -246,6 +246,17 @@ export function Sidebar() {
                       onClick={(e) => e.stopPropagation()}
                       className="absolute right-2 top-8 z-30 w-44 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-1 text-xs space-y-0.5"
                     >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveMenuId(null);
+                          setActiveSpace(space.id);
+                        }}
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <Layers className="w-3.5 h-3.5 text-blue-500" />
+                        <span>All Tasks</span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => {
@@ -425,7 +436,9 @@ export function Sidebar() {
                                     className="pl-2.5 space-y-0.5"
                                   >
                                     {folder.lists.map((list) => {
-                                      const isListActive = activeListId === list.id;
+                                      const isListActive =
+                                        activeSpaceId === space.id &&
+                                        activeListId === list.id;
                                       const listTaskCount = tasks.filter(
                                         (t) => t.listId === list.id
                                       ).length;
@@ -536,7 +549,9 @@ export function Sidebar() {
 
                         {/* Direct Lists inside Space */}
                         {space.lists.map((list) => {
-                          const isListActive = activeListId === list.id;
+                          const isListActive =
+                            activeSpaceId === space.id &&
+                            activeListId === list.id;
                           const listTaskCount = tasks.filter(
                             (t) => t.listId === list.id
                           ).length;

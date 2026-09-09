@@ -1,6 +1,6 @@
 "use client";
 
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useWorkspaceStore, getSpaceListIds } from "@/lib/store/useWorkspaceStore";
 import { Priority, Task } from "@/types";
 import { useState, useMemo } from "react";
 import { useDropdown } from "@/components/ui/useDropdown";
@@ -95,6 +95,10 @@ export function TableView() {
   );
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
   const members = currentWorkspace?.members || [];
+  const spaceListIds = useMemo(
+    () => new Set(getSpaceListIds(currentSpace)),
+    [currentSpace],
+  );
 
   const [sorting, setSorting] = useState<SortingState>([
     { id: "title", desc: false },
@@ -117,11 +121,15 @@ export function TableView() {
   // Filter tasks based on active list and store filters
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
-      if (activeListId && task.listId !== activeListId) return false;
+      if (activeListId) {
+        if (task.listId !== activeListId) return false;
+      } else if (!spaceListIds.has(task.listId)) {
+        return false;
+      }
 
       return matchesFilters(task, filters, statuses);
     });
-  }, [tasks, activeListId, filters, statuses]);
+  }, [tasks, activeListId, spaceListIds, filters, statuses]);
 
   // Define TanStack Table columns
   const columns = useMemo(

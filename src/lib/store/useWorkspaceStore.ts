@@ -483,7 +483,7 @@ interface WorkspaceState {
   workspaces: Workspace[];
   activeWorkspaceId: string;
   activeSpaceId: string;
-  activeListId: string;
+  activeListId: string | null;
   tasks: Task[];
   tags: Tag[];
   channelMessages: ChannelMessage[];
@@ -522,7 +522,7 @@ interface WorkspaceState {
   setLastSeenNotificationsAt: (iso: string) => void;
   setActiveWorkspace: (id: string) => void;
   setActiveSpace: (id: string) => void;
-  setActiveList: (id: string) => void;
+  setActiveList: (id: string | null) => void;
   setActiveView: (view: ViewMode) => void;
   setSelectedTaskId: (id: string | null) => void;
   setSelectedBranchId: (id: string | null) => void;
@@ -546,7 +546,11 @@ interface WorkspaceState {
   applyRemoteTaskDelete: (taskId: string) => void;
 
   // Task Actions
-  createTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => Task;
+  createTask: (
+    task: Omit<Task, "id" | "createdAt" | "updatedAt" | "listId"> & {
+      listId?: string | null;
+    }
+  ) => Task;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   bulkUpdateTasks: (ids: string[], updates: Partial<Task>) => void;
@@ -697,6 +701,25 @@ export function findWorkspaceForListId(
         s.folders.some((f) => f.lists.some((l) => l.id === listId)),
     ),
   );
+}
+
+/**
+ * Returns all list IDs contained in a space (both top-level and inside folders).
+ */
+export function getSpaceListIds(space?: Space | null): string[] {
+  if (!space) return [];
+  const listIds: string[] = [];
+  if (Array.isArray(space.lists)) {
+    for (const l of space.lists) listIds.push(l.id);
+  }
+  if (Array.isArray(space.folders)) {
+    for (const f of space.folders) {
+      if (Array.isArray(f.lists)) {
+        for (const l of f.lists) listIds.push(l.id);
+      }
+    }
+  }
+  return listIds;
 }
 
 /**
@@ -1084,12 +1107,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({ lastSeenNotificationsAt: iso }),
       setActiveWorkspace: (id) => set({ activeWorkspaceId: id }),
       setActiveSpace: (id) => {
-        const space = get()
-          .workspaces.flatMap((w) => w.spaces)
-          .find((s) => s.id === id);
-        const firstList =
-          space?.lists[0]?.id || space?.folders[0]?.lists[0]?.id || "";
-        set({ activeSpaceId: id, activeListId: firstList });
+        set({ activeSpaceId: id, activeListId: null });
       },
       setActiveList: (id) => set({ activeListId: id }),
       setActiveView: (view) => set({ activeView: view }),
@@ -1188,13 +1206,26 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       createTask: (newTaskData) => {
         const id = generateId("task");
         const now = new Date().toISOString();
+        const state = get();
+        let targetListId = newTaskData.listId;
+        if (!targetListId) {
+          const currentSpace = state.workspaces
+            .flatMap((w) => w.spaces)
+            .find((s) => s.id === state.activeSpaceId);
+          targetListId =
+            state.activeListId ||
+            currentSpace?.lists[0]?.id ||
+            currentSpace?.folders[0]?.lists[0]?.id ||
+            "list-sprint-tasks";
+        }
         const newTask: Task = {
           ...newTaskData,
+          listId: targetListId,
           id,
           createdAt: now,
           updatedAt: now,
         };
-        set((state) => ({ tasks: [newTask, ...state.tasks] }));
+        set((s) => ({ tasks: [newTask, ...s.tasks] }));
         syncCreateTask(newTask);
         return newTask;
       },
@@ -1763,7 +1794,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const folderListIds = new Set(folderToDelete.lists.map((l) => l.id));
 
         let nextListId = state.activeListId;
-        if (folderListIds.has(state.activeListId)) {
+        if (state.activeListId && folderListIds.has(state.activeListId)) {
           nextListId =
             currentSpace?.lists[0]?.id ||
             currentSpace?.folders.find((f) => f.id !== folderId)?.lists[0]
@@ -2167,7 +2198,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             tasks: rawTasks,
             activeWorkspaceId: (typeof state.activeWorkspaceId === "string" && state.activeWorkspaceId) || activeWs?.id || "ws-main",
             activeSpaceId: (typeof state.activeSpaceId === "string" && state.activeSpaceId) || activeSpace?.id || "space-eng",
-            activeListId: (typeof state.activeListId === "string" && state.activeListId) || activeList || "list-sprint-tasks",
+            activeListId: state.activeListId === null ? null : ((typeof state.activeListId === "string" && state.activeListId) || activeList || "list-sprint-tasks"),
             activeView: (state.activeView as ViewMode) || "list",
           };
         }

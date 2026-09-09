@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useState, useEffect, useMemo } from "react";
+import { useWorkspaceStore, getSpaceListIds } from "@/lib/store/useWorkspaceStore";
 import {
   format,
   addMonths,
@@ -40,6 +40,10 @@ export function CalendarView() {
     (s) => s.id === activeSpaceId,
   );
   const statuses = currentSpace?.statuses || [];
+  const spaceListIds = useMemo(
+    () => new Set(getSpaceListIds(currentSpace)),
+    [currentSpace],
+  );
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showMarketing, setShowMarketing] = useState(true);
@@ -90,7 +94,11 @@ export function CalendarView() {
   // Apply filters
   const filteredTasks = tasks.filter((task) => {
     if (!task.dueDate) return false;
-    if (activeListId && task.listId !== activeListId) return false;
+    if (activeListId) {
+      if (task.listId !== activeListId) return false;
+    } else if (!spaceListIds.has(task.listId)) {
+      return false;
+    }
 
     return matchesFilters(task, filters, statuses);
   });
