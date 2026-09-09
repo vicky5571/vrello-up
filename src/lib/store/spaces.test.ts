@@ -1,7 +1,7 @@
 import test, { beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { useWorkspaceStore, DEFAULT_STATUSES, getSpaceListIds } from "./useWorkspaceStore.ts";
+import { useWorkspaceStore, DEFAULT_STATUSES, getSpaceListIds, reconcileWorkspaces } from "./useWorkspaceStore.ts";
 
 const api = () => useWorkspaceStore.getState();
 
@@ -174,9 +174,26 @@ test("cascading list and task cleanup on deleteSpace purges top-level and folder
     orderIndex: 1,
   });
 
+  const survivingSpace = api().workspaces[0].spaces.find((s) => s.id !== space.id);
+  const survivingTask = api().createTask({
+    listId: survivingSpace!.lists[0].id,
+    title: "Surviving Task",
+    description: "",
+    statusId: "status-todo",
+    priority: "normal",
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    dependencies: [task1.id],
+    orderIndex: 0,
+  });
+
   assert.ok(api().tasks.some((t) => t.id === task1.id));
   assert.ok(api().tasks.some((t) => t.id === task2.id));
   assert.equal(api().activeSpaceId, space.id);
+
+  api().setSelectedTaskId(task1.id);
+  useWorkspaceStore.setState({ selectedTaskIds: [task1.id, survivingTask.id] });
 
   // Perform cascading space deletion
   api().deleteSpace(space.id);
@@ -187,6 +204,15 @@ test("cascading list and task cleanup on deleteSpace purges top-level and folder
   // Tasks from both the direct list and the folder list must be purged
   assert.equal(api().tasks.some((t) => t.id === task1.id), false);
   assert.equal(api().tasks.some((t) => t.id === task2.id), false);
+
+  // Selected task id and selection set must be sanitized
+  assert.equal(api().selectedTaskId, null);
+  assert.deepEqual(api().selectedTaskIds, [survivingTask.id]);
+
+  // Dependent task in surviving space should have the purged task removed from its dependencies
+  const updatedSurvivingTask = api().tasks.find((t) => t.id === survivingTask.id);
+  assert.ok(updatedSurvivingTask);
+  assert.equal(updatedSurvivingTask?.dependencies?.includes(task1.id), false);
 
   // activeSpaceId and activeListId should fall back to another existing space
   assert.notEqual(api().activeSpaceId, space.id);
@@ -353,4 +379,72 @@ test("createTask defaults listId to active space's first list when activeListId 
   });
 
   assert.equal(created.listId, space.lists[0].id);
+});
+
+test("reconcileWorkspaces preserves client custom spaces and lists over static server seeds", () => {
+  const clientWs = JSON.parse(JSON.stringify(api().workspaces));
+  // Add a custom space and custom list to client
+  const customSpace = {
+    id: "space-custom-growth",
+    workspaceId: clientWs[0].id,
+    name: "Growth & Retention",
+    icon: "Rocket",
+    color: "#F59E0B",
+    statuses: DEFAULT_STATUSES,
+    folders: [
+      {
+        id: "folder-experiments",
+        spaceId: "space-custom-growth",
+        name: "Q4 Experiments",
+        lists: [
+          {
+            id: "list-onboarding-ab",
+            spaceId: "space-custom-growth",
+            folderId: "folder-experiments",
+            name: "Onboarding A/B Test",
+          },
+        ],
+      },
+    ],
+    lists: [
+      {
+        id: "list-funnel-review",
+        spaceId: "space-custom-growth",
+        name: "Funnel Review",
+      },
+    ],
+  };
+  clientWs[0].spaces.push(customSpace);
+
+  // Static server workspaces lacking the custom space
+  const serverWs = [
+    {
+      id: clientWs[0].id,
+      name: clientWs[0].name,
+      members: clientWs[0].members,
+      spaces: [
+        {
+          id: "space-eng",
+          workspaceId: clientWs[0].id,
+          name: "Engineering Core",
+          icon: "Code2",
+          color: "#0D9488",
+          statuses: DEFAULT_STATUSES,
+          folders: [],
+          lists: [{ id: "list-sprint-tasks", spaceId: "space-eng", name: "Sprint Backlog" }],
+        },
+      ],
+    },
+  ];
+
+  const result = reconcileWorkspaces(clientWs, serverWs);
+  assert.equal(result.shouldSyncToServer, true);
+
+  const reconciledWs = result.workspaces.find((w) => w.id === clientWs[0].id);
+  assert.ok(reconciledWs);
+  assert.ok(reconciledWs?.spaces.some((s) => s.id === "space-custom-growth"));
+
+  const reconciledSpace = reconciledWs?.spaces.find((s) => s.id === "space-custom-growth");
+  assert.equal(reconciledSpace?.lists[0].id, "list-funnel-review");
+  assert.equal(reconciledSpace?.folders[0].lists[0].id, "list-onboarding-ab");
 });

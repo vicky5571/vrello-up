@@ -336,15 +336,34 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify parent list exists; if not fallback to the first available list
+    // Verify parent list exists; if not, create it under target space so listId is preserved
     let targetListId = listId;
     const listExists = await prisma.listItem.findUnique({ where: { id: listId } });
     if (!listExists) {
-      const fallbackList = await prisma.listItem.findFirst();
-      if (fallbackList) {
-        targetListId = fallbackList.id;
+      const parentSpace =
+        (body.spaceId
+          ? await prisma.spaceItem.findUnique({ where: { id: body.spaceId } })
+          : null) || (await prisma.spaceItem.findFirst());
+
+      if (parentSpace) {
+        await prisma.listItem.create({
+          data: {
+            id: listId,
+            spaceId: parentSpace.id,
+            folderId: body.folderId || null,
+            name: body.listName || "General",
+            icon: body.listIcon || "ListTodo",
+            color: "#64748B",
+          },
+        });
+        targetListId = listId;
       } else {
-        return NextResponse.json({ error: "No target list found" }, { status: 400 });
+        const fallbackList = await prisma.listItem.findFirst();
+        if (fallbackList) {
+          targetListId = fallbackList.id;
+        } else {
+          return NextResponse.json({ error: "No target list found" }, { status: 400 });
+        }
       }
     }
 

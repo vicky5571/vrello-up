@@ -723,6 +723,82 @@ export function getSpaceListIds(space?: Space | null): string[] {
 }
 
 /**
+ * Reconciles client workspaces (from localStorage) with server workspaces (from database)
+ * to avoid data loss on page load. Preserves custom spaces, folders, and lists created
+ * locally while syncing any missing items to the server.
+ */
+export function reconcileWorkspaces(
+  clientWorkspaces: Workspace[],
+  serverWorkspaces: Workspace[],
+): { workspaces: Workspace[]; shouldSyncToServer: boolean } {
+  if (!Array.isArray(serverWorkspaces) || serverWorkspaces.length === 0) {
+    return { workspaces: clientWorkspaces, shouldSyncToServer: true };
+  }
+  if (!Array.isArray(clientWorkspaces) || clientWorkspaces.length === 0) {
+    return { workspaces: serverWorkspaces, shouldSyncToServer: false };
+  }
+
+  let shouldSyncToServer = false;
+
+  const mergedWorkspaces = clientWorkspaces.map((clientWs) => {
+    const serverWs = serverWorkspaces.find((w) => w.id === clientWs.id);
+    if (!serverWs) {
+      shouldSyncToServer = true;
+      return clientWs;
+    }
+
+    const serverSpaceMap = new Map(serverWs.spaces.map((s) => [s.id, s]));
+    const mergedSpaces = clientWs.spaces.map((clientSpace) => {
+      const serverSpace = serverSpaceMap.get(clientSpace.id);
+      if (!serverSpace) {
+        shouldSyncToServer = true;
+        return clientSpace;
+      }
+
+      const serverFolderIds = new Set(serverSpace.folders.map((f) => f.id));
+      const serverListIds = new Set([
+        ...serverSpace.lists.map((l) => l.id),
+        ...serverSpace.folders.flatMap((f) => f.lists.map((l) => l.id)),
+      ]);
+
+      const clientListIds = [
+        ...clientSpace.lists.map((l) => l.id),
+        ...clientSpace.folders.flatMap((f) => f.lists.map((l) => l.id)),
+      ];
+
+      if (
+        clientSpace.folders.some((f) => !serverFolderIds.has(f.id)) ||
+        clientListIds.some((id) => !serverListIds.has(id))
+      ) {
+        shouldSyncToServer = true;
+      }
+
+      return clientSpace;
+    });
+
+    const clientSpaceIds = new Set(clientWs.spaces.map((s) => s.id));
+    for (const s of serverWs.spaces) {
+      if (!clientSpaceIds.has(s.id)) {
+        const isDefaultSpace =
+          s.id === "space-eng" ||
+          s.id === "space-product" ||
+          s.id === "space-marcom";
+        if (!isDefaultSpace) {
+          mergedSpaces.push(s);
+        }
+      }
+    }
+
+    return {
+      ...clientWs,
+      spaces: mergedSpaces,
+    };
+  });
+
+  return { workspaces: mergedWorkspaces, shouldSyncToServer };
+}
+
+/**
  * Bumps the execution counter for an automation rule.
  */
 function countAutomationRun(id: string) {
@@ -829,13 +905,24 @@ export const quotaAwareStorage: StateStorage = {
   },
 };
 
-function syncCreateTask(task: Task) {
+function syncCreateTask(task: Task, spaceId?: string, listName?: string) {
   if (typeof window === "undefined") return;
   fetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(task),
+    body: JSON.stringify({ ...task, spaceId, listName }),
   }).catch((err) => console.warn("[vrello sync] failed to persist task creation:", err));
+}
+
+function syncWorkspaces(workspaces: Workspace[]) {
+  if (typeof window === "undefined") return;
+  fetch("/api/workspaces", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ workspaces }),
+  }).catch((err) =>
+    console.warn("[vrello sync] failed to persist workspaces:", err),
+  );
 }
 
 function syncUpdateTask(id: string, updates: Partial<Task>) {
@@ -1167,14 +1254,20 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const res = await fetch("/api/tasks");
           if (!res.ok) return;
           const data = await res.json();
-          if (Array.isArray(data.tasks) && data.tasks.length > 0) {
-            set((state) => ({
-              tasks: data.tasks,
-              workspaces:
-                Array.isArray(data.workspaces) && data.workspaces.length > 0
-                  ? data.workspaces
-                  : state.workspaces,
-            }));
+          const currentWorkspaces = get().workspaces;
+          const { workspaces: reconciled, shouldSyncToServer } =
+            reconcileWorkspaces(currentWorkspaces, data.workspaces);
+
+          set((state) => ({
+            tasks:
+              Array.isArray(data.tasks) && data.tasks.length > 0
+                ? data.tasks
+                : state.tasks,
+            workspaces: reconciled,
+          }));
+
+          if (shouldSyncToServer) {
+            syncWorkspaces(reconciled);
           }
         } catch (err) {
           console.warn("[vrello sync] failed to fetch tasks from server:", err);
@@ -1226,7 +1319,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           updatedAt: now,
         };
         set((s) => ({ tasks: [newTask, ...s.tasks] }));
-        syncCreateTask(newTask);
+        syncCreateTask(newTask, state.activeSpaceId);
         return newTask;
       },
 
@@ -1681,6 +1774,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           activeSpaceId: id,
           activeListId: newSpace.lists[0].id,
         }));
+        syncWorkspaces(get().workspaces);
         return newSpace;
       },
 
@@ -1697,6 +1791,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               : w,
           ),
         }));
+        syncWorkspaces(get().workspaces);
       },
 
       deleteSpace: (spaceId) => {
@@ -1707,10 +1802,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const spaceToDelete = activeWs?.spaces.find((s) => s.id === spaceId);
         if (!spaceToDelete) return;
 
-        const listIdsToDelete = new Set<string>([
-          ...spaceToDelete.lists.map((l) => l.id),
-          ...spaceToDelete.folders.flatMap((f) => f.lists.map((l) => l.id)),
-        ]);
+        const listIdsToDelete = new Set<string>(getSpaceListIds(spaceToDelete));
 
         const remainingSpaces =
           activeWs?.spaces.filter((s) => s.id !== spaceId) || [];
@@ -1718,7 +1810,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const nextListId =
           nextSpace?.lists[0]?.id ||
           nextSpace?.folders[0]?.lists[0]?.id ||
-          "";
+          null;
+
+        const tasksToDelete = state.tasks.filter((t) =>
+          listIdsToDelete.has(t.listId),
+        );
+        const deletedTaskIds = new Set(tasksToDelete.map((t) => t.id));
 
         set((prev) => ({
           workspaces: prev.workspaces.map((w) =>
@@ -1726,7 +1823,25 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               ? { ...w, spaces: w.spaces.filter((s) => s.id !== spaceId) }
               : w,
           ),
-          tasks: prev.tasks.filter((t) => !listIdsToDelete.has(t.listId)),
+          tasks: prev.tasks
+            .filter((t) => !listIdsToDelete.has(t.listId))
+            .map((t) =>
+              t.dependencies && t.dependencies.some((depId) => deletedTaskIds.has(depId))
+                ? {
+                    ...t,
+                    dependencies: t.dependencies.filter((depId) => !deletedTaskIds.has(depId)),
+                  }
+                : t,
+            ),
+          selectedTaskId:
+            prev.selectedTaskId && deletedTaskIds.has(prev.selectedTaskId)
+              ? null
+              : prev.selectedTaskId,
+          lastSelectedTaskId:
+            prev.lastSelectedTaskId && deletedTaskIds.has(prev.lastSelectedTaskId)
+              ? null
+              : prev.lastSelectedTaskId,
+          selectedTaskIds: prev.selectedTaskIds.filter((id) => !deletedTaskIds.has(id)),
           activeSpaceId:
             prev.activeSpaceId === spaceId
               ? (nextSpace?.id || "")
@@ -1734,6 +1849,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           activeListId:
             prev.activeSpaceId === spaceId ? nextListId : prev.activeListId,
         }));
+
+        tasksToDelete.forEach((t) => syncDeleteTask(t.id));
+        syncWorkspaces(get().workspaces);
       },
 
       createFolder: (spaceId, name) => {
@@ -1757,6 +1875,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             };
           }),
         }));
+        syncWorkspaces(get().workspaces);
         return newFolder;
       },
 
@@ -1778,6 +1897,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             };
           }),
         }));
+        syncWorkspaces(get().workspaces);
       },
 
       deleteFolder: (spaceId, folderId) => {
@@ -1799,8 +1919,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             currentSpace?.lists[0]?.id ||
             currentSpace?.folders.find((f) => f.id !== folderId)?.lists[0]
               ?.id ||
-            "";
+            null;
         }
+
+        const tasksToDelete = state.tasks.filter((t) =>
+          folderListIds.has(t.listId),
+        );
+        const deletedTaskIds = new Set(tasksToDelete.map((t) => t.id));
 
         set((prev) => ({
           workspaces: prev.workspaces.map((w) => {
@@ -1816,9 +1941,30 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               }),
             };
           }),
-          tasks: prev.tasks.filter((t) => !folderListIds.has(t.listId)),
+          tasks: prev.tasks
+            .filter((t) => !folderListIds.has(t.listId))
+            .map((t) =>
+              t.dependencies && t.dependencies.some((depId) => deletedTaskIds.has(depId))
+                ? {
+                    ...t,
+                    dependencies: t.dependencies.filter((depId) => !deletedTaskIds.has(depId)),
+                  }
+                : t,
+            ),
+          selectedTaskId:
+            prev.selectedTaskId && deletedTaskIds.has(prev.selectedTaskId)
+              ? null
+              : prev.selectedTaskId,
+          lastSelectedTaskId:
+            prev.lastSelectedTaskId && deletedTaskIds.has(prev.lastSelectedTaskId)
+              ? null
+              : prev.lastSelectedTaskId,
+          selectedTaskIds: prev.selectedTaskIds.filter((id) => !deletedTaskIds.has(id)),
           activeListId: nextListId,
         }));
+
+        tasksToDelete.forEach((t) => syncDeleteTask(t.id));
+        syncWorkspaces(get().workspaces);
       },
 
       createList: (spaceId, name, folderId) => {
@@ -1853,6 +1999,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           }),
           activeListId: newList.id,
         }));
+        syncWorkspaces(get().workspaces);
         return newList;
       },
 
@@ -1889,6 +2036,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             };
           }),
         }));
+        syncWorkspaces(get().workspaces);
       },
 
       deleteList: (spaceId, listId, folderId) => {
@@ -1906,8 +2054,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             currentSpace?.folders
               .flatMap((f) => f.lists)
               .filter((l) => l.id !== listId) || [];
-          nextListId = otherDirectLists[0]?.id || otherFolderLists[0]?.id || "";
+          nextListId = otherDirectLists[0]?.id || otherFolderLists[0]?.id || null;
         }
+
+        const tasksToDelete = state.tasks.filter((t) => t.listId === listId);
+        const deletedTaskIds = new Set(tasksToDelete.map((t) => t.id));
 
         set((prev) => ({
           workspaces: prev.workspaces.map((w) => {
@@ -1936,9 +2087,30 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               }),
             };
           }),
-          tasks: prev.tasks.filter((t) => t.listId !== listId),
+          tasks: prev.tasks
+            .filter((t) => t.listId !== listId)
+            .map((t) =>
+              t.dependencies && t.dependencies.some((depId) => deletedTaskIds.has(depId))
+                ? {
+                    ...t,
+                    dependencies: t.dependencies.filter((depId) => !deletedTaskIds.has(depId)),
+                  }
+                : t,
+            ),
+          selectedTaskId:
+            prev.selectedTaskId && deletedTaskIds.has(prev.selectedTaskId)
+              ? null
+              : prev.selectedTaskId,
+          lastSelectedTaskId:
+            prev.lastSelectedTaskId && deletedTaskIds.has(prev.lastSelectedTaskId)
+              ? null
+              : prev.lastSelectedTaskId,
+          selectedTaskIds: prev.selectedTaskIds.filter((id) => !deletedTaskIds.has(id)),
           activeListId: nextListId,
         }));
+
+        tasksToDelete.forEach((t) => syncDeleteTask(t.id));
+        syncWorkspaces(get().workspaces);
       },
 
       addStatusToSpace: (spaceId, name, color) => {
@@ -1961,6 +2133,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             };
           }),
         }));
+        syncWorkspaces(get().workspaces);
       },
 
       updateStatus: (spaceId, statusId, updates) => {
@@ -1981,6 +2154,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             };
           }),
         }));
+        syncWorkspaces(get().workspaces);
       },
 
       deleteStatus: (spaceId, statusId, fallbackStatusId) => {
@@ -2012,6 +2186,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             t.statusId === statusId ? { ...t, statusId: fallback } : t,
           ),
         }));
+        syncWorkspaces(get().workspaces);
       },
 
       createTag: (name, color) => {
