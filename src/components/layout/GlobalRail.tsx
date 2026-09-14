@@ -8,7 +8,6 @@ import {
   Users,
   Grid3X3,
   UserPlus,
-  Gem,
   ChevronsLeft,
   ChevronsRight,
   Kanban,
@@ -18,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { TeamsModal } from "@/components/modals/TeamsModal";
 import { InviteModal } from "@/components/modals/InviteModal";
-import { UpgradeModal } from "@/components/modals/UpgradeModal";
+
 import { MoreAppsMenu } from "@/components/modals/MoreAppsMenu";
 
 export function GlobalRail() {
@@ -35,7 +34,7 @@ export function GlobalRail() {
 
   const [isTeamsOpen, setIsTeamsOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   const NAV_ITEMS = [
@@ -174,15 +173,6 @@ export function GlobalRail() {
             <span className="leading-none">Invite</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setIsUpgradeOpen(true)}
-            title="Upgrade plan"
-            className="w-11 py-1.5 flex flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-semibold text-amber-400 hover:text-amber-300 hover:bg-amber-400/10 transition-colors cursor-pointer"
-          >
-            <Gem className="w-4 h-4 text-amber-400" />
-            <span className="leading-none">Upgrade</span>
-          </button>
         </div>
       </aside>
 
@@ -198,10 +188,7 @@ export function GlobalRail() {
         onClose={() => setIsInviteOpen(false)}
       />
 
-      <UpgradeModal
-        isOpen={isUpgradeOpen}
-        onClose={() => setIsUpgradeOpen(false)}
-      />
+
 
       <MoreAppsMenu
         isOpen={isMoreOpen}
