@@ -173,7 +173,7 @@ export function TopNav() {
 
   return (
     <>
-      <div className="flex flex-col shrink-0 select-none bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-slate-800">
+      <div className="relative z-30 flex flex-col shrink-0 select-none bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-slate-800">
         {/* Tier 1: Global Workspace & Utility Bar */}
         <header className="h-11 px-4 flex items-center justify-between gap-4 border-b border-slate-200/60 dark:border-slate-800/60">
           {/* Left: Workspace dropdown */}
@@ -426,7 +426,7 @@ export function TopNav() {
         </header>
 
         {/* Tier 2: Space / Project Breadcrumbs & View Switcher Bar */}
-        <div className="px-4 py-1.5 flex items-center justify-between gap-3 border-b border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
+        <div className="relative z-20 px-4 py-1.5 flex items-center justify-between gap-3 border-b border-slate-200/60 dark:border-slate-800/60">
           {/* Left: Breadcrumbs */}
           <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 shrink-0">
             <div className="flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400">
@@ -449,7 +449,7 @@ export function TopNav() {
               </button>
 
               {isListMenuOpen && allListsInSpace.length > 0 && (
-                <div className="absolute left-0 top-full mt-1 w-52 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50">
+                <div className="absolute left-0 top-full mt-1.5 w-56 rounded-xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 max-h-80 overflow-y-auto">
                   <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Lists in {currentSpace?.name}
                   </div>
@@ -524,7 +524,7 @@ export function TopNav() {
         </div>
 
         {/* Tier 3: Quick Action Controls (Below View Switcher) */}
-        <div className="px-4 py-1 flex items-center justify-end gap-1.5 text-xs text-slate-600 dark:text-slate-400 overflow-x-auto no-scrollbar">
+        <div className="relative z-10 px-4 py-1 flex items-center justify-end gap-1.5 text-xs text-slate-600 dark:text-slate-400 overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => setIsAgentsOpen(true)}
