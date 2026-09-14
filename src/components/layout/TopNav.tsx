@@ -26,6 +26,8 @@ import {
   ShieldCheck,
   Menu,
   Megaphone,
+  Plus,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSession, signOut } from "next-auth/react";
@@ -54,6 +56,21 @@ const AutomationsModal = dynamic(
   () =>
     import("@/components/modals/AutomationsModal").then(
       (m) => m.AutomationsModal,
+    ),
+  { ssr: false },
+);
+
+const CreateWorkspaceModal = dynamic(
+  () =>
+    import("@/components/workspaces/CreateWorkspaceModal").then(
+      (m) => m.CreateWorkspaceModal,
+    ),
+  { ssr: false },
+);
+const EditWorkspaceModal = dynamic(
+  () =>
+    import("@/components/workspaces/EditWorkspaceModal").then(
+      (m) => m.EditWorkspaceModal,
     ),
   { ssr: false },
 );
@@ -237,6 +254,11 @@ export function TopNav() {
   const [isAgentsOpen, setIsAgentsOpen] = useState(false);
   const [isAutomationsOpen, setIsAutomationsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isCreateWsOpen, setIsCreateWsOpen] = useState(false);
+  const [editWsModalState, setEditWsModalState] = useState<{
+    isOpen: boolean;
+    workspace: (typeof workspaces)[0] | null;
+  }>({ isOpen: false, workspace: null });
   const [callModalState, setCallModalState] = useState<{
     isOpen: boolean;
     mode: "audio" | "video";
@@ -354,33 +376,62 @@ export function TopNav() {
                 </button>
 
                 {isWsMenuOpen && (
-                  <div className="absolute left-0 top-full mt-1 w-60 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="absolute left-0 top-full mt-1 w-64 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
                     <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Workspaces
                     </div>
-                    {workspaces.map((ws) => {
-                      const isSelected = ws.id === currentWorkspace?.id;
-                      return (
-                        <button
-                          key={ws.id}
-                          type="button"
-                          onClick={() => {
-                            setActiveWorkspace(ws.id);
-                            setIsWsMenuOpen(false);
-                            toast.success(`Switched to workspace "${ws.name}"`);
-                          }}
-                          className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span className="truncate font-medium text-slate-800 dark:text-slate-200">
-                              {ws.name}
-                            </span>
+                    <div className="max-h-60 overflow-y-auto space-y-0.5">
+                      {workspaces.map((ws) => {
+                        const isSelected = ws.id === currentWorkspace?.id;
+                        return (
+                          <div
+                            key={ws.id}
+                            className="group flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveWorkspace(ws.id);
+                                setIsWsMenuOpen(false);
+                                toast.success(`Switched to workspace "${ws.name}"`);
+                              }}
+                              className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer"
+                            >
+                              <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="truncate font-medium text-slate-800 dark:text-slate-200">
+                                {ws.name}
+                              </span>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-[#0073ea] shrink-0 ml-1" />}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsWsMenuOpen(false);
+                                setEditWsModalState({ isOpen: true, workspace: ws });
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-opacity text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                              title="Workspace settings"
+                            >
+                              <Settings className="w-3.5 h-3.5" />
+                            </button>
                           </div>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-[#0073ea] shrink-0" />}
-                        </button>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                    <div className="mt-1 pt-1 border-t border-slate-100 dark:border-slate-800 px-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsWsMenuOpen(false);
+                          setIsCreateWsOpen(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 text-xs font-semibold text-[#0073ea] dark:text-sky-400 hover:bg-[#0073ea]/10 dark:hover:bg-sky-400/10 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Create Workspace</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -493,35 +544,64 @@ export function TopNav() {
               </button>
 
               {isWsMenuOpen && (
-                <div className="absolute left-0 top-full mt-1 w-60 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute left-0 top-full mt-1 w-64 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
                   <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     Workspaces
                   </div>
-                  {workspaces.map((ws) => {
-                    const isSelected = ws.id === currentWorkspace?.id;
-                    return (
-                      <button
-                        key={ws.id}
-                        type="button"
-                        onClick={() => {
-                          setActiveWorkspace(ws.id);
-                          setIsWsMenuOpen(false);
-                          toast.success(`Switched to workspace "${ws.name}"`);
-                        }}
-                        className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className="truncate font-medium text-slate-800 dark:text-slate-200">
-                            {ws.name}
-                          </span>
+                  <div className="max-h-60 overflow-y-auto space-y-0.5">
+                    {workspaces.map((ws) => {
+                      const isSelected = ws.id === currentWorkspace?.id;
+                      return (
+                        <div
+                          key={ws.id}
+                          className="group flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveWorkspace(ws.id);
+                              setIsWsMenuOpen(false);
+                              toast.success(`Switched to workspace "${ws.name}"`);
+                            }}
+                            className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer"
+                          >
+                            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="truncate font-medium text-slate-800 dark:text-slate-200">
+                              {ws.name}
+                            </span>
+                            {isSelected && (
+                              <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 ml-1" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsWsMenuOpen(false);
+                              setEditWsModalState({ isOpen: true, workspace: ws });
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-opacity text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                            title="Workspace settings"
+                          >
+                            <Settings className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                        {isSelected && (
-                          <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                  <div className="mt-1 pt-1 border-t border-slate-100 dark:border-slate-800 px-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsWsMenuOpen(false);
+                        setIsCreateWsOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 text-xs font-semibold text-[#0073ea] dark:text-sky-400 hover:bg-[#0073ea]/10 dark:hover:bg-sky-400/10 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Create Workspace</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -791,6 +871,17 @@ export function TopNav() {
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
+      />
+
+      <CreateWorkspaceModal
+        isOpen={isCreateWsOpen}
+        onClose={() => setIsCreateWsOpen(false)}
+      />
+
+      <EditWorkspaceModal
+        isOpen={editWsModalState.isOpen}
+        workspace={editWsModalState.workspace}
+        onClose={() => setEditWsModalState({ isOpen: false, workspace: null })}
       />
     </>
   );

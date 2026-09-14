@@ -237,3 +237,36 @@ export async function PUT(request: Request) {
 export async function POST(request: Request) {
   return PUT(request);
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { error: "Missing workspace id" },
+        { status: 400 },
+      );
+    }
+
+    const totalCount = await prisma.workspaceItem.count();
+    if (totalCount <= 1) {
+      return NextResponse.json(
+        { error: "Cannot delete the last remaining workspace" },
+        { status: 400 },
+      );
+    }
+
+    await prisma.workspaceItem.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting workspace:", error);
+    return NextResponse.json(
+      { error: "Failed to delete workspace" },
+      { status: 500 },
+    );
+  }
+}

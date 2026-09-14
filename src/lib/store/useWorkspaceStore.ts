@@ -24,6 +24,10 @@ import {
 import { generateId } from "@/lib/utils";
 import { reorderSpacesList, moveSpaceDirection } from "@/lib/spaces/spaceOrder";
 import { switchWorkspace } from "@/lib/store/workspaceSwitch";
+import {
+  buildInitialWorkspace,
+  removeWorkspaceAndCascadeTasks,
+} from "@/lib/store/workspaceCrud";
 
 // Default Seed Users
 export const SEED_USERS: User[] = [
@@ -503,6 +507,12 @@ interface WorkspaceState {
   setTrashOpen: (open: boolean) => void;
   setLastSeenNotificationsAt: (iso: string) => void;
   setActiveWorkspace: (id: string) => void;
+  createWorkspace: (name: string, avatar?: string) => Workspace;
+  updateWorkspace: (
+    id: string,
+    updates: Partial<Pick<Workspace, "name" | "avatar">>,
+  ) => void;
+  deleteWorkspace: (id: string) => boolean;
   setActiveSpace: (id: string) => void;
   setActiveList: (id: string | null) => void;
   setActiveView: (view: ViewMode) => void;
@@ -905,6 +915,15 @@ function syncWorkspaces(workspaces: Workspace[]) {
     body: JSON.stringify({ workspaces }),
   }).catch((err) =>
     console.warn("[vrello sync] failed to persist workspaces:", err),
+  );
+}
+
+function syncDeleteWorkspace(id: string) {
+  if (typeof window === "undefined") return;
+  fetch(`/api/workspaces?id=${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  }).catch((err) =>
+    console.warn("[vrello sync] failed to persist workspace deletion:", err),
   );
 }
 
@@ -1759,6 +1778,86 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             return t;
           }),
         }));
+      },
+
+      createWorkspace: (name, avatar) => {
+        const state = get();
+        const currentMember = state.workspaces
+          .flatMap((w) => w.members || [])
+          .find((m) => m.id === state.currentUserId);
+        const members = currentMember ? [currentMember] : SEED_USERS;
+
+        const newWs = buildInitialWorkspace({
+          name,
+          avatar,
+          defaultStatuses: DEFAULT_STATUSES,
+          members,
+        });
+
+        const nextWorkspaces = [...state.workspaces, newWs];
+        const switchResult = switchWorkspace(nextWorkspaces, newWs.id, {
+          activeWorkspaceId: state.activeWorkspaceId,
+          activeSpaceId: state.activeSpaceId,
+          activeListId: state.activeListId,
+          selectedTaskId: state.selectedTaskId,
+          selectedTaskIds: state.selectedTaskIds,
+        });
+
+        set({
+          workspaces: nextWorkspaces,
+          ...switchResult,
+        });
+
+        syncWorkspaces(nextWorkspaces);
+        return newWs;
+      },
+
+      updateWorkspace: (id, updates) => {
+        set((state) => ({
+          workspaces: state.workspaces.map((w) =>
+            w.id === id ? { ...w, ...updates } : w,
+          ),
+        }));
+        syncWorkspaces(get().workspaces);
+      },
+
+      deleteWorkspace: (id) => {
+        const state = get();
+        const result = removeWorkspaceAndCascadeTasks(
+          state.workspaces,
+          state.tasks,
+          id,
+        );
+        if (!result.success) {
+          return false;
+        }
+
+        const nextActiveWsId =
+          state.activeWorkspaceId === id
+            ? result.remainingWorkspaces[0]?.id || ""
+            : state.activeWorkspaceId;
+
+        const switchResult = switchWorkspace(
+          result.remainingWorkspaces,
+          nextActiveWsId,
+          {
+            activeWorkspaceId: state.activeWorkspaceId,
+            activeSpaceId: state.activeSpaceId,
+            activeListId: state.activeListId,
+            selectedTaskId: state.selectedTaskId,
+            selectedTaskIds: state.selectedTaskIds,
+          },
+        );
+
+        set({
+          workspaces: result.remainingWorkspaces,
+          tasks: result.remainingTasks,
+          ...switchResult,
+        });
+
+        syncDeleteWorkspace(id);
+        syncWorkspaces(result.remainingWorkspaces);
+        return true;
       },
 
       createSpace: (name, icon, color) => {
