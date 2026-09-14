@@ -1,38 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/marcom/db";
-import { requireMember } from "@/lib/marcom/auth";
-import { hasPermission } from "@/lib/marcom/guards";
-
-async function requireContentWriter() {
-  let role;
-  try {
-    role = await requireMember("ws-main");
-  } catch (e) {
-    if (e instanceof Response) throw e;
-    throw e;
-  }
-  if (!hasPermission(role, "CREATE_EVENT")) {
-    throw Response.json({ error: "Forbidden" }, { status: 403 });
-  }
-}
+import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    await requireMember("ws-main");
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
-  }
-
   const { id } = await params;
   try {
     const post = await prisma.contentPost.findUnique({ where: { id } });
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
+
+    const authError = await requireWorkspaceAccess(post.workspaceId, { requiredRole: "viewer", request });
+    if (authError) return authError;
+
     return NextResponse.json(post);
   } catch (err) {
     console.error("Failed to fetch post:", err);
@@ -44,15 +27,16 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    await requireContentWriter();
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
+  const { id } = await params;
+  const existing = await prisma.contentPost.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
 
-  const { id } = await params;
-  const body = await request.json();
+  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
+  if (authError) return authError;
+
+  const body = await request.json().catch(() => ({}));
 
   const data: Record<string, unknown> = {};
   if (body.title !== undefined) data.title = String(body.title).trim();
@@ -81,17 +65,18 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    await requireContentWriter();
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
+  const { id } = await params;
+  const existing = await prisma.contentPost.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
 
-  const { id } = await params;
+  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
+  if (authError) return authError;
+
   try {
     await prisma.contentPost.delete({ where: { id } });
     return NextResponse.json({ success: true });

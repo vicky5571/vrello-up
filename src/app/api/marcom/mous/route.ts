@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
-import { requireMember } from "@/lib/marcom/auth";
-import { hasPermission } from "@/lib/marcom/guards";
+import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { MOU_STATUSES } from "@/lib/marcom/mouMachine";
 
 const VALID_STATUSES = MOU_STATUSES;
@@ -16,14 +15,11 @@ const mouInclude = {
 } as const;
 
 export async function GET(request: Request) {
-  try {
-    await requireMember("ws-main");
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
-  }
-
   const { searchParams } = new URL(request.url);
+  const workspaceId = searchParams.get("workspaceId") || "ws-main";
+  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
+  if (authError) return authError;
+
   const branchId = searchParams.get("branchId") ?? searchParams.get("branch");
   const status = searchParams.get("status");
   const query = searchParams.get("q")?.toLowerCase();
@@ -32,7 +28,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const where: Prisma.MouWhereInput = {};
+  const where: Prisma.MouWhereInput = {
+    workspaceId,
+  };
   if (branchId && branchId !== "ALL") {
     where.branchId = branchId;
   }
@@ -53,18 +51,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  let role;
-  try {
-    role = await requireMember("ws-main");
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
-  }
-  if (!hasPermission(role, "CREATE_MOU")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const body = await request.json().catch(() => ({}));
+  const workspaceId = body?.workspaceId || "ws-main";
+  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
+  if (authError) return authError;
 
-  const body = await request.json();
   const { branchId, outletName, partnerName, mouType, submissionDate, startDate, endDate, status, picName, picPhone, docPath, compensationValue, notes } = body ?? {};
   if (!branchId || !partnerName || !mouType) {
     return NextResponse.json({ error: "Missing required fields: branchId, partnerName, mouType" }, { status: 400 });
@@ -76,6 +67,7 @@ export async function POST(request: Request) {
   try {
     const mou = await prisma.mou.create({
       data: {
+        workspaceId,
         branchId,
         outletName,
         partnerName,

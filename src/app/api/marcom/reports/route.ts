@@ -1,40 +1,25 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
-import { requireMember } from "@/lib/marcom/auth";
-import { hasPermission } from "@/lib/marcom/guards";
+import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { compareReportPeriodDesc } from "@/lib/marcom/analytics";
-
-async function requireReportWriter() {
-  let role;
-  try {
-    role = await requireMember("ws-main");
-  } catch (e) {
-    if (e instanceof Response) throw e;
-    throw e;
-  }
-  if (!hasPermission(role, "MANAGE_MASTER_DATA")) {
-    throw Response.json({ error: "Forbidden" }, { status: 403 });
-  }
-}
 
 function asJsonArray(value: unknown): Prisma.InputJsonValue {
   return (Array.isArray(value) ? value : []) as Prisma.InputJsonValue;
 }
 
 export async function GET(request: Request) {
-  try {
-    await requireMember("ws-main");
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
-  }
-
   const { searchParams } = new URL(request.url);
+  const workspaceId = searchParams.get("workspaceId") || "ws-main";
+  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
+  if (authError) return authError;
+
   const month = searchParams.get("month");
   const yearParam = searchParams.get("year");
 
-  const where: Prisma.MonthlyReportWhereInput = {};
+  const where: Prisma.MonthlyReportWhereInput = {
+    workspaceId,
+  };
   if (month) {
     where.month = { equals: month, mode: "insensitive" };
   }
@@ -58,14 +43,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  try {
-    await requireReportWriter();
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
-  }
+  const body = await request.json().catch(() => ({}));
+  const workspaceId = body?.workspaceId || "ws-main";
+  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
+  if (authError) return authError;
 
-  const body = await request.json();
   const { month, year, summary, activities, achievements, keyIssues, actionPlans } =
     body ?? {};
   if (!month || year === undefined) {
@@ -83,6 +65,7 @@ export async function POST(request: Request) {
 
   const report = await prisma.monthlyReport.create({
     data: {
+      workspaceId,
       month,
       year,
       summary: (summary ?? {}) as Prisma.InputJsonValue,

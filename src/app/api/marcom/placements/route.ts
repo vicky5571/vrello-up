@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
-import { requireMember } from "@/lib/marcom/auth";
-import { hasPermission } from "@/lib/marcom/guards";
+import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 
 const VALID_STATUSES = ["NOT_STARTED", "ON_PROGRESS", "DONE", "ISSUE"] as const;
 
@@ -11,28 +10,12 @@ const placementInclude = {
   material: { select: { id: true, type: true, name: true } },
 } as const;
 
-async function requirePlacementCreator() {
-  let role;
-  try {
-    role = await requireMember("ws-main");
-  } catch (e) {
-    if (e instanceof Response) throw e;
-    throw e;
-  }
-  if (!hasPermission(role, "CREATE_PLACEMENT")) {
-    throw Response.json({ error: "Forbidden" }, { status: 403 });
-  }
-}
-
 export async function GET(request: Request) {
-  try {
-    await requireMember("ws-main");
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
-  }
-
   const { searchParams } = new URL(request.url);
+  const workspaceId = searchParams.get("workspaceId") || "ws-main";
+  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
+  if (authError) return authError;
+
   const outletId = searchParams.get("outletId");
   const status = searchParams.get("status");
   const query = searchParams.get("q")?.toLowerCase();
@@ -41,7 +24,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const where: Prisma.PlacementWhereInput = {};
+  const where: Prisma.PlacementWhereInput = {
+    workspaceId,
+  };
   if (outletId && outletId !== "ALL") {
     where.outletId = outletId;
   }
@@ -62,14 +47,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  try {
-    await requirePlacementCreator();
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
-  }
+  const body = await request.json().catch(() => ({}));
+  const workspaceId = body?.workspaceId || "ws-main";
+  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
+  if (authError) return authError;
 
-  const body = await request.json();
   const { outletId, materialId, status, date, picName, photoUrl, dimensions, cost, notes } = body ?? {};
   if (!outletId || !materialId) {
     return NextResponse.json({ error: "Missing required fields: outletId, materialId" }, { status: 400 });
@@ -80,7 +62,7 @@ export async function POST(request: Request) {
 
   try {
     const placement = await prisma.placement.create({
-      data: { outletId, materialId, status, date, picName, photoUrl, dimensions, cost, notes },
+      data: { workspaceId, outletId, materialId, status, date, picName, photoUrl, dimensions, cost, notes },
       include: placementInclude,
     });
     return NextResponse.json(placement, { status: 201 });

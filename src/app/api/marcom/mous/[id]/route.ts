@@ -1,24 +1,23 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
-import { requireMember } from "@/lib/marcom/auth";
-import { hasPermission } from "@/lib/marcom/guards";
+import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { canTransitionMou, MOU_STATUSES, type MouStatus } from "@/lib/marcom/mouMachine";
 
 const VALID_STATUSES = MOU_STATUSES;
 const PATCHABLE_FIELDS = ["branchId", "outletName", "partnerName", "mouType", "submissionDate", "startDate", "endDate", "status", "picName", "picPhone", "docPath", "compensationValue", "notes"] as const;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  let role;
-  try {
-    role = await requireMember("ws-main");
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
+  const { id } = await params;
+  const existing = await prisma.mou.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "MOU not found" }, { status: 404 });
   }
 
-  const { id } = await params;
-  const body = await request.json();
+  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
+  if (authError) return authError;
+
+  const body = await request.json().catch(() => ({}));
   const data: Record<string, unknown> = {};
   for (const field of PATCHABLE_FIELDS) {
     if (body?.[field] !== undefined) {
@@ -36,10 +35,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
   }
 
-  const existing = await prisma.mou.findUnique({ where: { id } });
-  if (!existing) {
-    return NextResponse.json({ error: "MOU not found" }, { status: 404 });
-  }
   if (typeof data.status === "string" && data.status !== existing.status) {
     if (!canTransitionMou(existing.status as MouStatus, data.status as MouStatus)) {
       return NextResponse.json(
@@ -47,8 +42,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         { status: 400 },
       );
     }
-    if (existing.status === "SUBMITTED" && !hasPermission(role, "APPROVE_MOU")) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (existing.status === "SUBMITTED") {
+      const adminAuthError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "admin", request });
+      if (adminAuthError) return adminAuthError;
     }
   }
 
@@ -63,19 +59,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  let role;
-  try {
-    role = await requireMember("ws-main");
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
-  }
-  if (!hasPermission(role, "DELETE_MOU")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const existing = await prisma.mou.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "MOU not found" }, { status: 404 });
   }
 
-  const { id } = await params;
+  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
+  if (authError) return authError;
+
   try {
     await prisma.mou.delete({ where: { id } });
     return NextResponse.json({ ok: true });

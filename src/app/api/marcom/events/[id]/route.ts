@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
-import { requireMember } from "@/lib/marcom/auth";
-import { hasPermission } from "@/lib/marcom/guards";
+import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 
 const VALID_STATUSES = ["UPCOMING", "ON_PROGRESS", "COMPLETED", "CANCELLED"] as const;
 const PATCHABLE_FIELDS = [
@@ -28,29 +27,17 @@ const eventInclude = {
   footage: true,
 } as const;
 
-async function requireEventWriter() {
-  let role;
-  try {
-    role = await requireMember("ws-main");
-  } catch (e) {
-    if (e instanceof Response) throw e;
-    throw e;
-  }
-  if (!hasPermission(role, "CREATE_EVENT")) {
-    throw Response.json({ error: "Forbidden" }, { status: 403 });
-  }
-}
-
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    await requireEventWriter();
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
+  const { id } = await params;
+  const existing = await prisma.marcomEvent.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
 
-  const { id } = await params;
-  const body = await request.json();
+  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
+  if (authError) return authError;
+
+  const body = await request.json().catch(() => ({}));
   const data: Record<string, unknown> = {};
   for (const field of PATCHABLE_FIELDS) {
     if (body?.[field] !== undefined) {
@@ -86,15 +73,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    await requireEventWriter();
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const existing = await prisma.marcomEvent.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
 
-  const { id } = await params;
+  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
+  if (authError) return authError;
+
   try {
     await prisma.marcomEvent.delete({ where: { id } });
     return NextResponse.json({ ok: true });
