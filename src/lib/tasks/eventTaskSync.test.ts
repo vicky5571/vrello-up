@@ -115,3 +115,26 @@ test("buildEventTaskPayload correctly constructs Task creation payload with PIC 
   assert.equal(payload.subtasks.length, 2);
   assert.equal(payload.subtasks[0].title, "Sewa sound system");
 });
+
+test("buildEventTaskPayload seamlessly handles FieldEventItem with startDate", () => {
+  const payload = buildEventTaskPayload({
+    event: {
+      id: "fe-888",
+      name: "Bandung Expo 2026",
+      eventType: "Exhibition",
+      branchName: "Bandung Dago",
+      location: "Trans Studio Mall",
+      startDate: "2026-11-15T09:00:00.000Z",
+      picName: "Siti Rahma",
+    },
+    listId: "list-events",
+    statusId: "status-in-progress",
+    members: mockMembers,
+    subtasks: [],
+  });
+
+  assert.equal(payload.title, "[Field Event] Bandung Expo 2026");
+  assert.equal(payload.dueDate, "2026-11-15");
+  assert.equal(payload.assignees[0].name, "Siti Rahma");
+  assert.equal(payload.relatedMarcomId, "fe-888");
+});

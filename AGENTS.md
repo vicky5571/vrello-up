@@ -24,7 +24,7 @@ Welcome to **vrello-up**. This document serves as the high-signal blueprint for 
 
 - **Database Models (Prisma / Backend)**:
   👉 [`prisma/schema.prisma`](file:///Users/mac/Web%20Development/vrello-up/prisma/schema.prisma)
-  Contains PostgreSQL schema for `WorkspaceItem`, `SpaceItem`, `ListItem`, `TaskItem`, and Marcom models (`Branch`, `Outlet`, `Placement`, `Mou`, `MarcomEvent`, `DocumentItem`, `MonthlyReport`).
+  Contains PostgreSQL schema for `WorkspaceItem`, `SpaceItem`, `ListItem`, `TaskItem`, and Marcom models (`Branch`, `Outlet`, `Placement`, `Mou`, `FieldEvent`, `ContentPost`, `DocumentItem`, `MonthlyReport`).
 
 ---
 

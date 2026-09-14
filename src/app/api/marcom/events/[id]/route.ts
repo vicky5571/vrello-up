@@ -5,7 +5,24 @@ import { requireMember } from "@/lib/marcom/auth";
 import { hasPermission } from "@/lib/marcom/guards";
 
 const VALID_STATUSES = ["UPCOMING", "ON_PROGRESS", "COMPLETED", "CANCELLED"] as const;
-const PATCHABLE_FIELDS = ["name", "date", "endDate", "location", "branchName", "picName", "eventType", "status", "budget", "attendeeCount", "targetAttendee", "notes", "postPlatform", "postFormat", "mediaUrl"] as const;
+const PATCHABLE_FIELDS = [
+  "name",
+  "date",
+  "startDate",
+  "endDate",
+  "location",
+  "branchName",
+  "picName",
+  "eventType",
+  "status",
+  "budget",
+  "attendeeCount",
+  "targetAttendee",
+  "notes",
+  "postPlatform",
+  "postFormat",
+  "mediaUrl",
+] as const;
 
 const eventInclude = {
   footage: true,
@@ -37,9 +54,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const data: Record<string, unknown> = {};
   for (const field of PATCHABLE_FIELDS) {
     if (body?.[field] !== undefined) {
-      if ((field === "date" || field === "endDate") && typeof body[field] === "string") {
-        data[field] = body[field] ? new Date(body[field] as string) : null;
-      } else {
+      if (field === "startDate" && body.date === undefined) {
+        data["date"] = body[field] ? new Date(body[field] as string) : null;
+      } else if (field === "date" || field === "endDate") {
+        data[field] = typeof body[field] === "string" && body[field] ? new Date(body[field] as string) : null;
+      } else if (field !== "startDate") {
         data[field] = body[field];
       }
     }
@@ -53,7 +72,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   try {
     const event = await prisma.marcomEvent.update({ where: { id }, data, include: eventInclude });
-    return NextResponse.json(event);
+    return NextResponse.json({
+      ...event,
+      startDate: event.date ? event.date.toISOString() : null,
+      date: event.date ? event.date.toISOString() : null,
+      endDate: event.endDate ? event.endDate.toISOString() : null,
+    });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });

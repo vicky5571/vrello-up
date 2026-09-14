@@ -51,17 +51,19 @@ export type EventStatus = "UPCOMING" | "ON_PROGRESS" | "COMPLETED" | "CANCELLED"
 
 export interface EventFootage {
   id: string;
-  eventId: string;
+  eventId?: string;
+  fieldEventId?: string;
   title: string;
   filePath: string;
   duration: string;
 }
 
-export interface MarcomEvent {
+export interface FieldEvent {
   id: string;
   name: string;
-  date: string | null;
-  endDate: string | null;
+  date?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
   location: string;
   branchName: string;
   picName: string;
@@ -73,6 +75,8 @@ export interface MarcomEvent {
   notes: string;
   footage?: EventFootage[];
 }
+
+export type MarcomEvent = FieldEvent;
 
 export type ActivityViewMode = "cards" | "table";
 
@@ -119,7 +123,7 @@ const EVENT_TYPE_STYLES: Record<string, { label: string; badge: string }> = {
   Community: { label: "Community", badge: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20" },
 };
 
-const columnHelper = createMarcomColumnHelper<MarcomEvent>();
+const columnHelper = createMarcomColumnHelper<FieldEvent>();
 
 interface EventsViewProps {
   initialView?: ActivityViewMode;
@@ -166,7 +170,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     [rawSpaces]
   );
 
-  const [events, setEvents] = useState<MarcomEvent[]>([]);
+  const [events, setEvents] = useState<FieldEvent[]>([]);
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -307,13 +311,14 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   }, [branches, members, rawSpaces]);
 
   // Open Edit Modal
-  const openEditModal = useCallback((event: MarcomEvent) => {
+  const openEditModal = useCallback((event: FieldEvent) => {
     setEditId(event.id);
     setEventName(event.name || "");
     setEventType(event.eventType || "Roadshow");
     setEventBranchName(event.branchName || branches[0]?.name || "");
     setEventLocation(event.location || "");
-    setEventStartDate(event.date ? event.date.slice(0, 10) : "");
+    const dateVal = event.startDate || event.date;
+    setEventStartDate(dateVal ? dateVal.slice(0, 10) : "");
     setEventEndDate(event.endDate ? event.endDate.slice(0, 10) : "");
     setEventStatus(event.status || "UPCOMING");
     setEventBudget(event.budget || 0);
@@ -532,12 +537,13 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         "List";
       const locationLabel = `${targetSpace?.name || "Space"} › ${targetListName}`;
 
-      const savedItemForNav: MarcomEvent = {
+      const savedItemForNav: FieldEvent = {
         id: savedId || "",
         name: eventName.trim(),
         eventType,
         branchName: eventBranchName,
         location: eventLocation,
+        startDate: eventStartDate || null,
         date: eventStartDate || null,
         endDate: eventEndDate || null,
         picName: picMember?.name || eventPicName,
@@ -587,7 +593,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
 
   // Navigate to Board Task with full context switch
   const navigateToTask = useCallback(
-    (event: MarcomEvent) => {
+    (event: FieldEvent) => {
       let existing = tasks.find((t) => t.relatedMarcomId === event.id);
 
       if (!existing) {
@@ -596,6 +602,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         const targetSpace = rawSpaces.find((s) => s.id === dest.spaceId) || rawSpaces[0];
         const targetStatus = targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
         const picMember = findMemberForPic(members, event.picName) || members[0];
+        const eventDateVal = event.startDate || event.date;
 
         existing = createTask({
           listId: chosenListId,
@@ -611,7 +618,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           statusId: targetStatus,
           priority: "high",
           assignees: picMember ? [picMember] : [],
-          dueDate: event.date ? event.date.slice(0, 10) : undefined,
+          dueDate: eventDateVal ? eventDateVal.slice(0, 10) : undefined,
           orderIndex: 0,
           tags: [],
           subtasks: getEventChecklistTemplate(event.eventType || "Roadshow").map((t, i) => ({
@@ -650,7 +657,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     ]
   );
 
-  const handleTrackAsTask = (event: MarcomEvent) => {
+  const handleTrackAsTask = (event: FieldEvent) => {
     navigateToTask(event);
   };
 
@@ -1351,7 +1358,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         </div>
       ) : (
         /* Table View */
-        <MarcomTableShell<MarcomEvent>
+        <MarcomTableShell<FieldEvent>
           data={filteredEvents}
           columns={columns}
           getRowId={(row) => row.id}

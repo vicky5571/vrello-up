@@ -100,6 +100,7 @@ export interface EventDataInput {
   eventType: string;
   branchName?: string;
   location?: string;
+  startDate?: string | null;
   date?: string | null;
   endDate?: string | null;
   picName?: string;
@@ -166,9 +167,8 @@ export function buildEventTaskPayload({
     ? [members[0]]
     : [];
 
-  const dueDate = event.date
-    ? event.date.slice(0, 10)
-    : undefined;
+  const rawDate = event.startDate || event.date;
+  const dueDate = rawDate ? rawDate.slice(0, 10) : undefined;
 
   const description = buildEventDescription({
     location: event.location,

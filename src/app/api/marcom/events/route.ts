@@ -53,7 +53,15 @@ export async function GET(request: Request) {
     orderBy: { id: "asc" },
     include: eventInclude,
   });
-  return NextResponse.json({ total: events.length, data: events });
+
+  const normalizedEvents = events.map((e) => ({
+    ...e,
+    startDate: e.date ? e.date.toISOString() : null,
+    date: e.date ? e.date.toISOString() : null,
+    endDate: e.endDate ? e.endDate.toISOString() : null,
+  }));
+
+  return NextResponse.json({ total: normalizedEvents.length, data: normalizedEvents });
 }
 
 export async function POST(request: Request) {
@@ -65,7 +73,25 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { name, date, endDate, location, branchName, picName, eventType, status, budget, attendeeCount, targetAttendee, notes, postPlatform, postFormat, mediaUrl } = body ?? {};
+  const {
+    name,
+    date,
+    startDate,
+    endDate,
+    location,
+    branchName,
+    picName,
+    eventType,
+    status,
+    budget,
+    attendeeCount,
+    targetAttendee,
+    notes,
+    postPlatform,
+    postFormat,
+    mediaUrl,
+  } = body ?? {};
+
   if (!name || !eventType) {
     return NextResponse.json({ error: "Missing required fields: name, eventType" }, { status: 400 });
   }
@@ -73,10 +99,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
+  const eventDate = startDate || date;
+
   const event = await prisma.marcomEvent.create({
     data: {
       name,
-      date: date ? new Date(date) : undefined,
+      date: eventDate ? new Date(eventDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
       location,
       branchName,
@@ -93,5 +121,11 @@ export async function POST(request: Request) {
     },
     include: eventInclude,
   });
-  return NextResponse.json(event, { status: 201 });
+
+  return NextResponse.json({
+    ...event,
+    startDate: event.date ? event.date.toISOString() : null,
+    date: event.date ? event.date.toISOString() : null,
+    endDate: event.endDate ? event.endDate.toISOString() : null,
+  }, { status: 201 });
 }

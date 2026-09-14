@@ -207,10 +207,14 @@ export interface FieldEventItem {
   targetAttendee: number;
   attendeeCount: number;
   notes?: string;
-  footage?: { id: string; eventId: string; title: string; filePath: string; duration?: string }[];
+  date?: string | null;
+  footage?: { id: string; eventId?: string; fieldEventId?: string; title: string; filePath: string; duration?: string }[];
   createdAt?: string;
   updatedAt?: string;
 }
+
+export type FieldEvent = FieldEventItem;
+export type MarcomEvent = FieldEventItem;
 
 export type GroupByOption = "status" | "priority" | "assignee";
 
