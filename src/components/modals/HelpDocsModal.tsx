@@ -46,7 +46,7 @@ const GUIDES = [
   },
   {
     icon: Calendar,
-    title: "Planner & Calendar View",
+    title: "Calendar View",
     desc: "Schedule milestone deliverables and visualize task due dates across monthly and weekly calendar grids.",
   },
   {

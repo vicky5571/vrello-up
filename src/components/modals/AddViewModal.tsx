@@ -48,7 +48,7 @@ const AVAILABLE_VIEWS = [
   },
   {
     id: "calendar" as ViewMode,
-    label: "Calendar Planner",
+    label: "Calendar View",
     icon: CalendarDays,
     color: "text-rose-500",
     bg: "bg-rose-50 dark:bg-rose-950/40",

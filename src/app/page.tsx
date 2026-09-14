@@ -203,7 +203,7 @@ export default function WorkspacePage() {
       >
         Skip to main content
       </a>
-      {/* ClickUp Floating Dark Left Dock (Global Rail: Home, Planner, AI, Teams, More) */}
+      {/* ClickUp Floating Dark Left Dock (Global Rail: Home, Calendar, AI, Teams, More) */}
       <GlobalRail />
 
       {/* Floating Hierarchical Sidebar */}

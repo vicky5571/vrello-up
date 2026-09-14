@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Home,
-  CalendarClock,
+  CalendarDays,
   Sparkles,
   Users,
   Grid3X3,
@@ -47,9 +47,9 @@ export function GlobalRail() {
       onClick: () => setActiveView("home"),
     },
     {
-      id: "planner",
-      label: "Planner",
-      icon: CalendarClock,
+      id: "calendar",
+      label: "Calendar",
+      icon: CalendarDays,
       isActive: activeView === "calendar",
       onClick: () => setActiveView("calendar"),
     },
