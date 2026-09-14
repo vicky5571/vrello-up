@@ -17,6 +17,13 @@ test("Marcom work items are isolated by workspaceId and deleted on workspace cas
     await prisma.workspaceItem.deleteMany({
       where: { id: { in: [wsAlphaId, wsBetaId] } },
     });
+    // Delete default tenant test work items if any were left behind
+    await prisma.fieldEvent.deleteMany({
+      where: { id: "event-default-tenant" },
+    });
+    await prisma.contentPost.deleteMany({
+      where: { id: "post-default-tenant" },
+    });
     // Delete child outlet and material before branch
     await prisma.placement.deleteMany({
       where: {
@@ -327,6 +334,64 @@ test("Marcom work items are isolated by workspaceId and deleted on workspace cas
       const betaDoc = await prisma.documentItem.findUnique({ where: { id: "doc-beta-1" } });
       assert.ok(betaDoc);
       assert.equal(betaDoc.workspaceId, wsBetaId);
+
+      // Assert shared master data survived the deletion of Workspace Alpha
+      assert.ok(await prisma.branch.findUnique({ where: { id: testBranchId } }));
+      assert.ok(await prisma.outlet.findUnique({ where: { id: testOutletId } }));
+      assert.ok(await prisma.material.findUnique({ where: { id: testMaterialId } }));
+    });
+
+    // Sub-test 3: Backward-Compatible Default Tenant (@default("ws-main"))
+    await t.test("creating work items without workspaceId populates default tenant ws-main", async () => {
+      // Ensure ws-main exists so foreign key constraint is satisfied
+      await prisma.workspaceItem.upsert({
+        where: { id: "ws-main" },
+        update: {},
+        create: { id: "ws-main", name: "Acme Corp Core" },
+      });
+
+      const defaultEvent = await prisma.fieldEvent.create({
+        data: {
+          id: "event-default-tenant",
+          name: "Default Tenant Roadshow",
+          eventType: "ROADSHOW",
+        },
+      });
+
+      const defaultPost = await prisma.contentPost.create({
+        data: {
+          id: "post-default-tenant",
+          title: "Default Tenant Reel",
+          platform: "instagram",
+          format: "REEL",
+        },
+      });
+
+      try {
+        // Assert returned instance default
+        assert.equal(defaultEvent.workspaceId, "ws-main");
+        assert.equal(defaultPost.workspaceId, "ws-main");
+
+        // Assert database persistence default
+        const fetchedEvent = await prisma.fieldEvent.findUnique({
+          where: { id: "event-default-tenant" },
+        });
+        assert.ok(fetchedEvent);
+        assert.equal(fetchedEvent.workspaceId, "ws-main");
+
+        const fetchedPost = await prisma.contentPost.findUnique({
+          where: { id: "post-default-tenant" },
+        });
+        assert.ok(fetchedPost);
+        assert.equal(fetchedPost.workspaceId, "ws-main");
+      } finally {
+        await prisma.fieldEvent.deleteMany({
+          where: { id: "event-default-tenant" },
+        });
+        await prisma.contentPost.deleteMany({
+          where: { id: "post-default-tenant" },
+        });
+      }
     });
   } finally {
     // Clean up all fixtures
