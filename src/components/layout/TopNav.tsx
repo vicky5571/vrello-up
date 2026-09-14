@@ -9,7 +9,6 @@ import { NotificationCenter } from "./NotificationCenter";
 import {
   ChevronDown,
   Search,
-  Sparkles,
   Bot,
   Zap,
   Brain,
@@ -528,7 +527,7 @@ export function TopNav() {
             </div>
           </div>
 
-          {/* Center: Search Pill & AI Chats */}
+          {/* Center: Search Pill */}
           <div className="hidden md:flex items-center gap-2">
             <div
               onClick={openCommandPalette}
@@ -543,15 +542,6 @@ export function TopNav() {
                 className="w-48 lg:w-56 pl-8 pr-3 py-1 text-xs rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 placeholder-slate-400 border border-transparent group-hover:border-slate-300 dark:group-hover:border-slate-700 cursor-pointer focus:outline-hidden transition-all shadow-2xs"
               />
             </div>
-
-            <button
-              type="button"
-              onClick={() => setAiDrawerOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/40 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors cursor-pointer"
-            >
-              <Sparkles className="w-3 h-3 text-purple-500" />
-              <span>AI Chats</span>
-            </button>
           </div>
 
           {/* Right: Quick actions & user avatar */}
