@@ -288,7 +288,7 @@ export function Sidebar() {
               </div>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto px-2 space-y-1">
+            <div className="flex-1 overflow-y-auto px-2 space-y-1 pb-16">
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
