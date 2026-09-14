@@ -17,6 +17,10 @@ import {
 import { SEED_USERS, DEFAULT_STATUSES } from "@/lib/store/useWorkspaceStore";
 import { realtimeHub } from "@/lib/server/realtimeHub";
 import { fetchTasksForWorkspace } from "@/lib/tasks/taskQuery";
+import {
+  getAuthenticatedUser,
+  requireWorkspaceAccess,
+} from "@/lib/server/workspaceAuth";
 
 // Auto-seed initial workspace, spaces, lists, and tasks if PostgreSQL task tables are empty
 async function ensureSeedData() {
@@ -161,6 +165,22 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const workspaceId = searchParams.get("workspaceId");
 
+    if (workspaceId) {
+      const authError = await requireWorkspaceAccess(workspaceId, {
+        requiredRole: "viewer",
+        request,
+      });
+      if (authError) return authError;
+    } else {
+      const user = await getAuthenticatedUser(request);
+      if (!user) {
+        return NextResponse.json(
+          { error: "Unauthorized: Active session required" },
+          { status: 401 },
+        );
+      }
+    }
+
     const [dbWorkspaces, dbTasks] = await Promise.all([
       prisma.workspaceItem.findMany({
         include: {
@@ -298,9 +318,32 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate tenant membership and write permission
+    let targetWsId: string | null = null;
+    const existingList = await prisma.listItem.findUnique({
+      where: { id: listId },
+      include: { space: true },
+    });
+    if (existingList?.space?.workspaceId) {
+      targetWsId = existingList.space.workspaceId;
+    } else if (body.spaceId) {
+      const space = await prisma.spaceItem.findUnique({
+        where: { id: body.spaceId },
+      });
+      if (space?.workspaceId) targetWsId = space.workspaceId;
+    }
+
+    if (targetWsId) {
+      const authError = await requireWorkspaceAccess(targetWsId, {
+        requiredRole: "staff",
+        request,
+      });
+      if (authError) return authError;
+    }
+
     // Verify parent list exists; if not, create it under target space so listId is preserved
     let targetListId = listId;
-    const listExists = await prisma.listItem.findUnique({ where: { id: listId } });
+    const listExists = existingList || (await prisma.listItem.findUnique({ where: { id: listId } }));
     if (!listExists) {
       const parentSpace =
         (body.spaceId

@@ -2,9 +2,27 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/marcom/db";
 import { type Workspace, type User, type Status } from "@/types";
 import { DEFAULT_STATUSES } from "@/lib/store/useWorkspaceStore";
+import {
+  getAuthenticatedUser,
+  requireWorkspaceAccess,
+} from "@/lib/server/workspaceAuth";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized: Active session required" },
+        { status: 401 },
+      );
+    }
+
+    const memberships = await prisma.workspaceMember.findMany({
+      where: { email: user.email },
+      select: { workspaceId: true },
+    });
+    const memberWsIds = new Set(memberships.map((m) => m.workspaceId));
+
     const dbWorkspaces = await prisma.workspaceItem.findMany({
       include: {
         spaces: {
@@ -20,7 +38,16 @@ export async function GET() {
       },
     });
 
-    const workspaces: Workspace[] = dbWorkspaces.map((ws) => ({
+    const accessibleDbWorkspaces = dbWorkspaces.filter((ws) => {
+      if (user.isDemo) return true;
+      if (memberWsIds.has(ws.id)) return true;
+      const members = Array.isArray(ws.members)
+        ? (ws.members as Array<{ email?: string }>)
+        : [];
+      return members.some((m) => m && m.email === user.email);
+    });
+
+    const workspaces: Workspace[] = accessibleDbWorkspaces.map((ws) => ({
       id: ws.id,
       name: ws.name,
       avatar: ws.avatar || undefined,
@@ -83,6 +110,18 @@ export async function PUT(request: Request) {
     }
 
     for (const ws of workspaces) {
+      // Check permission if workspace already exists
+      const existingWs = await prisma.workspaceItem.findUnique({
+        where: { id: ws.id },
+      });
+      if (existingWs) {
+        const authError = await requireWorkspaceAccess(ws.id, {
+          requiredRole: "staff",
+          request,
+        });
+        if (authError) return authError;
+      }
+
       // 1. Upsert WorkspaceItem
       await prisma.workspaceItem.upsert({
         where: { id: ws.id },
@@ -98,6 +137,23 @@ export async function PUT(request: Request) {
           members: JSON.parse(JSON.stringify(ws.members || [])),
         },
       });
+
+      // Synchronize members into WorkspaceMember relational table
+      if (Array.isArray(ws.members)) {
+        for (const m of ws.members) {
+          if (m && m.email) {
+            const role =
+              m.role === "admin" || m.role === "staff" ? m.role : "viewer";
+            await prisma.workspaceMember.upsert({
+              where: {
+                workspaceId_email: { workspaceId: ws.id, email: m.email },
+              },
+              create: { workspaceId: ws.id, email: m.email, role },
+              update: { role },
+            });
+          }
+        }
+      }
 
       // 2. Manage Spaces
       const existingSpaces = await prisma.spaceItem.findMany({
@@ -256,6 +312,12 @@ export async function DELETE(request: Request) {
         { status: 400 },
       );
     }
+
+    const authError = await requireWorkspaceAccess(id, {
+      requiredRole: "admin",
+      request,
+    });
+    if (authError) return authError;
 
     await prisma.workspaceItem.delete({
       where: { id },

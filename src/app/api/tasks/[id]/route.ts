@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/marcom/db";
 import { realtimeHub } from "@/lib/server/realtimeHub";
+import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import {
   type Task,
   type User,
@@ -19,6 +20,21 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
+
+    const existingTask = await prisma.taskItem.findUnique({
+      where: { id },
+      include: { list: { include: { space: true } } },
+    });
+    if (!existingTask) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    const authError = await requireWorkspaceAccess(
+      existingTask.list.space.workspaceId,
+      { requiredRole: "staff", request },
+    );
+    if (authError) return authError;
+
     const body = await request.json();
 
     const updateData: Record<string, unknown> = {};
@@ -119,6 +135,20 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    const existingTask = await prisma.taskItem.findUnique({
+      where: { id },
+      include: { list: { include: { space: true } } },
+    });
+    if (!existingTask) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    const authError = await requireWorkspaceAccess(
+      existingTask.list.space.workspaceId,
+      { requiredRole: "staff", request: _request },
+    );
+    if (authError) return authError;
 
     await prisma.taskItem.delete({
       where: { id },
