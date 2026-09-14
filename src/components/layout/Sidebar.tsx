@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDropdown } from "@/components/ui/useDropdown";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { type Space } from "@/types";
@@ -128,6 +128,14 @@ export function Sidebar() {
     "space-product": true,
     "space-marcom": true,
   });
+
+  useEffect(() => {
+    if (activeSpaceId) {
+      setExpandedSpaces((prev) =>
+        prev[activeSpaceId] ? prev : { ...prev, [activeSpaceId]: true },
+      );
+    }
+  }, [activeSpaceId]);
 
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
 

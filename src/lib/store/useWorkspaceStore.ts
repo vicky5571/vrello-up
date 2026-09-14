@@ -23,6 +23,7 @@ import {
 } from "@/types";
 import { generateId } from "@/lib/utils";
 import { reorderSpacesList, moveSpaceDirection } from "@/lib/spaces/spaceOrder";
+import { switchWorkspace } from "@/lib/store/workspaceSwitch";
 
 // Default Seed Users
 export const SEED_USERS: User[] = [
@@ -1186,7 +1187,16 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setTrashOpen: (open) => set({ isTrashOpen: open }),
       setLastSeenNotificationsAt: (iso) =>
         set({ lastSeenNotificationsAt: iso }),
-      setActiveWorkspace: (id) => set({ activeWorkspaceId: id }),
+      setActiveWorkspace: (id) =>
+        set((state) =>
+          switchWorkspace(state.workspaces, id, {
+            activeWorkspaceId: state.activeWorkspaceId,
+            activeSpaceId: state.activeSpaceId,
+            activeListId: state.activeListId,
+            selectedTaskId: state.selectedTaskId,
+            selectedTaskIds: state.selectedTaskIds,
+          }),
+        ),
       setActiveSpace: (id) => {
         set({ activeSpaceId: id, activeListId: null });
       },
@@ -2342,6 +2352,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               return m;
             }),
           }));
+
+          const activeWs = state.workspaces.find((w) => w.id === state.activeWorkspaceId);
+          if (activeWs && !activeWs.spaces.some((s) => s.id === state.activeSpaceId)) {
+            state.activeSpaceId = activeWs.spaces[0]?.id || "";
+            state.activeListId = null;
+          }
         }
       },
       migrate: (persistedState: unknown, version: number) => {
