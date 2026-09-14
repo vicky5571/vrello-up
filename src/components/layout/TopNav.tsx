@@ -27,7 +27,6 @@ import {
   LogOut,
   ShieldCheck,
   Menu,
-  Kanban,
   Megaphone,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -402,17 +401,6 @@ export function TopNav() {
               <span className="font-medium text-slate-800 dark:text-slate-200 shrink-0">
                 {MARCOM_VIEW_LABELS[activeView] || "Overview"}
               </span>
-
-              {/* Quick Jump back to Projects */}
-              <button
-                type="button"
-                onClick={() => setAppMode("tasks")}
-                title="Switch back to Projects & Tasks Workspace"
-                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200/70 dark:border-blue-800/50 transition-colors cursor-pointer ml-1"
-              >
-                <Kanban className="w-3.5 h-3.5 text-blue-500" />
-                <span>Ke Projects & Tasks</span>
-              </button>
             </div>
 
             {/* Center: Command Palette Trigger */}

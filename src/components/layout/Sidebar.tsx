@@ -28,7 +28,6 @@ import {
   FolderPlus,
   Megaphone,
   Kanban,
-  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MARKETING_VIEWS, WORK_ITEM_VIEWS, MASTER_DATA_VIEWS } from "@/components/layout/ViewSwitcher";
@@ -237,14 +236,9 @@ export function Sidebar() {
                     Marketing & Ops Hub
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setAppMode("tasks")}
-                  className="text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-0.5"
-                  title="Kembali ke Projects & Spaces"
-                >
-                  <span>← Spaces</span>
-                </button>
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 border border-pink-200 dark:border-pink-900/60">
+                  Ops Portal
+                </span>
               </div>
             </div>
           ) : (
@@ -325,21 +319,6 @@ export function Sidebar() {
                     );
                   })}
                 </div>
-              </div>
-
-              {/* Back to Projects Escape Hatch */}
-              <div className="pt-2 px-1 border-t border-slate-200/60 dark:border-white/5">
-                <button
-                  type="button"
-                  onClick={() => setAppMode("tasks")}
-                  className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg bg-blue-50/60 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-semibold transition-colors cursor-pointer border border-blue-200/60 dark:border-blue-800/40"
-                >
-                  <div className="flex items-center gap-2">
-                    <Kanban className="w-3.5 h-3.5 text-blue-500" />
-                    <span>Ke Projects & Spaces</span>
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-blue-400" />
-                </button>
               </div>
             </div>
           ) : (
