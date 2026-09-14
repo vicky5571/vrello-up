@@ -20,7 +20,6 @@ import {
   Check,
   Folder as FolderIcon,
   List as ListIcon,
-  Calendar,
   Building2,
   Download,
   LogIn,
@@ -527,19 +526,6 @@ export function TopNav() {
                 </div>
               )}
             </div>
-
-            {/* Quick Calendar Jump */}
-            <button
-              type="button"
-              onClick={() => {
-                setActiveView("calendar");
-                toast.info("Opened Calendar View");
-              }}
-              title="Jump to Calendar View"
-              className="p-2 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer ml-0.5"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-            </button>
           </div>
 
           {/* Center: Search Pill & AI Chats */}
