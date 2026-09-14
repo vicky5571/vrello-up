@@ -224,24 +224,8 @@ export function Sidebar() {
             </div>
           </div>
 
-          {/* Header based on appMode */}
-          {appMode === "marcom" ? (
-            <div className="px-3 py-1.5 border-b border-slate-200/80 dark:border-white/5 shrink-0">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-md bg-pink-500/10 text-pink-500 flex items-center justify-center font-bold text-xs">
-                    <Megaphone className="w-3 h-3" />
-                  </div>
-                  <span className="font-semibold text-xs text-slate-800 dark:text-slate-200">
-                    Marketing & Ops Hub
-                  </span>
-                </div>
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 border border-pink-200 dark:border-pink-900/60">
-                  Ops Portal
-                </span>
-              </div>
-            </div>
-          ) : (
+          {/* Spaces Header in Tasks Mode */}
+          {appMode === "tasks" && (
             <div className="px-3 pt-1 pb-1 shrink-0">
               <div className="flex items-center justify-between px-2 mb-1">
                 <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
