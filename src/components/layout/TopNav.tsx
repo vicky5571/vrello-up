@@ -57,8 +57,9 @@ const AutomationsModal = dynamic(
 );
 
 const MARCOM_VIEW_LABELS: Record<string, string> = {
-  events: "Campaigns & Content",
-  content: "Campaigns & Content",
+  "content-planner": "Content Planner",
+  events: "Field Events",
+  content: "Content Planner",
   placements: "Placements",
   mous: "MOUs",
   branches: "Branches",

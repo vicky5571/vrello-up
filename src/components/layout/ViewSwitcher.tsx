@@ -19,6 +19,8 @@ import {
   TrendingUp,
   Plus,
   Megaphone,
+  Sparkles,
+  Flag,
   LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,7 +44,8 @@ const VIEWS: ViewTabItem[] = [
 ];
 
 export const WORK_ITEM_VIEWS: ViewTabItem[] = [
-  { id: "events", label: "Campaigns & Content", icon: Megaphone, iconColor: "text-pink-500", isAvailable: true },
+  { id: "content-planner", label: "Content Planner", icon: Sparkles, iconColor: "text-pink-500", isAvailable: true },
+  { id: "events", label: "Field Events", icon: Flag, iconColor: "text-blue-500", isAvailable: true },
   { id: "placements", label: "Placements", icon: ClipboardList, iconColor: "text-lime-500", isAvailable: true },
   { id: "mous", label: "MOUs", icon: FileText, iconColor: "text-fuchsia-500", isAvailable: true },
 ];

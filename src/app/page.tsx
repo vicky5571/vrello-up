@@ -378,6 +378,19 @@ export default function WorkspacePage() {
               </motion.div>
             )}
 
+            {activeView === "content-planner" && (
+              <motion.div
+                key="content-planner-view"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="h-full w-full"
+              >
+                <ContentPlannerView />
+              </motion.div>
+            )}
+
             {activeView === "events" && (
               <motion.div
                 key="events-view"

@@ -189,9 +189,7 @@ export function Sidebar() {
                 </div>
                 <div className="space-y-0.5">
                   {WORK_ITEM_VIEWS.map((mv) => {
-                    const isItemActive =
-                      activeView === mv.id ||
-                      (mv.id === "events" && activeView === "content");
+                    const isItemActive = activeView === mv.id;
                     const Icon = mv.icon;
 
                     return (

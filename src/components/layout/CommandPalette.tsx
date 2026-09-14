@@ -18,6 +18,7 @@ import {
   FileText,
   ClipboardList,
   Megaphone,
+  Flag,
   Files,
   BarChart3,
   TrendingUp,
@@ -86,7 +87,8 @@ export function CommandPalette() {
   const [branches, setBranches] = useState<MarcomHit[]>([]);
   const [outlets, setOutlets] = useState<MarcomHit[]>([]);
   const [mous, setMous] = useState<MarcomHit[]>([]);
-  const [campaigns, setCampaigns] = useState<MarcomHit[]>([]);
+  const [contentPosts, setContentPosts] = useState<MarcomHit[]>([]);
+  const [fieldEvents, setFieldEvents] = useState<MarcomHit[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -128,7 +130,7 @@ export function CommandPalette() {
     }
   }, [isCommandPaletteOpen]);
 
-  // Marcom directory for universal jump: branches, outlets, MOUs, campaigns.
+  // Marcom directory for universal jump: branches, outlets, MOUs, content posts, field events.
   // Fetched lazily on open; failures degrade to tasks/navigation/views.
   useEffect(() => {
     if (!isCommandPaletteOpen) return;
@@ -139,9 +141,9 @@ export function CommandPalette() {
         .map((r) => {
           const rawId = typeof r.id === "string" ? r.id : "";
           const name =
-            [r.partnerName, r.name].find((v) => typeof v === "string") || rawId;
+            [r.title, r.partnerName, r.name].find((v) => typeof v === "string") || rawId;
           const detail =
-            [r.code, r.eventType, r.branchName, r.city, r.status]
+            [r.code, r.platform, r.format, r.eventType, r.branchName, r.city, r.status]
               .filter((v): v is string => typeof v === "string" && v.length > 0)
               .slice(0, 2)
               .join(" • ") || undefined;
@@ -152,13 +154,15 @@ export function CommandPalette() {
       fetch("/api/marcom/branches").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
       fetch("/api/marcom/outlets").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
       fetch("/api/marcom/mous").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+      fetch("/api/marcom/content").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
       fetch("/api/marcom/events").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
-    ]).then(([b, o, m, e]) => {
+    ]).then(([b, o, m, c, e]) => {
       if (cancelled) return;
       setBranches(pick("branch:", b.data));
       setOutlets(pick("outlet:", o.data));
       setMous(pick("mou:", m.data));
-      setCampaigns(pick("campaign:", e.data));
+      setContentPosts(pick("content:", c.data));
+      setFieldEvents(pick("event:", e.data));
     });
     return () => {
       cancelled = true;
@@ -300,7 +304,8 @@ export function CommandPalette() {
       { rows: branches, category: "branches", view: "branches", viewLabel: "Branch", icon: Building2 },
       { rows: outlets, category: "outlets", view: "outlets", viewLabel: "Outlet", icon: Store },
       { rows: mous, category: "mous", view: "mous", viewLabel: "MOU", icon: FileText },
-      { rows: campaigns, category: "campaigns", view: "events", viewLabel: "Campaign", icon: Megaphone },
+      { rows: contentPosts, category: "campaigns", view: "content-planner", viewLabel: "Content Post", icon: Sparkles },
+      { rows: fieldEvents, category: "campaigns", view: "events", viewLabel: "Field Event", icon: Flag },
     ];
     for (const section of marcomSections) {
       fuzzyFilter(q, section.rows, (r) => [r.name, r.detail ?? ""], 4).forEach((hit) => {
@@ -333,7 +338,8 @@ export function CommandPalette() {
       { id: "outlets", name: "Outlets (Marketing)", icon: Store },
       { id: "mous", name: "MOUs (Marketing)", icon: FileText },
       { id: "placements", name: "Placements (Marketing)", icon: ClipboardList },
-      { id: "events", name: "Campaigns & Content (Marketing)", icon: Megaphone },
+      { id: "content-planner", name: "Content Planner (Marketing)", icon: Sparkles },
+      { id: "events", name: "Field Events (Marketing)", icon: Flag },
       { id: "documents", name: "Documents (Marketing)", icon: Files },
       { id: "reports", name: "Reports (Marketing)", icon: BarChart3 },
       { id: "analytics", name: "Analytics (Marketing)", icon: TrendingUp },
@@ -343,7 +349,7 @@ export function CommandPalette() {
       q,
       viewsList,
       (v) => [v.name, v.id],
-      14,
+      15,
     );
     matchingViews.forEach((v) => {
       items.push({
@@ -384,11 +390,19 @@ export function CommandPalette() {
         onSelect: goTo("mous"),
       },
       {
-        id: "action-goto-campaigns",
-        title: "Go to Campaigns & Content",
-        subtitle: "Open marketing campaigns and social media calendar",
-        keywords: "campaigns events content marketing social",
-        icon: Megaphone,
+        id: "action-goto-content-planner",
+        title: "Go to Content Planner",
+        subtitle: "Open social media scheduling & editorial calendar",
+        keywords: "content planner social media instagram tiktok reels youtube post",
+        icon: Sparkles,
+        onSelect: goTo("content-planner"),
+      },
+      {
+        id: "action-goto-field-events",
+        title: "Go to Field Events",
+        subtitle: "Open physical activations, roadshows, and venue logistics",
+        keywords: "field events roadshows activations on-ground booth exhibition",
+        icon: Flag,
         onSelect: goTo("events"),
       },
       {
@@ -471,7 +485,8 @@ export function CommandPalette() {
     branches,
     outlets,
     mous,
-    campaigns,
+    contentPosts,
+    fieldEvents,
     currentWorkspace,
     allStatuses,
     theme,
