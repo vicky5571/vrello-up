@@ -154,6 +154,7 @@ const NO_FILTER_BAR_VIEWS = new Set<string>([
 export default function WorkspacePage() {
   const [isMounted, setIsMounted] = useState(false);
   const {
+    appMode,
     activeView,
     isCreateTaskModalOpen,
     setCreateTaskModalOpen,
@@ -213,8 +214,10 @@ export default function WorkspacePage() {
         {/* Top Navigation */}
         <TopNav />
 
-        {/* Global Filter Bar (workspace views only) */}
-        {!NO_FILTER_BAR_VIEWS.has(activeView) && isFilterBarOpen && <FilterBar />}
+        {/* Global Filter Bar (tasks mode only) */}
+        {appMode === "tasks" &&
+          !NO_FILTER_BAR_VIEWS.has(activeView) &&
+          isFilterBarOpen && <FilterBar />}
 
         {/* View Transition Area */}
         <div className="flex-1 overflow-hidden relative bg-[#FAFBFC] dark:bg-[#121316]">
