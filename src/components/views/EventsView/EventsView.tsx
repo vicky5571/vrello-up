@@ -20,15 +20,27 @@ import {
   TableProperties,
   Search,
   Film,
+  Kanban,
+  ExternalLink,
+  Layers,
+  ListTodo,
+  RotateCcw,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { formatDate, cn, formatIDR } from "@/lib/utils";
+import type { Task, Subtask, User } from "@/types";
 import {
   getWorkspaceSpacesAndLists,
   findSpaceByListId,
   getDefaultDestinationForChannel,
 } from "@/lib/tasks/targetSpaceList";
+import {
+  getEventChecklistTemplate,
+  findMemberForPic,
+  buildEventDescription,
+  buildEventTaskPayload,
+} from "@/lib/tasks/eventTaskSync";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
@@ -118,7 +130,12 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   const {
     tasks,
     createTask,
+    updateTask,
     setSelectedTaskId,
+    setAppMode,
+    setActiveSpace,
+    setActiveList,
+    setActiveView,
     workspaces,
     activeWorkspaceId,
     activeSpaceId,
@@ -174,6 +191,11 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   );
   const [eventEndDate, setEventEndDate] = useState("");
   const [eventPicName, setEventPicName] = useState("");
+  const [picMemberId, setPicMemberId] = useState<string>("");
+  const [eventSubtasks, setEventSubtasks] = useState<
+    { id: string; title: string; completed?: boolean }[]
+  >([]);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [eventStatus, setEventStatus] = useState<EventStatus>("UPCOMING");
   const [eventBudget, setEventBudget] = useState<number>(0);
   const [eventTargetAttendee, setEventTargetAttendee] = useState<number>(100);
@@ -255,7 +277,9 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setEventLocation("");
     setEventStartDate(new Date().toISOString().slice(0, 10));
     setEventEndDate("");
-    setEventPicName(members[0]?.name || "Field Team Lead");
+    const defaultMember = members[0];
+    setPicMemberId(defaultMember?.id || "");
+    setEventPicName(defaultMember?.name || "Field Team Lead");
     setEventStatus("UPCOMING");
     setEventBudget(15000000);
     setEventTargetAttendee(250);
@@ -266,6 +290,14 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setNewFootageDuration("");
     setNewFootagePath("");
     setCreateExecutionTask(true);
+    setEventSubtasks(
+      getEventChecklistTemplate("Roadshow").map((t, i) => ({
+        id: `sub-init-${i}`,
+        title: t,
+        completed: false,
+      }))
+    );
+    setNewSubtaskTitle("");
 
     const dest = getDefaultDestinationForChannel(rawSpaces, "on_ground");
     setTargetSpaceId(dest.spaceId);
@@ -283,7 +315,6 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setEventLocation(event.location || "");
     setEventStartDate(event.date ? event.date.slice(0, 10) : "");
     setEventEndDate(event.endDate ? event.endDate.slice(0, 10) : "");
-    setEventPicName(event.picName || "");
     setEventStatus(event.status || "UPCOMING");
     setEventBudget(event.budget || 0);
     setEventTargetAttendee(event.targetAttendee || 100);
@@ -293,6 +324,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setNewFootageTitle("");
     setNewFootageDuration("");
     setNewFootagePath("");
+    setCreateExecutionTask(true);
 
     const existingTask = tasks.find((t) => t.relatedMarcomId === event.id);
     if (existingTask) {
@@ -301,16 +333,46 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         setTargetSpaceId(owningSpace.id);
         setTargetListId(existingTask.listId);
       }
-      setCreateExecutionTask(false);
+      const assignedUser = existingTask.assignees?.[0];
+      if (assignedUser) {
+        setPicMemberId(assignedUser.id);
+        setEventPicName(assignedUser.name);
+      } else {
+        const matched = findMemberForPic(members, event.picName);
+        setPicMemberId(matched?.id || "custom");
+        setEventPicName(event.picName || "");
+      }
+      setEventSubtasks(
+        Array.isArray(existingTask.subtasks) && existingTask.subtasks.length > 0
+          ? existingTask.subtasks.map((s, i) => ({
+              id: s.id || `sub-edit-${i}`,
+              title: s.title,
+              completed: Boolean(s.completed),
+            }))
+          : getEventChecklistTemplate(event.eventType || "Roadshow").map((t, i) => ({
+              id: `sub-edit-${i}`,
+              title: t,
+              completed: false,
+            }))
+      );
     } else {
       const dest = getDefaultDestinationForChannel(rawSpaces, "on_ground");
       setTargetSpaceId(dest.spaceId);
       setTargetListId(dest.listId);
-      setCreateExecutionTask(true);
+      const matched = findMemberForPic(members, event.picName);
+      setPicMemberId(matched?.id || members[0]?.id || "custom");
+      setEventPicName(event.picName || members[0]?.name || "");
+      setEventSubtasks(
+        getEventChecklistTemplate(event.eventType || "Roadshow").map((t, i) => ({
+          id: `sub-edit-${i}`,
+          title: t,
+          completed: false,
+        }))
+      );
     }
 
     setIsModalOpen(true);
-  }, [branches, rawSpaces, tasks]);
+  }, [branches, rawSpaces, tasks, members]);
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -386,7 +448,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Failed to update event");
-        toast.success("Field event updated successfully");
+        savedId = editId;
       } else {
         const res = await fetch("/api/marcom/events", {
           method: "POST",
@@ -396,33 +458,108 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         if (!res.ok) throw new Error("Failed to create event");
         const created = await res.json();
         savedId = created.id;
-        toast.success("Field event created successfully");
       }
 
-      // Automatically create execution task in chosen Space & List if toggled
-      if (createExecutionTask && savedId && !tasks.some((t) => t.relatedMarcomId === savedId)) {
-        const chosenListId = targetListId || activeListId || "list-events-roadshows";
-        const chosenSpace = flatSpaces.find((s) => s.id === targetSpaceId);
-        const rawTargetSpace = rawSpaces.find((s) => s.id === targetSpaceId);
-        const targetStatus = rawTargetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
+      const picMember =
+        members.find((m) => m.id === picMemberId) ||
+        findMemberForPic(members, eventPicName);
 
+      const chosenListId =
+        targetListId || activeListId || "list-field-ops";
+      const targetSpace = rawSpaces.find((s) => s.id === targetSpaceId);
+      const targetStatus =
+        targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
+
+      const formattedSubtasks: Subtask[] = eventSubtasks.map((s, i) => ({
+        id: s.id || `sub-${Date.now()}-${i}`,
+        title: s.title,
+        completed: Boolean(s.completed),
+        createdAt: new Date().toISOString(),
+      }));
+
+      // Automatically create execution task in chosen Space & List if toggled
+      const existingTask = savedId
+        ? tasks.find((t) => t.relatedMarcomId === savedId)
+        : undefined;
+
+      if (!existingTask && createExecutionTask && savedId) {
         createTask({
           listId: chosenListId,
           title: `[Field Event] ${eventName.trim()}`,
-          description: `<p><strong>Location:</strong> ${eventLocation || "TBD"}</p><p><strong>Branch:</strong> ${eventBranchName}</p><p><strong>Type:</strong> ${eventType}</p><p><strong>Budget:</strong> ${formatIDR(Number(eventBudget) || 0)}</p><p><strong>Target Attendees:</strong> ${eventTargetAttendee}</p>${eventNotes ? `<p><strong>Logistics Notes:</strong> ${eventNotes}</p>` : ""}`,
+          description: buildEventDescription({
+            location: eventLocation,
+            branchName: eventBranchName,
+            eventType,
+            budget: Number(eventBudget) || 0,
+            targetAttendee: Number(eventTargetAttendee) || 0,
+            notes: eventNotes,
+          }),
           statusId: targetStatus,
           priority: "high",
-          assignees: members[0] ? [members[0]] : [],
+          assignees: picMember ? [picMember] : members[0] ? [members[0]] : [],
           dueDate: eventStartDate || undefined,
           orderIndex: 0,
           tags: [],
-          subtasks: [],
+          subtasks: formattedSubtasks,
           relatedMarcomId: savedId,
         });
-        toast.info(
-          `Linked task created in ${chosenSpace?.name || "Target Space"}`
-        );
+      } else if (existingTask) {
+        const updates: Partial<Task> = {
+          title: `[Field Event] ${eventName.trim()}`,
+          description: buildEventDescription({
+            location: eventLocation,
+            branchName: eventBranchName,
+            eventType,
+            budget: Number(eventBudget) || 0,
+            targetAttendee: Number(eventTargetAttendee) || 0,
+            notes: eventNotes,
+          }),
+          dueDate: eventStartDate || undefined,
+          assignees: picMember ? [picMember] : [],
+          subtasks: formattedSubtasks,
+        };
+        if (targetListId && targetListId !== existingTask.listId) {
+          updates.listId = targetListId;
+        }
+        updateTask(existingTask.id, updates);
       }
+
+      const targetListName =
+        targetSpace?.lists.find((l) => l.id === targetListId)?.name ||
+        targetSpace?.folders
+          .flatMap((f) => f.lists)
+          .find((l) => l.id === targetListId)?.name ||
+        "List";
+      const locationLabel = `${targetSpace?.name || "Space"} › ${targetListName}`;
+
+      const savedItemForNav: MarcomEvent = {
+        id: savedId || "",
+        name: eventName.trim(),
+        eventType,
+        branchName: eventBranchName,
+        location: eventLocation,
+        date: eventStartDate || null,
+        endDate: eventEndDate || null,
+        picName: picMember?.name || eventPicName,
+        status: eventStatus,
+        budget: Number(eventBudget) || 0,
+        targetAttendee: Number(eventTargetAttendee) || 0,
+        attendeeCount: Number(eventAttendeeCount) || 0,
+        notes: eventNotes,
+        footage: eventFootageList,
+      };
+
+      toast.success(
+        editId
+          ? `Field event diperbarui & disinkronkan ke "${locationLabel}"`
+          : `Field event dibuat & tersimpan di "${locationLabel}"`,
+        {
+          action: {
+            label: "Lihat di Board",
+            onClick: () => navigateToTask(savedItemForNav),
+          },
+        }
+      );
 
       closeModal();
       await fetchEvents();
@@ -448,34 +585,74 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     }
   }, [editId, fetchEvents]);
 
-  // Track as Task (instant trigger)
-  const handleTrackAsTask = useCallback((event: MarcomEvent) => {
-    const existing = tasks.find((t) => t.relatedMarcomId === event.id);
-    if (existing) {
+  // Navigate to Board Task with full context switch
+  const navigateToTask = useCallback(
+    (event: MarcomEvent) => {
+      let existing = tasks.find((t) => t.relatedMarcomId === event.id);
+
+      if (!existing) {
+        const dest = getDefaultDestinationForChannel(rawSpaces, "on_ground", targetSpaceId);
+        const chosenListId = dest.listId || activeListId || "list-field-ops";
+        const targetSpace = rawSpaces.find((s) => s.id === dest.spaceId) || rawSpaces[0];
+        const targetStatus = targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
+        const picMember = findMemberForPic(members, event.picName) || members[0];
+
+        existing = createTask({
+          listId: chosenListId,
+          title: `[Field Event] ${event.name}`,
+          description: buildEventDescription({
+            location: event.location,
+            branchName: event.branchName,
+            eventType: event.eventType,
+            budget: event.budget,
+            targetAttendee: event.targetAttendee,
+            notes: event.notes,
+          }),
+          statusId: targetStatus,
+          priority: "high",
+          assignees: picMember ? [picMember] : [],
+          dueDate: event.date ? event.date.slice(0, 10) : undefined,
+          orderIndex: 0,
+          tags: [],
+          subtasks: getEventChecklistTemplate(event.eventType || "Roadshow").map((t, i) => ({
+            id: `sub-${Date.now()}-${i}`,
+            title: t,
+            completed: false,
+            createdAt: new Date().toISOString(),
+          })),
+          relatedMarcomId: event.id,
+        });
+      }
+
+      const owningSpace = findSpaceByListId(rawSpaces, existing.listId);
+      if (owningSpace) {
+        setActiveSpace(owningSpace.id);
+        setActiveList(existing.listId);
+      }
+      setAppMode("tasks");
+      setActiveView("board");
       setSelectedTaskId(existing.id);
-      toast.info("Opened existing execution task");
-      return;
-    }
+      toast.info(`Beralih ke ${owningSpace?.name || "Workspace"} › Board`);
+    },
+    [
+      tasks,
+      rawSpaces,
+      targetSpaceId,
+      activeListId,
+      statuses,
+      members,
+      createTask,
+      setActiveSpace,
+      setActiveList,
+      setAppMode,
+      setActiveView,
+      setSelectedTaskId,
+    ]
+  );
 
-    const dest = getDefaultDestinationForChannel(rawSpaces, "on_ground");
-    const chosenSpace = rawSpaces.find((s) => s.id === dest.spaceId);
-    const targetStatus = chosenSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
-
-    createTask({
-      listId: dest.listId,
-      title: `[Field Event] ${event.name}`,
-      description: `<p><strong>Location:</strong> ${event.location || "TBD"}</p><p><strong>Branch:</strong> ${event.branchName}</p><p><strong>Type:</strong> ${event.eventType}</p><p><strong>Budget:</strong> ${formatIDR(event.budget)}</p><p><strong>Target Attendees:</strong> ${event.targetAttendee}</p>${event.notes ? `<p><strong>Notes:</strong> ${event.notes}</p>` : ""}`,
-      statusId: targetStatus,
-      priority: "high",
-      assignees: members[0] ? [members[0]] : [],
-      dueDate: event.date ? event.date.slice(0, 10) : undefined,
-      orderIndex: 0,
-      tags: [],
-      subtasks: [],
-      relatedMarcomId: event.id,
-    });
-    toast.success("Linked execution task created in Events & Roadshows list");
-  }, [tasks, rawSpaces, statuses, createTask, members, setSelectedTaskId]);
+  const handleTrackAsTask = (event: MarcomEvent) => {
+    navigateToTask(event);
+  };
 
   // Filtered Events
   const filteredEvents = useMemo(() => {
@@ -642,6 +819,37 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           );
         },
       }),
+      columnHelper.accessor("picName", {
+        header: "PIC / Assignee",
+        size: 150,
+        cell: ({ row }) => {
+          const e = row.original;
+          const linkedTask = tasks.find((t) => t.relatedMarcomId === e.id);
+          const member =
+            linkedTask?.assignees?.[0] ||
+            findMemberForPic(members, e.picName);
+
+          return (
+            <div className="flex items-center gap-2 text-xs">
+              {member ? (
+                <img
+                  src={member.avatar}
+                  alt={member.name}
+                  className="w-5 h-5 rounded-full bg-slate-200 shrink-0"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <Users className="w-4 h-4 text-slate-400 shrink-0" />
+              )}
+              <span className="truncate font-medium text-slate-700 dark:text-slate-300">
+                {member?.name || e.picName || "Unassigned"}
+              </span>
+            </div>
+          );
+        },
+      }),
       columnHelper.accessor("status", {
         header: "Status",
         size: 120,
@@ -655,42 +863,63 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         },
       }),
       columnHelper.display({
-        id: "actions",
-        header: "Actions",
-        size: 120,
+        id: "destination",
+        header: "Lokasi Task (Workspace)",
+        size: 190,
         cell: ({ row }) => {
           const e = row.original;
           const linkedTask = tasks.find((t) => t.relatedMarcomId === e.id);
+          const linkedSpace = linkedTask
+            ? findSpaceByListId(rawSpaces, linkedTask.listId)
+            : null;
+          const linkedList =
+            linkedSpace?.lists.find((l) => l.id === linkedTask?.listId) ||
+            linkedSpace?.folders
+              .flatMap((f) => f.lists)
+              .find((l) => l.id === linkedTask?.listId);
+
           return (
-            <div className="flex items-center gap-1 justify-end">
-              {linkedTask ? (
-                <button
-                  type="button"
-                  onClick={() => setSelectedTaskId(linkedTask.id)}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 text-[11px] font-medium transition-colors"
-                  title="Open linked execution task"
-                >
-                  <CheckSquare className="w-3 h-3" />
-                  Task
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleTrackAsTask(e)}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 text-[11px] font-medium transition-colors"
-                  title="Track as task in board"
-                >
-                  <Plus className="w-3 h-3" />
-                  Track
-                </button>
-              )}
+            <button
+              type="button"
+              onClick={() => navigateToTask(e)}
+              className="group/loc flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer text-left transition-colors"
+              title="Klik untuk melihat task di Kanban Board"
+            >
+              <Layers className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span className="truncate font-medium">
+                {linkedSpace && linkedList
+                  ? `${linkedSpace.name} › ${linkedList.name}`
+                  : "Workspace Task"}
+              </span>
+              <ExternalLink className="w-3 h-3 opacity-0 group-hover/loc:opacity-100 shrink-0 text-blue-500 transition-opacity" />
+            </button>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        size: 140,
+        cell: ({ row }) => {
+          const e = row.original;
+          return (
+            <div className="flex items-center gap-1.5 justify-end">
+              <button
+                type="button"
+                onClick={() => navigateToTask(e)}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 text-[10px] font-semibold transition-colors cursor-pointer"
+                title="Lihat task di Kanban Board"
+              >
+                <Kanban className="w-3 h-3" />
+                <span>Board</span>
+              </button>
               <button
                 type="button"
                 onClick={() => openEditModal(e)}
-                className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 title="Edit Event"
               >
-                <Edit2 className="w-3 h-3" />
+                <Edit2 className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
@@ -699,17 +928,17 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                     handleDeleteEvent(e.id);
                   }
                 }}
-                className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                 title="Delete Event"
               >
-                <Trash2 className="w-3 h-3" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
           );
         },
       }),
     ],
-    [tasks, openEditModal, handleTrackAsTask, handleDeleteEvent, setSelectedTaskId]
+    [tasks, rawSpaces, members, openEditModal, navigateToTask, handleDeleteEvent]
   );
 
   return (
@@ -997,41 +1226,107 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                       <span>{event.footage.length} B-roll clips attached</span>
                     </div>
                   )}
+
+                  {/* Destination Breadcrumb */}
+                  {(() => {
+                    const linkedTask = tasks.find((t) => t.relatedMarcomId === event.id);
+                    const linkedSpace = linkedTask
+                      ? findSpaceByListId(rawSpaces, linkedTask.listId)
+                      : null;
+                    const linkedList =
+                      linkedSpace?.lists.find((l) => l.id === linkedTask?.listId) ||
+                      linkedSpace?.folders
+                        .flatMap((f) => f.lists)
+                        .find((l) => l.id === linkedTask?.listId);
+
+                    return (
+                      <div className="mt-3 flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                        <div className="flex items-center gap-1.5 min-w-0 text-slate-600 dark:text-slate-300">
+                          <Layers className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                          <span className="font-semibold truncate">
+                            {linkedSpace && linkedList
+                              ? `${linkedSpace.name} › ${linkedList.name}`
+                              : "Workspace Task"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => navigateToTask(event)}
+                          className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer ml-2"
+                        >
+                          <span>Board</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Checklist summary */}
+                  {(() => {
+                    const linkedTask = tasks.find((t) => t.relatedMarcomId === event.id);
+                    const subtasks = linkedTask?.subtasks || [];
+                    if (subtasks.length === 0) return null;
+                    const completedCount = subtasks.filter((s) => s.completed).length;
+                    return (
+                      <div className="mt-2 flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border border-blue-200/40 dark:border-blue-900/30">
+                        <div className="flex items-center gap-1.5">
+                          <CheckSquare className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                          <span>Checklist Persiapan:</span>
+                        </div>
+                        <span className="font-semibold font-mono text-[10px]">
+                          {completedCount}/{subtasks.length} Selesai
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Card Footer Actions */}
                 <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                  <div className="text-[11px] text-slate-500 truncate">
-                    PIC: <span className="font-medium text-slate-700 dark:text-slate-300">{event.picName || "Unassigned"}</span>
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500 truncate min-w-0">
+                    {(() => {
+                      const linkedTask = tasks.find((t) => t.relatedMarcomId === event.id);
+                      const picMember =
+                        linkedTask?.assignees?.[0] ||
+                        findMemberForPic(members, event.picName);
+
+                      return (
+                        <>
+                          {picMember ? (
+                            <img
+                              src={picMember.avatar}
+                              alt={picMember.name}
+                              className="w-4 h-4 rounded-full bg-slate-200 shrink-0"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          )}
+                          <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
+                            {picMember?.name || event.picName || "Unassigned"}
+                          </span>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex items-center gap-1">
-                    {linkedTask ? (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedTaskId(linkedTask.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 text-xs font-semibold transition-colors"
-                        title="Open linked execution task"
-                      >
-                        <CheckSquare className="w-3.5 h-3.5" />
-                        Task
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleTrackAsTask(event)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 text-xs font-semibold transition-colors"
-                        title="Track as task in board"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Track
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => navigateToTask(event)}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer transition-colors"
+                      title="Lihat task di Kanban Board"
+                    >
+                      <Kanban className="w-3 h-3" />
+                      <span>Lihat di Board</span>
+                    </button>
 
                     <button
                       type="button"
                       onClick={() => openEditModal(event)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       title="Edit Event"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -1043,7 +1338,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                           handleDeleteEvent(event.id);
                         }
                       }}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                      className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                       title="Delete Event"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -1218,13 +1513,38 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Person in Charge (PIC)
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Budi Hartono"
-                      value={eventPicName}
-                      onChange={(e) => setEventPicName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
-                    />
+                    <select
+                      value={picMemberId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPicMemberId(val);
+                        if (val !== "custom") {
+                          const m = members.find((mem) => mem.id === val);
+                          if (m) setEventPicName(m.name);
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden cursor-pointer"
+                    >
+                      {members.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          👤 {m.name} ({m.email})
+                        </option>
+                      ))}
+                      <option value="custom">✍️ Custom PIC Name...</option>
+                    </select>
+
+                    {picMemberId === "custom" && (
+                      <input
+                        type="text"
+                        placeholder="Masukkan nama PIC..."
+                        value={eventPicName}
+                        onChange={(e) => setEventPicName(e.target.value)}
+                        className="mt-1.5 w-full px-3 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 outline-hidden"
+                      />
+                    )}
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      PIC akan otomatis menerima task ini di Kanban Board & "My Tasks".
+                    </span>
                   </div>
                 </div>
 
@@ -1371,62 +1691,212 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                   </div>
                 </div>
 
+                {/* EVENT PREPARATION CHECKLIST (Subtasks) */}
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100">
+                      <ListTodo className="w-4 h-4 text-blue-500" />
+                      <span>Checklist Persiapan Event (Task Subtasks)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-slate-400 font-mono">
+                        {eventSubtasks.filter((s) => s.completed).length}/{eventSubtasks.length} selesai
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const template = getEventChecklistTemplate(eventType);
+                          setEventSubtasks(
+                            template.map((t, i) => ({
+                              id: `sub-${Date.now()}-${i}`,
+                              title: t,
+                              completed: false,
+                            }))
+                          );
+                          toast.info(`Checklist direset ke template ${eventType}`);
+                        }}
+                        className="inline-flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                        title="Muat ulang item checklist sesuai jenis event"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Template {eventType}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Daftar persiapan logistik & operasional lapangan. Item ini otomatis tersinkronisasi sebagai subtasks di Kanban Board.
+                  </p>
+
+                  {eventSubtasks.length > 0 && (
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                      {eventSubtasks.map((s, idx) => (
+                        <div
+                          key={s.id || idx}
+                          className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"
+                        >
+                          <label className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(s.completed)}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setEventSubtasks((prev) =>
+                                  prev.map((item, i) =>
+                                    i === idx ? { ...item, completed: checked } : item
+                                  )
+                                );
+                              }}
+                              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                            />
+                            <span
+                              className={cn(
+                                "truncate text-slate-800 dark:text-slate-200",
+                                s.completed && "line-through text-slate-400 dark:text-slate-500"
+                              )}
+                            >
+                              {s.title}
+                            </span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEventSubtasks((prev) => prev.filter((_, i) => i !== idx))
+                            }
+                            className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer transition-colors"
+                            title="Hapus checklist item"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add subtask item */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="text"
+                      placeholder="Tambah checklist baru... (e.g. Sewa genset 10kVA)"
+                      value={newSubtaskTitle}
+                      onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (newSubtaskTitle.trim()) {
+                            setEventSubtasks((prev) => [
+                              ...prev,
+                              {
+                                id: `sub-${Date.now()}-${prev.length}`,
+                                title: newSubtaskTitle.trim(),
+                                completed: false,
+                              },
+                            ]);
+                            setNewSubtaskTitle("");
+                          }
+                        }
+                      }}
+                      className="flex-1 px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 outline-hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!newSubtaskTitle.trim()) return;
+                        setEventSubtasks((prev) => [
+                          ...prev,
+                          {
+                            id: `sub-${Date.now()}-${prev.length}`,
+                            title: newSubtaskTitle.trim(),
+                            completed: false,
+                          },
+                        ]);
+                        setNewSubtaskTitle("");
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Tambah
+                    </button>
+                  </div>
+                </div>
+
                 {/* TARGET SPACE & LIST SELECTION (Superpower Integration) */}
                 <div className="p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <CheckSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                        Target Workspace Destination
+                      <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                        Target Space & List (Lokasi Penyimpanan Task)
                       </span>
                     </div>
-                    <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer font-medium">
                       <input
                         type="checkbox"
                         checked={createExecutionTask}
                         onChange={(e) => setCreateExecutionTask(e.target.checked)}
                         className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
-                      Create execution task in board
+                      Sinkronkan ke Kanban Board
                     </label>
                   </div>
 
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Pilih Space dan List di Workspace tempat task event ini akan dibuat dan dipantau bersama checklist persiapannya.
+                  </p>
+
                   {createExecutionTask && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                      <div>
-                        <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                          Target Space
-                        </label>
-                        <select
-                          value={targetSpaceId}
-                          onChange={(e) => handleTargetSpaceChange(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 outline-hidden font-medium"
-                        >
-                          {flatSpaces.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.name}
-                            </option>
-                          ))}
-                        </select>
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            Pilih Space
+                          </label>
+                          <select
+                            value={targetSpaceId}
+                            onChange={(e) => handleTargetSpaceChange(e.target.value)}
+                            className="w-full px-3 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 outline-hidden font-medium cursor-pointer"
+                          >
+                            {flatSpaces.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            Pilih List
+                          </label>
+                          <select
+                            value={targetListId}
+                            onChange={(e) => setTargetListId(e.target.value)}
+                            className="w-full px-3 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 outline-hidden font-medium cursor-pointer"
+                          >
+                            {targetLists.map((l) => (
+                              <option key={l.id} value={l.id}>
+                                {l.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                          Target List
-                        </label>
-                        <select
-                          value={targetListId}
-                          onChange={(e) => setTargetListId(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 outline-hidden font-medium"
-                        >
-                          {targetLists.map((l) => (
-                            <option key={l.id} value={l.id}>
-                              {l.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                      {/* Live destination preview pill */}
+                      {(() => {
+                        const currentSpace = flatSpaces.find((s) => s.id === targetSpaceId);
+                        const currentList = targetLists.find((l) => l.id === targetListId);
+                        return (
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300 pt-1">
+                            <span className="text-slate-400">Tujuan akhir:</span>
+                            <span className="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-blue-200/50 dark:border-blue-900/40">
+                              <Layers className="w-3 h-3" />
+                              {currentSpace?.name || "Space"} › {currentList?.name || "List"}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </>
                   )}
                 </div>
 
