@@ -47,7 +47,7 @@ export function ChannelView() {
 
   // Filter messages for current channel
   const messages = (channelMessages || []).filter(
-    (m) => m.channelId === channelId || m.channelId === "list-sprint-tasks" || !m.channelId
+    (m) => m.channelId === channelId || !m.channelId
   );
 
   const filteredMessages = messages.filter((m) =>

@@ -31,41 +31,6 @@ async function ensureSeedData() {
       spaces: {
         create: [
           {
-            id: "space-eng",
-            name: "Engineering Core",
-            icon: "Code2",
-            color: "#0D9488",
-            statuses: JSON.parse(JSON.stringify(DEFAULT_STATUSES)),
-            folders: {
-              create: [
-                {
-                  id: "folder-sprint",
-                  name: "Sprint 42",
-                },
-              ],
-            },
-            lists: {
-              create: [
-                {
-                  id: "list-sprint-tasks",
-                  folderId: "folder-sprint",
-                  name: "Sprint Backlog",
-                  icon: "ListTodo",
-                },
-                {
-                  id: "list-roadmap",
-                  name: "Architecture Roadmap",
-                  icon: "Milestone",
-                },
-                {
-                  id: "list-bugs",
-                  name: "Bug Tracker",
-                  icon: "Bug",
-                },
-              ],
-            },
-          },
-          {
             id: "space-product",
             name: "Design & Product",
             icon: "Palette",
@@ -117,7 +82,7 @@ async function ensureSeedData() {
     data: [
       {
         id: "task-1",
-        listId: "list-sprint-tasks",
+        listId: "list-design-system",
         title: "Implement Framer Motion view transition animations",
         description:
           "<h3>Overview</h3><p>Integrate <code>layoutId</code> morphing for view indicator tabs and spring physics for the task slide-over drawer.</p>",

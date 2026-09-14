@@ -13,7 +13,7 @@ type NewTask = Omit<Task, "id" | "createdAt" | "updatedAt">;
 
 function makeTask(title: string, overrides: Partial<NewTask> = {}) {
   return api().createTask({
-    listId: "list-sprint-tasks",
+    listId: "list-design-system",
     title,
     description: "",
     statusId: "status-todo",

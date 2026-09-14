@@ -7,7 +7,7 @@ const api = () => useWorkspaceStore.getState();
 
 function makeTask(title: string) {
   return api().createTask({
-    listId: "list-sprint-tasks",
+    listId: "list-design-system",
     title,
     description: "",
     statusId: "status-todo",

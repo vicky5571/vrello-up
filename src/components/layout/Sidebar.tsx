@@ -28,7 +28,7 @@ import {
   FolderPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MARKETING_VIEWS } from "@/components/layout/ViewSwitcher";
+import { MARKETING_VIEWS, WORK_ITEM_VIEWS, MASTER_DATA_VIEWS } from "@/components/layout/ViewSwitcher";
 import { CreateSpaceModal } from "@/components/spaces/CreateSpaceModal";
 import { EditSpaceModal } from "@/components/spaces/EditSpaceModal";
 import { CreateListModal } from "@/components/spaces/CreateListModal";
@@ -74,13 +74,11 @@ export function Sidebar() {
   } = useWorkspaceStore();
 
   const [expandedSpaces, setExpandedSpaces] = useState<Record<string, boolean>>({
-    "space-eng": true,
     "space-product": true,
+    "space-marcom": true,
   });
 
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
-    "folder-sprint": true,
-  });
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
 
   const [isMarketingExpanded, setIsMarketingExpanded] = useState(true);
 
@@ -675,28 +673,65 @@ export function Sidebar() {
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="overflow-hidden pl-3 border-l border-slate-200/70 dark:border-slate-800/80 ml-3.5 space-y-0.5 py-0.5"
+                    className="overflow-hidden pl-3 border-l border-slate-200/70 dark:border-slate-800/80 ml-3.5 space-y-2 py-1"
                   >
-                    {MARKETING_VIEWS.map((mv) => {
-                      const isItemActive = activeView === mv.id || (mv.id === "events" && activeView === "content");
-                      const Icon = mv.icon;
+                    {/* Work Items Group */}
+                    <div>
+                      <div className="px-2 py-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
+                        Work Items
+                      </div>
+                      <div className="space-y-0.5">
+                        {WORK_ITEM_VIEWS.map((mv) => {
+                          const isItemActive = activeView === mv.id || (mv.id === "events" && activeView === "content");
+                          const Icon = mv.icon;
 
-                      return (
-                        <div
-                          key={mv.id}
-                          onClick={() => setActiveView(mv.id)}
-                          className={cn(
-                            "flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium cursor-pointer transition-colors",
-                            isItemActive
-                              ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
-                              : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
-                          )}
-                        >
-                          <Icon className={cn("w-3.5 h-3.5 shrink-0", mv.iconColor)} />
-                          <span className="truncate">{mv.label}</span>
-                        </div>
-                      );
-                    })}
+                          return (
+                            <div
+                              key={mv.id}
+                              onClick={() => setActiveView(mv.id)}
+                              className={cn(
+                                "flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium cursor-pointer transition-colors",
+                                isItemActive
+                                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
+                                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
+                              )}
+                            >
+                              <Icon className={cn("w-3.5 h-3.5 shrink-0", mv.iconColor)} />
+                              <span className="truncate">{mv.label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Master Data Group */}
+                    <div>
+                      <div className="px-2 py-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
+                        Master Data
+                      </div>
+                      <div className="space-y-0.5">
+                        {MASTER_DATA_VIEWS.map((mv) => {
+                          const isItemActive = activeView === mv.id || (mv.id === "events" && activeView === "content");
+                          const Icon = mv.icon;
+
+                          return (
+                            <div
+                              key={mv.id}
+                              onClick={() => setActiveView(mv.id)}
+                              className={cn(
+                                "flex items-center gap-2 px-2 py-1 rounded-md text-xs font-medium cursor-pointer transition-colors",
+                                isItemActive
+                                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
+                                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
+                              )}
+                            >
+                              <Icon className={cn("w-3.5 h-3.5 shrink-0", mv.iconColor)} />
+                              <span className="truncate">{mv.label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

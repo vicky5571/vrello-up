@@ -102,44 +102,6 @@ export const DEFAULT_VIEW_PREFERENCES: ViewPreferences = {
 
 const INITIAL_SPACES: Space[] = [
   {
-    id: "space-eng",
-    workspaceId: "ws-main",
-    name: "Engineering Core",
-    icon: "Code2",
-    color: "#0D9488",
-    statuses: DEFAULT_STATUSES,
-    folders: [
-      {
-        id: "folder-sprint",
-        spaceId: "space-eng",
-        name: "Sprint 42",
-        lists: [
-          {
-            id: "list-sprint-tasks",
-            spaceId: "space-eng",
-            folderId: "folder-sprint",
-            name: "Sprint Backlog",
-            icon: "ListTodo",
-          },
-        ],
-      },
-    ],
-    lists: [
-      {
-        id: "list-roadmap",
-        spaceId: "space-eng",
-        name: "Architecture Roadmap",
-        icon: "Milestone",
-      },
-      {
-        id: "list-bugs",
-        spaceId: "space-eng",
-        name: "Bug Tracker",
-        icon: "Bug",
-      },
-    ],
-  },
-  {
     id: "space-product",
     workspaceId: "ws-main",
     name: "Design & Product",
@@ -191,7 +153,7 @@ const INITIAL_SPACES: Space[] = [
 const INITIAL_TASKS: Task[] = [
   {
     id: "task-1",
-    listId: "list-sprint-tasks",
+    listId: "list-design-system",
     title: "Implement Framer Motion view transition animations",
     description:
       "<h3>Overview</h3><p>Integrate <code>layoutId</code> morphing for view indicator tabs and spring physics for the task slide-over drawer.</p><ul><li>Fluid spring curves</li><li>Accessible reduced-motion fallback</li><li>Hardware accelerated transforms</li></ul>",
@@ -228,7 +190,7 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "task-2",
-    listId: "list-sprint-tasks",
+    listId: "list-design-system",
     title: "Build ClickUp-style interactive Table View with TanStack Table",
     description:
       "<p>Implement column sorting, status selector badges, inline title editing, and priority dropdown directly inside the tabular row grid.</p>",
@@ -257,7 +219,7 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "task-3",
-    listId: "list-sprint-tasks",
+    listId: "list-design-system",
     title: "Configure Security rules and environment secret boundaries",
     description:
       "<p>Enforce <code>SECURITY.md</code> rules: strict separation of public keys vs server-only secrets, DOMPurify HTML sanitization for Tiptap editor, and RLS checks.</p>",
@@ -286,7 +248,7 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "task-4",
-    listId: "list-sprint-tasks",
+    listId: "list-design-system",
     title: "Review UI/UX Pro Max Dark Mode & Contrast Tokens",
     description:
       "<p>Ensure all text surfaces meet WCAG 2.2 AA >= 4.5:1 contrast standards, especially on deep OLED slate dark mode.</p>",
@@ -302,7 +264,7 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "post-1",
-    listId: "list-sprint-tasks",
+    listId: "list-content-planner",
     title: "Launch Teaser Reel: VrelloUp 2.0 Feature Drop",
     description:
       "<p>Highlight fluid animations, ClickUp/Trello hybrid views, and real-time sprint blocker analytics. #Productivity #TechLaunch</p>",
@@ -342,7 +304,7 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "post-2",
-    listId: "list-sprint-tasks",
+    listId: "list-content-planner",
     title: "TikTok Behind-the-Scenes: Field Officer Solo Roadshow",
     description:
       "<p>Day in the life of field marketing officers inspecting outlet branding signboards in Solo Central Java. #FieldOps #BehindTheScenes</p>",
@@ -375,7 +337,7 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "post-3",
-    listId: "list-sprint-tasks",
+    listId: "list-content-planner",
     title: "YouTube Deep Dive: ClickUp & Trello Hybrid Workflow",
     description:
       "<p>Walkthrough comparing multi-view capabilities (List, Board, Calendar, Gantt, Table) in VrelloUp. #Tutorial #Productivity</p>",
@@ -408,7 +370,7 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "post-4",
-    listId: "list-sprint-tasks",
+    listId: "list-content-planner",
     title: "LinkedIn Product Update: VrelloUp Q3 Release Notes",
     description:
       "<p>Official announcement detailing sprint planning, task dependencies, and marketing integration. #SaaS #ProductUpdate</p>",
@@ -444,7 +406,7 @@ const INITIAL_TASKS: Task[] = [
 const INITIAL_CHANNEL_MESSAGES: ChannelMessage[] = [
   {
     id: "msg-1",
-    channelId: "list-sprint-tasks",
+    channelId: "list-design-system",
     userId: "user-1",
     user: SEED_USERS[0],
     content:
@@ -453,7 +415,7 @@ const INITIAL_CHANNEL_MESSAGES: ChannelMessage[] = [
   },
   {
     id: "msg-2",
-    channelId: "list-sprint-tasks",
+    channelId: "list-design-system",
     userId: "user-2",
     user: SEED_USERS[1],
     content:
@@ -462,7 +424,7 @@ const INITIAL_CHANNEL_MESSAGES: ChannelMessage[] = [
   },
   {
     id: "msg-3",
-    channelId: "list-sprint-tasks",
+    channelId: "list-design-system",
     userId: "user-3",
     user: SEED_USERS[2],
     content:
@@ -780,7 +742,6 @@ export function reconcileWorkspaces(
     for (const s of serverWs.spaces) {
       if (!clientSpaceIds.has(s.id)) {
         const isDefaultSpace =
-          s.id === "space-eng" ||
           s.id === "space-product" ||
           s.id === "space-marcom";
         if (!isDefaultSpace) {
@@ -966,8 +927,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
     (set, get) => ({
       workspaces: [INITIAL_WORKSPACE],
       activeWorkspaceId: "ws-main",
-      activeSpaceId: "space-eng",
-      activeListId: "list-sprint-tasks",
+      activeSpaceId: "space-product",
+      activeListId: "list-design-system",
       tasks: INITIAL_TASKS,
       tags: SEED_TAGS,
       channelMessages: INITIAL_CHANNEL_MESSAGES,
@@ -1038,7 +999,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           state.workspaces[0];
         const defaultSpace = currentWorkspace?.spaces[0];
         const defaultListId =
-          defaultSpace?.lists[0]?.id || state.activeListId || "list-sprint-tasks";
+          defaultSpace?.lists[0]?.id || state.activeListId || "list-design-system";
         const defaultStatusId = defaultSpace?.statuses[0]?.id || "status-todo";
         const actor = resolveActor(state);
 
@@ -1309,7 +1270,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             state.activeListId ||
             currentSpace?.lists[0]?.id ||
             currentSpace?.folders[0]?.lists[0]?.id ||
-            "list-sprint-tasks";
+            "list-design-system";
         }
         const newTask: Task = {
           ...newTaskData,
@@ -2361,6 +2322,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             rawTasks = [...rawTasks, ...missingSeeds];
           }
 
+          // Ensure space-eng and its lists from previous client localStorage are purged
+          rawWorkspaces = rawWorkspaces.map((w) => ({
+            ...w,
+            spaces: (w.spaces || []).filter((s) => s.id !== "space-eng"),
+          }));
+
+          const engListIds = new Set(["list-sprint-tasks", "list-roadmap", "list-bugs"]);
+          rawTasks = rawTasks.filter((t) => !engListIds.has(t.listId));
+
           const activeWs = rawWorkspaces[0];
           const activeSpace = activeWs?.spaces[0];
           const activeList =
@@ -2372,8 +2342,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             workspaces: rawWorkspaces,
             tasks: rawTasks,
             activeWorkspaceId: (typeof state.activeWorkspaceId === "string" && state.activeWorkspaceId) || activeWs?.id || "ws-main",
-            activeSpaceId: (typeof state.activeSpaceId === "string" && state.activeSpaceId) || activeSpace?.id || "space-eng",
-            activeListId: state.activeListId === null ? null : ((typeof state.activeListId === "string" && state.activeListId) || activeList || "list-sprint-tasks"),
+            activeSpaceId: (typeof state.activeSpaceId === "string" && state.activeSpaceId !== "space-eng" && state.activeSpaceId) || activeSpace?.id || "space-product",
+            activeListId: state.activeListId === null ? null : ((typeof state.activeListId === "string" && !engListIds.has(state.activeListId) && state.activeListId) || activeList || "list-design-system"),
             activeView: (state.activeView as ViewMode) || "list",
           };
         }

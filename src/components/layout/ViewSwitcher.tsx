@@ -44,15 +44,23 @@ const VIEWS: ViewTabItem[] = [
   { id: "table", label: "Table", icon: TableProperties, iconColor: "text-emerald-500", isAvailable: true },
 ];
 
-export const MARKETING_VIEWS: ViewTabItem[] = [
+export const WORK_ITEM_VIEWS: ViewTabItem[] = [
   { id: "events", label: "Campaigns & Content", icon: Megaphone, iconColor: "text-pink-500", isAvailable: true },
-  { id: "branches", label: "Branches", icon: Building2, iconColor: "text-cyan-500", isAvailable: true },
-  { id: "outlets", label: "Outlets", icon: Store, iconColor: "text-orange-500", isAvailable: true },
   { id: "placements", label: "Placements", icon: ClipboardList, iconColor: "text-lime-500", isAvailable: true },
   { id: "mous", label: "MOUs", icon: FileText, iconColor: "text-fuchsia-500", isAvailable: true },
+];
+
+export const MASTER_DATA_VIEWS: ViewTabItem[] = [
+  { id: "branches", label: "Branches", icon: Building2, iconColor: "text-cyan-500", isAvailable: true },
+  { id: "outlets", label: "Outlets", icon: Store, iconColor: "text-orange-500", isAvailable: true },
   { id: "documents", label: "Documents", icon: Files, iconColor: "text-sky-500", isAvailable: true },
   { id: "reports", label: "Reports", icon: BarChart3, iconColor: "text-indigo-500", isAvailable: true },
   { id: "analytics", label: "Analytics", icon: TrendingUp, iconColor: "text-teal-500", isAvailable: true },
+];
+
+export const MARKETING_VIEWS: ViewTabItem[] = [
+  ...WORK_ITEM_VIEWS,
+  ...MASTER_DATA_VIEWS,
 ];
 
 function ViewTabButton({
@@ -146,11 +154,47 @@ export function ViewSwitcher() {
           </button>
 
           {isMarketingOpen && (
-            <div className="absolute left-0 top-full mt-1 w-52 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-              <div className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                Marketing & Ops
+            <div className="absolute left-0 top-full mt-1 w-56 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+              {/* Work Items Section */}
+              <div className="px-3 pt-1 pb-0.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                Work Items
               </div>
-              {MARKETING_VIEWS.map((mv) => {
+              {WORK_ITEM_VIEWS.map((mv) => {
+                const Icon = mv.icon;
+                const isSelected = activeView === mv.id || (mv.id === "events" && activeView === "content");
+                return (
+                  <button
+                    key={mv.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveView(mv.id);
+                      setIsMarketingOpen(false);
+                    }}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer",
+                      isSelected && "font-semibold bg-slate-50 dark:bg-slate-800/60"
+                    )}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Icon className={cn("w-3.5 h-3.5 shrink-0", mv.iconColor)} />
+                      <span className="truncate text-slate-700 dark:text-slate-200">
+                        {mv.label}
+                      </span>
+                    </div>
+                    {isSelected && (
+                      <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+
+              <div className="border-t border-slate-100 dark:border-slate-800 my-1.5" />
+
+              {/* Master Data Section */}
+              <div className="px-3 pt-0.5 pb-0.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                Master Data
+              </div>
+              {MASTER_DATA_VIEWS.map((mv) => {
                 const Icon = mv.icon;
                 const isSelected = activeView === mv.id || (mv.id === "events" && activeView === "content");
                 return (

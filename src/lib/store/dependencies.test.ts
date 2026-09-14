@@ -26,7 +26,7 @@ function stubTask(id: string, dependencies: string[] = []): Task {
 
 function makeTask(title: string) {
   return api().createTask({
-    listId: "list-sprint-tasks",
+    listId: "list-design-system",
     title,
     description: "",
     statusId: "status-todo",
