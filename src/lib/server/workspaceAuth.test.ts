@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires explicit TypeScript extension
 import { prisma } from "../marcom/db.ts";
 // @ts-expect-error Node's strip-types runner requires explicit TypeScript extension
-import { isRoleSufficient, validateWorkspaceAccess, requireWorkspaceAccess, type WorkspaceRole } from "./workspaceAuth.ts";
+import { isRoleSufficient, validateWorkspaceAccess, requireWorkspaceAccess } from "./workspaceAuth.ts";
 
 test("RBAC role hierarchy: isRoleSufficient", () => {
   // admin has all permissions
@@ -22,7 +22,7 @@ test("RBAC role hierarchy: isRoleSufficient", () => {
   assert.equal(isRoleSufficient("viewer", "viewer"), true);
 });
 
-test("RBAC & Tenant Authorization: validateWorkspaceAccess", async (t) => {
+test("RBAC & Tenant Authorization: validateWorkspaceAccess", async () => {
   const wsAlphaId = "ws-auth-alpha";
   const wsBetaId = "ws-auth-beta";
 

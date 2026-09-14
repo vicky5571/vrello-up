@@ -156,3 +156,4 @@ Setiap komponen tampilan Marcom mengaitkan data dengan workspace aktif dari Zust
    Menambahkan unit test baru untuk memverifikasi isolasi query Marcom work items per `workspaceId` dan cascade delete saat workspace dihapus.
 4. **Full Test Suite**:
    `npm test` lolos 100% untuk seluruh unit test di proyek.
+

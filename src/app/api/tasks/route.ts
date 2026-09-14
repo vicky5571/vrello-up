@@ -3,7 +3,6 @@ import { prisma } from "@/lib/marcom/db";
 import {
   type Task,
   type Workspace,
-  type Folder,
   type Status,
   type Priority,
   type PostPlatform,
