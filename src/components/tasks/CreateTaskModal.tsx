@@ -6,6 +6,7 @@ import { Priority, PostPlatform, PostFormat } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Calendar, Flame, Layers, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { getWorkspaceSpacesAndLists } from "@/lib/tasks/targetSpaceList";
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -30,10 +31,28 @@ export function CreateTaskModal({
   } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = currentWorkspace?.spaces.find(
-    (s) => s.id === activeSpaceId,
-  );
-  const statuses = currentSpace?.statuses || [];
+  const rawSpaces = currentWorkspace?.spaces || [];
+  const flatSpaces = getWorkspaceSpacesAndLists(rawSpaces);
+
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string>(() => {
+    if (activeSpaceId && rawSpaces.some((s) => s.id === activeSpaceId)) {
+      return activeSpaceId;
+    }
+    return rawSpaces[0]?.id || "";
+  });
+
+  const selectedSpace = rawSpaces.find((s) => s.id === selectedSpaceId) || rawSpaces[0];
+  const flatTargetSpace = flatSpaces.find((s) => s.id === selectedSpaceId) || flatSpaces[0];
+  const availableLists = flatTargetSpace?.lists || [];
+
+  const [selectedListId, setSelectedListId] = useState<string>(() => {
+    if (activeListId && availableLists.some((l) => l.id === activeListId)) {
+      return activeListId;
+    }
+    return availableLists[0]?.id || "";
+  });
+
+  const statuses = selectedSpace?.statuses || [];
   const members = currentWorkspace?.members || SEED_USERS;
 
   const [title, setTitle] = useState("");
@@ -56,6 +75,17 @@ export function CreateTaskModal({
   const [mediaUrl, setMediaUrl] = useState("");
   const [showPostOptions, setShowPostOptions] = useState(initialPostOptions);
 
+  const handleSpaceChange = (newSpaceId: string) => {
+    setSelectedSpaceId(newSpaceId);
+    const flat = flatSpaces.find((s) => s.id === newSpaceId);
+    const lists = flat?.lists || [];
+    setSelectedListId(lists[0]?.id || "");
+    const raw = rawSpaces.find((s) => s.id === newSpaceId);
+    if (raw?.statuses?.[0]) {
+      setStatusId(raw.statuses[0].id);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -67,8 +97,10 @@ export function CreateTaskModal({
       selectedAssigneeIds.includes(u.id),
     );
 
+    const targetList = selectedListId || activeListId;
+
     createTask({
-      listId: activeListId,
+      listId: targetList,
       title: title.trim(),
       description: description.trim() ? `<p>${description.trim()}</p>` : "",
       statusId: statusId || statuses[0]?.id || "status-todo",
@@ -156,6 +188,42 @@ export function CreateTaskModal({
                   placeholder="Add details, acceptance criteria, or notes..."
                   className="w-full px-3.5 py-2 rounded-md bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE] transition-all placeholder:text-slate-400 resize-none"
                 />
+              </div>
+
+              {/* Destination Space & List */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                    <Layers className="w-3 h-3 text-indigo-500" /> Target Space
+                  </label>
+                  <select
+                    value={selectedSpaceId}
+                    onChange={(e) => handleSpaceChange(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE] cursor-pointer"
+                  >
+                    {flatSpaces.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1">
+                    <Layers className="w-3 h-3 text-indigo-500" /> Target List
+                  </label>
+                  <select
+                    value={selectedListId}
+                    onChange={(e) => setSelectedListId(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE] cursor-pointer"
+                  >
+                    {availableLists.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Meta Grid (Status, Priority, Due Date) */}

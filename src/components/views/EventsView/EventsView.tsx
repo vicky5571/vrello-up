@@ -34,6 +34,11 @@ import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { PostPlatform, PostFormat, Priority } from "@/types";
 import { formatDate, cn, formatIDR } from "@/lib/utils";
 import {
+  getWorkspaceSpacesAndLists,
+  findSpaceByListId,
+  getDefaultDestinationForChannel,
+} from "@/lib/tasks/targetSpaceList";
+import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
@@ -222,6 +227,30 @@ export function EventsView({
   );
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
 
+  // Destination Space & List resolution
+  const rawSpaces = useMemo(() => currentWorkspace?.spaces || [], [currentWorkspace]);
+  const flatSpaces = useMemo(() => getWorkspaceSpacesAndLists(rawSpaces), [rawSpaces]);
+
+  const [targetSpaceId, setTargetSpaceId] = useState<string>("");
+  const [targetListId, setTargetListId] = useState<string>("");
+  const [createExecutionTask, setCreateExecutionTask] = useState(true);
+
+  const selectedTargetSpace = useMemo(
+    () => flatSpaces.find((s) => s.id === targetSpaceId) || flatSpaces[0],
+    [flatSpaces, targetSpaceId]
+  );
+  const targetLists = useMemo(() => selectedTargetSpace?.lists || [], [selectedTargetSpace]);
+
+  const handleTargetSpaceChange = (newSpaceId: string) => {
+    setTargetSpaceId(newSpaceId);
+    const dest = getDefaultDestinationForChannel(rawSpaces, modalChannel, newSpaceId);
+    setTargetListId(dest.listId);
+    const rawTarget = rawSpaces.find((s) => s.id === newSpaceId);
+    if (rawTarget?.statuses?.[0]) {
+      setPostStatusId(rawTarget.statuses[0].id);
+    }
+  };
+
   const [events, setEvents] = useState<MarcomEvent[]>([]);
   const [branches, setBranches] = useState<BranchOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -280,6 +309,15 @@ export function EventsView({
     setActivityBranchName(branches[0]?.name || "");
     setActivityStatus("UPCOMING");
     setActivityNotes("");
+    setCreateExecutionTask(true);
+
+    // Resolve Destination Space & List
+    const dest = getDefaultDestinationForChannel(rawSpaces, channel);
+    setTargetSpaceId(dest.spaceId);
+    setTargetListId(dest.listId);
+
+    const targetSpace = rawSpaces.find((s) => s.id === dest.spaceId);
+    const initialStatus = targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
 
     // Social defaults
     setPostPlatform("instagram");
@@ -287,7 +325,7 @@ export function EventsView({
     setPostDate(new Date().toISOString().slice(0, 10));
     setPostMediaUrl("");
     setPostPriority("normal");
-    setPostStatusId(statuses[0]?.id || "status-todo");
+    setPostStatusId(initialStatus);
     setPostAssigneeIds(members[0] ? [members[0].id] : []);
     setPostTagIds([]);
     setPostSubtasks(DEFAULT_POST_SUBTASKS.map((title, i) => ({ id: `sub-init-${i}`, title })));
@@ -304,7 +342,7 @@ export function EventsView({
     setEventAttendeeCount(0);
 
     setIsModalOpen(true);
-  }, [branches, statuses, members]);
+  }, [branches, statuses, members, rawSpaces]);
 
   // Sync with global store trigger for New Post modal
   useEffect(() => {
@@ -321,6 +359,19 @@ export function EventsView({
     setActivityBranchName(activity.branchName || branches[0]?.name || "");
     setActivityStatus(activity.status || "UPCOMING");
     setActivityNotes(activity.notes || "");
+
+    const existingTask = tasks.find((t) => t.relatedMarcomId === activity.id);
+    if (existingTask) {
+      const owningSpace = findSpaceByListId(rawSpaces, existingTask.listId);
+      if (owningSpace) {
+        setTargetSpaceId(owningSpace.id);
+        setTargetListId(existingTask.listId);
+      }
+    } else {
+      const dest = getDefaultDestinationForChannel(rawSpaces, isSocial ? "social" : "on_ground");
+      setTargetSpaceId(dest.spaceId);
+      setTargetListId(dest.listId);
+    }
 
     if (isSocial) {
       setPostPlatform(activity.postPlatform || "instagram");
@@ -454,10 +505,10 @@ export function EventsView({
     const isSocial = isSocialActivity(event);
 
     if (isSocial) {
-      const targetListId = activeListId || "list-content-planner";
+      const chosenListId = targetListId || activeListId || "list-content-planner";
       const targetStatus = statuses[0]?.id || "status-todo";
       const task = createTask({
-        listId: targetListId,
+        listId: chosenListId,
         title: `[Content] ${event.name}`,
         description: event.notes ? `<p>${event.notes}</p>` : "<p>Draft post copy...</p>",
         statusId: targetStatus,
@@ -481,10 +532,11 @@ export function EventsView({
       toast.success("Content post linked to execution task!");
       setSelectedTaskId(task.id);
     } else {
+      const chosenListId = targetListId || "list-field-ops";
       const firstFootage = event.footage?.[0]?.filePath;
       const statusId = event.status === "COMPLETED" ? "status-done" : "status-in-progress";
       const task = createTask({
-        listId: "list-field-ops",
+        listId: chosenListId,
         title: `[Event] ${event.name} (${event.branchName || "Main"})`,
         description: `<p><strong>Location:</strong> ${event.location || "TBD"}</p><p><strong>Target Attendees:</strong> ${event.targetAttendee}</p><p><strong>Budget:</strong> ${formatIDR(event.budget)}</p><p>${event.notes || ""}</p>`,
         statusId,
@@ -602,15 +654,17 @@ export function EventsView({
 
       const savedItem: MarcomEvent = await res.json();
 
-      // If creating a social post, link to a task as well
+      // Link to execution work item (Task) in target space & list
+      const chosenListId = targetListId || activeListId || "list-content-planner";
+      const targetSpace = rawSpaces.find((s) => s.id === targetSpaceId);
+      const targetStatus = postStatusId || targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
+
       if (!isEditing && modalChannel === "social") {
-        const targetListId = activeListId || "list-content-planner";
-        const targetStatus = postStatusId || statuses[0]?.id || "status-todo";
         const assignedUsers = members.filter((u) => postAssigneeIds.includes(u.id));
         const selectedTags = (tags || []).filter((t) => postTagIds.includes(t.id));
 
         createTask({
-          listId: targetListId,
+          listId: chosenListId,
           title: activityName.trim(),
           description: activityNotes.trim()
             ? `<p>${activityNotes.trim()}</p>`
@@ -638,13 +692,59 @@ export function EventsView({
               ...tasks.filter((t) => t.postPlatform != null).map((t) => t.orderIndex)
             ) + 1,
         });
+      } else if (!isEditing && modalChannel === "on_ground" && createExecutionTask) {
+        const firstFootage = savedItem.footage?.[0]?.filePath;
+        const statusId = activityStatus === "COMPLETED" ? "status-done" : "status-in-progress";
+        createTask({
+          listId: chosenListId,
+          title: `[Event] ${savedItem.name} (${savedItem.branchName || "Main"})`,
+          description: `<p><strong>Location:</strong> ${savedItem.location || "TBD"}</p><p><strong>Target Attendees:</strong> ${savedItem.targetAttendee}</p><p><strong>Budget:</strong> ${formatIDR(savedItem.budget)}</p><p>${savedItem.notes || ""}</p>`,
+          statusId,
+          priority: activityStatus === "UPCOMING" ? "high" : "normal",
+          assignees: members[0] ? [members[0]] : [],
+          dueDate: savedItem.date ? savedItem.date.slice(0, 10) : undefined,
+          startDate: savedItem.date ? savedItem.date.slice(0, 10) : undefined,
+          relatedMarcomId: savedItem.id,
+          mediaUrl: firstFootage || undefined,
+          tags: [],
+          subtasks: [
+            {
+              id: `st-ev-${Date.now()}-1`,
+              title: `Venue booking & permits (${savedItem.location || "Venue"})`,
+              completed: false,
+              createdAt: new Date().toISOString(),
+            },
+            {
+              id: `st-ev-${Date.now()}-2`,
+              title: "Stage, sound, & branding production setup",
+              completed: false,
+              createdAt: new Date().toISOString(),
+            },
+            {
+              id: `st-ev-${Date.now()}-3`,
+              title: "Capture 4K video footage & b-roll clips",
+              completed: Boolean(savedItem.footage?.length),
+              createdAt: new Date().toISOString(),
+            },
+            {
+              id: `st-ev-${Date.now()}-4`,
+              title: "Compile attendee counts & post-event report",
+              completed: false,
+              createdAt: new Date().toISOString(),
+            },
+          ],
+          orderIndex: 0,
+        });
       }
 
+      const targetListName = targetLists.find((l) => l.id === chosenListId)?.name;
       toast.success(
         isEditing
           ? "Activity updated successfully"
           : modalChannel === "social"
-          ? "Content post scheduled & task created!"
+          ? `Content post scheduled & task created in ${targetListName || "selected list"}!`
+          : createExecutionTask
+          ? `On-ground activation & task created in ${targetListName || "selected list"}!`
           : "On-ground activation created successfully!"
       );
       closeModal();
@@ -991,6 +1091,67 @@ export function EventsView({
                   onChange={(e) => setActivityName(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500"
                 />
+              </div>
+
+              {/* Target Space & List Destination */}
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
+                    <Layers className="w-3.5 h-3.5 text-pink-500" />
+                    <span>Target Space & List</span>
+                  </label>
+                  <span className="text-[10px] text-slate-400">
+                    Where task will be placed
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      Space
+                    </label>
+                    <select
+                      value={targetSpaceId}
+                      onChange={(e) => handleTargetSpaceChange(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                    >
+                      {flatSpaces.map((sp) => (
+                        <option key={sp.id} value={sp.id}>
+                          {sp.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+                      List
+                    </label>
+                    <select
+                      value={targetListId}
+                      onChange={(e) => setTargetListId(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                    >
+                      {targetLists.map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {!editId && modalChannel === "on_ground" && (
+                  <label className="flex items-center gap-2 pt-0.5 cursor-pointer text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={createExecutionTask}
+                      onChange={(e) => setCreateExecutionTask(e.target.checked)}
+                      className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                    />
+                    <span>Automatically track execution work item in this list</span>
+                  </label>
+                )}
               </div>
 
               {/* SOCIAL MEDIA FIELDS */}
