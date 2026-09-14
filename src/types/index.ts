@@ -179,6 +179,7 @@ export type ViewMode =
 
 export interface ContentPostItem {
   id: string;
+  workspaceId?: string;
   title: string;
   platform: PostPlatform;
   format: PostFormat;
@@ -193,8 +194,11 @@ export interface ContentPostItem {
   updatedAt?: string;
 }
 
+export type ContentPost = ContentPostItem;
+
 export interface FieldEventItem {
   id: string;
+  workspaceId?: string;
   name: string;
   eventType: string;
   startDate?: string | null;
@@ -215,6 +219,80 @@ export interface FieldEventItem {
 
 export type FieldEvent = FieldEventItem;
 export type MarcomEvent = FieldEventItem;
+
+export type PlacementStatus = "NOT_STARTED" | "ON_PROGRESS" | "DONE" | "ISSUE";
+
+export interface Placement {
+  id: string;
+  workspaceId?: string;
+  outletId: string;
+  materialId: string;
+  status: PlacementStatus;
+  date?: string | null;
+  picName?: string;
+  photoUrl?: string;
+  dimensions?: string;
+  cost?: number;
+  notes?: string;
+  outlet?: { id: string; code: string; name: string };
+  material?: { id: string; type: string; name: string };
+}
+
+export type PlacementItem = Placement;
+
+export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE";
+
+export interface Mou {
+  id: string;
+  workspaceId?: string;
+  branchId: string;
+  outletName?: string;
+  partnerName: string;
+  mouType: string;
+  submissionDate?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  status: MouStatus;
+  picName?: string;
+  picPhone?: string;
+  docPath?: string;
+  compensationValue?: number;
+  notes?: string;
+  branch?: { id: string; code: string; name: string };
+}
+
+export type MouItem = Mou;
+
+export type DocFileType = "PDF" | "XLSX" | "DOCX" | "ZIP" | "CSV" | "MP4" | "PNG" | "JPG";
+
+export interface DocumentItem {
+  id: string;
+  workspaceId?: string;
+  name: string;
+  category: string;
+  period?: string;
+  branchName?: string;
+  ownerPic?: string;
+  status?: string;
+  fileType: DocFileType | string;
+  fileSizeMb?: number;
+  filePath: string;
+  description?: string;
+}
+
+export interface MonthlyReport {
+  id: string;
+  workspaceId?: string;
+  month: string;
+  year: number;
+  summary?: { totalActivities?: number; completionRate?: number } | Record<string, unknown>;
+  activities?: unknown[];
+  achievements?: unknown[];
+  keyIssues?: unknown[];
+  actionPlans?: unknown[];
+}
+
+export type MonthlyReportItem = MonthlyReport;
 
 export type GroupByOption = "status" | "priority" | "assignee";
 

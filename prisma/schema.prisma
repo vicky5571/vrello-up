@@ -120,53 +120,64 @@ model Material {
 }
 
 model Placement {
-  id         String          @id @default(cuid())
-  outletId   String
-  outlet     Outlet          @relation(fields: [outletId], references: [id], onDelete: Cascade)
-  materialId String
-  material   Material        @relation(fields: [materialId], references: [id])
-  status     PlacementStatus @default(NOT_STARTED)
-  date       DateTime?
-  picName    String          @default("")
-  photoUrl   String          @default("")
-  dimensions String          @default("")
-  cost       Float           @default(0)
-  notes      String          @default("")
+  id          String          @id @default(cuid())
+  workspaceId String          @default("ws-main")
+  workspace   WorkspaceItem   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  outletId    String
+  outlet      Outlet          @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  materialId  String
+  material    Material        @relation(fields: [materialId], references: [id])
+  status      PlacementStatus @default(NOT_STARTED)
+  date        DateTime?
+  picName     String          @default("")
+  photoUrl    String          @default("")
+  dimensions  String          @default("")
+  cost        Float           @default(0)
+  notes       String          @default("")
+
+  @@index([workspaceId])
 }
 
 model Mou {
-  id                String    @id @default(cuid())
+  id                String        @id @default(cuid())
+  workspaceId       String        @default("ws-main")
+  workspace         WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   branchId          String
-  branch            Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  outletName        String    @default("")
+  branch            Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  outletName        String        @default("")
   partnerName       String
   mouType           String
   submissionDate    DateTime?
   startDate         DateTime?
   endDate           DateTime?
-  status            MouStatus @default(DRAFT)
-  picName           String    @default("")
-  picPhone          String    @default("")
-  docPath           String    @default("")
-  compensationValue Float     @default(0)
-  notes             String    @default("")
+  status            MouStatus     @default(DRAFT)
+  picName           String        @default("")
+  picPhone          String        @default("")
+  docPath           String        @default("")
+  compensationValue Float         @default(0)
+  notes             String        @default("")
+
+  @@index([workspaceId])
 }
 
 model ContentPost {
-  id          String    @id @default(cuid())
+  id          String        @id @default(cuid())
+  workspaceId String        @default("ws-main")
+  workspace   WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   title       String
   platform    String
   format      String
   publishDate DateTime?
-  status      String    @default("SCHEDULED")
-  caption     String    @default("")
-  mediaUrl    String    @default("")
-  branchName  String    @default("")
-  picName     String    @default("")
-  subtasks    Json      @default("[]")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  status      String        @default("SCHEDULED")
+  caption     String        @default("")
+  mediaUrl    String        @default("")
+  branchName  String        @default("")
+  picName     String        @default("")
+  subtasks    Json          @default("[]")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
+  @@index([workspaceId])
   @@index([platform])
   @@index([status])
   @@index([publishDate])
@@ -174,6 +185,8 @@ model ContentPost {
 
 model FieldEvent {
   id             String         @id @default(cuid())
+  workspaceId    String         @default("ws-main")
+  workspace      WorkspaceItem  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   name           String
   eventType      String
   startDate      DateTime?
@@ -190,6 +203,7 @@ model FieldEvent {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
+  @@index([workspaceId])
   @@index([status])
   @@index([startDate])
   @@index([branchName])
@@ -197,6 +211,8 @@ model FieldEvent {
 
 model MarcomEvent {
   id             String         @id @default(cuid())
+  workspaceId    String         @default("ws-main")
+  workspace      WorkspaceItem  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   name           String
   date           DateTime?
   endDate        DateTime?
@@ -213,6 +229,8 @@ model MarcomEvent {
   postFormat     String?
   mediaUrl       String?
   footage        EventFootage[]
+
+  @@index([workspaceId])
 }
 
 model EventFootage {
@@ -227,38 +245,53 @@ model EventFootage {
 }
 
 model DocumentItem {
-  id          String      @id @default(cuid())
+  id          String        @id @default(cuid())
+  workspaceId String        @default("ws-main")
+  workspace   WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   name        String
   category    String
-  period      String      @default("")
-  branchName  String      @default("")
-  ownerPic    String      @default("")
-  status      String      @default("Draft")
+  period      String        @default("")
+  branchName  String        @default("")
+  ownerPic    String        @default("")
+  status      String        @default("Draft")
   fileType    DocFileType
-  fileSizeMb  Float       @default(0)
+  fileSizeMb  Float         @default(0)
   filePath    String
-  description String      @default("")
+  description String        @default("")
+
+  @@index([workspaceId])
 }
 
 model MonthlyReport {
-  id           String @id @default(cuid())
+  id           String        @id @default(cuid())
+  workspaceId  String        @default("ws-main")
+  workspace    WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   month        String
   year         Int
-  summary      Json   @default("{}")
-  activities   Json   @default("[]")
-  achievements Json   @default("[]")
-  keyIssues    Json   @default("[]")
-  actionPlans  Json   @default("[]")
+  summary      Json          @default("{}")
+  activities   Json          @default("[]")
+  achievements Json          @default("[]")
+  keyIssues    Json          @default("[]")
+  actionPlans  Json          @default("[]")
+
+  @@index([workspaceId])
 }
 
 model WorkspaceItem {
-  id        String      @id @default(cuid())
-  name      String
-  avatar    String      @default("")
-  members   Json        @default("[]")
-  spaces    SpaceItem[]
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id             String          @id @default(cuid())
+  name           String
+  avatar         String          @default("")
+  members        Json            @default("[]")
+  spaces         SpaceItem[]
+  placements     Placement[]
+  mous           Mou[]
+  fieldEvents    FieldEvent[]
+  marcomEvents   MarcomEvent[]
+  contentPosts   ContentPost[]
+  monthlyReports MonthlyReport[]
+  documents      DocumentItem[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 model SpaceItem {
