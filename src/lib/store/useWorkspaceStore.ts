@@ -445,6 +445,7 @@ const INITIAL_WORKSPACE: Workspace = {
 const MARCOM_VIEW_SET = new Set<ViewMode>([
   "events",
   "content",
+  "content-planner",
   "placements",
   "mous",
   "branches",
