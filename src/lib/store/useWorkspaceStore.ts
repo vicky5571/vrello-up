@@ -23,7 +23,7 @@ import {
 } from "@/types";
 import { generateId } from "@/lib/utils";
 import { reorderSpacesList, moveSpaceDirection } from "@/lib/spaces/spaceOrder";
-import { switchWorkspace } from "@/lib/store/workspaceSwitch";
+import { switchWorkspace, extractSpaceListIds } from "@/lib/store/workspaceSwitch";
 import {
   buildInitialWorkspace,
   removeWorkspaceAndCascadeTasks,
@@ -529,7 +529,7 @@ interface WorkspaceState {
     visibleFields?: Partial<ViewPreferences["visibleFields"]>;
   }) => void;
   resetViewPreferences: () => void;
-  fetchServerTasks: () => Promise<void>;
+  fetchServerTasks: (workspaceId?: string) => Promise<void>;
 
   // Realtime Presence & Remote Sync
   presenceByTaskId: Record<string, User[]>;
@@ -1206,7 +1206,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setTrashOpen: (open) => set({ isTrashOpen: open }),
       setLastSeenNotificationsAt: (iso) =>
         set({ lastSeenNotificationsAt: iso }),
-      setActiveWorkspace: (id) =>
+      setActiveWorkspace: (id) => {
         set((state) =>
           switchWorkspace(state.workspaces, id, {
             activeWorkspaceId: state.activeWorkspaceId,
@@ -1215,7 +1215,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             selectedTaskId: state.selectedTaskId,
             selectedTaskIds: state.selectedTaskIds,
           }),
-        ),
+        );
+        get().fetchServerTasks(id);
+      },
       setActiveSpace: (id) => {
         set({ activeSpaceId: id, activeListId: null });
       },
@@ -1283,23 +1285,49 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       resetViewPreferences: () =>
         set({ viewPreferences: DEFAULT_VIEW_PREFERENCES }),
 
-      fetchServerTasks: async () => {
+      fetchServerTasks: async (workspaceId?: string) => {
         if (typeof window === "undefined") return;
         try {
-          const res = await fetch("/api/tasks");
+          const targetWsId = workspaceId || get().activeWorkspaceId;
+          const url = targetWsId
+            ? `/api/tasks?workspaceId=${encodeURIComponent(targetWsId)}`
+            : "/api/tasks";
+          const res = await fetch(url);
           if (!res.ok) return;
           const data = await res.json();
           const currentWorkspaces = get().workspaces;
           const { workspaces: reconciled, shouldSyncToServer } =
             reconcileWorkspaces(currentWorkspaces, data.workspaces);
 
-          set((state) => ({
-            tasks:
-              Array.isArray(data.tasks) && data.tasks.length > 0
-                ? data.tasks
-                : state.tasks,
-            workspaces: reconciled,
-          }));
+          set((state) => {
+            if (!Array.isArray(data.tasks)) {
+              return { workspaces: reconciled };
+            }
+
+            if (targetWsId) {
+              const targetWs = (reconciled || state.workspaces).find(
+                (w) => w.id === targetWsId,
+              );
+              const targetListIds = new Set(
+                (targetWs?.spaces || []).flatMap((s) => extractSpaceListIds(s)),
+              );
+
+              // Retain tasks belonging to other workspaces, and replace/update tasks for this workspace
+              const otherWsTasks = state.tasks.filter(
+                (t) => !targetListIds.has(t.listId),
+              );
+
+              return {
+                tasks: [...otherWsTasks, ...data.tasks],
+                workspaces: reconciled,
+              };
+            }
+
+            return {
+              tasks: data.tasks,
+              workspaces: reconciled,
+            };
+          });
 
           if (shouldSyncToServer) {
             syncWorkspaces(reconciled);

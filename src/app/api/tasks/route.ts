@@ -16,6 +16,7 @@ import {
 } from "@/types";
 import { SEED_USERS, DEFAULT_STATUSES } from "@/lib/store/useWorkspaceStore";
 import { realtimeHub } from "@/lib/server/realtimeHub";
+import { fetchTasksForWorkspace } from "@/lib/tasks/taskQuery";
 
 // Auto-seed initial workspace, spaces, lists, and tasks if PostgreSQL task tables are empty
 async function ensureSeedData() {
@@ -153,9 +154,12 @@ async function ensureSeedData() {
   return ws;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await ensureSeedData();
+
+    const { searchParams } = new URL(request.url);
+    const workspaceId = searchParams.get("workspaceId");
 
     const [dbWorkspaces, dbTasks] = await Promise.all([
       prisma.workspaceItem.findMany({
@@ -172,14 +176,7 @@ export async function GET() {
           },
         },
       }),
-      prisma.taskItem.findMany({
-        include: {
-          comments: true,
-        },
-        orderBy: {
-          orderIndex: "asc",
-        },
-      }),
+      fetchTasksForWorkspace(workspaceId),
     ]);
 
     // Format workspaces to match frontend Workspace shape
