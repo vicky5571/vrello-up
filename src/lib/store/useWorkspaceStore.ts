@@ -2323,7 +2323,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
         // Migration from unversioned (v0) to v1
         if (version === 0 || !version) {
-          const rawWorkspaces = Array.isArray(state.workspaces) && state.workspaces.length > 0
+          let rawWorkspaces = Array.isArray(state.workspaces) && state.workspaces.length > 0
             ? (state.workspaces as Workspace[]).map((w) => ({
                 ...w,
                 spaces: Array.isArray(w.spaces)
