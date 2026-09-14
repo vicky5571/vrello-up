@@ -23,18 +23,19 @@ export function AuthSync() {
         `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`;
       const googleId = `google-${email.replace(/[^a-zA-Z0-9]/g, "_")}`;
 
+      const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
+      const existingMember = currentWorkspace?.members.find((m) => m.id === googleId);
+      const role = existingMember?.role || "admin";
+
       const googleUser: User = {
         id: googleId,
         name,
         email,
         avatar,
-        role: "admin",
+        role,
       };
 
-      const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-      const existingMember = currentWorkspace?.members.find((m) => m.id === googleId);
-
-      if (!existingMember || existingMember.role !== "admin") {
+      if (!existingMember || existingMember.name !== name || existingMember.avatar !== avatar) {
         useWorkspaceStore.setState((state) => ({
           workspaces: state.workspaces.map((w) =>
             w.id === state.activeWorkspaceId
@@ -46,6 +47,11 @@ export function AuthSync() {
 
       if (currentUserId !== googleId) {
         setCurrentUserId(googleId);
+      }
+    } else {
+      // Revert to default seed persona if currentUserId is a googleId without an active session
+      if (currentUserId.startsWith("google-")) {
+        setCurrentUserId("user-1");
       }
     }
   }, [session, currentUserId, setCurrentUserId, workspaces, activeWorkspaceId]);

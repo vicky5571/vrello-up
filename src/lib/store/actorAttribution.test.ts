@@ -54,3 +54,34 @@ test("unknown currentUserId falls back to the seed user", () => {
   assert.equal(messages[messages.length - 1]?.userId, "user-1");
   api().setCurrentUserId("user-1");
 });
+
+test("google session member attribution strictly resolves to the authenticated user", () => {
+  const googleUser = {
+    id: "google-vicky_gmail_com",
+    name: "Vicky Google",
+    email: "vicky@gmail.com",
+    avatar: "https://example.com/vicky.jpg",
+    role: "admin" as const,
+  };
+
+  useWorkspaceStore.setState((state) => ({
+    workspaces: state.workspaces.map((w) =>
+      w.id === state.activeWorkspaceId
+        ? { ...w, members: [googleUser, ...w.members.filter((m) => m.id !== googleUser.id)] }
+        : w
+    ),
+  }));
+
+  api().setCurrentUserId(googleUser.id);
+  const task = makeTask("google-actor-test");
+  api().addComment(task.id, "Authenticated comment");
+  api().logActivity(task.id, "created deliverable");
+
+  const stored = api().tasks.find((t) => t.id === task.id);
+  assert.equal(stored?.comments?.[0]?.userId, "google-vicky_gmail_com");
+  assert.equal(stored?.activities?.[0]?.userName, "Vicky Google");
+
+  api().deleteTask(task.id);
+  api().setCurrentUserId("user-1");
+});
+

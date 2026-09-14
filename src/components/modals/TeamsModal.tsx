@@ -6,6 +6,7 @@ import { X, Users, Mail, Shield, Trash2, UserPlus } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 interface TeamsModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface TeamsModalProps {
 }
 
 export function TeamsModal({ isOpen, onClose, onOpenInvite }: TeamsModalProps) {
+  const { data: session } = useSession();
   const {
     workspaces,
     activeWorkspaceId,
@@ -162,17 +164,27 @@ export function TeamsModal({ isOpen, onClose, onOpenInvite }: TeamsModalProps) {
                           </div>
                         </div>
 
-                        {!isCurrentActive && (
+                        {session?.user ? (
+                          isCurrentActive && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
+                              You (Google)
+                            </span>
+                          )
+                        ) : !isCurrentActive ? (
                           <button
                             type="button"
                             onClick={() => {
                               setCurrentUserId(member.id);
-                              toast.success(`Switched active profile to ${member.name}`);
+                              toast.success(`Switched active persona to ${member.name}`);
                             }}
                             className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
                           >
-                            Switch to
+                            Simulate
                           </button>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400">
+                            Active
+                          </span>
                         )}
 
                         {members.length > 1 && (

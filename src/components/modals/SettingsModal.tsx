@@ -296,43 +296,62 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     )}
                   </div>
 
-                  <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
-                      Or switch active team member identity:
-                    </p>
-                    <div className="space-y-2">
-                    {(currentWorkspace?.members || SEED_USERS).map((user) => {
-                      const isSelected = user.id === currentUserId;
-                      return (
-                        <div
-                          key={user.id}
-                          onClick={() => {
-                            setCurrentUserId(user.id);
-                            toast.success(`Switched active profile to ${user.name}`);
-                          }}
-                          className={`p-3 rounded-xl border cursor-pointer flex items-center justify-between transition-all ${
-                            isSelected
-                              ? "bg-indigo-50/60 dark:bg-indigo-950/30 border-indigo-500/50 shadow-2xs"
-                              : "border-slate-200/80 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <UserAvatar user={user} size="lg" showTooltip={false} />
-                            <div>
-                              <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                                {user.name}
-                              </div>
-                              <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                                {user.email} • {user.role || "Team Member"}
-                              </div>
-                            </div>
-                          </div>
-                          {isSelected && <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
+                  {session?.user ? (
+                    <div className="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-900/50 flex items-start gap-3">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                          Identity Locked to Google Session
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                        <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-1 leading-relaxed">
+                          You are currently signed in as <strong>{session.user.email}</strong>. Persona switching is disabled while authenticated to ensure task creation, comments, and activity audit logs are strictly attributed to your verified account. Disconnect your Google account above to return to local demo simulation.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                          Simulate Demo Persona:
+                        </p>
+                        <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-md border border-amber-200/50 dark:border-amber-900/50">
+                          Local Demo Mode
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {(currentWorkspace?.members || SEED_USERS).map((user) => {
+                          const isSelected = user.id === currentUserId;
+                          return (
+                            <div
+                              key={user.id}
+                              onClick={() => {
+                                setCurrentUserId(user.id);
+                                toast.success(`Switched active persona to ${user.name}`);
+                              }}
+                              className={`p-3 rounded-xl border cursor-pointer flex items-center justify-between transition-all ${
+                                isSelected
+                                  ? "bg-indigo-50/60 dark:bg-indigo-950/30 border-indigo-500/50 shadow-2xs"
+                                  : "border-slate-200/80 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <UserAvatar user={user} size="lg" showTooltip={false} />
+                                <div>
+                                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                                    {user.name}
+                                  </div>
+                                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                    {user.email} • {user.role || "Team Member"}
+                                  </div>
+                                </div>
+                              </div>
+                              {isSelected && <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
               </div>
             )}
 

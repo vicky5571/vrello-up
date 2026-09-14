@@ -44,7 +44,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
   const handleDemoLogin = (user = SEED_USERS[0]) => {
     setCurrentUserId(user.id);
-    toast.success(`Signed in as ${user.name} (Local Demo)`);
+    toast.success(`Simulating as ${user.name} (Local Demo)`);
     onClose();
   };
 
@@ -178,7 +178,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 {/* Local Demo Personas */}
                 <div className="space-y-1.5">
                   <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block">
-                    Instant Demo Login (No credentials required):
+                    Simulate Demo Persona (Local test only):
                   </span>
                   <div className="grid grid-cols-3 gap-2">
                     {SEED_USERS.map((user) => (
