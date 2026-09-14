@@ -58,3 +58,6 @@ next-env.d.ts
 
 # local file uploads (served via authenticated /api/marcom/files route)
 /uploads/
+
+# git worktrees
+.worktrees/
