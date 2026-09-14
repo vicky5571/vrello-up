@@ -27,6 +27,8 @@ import {
   LogOut,
   ShieldCheck,
   Menu,
+  Kanban,
+  Megaphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSession, signOut } from "next-auth/react";
@@ -205,6 +207,7 @@ function UserMenuDropdown({
 export function TopNav() {
   const {
     appMode,
+    setAppMode,
     activeView,
     workspaces,
     activeWorkspaceId,
@@ -325,7 +328,7 @@ export function TopNav() {
         {appMode === "marcom" ? (
           /* Lean Single-Tier Header for Marketing Hub (~44px) */
           <header className="h-11 px-4 flex items-center justify-between gap-3 bg-white dark:bg-[#18191B]">
-            {/* Left: Breadcrumbs & mobile toggle */}
+            {/* Left: Workspace Anchor + Marcom Breadcrumbs & mobile toggle */}
             <div className="flex items-center gap-2 text-xs">
               <button
                 type="button"
@@ -334,13 +337,82 @@ export function TopNav() {
               >
                 <Menu className="w-4 h-4" />
               </button>
-              <span className="font-semibold text-pink-600 dark:text-pink-400">
-                Marketing Hub
+
+              {/* Workspace Avatar */}
+              <div className="w-5 h-5 rounded bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shadow-2xs">
+                {currentWorkspace?.avatar || "V"}
+              </div>
+
+              {/* Workspace Selector Dropdown */}
+              <div ref={wsMenuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsWsMenuOpen(!isWsMenuOpen)}
+                  className="flex items-center gap-1 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <span className="truncate max-w-[120px] sm:max-w-[180px]">
+                    {currentWorkspace?.name || "Acme Workspace"}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+
+                {isWsMenuOpen && (
+                  <div className="absolute left-0 top-full mt-1 w-60 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Workspaces
+                    </div>
+                    {workspaces.map((ws) => {
+                      const isSelected = ws.id === currentWorkspace?.id;
+                      return (
+                        <button
+                          key={ws.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveWorkspace(ws.id);
+                            setIsWsMenuOpen(false);
+                            toast.success(`Switched to workspace "${ws.name}"`);
+                          }}
+                          className="w-full flex items-center justify-between px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="truncate font-medium text-slate-800 dark:text-slate-200">
+                              {ws.name}
+                            </span>
+                          </div>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-[#0073ea] shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+
+              {/* Marketing Hub Badge */}
+              <span className="font-semibold text-pink-600 dark:text-pink-400 flex items-center gap-1 shrink-0">
+                <Megaphone className="w-3 h-3" />
+                <span>Marketing Hub</span>
               </span>
-              <span className="text-slate-400">/</span>
-              <span className="font-medium text-slate-800 dark:text-slate-200">
+
+              <span className="text-slate-300 dark:text-slate-700">/</span>
+
+              {/* Active View Label */}
+              <span className="font-medium text-slate-800 dark:text-slate-200 shrink-0">
                 {MARCOM_VIEW_LABELS[activeView] || "Overview"}
               </span>
+
+              {/* Quick Jump back to Projects */}
+              <button
+                type="button"
+                onClick={() => setAppMode("tasks")}
+                title="Switch back to Projects & Tasks Workspace"
+                className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200/70 dark:border-blue-800/50 transition-colors cursor-pointer ml-1"
+              >
+                <Kanban className="w-3.5 h-3.5 text-blue-500" />
+                <span>Ke Projects & Tasks</span>
+              </button>
             </div>
 
             {/* Center: Command Palette Trigger */}
