@@ -156,6 +156,8 @@ export interface Workspace {
   members: User[];
 }
 
+export type AppMode = "tasks" | "marcom";
+
 export type ViewMode =
   | "home"
   | "list"

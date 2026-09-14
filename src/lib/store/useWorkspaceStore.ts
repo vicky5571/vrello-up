@@ -12,6 +12,7 @@ import {
   type ActivityLog,
   type ChannelMessage,
   type Status,
+  type AppMode,
   type ViewMode,
   type FilterOptions,
   type ViewPreferences,
@@ -441,6 +442,18 @@ const INITIAL_WORKSPACE: Workspace = {
   members: SEED_USERS,
 };
 
+const MARCOM_VIEW_SET = new Set<ViewMode>([
+  "events",
+  "content",
+  "placements",
+  "mous",
+  "branches",
+  "outlets",
+  "documents",
+  "reports",
+  "analytics",
+]);
+
 interface WorkspaceState {
   workspaces: Workspace[];
   activeWorkspaceId: string;
@@ -454,6 +467,9 @@ interface WorkspaceState {
   selectedTaskIds: string[];
   trash: TrashedTask[];
   activeView: ViewMode;
+  appMode: AppMode;
+  lastTaskView: ViewMode;
+  lastMarcomView: ViewMode;
   currentUserId: string;
   filters: FilterOptions;
   viewPreferences: ViewPreferences;
@@ -471,6 +487,7 @@ interface WorkspaceState {
   selectedBranchId: string | null;
 
   // Actions
+  setAppMode: (mode: AppMode) => void;
   setCommandPaletteOpen: (open: boolean) => void;
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
@@ -1140,7 +1157,19 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         groupBy: "status",
       },
       viewPreferences: DEFAULT_VIEW_PREFERENCES,
+      appMode: "tasks",
+      lastTaskView: "list",
+      lastMarcomView: "events",
 
+      setAppMode: (mode) =>
+        set((state) => {
+          if (state.appMode === mode) return {};
+          const targetView = mode === "tasks" ? state.lastTaskView : state.lastMarcomView;
+          return {
+            appMode: mode,
+            activeView: targetView,
+          };
+        }),
       setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
       openCommandPalette: () => set({ isCommandPaletteOpen: true }),
       closeCommandPalette: () => set({ isCommandPaletteOpen: false }),
@@ -1158,7 +1187,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({ activeSpaceId: id, activeListId: null });
       },
       setActiveList: (id) => set({ activeListId: id }),
-      setActiveView: (view) => set({ activeView: view }),
+      setActiveView: (view) =>
+        set((state) => {
+          const isMarcom = MARCOM_VIEW_SET.has(view);
+          const newMode: AppMode = isMarcom ? "marcom" : "tasks";
+          return {
+            activeView: view,
+            appMode: newMode,
+            lastTaskView: !isMarcom ? view : state.lastTaskView,
+            lastMarcomView: isMarcom ? view : state.lastMarcomView,
+          };
+        }),
       setSelectedTaskId: (id) =>
         set((state) => ({
           selectedTaskId: id,
@@ -1171,7 +1210,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         })),
       navigateToMarcom: (view, search) =>
         set((state) => ({
+          appMode: "marcom",
           activeView: view,
+          lastMarcomView: view,
           marcomFilters:
             search !== undefined
               ? { ...state.marcomFilters, [view]: search }
@@ -2359,6 +2400,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         activeSpaceId: state.activeSpaceId,
         activeListId: state.activeListId,
         activeView: state.activeView,
+        appMode: state.appMode,
+        lastTaskView: state.lastTaskView,
+        lastMarcomView: state.lastMarcomView,
         currentUserId: state.currentUserId,
         tags: state.tags,
         customAutomations: state.customAutomations,
