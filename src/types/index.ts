@@ -167,6 +167,7 @@ export type ViewMode =
   | "gantt"
   | "channel"
   | "content"
+  | "content-planner"
   | "branches"
   | "outlets"
   | "placements"
@@ -175,6 +176,41 @@ export type ViewMode =
   | "documents"
   | "reports"
   | "analytics";
+
+export interface ContentPostItem {
+  id: string;
+  title: string;
+  platform: PostPlatform;
+  format: PostFormat;
+  publishDate?: string | null;
+  status: "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
+  caption?: string;
+  mediaUrl?: string;
+  branchName?: string;
+  picName?: string;
+  subtasks?: { id: string; title: string; completed?: boolean }[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FieldEventItem {
+  id: string;
+  name: string;
+  eventType: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  location?: string;
+  branchName?: string;
+  picName?: string;
+  status: "UPCOMING" | "ON_PROGRESS" | "COMPLETED" | "CANCELLED";
+  budget: number;
+  targetAttendee: number;
+  attendeeCount: number;
+  notes?: string;
+  footage?: { id: string; eventId: string; title: string; filePath: string; duration?: string }[];
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export type GroupByOption = "status" | "priority" | "assignee";
 

@@ -152,6 +152,49 @@ model Mou {
   notes             String    @default("")
 }
 
+model ContentPost {
+  id          String    @id @default(cuid())
+  title       String
+  platform    String
+  format      String
+  publishDate DateTime?
+  status      String    @default("SCHEDULED")
+  caption     String    @default("")
+  mediaUrl    String    @default("")
+  branchName  String    @default("")
+  picName     String    @default("")
+  subtasks    Json      @default("[]")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([platform])
+  @@index([status])
+  @@index([publishDate])
+}
+
+model FieldEvent {
+  id             String         @id @default(cuid())
+  name           String
+  eventType      String
+  startDate      DateTime?
+  endDate        DateTime?
+  location       String         @default("")
+  branchName     String         @default("")
+  picName        String         @default("")
+  status         EventStatus    @default(UPCOMING)
+  budget         Float          @default(0)
+  targetAttendee Int            @default(0)
+  attendeeCount  Int            @default(0)
+  notes          String         @default("")
+  footage        EventFootage[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([status])
+  @@index([startDate])
+  @@index([branchName])
+}
+
 model MarcomEvent {
   id             String         @id @default(cuid())
   name           String
@@ -166,7 +209,6 @@ model MarcomEvent {
   attendeeCount  Int            @default(0)
   targetAttendee Int            @default(0)
   notes          String         @default("")
-  // Content Planner fields — unified with Events so both use MarcomEvent
   postPlatform   String?
   postFormat     String?
   mediaUrl       String?
@@ -174,12 +216,14 @@ model MarcomEvent {
 }
 
 model EventFootage {
-  id       String      @id @default(cuid())
-  eventId  String
-  event    MarcomEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  title    String
-  filePath String
-  duration String      @default("")
+  id           String       @id @default(cuid())
+  eventId      String
+  event        MarcomEvent? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  fieldEvent   FieldEvent?  @relation(fields: [fieldEventId], references: [id], onDelete: Cascade)
+  fieldEventId String?
+  title        String
+  filePath     String
+  duration     String       @default("")
 }
 
 model DocumentItem {
