@@ -101,6 +101,7 @@ function ReportSection({ title, items }: { title: string; items: unknown[] }) {
 
 export function ReportsView() {
   const { can } = useMarcomPermissions();
+  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const { setExportCenterOpen } = useWorkspaceStore();
 
   const [reports, setReports] = useState<MarcomReport[]>([]);
@@ -124,8 +125,8 @@ export function ReportsView() {
     setError(null);
     try {
       const [reportsRes, docsRes] = await Promise.all([
-        fetch("/api/marcom/reports"),
-        fetch("/api/marcom/documents"),
+        fetch(`/api/marcom/reports?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
+        fetch(`/api/marcom/documents?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
       ]);
       if (!reportsRes.ok) throw new Error(`Request failed (${reportsRes.status})`);
       const json = await reportsRes.json();
@@ -139,11 +140,11 @@ export function ReportsView() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [activeWorkspaceId]);
 
   useEffect(() => {
     fetchReports();
-  }, [fetchReports]);
+  }, [fetchReports, activeWorkspaceId]);
 
   // Reports are not tasks: row click toggles a local expandable detail row.
   // TaskDrawer (setSelectedTaskId) is deliberately not wired here.
@@ -199,6 +200,7 @@ export function ReportsView() {
             totalActivities: totalActivities === "" ? 0 : Number(totalActivities),
             completionRate: completionRate === "" ? 0 : Number(completionRate),
           },
+          workspaceId: activeWorkspaceId,
         }),
       });
       if (!res.ok) throw new Error(`Request failed (${res.status})`);

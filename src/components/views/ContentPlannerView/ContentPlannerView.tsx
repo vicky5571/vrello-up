@@ -98,6 +98,7 @@ const columnHelper = createMarcomColumnHelper<ContentPostItem>();
 
 export function ContentPlannerView() {
   const { can } = useMarcomPermissions();
+  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const {
     tasks,
     createTask,
@@ -108,7 +109,6 @@ export function ContentPlannerView() {
     setActiveList,
     setActiveView,
     workspaces,
-    activeWorkspaceId,
     activeSpaceId,
     activeListId,
     tags,
@@ -201,7 +201,7 @@ export function ContentPlannerView() {
     setError(null);
     try {
       const [resPosts, resBranches] = await Promise.all([
-        fetch("/api/marcom/content"),
+        fetch(`/api/marcom/content?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
         fetch("/api/marcom/branches"),
       ]);
 
@@ -225,11 +225,11 @@ export function ContentPlannerView() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [activeWorkspaceId]);
 
   useEffect(() => {
     fetchPosts();
-  }, [fetchPosts]);
+  }, [fetchPosts, activeWorkspaceId]);
 
   const openCreateModal = useCallback(() => {
     setEditId(null);
@@ -340,6 +340,7 @@ export function ContentPlannerView() {
           ? members.find((m) => m.id === assigneeIds[0])?.name || undefined
           : undefined,
         subtasks: postSubtasks,
+        workspaceId: activeWorkspaceId,
       };
 
       const res = await fetch(url, {

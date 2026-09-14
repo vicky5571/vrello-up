@@ -54,6 +54,7 @@ const STATUS_STYLES: Record<MouStatus, string> = {
 
 export function MousView() {
   const { can } = useMarcomPermissions();
+  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId, setExportCenterOpen } = useWorkspaceStore();
 
   const [mous, setMous] = useState<MarcomMou[]>([]);
@@ -123,10 +124,11 @@ export function MousView() {
       setError(null);
       try {
         const params = new URLSearchParams();
+        params.set("workspaceId", activeWorkspaceId);
         if (statusFilter && statusFilter !== "ALL") {
           params.set("status", statusFilter);
         }
-        const mousUrl = `/api/marcom/mous${params.toString() ? `?${params.toString()}` : ""}`;
+        const mousUrl = `/api/marcom/mous?${params.toString()}`;
         const [resMous, resBranches, resOutlets] = await Promise.all([
           fetch(mousUrl),
           fetch("/api/marcom/branches"),
@@ -149,12 +151,12 @@ export function MousView() {
         setIsLoading(false);
       }
     },
-    [selectedStatus],
+    [selectedStatus, activeWorkspaceId],
   );
 
   useEffect(() => {
     fetchMous(selectedStatus);
-  }, [fetchMous, selectedStatus]);
+  }, [fetchMous, selectedStatus, activeWorkspaceId]);
 
   const handleStatusFilter = (status: string) => {
     const next = selectedStatus === status && status !== "ALL" ? "ALL" : status;
@@ -327,7 +329,7 @@ export function MousView() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branchId, partnerName, mouType, outletName: outletName || "", startDate: startDate || undefined, endDate: endDate || undefined, picName: picName || "", picPhone: picPhone || "", docPath: docPath || "", compensationValue: compensationValue != null ? Math.max(0, Number(compensationValue)) : 0, notes: notes || "" }),
+        body: JSON.stringify({ branchId, partnerName, mouType, outletName: outletName || "", startDate: startDate || undefined, endDate: endDate || undefined, picName: picName || "", picPhone: picPhone || "", docPath: docPath || "", compensationValue: compensationValue != null ? Math.max(0, Number(compensationValue)) : 0, notes: notes || "", workspaceId: activeWorkspaceId }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

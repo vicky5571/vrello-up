@@ -47,12 +47,12 @@ const STATUS_STYLES: Record<PlacementStatus, string> = {
 
 export function PlacementsView() {
   const { can } = useMarcomPermissions();
+  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const {
     tasks,
     createTask,
     setSelectedTaskId,
     workspaces,
-    activeWorkspaceId,
     setExportCenterOpen,
     marcomFilters,
     setMarcomFilter,
@@ -108,10 +108,11 @@ export function PlacementsView() {
       setError(null);
       try {
         const params = new URLSearchParams();
+        params.set("workspaceId", activeWorkspaceId);
         if (statusFilter && statusFilter !== "ALL") {
           params.set("status", statusFilter);
         }
-        const placementsUrl = `/api/marcom/placements${params.toString() ? `?${params.toString()}` : ""}`;
+        const placementsUrl = `/api/marcom/placements?${params.toString()}`;
         const [resPlacements, resOutlets, resMaterials] = await Promise.all([
           fetch(placementsUrl),
           fetch("/api/marcom/outlets"),
@@ -134,12 +135,12 @@ export function PlacementsView() {
         setIsLoading(false);
       }
     },
-    [selectedStatus],
+    [selectedStatus, activeWorkspaceId],
   );
 
   useEffect(() => {
     fetchPlacements(selectedStatus);
-  }, [fetchPlacements, selectedStatus]);
+  }, [fetchPlacements, selectedStatus, activeWorkspaceId]);
 
   const handleStatusFilter = (status: string) => {
     const next = selectedStatus === status && status !== "ALL" ? "ALL" : status;
@@ -238,7 +239,7 @@ export function PlacementsView() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outletId, materialId, status: status || "NOT_STARTED", dimensions: dimensions || "", cost: cost != null ? Number(cost) : undefined, picName: picName || "", notes: notes || "", photoUrl: photoUrl || "", date: date || new Date().toISOString() }),
+        body: JSON.stringify({ outletId, materialId, status: status || "NOT_STARTED", dimensions: dimensions || "", cost: cost != null ? Number(cost) : undefined, picName: picName || "", notes: notes || "", photoUrl: photoUrl || "", date: date || new Date().toISOString(), workspaceId: activeWorkspaceId }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

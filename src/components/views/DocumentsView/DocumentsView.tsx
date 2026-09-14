@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Files, Plus, Edit2, Upload, RefreshCw } from "lucide-react";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn } from "@/lib/utils";
 import {
@@ -59,6 +60,7 @@ function DocumentPreview({ document }: { document: MarcomDocument }) {
 
 export function DocumentsView() {
   const { can } = useMarcomPermissions();
+  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
 
   const [documents, setDocuments] = useState<MarcomDocument[]>([]);
   const [branches, setBranches] = useState<BranchOption[]>([]);
@@ -75,7 +77,10 @@ export function DocumentsView() {
     setIsLoading(true);
     setError(null);
     try {
-      const [resDocs, resBranches] = await Promise.all([fetch("/api/marcom/documents"), fetch("/api/marcom/branches")]);
+      const [resDocs, resBranches] = await Promise.all([
+        fetch(`/api/marcom/documents?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
+        fetch("/api/marcom/branches"),
+      ]);
       if (!resDocs.ok) throw new Error(`Request failed (${resDocs.status})`);
       const jsonDocs = await resDocs.json();
       setDocuments(Array.isArray(jsonDocs.data) ? jsonDocs.data : []);
@@ -88,11 +93,11 @@ export function DocumentsView() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [activeWorkspaceId]);
 
   useEffect(() => {
     fetchDocuments();
-  }, [fetchDocuments]);
+  }, [fetchDocuments, activeWorkspaceId]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -159,6 +164,7 @@ export function DocumentsView() {
           filePath: filePath!.trim(),
           fileSizeMb: Number(fileSizeMb) || 0,
           description: description?.trim() || undefined,
+          workspaceId: activeWorkspaceId,
         }),
       });
       if (!res.ok) {

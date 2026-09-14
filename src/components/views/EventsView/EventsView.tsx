@@ -131,6 +131,7 @@ interface EventsViewProps {
 
 export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   const { can } = useMarcomPermissions();
+  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const {
     tasks,
     createTask,
@@ -141,7 +142,6 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setActiveList,
     setActiveView,
     workspaces,
-    activeWorkspaceId,
     activeSpaceId,
     activeListId,
     marcomFilters,
@@ -237,7 +237,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setError(null);
     try {
       const [resEvents, resBranches] = await Promise.all([
-        fetch("/api/marcom/events"),
+        fetch(`/api/marcom/events?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
         fetch("/api/marcom/branches"),
       ]);
       if (!resEvents.ok) throw new Error(`Request failed (${resEvents.status})`);
@@ -252,11 +252,11 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [activeWorkspaceId]);
 
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+  }, [fetchEvents, activeWorkspaceId]);
 
   // Sync external search query
   const prevFilter = useRef(marcomFilters["events"]);
@@ -442,6 +442,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         targetAttendee: Number(eventTargetAttendee) || 0,
         attendeeCount: Number(eventAttendeeCount) || 0,
         notes: eventNotes.trim(),
+        workspaceId: activeWorkspaceId,
       };
 
       let savedId = editId;
