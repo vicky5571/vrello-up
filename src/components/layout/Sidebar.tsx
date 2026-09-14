@@ -38,6 +38,22 @@ import { RenameListModal } from "@/components/spaces/RenameListModal";
 import { HelpDocsModal } from "@/components/modals/HelpDocsModal";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { SortableSpaceItem } from "@/components/spaces/SortableSpaceItem";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Code2,
@@ -73,7 +89,38 @@ export function Sidebar() {
     deleteSpace,
     deleteFolder,
     deleteList,
+    reorderSpaces,
+    moveSpace,
   } = useWorkspaceStore();
+
+  const currentWorkspace =
+    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !currentWorkspace) return;
+
+    const spaces = currentWorkspace.spaces;
+    const oldIndex = spaces.findIndex((s) => s.id === active.id);
+    const newIndex = spaces.findIndex((s) => s.id === over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const reordered = arrayMove(spaces, oldIndex, newIndex);
+      reorderSpaces(reordered.map((s) => s.id));
+      toast.success("Spaces reordered");
+    }
+  };
 
   const [expandedSpaces, setExpandedSpaces] = useState<Record<string, boolean>>({
     "space-product": true,
@@ -120,8 +167,6 @@ export function Sidebar() {
     onClose: () => setActiveMenuId(null),
   });
 
-  const currentWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
 
   const toggleSpaceExpand = (spaceId: string) => {
     setExpandedSpaces((prev) => ({ ...prev, [spaceId]: !prev[spaceId] }));
@@ -244,487 +289,62 @@ export function Sidebar() {
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto px-2 space-y-1">
-            {currentWorkspace?.spaces.map((space) => {
-              const isSpaceActive = activeSpaceId === space.id && !activeListId;
-              const isExpanded = !!expandedSpaces[space.id];
-              const Icon = ICON_MAP[space.icon] || Layers;
-              const isSpaceMenuOpen = activeMenuId === `space-${space.id}`;
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={currentWorkspace?.spaces.map((s) => s.id) || []}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {currentWorkspace?.spaces.map((space, spaceIndex) => {
+                    const isSpaceActive = activeSpaceId === space.id && !activeListId;
+                    const isExpanded = !!expandedSpaces[space.id];
 
-              return (
-                <div key={space.id} className="space-y-0.5 relative">
-                  {/* Space Item */}
-                  <div
-                    onClick={() => {
-                      setActiveSpace(space.id);
-                      if (!isExpanded) toggleSpaceExpand(space.id);
-                    }}
-                    className={cn(
-                      "group flex items-center justify-between px-2 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-colors",
-                      isSpaceActive
-                        ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200"
-                    )}
-                  >
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleSpaceExpand(space.id);
+                    return (
+                      <SortableSpaceItem
+                        key={space.id}
+                        space={space}
+                        spaceIndex={spaceIndex}
+                        totalSpaces={currentWorkspace.spaces.length}
+                        isSpaceActive={isSpaceActive}
+                        isExpanded={isExpanded}
+                        activeSpaceId={activeSpaceId}
+                        activeListId={activeListId}
+                        activeMenuId={activeMenuId}
+                        expandedFolders={expandedFolders}
+                        tasks={tasks}
+                        menuRef={menuRef}
+                        onSelectSpace={(id) => setActiveSpace(id)}
+                        onToggleSpaceExpand={toggleSpaceExpand}
+                        onToggleFolderExpand={toggleFolderExpand}
+                        onOpenCreateListModal={(spaceId, folderId) =>
+                          setCreateListModalState({ isOpen: true, spaceId, folderId })
+                        }
+                        onOpenFolderModal={(spaceId, folderId, initialName) =>
+                          setFolderModalState({ isOpen: true, spaceId, folderId, initialName })
+                        }
+                        onOpenRenameListModal={(spaceId, listId, folderId, initialName) =>
+                          setRenameListModalState({ isOpen: true, spaceId, listId, folderId, initialName })
+                        }
+                        onOpenEditSpaceModal={(sp) =>
+                          setEditSpaceModalState({ isOpen: true, space: sp })
+                        }
+                        onSetActiveMenuId={setActiveMenuId}
+                        onDeleteSpace={deleteSpace}
+                        onDeleteFolder={deleteFolder}
+                        onDeleteList={deleteList}
+                        onSelectList={(spaceId, listId) => {
+                          setActiveSpace(spaceId);
+                          setActiveList(listId);
                         }}
-                        className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                      >
-                        <motion.span
-                          animate={{ rotate: isExpanded ? 0 : -90 }}
-                          transition={{ duration: 0.15 }}
-                          className="inline-block"
-                        >
-                          <ChevronDown className="w-3 h-3" />
-                        </motion.span>
-                      </button>
-
-                      <div
-                        className="w-4 h-4 rounded flex items-center justify-center text-white shrink-0"
-                        style={{ backgroundColor: space.color }}
-                      >
-                        <Icon className="w-2.5 h-2.5" />
-                      </div>
-
-                      <span className="truncate">{space.name}</span>
-                    </div>
-
-                    <div className="flex items-center gap-0.5">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCreateListModalState({
-                            isOpen: true,
-                            spaceId: space.id,
-                          });
-                        }}
-                        title="Add list to space"
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-opacity cursor-pointer"
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenuId(isSpaceMenuOpen ? null : `space-${space.id}`);
-                        }}
-                        title="Space Actions"
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-opacity cursor-pointer"
-                      >
-                        <MoreHorizontal className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Space Context Menu Popover */}
-                  {isSpaceMenuOpen && (
-                    <div
-                      ref={menuRef}
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute right-2 top-8 z-30 w-44 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-1 text-xs space-y-0.5"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveMenuId(null);
-                          setActiveSpace(space.id);
-                        }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <Layers className="w-3.5 h-3.5 text-blue-500" />
-                        <span>All Tasks</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveMenuId(null);
-                          setCreateListModalState({ isOpen: true, spaceId: space.id });
-                        }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5 text-teal-500" />
-                        <span>Add List</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveMenuId(null);
-                          setFolderModalState({ isOpen: true, spaceId: space.id });
-                        }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <FolderPlus className="w-3.5 h-3.5 text-amber-500" />
-                        <span>Add Folder</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveMenuId(null);
-                          setEditSpaceModalState({ isOpen: true, space });
-                        }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <Edit2 className="w-3.5 h-3.5 text-indigo-500" />
-                        <span>Edit Space</span>
-                      </button>
-                      <div className="border-t border-slate-100 dark:border-slate-800 my-0.5" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveMenuId(null);
-                          deleteSpace(space.id);
-                          toast.success(`Space "${space.name}" deleted`);
-                        }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete Space</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Accordion Lists & Folders */}
-                  <AnimatePresence initial={false}>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.15 }}
-                        className="overflow-hidden pl-3 border-l border-slate-200/70 dark:border-slate-800/80 ml-3.5 space-y-0.5 py-0.5"
-                      >
-                        {/* Folders */}
-                        {space.folders?.map((folder) => {
-                          const isFolderExpanded = !!expandedFolders[folder.id];
-                          const isFolderMenuOpen = activeMenuId === `folder-${folder.id}`;
-
-                          return (
-                            <div key={folder.id} className="space-y-0.5 relative">
-                              <div
-                                onClick={() => toggleFolderExpand(folder.id)}
-                                className="group flex items-center justify-between px-2 py-1 rounded-md text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors"
-                              >
-                                <div className="flex items-center gap-1.5 overflow-hidden">
-                                  <motion.span
-                                    animate={{ rotate: isFolderExpanded ? 0 : -90 }}
-                                    transition={{ duration: 0.12 }}
-                                    className="inline-block"
-                                  >
-                                    <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
-                                  </motion.span>
-                                  <FolderIcon className="w-3 h-3 text-amber-500 shrink-0" />
-                                  <span className="truncate font-medium">
-                                    {folder.name}
-                                  </span>
-                                </div>
-
-                                <div className="flex items-center gap-0.5">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setCreateListModalState({
-                                        isOpen: true,
-                                        spaceId: space.id,
-                                        folderId: folder.id,
-                                      });
-                                    }}
-                                    title="Add list to folder"
-                                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-opacity"
-                                  >
-                                    <Plus className="w-3 h-3" />
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveMenuId(
-                                        isFolderMenuOpen ? null : `folder-${folder.id}`
-                                      );
-                                    }}
-                                    title="Folder Actions"
-                                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-opacity"
-                                  >
-                                    <MoreHorizontal className="w-3 h-3" />
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Folder Context Menu Popover */}
-                              {isFolderMenuOpen && (
-                                <div
-                                  ref={menuRef}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="absolute right-2 top-6 z-30 w-40 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-1 text-xs space-y-0.5"
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveMenuId(null);
-                                      setCreateListModalState({
-                                        isOpen: true,
-                                        spaceId: space.id,
-                                        folderId: folder.id,
-                                      });
-                                    }}
-                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                                  >
-                                    <Plus className="w-3.5 h-3.5 text-teal-500" />
-                                    <span>Add List</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveMenuId(null);
-                                      setFolderModalState({
-                                        isOpen: true,
-                                        spaceId: space.id,
-                                        folderId: folder.id,
-                                        initialName: folder.name,
-                                      });
-                                    }}
-                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                                  >
-                                    <Edit2 className="w-3.5 h-3.5 text-indigo-500" />
-                                    <span>Rename Folder</span>
-                                  </button>
-                                  <div className="border-t border-slate-100 dark:border-slate-800 my-0.5" />
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveMenuId(null);
-                                      deleteFolder(space.id, folder.id);
-                                      toast.success(`Folder "${folder.name}" deleted`);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    <span>Delete Folder</span>
-                                  </button>
-                                </div>
-                              )}
-
-                              {/* Lists inside Folder */}
-                              <AnimatePresence initial={false}>
-                                {isFolderExpanded && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: "auto", opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.12 }}
-                                    className="pl-2.5 space-y-0.5"
-                                  >
-                                    {folder.lists.map((list) => {
-                                      const isListActive =
-                                        activeSpaceId === space.id &&
-                                        activeListId === list.id;
-                                      const listTaskCount = tasks.filter(
-                                        (t) => t.listId === list.id
-                                      ).length;
-                                      const isListMenuOpen =
-                                        activeMenuId === `list-${list.id}`;
-
-                                      return (
-                                        <div
-                                          key={list.id}
-                                          className="relative space-y-0.5"
-                                        >
-                                          <div
-                                            onClick={() => {
-                                              setActiveSpace(space.id);
-                                              setActiveList(list.id);
-                                            }}
-                                            className={cn(
-                                              "group flex items-center justify-between px-2 py-1 rounded-md text-xs cursor-pointer transition-colors",
-                                              isListActive
-                                                ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
-                                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
-                                            )}
-                                          >
-                                            <div className="flex items-center gap-1.5 overflow-hidden">
-                                              <ListTodo className="w-3 h-3 shrink-0 text-slate-400" />
-                                              <span className="truncate">
-                                                {list.name}
-                                              </span>
-                                            </div>
-
-                                            <div className="flex items-center gap-1">
-                                              {listTaskCount > 0 && (
-                                                <span className="text-[10px] text-slate-500 font-medium px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-slate-800">
-                                                  {listTaskCount}
-                                                </span>
-                                              )}
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setActiveMenuId(
-                                                    isListMenuOpen
-                                                      ? null
-                                                      : `list-${list.id}`
-                                                  );
-                                                }}
-                                                title="List Actions"
-                                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-opacity"
-                                              >
-                                                <MoreHorizontal className="w-3 h-3" />
-                                              </button>
-                                            </div>
-                                          </div>
-
-                                          {/* List Context Menu Popover */}
-                                          {isListMenuOpen && (
-                                            <div
-                                              ref={menuRef}
-                                              onClick={(e) => e.stopPropagation()}
-                                              className="absolute right-2 top-6 z-30 w-36 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-1 text-xs space-y-0.5"
-                                            >
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  setActiveMenuId(null);
-                                                  setRenameListModalState({
-                                                    isOpen: true,
-                                                    spaceId: space.id,
-                                                    listId: list.id,
-                                                    folderId: folder.id,
-                                                    initialName: list.name,
-                                                  });
-                                                }}
-                                                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                                              >
-                                                <Edit2 className="w-3.5 h-3.5 text-indigo-500" />
-                                                <span>Rename</span>
-                                              </button>
-                                              <div className="border-t border-slate-100 dark:border-slate-800 my-0.5" />
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  setActiveMenuId(null);
-                                                  deleteList(
-                                                    space.id,
-                                                    list.id,
-                                                    folder.id
-                                                  );
-                                                  toast.success(
-                                                    `List "${list.name}" deleted`
-                                                  );
-                                                }}
-                                                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
-                                              >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                                <span>Delete</span>
-                                              </button>
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          );
-                        })}
-
-                        {/* Direct Lists inside Space */}
-                        {space.lists.map((list) => {
-                          const isListActive =
-                            activeSpaceId === space.id &&
-                            activeListId === list.id;
-                          const listTaskCount = tasks.filter(
-                            (t) => t.listId === list.id
-                          ).length;
-                          const isListMenuOpen = activeMenuId === `list-${list.id}`;
-
-                          return (
-                            <div key={list.id} className="relative space-y-0.5">
-                              <div
-                                onClick={() => {
-                                  setActiveSpace(space.id);
-                                  setActiveList(list.id);
-                                }}
-                                className={cn(
-                                  "group flex items-center justify-between px-2 py-1 rounded-md text-xs cursor-pointer transition-colors",
-                                  isListActive
-                                    ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
-                                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
-                                )}
-                              >
-                                <div className="flex items-center gap-1.5 overflow-hidden">
-                                  <ListTodo className="w-3 h-3 shrink-0 text-slate-400" />
-                                  <span className="truncate">{list.name}</span>
-                                </div>
-
-                                <div className="flex items-center gap-1">
-                                  {listTaskCount > 0 && (
-                                    <span className="text-[10px] text-slate-500 font-medium px-1.5 py-0.2 rounded bg-slate-200/80 dark:bg-slate-800">
-                                      {listTaskCount}
-                                    </span>
-                                  )}
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setActiveMenuId(
-                                        isListMenuOpen ? null : `list-${list.id}`
-                                      );
-                                    }}
-                                    title="List Actions"
-                                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-opacity cursor-pointer"
-                                  >
-                                    <MoreHorizontal className="w-3 h-3" />
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* List Context Menu Popover */}
-                              {isListMenuOpen && (
-                                <div
-                                  ref={menuRef}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="absolute right-2 top-6 z-30 w-36 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-1 text-xs space-y-0.5"
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveMenuId(null);
-                                      setRenameListModalState({
-                                        isOpen: true,
-                                        spaceId: space.id,
-                                        listId: list.id,
-                                        initialName: list.name,
-                                      });
-                                    }}
-                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                                  >
-                                    <Edit2 className="w-3.5 h-3.5 text-indigo-500" />
-                                    <span>Rename</span>
-                                  </button>
-                                  <div className="border-t border-slate-100 dark:border-slate-800 my-0.5" />
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveMenuId(null);
-                                      deleteList(space.id, list.id);
-                                      toast.success(`List "${list.name}" deleted`);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    <span>Delete</span>
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
+                        onMoveSpace={moveSpace}
+                      />
+                    );
+                  })}
+                </SortableContext>
+              </DndContext>
             </div>
           )}
 

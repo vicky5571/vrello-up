@@ -22,6 +22,7 @@ import {
   type CustomAutomationRule,
 } from "@/types";
 import { generateId } from "@/lib/utils";
+import { reorderSpacesList, moveSpaceDirection } from "@/lib/spaces/spaceOrder";
 
 // Default Seed Users
 export const SEED_USERS: User[] = [
@@ -579,6 +580,8 @@ interface WorkspaceState {
     updates: Partial<Pick<Space, "name" | "icon" | "color">>,
   ) => void;
   deleteSpace: (spaceId: string) => void;
+  reorderSpaces: (orderedSpaceIds: string[]) => void;
+  moveSpace: (spaceId: string, direction: "up" | "down") => void;
 
   // Folder Actions
   createFolder: (spaceId: string, name: string) => Folder;
@@ -1854,6 +1857,28 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }));
 
         tasksToDelete.forEach((t) => syncDeleteTask(t.id));
+        syncWorkspaces(get().workspaces);
+      },
+
+      reorderSpaces: (orderedSpaceIds) => {
+        set((state) => ({
+          workspaces: state.workspaces.map((w) =>
+            w.id === state.activeWorkspaceId
+              ? { ...w, spaces: reorderSpacesList(w.spaces, orderedSpaceIds) }
+              : w,
+          ),
+        }));
+        syncWorkspaces(get().workspaces);
+      },
+
+      moveSpace: (spaceId, direction) => {
+        set((state) => ({
+          workspaces: state.workspaces.map((w) =>
+            w.id === state.activeWorkspaceId
+              ? { ...w, spaces: moveSpaceDirection(w.spaces, spaceId, direction) }
+              : w,
+          ),
+        }));
         syncWorkspaces(get().workspaces);
       },
 

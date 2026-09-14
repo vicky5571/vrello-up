@@ -448,3 +448,38 @@ test("reconcileWorkspaces preserves client custom spaces and lists over static s
   assert.equal(reconciledSpace?.lists[0].id, "list-funnel-review");
   assert.equal(reconciledSpace?.folders[0].lists[0].id, "list-onboarding-ab");
 });
+
+test("reorderSpaces updates space array ordering in the active workspace", () => {
+  const currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
+  assert.ok(currentWs && currentWs.spaces.length >= 2);
+
+  const initialOrder = currentWs.spaces.map((s) => s.id);
+  const reversedOrder = [...initialOrder].reverse();
+
+  api().reorderSpaces(reversedOrder);
+
+  const updatedWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
+  assert.deepEqual(
+    updatedWs?.spaces.map((s) => s.id),
+    reversedOrder
+  );
+});
+
+test("moveSpace moves a space up and down in the active workspace", () => {
+  const currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
+  assert.ok(currentWs && currentWs.spaces.length >= 2);
+
+  const secondSpaceId = currentWs.spaces[1].id;
+  const firstSpaceId = currentWs.spaces[0].id;
+
+  api().moveSpace(secondSpaceId, "up");
+  let updatedWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
+  assert.equal(updatedWs?.spaces[0].id, secondSpaceId);
+  assert.equal(updatedWs?.spaces[1].id, firstSpaceId);
+
+  api().moveSpace(secondSpaceId, "down");
+  updatedWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
+  assert.equal(updatedWs?.spaces[0].id, firstSpaceId);
+  assert.equal(updatedWs?.spaces[1].id, secondSpaceId);
+});
+
