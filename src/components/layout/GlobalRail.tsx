@@ -11,6 +11,8 @@ import {
   Gem,
   ChevronsLeft,
   ChevronsRight,
+  Kanban,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
@@ -21,6 +23,8 @@ import { MoreAppsMenu } from "@/components/modals/MoreAppsMenu";
 
 export function GlobalRail() {
   const {
+    appMode,
+    setAppMode,
     isSidebarOpen,
     toggleSidebar,
     isAiDrawerOpen,
@@ -77,6 +81,41 @@ export function GlobalRail() {
       <aside className="hidden md:flex w-[52px] shrink-0 h-full bg-[#0F1115] text-slate-400 flex-col items-center py-3 justify-between rounded-2xl border border-white/10 shadow-lg select-none z-30 overflow-hidden">
         {/* Top Section: Toggle & Navigation */}
         <div className="flex flex-col items-center w-full gap-1">
+          {/* Workspace Mode Switcher */}
+          <div className="flex flex-col items-center gap-1 p-1 mb-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+            {/* Projects & Tasks Mode Toggle */}
+            <button
+              type="button"
+              onClick={() => setAppMode("tasks")}
+              title="Projects & Tasks"
+              className={cn(
+                "w-9 h-8 flex items-center justify-center rounded-lg transition-all cursor-pointer group relative",
+                appMode === "tasks"
+                  ? "bg-blue-600 text-white shadow-sm shadow-blue-500/30"
+                  : "text-slate-400 hover:text-white hover:bg-white/10",
+              )}
+            >
+              <Kanban className="w-4 h-4 transition-transform group-hover:scale-105" />
+            </button>
+
+            {/* Marketing & Ops Mode Toggle */}
+            <button
+              type="button"
+              onClick={() => setAppMode("marcom")}
+              title="Marketing & Ops Hub"
+              className={cn(
+                "w-9 h-8 flex items-center justify-center rounded-lg transition-all cursor-pointer group relative",
+                appMode === "marcom"
+                  ? "bg-pink-600 text-white shadow-sm shadow-pink-500/30"
+                  : "text-slate-400 hover:text-white hover:bg-white/10",
+              )}
+            >
+              <Megaphone className="w-4 h-4 transition-transform group-hover:scale-105" />
+            </button>
+          </div>
+
+          <div className="w-6 h-px bg-white/10 my-0.5" />
+
           {/* Sidebar Toggle */}
           <button
             type="button"
