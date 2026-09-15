@@ -174,6 +174,12 @@ test("formatEventDateRange handles single-day, multi-day, and TBD dates with acc
   assert.equal(tbd.formatted, "TBD");
   assert.equal(tbd.durationDays, 0);
   assert.equal(tbd.isMultiDay, false);
+
+  // Inverted dates guard (endDate earlier than startDate)
+  const inverted = formatEventDateRange("2026-10-15", "2026-10-10");
+  assert.equal(inverted.durationDays, 1);
+  assert.equal(inverted.isMultiDay, false);
+  assert.equal(inverted.formatted, inverted.startDateFormatted);
 });
 
 test("detectEventConflicts flags overlapping dates in the same branch and across branches", () => {

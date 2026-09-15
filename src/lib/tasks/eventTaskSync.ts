@@ -296,7 +296,7 @@ export function formatEventDateRange(
 
   const startFormatted = formatDate(rawStart);
 
-  if (!rawEnd || rawEnd === rawStart) {
+  if (!rawEnd || rawEnd === rawStart || rawEnd < rawStart) {
     return {
       formatted: startFormatted,
       durationDays: 1,

@@ -84,6 +84,10 @@ export async function POST(request: Request) {
 
   const eventDate = startDate || date;
 
+  if (eventDate && endDate && new Date(endDate) < new Date(eventDate)) {
+    return NextResponse.json({ error: "endDate cannot be earlier than startDate" }, { status: 400 });
+  }
+
   const footageData = Array.isArray(footage)
     ? footage
         .filter((f: any) => f && (f.title || f.filePath))

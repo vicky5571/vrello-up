@@ -124,6 +124,13 @@ export function EventFormModal({
     setTargetListId(dest.listId);
   };
 
+  const handleStartDateChange = (val: string) => {
+    setEventStartDate(val);
+    if (eventEndDate && val && eventEndDate < val) {
+      setEventEndDate(val);
+    }
+  };
+
   // Google Drive Picker
   const {
     openSelector: openDriveSelector,
@@ -281,6 +288,11 @@ export function EventFormModal({
     e.preventDefault();
     if (!eventName.trim()) {
       toast.error("Event name is required");
+      return;
+    }
+
+    if (eventEndDate && eventStartDate && eventEndDate < eventStartDate) {
+      toast.error("End date cannot be earlier than start date");
       return;
     }
 
@@ -554,7 +566,7 @@ export function EventFormModal({
                   <input
                     type="date"
                     value={eventStartDate}
-                    onChange={(e) => setEventStartDate(e.target.value)}
+                    onChange={(e) => handleStartDateChange(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
                   />
                 </div>
@@ -566,9 +578,22 @@ export function EventFormModal({
                     type="date"
                     min={eventStartDate}
                     value={eventEndDate}
-                    onChange={(e) => setEventEndDate(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val && eventStartDate && val < eventStartDate) {
+                        toast.error("End date cannot be earlier than start date");
+                        setEventEndDate(eventStartDate);
+                        return;
+                      }
+                      setEventEndDate(val);
+                    }}
                     className="w-full px-3 py-2 rounded-lg text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
                   />
+                  <span className="text-[10px] text-slate-400 mt-1 block">
+                    {eventEndDate && eventStartDate && eventEndDate > eventStartDate
+                      ? "Multi-day activation"
+                      : "Optional for multi-day events (min: start date)"}
+                  </span>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">

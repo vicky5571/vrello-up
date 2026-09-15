@@ -54,6 +54,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
+  const effectiveStartDate = data["date"] !== undefined ? (data["date"] as Date | null) : existing.date;
+  const effectiveEndDate = data["endDate"] !== undefined ? (data["endDate"] as Date | null) : existing.endDate;
+
+  if (effectiveStartDate && effectiveEndDate && effectiveEndDate < effectiveStartDate) {
+    return NextResponse.json({ error: "endDate cannot be earlier than startDate" }, { status: 400 });
+  }
+
   if (body?.footage !== undefined && Array.isArray(body.footage)) {
     const footageData = body.footage
       .filter((f: any) => f && (f.title || f.filePath))
