@@ -4,52 +4,52 @@ import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
 
 export const DEFAULT_EVENT_CHECKLISTS: Record<string, string[]> = {
   Roadshow: [
-    "Survei venue & izin operasional mall/lokasi",
-    "Sewa sound system & lighting",
-    "Cetak backdrop & rollup banner",
-    "Briefing SPG, MC & field crew",
-    "Setup booth & display produk",
-    "Evaluasi pengunjung & rekap data lead",
+    "Venue survey & location operational permits",
+    "Sound system & lighting rental",
+    "Print backdrop & rollup banners",
+    "Briefing field crew, MC & promoters",
+    "Booth setup & product display installation",
+    "Visitor evaluation & lead data recap",
   ],
   Launch: [
-    "Konfirmasi sewa venue & perizinan",
-    "Undangan media, KOL & tamu VIP",
-    "Panggung, backdrop & sound system setup",
-    "Catering & merchandise goodie bag",
-    "Live streaming & dokumentasi video",
-    "Press release & monitoring publikasi",
+    "Venue rental confirmation & permits",
+    "Invitations for media, KOL & VIP guests",
+    "Stage, backdrop & sound system setup",
+    "Catering & merchandise goodie bags",
+    "Live streaming & video coverage team",
+    "Press release distribution & media monitoring",
   ],
   Exhibition: [
-    "Registrasi booth & skema denah lokasi",
-    "Display produk utama & instalasi POSM",
-    "Brosur, flyer katalog & voucher promosi",
-    "Jadwal shift crew & seragam tim",
-    "Pencatatan lead pengunjung & rekap penjualan",
+    "Booth registration & layout floor plan",
+    "Flagship product display & POSM installation",
+    "Brochures, catalog flyers & promo vouchers",
+    "Crew shift schedule & team uniforms",
+    "Visitor lead recording & sales recap",
   ],
   Booth: [
-    "Izin penempatan booth & daya listrik",
-    "Rollup banner & brosur promosi",
-    "Display dummy produk & sample tester",
-    "Penugasan crew stand & QR code absensi",
+    "Booth placement permit & power supply",
+    "Rollup banners & promotional flyers",
+    "Product dummy display & tester samples",
+    "Stand crew assignment & attendance QR code",
   ],
   Workshop: [
-    "Materi presentasi & hands-on training kit",
-    "Sound system & proyektor layar",
-    "Snack box & coffee break",
-    "Sertifikat peserta & form feedback",
+    "Presentation slides & hands-on training kit",
+    "Sound system & projector screen",
+    "Refreshment snacks & coffee break",
+    "Attendee certificates & feedback forms",
   ],
   Community: [
-    "Reservasi lokasi gathering komunitas",
-    "Agenda acara, games interaktif & doorprize",
-    "Merchandise eksklusif komunitas",
-    "Sesi foto bersama & dokumentasi medsos",
+    "Community gathering venue reservation",
+    "Event rundown, interactive games & doorprizes",
+    "Exclusive community merchandise",
+    "Group photo session & social media coverage",
   ],
   default: [
-    "Konfirmasi lokasi & izin pelaksanaan",
-    "Persiapan materi & perlengkapan logistik",
-    "Briefing PIC & tim pelaksana",
-    "Pelaksanaan event & dokumentasi",
-    "Laporan rekapitulasi & evaluasi",
+    "Location confirmation & operational permits",
+    "Logistics & promotional materials preparation",
+    "Field PIC & operational team briefing",
+    "Event execution & media documentation",
+    "Post-event evaluation & recap report",
   ],
 };
 
@@ -455,11 +455,11 @@ export function detectEventConflicts(
     const crossNames = detail.crossBranchConflicts.map((c) => c.eventName).join(", ");
 
     if (detail.hasSameBranchConflict && detail.hasCrossBranchConflict) {
-      detail.message = `Bentrok venue di cabang "${detail.branchName}" dengan "${sameNames}", dan aktivasi bersamaan antar-cabang dengan ${crossBranches} ("${crossNames}")`;
+      detail.message = `Venue clash at branch "${detail.branchName}" with "${sameNames}", and simultaneous cross-branch activation with ${crossBranches} ("${crossNames}")`;
     } else if (detail.hasSameBranchConflict) {
-      detail.message = `Bentrok jadwal di cabang "${detail.branchName}" dengan "${sameNames}"`;
+      detail.message = `Schedule clash at branch "${detail.branchName}" with "${sameNames}"`;
     } else if (detail.hasCrossBranchConflict) {
-      detail.message = `Jadwal aktivasi bersamaan antar-cabang dengan ${crossBranches} ("${crossNames}")`;
+      detail.message = `Simultaneous cross-branch activation with ${crossBranches} ("${crossNames}")`;
     }
   }
 

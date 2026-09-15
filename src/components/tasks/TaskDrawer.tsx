@@ -374,7 +374,7 @@ export function TaskDrawer() {
                 <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 min-w-0 pr-2">
                   <Flag className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                   <span className="font-medium truncate">
-                    Tautan Aktif: {navigatedFromMarcom?.label || "Field Events"}
+                    Linked to: {navigatedFromMarcom?.label || "Field Events"}
                   </span>
                 </div>
                 <button
@@ -385,12 +385,12 @@ export function TaskDrawer() {
                     setNavigatedFromMarcom(null);
                     setAppMode("marcom");
                     setActiveView(targetView);
-                    toast.info("Kembali ke Field Events");
+                    toast.info("Back to Field Events");
                   }}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] shadow-2xs transition-all cursor-pointer shrink-0"
                 >
                   <ArrowLeft className="w-3 h-3" />
-                  <span>Kembali ke Field Events</span>
+                  <span>Back to Field Events</span>
                 </button>
               </div>
             )}

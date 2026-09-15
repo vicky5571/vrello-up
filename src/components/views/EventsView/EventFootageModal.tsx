@@ -59,7 +59,7 @@ export function EventFootageModal({
         {
           id: "primary-media",
           eventId: event.id,
-          title: "Dokumentasi Utama Event",
+          title: "Main Event Documentation",
           filePath: event.mediaUrl,
           duration: "Highlight",
         },
@@ -113,7 +113,7 @@ export function EventFootageModal({
               type="button"
               onClick={onClose}
               className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Tutup (Esc)"
+              title="Close (Esc)"
             >
               <X className="w-5 h-5" />
             </button>
@@ -127,7 +127,7 @@ export function EventFootageModal({
                 {!activeClip ? (
                   <div className="text-center p-6 text-slate-500">
                     <Video className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                    <p className="text-xs">Belum ada klip video yang ditambahkan.</p>
+                    <p className="text-xs">No video clips added yet.</p>
                   </div>
                 ) : parsedDrive && parsedDrive.isValid && parsedDrive.embedUrl ? (
                   <iframe
@@ -165,7 +165,7 @@ export function EventFootageModal({
                       className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Buka Media di Tab Baru</span>
+                      <span>Open Media in New Tab</span>
                     </a>
                   </div>
                 )}
@@ -205,7 +205,7 @@ export function EventFootageModal({
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Buka Sumber ↗</span>
+                      <span>Open Source ↗</span>
                     </a>
                   </div>
                 </div>
@@ -217,16 +217,16 @@ export function EventFootageModal({
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Daftar Klip ({clips.length})
+                    Clips List ({clips.length})
                   </span>
                   <span className="text-[10px] text-slate-500">
-                    Pilih klip untuk menonton
+                    Select clip to watch
                   </span>
                 </div>
 
                 {clips.length === 0 ? (
                   <p className="text-xs text-slate-500 italic">
-                    Belum ada klip footage yang diunggah untuk event ini.
+                    No footage clips uploaded for this event yet.
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -278,7 +278,7 @@ export function EventFootageModal({
               {event.mediaUrl && (
                 <div className="mt-4 pt-3 border-t border-slate-800">
                   <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block mb-1.5">
-                    Folder Arsip Dokumentasi Lapangan
+                    Field Documentation Archive Folder
                   </span>
                   <a
                     href={event.mediaUrl}
@@ -288,7 +288,7 @@ export function EventFootageModal({
                   >
                     <span className="flex items-center gap-1.5 truncate">
                       <Folder className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="truncate">Buka Folder Raw Footage (Drive)</span>
+                      <span className="truncate">Open Raw Footage Folder (Drive)</span>
                     </span>
                     <ExternalLink className="w-3 h-3 shrink-0 ml-1" />
                   </a>

@@ -812,13 +812,13 @@ export function TopNav() {
                     setNavigatedFromMarcom(null);
                     setAppMode("marcom");
                     setActiveView(targetView);
-                    toast.info(`Kembali ke ${navigatedFromMarcom.label}`);
+                    toast.info(`Back to ${navigatedFromMarcom.label}`);
                   }}
                   className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 border border-blue-500/30 text-[11px] font-semibold transition-colors cursor-pointer"
-                  title={`Kembali ke ${navigatedFromMarcom.label}`}
+                  title={`Back to ${navigatedFromMarcom.label}`}
                 >
                   <ArrowLeft className="w-3 h-3" />
-                  <span>Kembali ke {navigatedFromMarcom.label}</span>
+                  <span>Back to {navigatedFromMarcom.label}</span>
                 </button>
                 <button
                   type="button"

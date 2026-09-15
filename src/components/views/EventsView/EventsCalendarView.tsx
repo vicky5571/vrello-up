@@ -157,7 +157,7 @@ export function EventsCalendarView({
             onClick={goToToday}
             className="px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
           >
-            Hari Ini
+            Today
           </button>
         </div>
 
@@ -165,14 +165,14 @@ export function EventsCalendarView({
           {sameBranchMonthConflicts.length > 0 && (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-semibold">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
-              <span>{sameBranchMonthConflicts.length} Bentrok Cabang</span>
+              <span>{sameBranchMonthConflicts.length} Branch Conflicts</span>
             </div>
           )}
 
           {crossBranchMonthConflicts.length > 0 && (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-xs font-semibold">
               <span className="text-xs">🌐</span>
-              <span>{crossBranchMonthConflicts.length} Aktivasi Antar-Cabang</span>
+              <span>{crossBranchMonthConflicts.length} Cross-Branch Activations</span>
             </div>
           )}
 
@@ -181,7 +181,7 @@ export function EventsCalendarView({
               type="button"
               onClick={prevMonth}
               className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Bulan sebelumnya"
+              title="Previous month"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -189,7 +189,7 @@ export function EventsCalendarView({
               type="button"
               onClick={nextMonth}
               className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Bulan berikutnya"
+              title="Next month"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -202,10 +202,10 @@ export function EventsCalendarView({
         <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl text-amber-800 dark:text-amber-200 text-xs space-y-1">
           <div className="flex items-center gap-1.5 font-bold">
             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-            <span>Peringatan Bentrok Jadwal di Cabang yang Sama (Venue Clash)</span>
+            <span>Schedule Conflict Alert: Same Branch Venue Clash</span>
           </div>
           <p className="text-[11px] text-amber-700 dark:text-amber-300">
-            Ditemukan aktivasi pada tanggal yang beririsan di cabang yang sama. Periksa alokasi SPG dan perlengkapan panggung:
+            Overlapping activations detected in the same branch. Review field crew and venue allocation:
           </p>
           <ul className="list-disc list-inside space-y-0.5 pt-1 text-[11px]">
             {sameBranchMonthConflicts.slice(0, 3).map(({ event, detail }) => (
@@ -221,10 +221,10 @@ export function EventsCalendarView({
         <div className="p-3.5 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/50 rounded-xl text-indigo-800 dark:text-indigo-200 text-xs space-y-1">
           <div className="flex items-center gap-1.5 font-bold">
             <span className="text-base">🌐</span>
-            <span>Aktivasi Bersamaan Antar-Cabang di Tanggal yang Sama</span>
+            <span>Simultaneous Cross-Branch Activations on Same Date</span>
           </div>
           <p className="text-[11px] text-indigo-700 dark:text-indigo-300">
-            Ditemukan beberapa cabang berbeda yang mengadakan aktivasi pada tanggal bersamaan. Pastikan koordinasi Marcom pusat dan logistik aset berjalan sinkron:
+            Multiple branches holding activations on overlapping dates. Ensure national Marcom coordination and asset logistics are aligned:
           </p>
           <ul className="list-disc list-inside space-y-0.5 pt-1 text-[11px]">
             {crossBranchMonthConflicts.slice(0, 3).map(({ event, detail }) => (
@@ -295,7 +295,7 @@ export function EventsCalendarView({
 
                   <div className="flex items-center gap-1">
                     {hasSameBranchConflict && (
-                      <span title="Bentrok venue/jadwal di cabang yang sama">
+                      <span title="Venue/schedule clash in the same branch">
                         <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
                       </span>
                     )}
@@ -303,7 +303,7 @@ export function EventsCalendarView({
                     {hasCrossBranchConflict && (
                       <span
                         className="text-[9px] font-semibold px-1 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50"
-                        title={`${uniqueBranches.length} cabang aktif bersamaan: ${uniqueBranches.join(", ")}`}
+                        title={`${uniqueBranches.length} branches active simultaneously: ${uniqueBranches.join(", ")}`}
                       >
                         🌐 {uniqueBranches.length}
                       </span>
@@ -314,7 +314,7 @@ export function EventsCalendarView({
                         type="button"
                         onClick={() => onOpenCreateModal(dateKey)}
                         className="opacity-0 group-hover/cell:opacity-100 p-0.5 rounded text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-opacity cursor-pointer"
-                        title={`Tambah event di ${formatDate(dateKey)}`}
+                        title={`Add event on ${formatDate(dateKey)}`}
                       >
                         <Plus className="w-3 h-3" />
                       </button>

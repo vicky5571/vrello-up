@@ -409,11 +409,11 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   // Add footage
   const handleAddFootage = () => {
     if (!newFootageTitle.trim()) {
-      toast.error("Judul klip footage wajib diisi");
+      toast.error("Footage clip title is required");
       return;
     }
     if (!newFootagePath.trim()) {
-      toast.error("Tautan video / URL Google Drive wajib diisi");
+      toast.error("Video URL / Google Drive link is required");
       return;
     }
     const newFootage: EventFootage = {
@@ -427,7 +427,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setNewFootageTitle("");
     setNewFootageDuration("");
     setNewFootagePath("");
-    toast.success("Klip footage berhasil ditambahkan");
+    toast.success("Footage clip added successfully");
   };
 
   const handleRemoveFootage = (id: string) => {
@@ -579,11 +579,11 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
 
       toast.success(
         editId
-          ? `Field event diperbarui & disinkronkan ke "${locationLabel}"`
-          : `Field event dibuat & tersimpan di "${locationLabel}"`,
+          ? `Field event updated & synced to "${locationLabel}"`
+          : `Field event created & saved in "${locationLabel}"`,
         {
           action: {
-            label: "Lihat di Board",
+            label: "View on Board",
             onClick: () => navigateToTask(savedItemForNav),
           },
         }
@@ -783,10 +783,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                     type="button"
                     onClick={() => openFootageModal(e, 0)}
                     className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-[10px] cursor-pointer font-medium"
-                    title="Tonton video footage & B-roll"
+                    title="Watch footage & B-roll video"
                   >
                     <Film className="w-3 h-3 text-blue-500" />
-                    <span>{e.footage.length} footage ▶</span>
+                    <span>{e.footage.length} clips ▶</span>
                   </button>
                 )}
               </div>
@@ -832,7 +832,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
               <div className="flex flex-wrap items-center gap-1 pl-5">
                 {range.isMultiDay && (
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/40">
-                    Durasi {range.durationDays} hari
+                    {range.durationDays}d duration
                   </span>
                 )}
                 {conflict?.hasSameBranchConflict && (
@@ -841,7 +841,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                     title={conflict.message}
                   >
                     <AlertTriangle className="w-2.5 h-2.5 text-amber-500" />
-                    Bentrok Cabang
+                    Branch Conflict
                   </span>
                 )}
                 {conflict?.hasCrossBranchConflict && (
@@ -849,7 +849,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                     className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/60"
                     title={conflict.message}
                   >
-                    🌐 {conflict.crossBranchCount} Cabang Bersamaan
+                    🌐 {conflict.crossBranchCount} Branches Overlap
                   </span>
                 )}
               </div>
@@ -936,7 +936,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
       }),
       columnHelper.display({
         id: "destination",
-        header: "Lokasi Task (Workspace)",
+        header: "Task Location (Workspace)",
         size: 190,
         cell: ({ row }) => {
           const e = row.original;
@@ -956,7 +956,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
               <span className="truncate font-medium">
                 {linkedSpace && linkedList
                   ? `${linkedSpace.name} › ${linkedList.name}`
-                  : "Belum ditautkan"}
+                  : "Not linked"}
               </span>
             </div>
           );
@@ -974,7 +974,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                 type="button"
                 onClick={() => navigateToTask(e)}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 text-[10px] font-semibold transition-colors cursor-pointer"
-                title="Lihat task di Kanban Board"
+                title="View task on Kanban Board"
               >
                 <Kanban className="w-3 h-3" />
                 <span>Board</span>
@@ -1300,20 +1300,20 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                             </div>
                             {range.isMultiDay && (
                               <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/50">
-                                {range.durationDays} hari
+                                {range.durationDays}d duration
                               </span>
                             )}
                           </div>
                           {conflict?.hasSameBranchConflict && (
                             <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
                               <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
-                              <span className="truncate">Bentrok venue di cabang ini</span>
+                              <span className="truncate">Branch venue conflict</span>
                             </div>
                           )}
                           {conflict?.hasCrossBranchConflict && (
                             <div className="flex items-center gap-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">
                               <span className="shrink-0">🌐</span>
-                              <span className="truncate">{conflict.crossBranchCount} cabang aktivasi bersamaan</span>
+                              <span className="truncate">{conflict.crossBranchCount} branches active simultaneously</span>
                             </div>
                           )}
                         </div>
@@ -1369,7 +1369,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                           <div
                             onClick={() => openFootageModal(event, 0)}
                             className="group/player relative rounded-xl overflow-hidden aspect-video bg-slate-950 border border-slate-200/80 dark:border-slate-800 cursor-pointer shadow-xs hover:border-blue-500/50 transition-all"
-                            title="Klik untuk menonton video dokumentasi"
+                            title="Click to watch documentation video"
                           >
                             {driveInfo.isValid && driveInfo.embedUrl ? (
                               <iframe
@@ -1387,7 +1387,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                               <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950/40 to-slate-900 p-3 text-center">
                                 <Film className="w-8 h-8 text-blue-400 mb-1 opacity-70" />
                                 <span className="text-[11px] text-slate-300 font-medium truncate max-w-full">
-                                  {primaryClip?.title || "Dokumentasi Lapangan"}
+                                  {primaryClip?.title || "Field Documentation"}
                                 </span>
                               </div>
                             )}
@@ -1418,7 +1418,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                             className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 font-semibold transition-colors cursor-pointer"
                           >
                             <Film className="w-3.5 h-3.5" />
-                            <span>Tonton B-roll ({event.footage.length} klip) ▶</span>
+                            <span>Watch B-roll ({event.footage.length} clips) ▶</span>
                           </button>
                         ) : (
                           <span />
@@ -1430,10 +1430,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 hover:underline"
-                            title="Buka folder cloud arsip dokumentasi lapangan"
+                            title="Open field documentation archive folder"
                           >
                             <Folder className="w-3 h-3" />
-                            <span>Folder Arsip ↗</span>
+                            <span>Archive Folder ↗</span>
                           </a>
                         )}
                       </div>
@@ -1479,10 +1479,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                       <div className="mt-2 flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border border-blue-200/40 dark:border-blue-900/30">
                         <div className="flex items-center gap-1.5">
                           <CheckSquare className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                          <span>Checklist Persiapan:</span>
+                          <span>Preparation Checklist:</span>
                         </div>
                         <span className="font-semibold font-mono text-[10px]">
-                          {completedCount}/{subtasks.length} Selesai
+                          {completedCount}/{subtasks.length} Completed
                         </span>
                       </div>
                     );
@@ -1525,10 +1525,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                       type="button"
                       onClick={() => navigateToTask(event)}
                       className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer transition-colors"
-                      title="Lihat task di Kanban Board"
+                      title="View task on Kanban Board"
                     >
                       <Kanban className="w-3 h-3" />
-                      <span>Lihat di Board</span>
+                      <span>View on Board</span>
                     </button>
 
                     <button
@@ -1746,14 +1746,14 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                     {picMemberId === "custom" && (
                       <input
                         type="text"
-                        placeholder="Masukkan nama PIC..."
+                        placeholder="Enter PIC name..."
                         value={eventPicName}
                         onChange={(e) => setEventPicName(e.target.value)}
                         className="mt-1.5 w-full px-3 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 outline-hidden"
                       />
                     )}
                     <span className="text-[10px] text-slate-400 mt-1 block">
-                      PIC akan otomatis menerima task ini di Kanban Board & "My Tasks".
+                      PIC will automatically receive this task on Kanban Board & "My Tasks".
                     </span>
                   </div>
                 </div>
@@ -1839,7 +1839,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                   <div className="flex items-center justify-between">
                     <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100">
                       <Folder className="w-4 h-4 text-amber-500" />
-                      <span>Folder Arsip Dokumentasi Lapangan (Storage Destination)</span>
+                      <span>Field Documentation Archive (Storage Destination)</span>
                     </label>
                     <button
                       type="button"
@@ -1849,25 +1849,25 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                           onSelect: (atts) => {
                             if (atts[0]) {
                               setEventMediaUrl(atts[0].url);
-                              toast.success("Folder dokumentasi Google Drive berhasil dipilih");
+                              toast.success("Google Drive documentation folder selected");
                             }
                           },
                         })
                       }
                       className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <span>Pilih dari Google Drive</span>
+                      <span>Select from Google Drive</span>
                     </button>
                   </div>
                   <input
                     type="url"
-                    placeholder="https://drive.google.com/drive/folders/... atau URL cloud storage arsip raw footage"
+                    placeholder="https://drive.google.com/drive/folders/... or cloud storage URL for raw footage archive"
                     value={eventMediaUrl}
                     onChange={(e) => setEventMediaUrl(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden font-mono text-[11px]"
                   />
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Tautan folder tempat tim dokumentasi menyimpan seluruh aset foto, video mentah (raw footage), dan materi liputan acara.
+                    Folder link where the media team archives all event photos, raw footage, and coverage assets.
                   </p>
                 </div>
 
@@ -1876,10 +1876,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100">
                       <Film className="w-4 h-4 text-blue-500" />
-                      <span>Klip Video B-Roll & Dokumentasi Highlight</span>
+                      <span>B-Roll Video Clips & Highlight Documentation</span>
                     </div>
                     <span className="text-[11px] text-slate-400">
-                      {eventFootageList.length} klip terlampir
+                      {eventFootageList.length} clips attached
                     </span>
                   </div>
 
@@ -1926,16 +1926,16 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                                 );
                               }}
                               className="p-1 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
-                              title="Putar / Preview video"
+                              title="Play / Preview video"
                             >
                               <Play className="w-3 h-3 fill-current" />
-                              <span>Putar</span>
+                              <span>Play</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => handleRemoveFootage(f.id)}
                               className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer transition-colors"
-                              title="Hapus klip"
+                              title="Remove clip"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -1948,7 +1948,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                   {/* Add footage input form */}
                   <div className="p-3 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/60 dark:bg-slate-800/40 space-y-2">
                     <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                      <span>Tambah Klip Baru:</span>
+                      <span>Add New Clip:</span>
                       <button
                         type="button"
                         onClick={() =>
@@ -1960,28 +1960,28 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                                 if (!newFootageTitle.trim()) {
                                   setNewFootageTitle(atts[0].name.replace(/\.[^/.]+$/, ""));
                                 }
-                                toast.success("Video Google Drive berhasil dipilih");
+                                toast.success("Google Drive video selected");
                               }
                             },
                           })
                         }
                         className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
                       >
-                        <span>Pilih dari Google Drive</span>
+                        <span>Select from Google Drive</span>
                       </button>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <input
                         type="text"
-                        placeholder="Judul Klip (misal: Crowd Highlights)"
+                        placeholder="Clip Title (e.g. Crowd Highlights)"
                         value={newFootageTitle}
                         onChange={(e) => setNewFootageTitle(e.target.value)}
                         className="sm:col-span-2 px-2.5 py-1.5 rounded-md text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
                       />
                       <input
                         type="text"
-                        placeholder="Durasi (misal: 02:15)"
+                        placeholder="Duration (e.g. 02:15)"
                         value={newFootageDuration}
                         onChange={(e) => setNewFootageDuration(e.target.value)}
                         className="px-2.5 py-1.5 rounded-md text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
@@ -1991,7 +1991,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                     <div className="flex items-center gap-2">
                       <input
                         type="url"
-                        placeholder="URL Video (Google Drive / Direct MP4 / WebM / Cloud URL)"
+                        placeholder="Video URL (Google Drive / Direct MP4 / WebM / Cloud URL)"
                         value={newFootagePath}
                         onChange={(e) => setNewFootagePath(e.target.value)}
                         className="flex-1 px-2.5 py-1.5 rounded-md text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono text-[11px]"
@@ -2002,7 +2002,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                         className="px-3.5 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1 shrink-0 cursor-pointer shadow-2xs"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        Tambah Klip
+                        Add Clip
                       </button>
                     </div>
                   </div>
@@ -2013,11 +2013,11 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100">
                       <ListTodo className="w-4 h-4 text-blue-500" />
-                      <span>Checklist Persiapan Event (Task Subtasks)</span>
+                      <span>Event Preparation Checklist (Task Subtasks)</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] text-slate-400 font-mono">
-                        {eventSubtasks.filter((s) => s.completed).length}/{eventSubtasks.length} selesai
+                        {eventSubtasks.filter((s) => s.completed).length}/{eventSubtasks.length} completed
                       </span>
                       <button
                         type="button"
@@ -2030,10 +2030,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                               completed: false,
                             }))
                           );
-                          toast.info(`Checklist direset ke template ${eventType}`);
+                          toast.info(`Checklist reset to ${eventType} template`);
                         }}
                         className="inline-flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
-                        title="Muat ulang item checklist sesuai jenis event"
+                        title="Reload checklist template for this event type"
                       >
                         <RotateCcw className="w-3 h-3" />
                         <span>Template {eventType}</span>
@@ -2042,7 +2042,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                   </div>
 
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Daftar persiapan logistik & operasional lapangan. Item ini otomatis tersinkronisasi sebagai subtasks di Kanban Board.
+                    Field logistics and operational checklist. Items automatically sync as subtasks on the Kanban Board.
                   </p>
 
                   {eventSubtasks.length > 0 && (
@@ -2081,7 +2081,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                               setEventSubtasks((prev) => prev.filter((_, i) => i !== idx))
                             }
                             className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer transition-colors"
-                            title="Hapus checklist item"
+                            title="Remove checklist item"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -2094,7 +2094,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                   <div className="flex items-center gap-2 pt-1">
                     <input
                       type="text"
-                      placeholder="Tambah checklist baru... (e.g. Sewa genset 10kVA)"
+                      placeholder="Add new checklist item... (e.g. Rent 10kVA generator)"
                       value={newSubtaskTitle}
                       onChange={(e) => setNewSubtaskTitle(e.target.value)}
                       onKeyDown={(e) => {
@@ -2132,7 +2132,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                       className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      Tambah
+                      Add
                     </button>
                   </div>
                 </div>
@@ -2143,7 +2143,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                     <div className="flex items-center gap-2">
                       <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-                        Target Space & List (Lokasi Penyimpanan Task)
+                        Target Space & List (Task Storage Destination)
                       </span>
                     </div>
                     <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer font-medium">
@@ -2153,12 +2153,12 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                         onChange={(e) => setCreateExecutionTask(e.target.checked)}
                         className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
-                      Sinkronkan ke Kanban Board
+                      Sync to Kanban Board
                     </label>
                   </div>
 
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Pilih Space dan List di Workspace tempat task event ini akan dibuat dan dipantau bersama checklist persiapannya.
+                    Select the Workspace Space and List where this event task will be created and tracked alongside its checklist.
                   </p>
 
                   {createExecutionTask && (
@@ -2166,7 +2166,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                         <div>
                           <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                            Pilih Space
+                            Select Space
                           </label>
                           <select
                             value={targetSpaceId}
@@ -2183,7 +2183,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
 
                         <div>
                           <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                            Pilih List
+                            Select List
                           </label>
                           <select
                             value={targetListId}
@@ -2205,7 +2205,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                         const currentList = targetLists.find((l) => l.id === targetListId);
                         return (
                           <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300 pt-1">
-                            <span className="text-slate-400">Tujuan akhir:</span>
+                            <span className="text-slate-400">Destination:</span>
                             <span className="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-blue-200/50 dark:border-blue-900/40">
                               <Layers className="w-3 h-3" />
                               {currentSpace?.name || "Space"} › {currentList?.name || "List"}
