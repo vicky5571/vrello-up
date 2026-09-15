@@ -342,7 +342,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-6 pb-20">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

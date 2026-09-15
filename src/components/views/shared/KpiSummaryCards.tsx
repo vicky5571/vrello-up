@@ -72,7 +72,7 @@ export function KpiSummaryCards({ items }: { items: KpiCardItem[] }) {
         return (
           <div
             key={idx}
-            className="flex items-center gap-3.5 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs transition-colors"
+            className="flex items-center gap-3.5 p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs transition-colors"
           >
             <div className={cn("p-2.5 rounded-xl shrink-0", colorStyles.bg)}>
               <Icon className={cn("w-4 h-4", colorStyles.text)} />

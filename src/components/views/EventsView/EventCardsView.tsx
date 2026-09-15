@@ -199,7 +199,7 @@ export function EventCardsView({
               </div>
 
               {/* Video Footage Showcase (Optimized Lightweight Poster) */}
-              {hasMedia && (
+              {hasMedia ? (
                 <div className="mt-3 space-y-2">
                   <div
                     onClick={() => onOpenFootageModal(event, 0)}
@@ -270,40 +270,62 @@ export function EventCardsView({
                     )}
                   </div>
                 </div>
-              )}
-
-              {/* Destination Breadcrumb */}
-              <div className="mt-3 flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
-                <div className="flex items-center gap-1.5 min-w-0 text-slate-600 dark:text-slate-300">
-                  <Layers className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  <span className="font-semibold truncate">
-                    {linkedSpace && linkedList
-                      ? `${linkedSpace.name} › ${linkedList.name}`
-                      : "Workspace Task"}
-                  </span>
-                </div>
-                <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 shrink-0 ml-2">
-                  Workspace Task
-                </span>
-              </div>
-
-              {/* Checklist summary */}
-              {subtasks.length > 0 && (
-                <div className="mt-2 flex items-center justify-between text-[11px] px-2.5 py-1 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border border-blue-200/40 dark:border-blue-900/30">
-                  <div className="flex items-center gap-1.5">
-                    <CheckSquare className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                    <span>Preparation Checklist:</span>
+              ) : (
+                /* Compact placeholder when no footage is attached */
+                <div className="mt-3 p-2.5 rounded-xl border border-dashed border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-between text-slate-400">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Film className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                      No footage attached
+                    </span>
                   </div>
-                  <span className="font-semibold font-mono text-[10px]">
-                    {completedSubtasksCount}/{subtasks.length} Completed
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onSelectEvent(event)}
+                    className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline shrink-0 cursor-pointer ml-2"
+                  >
+                    + Add Clip
+                  </button>
                 </div>
               )}
+
+              {/* Linked Workspace Task & Checklist info */}
+              <div className="mt-3 space-y-1.5">
+                {/* Destination Task Breadcrumb */}
+                <div className="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                  <div className="flex items-center gap-1.5 min-w-0 text-slate-600 dark:text-slate-300">
+                    <Layers className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span className="font-semibold truncate">
+                      {linkedSpace && linkedList
+                        ? `${linkedSpace.name} › ${linkedList.name}`
+                        : "Workspace Task"}
+                    </span>
+                  </div>
+                  {linkedSpace && linkedList && (
+                    <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 shrink-0 ml-2">
+                      Linked
+                    </span>
+                  )}
+                </div>
+
+                {/* Checklist summary */}
+                {subtasks.length > 0 && (
+                  <div className="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border border-blue-200/40 dark:border-blue-900/30">
+                    <div className="flex items-center gap-1.5">
+                      <CheckSquare className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                      <span>Checklist:</span>
+                    </div>
+                    <span className="font-semibold font-mono text-[10px]">
+                      {completedSubtasksCount}/{subtasks.length} Done
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Card Footer Actions */}
-            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 truncate min-w-0">
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1.5">
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 min-w-0 flex-1 mr-1">
                 {picMember ? (
                   <img
                     src={picMember.avatar}
@@ -321,7 +343,7 @@ export function EventCardsView({
                 </span>
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
                   onClick={() => onNavigateToTask(event)}
@@ -329,7 +351,7 @@ export function EventCardsView({
                   title="View task on Kanban Board"
                 >
                   <Kanban className="w-3 h-3" />
-                  <span>View on Board</span>
+                  <span>Board</span>
                 </button>
 
                 <button

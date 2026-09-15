@@ -85,10 +85,23 @@ export function EventFormModal({
   const [eventPicName, setEventPicName] = useState("");
   const [picMemberId, setPicMemberId] = useState<string>("");
   const [eventStatus, setEventStatus] = useState<EventStatus>("UPCOMING");
-  const [eventBudget, setEventBudget] = useState<number>(0);
-  const [eventTargetAttendee, setEventTargetAttendee] = useState<number>(100);
-  const [eventAttendeeCount, setEventAttendeeCount] = useState<number>(0);
+  const [eventBudget, setEventBudget] = useState<string>("0");
+  const [eventTargetAttendee, setEventTargetAttendee] = useState<string>("100");
+  const [eventAttendeeCount, setEventAttendeeCount] = useState<string>("0");
   const [eventNotes, setEventNotes] = useState("");
+
+  const handleNumberInputChange = (
+    value: string,
+    setter: (val: string) => void
+  ) => {
+    if (value === "") {
+      setter("");
+      return;
+    }
+    const clean = value.replace(/[^0-9]/g, "");
+    const normalized = clean.replace(/^0+(?=\d)/, "");
+    setter(normalized);
+  };
 
   // Subtasks checklist
   const [eventSubtasks, setEventSubtasks] = useState<
@@ -153,9 +166,9 @@ export function EventFormModal({
       setEventStartDate(dateVal ? dateVal.slice(0, 10) : "");
       setEventEndDate(event.endDate ? event.endDate.slice(0, 10) : "");
       setEventStatus(event.status || "UPCOMING");
-      setEventBudget(event.budget || 0);
-      setEventTargetAttendee(event.targetAttendee || 100);
-      setEventAttendeeCount(event.attendeeCount || 0);
+      setEventBudget(String(event.budget ?? 0));
+      setEventTargetAttendee(String(event.targetAttendee ?? 100));
+      setEventAttendeeCount(String(event.attendeeCount ?? 0));
       setEventNotes(event.notes || "");
       setEventMediaUrl(event.mediaUrl || "");
       setEventFootageList(event.footage || []);
@@ -220,9 +233,9 @@ export function EventFormModal({
       setPicMemberId(defaultMember?.id || "");
       setEventPicName(defaultMember?.name || "Field Team Lead");
       setEventStatus("UPCOMING");
-      setEventBudget(15000000);
-      setEventTargetAttendee(250);
-      setEventAttendeeCount(0);
+      setEventBudget("15000000");
+      setEventTargetAttendee("250");
+      setEventAttendeeCount("0");
       setEventNotes("");
       setEventMediaUrl("");
       setEventFootageList([]);
@@ -296,6 +309,10 @@ export function EventFormModal({
       return;
     }
 
+    const parsedBudget = Math.max(0, parseInt(eventBudget, 10) || 0);
+    const parsedTargetAttendee = Math.max(0, parseInt(eventTargetAttendee, 10) || 0);
+    const parsedAttendeeCount = Math.max(0, parseInt(eventAttendeeCount, 10) || 0);
+
     setIsSaving(true);
     try {
       const payload = {
@@ -307,9 +324,9 @@ export function EventFormModal({
         endDate: eventEndDate || undefined,
         picName: eventPicName.trim(),
         status: eventStatus,
-        budget: Number(eventBudget) || 0,
-        targetAttendee: Number(eventTargetAttendee) || 0,
-        attendeeCount: Number(eventAttendeeCount) || 0,
+        budget: parsedBudget,
+        targetAttendee: parsedTargetAttendee,
+        attendeeCount: parsedAttendeeCount,
         notes: eventNotes.trim(),
         mediaUrl: eventMediaUrl.trim() || undefined,
         footage: eventFootageList,
@@ -368,8 +385,8 @@ export function EventFormModal({
             location: eventLocation,
             branchName: eventBranchName,
             eventType,
-            budget: Number(eventBudget) || 0,
-            targetAttendee: Number(eventTargetAttendee) || 0,
+            budget: parsedBudget,
+            targetAttendee: parsedTargetAttendee,
             notes: eventNotes,
           }),
           statusId: targetStatus,
@@ -388,8 +405,8 @@ export function EventFormModal({
             location: eventLocation,
             branchName: eventBranchName,
             eventType,
-            budget: Number(eventBudget) || 0,
-            targetAttendee: Number(eventTargetAttendee) || 0,
+            budget: parsedBudget,
+            targetAttendee: parsedTargetAttendee,
             notes: eventNotes,
           }),
           statusId: targetStatus,
@@ -422,9 +439,9 @@ export function EventFormModal({
         endDate: eventEndDate || null,
         picName: picMember?.name || eventPicName,
         status: eventStatus,
-        budget: Number(eventBudget) || 0,
-        targetAttendee: Number(eventTargetAttendee) || 0,
-        attendeeCount: Number(eventAttendeeCount) || 0,
+        budget: parsedBudget,
+        targetAttendee: parsedTargetAttendee,
+        attendeeCount: parsedAttendeeCount,
         notes: eventNotes,
         mediaUrl: eventMediaUrl.trim() || null,
         footage: eventFootageList,
@@ -660,12 +677,13 @@ export function EventFormModal({
                     type="number"
                     min={0}
                     step={500000}
+                    placeholder="0"
                     value={eventBudget}
-                    onChange={(e) => setEventBudget(Number(e.target.value) || 0)}
+                    onChange={(e) => handleNumberInputChange(e.target.value, setEventBudget)}
                     className="w-full px-3 py-2 rounded-lg text-xs font-mono font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
                   />
                   <span className="text-[10px] text-emerald-600 font-mono mt-0.5 block">
-                    {formatIDR(eventBudget)}
+                    {formatIDR(Math.max(0, parseInt(eventBudget, 10) || 0))}
                   </span>
                 </div>
 
@@ -676,8 +694,9 @@ export function EventFormModal({
                   <input
                     type="number"
                     min={0}
+                    placeholder="0"
                     value={eventTargetAttendee}
-                    onChange={(e) => setEventTargetAttendee(Number(e.target.value) || 0)}
+                    onChange={(e) => handleNumberInputChange(e.target.value, setEventTargetAttendee)}
                     className="w-full px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
                   />
                 </div>
@@ -689,8 +708,9 @@ export function EventFormModal({
                   <input
                     type="number"
                     min={0}
+                    placeholder="0"
                     value={eventAttendeeCount}
-                    onChange={(e) => setEventAttendeeCount(Number(e.target.value) || 0)}
+                    onChange={(e) => handleNumberInputChange(e.target.value, setEventAttendeeCount)}
                     className="w-full px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
                   />
                 </div>
@@ -793,7 +813,7 @@ export function EventFormModal({
                                     name: eventName || "Preview",
                                     eventType,
                                     status: eventStatus,
-                                    budget: Number(eventBudget) || 0,
+                                    budget: Math.max(0, parseInt(eventBudget, 10) || 0),
                                     targetAttendee: 0,
                                     attendeeCount: 0,
                                     footage: eventFootageList,
