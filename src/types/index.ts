@@ -43,6 +43,10 @@ export interface TaskAttachment {
   type: "video" | "image" | "document" | "other";
   url: string;
   uploadedAt: string;
+  source?: "local" | "gdrive";
+  driveFileId?: string;
+  thumbnailUrl?: string;
+  isSharedFolder?: boolean;
 }
 
 export interface TaskCommentAttachment {
