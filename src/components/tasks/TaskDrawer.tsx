@@ -76,6 +76,11 @@ export function TaskDrawer() {
     activeSpaceId,
     setActiveSpace,
     setActiveList,
+    appMode,
+    setAppMode,
+    activeView,
+    setActiveView,
+    lastTaskView,
     tags,
     createTag,
     renameTag,
@@ -83,7 +88,6 @@ export function TaskDrawer() {
     toggleTaskTag,
     presenceByTaskId,
     currentUserId,
-    activeView,
   } = useWorkspaceStore();
 
   const liveTask = tasks.find((t) => t.id === selectedTaskId);
@@ -141,6 +145,34 @@ export function TaskDrawer() {
 
     return { owningSpace: space, owningFolder: folder, owningList: list };
   }, [allSpaces, task?.listId, currentSpace]);
+
+  const handleNavigateToSpace = (spaceId: string, spaceName: string) => {
+    setActiveSpace(spaceId);
+    setActiveList(null);
+    if (appMode !== "tasks") {
+      setAppMode("tasks");
+    }
+    if (appMode === "marcom" || activeView === "home") {
+      setActiveView(lastTaskView || "board");
+    }
+    toast.info(`Beralih ke Space: ${spaceName} (Projects)`);
+  };
+
+  const handleNavigateToList = (
+    spaceId: string,
+    listId: string,
+    listName: string,
+  ) => {
+    setActiveSpace(spaceId);
+    setActiveList(listId);
+    if (appMode !== "tasks") {
+      setAppMode("tasks");
+    }
+    if (appMode === "marcom" || activeView === "home") {
+      setActiveView(lastTaskView || "board");
+    }
+    toast.info(`Beralih ke List: ${listName} (Projects)`);
+  };
 
   const [title, setTitle] = useState("");
   const [newTagName, setNewTagName] = useState("");
@@ -339,11 +371,10 @@ export function TaskDrawer() {
                   <>
                     <button
                       type="button"
-                      onClick={() => {
-                        setActiveSpace(owningSpace.id);
-                        toast.info(`Beralih ke Space: ${owningSpace.name}`);
-                      }}
-                      title={`Beralih ke Space: ${owningSpace.name}`}
+                      onClick={() =>
+                        handleNavigateToSpace(owningSpace.id, owningSpace.name)
+                      }
+                      title={`Beralih ke Space: ${owningSpace.name} (Projects)`}
                       className="hover:text-[#7B68EE] dark:hover:text-[#9182f0] transition-colors truncate max-w-[120px] sm:max-w-[160px] cursor-pointer flex items-center gap-1 text-slate-600 dark:text-slate-400 font-medium"
                     >
                       {owningSpace.color && (
@@ -371,12 +402,14 @@ export function TaskDrawer() {
                   <>
                     <button
                       type="button"
-                      onClick={() => {
-                        if (owningSpace) setActiveSpace(owningSpace.id);
-                        setActiveList(owningList.id);
-                        toast.info(`Beralih ke List: ${owningList.name}`);
-                      }}
-                      title={`Beralih ke List: ${owningList.name}`}
+                      onClick={() =>
+                        handleNavigateToList(
+                          owningSpace?.id || activeSpaceId,
+                          owningList.id,
+                          owningList.name,
+                        )
+                      }
+                      title={`Beralih ke List: ${owningList.name} (Projects)`}
                       className="hover:text-[#7B68EE] dark:hover:text-[#9182f0] transition-colors truncate max-w-[120px] sm:max-w-[160px] cursor-pointer text-slate-600 dark:text-slate-400 font-medium"
                     >
                       {owningList.name}
