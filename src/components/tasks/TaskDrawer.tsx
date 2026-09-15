@@ -25,6 +25,7 @@ import {
   Image as ImageIcon,
   UploadCloud,
   Download,
+  Upload,
   Play,
   File as FileIcon,
   Star,
@@ -664,7 +665,7 @@ export function TaskDrawer() {
                       </span>
                     </div>
                     <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0 text-white group-hover:bg-white/30 transition-colors">
-                      <Download className="w-4 h-4" />
+                      <Upload className="w-4 h-4" />
                     </div>
                   </button>
 
