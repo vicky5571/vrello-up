@@ -83,6 +83,10 @@ interface MarcomTableShellProps<T extends object & { id: string }> {
   onSearchChange?: (term: string) => void;
   // empty
   emptyLabel?: string;
+  // layout controls
+  hideHeader?: boolean;
+  hideSearch?: boolean;
+  noPadding?: boolean;
 }
 
 export function MarcomTableShell<T extends object & { id: string }>({
@@ -113,6 +117,9 @@ export function MarcomTableShell<T extends object & { id: string }>({
   searchTerm,
   onSearchChange,
   emptyLabel = `No ${entityPlural} found.`,
+  hideHeader = false,
+  hideSearch = false,
+  noPadding = false,
 }: MarcomTableShellProps<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -209,69 +216,75 @@ export function MarcomTableShell<T extends object & { id: string }>({
   };
 
   return (
-    <div className="h-full overflow-y-auto p-4 md:p-6">
+    <div className={cn("h-full", noPadding ? "" : "overflow-y-auto p-4 md:p-6")}>
       {/* KPI Summary Cards */}
       {kpiBar && <div className="mb-4">{kpiBar}</div>}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-3 gap-3">
-        <div className="flex items-center gap-2">
-          <TitleIcon className="w-4 h-4 text-slate-500" />
-          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</h2>
-          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-            {filteredCount !== data.length ? `${filteredCount}/${data.length}` : `${data.length}`} {filteredCount === 1 ? (countLabel?.singular ?? entityName) : (countLabel?.plural ?? entityPlural)}
-          </span>
+      {!hideHeader && (
+        <div className="flex items-center justify-between mb-3 gap-3">
+          <div className="flex items-center gap-2">
+            <TitleIcon className="w-4 h-4 text-slate-500" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</h2>
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+              {filteredCount !== data.length ? `${filteredCount}/${data.length}` : `${data.length}`} {filteredCount === 1 ? (countLabel?.singular ?? entityName) : (countLabel?.plural ?? entityPlural)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {!hideSearch && (
+              <div className="relative hidden sm:flex items-center">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
+                <input
+                  type="search"
+                  placeholder={`Search ${entityPlural}...`}
+                  value={globalFilter}
+                  onChange={(e) => handleFilterChange(e.target.value)}
+                  className="w-44 lg:w-56 pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            )}
+            {headerExtra}
+            {canAdd && onAdd && addLabel && (
+              <button
+                type="button"
+                onClick={onAdd}
+                className={
+                  addClassName ??
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-2xs cursor-pointer"
+                }
+              >
+                {AddIcon && <AddIcon className="w-3.5 h-3.5" />}
+                <span>{addLabel}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onRefresh()}
+              disabled={isLoading}
+              title={`Refresh ${entityPlural}`}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+              <span>Refresh</span>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative hidden sm:flex items-center">
+      )}
+      {/* Mobile search */}
+      {!hideHeader && !hideSearch && (
+        <div className="sm:hidden mb-3">
+          <div className="relative flex items-center">
             <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
             <input
               type="search"
               placeholder={`Search ${entityPlural}...`}
               value={globalFilter}
               onChange={(e) => handleFilterChange(e.target.value)}
-              className="w-44 lg:w-56 pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
-          {headerExtra}
-          {canAdd && onAdd && addLabel && (
-            <button
-              type="button"
-              onClick={onAdd}
-              className={
-                addClassName ??
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-2xs cursor-pointer"
-              }
-            >
-              {AddIcon && <AddIcon className="w-3.5 h-3.5" />}
-              <span>{addLabel}</span>
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => onRefresh()}
-            disabled={isLoading}
-            title={`Refresh ${entityPlural}`}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
-            <span>Refresh</span>
-          </button>
         </div>
-      </div>
-      {/* Mobile search */}
-      <div className="sm:hidden mb-3">
-        <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
-          <input
-            type="search"
-            placeholder={`Search ${entityPlural}...`}
-            value={globalFilter}
-            onChange={(e) => handleFilterChange(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-      </div>
+      )}
 
       {/* Structured Filter Bar */}
       {filterBar && (

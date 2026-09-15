@@ -137,3 +137,4 @@ export function PlatformIcon({
       return <Globe className={className} />;
   }
 }
+

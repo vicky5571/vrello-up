@@ -1375,6 +1375,8 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           canDelete={can("CREATE_EVENT")}
           deleteRequiresMessage="Delete requires admin or manager role"
           onDeleteOne={handleDeleteEvent}
+          hideHeader
+          noPadding
         />
       )}
 

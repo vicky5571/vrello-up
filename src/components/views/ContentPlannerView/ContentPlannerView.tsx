@@ -767,6 +767,9 @@ export function ContentPlannerView() {
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-pink-500" />
             <span>Content Planner</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+              {filteredPosts.length} {filteredPosts.length === 1 ? "post" : "posts"}
+            </span>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Social media calendar, video formats, copywriting, and digital asset
@@ -849,6 +852,7 @@ export function ContentPlannerView() {
                   ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs"
                   : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               )}
+              title="Box / Cards View"
             >
               <LayoutGrid className="w-3.5 h-3.5" />
             </button>
@@ -861,10 +865,26 @@ export function ContentPlannerView() {
                   ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs"
                   : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               )}
+              title="Row / Table View"
             >
               <TableProperties className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={fetchPosts}
+            disabled={isLoading}
+            title="Refresh posts"
+            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw
+              className={cn(
+                "w-3.5 h-3.5",
+                isLoading && "animate-spin text-pink-500"
+              )}
+            />
+          </button>
         </div>
       </div>
 
@@ -1072,11 +1092,8 @@ export function ContentPlannerView() {
             if (res.ok) await fetchPosts();
             return res.ok;
           }}
-          canAdd={can("CREATE_EVENT")}
-          onAdd={openCreateModal}
-          addLabel="Schedule Post"
-          addIcon={Plus}
-          addClassName="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 transition-all shadow-xs cursor-pointer"
+          hideHeader
+          noPadding
           emptyLabel="No content posts found."
         />
       )}
