@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, Send } from "lucide-react";
+import { X, Sparkles, Send, Check } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { answerQuery, type BrainAction } from "@/lib/ai/brain";
 import { generateId } from "@/lib/utils";
@@ -162,13 +162,18 @@ export function AiDrawer() {
                           type="button"
                           disabled={appliedIds.has(msg.id)}
                           onClick={() => applyAction(msg)}
-                          className="mt-2 w-full px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-purple-500/15 text-purple-600 dark:text-purple-300 hover:bg-purple-500/25 disabled:opacity-50 disabled:cursor-default transition-colors cursor-pointer"
+                          className="mt-2 w-full px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-purple-500/15 text-purple-600 dark:text-purple-300 hover:bg-purple-500/25 disabled:opacity-50 disabled:cursor-default transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                         >
-                          {appliedIds.has(msg.id)
-                            ? "Applied ✓"
-                            : msg.action.kind === "add-subtasks"
-                              ? `Add ${msg.action.subtasks.length} subtasks to current task`
-                              : "Apply description to current task"}
+                          {appliedIds.has(msg.id) ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Applied</span>
+                            </>
+                          ) : msg.action.kind === "add-subtasks" ? (
+                            `Add ${msg.action.subtasks.length} subtasks to current task`
+                          ) : (
+                            "Apply description to current task"
+                          )}
                         </button>
                       )}
                     </div>

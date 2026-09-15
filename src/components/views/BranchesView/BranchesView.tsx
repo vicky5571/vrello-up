@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Building2, Plus, Edit2, Store, FileText } from "lucide-react";
+import { Building2, Plus, Edit2, Store, FileText, X } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import {
@@ -430,7 +430,9 @@ export function BranchesView() {
                 <Building2 className="w-4 h-4 text-cyan-600" />
                 {modalBranch.id ? "Edit Branch" : "Add New Branch"}
               </h2>
-              <button type="button" onClick={() => setModalBranch(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">✕</button>
+              <button type="button" onClick={() => setModalBranch(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg">
+                <X className="w-4 h-4" />
+              </button>
             </div>
             <form onSubmit={handleSaveBranch} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">

@@ -8,7 +8,7 @@ import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import { TagBadge } from "@/components/ui/TagBadge";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
 import { AvatarGroup } from "@/components/ui/UserAvatar";
-import { Calendar, CheckSquare, MoreHorizontal, Play, Paperclip } from "lucide-react";
+import { Calendar, CheckSquare, MoreHorizontal, Play, Paperclip, Check } from "lucide-react";
 import { formatDate, isOverdue, cn } from "@/lib/utils";
 import { useState, useRef, memo } from "react";
 import { useDropdown } from "@/components/ui/useDropdown";
@@ -111,7 +111,7 @@ export const BoardCard = memo(function BoardCard({
                   : "border-slate-300 dark:border-slate-600 opacity-0 group-hover:opacity-100 max-md:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
               )}
             >
-              {selected && "✓"}
+              {selected && <Check className="w-3.5 h-3.5" />}
             </button>
           )}
           {visibleFields.priority ? <PriorityBadge priority={task.priority} /> : null}

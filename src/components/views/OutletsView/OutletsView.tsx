@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Store, Plus, Edit2, Building2, ClipboardList, Filter, Layers } from "lucide-react";
+import { Store, Plus, Edit2, Building2, ClipboardList, Filter, Layers, X } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn } from "@/lib/utils";
@@ -454,7 +454,9 @@ export function OutletsView() {
                 <Store className="w-4 h-4 text-orange-600" />
                 {modalOutlet.id ? "Edit Outlet" : "Add New Outlet"}
               </h2>
-              <button type="button" onClick={() => setModalOutlet(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">✕</button>
+              <button type="button" onClick={() => setModalOutlet(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg">
+                <X className="w-4 h-4" />
+              </button>
             </div>
             <form onSubmit={handleSaveOutlet} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">

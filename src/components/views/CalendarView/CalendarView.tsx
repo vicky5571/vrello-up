@@ -19,9 +19,12 @@ import {
   ChevronRight,
   Calendar as CalendarIcon,
   Megaphone,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { matchesFilters } from "@/lib/tasks/filterTasks";
+import { PlatformIcon } from "@/components/ui/BrandIcons";
+import { PostPlatform } from "@/types";
 
 export function CalendarView() {
   const {
@@ -48,7 +51,7 @@ export function CalendarView() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showMarketing, setShowMarketing] = useState(true);
   const [marketingItems, setMarketingItems] = useState<
-    { id: string; title: string; date: string; icon: string; view: "events" | "mous" }[]
+    { id: string; title: string; date: string; postPlatform?: string; view: "events" | "mous" }[]
   >([]);
 
   useEffect(() => {
@@ -57,22 +60,16 @@ export function CalendarView() {
       fetch("/api/marcom/mous").then((r) => (r.ok ? r.json() : { data: [] })),
     ])
       .then(([eventsRes, mousRes]) => {
-        const items: { id: string; title: string; date: string; icon: string; view: "events" | "mous" }[] = [];
+        const items: { id: string; title: string; date: string; postPlatform?: string; view: "events" | "mous" }[] = [];
         (eventsRes.data || []).forEach((e: { id: string; name: string; date?: string; endDate?: string; postPlatform?: string }) => {
           const d = e.date ? format(new Date(e.date), "yyyy-MM-dd") : null;
           const endD = e.endDate ? format(new Date(e.endDate), "yyyy-MM-dd") : null;
-          const icon = e.postPlatform
-            ? e.postPlatform === "instagram" ? "📸"
-            : e.postPlatform === "tiktok" ? "🎵"
-            : e.postPlatform === "youtube" ? "▶️"
-            : "📱"
-            : "🎪";
-          if (d) items.push({ id: e.id, title: e.name, date: d, icon, view: "events" });
-          if (endD && endD !== d) items.push({ id: `${e.id}-end`, title: `End: ${e.name}`, date: endD, icon, view: "events" });
+          if (d) items.push({ id: e.id, title: e.name, date: d, postPlatform: e.postPlatform, view: "events" });
+          if (endD && endD !== d) items.push({ id: `${e.id}-end`, title: `End: ${e.name}`, date: endD, postPlatform: e.postPlatform, view: "events" });
         });
         (mousRes.data || []).forEach((m: { id: string; partnerName: string; endDate?: string }) => {
           const d = m.endDate ? format(new Date(m.endDate), "yyyy-MM-dd") : null;
-          if (d) items.push({ id: m.id, title: `MOU: ${m.partnerName}`, date: d, icon: "📜", view: "mous" });
+          if (d) items.push({ id: m.id, title: `MOU: ${m.partnerName}`, date: d, view: "mous" });
         });
         setMarketingItems(items);
       })
@@ -224,7 +221,13 @@ export function CalendarView() {
                     className="p-1 rounded-md text-[11px] font-semibold truncate cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-2xs bg-pink-500/10 text-pink-700 dark:text-pink-300 border border-pink-500/30"
                     title={`${item.title} (Open in ${item.view === "events" ? "Campaigns & Content" : "MOUs"})`}
                   >
-                    <span className="text-[10px] shrink-0">{item.icon}</span>
+                    {item.view === "mous" ? (
+                      <FileText className="w-3 h-3 shrink-0 text-amber-500" />
+                    ) : item.postPlatform ? (
+                      <PlatformIcon platform={item.postPlatform as PostPlatform} className="w-3 h-3 shrink-0" />
+                    ) : (
+                      <CalendarIcon className="w-3 h-3 shrink-0 text-pink-500" />
+                    )}
                     <span className="truncate">{item.title}</span>
                   </div>
                 ))}
@@ -248,17 +251,10 @@ export function CalendarView() {
                         style={{ backgroundColor: status?.color || "#0073ea" }}
                       />
                       {task.postPlatform && (
-                        <span
-                          className="text-[10px] shrink-0"
-                          title={`Scheduled on ${task.postPlatform}`}
-                        >
-                          {task.postPlatform === "instagram" && "📸"}
-                          {task.postPlatform === "tiktok" && "🎵"}
-                          {task.postPlatform === "youtube" && "▶️"}
-                          {task.postPlatform === "linkedin" && "💼"}
-                          {task.postPlatform === "facebook" && "👥"}
-                          {task.postPlatform === "press" && "📰"}
-                        </span>
+                        <PlatformIcon
+                          platform={task.postPlatform}
+                          className="w-3 h-3 shrink-0"
+                        />
                       )}
                       <span className="truncate">{task.title}</span>
                     </div>

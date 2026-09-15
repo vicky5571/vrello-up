@@ -1,5 +1,6 @@
 import { PostPlatform, PostFormat } from "@/types";
 import { cn } from "@/lib/utils";
+import { PlatformIcon } from "./BrandIcons";
 
 interface PlatformBadgeProps {
   platform?: PostPlatform;
@@ -10,60 +11,52 @@ interface PlatformBadgeProps {
 
 const PLATFORM_MAP: Record<
   PostPlatform,
-  { label: string; icon: string; bg: string; text: string; border: string }
+  { label: string; bg: string; text: string; border: string }
 > = {
   instagram: {
     label: "Instagram",
-    icon: "📸",
     bg: "bg-pink-500/10 dark:bg-pink-500/20",
     text: "text-pink-600 dark:text-pink-400",
     border: "border-pink-500/30",
   },
   tiktok: {
     label: "TikTok",
-    icon: "🎵",
     bg: "bg-cyan-500/10 dark:bg-cyan-500/20",
     text: "text-cyan-600 dark:text-cyan-400",
     border: "border-cyan-500/30",
   },
   youtube: {
     label: "YouTube",
-    icon: "▶️",
     bg: "bg-red-500/10 dark:bg-red-500/20",
     text: "text-red-600 dark:text-red-400",
     border: "border-red-500/30",
   },
   linkedin: {
     label: "LinkedIn",
-    icon: "💼",
     bg: "bg-blue-500/10 dark:bg-blue-500/20",
     text: "text-blue-600 dark:text-blue-400",
     border: "border-blue-500/30",
   },
   facebook: {
     label: "Facebook",
-    icon: "👥",
     bg: "bg-indigo-500/10 dark:bg-indigo-500/20",
     text: "text-indigo-600 dark:text-indigo-400",
     border: "border-indigo-500/30",
   },
   twitter: {
     label: "Twitter / X",
-    icon: "𝕏",
     bg: "bg-slate-500/10 dark:bg-slate-500/20",
     text: "text-slate-700 dark:text-slate-300",
     border: "border-slate-500/30",
   },
   blog: {
     label: "Blog",
-    icon: "✍️",
     bg: "bg-amber-500/10 dark:bg-amber-500/20",
     text: "text-amber-600 dark:text-amber-400",
     border: "border-amber-500/30",
   },
   press: {
     label: "Press",
-    icon: "📰",
     bg: "bg-emerald-500/10 dark:bg-emerald-500/20",
     text: "text-emerald-600 dark:text-emerald-400",
     border: "border-emerald-500/30",
@@ -92,7 +85,7 @@ export function PlatformBadge({
           className,
         )}
       >
-        <span>{item.icon}</span>
+        <PlatformIcon platform={platform} className="w-3 h-3" />
       </span>
     );
   }
@@ -100,14 +93,14 @@ export function PlatformBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0",
+        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0",
         item.bg,
         item.text,
         item.border,
         className,
       )}
     >
-      <span>{item.icon}</span>
+      <PlatformIcon platform={platform} className="w-3 h-3 shrink-0" />
       <span>{item.label}</span>
       {format && (
         <span className="opacity-70 capitalize font-medium">· {format}</span>
@@ -115,4 +108,3 @@ export function PlatformBadge({
     </span>
   );
 }
-

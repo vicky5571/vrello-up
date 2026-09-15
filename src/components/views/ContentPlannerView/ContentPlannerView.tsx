@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Share2,
   Kanban,
+  X,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -40,51 +41,44 @@ import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
+import { PlatformIcon } from "@/components/ui/BrandIcons";
 
 export type PostStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
 
 const PLATFORM_CONFIG: Record<
   PostPlatform,
-  { label: string; icon: string; badgeClass: string }
+  { label: string; badgeClass: string }
 > = {
   instagram: {
     label: "Instagram",
-    icon: "📸",
     badgeClass: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20",
   },
   tiktok: {
     label: "TikTok",
-    icon: "🎵",
     badgeClass: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20",
   },
   youtube: {
     label: "YouTube",
-    icon: "▶️",
     badgeClass: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
   },
   facebook: {
     label: "Facebook",
-    icon: "👥",
     badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
   },
   linkedin: {
     label: "LinkedIn",
-    icon: "💼",
     badgeClass: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
   },
   twitter: {
     label: "X (Twitter)",
-    icon: "🐦",
     badgeClass: "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20",
   },
   blog: {
     label: "Blog / SEO",
-    icon: "📝",
     badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
   },
   press: {
     label: "Press Release",
-    icon: "📰",
     badgeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
   },
 };
@@ -633,9 +627,11 @@ export function ContentPlannerView() {
             className="flex items-center gap-2.5 text-left group/title cursor-pointer w-full"
             title="Klik untuk membuka Task Detail Drawer & Lampiran"
           >
-            <span className="text-base">
-              {PLATFORM_CONFIG[row.original.platform as PostPlatform]?.icon ||
-                "📱"}
+            <span className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+              <PlatformIcon
+                platform={row.original.platform as PostPlatform}
+                className="w-4 h-4"
+              />
             </span>
             <div className="min-w-0">
               <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover/title:text-pink-600 dark:group-hover/title:text-pink-400 truncate block transition-colors">
@@ -658,11 +654,14 @@ export function ContentPlannerView() {
           return (
             <span
               className={cn(
-                "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border",
+                "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold border",
                 cfg.badgeClass
               )}
             >
-              <span>{cfg.icon}</span>
+              <PlatformIcon
+                platform={row.original.platform as PostPlatform}
+                className="w-3.5 h-3.5 shrink-0"
+              />
               <span>{cfg.label}</span>
             </span>
           );
@@ -818,7 +817,7 @@ export function ContentPlannerView() {
                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
                 )}
               >
-                <span>{PLATFORM_CONFIG[p].icon}</span>
+                <PlatformIcon platform={p} className="w-3.5 h-3.5" />
                 <span>{PLATFORM_CONFIG[p].label}</span>
               </button>
             );
@@ -896,7 +895,10 @@ export function ContentPlannerView() {
                         cfg.badgeClass
                       )}
                     >
-                      <span>{cfg.icon}</span>
+                      <PlatformIcon
+                        platform={post.platform as PostPlatform}
+                        className="w-3.5 h-3.5"
+                      />
                       <span>{cfg.label}</span>
                       <span className="text-[10px] opacity-70 font-normal uppercase">
                         • {post.format}
@@ -1093,7 +1095,7 @@ export function ContentPlannerView() {
                 onClick={closeModal}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -1195,7 +1197,6 @@ export function ContentPlannerView() {
                   >
                     {Object.keys(PLATFORM_CONFIG).map((p) => (
                       <option key={p} value={p}>
-                        {PLATFORM_CONFIG[p as PostPlatform].icon}{" "}
                         {PLATFORM_CONFIG[p as PostPlatform].label}
                       </option>
                     ))}

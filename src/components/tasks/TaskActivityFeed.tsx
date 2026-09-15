@@ -17,6 +17,7 @@ import {
   ImageIcon,
   FileCode,
   Download,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -332,8 +333,8 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
                     onClick={() => handleInsertMention("Brain² AI")}
                     className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-left transition-colors text-indigo-600 dark:text-indigo-400 font-bold cursor-pointer"
                   >
-                    <span className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center text-[10px]">
-                      🤖
+                    <span className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                      <Bot className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                     </span>
                     <span>Brain² AI</span>
                   </button>

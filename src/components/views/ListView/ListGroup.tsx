@@ -206,7 +206,7 @@ export const ListGroup = memo(function ListGroup({
                 : "border-slate-300 dark:border-slate-600 opacity-0 group-hover/header:opacity-100 max-md:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
             )}
           >
-            {allGroupSelected && "✓"}
+            {allGroupSelected && <Check className="w-3.5 h-3.5" />}
           </button>
         )}
 

@@ -7,7 +7,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { BoardCard } from "./BoardCard";
-import { Plus } from "lucide-react";
+import { Plus, Check } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useState, memo } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
@@ -92,7 +92,7 @@ export const BoardColumn = memo(function BoardColumn({
                   : "flex w-6 h-6 items-center justify-center rounded-md border border-slate-300 dark:border-slate-600 text-white cursor-pointer hover:border-indigo-400 transition-colors"
               }
             >
-              {allColumnSelected && "✓"}
+              {allColumnSelected && <Check className="w-3.5 h-3.5" />}
             </button>
           )}
           <StatusBadge status={status} size="sm" />

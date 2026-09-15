@@ -25,6 +25,7 @@ import {
   Layers,
   ListTodo,
   RotateCcw,
+  X,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -1405,9 +1406,9 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
@@ -1535,10 +1536,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                     >
                       {members.map((m) => (
                         <option key={m.id} value={m.id}>
-                          👤 {m.name} ({m.email})
+                          {m.name} ({m.email})
                         </option>
                       ))}
-                      <option value="custom">✍️ Custom PIC Name...</option>
+                      <option value="custom">Custom PIC Name...</option>
                     </select>
 
                     {picMemberId === "custom" && (
@@ -1663,9 +1664,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                           <button
                             type="button"
                             onClick={() => handleRemoveFootage(f.id)}
-                            className="text-slate-400 hover:text-rose-500 p-1"
+                            className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer transition-colors"
+                            title="Remove footage clip"
                           >
-                            ✕
+                            <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ))}
@@ -1774,7 +1776,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                             className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer transition-colors"
                             title="Hapus checklist item"
                           >
-                            ✕
+                            <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ))}

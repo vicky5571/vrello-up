@@ -150,7 +150,7 @@ export function HomeView() {
             </header>
             {assigned.length === 0 ? (
               <p className="text-xs text-slate-500 dark:text-slate-400 py-4 text-center">
-                Nothing assigned — enjoy the clear plate. 🎉
+                Nothing assigned — enjoy the clear plate.
               </p>
             ) : (
               <div className="space-y-0.5">
@@ -263,9 +263,12 @@ export function HomeView() {
               </div>
             )}
             {blockers.length > 0 && (
-              <p className="mt-3 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
-                ⚠ {blockers.length} item{blockers.length > 1 ? "s" : ""} need
-                attention — ask Brain² to “show blockers”.
+              <p className="mt-3 text-[11px] text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span>
+                  {blockers.length} item{blockers.length > 1 ? "s" : ""} need
+                  attention — ask Brain² to “show blockers”.
+                </span>
               </p>
             )}
           </section>

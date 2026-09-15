@@ -104,7 +104,7 @@ export function AgentsModal({ isOpen, onClose }: AgentsModalProps) {
         const untriaged = open.filter((t) => t.priority === "none");
         output =
           untriaged.length === 0
-            ? `All ${open.length} open tasks have a priority set. Nothing to triage. 🎉`
+            ? `All ${open.length} open tasks have a priority set. Nothing to triage.`
             : [
                 `${untriaged.length} of ${open.length} open tasks need triage (no priority):`,
                 ...untriaged
@@ -130,7 +130,7 @@ export function AgentsModal({ isOpen, onClose }: AgentsModalProps) {
         );
         output =
           hits.length === 0
-            ? `Scanned ${tasks.length} tasks — no disallowed markup found. Inputs are clean. 🎉`
+            ? `Scanned ${tasks.length} tasks — no disallowed markup found. Inputs are clean.`
             : [
                 `${hits.length} task${hits.length > 1 ? "s" : ""} contain markup that sanitization would strip:`,
                 ...hits.slice(0, 8).map((t) => `• "${t.title}"`),

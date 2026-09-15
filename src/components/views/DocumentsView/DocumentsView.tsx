@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Files, Plus, Edit2, Upload, RefreshCw } from "lucide-react";
+import { Files, Plus, Edit2, Upload, RefreshCw, X } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn } from "@/lib/utils";
@@ -299,7 +299,9 @@ export function DocumentsView() {
                 <Files className="w-4 h-4 text-teal-600" />
                 <span>{modalDocument.id ? "Edit Document" : "Upload Document"}</span>
               </h3>
-              <button type="button" onClick={() => setModalDocument(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">✕</button>
+              <button type="button" onClick={() => setModalDocument(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
             </div>
             <form onSubmit={handleSaveDocument} className="p-5 space-y-4">
               <div className="space-y-1.5">

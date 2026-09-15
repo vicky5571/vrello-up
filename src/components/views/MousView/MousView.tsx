@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDropdown } from "@/components/ui/useDropdown";
-import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins } from "lucide-react";
+import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins, X } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn, formatIDR } from "@/lib/utils";
@@ -553,7 +553,9 @@ export function MousView() {
                 <FileText className="w-4 h-4 text-fuchsia-600" />
                 {modalMou.id ? "Edit MOU" : "Add New MOU"}
               </h2>
-              <button type="button" onClick={() => { setModalMou(null); setIsBranchDropdownOpen(false); setBranchSearch(""); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">✕</button>
+              <button type="button" onClick={() => { setModalMou(null); setIsBranchDropdownOpen(false); setBranchSearch(""); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg">
+                <X className="w-4 h-4" />
+              </button>
             </div>
             <form onSubmit={handleSaveMou} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
@@ -627,9 +629,9 @@ export function MousView() {
                             <button
                               type="button"
                               onClick={() => setBranchSearch("")}
-                              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-xs p-0.5"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-0.5"
                             >
-                              ✕
+                              <X className="w-3.5 h-3.5" />
                             </button>
                           )}
                         </div>

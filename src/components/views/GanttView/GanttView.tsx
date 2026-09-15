@@ -750,16 +750,24 @@ export function GanttView() {
                               fill="#EF4444"
                               className="filter drop-shadow-md"
                             />
-                            <text
-                              x={midX}
-                              y={midY + 3.5}
-                              fill="#FFFFFF"
-                              fontSize="11"
-                              fontWeight="bold"
-                              textAnchor="middle"
-                            >
-                              ✕
-                            </text>
+                            <line
+                              x1={midX - 2.5}
+                              y1={midY - 2.5}
+                              x2={midX + 2.5}
+                              y2={midY + 2.5}
+                              stroke="#FFFFFF"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                            />
+                            <line
+                              x1={midX - 2.5}
+                              y1={midY + 2.5}
+                              x2={midX + 2.5}
+                              y2={midY - 2.5}
+                              stroke="#FFFFFF"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                            />
                           </g>
                         )}
                       </g>

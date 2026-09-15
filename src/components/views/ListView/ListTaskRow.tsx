@@ -132,7 +132,7 @@ export const ListTaskRow = memo(function ListTaskRow({
                 : "border-slate-300 dark:border-slate-600 opacity-0 group-hover/row:opacity-100 max-md:opacity-100 focus-visible:opacity-100 hover:border-indigo-400",
             )}
           >
-            {selected && "✓"}
+            {selected && <Check className="w-3.5 h-3.5" />}
           </button>
         )}
       </div>
@@ -262,7 +262,7 @@ export const ListTaskRow = memo(function ListTaskRow({
                         : "border-slate-300 dark:border-slate-600",
                     )}
                   >
-                    {isAssigned && "✓"}
+                    {isAssigned && <Check className="w-2.5 h-2.5" />}
                   </span>
                 </button>
               );

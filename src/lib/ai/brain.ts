@@ -55,7 +55,7 @@ export function formatSprintSummary(tasks: Task[], statuses: Status[]): string {
     `Sprint progress: ${s.done}/${s.total} done (${s.pct}%) — ${s.active} active.`,
     ...s.byStatus.map((b) => `• ${b.name}: ${b.count}`),
   ];
-  if (s.overdue > 0) lines.push(`⚠ ${s.overdue} overdue — ask me to "show blockers".`);
+  if (s.overdue > 0) lines.push(`${s.overdue} overdue — ask me to "show blockers".`);
   return lines.join("\n");
 }
 
@@ -102,7 +102,7 @@ export function getBlockers(tasks: Task[], statuses: Status[]): BlockerItem[] {
 export function formatBlockers(tasks: Task[], statuses: Status[]): string {
   const blockers = getBlockers(tasks, statuses);
   if (blockers.length === 0)
-    return "No blockers found. Nothing overdue, no stuck dependencies, and all urgent work is assigned. 🎉";
+    return "No blockers found. Nothing overdue, no stuck dependencies, and all urgent work is assigned.";
   return [
     `Found ${blockers.length} item${blockers.length > 1 ? "s" : ""} needing attention:`,
     ...blockers.map((b) => `• "${b.task.title}" — ${b.reason}.`),
