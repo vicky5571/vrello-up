@@ -609,26 +609,30 @@ export function TaskDrawer() {
                       <Paperclip className="w-3 h-3 text-teal-600" />
                       Footage & Attachments ({(task.attachments || []).length})
                     </label>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openSelector({
-                            onSelect: (newAtts) => {
-                              const updated = [...(task.attachments || []), ...newAtts];
-                              const updates: Partial<Task> = { attachments: updated };
-                              if (!task.mediaUrl && newAtts.length > 0) {
-                                const visual = newAtts.find((a) => a.type === "video" || a.type === "image");
-                                if (visual) updates.mediaUrl = visual.url;
-                              }
-                              updateTask(task.id, updates);
-                              toast.success(`Berhasil menambahkan ${newAtts.length} aset Google Drive`);
-                            },
-                          })
-                        }
-                        className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/60 cursor-pointer transition-colors"
-                      >
-                        <svg className="w-3.5 h-3.5" viewBox="0 0 87.3 78" fill="none">
+                  </div>
+
+                  {/* Primary Action: Google Drive Attachment Button */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openSelector({
+                        onSelect: (newAtts) => {
+                          const updated = [...(task.attachments || []), ...newAtts];
+                          const updates: Partial<Task> = { attachments: updated };
+                          if (!task.mediaUrl && newAtts.length > 0) {
+                            const visual = newAtts.find((a) => a.type === "video" || a.type === "image");
+                            if (visual) updates.mediaUrl = visual.url;
+                          }
+                          updateTask(task.id, updates);
+                          toast.success(`Berhasil menambahkan ${newAtts.length} aset Google Drive`);
+                        },
+                      })
+                    }
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white shadow-sm hover:shadow-md transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4" viewBox="0 0 87.3 78" fill="none">
                           <path
                             d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z"
                             fill="#0066DA"
@@ -654,10 +658,20 @@ export function TaskDrawer() {
                             fill="#2684FC"
                           />
                         </svg>
-                        <span>Google Drive</span>
-                      </button>
+                      </div>
+                      <div className="text-left min-w-0">
+                        <div className="text-xs font-semibold leading-tight flex items-center gap-1.5">
+                          <span>Lampirkan dari Google Drive</span>
+                        </div>
+                        <div className="text-[10px] text-teal-100/90 dark:text-teal-200/90 leading-tight truncate">
+                          Video footage, klip B-roll & Shared Folder
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                    <span className="text-[10px] font-bold tracking-wide uppercase bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded-full shrink-0">
+                      Bebas Ukuran
+                    </span>
+                  </button>
 
                   {/* Hidden File Input */}
                   <input
@@ -669,7 +683,7 @@ export function TaskDrawer() {
                     className="hidden"
                   />
 
-                  {/* Dropzone */}
+                  {/* Secondary Action: Local Dropzone / Browse */}
                   <div
                     onDragOver={(e) => {
                       e.preventDefault();
@@ -683,22 +697,28 @@ export function TaskDrawer() {
                     }}
                     onClick={() => fileInputRef.current?.click()}
                     className={cn(
-                      "p-3 rounded-lg border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center text-center",
+                      "px-3 py-2 rounded-lg border border-dashed transition-all cursor-pointer flex items-center justify-center text-center gap-1.5",
                       isDragOver
                         ? "border-teal-500 bg-teal-50 dark:bg-teal-950/40"
-                        : "border-teal-200/80 dark:border-teal-800/60 hover:border-teal-400 dark:hover:border-teal-600 bg-white/60 dark:bg-slate-800/40",
+                        : "border-slate-300 dark:border-slate-700/80 hover:border-teal-400 dark:hover:border-teal-600 bg-slate-50/70 dark:bg-slate-800/40",
                       isUploading && "opacity-60 pointer-events-none"
                     )}
                   >
                     {isUploading ? (
-                      <div className="flex items-center gap-2 text-xs font-semibold text-teal-700 dark:text-teal-300 py-1">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Uploading footage & files...</span>
+                      <div className="flex items-center gap-2 text-xs font-semibold text-teal-700 dark:text-teal-300 py-0.5">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Mengupload file lokal...</span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-                        <UploadCloud className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
-                        <span>Drop video clips or assets here, or <strong className="text-teal-600 dark:text-teal-400 underline">browse</strong></span>
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <UploadCloud className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+                        <span>
+                          atau upload file lokal (
+                          <strong className="text-teal-600 dark:text-teal-400 font-semibold underline underline-offset-2">
+                            browse
+                          </strong>
+                          , maks 25MB)
+                        </span>
                       </div>
                     )}
                   </div>
