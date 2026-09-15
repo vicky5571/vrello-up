@@ -32,7 +32,7 @@ const AVAILABLE_VIEWS = [
   },
   {
     id: "board" as ViewMode,
-    label: "Board (Kanban)",
+    label: "Kanban View",
     icon: Kanban,
     color: "text-orange-500",
     bg: "bg-orange-50 dark:bg-orange-950/40",

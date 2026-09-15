@@ -37,7 +37,7 @@ interface ViewTabItem {
 const VIEWS: ViewTabItem[] = [
   { id: "channel", label: "Channel", icon: Hash, iconColor: "text-violet-500", isAvailable: true },
   { id: "list", label: "List", icon: ListIcon, iconColor: "text-blue-500", isAvailable: true },
-  { id: "board", label: "Board", icon: Kanban, iconColor: "text-orange-500", isAvailable: true },
+  { id: "board", label: "Kanban", icon: Kanban, iconColor: "text-orange-500", isAvailable: true },
   { id: "calendar", label: "Calendar", icon: CalendarDays, iconColor: "text-rose-500", isAvailable: true },
   { id: "gantt", label: "Gantt", icon: Milestone, iconColor: "text-purple-500", isAvailable: true },
   { id: "table", label: "Table", icon: TableProperties, iconColor: "text-emerald-500", isAvailable: true },

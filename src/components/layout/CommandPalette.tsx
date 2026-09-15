@@ -330,7 +330,7 @@ export function CommandPalette() {
     const viewsList: { id: ViewMode; name: string; icon: React.ComponentType<{ className?: string }> }[] = [
       { id: "home", name: "Home Dashboard", icon: HomeIcon },
       { id: "list", name: "List View", icon: ListIcon },
-      { id: "board", name: "Board (Kanban) View", icon: Kanban },
+      { id: "board", name: "Kanban View", icon: Kanban },
       { id: "table", name: "Table Spreadsheet View", icon: TableIcon },
       { id: "calendar", name: "Calendar View", icon: Calendar },
       { id: "gantt", name: "Gantt Timeline View", icon: GanttChart },
