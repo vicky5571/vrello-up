@@ -659,18 +659,13 @@ export function TaskDrawer() {
                           />
                         </svg>
                       </div>
-                      <div className="text-left min-w-0">
-                        <div className="text-xs font-semibold leading-tight flex items-center gap-1.5">
-                          <span>Lampirkan dari Google Drive</span>
-                        </div>
-                        <div className="text-[10px] text-teal-100/90 dark:text-teal-200/90 leading-tight truncate">
-                          Video footage, klip B-roll & Shared Folder
-                        </div>
-                      </div>
+                      <span className="text-xs font-semibold leading-tight truncate">
+                        Lampirkan dari Google Drive
+                      </span>
                     </div>
-                    <span className="text-[10px] font-bold tracking-wide uppercase bg-white/20 hover:bg-white/30 text-white px-2 py-0.5 rounded-full shrink-0">
-                      Bebas Ukuran
-                    </span>
+                    <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0 text-white group-hover:bg-white/30 transition-colors">
+                      <Download className="w-4 h-4" />
+                    </div>
                   </button>
 
                   {/* Hidden File Input */}
