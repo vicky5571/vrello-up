@@ -37,6 +37,9 @@ import {
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
 import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
+import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
+import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
+import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
 
 export type PostStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
 
@@ -156,6 +159,14 @@ export function ContentPlannerView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Google Drive Picker
+  const {
+    openSelector,
+    isModalOpen: isDriveModalOpen,
+    closeModal: closeDriveModal,
+    handleManualAttach,
+  } = useGoogleDrivePicker();
 
   // Form Fields
   const [title, setTitle] = useState("");
@@ -916,14 +927,38 @@ export function ContentPlannerView() {
 
                   {post.mediaUrl && (
                     <div className="mt-3 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 aspect-video bg-slate-100 dark:bg-slate-800 relative">
-                      <img
-                        src={post.mediaUrl}
-                        alt={post.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = "none";
-                        }}
-                      />
+                      {(() => {
+                        const parsedDrive = parseGoogleDriveUrl(post.mediaUrl);
+                        if (parsedDrive.isValid && parsedDrive.embedUrl) {
+                          return (
+                            <iframe
+                              src={parsedDrive.embedUrl}
+                              title={post.title}
+                              className="w-full h-full border-0"
+                              allow="autoplay"
+                            />
+                          );
+                        }
+                        if (post.mediaUrl.endsWith(".mp4") || post.mediaUrl.endsWith(".mov")) {
+                          return (
+                            <video
+                              src={post.mediaUrl}
+                              controls
+                              className="w-full h-full object-contain bg-slate-900"
+                            />
+                          );
+                        }
+                        return (
+                          <img
+                            src={post.mediaUrl}
+                            alt={post.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        );
+                      })()}
                     </div>
                   )}
 
@@ -1245,9 +1280,28 @@ export function ContentPlannerView() {
 
               {/* Media URL */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Media / Thumbnail URL (optional)
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Media / Thumbnail URL (optional)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openSelector({
+                        defaultKind: "video",
+                        onSelect: (atts) => {
+                          if (atts[0]) {
+                            setMediaUrl(atts[0].url);
+                            toast.success("Tautan Google Drive berhasil disematkan ke postingan");
+                          }
+                        },
+                      })
+                    }
+                    className="text-[11px] font-semibold text-pink-600 dark:text-pink-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Pilih dari Google Drive</span>
+                  </button>
+                </div>
                 <input
                   type="url"
                   placeholder="https://..."
@@ -1296,6 +1350,13 @@ export function ContentPlannerView() {
           </div>
         </div>
       )}
+      {/* Google Drive Link Modal */}
+      <GoogleDriveLinkModal
+        isOpen={isDriveModalOpen}
+        onClose={closeDriveModal}
+        onAttach={handleManualAttach}
+        defaultKind="video"
+      />
     </div>
   );
 }
