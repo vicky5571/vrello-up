@@ -543,32 +543,22 @@ export function TaskDrawer() {
 
               {/* Footage & Attachments Section (Accessible for All Tasks) */}
               <div className="p-4 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 border border-slate-200/80 dark:border-slate-800 space-y-3">
-                {/* Primary Cover / Featured Preview */}
+                {/* Primary Cover / Featured Preview (Only shown when a cover is set) */}
                 {task.mediaUrl && (
                   <div className="space-y-2 pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
                     <div className="flex items-center justify-between">
-                      <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                        Primary Cover / Featured Footage
-                      </label>
+                      <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                        Cover / Featured Media
+                      </span>
                       <button
                         type="button"
                         onClick={() => updateTask(task.id, { mediaUrl: undefined })}
                         className="text-[10px] text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
                       >
-                        Remove Cover
+                        Hapus Cover
                       </button>
                     </div>
-                    <input
-                      type="url"
-                      placeholder="https://... or upload footage below"
-                      value={task.mediaUrl || ""}
-                      onChange={(e) =>
-                        updateTask(task.id, {
-                          mediaUrl: e.target.value.trim() || undefined,
-                        })
-                      }
-                      className="w-full px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-teal-500"
-                    />
 
                     {(() => {
                       const parsedDriveCover = parseGoogleDriveUrl(task.mediaUrl);
