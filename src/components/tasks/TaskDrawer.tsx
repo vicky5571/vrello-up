@@ -1,7 +1,7 @@
 "use client";
 
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
-import { Task, Priority, PostPlatform, PostFormat, TaskAttachment } from "@/types";
+import { Task, Priority, PostPlatform, PostFormat, TaskAttachment, Folder as FolderModel, List as ListModel } from "@/types";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -34,6 +34,7 @@ import {
   Eye,
   Folder,
   ExternalLink,
+  ChevronRight,
 } from "lucide-react";
 import { TiptapEditor } from "./TiptapEditor";
 import { SubtaskManager } from "./SubtaskManager";
@@ -41,13 +42,14 @@ import { TaskActivityFeed } from "./TaskActivityFeed";
 import { formatDate, cn } from "@/lib/utils";
 import { toastTaskDeleted } from "@/lib/tasks/deleteUndo";
 import { toast } from "sonner";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import { GoogleDrivePreviewModal } from "@/components/ui/GoogleDrivePreviewModal";
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useDropdown } from "@/components/ui/useDropdown";
+import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
 
 function formatBytes(bytes: number): string {
   if (!bytes || bytes <= 0) return "0 B";
@@ -72,6 +74,8 @@ export function TaskDrawer() {
     workspaces,
     activeWorkspaceId,
     activeSpaceId,
+    setActiveSpace,
+    setActiveList,
     tags,
     createTag,
     renameTag,
@@ -103,6 +107,40 @@ export function TaskDrawer() {
   );
   const statuses = currentSpace?.statuses || [];
   const members = currentWorkspace?.members || SEED_USERS;
+
+  const allSpaces = useMemo(
+    () => workspaces.flatMap((w) => w.spaces || []),
+    [workspaces],
+  );
+
+  const { owningSpace, owningFolder, owningList } = useMemo(() => {
+    if (!task?.listId) {
+      return {
+        owningSpace: currentSpace,
+        owningFolder: undefined,
+        owningList: undefined,
+      };
+    }
+    const space = findSpaceByListId(allSpaces, task.listId) || currentSpace;
+    let folder: FolderModel | undefined;
+    let list: ListModel | undefined;
+
+    if (space) {
+      list = space.lists?.find((l) => l.id === task.listId);
+      if (!list && space.folders) {
+        for (const f of space.folders) {
+          const found = f.lists?.find((l) => l.id === task.listId);
+          if (found) {
+            folder = f;
+            list = found;
+            break;
+          }
+        }
+      }
+    }
+
+    return { owningSpace: space, owningFolder: folder, owningList: list };
+  }, [allSpaces, task?.listId, currentSpace]);
 
   const [title, setTitle] = useState("");
   const [newTagName, setNewTagName] = useState("");
@@ -296,13 +334,65 @@ export function TaskDrawer() {
           >
             {/* Header / Actions */}
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold uppercase tracking-wider text-[10px]">
+              <div className="flex items-center flex-wrap gap-1.5 text-xs text-slate-500 font-medium min-w-0">
+                {owningSpace && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveSpace(owningSpace.id);
+                        toast.info(`Beralih ke Space: ${owningSpace.name}`);
+                      }}
+                      title={`Beralih ke Space: ${owningSpace.name}`}
+                      className="hover:text-[#7B68EE] dark:hover:text-[#9182f0] transition-colors truncate max-w-[120px] sm:max-w-[160px] cursor-pointer flex items-center gap-1 text-slate-600 dark:text-slate-400 font-medium"
+                    >
+                      {owningSpace.color && (
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: owningSpace.color }}
+                        />
+                      )}
+                      <span className="truncate">{owningSpace.name}</span>
+                    </button>
+                    <ChevronRight className="w-3 h-3 text-slate-400 shrink-0" />
+                  </>
+                )}
+
+                {owningFolder && (
+                  <>
+                    <span className="text-slate-500 dark:text-slate-400 truncate max-w-[100px] sm:max-w-[140px]">
+                      {owningFolder.name}
+                    </span>
+                    <ChevronRight className="w-3 h-3 text-slate-400 shrink-0" />
+                  </>
+                )}
+
+                {owningList && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (owningSpace) setActiveSpace(owningSpace.id);
+                        setActiveList(owningList.id);
+                        toast.info(`Beralih ke List: ${owningList.name}`);
+                      }}
+                      title={`Beralih ke List: ${owningList.name}`}
+                      className="hover:text-[#7B68EE] dark:hover:text-[#9182f0] transition-colors truncate max-w-[120px] sm:max-w-[160px] cursor-pointer text-slate-600 dark:text-slate-400 font-medium"
+                    >
+                      {owningList.name}
+                    </button>
+                    <ChevronRight className="w-3 h-3 text-slate-400 shrink-0" />
+                  </>
+                )}
+
+                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold uppercase tracking-wider text-[10px] shrink-0">
                   <Clock className="w-3 h-3 text-slate-500" />
                   TASK #{task.id.slice(-4)}
                 </span>
-                <span>•</span>
-                <span>Created {formatDate(task.createdAt)}</span>
+                <span className="hidden sm:inline text-slate-400">•</span>
+                <span className="hidden sm:inline text-slate-500 dark:text-slate-400">
+                  Created {formatDate(task.createdAt)}
+                </span>
               </div>
 
               <div className="flex items-center gap-2">
