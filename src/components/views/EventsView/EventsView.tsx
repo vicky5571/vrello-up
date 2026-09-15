@@ -49,6 +49,7 @@ import {
   mapEventStatusToTaskStatusId,
   formatEventDateRange,
   detectEventConflicts,
+  calculateFieldEventsKPI,
 } from "@/lib/tasks/eventTaskSync";
 import {
   MarcomTableShell,
@@ -708,44 +709,43 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   // Conflict detection
   const conflicts = useMemo(() => detectEventConflicts(events), [events]);
 
-  // KPI calculations (exclude CANCELLED events from committed budget and target footfall)
-  const nonCancelledEvents = useMemo(
-    () => events.filter((e) => e.status !== "CANCELLED"),
-    [events]
+  // KPI calculations (strictly excludes CANCELLED events from committed budget & target footfall)
+  const kpiSummary = useMemo(
+    () => calculateFieldEventsKPI(events, branches.length),
+    [events, branches.length]
   );
-  const totalActivations = events.length;
-  const activeCount = events.filter(
-    (e) => e.status === "UPCOMING" || e.status === "ON_PROGRESS"
-  ).length;
-  const totalCommittedBudget = nonCancelledEvents.reduce((sum, e) => sum + (e.budget || 0), 0);
-  const totalTargetAttendees = nonCancelledEvents.reduce((sum, e) => sum + (e.targetAttendee || 0), 0);
-  const totalActualAttendees = nonCancelledEvents.reduce((sum, e) => sum + (e.attendeeCount || 0), 0);
 
   const kpis: KpiCardItem[] = [
     {
       label: "Active Activations",
-      value: `${activeCount}`,
-      helper: `${totalActivations} total planned`,
+      value: `${kpiSummary.activeCount}`,
+      helper:
+        kpiSummary.cancelledCount > 0
+          ? `${kpiSummary.totalActivations} planned (${kpiSummary.cancelledCount} cancelled)`
+          : `${kpiSummary.totalActivations} total planned`,
       icon: Flag,
       color: "blue",
     },
     {
       label: "Committed Budget",
-      value: formatIDR(totalCommittedBudget),
-      helper: "Across all branches",
+      value: formatIDR(kpiSummary.totalCommittedBudget),
+      helper:
+        kpiSummary.cancelledCount > 0
+          ? `Excludes ${formatIDR(kpiSummary.cancelledBudget)} cancelled`
+          : "Across all active branches",
       icon: Coins,
       color: "emerald",
     },
     {
       label: "Target Footfall",
-      value: `${totalTargetAttendees.toLocaleString()}`,
-      helper: `${totalActualAttendees.toLocaleString()} reached to date`,
+      value: `${kpiSummary.totalTargetAttendees.toLocaleString()}`,
+      helper: `${kpiSummary.totalActualAttendees.toLocaleString()} reached (active events)`,
       icon: Users,
       color: "violet",
     },
     {
       label: "Branch Coverage",
-      value: `${branches.length || 5} Cities`,
+      value: `${kpiSummary.branchCoverageCount} Cities`,
       helper: "Active city network",
       icon: Building2,
       color: "amber",

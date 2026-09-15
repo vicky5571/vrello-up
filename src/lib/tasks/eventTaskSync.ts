@@ -1,6 +1,7 @@
 import type { User, Subtask, Priority, Task, Status, Space } from "@/types";
 import { formatIDR, formatDate } from "@/lib/utils";
 import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
+import { differenceInDays, startOfDay } from "date-fns";
 
 export const DEFAULT_EVENT_CHECKLISTS: Record<string, string[]> = {
   Roadshow: [
@@ -492,4 +493,150 @@ export function syncFieldEventOnTaskStatusChange(
     }).catch(() => {});
   }
 }
+
+export interface FieldEventsKpiSummary {
+  totalActivations: number;
+  activeCount: number;
+  completedCount: number;
+  cancelledCount: number;
+  totalCommittedBudget: number;
+  cancelledBudget: number;
+  totalTargetAttendees: number;
+  totalActualAttendees: number;
+  branchCoverageCount: number;
+}
+
+/**
+ * Calculates Field Events KPIs strictly excluding CANCELLED events
+ * from Committed Budget, Target Footfall, and Actual Attendance.
+ */
+export function calculateFieldEventsKPI(
+  events: Array<{
+    status?: string | null;
+    budget?: number | null;
+    targetAttendee?: number | null;
+    attendeeCount?: number | null;
+  }>,
+  branchesCount = 0
+): FieldEventsKpiSummary {
+  const totalActivations = events.length;
+  let activeCount = 0;
+  let completedCount = 0;
+  let cancelledCount = 0;
+  let totalCommittedBudget = 0;
+  let cancelledBudget = 0;
+  let totalTargetAttendees = 0;
+  let totalActualAttendees = 0;
+
+  for (const e of events) {
+    const budget = Number(e.budget) || 0;
+    const target = Number(e.targetAttendee) || 0;
+    const actual = Number(e.attendeeCount) || 0;
+
+    if (e.status === "CANCELLED") {
+      cancelledCount++;
+      cancelledBudget += budget;
+    } else {
+      if (e.status === "UPCOMING" || e.status === "ON_PROGRESS") {
+        activeCount++;
+      } else if (e.status === "COMPLETED") {
+        completedCount++;
+      }
+      totalCommittedBudget += budget;
+      totalTargetAttendees += target;
+      totalActualAttendees += actual;
+    }
+  }
+
+  return {
+    totalActivations,
+    activeCount,
+    completedCount,
+    cancelledCount,
+    totalCommittedBudget,
+    cancelledBudget,
+    totalTargetAttendees,
+    totalActualAttendees,
+    branchCoverageCount: Math.max(branchesCount, 1),
+  };
+}
+
+export interface TimelineBarMetricsInput {
+  startDate: Date | string;
+  endDate?: Date | string | null;
+  windowStart: Date;
+  windowEnd: Date;
+  colWidth?: number;
+}
+
+export interface TimelineBarMetrics {
+  isVisible: boolean;
+  totalDurationDays: number;
+  visibleDays: number;
+  leftPx: number;
+  barWidthPx: number;
+  startsBeforeWindow: boolean;
+  endsAfterWindow: boolean;
+}
+
+/**
+ * Calculates timeline bar metrics for an event within a visible date window.
+ * Strictly clamps visible bounds so that events starting prior to windowStart
+ * or ending after windowEnd do not visually distort or stretch past their actual span.
+ */
+export function calculateTimelineBarMetrics({
+  startDate,
+  endDate,
+  windowStart,
+  windowEnd,
+  colWidth = 44,
+}: TimelineBarMetricsInput): TimelineBarMetrics {
+  const parseToLocalStartOfDay = (d: Date | string): Date => {
+    if (d instanceof Date) return startOfDay(d);
+    const dateStr = String(d).slice(0, 10);
+    return startOfDay(new Date(`${dateStr}T00:00:00`));
+  };
+
+  const startObj = parseToLocalStartOfDay(startDate);
+  const endObj = endDate ? parseToLocalStartOfDay(endDate) : startObj;
+  const wStart = startOfDay(windowStart);
+  const wEnd = startOfDay(windowEnd);
+
+  // If completely outside the window interval, it shouldn't render
+  if (endObj < wStart || startObj > wEnd) {
+    const totalDuration = Math.max(1, differenceInDays(endObj, startObj) + 1);
+    return {
+      isVisible: false,
+      totalDurationDays: totalDuration,
+      visibleDays: 0,
+      leftPx: 0,
+      barWidthPx: 0,
+      startsBeforeWindow: startObj < wStart,
+      endsAfterWindow: endObj > wEnd,
+    };
+  }
+
+  const totalDurationDays = Math.max(1, differenceInDays(endObj, startObj) + 1);
+
+  // Clamp visible start and end within window bounds
+  const visibleStart = startObj < wStart ? wStart : startObj;
+  const visibleEnd = endObj > wEnd ? wEnd : endObj;
+
+  const visibleDiff = Math.max(0, differenceInDays(visibleStart, wStart));
+  const visibleDays = Math.max(1, differenceInDays(visibleEnd, visibleStart) + 1);
+
+  const leftPx = visibleDiff * colWidth;
+  const barWidthPx = Math.max(colWidth - 6, visibleDays * colWidth - 8);
+
+  return {
+    isVisible: true,
+    totalDurationDays,
+    visibleDays,
+    leftPx,
+    barWidthPx,
+    startsBeforeWindow: startObj < wStart,
+    endsAfterWindow: endObj > wEnd,
+  };
+}
+
 

@@ -21,7 +21,10 @@ import {
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import type { FieldEventItem } from "@/types";
-import type { EventConflictDetail } from "@/lib/tasks/eventTaskSync";
+import {
+  type EventConflictDetail,
+  calculateTimelineBarMetrics,
+} from "@/lib/tasks/eventTaskSync";
 
 const STATUS_BAR_COLORS: Record<string, { bar: string; text: string; border: string }> = {
   UPCOMING: {
@@ -328,24 +331,17 @@ export function EventsTimelineView({
                         const rawEnd =
                           (event.endDate || event.startDate || event.date)?.slice(0, 10) || rawStart;
 
-                        const startDateObj = new Date(rawStart);
-                        const endDateObj = new Date(rawEnd);
+                        const metrics = calculateTimelineBarMetrics({
+                          startDate: rawStart,
+                          endDate: rawEnd,
+                          windowStart,
+                          windowEnd,
+                          colWidth,
+                        });
 
-                        // If event is completely out of current viewport window, skip
-                        if (endDateObj < windowStart || startDateObj > windowEnd) {
+                        if (!metrics.isVisible) {
                           return null;
                         }
-
-                        // Calculate offset from windowStart
-                        const diffFromStart = differenceInDays(startDateObj, windowStart);
-                        const duration = Math.max(1, differenceInDays(endDateObj, startDateObj) + 1);
-
-                        // Clamp positions to viewport
-                        const leftPx = Math.max(0, diffFromStart * colWidth);
-                        const barWidthPx = Math.max(
-                          colWidth - 6,
-                          duration * colWidth - 8
-                        );
 
                         const color =
                           STATUS_BAR_COLORS[event.status] || STATUS_BAR_COLORS.UPCOMING;
@@ -356,19 +352,24 @@ export function EventsTimelineView({
                             key={event.id}
                             onClick={() => onSelectEvent(event)}
                             style={{
-                              left: `${leftPx}px`,
-                              width: `${barWidthPx}px`,
+                              left: `${metrics.leftPx}px`,
+                              width: `${metrics.barWidthPx}px`,
                             }}
                             className={cn(
                               "absolute h-8 rounded-lg px-2 flex items-center justify-between text-xs cursor-pointer shadow-xs transition-all hover:shadow-md hover:scale-[1.01] z-10 select-none",
+                              metrics.startsBeforeWindow && "rounded-l-none border-l-2 border-l-white/70",
+                              metrics.endsAfterWindow && "rounded-r-none border-r-2 border-r-white/70",
                               color.bar,
                               color.text,
                               eventConflict?.hasSameBranchConflict && "ring-2 ring-amber-400 animate-pulse",
                               eventConflict?.hasCrossBranchConflict && !eventConflict.hasSameBranchConflict && "ring-2 ring-indigo-300"
                             )}
-                            title={`${event.name} (${formatDate(rawStart)} – ${formatDate(rawEnd)}) [${duration}d duration]${eventConflict ? ' | ' + eventConflict.message : ''}`}
+                            title={`${event.name} (${formatDate(rawStart)} – ${formatDate(rawEnd)}) [${metrics.totalDurationDays}d duration${metrics.startsBeforeWindow || metrics.endsAfterWindow ? `, ${metrics.visibleDays}d visible` : ""}]${eventConflict ? ' | ' + eventConflict.message : ''}`}
                           >
                             <div className="flex items-center gap-1.5 truncate pr-1">
+                              {metrics.startsBeforeWindow && (
+                                <span className="text-[10px] font-bold opacity-80 shrink-0" title="Activation started before current visible window">◀</span>
+                              )}
                               {eventConflict?.hasSameBranchConflict && (
                                 <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-200" title="Venue clash in this branch" />
                               )}
@@ -380,9 +381,14 @@ export function EventsTimelineView({
                               </span>
                             </div>
 
-                            <span className="shrink-0 text-[10px] font-mono px-1 rounded bg-black/20 text-white/90">
-                              {duration}d
-                            </span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <span className="text-[10px] font-mono px-1 rounded bg-black/20 text-white/90">
+                                {metrics.totalDurationDays}d
+                              </span>
+                              {metrics.endsAfterWindow && (
+                                <span className="text-[10px] font-bold opacity-80 shrink-0" title="Activation extends past current visible window">▶</span>
+                              )}
+                            </div>
                           </div>
                         );
                       })}

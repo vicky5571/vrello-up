@@ -10,6 +10,8 @@ import {
   mapTaskCategoryToEventStatus,
   formatEventDateRange,
   detectEventConflicts,
+  calculateFieldEventsKPI,
+  calculateTimelineBarMetrics,
 } from "./eventTaskSync.ts";
 import type { User, Subtask, Status } from "@/types";
 
@@ -248,4 +250,157 @@ test("detectEventConflicts flags overlapping dates in the same branch and across
   assert.ok(conflicts.get("ev-2")?.conflictingEventIds.includes("ev-1"));
   assert.ok(conflicts.get("ev-3")?.conflictingEventIds.includes("ev-1"));
 });
+
+test("calculateFieldEventsKPI strictly excludes CANCELLED events from committed budget and target footfall", () => {
+  const events = [
+    {
+      id: "ev-1",
+      name: "Surabaya Mega Roadshow",
+      status: "UPCOMING",
+      budget: 20000000,
+      targetAttendee: 500,
+      attendeeCount: 0,
+    },
+    {
+      id: "ev-2",
+      name: "Jakarta Mall Activation",
+      status: "ON_PROGRESS",
+      budget: 35000000,
+      targetAttendee: 1000,
+      attendeeCount: 450,
+    },
+    {
+      id: "ev-3",
+      name: "Bandung Expo (Cancelled by Venue)",
+      status: "CANCELLED",
+      budget: 50000000, // Rp 50.000.000 cancelled! Must NOT inflate KPI!
+      targetAttendee: 2500, // 2500 target footfall cancelled! Must NOT inflate KPI!
+      attendeeCount: 0,
+    },
+    {
+      id: "ev-4",
+      name: "Medan Pop-up Booth",
+      status: "COMPLETED",
+      budget: 15000000,
+      targetAttendee: 300,
+      attendeeCount: 320,
+    },
+  ];
+
+  const kpis = calculateFieldEventsKPI(events, 4);
+
+  // Total activations planned in the calendar
+  assert.equal(kpis.totalActivations, 4);
+
+  // Active count only includes UPCOMING + ON_PROGRESS
+  assert.equal(kpis.activeCount, 2);
+  assert.equal(kpis.completedCount, 1);
+  assert.equal(kpis.cancelledCount, 1);
+
+  // Committed budget: 20M + 35M + 15M = 70M (the 50M cancelled budget is completely excluded!)
+  assert.equal(kpis.totalCommittedBudget, 70000000);
+  assert.equal(kpis.cancelledBudget, 50000000);
+
+  // Target footfall: 500 + 1000 + 300 = 1800 (the 2500 from cancelled event is completely excluded!)
+  assert.equal(kpis.totalTargetAttendees, 1800);
+
+  // Actual attendees: 0 + 450 + 320 = 770
+  assert.equal(kpis.totalActualAttendees, 770);
+
+  assert.equal(kpis.branchCoverageCount, 4);
+});
+
+test("calculateTimelineBarMetrics accurately clamps events starting before windowStart", () => {
+  const windowStart = new Date("2026-09-10T00:00:00");
+  const windowEnd = new Date("2026-09-30T00:00:00"); // 21 days window (Sept 10 - Sept 30)
+  const colWidth = 44;
+
+  // Event starts 5 days before window (Sept 5) and ends inside window (Sept 15)
+  // Total span: 11 days (Sept 5 - Sept 15)
+  // Visible span inside window: 6 days (Sept 10, 11, 12, 13, 14, 15)
+  const metrics = calculateTimelineBarMetrics({
+    startDate: "2026-09-05",
+    endDate: "2026-09-15",
+    windowStart,
+    windowEnd,
+    colWidth,
+  });
+
+  assert.equal(metrics.isVisible, true);
+  assert.equal(metrics.totalDurationDays, 11);
+  assert.equal(metrics.visibleDays, 6);
+  assert.equal(metrics.leftPx, 0); // Must be pinned to Day 0 (Sept 10)
+  assert.equal(metrics.barWidthPx, 6 * colWidth - 8); // 256px, NOT 11 * 44 - 8!
+  assert.equal(metrics.startsBeforeWindow, true);
+  assert.equal(metrics.endsAfterWindow, false);
+});
+
+test("calculateTimelineBarMetrics accurately clamps events ending after windowEnd", () => {
+  const windowStart = new Date("2026-09-10T00:00:00");
+  const windowEnd = new Date("2026-09-30T00:00:00");
+  const colWidth = 44;
+
+  // Event starts inside window at day index 15 (Sept 25) and ends after window (Oct 5)
+  // Total span: 11 days (Sept 25 - Oct 5)
+  // Visible span inside window: 6 days (Sept 25, 26, 27, 28, 29, 30)
+  const metrics = calculateTimelineBarMetrics({
+    startDate: "2026-09-25",
+    endDate: "2026-10-05",
+    windowStart,
+    windowEnd,
+    colWidth,
+  });
+
+  assert.equal(metrics.isVisible, true);
+  assert.equal(metrics.totalDurationDays, 11);
+  assert.equal(metrics.visibleDays, 6);
+  assert.equal(metrics.leftPx, 15 * colWidth); // 660px
+  assert.equal(metrics.barWidthPx, 6 * colWidth - 8); // 256px
+  assert.equal(metrics.startsBeforeWindow, false);
+  assert.equal(metrics.endsAfterWindow, true);
+});
+
+test("calculateTimelineBarMetrics correctly handles single day events inside window", () => {
+  const windowStart = new Date("2026-09-10T00:00:00");
+  const windowEnd = new Date("2026-09-30T00:00:00");
+  const colWidth = 44;
+
+  const metrics = calculateTimelineBarMetrics({
+    startDate: "2026-09-12",
+    endDate: "2026-09-12",
+    windowStart,
+    windowEnd,
+    colWidth,
+  });
+
+  assert.equal(metrics.isVisible, true);
+  assert.equal(metrics.totalDurationDays, 1);
+  assert.equal(metrics.visibleDays, 1);
+  assert.equal(metrics.leftPx, 2 * colWidth); // 88px (day 2 from Sept 10)
+  assert.equal(metrics.barWidthPx, colWidth - 6); // 38px
+  assert.equal(metrics.startsBeforeWindow, false);
+  assert.equal(metrics.endsAfterWindow, false);
+});
+
+test("calculateTimelineBarMetrics hides events that are completely outside the window", () => {
+  const windowStart = new Date("2026-09-10T00:00:00");
+  const windowEnd = new Date("2026-09-30T00:00:00");
+
+  const pastEvent = calculateTimelineBarMetrics({
+    startDate: "2026-08-01",
+    endDate: "2026-08-10",
+    windowStart,
+    windowEnd,
+  });
+  assert.equal(pastEvent.isVisible, false);
+
+  const futureEvent = calculateTimelineBarMetrics({
+    startDate: "2026-10-15",
+    endDate: "2026-10-20",
+    windowStart,
+    windowEnd,
+  });
+  assert.equal(futureEvent.isVisible, false);
+});
+
 
