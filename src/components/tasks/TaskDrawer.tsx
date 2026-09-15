@@ -46,6 +46,8 @@ import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import { GoogleDrivePreviewModal } from "@/components/ui/GoogleDrivePreviewModal";
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { useDropdown } from "@/components/ui/useDropdown";
 
 function formatBytes(bytes: number): string {
   if (!bytes || bytes <= 0) return "0 B";
@@ -108,6 +110,27 @@ export function TaskDrawer() {
   const [isManagingTags, setIsManagingTags] = useState(false);
   const [isAddingDep, setIsAddingDep] = useState(false);
   const [depSearch, setDepSearch] = useState("");
+
+  const [isAssigneeOpen, setIsAssigneeOpen] = useState(false);
+  const [assigneeSearch, setAssigneeSearch] = useState("");
+  const assigneeTriggerRef = useRef<HTMLButtonElement>(null);
+  const assigneeDropdownRef = useDropdown<HTMLDivElement>({
+    isOpen: isAssigneeOpen,
+    onClose: () => {
+      setIsAssigneeOpen(false);
+      setAssigneeSearch("");
+    },
+    triggerRef: assigneeTriggerRef,
+  });
+
+  const filteredMembers = members.filter((m) => {
+    const q = assigneeSearch.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      m.name.toLowerCase().includes(q) ||
+      (m.email && m.email.toLowerCase().includes(q))
+    );
+  });
 
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -197,8 +220,10 @@ export function TaskDrawer() {
   useEffect(() => {
     if (task) {
       setTitle(task.title);
+      setIsAssigneeOpen(false);
+      setAssigneeSearch("");
     }
-  }, [task]);
+  }, [task?.id]);
 
   // Handle ESC key to close drawer
   useEffect(() => {
@@ -478,35 +503,130 @@ export function TaskDrawer() {
 
               {/* Assignees Selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-slate-500" />{" "}
-                  Assignees
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {members.map((user) => {
-                    const isAssigned = task.assignees.some(
-                      (u) => u.id === user.id,
-                    );
-                    return (
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Assignees</span>
+                    {task.assignees.length > 0 && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                        {task.assignees.length}
+                      </span>
+                    )}
+                  </label>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Assigned Members Chips */}
+                  {task.assignees.map((user) => (
+                    <div
+                      key={user.id}
+                      className="inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 shadow-2xs group"
+                    >
+                      <UserAvatar user={user} size="xs" />
+                      <span className="max-w-[130px] truncate">{user.name}</span>
                       <button
-                        key={user.id}
                         type="button"
                         onClick={() => toggleAssignee(user.id)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                          isAssigned
-                            ? "bg-[#7B68EE]/10 text-[#7B68EE] border-[#7B68EE]/30 shadow-xs"
-                            : "bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-                        }`}
+                        title={`Hapus penugasan ${user.name}`}
+                        className="p-0.5 rounded-full text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                       >
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            isAssigned ? "bg-[#7B68EE]" : "bg-slate-400"
-                          }`}
-                        />
-                        {user.name}
+                        <X className="w-3 h-3" />
                       </button>
-                    );
-                  })}
+                    </div>
+                  ))}
+
+                  {task.assignees.length === 0 && (
+                    <span className="text-xs text-slate-400 dark:text-slate-500 italic mr-1">
+                      Belum ada yang ditugaskan
+                    </span>
+                  )}
+
+                  {/* + Assign Trigger & Dropdown Popover */}
+                  <div className="relative">
+                    <button
+                      ref={assigneeTriggerRef}
+                      type="button"
+                      onClick={() => setIsAssigneeOpen(!isAssigneeOpen)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-dashed border-slate-300 dark:border-slate-700 hover:border-[#7B68EE] hover:bg-[#7B68EE]/5 text-slate-600 dark:text-slate-400 hover:text-[#7B68EE] text-xs font-medium transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Assign</span>
+                    </button>
+
+                    {/* Popover Dropdown */}
+                    {isAssigneeOpen && (
+                      <div
+                        ref={assigneeDropdownRef}
+                        className="absolute left-0 top-full mt-1.5 w-64 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-2 z-40 space-y-2 animate-in fade-in zoom-in-95 duration-100"
+                      >
+                        {/* Search Input */}
+                        <div className="relative">
+                          <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input
+                            type="text"
+                            autoFocus
+                            value={assigneeSearch}
+                            onChange={(e) => setAssigneeSearch(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                if (filteredMembers[0]) {
+                                  toggleAssignee(filteredMembers[0].id);
+                                }
+                              }
+                            }}
+                            placeholder="Cari anggota tim..."
+                            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-[#7B68EE]"
+                          />
+                        </div>
+
+                        {/* Member List */}
+                        <div className="max-h-52 overflow-y-auto space-y-0.5">
+                          {filteredMembers.length === 0 ? (
+                            <p className="p-2 text-center text-xs text-slate-400 dark:text-slate-500">
+                              Tidak ada anggota tim yang cocok
+                            </p>
+                          ) : (
+                            filteredMembers.map((member) => {
+                              const isAssigned = task.assignees.some(
+                                (u) => u.id === member.id,
+                              );
+                              return (
+                                <button
+                                  key={member.id}
+                                  type="button"
+                                  onClick={() => toggleAssignee(member.id)}
+                                  className={cn(
+                                    "w-full flex items-center justify-between p-1.5 rounded-lg text-left transition-colors cursor-pointer",
+                                    isAssigned
+                                      ? "bg-[#7B68EE]/10 text-[#7B68EE]"
+                                      : "hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-800 dark:text-slate-200",
+                                  )}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0 pr-2">
+                                    <UserAvatar user={member} size="xs" />
+                                    <div className="min-w-0">
+                                      <div className="text-xs font-medium truncate">
+                                        {member.name}
+                                      </div>
+                                      {member.email && (
+                                        <div className="text-[10px] text-slate-400 truncate">
+                                          {member.email}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {isAssigned && (
+                                    <Check className="w-4 h-4 text-[#7B68EE] shrink-0" />
+                                  )}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
