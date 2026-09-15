@@ -463,7 +463,7 @@ export function ContentPlannerView() {
     }
   };
 
-  const navigateToTask = useCallback(
+  const getOrCreateLinkedTask = useCallback(
     (item: ContentPostItem) => {
       let existing = tasks.find((t) => t.relatedMarcomId === item.id);
 
@@ -499,6 +499,33 @@ export function ContentPlannerView() {
           orderIndex: 0,
         });
       }
+      return existing;
+    },
+    [
+      tasks,
+      rawSpaces,
+      targetSpaceId,
+      activeListId,
+      statuses,
+      members,
+      createTask,
+    ]
+  );
+
+  const openTaskDrawerInPlace = useCallback(
+    (item: ContentPostItem) => {
+      const task = getOrCreateLinkedTask(item);
+      if (task) {
+        setSelectedTaskId(task.id);
+      }
+    },
+    [getOrCreateLinkedTask, setSelectedTaskId]
+  );
+
+  const navigateToTask = useCallback(
+    (item: ContentPostItem) => {
+      const existing = getOrCreateLinkedTask(item);
+      if (!existing) return;
 
       const owningSpace = findSpaceByListId(rawSpaces, existing.listId);
       if (owningSpace) {
@@ -511,13 +538,8 @@ export function ContentPlannerView() {
       toast.info(`Beralih ke ${owningSpace?.name || "Workspace"} › Board`);
     },
     [
-      tasks,
+      getOrCreateLinkedTask,
       rawSpaces,
-      targetSpaceId,
-      activeListId,
-      statuses,
-      members,
-      createTask,
       setActiveSpace,
       setActiveList,
       setAppMode,
@@ -594,20 +616,25 @@ export function ContentPlannerView() {
         header: "Post Title / Concept",
         size: 260,
         cell: ({ row }) => (
-          <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => openTaskDrawerInPlace(row.original)}
+            className="flex items-center gap-2.5 text-left group/title cursor-pointer w-full"
+            title="Klik untuk membuka Task Detail Drawer & Lampiran"
+          >
             <span className="text-base">
               {PLATFORM_CONFIG[row.original.platform as PostPlatform]?.icon ||
                 "📱"}
             </span>
             <div className="min-w-0">
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate block">
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover/title:text-pink-600 dark:group-hover/title:text-pink-400 truncate block transition-colors">
                 {row.original.title}
               </span>
               <span className="text-[10px] text-slate-400 capitalize">
                 {row.original.format} • {row.original.branchName || "National"}
               </span>
             </div>
-          </div>
+          </button>
         ),
       }),
       columnHelper.accessor("platform", {
@@ -719,7 +746,7 @@ export function ContentPlannerView() {
         ),
       }),
     ],
-    [openEditModal, navigateToTask, tasks, rawSpaces]
+    [openEditModal, navigateToTask, openTaskDrawerInPlace, tasks, rawSpaces]
   );
 
   return (
@@ -846,7 +873,9 @@ export function ContentPlannerView() {
             return (
               <div
                 key={post.id}
-                className="group relative rounded-2xl bg-white dark:bg-[#18191B] border border-slate-200 dark:border-slate-800/80 p-4 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
+                onClick={() => openTaskDrawerInPlace(post)}
+                className="group relative rounded-2xl bg-white dark:bg-[#18191B] border border-slate-200 dark:border-slate-800/80 hover:border-pink-500/50 dark:hover:border-pink-500/50 p-4 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer"
+                title="Klik kartu untuk membuka Task Detail Drawer & Lampiran Footage"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2.5">
@@ -922,7 +951,10 @@ export function ContentPlannerView() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => navigateToTask(post)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigateToTask(post);
+                          }}
                           className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-pink-600 dark:text-pink-400 hover:underline cursor-pointer ml-2"
                         >
                           <span>Board</span>
@@ -946,15 +978,23 @@ export function ContentPlannerView() {
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      onClick={() => openEditModal(post)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditModal(post);
+                      }}
                       className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                      title="Edit Post"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => navigateToTask(post)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigateToTask(post);
+                      }}
                       className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/50 cursor-pointer transition-colors"
+                      title="Buka dan beralih ke Kanban Board"
                     >
                       <Kanban className="w-3 h-3" />
                       <span>Lihat di Board</span>
