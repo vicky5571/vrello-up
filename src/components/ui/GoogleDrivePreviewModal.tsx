@@ -129,8 +129,8 @@ export function GoogleDrivePreviewModal({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/10 transition-colors cursor-pointer"
               title="Buka di Google Drive (tab baru)"
             >
-              <span className="hidden xs:inline">Buka di Google Drive</span>
-              <span className="xs:hidden">Buka Drive</span>
+              <span className="hidden sm:inline">Buka di Google Drive</span>
+              <span className="sm:hidden">Buka Drive</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </button>
             <button

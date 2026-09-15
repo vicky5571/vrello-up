@@ -66,7 +66,7 @@ export function buildAttachmentFromManualUrl(
   }
 
   return {
-    id: parsed.id || generateAttachmentId(),
+    id: generateAttachmentId(),
     name: title,
     sizeBytes: 0,
     type: attachmentType,
@@ -95,7 +95,7 @@ export function buildAttachmentFromGoogleDriveDoc(doc: {
   const type: TaskAttachment["type"] = isFolder ? "other" : cat;
 
   return {
-    id: doc.id || generateAttachmentId(),
+    id: generateAttachmentId(),
     name: doc.name || (isFolder ? "Google Drive Folder" : "Google Drive File"),
     sizeBytes: typeof doc.sizeBytes === "number" ? doc.sizeBytes : 0,
     type,
@@ -155,14 +155,22 @@ function loadGapi(): Promise<void> {
         onerror: reject,
       });
     });
-  })();
+  })().catch((err) => {
+    gapiLoadPromise = null;
+    throw err;
+  });
   return gapiLoadPromise;
 }
 
 let gsiLoadPromise: Promise<void> | null = null;
 function loadGsi(): Promise<void> {
   if (gsiLoadPromise) return gsiLoadPromise;
-  gsiLoadPromise = loadScript("https://accounts.google.com/gsi/client");
+  gsiLoadPromise = loadScript("https://accounts.google.com/gsi/client").catch(
+    (err) => {
+      gsiLoadPromise = null;
+      throw err;
+    }
+  );
   return gsiLoadPromise;
 }
 

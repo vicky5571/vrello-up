@@ -617,8 +617,9 @@ export function TaskDrawer() {
                             onSelect: (newAtts) => {
                               const updated = [...(task.attachments || []), ...newAtts];
                               const updates: Partial<Task> = { attachments: updated };
-                              if (!task.mediaUrl && newAtts[0]?.url) {
-                                updates.mediaUrl = newAtts[0].url;
+                              if (!task.mediaUrl && newAtts.length > 0) {
+                                const visual = newAtts.find((a) => a.type === "video" || a.type === "image");
+                                if (visual) updates.mediaUrl = visual.url;
                               }
                               updateTask(task.id, updates);
                               toast.success(`Berhasil menambahkan ${newAtts.length} aset Google Drive`);
