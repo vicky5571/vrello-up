@@ -47,6 +47,7 @@ export interface TaskAttachment {
   driveFileId?: string;
   thumbnailUrl?: string;
   isSharedFolder?: boolean;
+  embedUrl?: string;
 }
 
 export interface TaskCommentAttachment {

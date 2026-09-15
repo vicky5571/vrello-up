@@ -75,6 +75,7 @@ export function buildAttachmentFromManualUrl(
     source: "gdrive",
     driveFileId: parsed.id ?? undefined,
     isSharedFolder: isFolder,
+    embedUrl: parsed.embedUrl ?? undefined,
   };
 }
 
@@ -107,6 +108,9 @@ export function buildAttachmentFromGoogleDriveDoc(doc: {
     driveFileId: doc.id,
     thumbnailUrl: doc.iconUrl || doc.thumbnails?.[0]?.url || undefined,
     isSharedFolder: isFolder,
+    embedUrl:
+      doc.embedUrl ||
+      (doc.id ? `https://drive.google.com/file/d/${doc.id}/preview` : undefined),
   };
 }
 
