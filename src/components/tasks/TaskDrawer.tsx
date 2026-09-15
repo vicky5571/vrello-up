@@ -476,6 +476,63 @@ export function TaskDrawer() {
                 </div>
               </div>
 
+              {/* Assignees Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-slate-500" />{" "}
+                  Assignees
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {members.map((user) => {
+                    const isAssigned = task.assignees.some(
+                      (u) => u.id === user.id,
+                    );
+                    return (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => toggleAssignee(user.id)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                          isAssigned
+                            ? "bg-[#7B68EE]/10 text-[#7B68EE] border-[#7B68EE]/30 shadow-xs"
+                            : "bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            isAssigned ? "bg-[#7B68EE]" : "bg-slate-400"
+                          }`}
+                        />
+                        {user.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Rich-Text Description */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  Description & Notes
+                </label>
+                <TiptapEditor
+                  content={task.description}
+                  onChange={(newHtml) =>
+                    updateTask(task.id, { description: newHtml })
+                  }
+                />
+              </div>
+
+              {/* Interactive Subtasks & Checklists */}
+              <div className="pt-2">
+                <SubtaskManager
+                  subtasks={task.subtasks}
+                  onAddSubtask={(stTitle) => addSubtask(task.id, stTitle)}
+                  onToggleSubtask={(stId) => toggleSubtask(task.id, stId)}
+                  onDeleteSubtask={(stId) => deleteSubtask(task.id, stId)}
+                />
+              </div>
+
               {/* Social & Content Planning Panel (Only visible in Content Planner view) */}
               {activeView === "content-planner" && (
                 <div className="p-4 rounded-xl bg-pink-50/40 dark:bg-pink-950/20 border border-pink-200/70 dark:border-pink-800/50 space-y-3">
@@ -833,40 +890,6 @@ export function TaskDrawer() {
                 </div>
               </div>
 
-              {/* Assignees Selector */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-slate-500" />{" "}
-                  Assignees
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {members.map((user) => {
-                    const isAssigned = task.assignees.some(
-                      (u) => u.id === user.id,
-                    );
-                    return (
-                      <button
-                        key={user.id}
-                        type="button"
-                        onClick={() => toggleAssignee(user.id)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                          isAssigned
-                            ? "bg-[#7B68EE]/10 text-[#7B68EE] border-[#7B68EE]/30 shadow-xs"
-                            : "bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-                        }`}
-                      >
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            isAssigned ? "bg-[#7B68EE]" : "bg-slate-400"
-                          }`}
-                        />
-                        {user.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* Tags */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -1002,29 +1025,6 @@ export function TaskDrawer() {
                     })}
                   </div>
                 )}
-              </div>
-
-              {/* Rich-Text Description */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                  Description & Notes
-                </label>
-                <TiptapEditor
-                  content={task.description}
-                  onChange={(newHtml) =>
-                    updateTask(task.id, { description: newHtml })
-                  }
-                />
-              </div>
-
-              {/* Interactive Subtasks & Checklists */}
-              <div className="pt-2">
-                <SubtaskManager
-                  subtasks={task.subtasks}
-                  onAddSubtask={(stTitle) => addSubtask(task.id, stTitle)}
-                  onToggleSubtask={(stId) => toggleSubtask(task.id, stId)}
-                  onDeleteSubtask={(stId) => deleteSubtask(task.id, stId)}
-                />
               </div>
 
               {/* Dependencies & Blockers Section */}
