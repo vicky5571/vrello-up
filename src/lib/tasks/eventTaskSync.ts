@@ -1,5 +1,6 @@
-import type { User, Subtask, Priority, Task } from "@/types";
-import { formatIDR } from "@/lib/utils";
+import type { User, Subtask, Priority, Task, Status, Space } from "@/types";
+import { formatIDR, formatDate } from "@/lib/utils";
+import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
 
 export const DEFAULT_EVENT_CHECKLISTS: Record<string, string[]> = {
   Roadshow: [
@@ -193,3 +194,302 @@ export function buildEventTaskPayload({
     relatedMarcomId: event.id,
   };
 }
+
+/**
+ * Maps a Field Event status (UPCOMING, ON_PROGRESS, COMPLETED, CANCELLED)
+ * to an appropriate Task statusId from the destination Space statuses.
+ */
+export function mapEventStatusToTaskStatusId(
+  eventStatus: string,
+  statuses: Status[]
+): string {
+  if (!Array.isArray(statuses) || statuses.length === 0) {
+    return "status-todo";
+  }
+
+  const normalized = (eventStatus || "").toUpperCase();
+
+  if (normalized === "COMPLETED") {
+    const doneStatus = statuses.find((s) => s.category === "done");
+    if (doneStatus) return doneStatus.id;
+    const closedStatus = statuses.find((s) => s.category === "closed");
+    if (closedStatus) return closedStatus.id;
+    const nameMatch = statuses.find((s) => {
+      const n = s.name.toLowerCase();
+      return n.includes("done") || n.includes("selesai") || n.includes("complete");
+    });
+    if (nameMatch) return nameMatch.id;
+    return statuses[statuses.length - 1].id;
+  }
+
+  if (normalized === "CANCELLED") {
+    const closedStatus = statuses.find((s) => s.category === "closed");
+    if (closedStatus) return closedStatus.id;
+    const doneStatus = statuses.find((s) => s.category === "done");
+    if (doneStatus) return doneStatus.id;
+    return statuses[statuses.length - 1].id;
+  }
+
+  if (normalized === "ON_PROGRESS") {
+    const inProgressStatus = statuses.find((s) => s.category === "in_progress");
+    if (inProgressStatus) return inProgressStatus.id;
+    const nameMatch = statuses.find((s) => {
+      const n = s.name.toLowerCase();
+      return n.includes("progress") || n.includes("jalan") || n.includes("doing");
+    });
+    if (nameMatch) return nameMatch.id;
+    return statuses[Math.min(1, statuses.length - 1)].id;
+  }
+
+  // Default / UPCOMING -> category open / todo
+  const openStatus = statuses.find((s) => s.category === "open");
+  if (openStatus) return openStatus.id;
+  return statuses[0].id;
+}
+
+/**
+ * Maps a Task status category & name to a Field Event status.
+ */
+export function mapTaskCategoryToEventStatus(
+  category?: string,
+  statusName?: string
+): "UPCOMING" | "ON_PROGRESS" | "COMPLETED" | "CANCELLED" {
+  const cat = (category || "").toLowerCase();
+  const name = (statusName || "").toLowerCase();
+
+  if (cat === "done" || cat === "closed" || name.includes("done") || name.includes("selesai")) {
+    return "COMPLETED";
+  }
+  if (cat === "in_progress" || cat === "review" || name.includes("progress") || name.includes("doing")) {
+    return "ON_PROGRESS";
+  }
+  return "UPCOMING";
+}
+
+export interface EventDateRangeResult {
+  formatted: string;
+  durationDays: number;
+  isMultiDay: boolean;
+  startDateFormatted: string;
+  endDateFormatted?: string;
+}
+
+/**
+ * Formats event date range and calculates duration in days.
+ */
+export function formatEventDateRange(
+  date?: string | null,
+  endDate?: string | null
+): EventDateRangeResult {
+  const rawStart = date ? date.slice(0, 10) : "";
+  const rawEnd = endDate ? endDate.slice(0, 10) : "";
+
+  if (!rawStart) {
+    return {
+      formatted: "TBD",
+      durationDays: 0,
+      isMultiDay: false,
+      startDateFormatted: "TBD",
+    };
+  }
+
+  const startFormatted = formatDate(rawStart);
+
+  if (!rawEnd || rawEnd === rawStart) {
+    return {
+      formatted: startFormatted,
+      durationDays: 1,
+      isMultiDay: false,
+      startDateFormatted: startFormatted,
+    };
+  }
+
+  const endFormatted = formatDate(rawEnd);
+
+  // Compute days difference
+  const startMs = new Date(rawStart).getTime();
+  const endMs = new Date(rawEnd).getTime();
+  const diffDays = Math.max(1, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1);
+
+  return {
+    formatted: `${startFormatted} – ${endFormatted}`,
+    durationDays: diffDays,
+    isMultiDay: diffDays > 1,
+    startDateFormatted: startFormatted,
+    endDateFormatted: endFormatted,
+  };
+}
+
+export interface EventConflictItem {
+  eventId: string;
+  eventName: string;
+  branchName: string;
+  isSameBranch: boolean;
+}
+
+export interface EventConflictDetail {
+  conflictingEventIds: string[];
+  branchName: string;
+  hasSameBranchConflict: boolean;
+  hasCrossBranchConflict: boolean;
+  sameBranchCount: number;
+  crossBranchCount: number;
+  sameBranchConflicts: EventConflictItem[];
+  crossBranchConflicts: EventConflictItem[];
+  message: string;
+}
+
+/**
+ * Detects schedule clashes/conflicts where two or more non-cancelled events
+ * have overlapping dates:
+ * - Same branch clash (Venue & local team overlap)
+ * - Cross branch clash (Simultaneous activations across different branches)
+ */
+export function detectEventConflicts(
+  events: {
+    id: string;
+    branchName?: string;
+    date?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    status: string;
+    name: string;
+  }[]
+): Map<string, EventConflictDetail> {
+  const conflictMap = new Map<string, EventConflictDetail>();
+  if (!Array.isArray(events) || events.length < 2) return conflictMap;
+
+  // Filter out cancelled events and events without branch or date
+  const activeEvents = events.filter((e) => {
+    if (e.status === "CANCELLED") return false;
+    const start = (e.startDate || e.date)?.slice(0, 10);
+    return Boolean(start && e.branchName?.trim());
+  });
+
+  const getOrCreateDetail = (ev: typeof activeEvents[0]): EventConflictDetail => {
+    let detail = conflictMap.get(ev.id);
+    if (!detail) {
+      detail = {
+        conflictingEventIds: [],
+        branchName: ev.branchName || "Main Branch",
+        hasSameBranchConflict: false,
+        hasCrossBranchConflict: false,
+        sameBranchCount: 0,
+        crossBranchCount: 0,
+        sameBranchConflicts: [],
+        crossBranchConflicts: [],
+        message: "",
+      };
+      conflictMap.set(ev.id, detail);
+    }
+    return detail;
+  };
+
+  for (let i = 0; i < activeEvents.length; i++) {
+    const a = activeEvents[i];
+    const aStart = (a.startDate || a.date)!.slice(0, 10);
+    const aEnd = (a.endDate || a.startDate || a.date)!.slice(0, 10);
+    const aBranch = a.branchName!.trim().toLowerCase();
+
+    for (let j = i + 1; j < activeEvents.length; j++) {
+      const b = activeEvents[j];
+      const bBranch = b.branchName!.trim().toLowerCase();
+      const bStart = (b.startDate || b.date)!.slice(0, 10);
+      const bEnd = (b.endDate || b.startDate || b.date)!.slice(0, 10);
+
+      // Overlap condition: startA <= endB && endA >= startB
+      if (aStart <= bEnd && aEnd >= bStart) {
+        const isSame = aBranch === bBranch;
+        const detailA = getOrCreateDetail(a);
+        const detailB = getOrCreateDetail(b);
+
+        if (!detailA.conflictingEventIds.includes(b.id)) {
+          detailA.conflictingEventIds.push(b.id);
+        }
+        if (!detailB.conflictingEventIds.includes(a.id)) {
+          detailB.conflictingEventIds.push(a.id);
+        }
+
+        if (isSame) {
+          detailA.sameBranchConflicts.push({
+            eventId: b.id,
+            eventName: b.name,
+            branchName: b.branchName!,
+            isSameBranch: true,
+          });
+          detailB.sameBranchConflicts.push({
+            eventId: a.id,
+            eventName: a.name,
+            branchName: a.branchName!,
+            isSameBranch: true,
+          });
+        } else {
+          detailA.crossBranchConflicts.push({
+            eventId: b.id,
+            eventName: b.name,
+            branchName: b.branchName!,
+            isSameBranch: false,
+          });
+          detailB.crossBranchConflicts.push({
+            eventId: a.id,
+            eventName: a.name,
+            branchName: a.branchName!,
+            isSameBranch: false,
+          });
+        }
+      }
+    }
+  }
+
+  // Finalize messages and flags for each entry
+  for (const [, detail] of conflictMap) {
+    detail.sameBranchCount = detail.sameBranchConflicts.length;
+    detail.crossBranchCount = detail.crossBranchConflicts.length;
+    detail.hasSameBranchConflict = detail.sameBranchCount > 0;
+    detail.hasCrossBranchConflict = detail.crossBranchCount > 0;
+
+    const sameNames = detail.sameBranchConflicts.map((c) => c.eventName).join(", ");
+    const crossBranches = Array.from(
+      new Set(detail.crossBranchConflicts.map((c) => c.branchName))
+    ).join(", ");
+    const crossNames = detail.crossBranchConflicts.map((c) => c.eventName).join(", ");
+
+    if (detail.hasSameBranchConflict && detail.hasCrossBranchConflict) {
+      detail.message = `Bentrok venue di cabang "${detail.branchName}" dengan "${sameNames}", dan aktivasi bersamaan antar-cabang dengan ${crossBranches} ("${crossNames}")`;
+    } else if (detail.hasSameBranchConflict) {
+      detail.message = `Bentrok jadwal di cabang "${detail.branchName}" dengan "${sameNames}"`;
+    } else if (detail.hasCrossBranchConflict) {
+      detail.message = `Jadwal aktivasi bersamaan antar-cabang dengan ${crossBranches} ("${crossNames}")`;
+    }
+  }
+
+  return conflictMap;
+}
+
+/**
+ * Fires an async background PATCH to update the linked Field Event status
+ * when a Task's status is changed in Kanban board or Task modal.
+ */
+export function syncFieldEventOnTaskStatusChange(
+  task: Task | undefined,
+  newStatusId: string,
+  spaces: Space[]
+): void {
+  if (!task || !task.relatedMarcomId || !task.title?.startsWith("[Field Event]")) {
+    return;
+  }
+  const space = findSpaceByListId(spaces, task.listId);
+  const nextStatus = space?.statuses.find((s) => s.id === newStatusId);
+  const mappedEventStatus = mapTaskCategoryToEventStatus(
+    nextStatus?.category,
+    nextStatus?.name
+  );
+  if (typeof window !== "undefined" && typeof fetch === "function") {
+    fetch(`/api/marcom/events/${task.relatedMarcomId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: mappedEventStatus }),
+    }).catch(() => {});
+  }
+}
+

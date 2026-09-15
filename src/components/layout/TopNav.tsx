@@ -28,6 +28,9 @@ import {
   Megaphone,
   Plus,
   Settings,
+  ArrowLeft,
+  Flag,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSession, signOut } from "next-auth/react";
@@ -236,6 +239,8 @@ export function TopNav() {
     currentUserId,
     setCurrentUserId,
     setExportCenterOpen,
+    navigatedFromMarcom,
+    setNavigatedFromMarcom,
   } = useWorkspaceStore();
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
@@ -796,6 +801,35 @@ export function TopNav() {
                 }`}
               />
             </button>
+
+            {/* Quick return to Marcom if navigated from there */}
+            {navigatedFromMarcom && (
+              <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetView = (navigatedFromMarcom.view as any) || "events";
+                    setNavigatedFromMarcom(null);
+                    setAppMode("marcom");
+                    setActiveView(targetView);
+                    toast.info(`Kembali ke ${navigatedFromMarcom.label}`);
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 border border-blue-500/30 text-[11px] font-semibold transition-colors cursor-pointer"
+                  title={`Kembali ke ${navigatedFromMarcom.label}`}
+                >
+                  <ArrowLeft className="w-3 h-3" />
+                  <span>Kembali ke {navigatedFromMarcom.label}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNavigatedFromMarcom(null)}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer rounded"
+                  title="Dismiss return shortcut"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Center: View Switcher Tabs */}

@@ -72,6 +72,7 @@ export async function POST(request: Request) {
     postPlatform,
     postFormat,
     mediaUrl,
+    footage,
   } = body ?? {};
 
   if (!name || !eventType) {
@@ -82,6 +83,17 @@ export async function POST(request: Request) {
   }
 
   const eventDate = startDate || date;
+
+  const footageData = Array.isArray(footage)
+    ? footage
+        .filter((f: any) => f && (f.title || f.filePath))
+        .map((f: any) => ({
+          title: String(f.title || "Footage").trim(),
+          filePath: String(f.filePath || "").trim(),
+          duration: String(f.duration || "").trim(),
+        }))
+        .filter((f: any) => f.filePath)
+    : [];
 
   const event = await prisma.marcomEvent.create({
     data: {
@@ -101,6 +113,7 @@ export async function POST(request: Request) {
       postPlatform,
       postFormat,
       mediaUrl,
+      ...(footageData.length > 0 ? { footage: { create: footageData } } : {}),
     },
     include: eventInclude,
   });

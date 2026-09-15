@@ -201,6 +201,17 @@ export interface ContentPostItem {
 
 export type ContentPost = ContentPostItem;
 
+export type EventStatus = "UPCOMING" | "ON_PROGRESS" | "COMPLETED" | "CANCELLED";
+
+export interface EventFootage {
+  id: string;
+  eventId?: string;
+  fieldEventId?: string;
+  title: string;
+  filePath: string;
+  duration?: string;
+}
+
 export interface FieldEventItem {
   id: string;
   workspaceId?: string;
@@ -211,13 +222,14 @@ export interface FieldEventItem {
   location?: string;
   branchName?: string;
   picName?: string;
-  status: "UPCOMING" | "ON_PROGRESS" | "COMPLETED" | "CANCELLED";
+  status: EventStatus;
   budget: number;
   targetAttendee: number;
   attendeeCount: number;
   notes?: string;
   date?: string | null;
-  footage?: { id: string; eventId?: string; fieldEventId?: string; title: string; filePath: string; duration?: string }[];
+  mediaUrl?: string | null;
+  footage?: EventFootage[];
   createdAt?: string;
   updatedAt?: string;
 }

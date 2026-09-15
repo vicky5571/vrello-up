@@ -26,11 +26,16 @@ import {
   ListTodo,
   RotateCcw,
   X,
+  Clock,
+  GanttChart,
+  AlertTriangle,
+  Play,
+  Folder,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { formatDate, cn, formatIDR } from "@/lib/utils";
-import type { Task, Subtask, User } from "@/types";
+import type { Task, Subtask, User, FieldEventItem, EventStatus, EventFootage } from "@/types";
 import {
   getWorkspaceSpacesAndLists,
   findSpaceByListId,
@@ -41,45 +46,27 @@ import {
   findMemberForPic,
   buildEventDescription,
   buildEventTaskPayload,
+  mapEventStatusToTaskStatusId,
+  formatEventDateRange,
+  detectEventConflicts,
 } from "@/lib/tasks/eventTaskSync";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
 import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
+import { EventsCalendarView } from "./EventsCalendarView";
+import { EventsTimelineView } from "./EventsTimelineView";
+import { EventFootageModal } from "./EventFootageModal";
+import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
+import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
+import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
 
-export type EventStatus = "UPCOMING" | "ON_PROGRESS" | "COMPLETED" | "CANCELLED";
+export type FieldEvent = FieldEventItem;
+export type MarcomEvent = FieldEventItem;
+export type { EventStatus, EventFootage };
 
-export interface EventFootage {
-  id: string;
-  eventId?: string;
-  fieldEventId?: string;
-  title: string;
-  filePath: string;
-  duration: string;
-}
-
-export interface FieldEvent {
-  id: string;
-  name: string;
-  date?: string | null;
-  startDate?: string | null;
-  endDate?: string | null;
-  location: string;
-  branchName: string;
-  picName: string;
-  eventType: string;
-  status: EventStatus;
-  budget: number;
-  attendeeCount: number;
-  targetAttendee: number;
-  notes: string;
-  footage?: EventFootage[];
-}
-
-export type MarcomEvent = FieldEvent;
-
-export type ActivityViewMode = "cards" | "table";
+export type ActivityViewMode = "cards" | "table" | "calendar" | "timeline";
 
 const STATUS_CONFIG: Record<
   EventStatus,
@@ -147,6 +134,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     activeListId,
     marcomFilters,
     setMarcomFilter,
+    setNavigatedFromMarcom,
   } = useWorkspaceStore();
 
   const currentWorkspace =
@@ -207,11 +195,31 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   const [eventAttendeeCount, setEventAttendeeCount] = useState<number>(0);
   const [eventNotes, setEventNotes] = useState("");
 
-  // Footage attachments
+  // Footage attachments & documentation storage
   const [eventFootageList, setEventFootageList] = useState<EventFootage[]>([]);
   const [newFootageTitle, setNewFootageTitle] = useState("");
   const [newFootageDuration, setNewFootageDuration] = useState("");
   const [newFootagePath, setNewFootagePath] = useState("");
+  const [eventMediaUrl, setEventMediaUrl] = useState("");
+  const [activeFootageEvent, setActiveFootageEvent] = useState<FieldEvent | null>(null);
+  const [activeClipIndex, setActiveClipIndex] = useState(0);
+
+  // Google Drive Picker
+  const {
+    openSelector: openDriveSelector,
+    isModalOpen: isDriveModalOpen,
+    closeModal: closeDriveModal,
+    handleManualAttach,
+  } = useGoogleDrivePicker();
+
+  const openFootageModal = useCallback((event: FieldEvent, clipIdx = 0) => {
+    setActiveFootageEvent(event);
+    setActiveClipIndex(clipIdx);
+  }, []);
+
+  const closeFootageModal = useCallback(() => {
+    setActiveFootageEvent(null);
+  }, []);
 
   // Target Space & List selection
   const [targetSpaceId, setTargetSpaceId] = useState<string>("");
@@ -274,13 +282,13 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   };
 
   // Open Create Modal
-  const openCreateModal = useCallback(() => {
+  const openCreateModal = useCallback((defaultDate?: string) => {
     setEditId(null);
     setEventName("");
     setEventType("Roadshow");
     setEventBranchName(branches[0]?.name || "Jakarta Central");
     setEventLocation("");
-    setEventStartDate(new Date().toISOString().slice(0, 10));
+    setEventStartDate(defaultDate || new Date().toISOString().slice(0, 10));
     setEventEndDate("");
     const defaultMember = members[0];
     setPicMemberId(defaultMember?.id || "");
@@ -290,6 +298,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setEventTargetAttendee(250);
     setEventAttendeeCount(0);
     setEventNotes("");
+    setEventMediaUrl("");
     setEventFootageList([]);
     setNewFootageTitle("");
     setNewFootageDuration("");
@@ -326,6 +335,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setEventTargetAttendee(event.targetAttendee || 100);
     setEventAttendeeCount(event.attendeeCount || 0);
     setEventNotes(event.notes || "");
+    setEventMediaUrl(event.mediaUrl || "");
     setEventFootageList(event.footage || []);
     setNewFootageTitle("");
     setNewFootageDuration("");
@@ -399,21 +409,25 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   // Add footage
   const handleAddFootage = () => {
     if (!newFootageTitle.trim()) {
-      toast.error("Footage title is required");
+      toast.error("Judul klip footage wajib diisi");
+      return;
+    }
+    if (!newFootagePath.trim()) {
+      toast.error("Tautan video / URL Google Drive wajib diisi");
       return;
     }
     const newFootage: EventFootage = {
       id: `vid-${Date.now()}`,
       eventId: editId || "",
       title: newFootageTitle.trim(),
-      filePath: newFootagePath.trim() || "https://assets.mixkit.co/videos/preview/mixkit-crowd-at-an-outdoor-festival-42523-large.mp4",
+      filePath: newFootagePath.trim(),
       duration: newFootageDuration.trim() || "01:30",
     };
     setEventFootageList((prev) => [...prev, newFootage]);
     setNewFootageTitle("");
     setNewFootageDuration("");
     setNewFootagePath("");
-    toast.success("Footage item added");
+    toast.success("Klip footage berhasil ditambahkan");
   };
 
   const handleRemoveFootage = (id: string) => {
@@ -443,6 +457,8 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         targetAttendee: Number(eventTargetAttendee) || 0,
         attendeeCount: Number(eventAttendeeCount) || 0,
         notes: eventNotes.trim(),
+        mediaUrl: eventMediaUrl.trim() || undefined,
+        footage: eventFootageList,
         workspaceId: activeWorkspaceId,
       };
 
@@ -474,8 +490,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
       const chosenListId =
         targetListId || activeListId || "list-field-ops";
       const targetSpace = rawSpaces.find((s) => s.id === targetSpaceId);
-      const targetStatus =
-        targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
+      const targetStatus = mapEventStatusToTaskStatusId(
+        eventStatus,
+        targetSpace?.statuses || statuses
+      );
 
       const formattedSubtasks: Subtask[] = eventSubtasks.map((s, i) => ({
         id: s.id || `sub-${Date.now()}-${i}`,
@@ -521,6 +539,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
             targetAttendee: Number(eventTargetAttendee) || 0,
             notes: eventNotes,
           }),
+          statusId: targetStatus,
           dueDate: eventStartDate || undefined,
           assignees: picMember ? [picMember] : [],
           subtasks: formattedSubtasks,
@@ -554,6 +573,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         targetAttendee: Number(eventTargetAttendee) || 0,
         attendeeCount: Number(eventAttendeeCount) || 0,
         notes: eventNotes,
+        mediaUrl: eventMediaUrl.trim() || null,
         footage: eventFootageList,
       };
 
@@ -638,6 +658,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         setActiveSpace(owningSpace.id);
         setActiveList(existing.listId);
       }
+      setNavigatedFromMarcom({ view: "events", label: "Field Events" });
       setAppMode("tasks");
       setActiveView("board");
       setSelectedTaskId(existing.id);
@@ -653,6 +674,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
       createTask,
       setActiveSpace,
       setActiveList,
+      setNavigatedFromMarcom,
       setAppMode,
       setActiveView,
       setSelectedTaskId,
@@ -683,14 +705,21 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     return list;
   }, [events, selectedStatus, searchQuery]);
 
-  // KPI calculations
+  // Conflict detection
+  const conflicts = useMemo(() => detectEventConflicts(events), [events]);
+
+  // KPI calculations (exclude CANCELLED events from committed budget and target footfall)
+  const nonCancelledEvents = useMemo(
+    () => events.filter((e) => e.status !== "CANCELLED"),
+    [events]
+  );
   const totalActivations = events.length;
   const activeCount = events.filter(
     (e) => e.status === "UPCOMING" || e.status === "ON_PROGRESS"
   ).length;
-  const totalCommittedBudget = events.reduce((sum, e) => sum + (e.budget || 0), 0);
-  const totalTargetAttendees = events.reduce((sum, e) => sum + (e.targetAttendee || 0), 0);
-  const totalActualAttendees = events.reduce((sum, e) => sum + (e.attendeeCount || 0), 0);
+  const totalCommittedBudget = nonCancelledEvents.reduce((sum, e) => sum + (e.budget || 0), 0);
+  const totalTargetAttendees = nonCancelledEvents.reduce((sum, e) => sum + (e.targetAttendee || 0), 0);
+  const totalActualAttendees = nonCancelledEvents.reduce((sum, e) => sum + (e.attendeeCount || 0), 0);
 
   const kpis: KpiCardItem[] = [
     {
@@ -750,10 +779,15 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                   {typeStyle.label}
                 </span>
                 {e.footage && e.footage.length > 0 && (
-                  <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => openFootageModal(e, 0)}
+                    className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-[10px] cursor-pointer font-medium"
+                    title="Tonton video footage & B-roll"
+                  >
                     <Film className="w-3 h-3 text-blue-500" />
-                    {e.footage.length} footage
-                  </span>
+                    <span>{e.footage.length} footage ▶</span>
+                  </button>
                 )}
               </div>
             </div>
@@ -779,17 +813,46 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           );
         },
       }),
-      columnHelper.accessor("date", {
+      columnHelper.accessor((row) => row.startDate || row.date || "", {
+        id: "date",
         header: "Schedule",
-        size: 150,
+        size: 210,
         cell: ({ row }) => {
           const e = row.original;
+          const range = formatEventDateRange(e.date || e.startDate, e.endDate);
+          const conflict = conflicts.get(e.id);
           return (
-            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
-              <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span>
-                {e.date ? formatDate(e.date) : "TBD"}
-              </span>
+            <div className="flex flex-col gap-1 text-xs text-slate-600 dark:text-slate-300">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                <span className="font-medium text-slate-800 dark:text-slate-200">
+                  {range.formatted}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1 pl-5">
+                {range.isMultiDay && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/40">
+                    Durasi {range.durationDays} hari
+                  </span>
+                )}
+                {conflict?.hasSameBranchConflict && (
+                  <span
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60"
+                    title={conflict.message}
+                  >
+                    <AlertTriangle className="w-2.5 h-2.5 text-amber-500" />
+                    Bentrok Cabang
+                  </span>
+                )}
+                {conflict?.hasCrossBranchConflict && (
+                  <span
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/60"
+                    title={conflict.message}
+                  >
+                    🌐 {conflict.crossBranchCount} Cabang Bersamaan
+                  </span>
+                )}
+              </div>
             </div>
           );
         },
@@ -888,20 +951,14 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
               .find((l) => l.id === linkedTask?.listId);
 
           return (
-            <button
-              type="button"
-              onClick={() => navigateToTask(e)}
-              className="group/loc flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer text-left transition-colors"
-              title="Klik untuk melihat task di Kanban Board"
-            >
-              <Layers className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+              <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span className="truncate font-medium">
                 {linkedSpace && linkedList
                   ? `${linkedSpace.name} › ${linkedList.name}`
-                  : "Workspace Task"}
+                  : "Belum ditautkan"}
               </span>
-              <ExternalLink className="w-3 h-3 opacity-0 group-hover/loc:opacity-100 shrink-0 text-blue-500 transition-opacity" />
-            </button>
+            </div>
           );
         },
       }),
@@ -947,7 +1004,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         },
       }),
     ],
-    [tasks, rawSpaces, members, openEditModal, navigateToTask, handleDeleteEvent]
+    [tasks, rawSpaces, members, openEditModal, navigateToTask, handleDeleteEvent, conflicts, openFootageModal]
   );
 
   return (
@@ -998,6 +1055,34 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
             >
               <TableProperties className="w-3.5 h-3.5" />
               Table
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("calendar")}
+              className={cn(
+                "p-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5",
+                viewMode === "calendar"
+                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+              )}
+              title="Calendar Month View"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              Calendar
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("timeline")}
+              className={cn(
+                "p-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5",
+                viewMode === "timeline"
+                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+              )}
+              title="Timeline (Gantt) View"
+            >
+              <GanttChart className="w-3.5 h-3.5" />
+              Timeline
             </button>
           </div>
 
@@ -1103,6 +1188,19 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
             Try Again
           </button>
         </div>
+      ) : viewMode === "calendar" ? (
+        <EventsCalendarView
+          events={filteredEvents}
+          conflicts={conflicts}
+          onSelectEvent={openEditModal}
+          onOpenCreateModal={openCreateModal}
+        />
+      ) : viewMode === "timeline" ? (
+        <EventsTimelineView
+          events={filteredEvents}
+          conflicts={conflicts}
+          onSelectEvent={openEditModal}
+        />
       ) : filteredEvents.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-center px-4">
           <div className="w-12 h-12 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3">
@@ -1118,7 +1216,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           </p>
           <button
             type="button"
-            onClick={openCreateModal}
+            onClick={() => openCreateModal()}
             className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs"
           >
             <Plus className="w-4 h-4" />
@@ -1190,13 +1288,37 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                       <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span>{event.branchName || "Main Branch"}</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                      <span>
-                        {event.date ? formatDate(event.date) : "Date TBD"}
-                        {event.endDate && ` – ${formatDate(event.endDate)}`}
-                      </span>
-                    </div>
+                    {(() => {
+                      const range = formatEventDateRange(event.startDate || event.date, event.endDate);
+                      const conflict = conflicts.get(event.id);
+                      return (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                              <span className="truncate">{range.formatted}</span>
+                            </div>
+                            {range.isMultiDay && (
+                              <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/50">
+                                {range.durationDays} hari
+                              </span>
+                            )}
+                          </div>
+                          {conflict?.hasSameBranchConflict && (
+                            <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                              <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                              <span className="truncate">Bentrok venue di cabang ini</span>
+                            </div>
+                          )}
+                          {conflict?.hasCrossBranchConflict && (
+                            <div className="flex items-center gap-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">
+                              <span className="shrink-0">🌐</span>
+                              <span className="truncate">{conflict.crossBranchCount} cabang aktivasi bersamaan</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Metrics: Budget & Attendance */}
@@ -1228,11 +1350,93 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                     </div>
                   </div>
 
-                  {/* Video Footage summary badge if any */}
-                  {event.footage && event.footage.length > 0 && (
-                    <div className="mt-3 flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800/60 text-[11px] text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
-                      <Film className="w-3.5 h-3.5 text-blue-500" />
-                      <span>{event.footage.length} B-roll clips attached</span>
+                  {/* Video Footage Showcase & Interactive Player Trigger */}
+                  {((event.footage && event.footage.length > 0) || event.mediaUrl) && (
+                    <div className="mt-3 space-y-2">
+                      {/* Video Preview Thumbnail / Frame */}
+                      {(() => {
+                        const primaryClip = event.footage?.[0];
+                        const clipUrl = primaryClip?.filePath || event.mediaUrl;
+                        if (!clipUrl) return null;
+                        const driveInfo = parseGoogleDriveUrl(clipUrl);
+                        const isVideo =
+                          clipUrl.endsWith(".mp4") ||
+                          clipUrl.endsWith(".mov") ||
+                          clipUrl.endsWith(".webm") ||
+                          clipUrl.includes("mixkit.co");
+
+                        return (
+                          <div
+                            onClick={() => openFootageModal(event, 0)}
+                            className="group/player relative rounded-xl overflow-hidden aspect-video bg-slate-950 border border-slate-200/80 dark:border-slate-800 cursor-pointer shadow-xs hover:border-blue-500/50 transition-all"
+                            title="Klik untuk menonton video dokumentasi"
+                          >
+                            {driveInfo.isValid && driveInfo.embedUrl ? (
+                              <iframe
+                                src={driveInfo.embedUrl}
+                                title={primaryClip?.title || event.name}
+                                className="w-full h-full border-0 pointer-events-none"
+                              />
+                            ) : isVideo ? (
+                              <video
+                                src={clipUrl}
+                                preload="metadata"
+                                className="w-full h-full object-cover opacity-80 group-hover/player:opacity-100 transition-opacity"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950/40 to-slate-900 p-3 text-center">
+                                <Film className="w-8 h-8 text-blue-400 mb-1 opacity-70" />
+                                <span className="text-[11px] text-slate-300 font-medium truncate max-w-full">
+                                  {primaryClip?.title || "Dokumentasi Lapangan"}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Play Button Overlay */}
+                            <div className="absolute inset-0 bg-black/35 group-hover/player:bg-black/15 flex items-center justify-center transition-colors">
+                              <div className="w-10 h-10 rounded-full bg-blue-600/90 text-white flex items-center justify-center shadow-lg group-hover/player:scale-110 transition-transform">
+                                <Play className="w-4 h-4 fill-current ml-0.5" />
+                              </div>
+                            </div>
+
+                            {/* Clip Duration Pill */}
+                            {primaryClip?.duration && (
+                              <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/75 text-white text-[10px] font-mono font-medium backdrop-blur-xs">
+                                {primaryClip.duration}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Interactive Button & Links Bar */}
+                      <div className="flex items-center justify-between text-[11px]">
+                        {event.footage && event.footage.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => openFootageModal(event, 0)}
+                            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 font-semibold transition-colors cursor-pointer"
+                          >
+                            <Film className="w-3.5 h-3.5" />
+                            <span>Tonton B-roll ({event.footage.length} klip) ▶</span>
+                          </button>
+                        ) : (
+                          <span />
+                        )}
+
+                        {event.mediaUrl && (
+                          <a
+                            href={event.mediaUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 hover:underline"
+                            title="Buka folder cloud arsip dokumentasi lapangan"
+                          >
+                            <Folder className="w-3 h-3" />
+                            <span>Folder Arsip ↗</span>
+                          </a>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -1258,14 +1462,9 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                               : "Workspace Task"}
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => navigateToTask(event)}
-                          className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer ml-2"
-                        >
-                          <span>Board</span>
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </button>
+                        <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 shrink-0 ml-2">
+                          Workspace Task
+                        </span>
                       </div>
                     );
                   })()}
@@ -1635,71 +1834,177 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
                   />
                 </div>
 
+                {/* Storage Destination & Raw Documentation Folder */}
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100">
+                      <Folder className="w-4 h-4 text-amber-500" />
+                      <span>Folder Arsip Dokumentasi Lapangan (Storage Destination)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openDriveSelector({
+                          defaultKind: "all",
+                          onSelect: (atts) => {
+                            if (atts[0]) {
+                              setEventMediaUrl(atts[0].url);
+                              toast.success("Folder dokumentasi Google Drive berhasil dipilih");
+                            }
+                          },
+                        })
+                      }
+                      className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Pilih dari Google Drive</span>
+                    </button>
+                  </div>
+                  <input
+                    type="url"
+                    placeholder="https://drive.google.com/drive/folders/... atau URL cloud storage arsip raw footage"
+                    value={eventMediaUrl}
+                    onChange={(e) => setEventMediaUrl(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden font-mono text-[11px]"
+                  />
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Tautan folder tempat tim dokumentasi menyimpan seluruh aset foto, video mentah (raw footage), dan materi liputan acara.
+                  </p>
+                </div>
+
                 {/* B-roll Video Footage Manager */}
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100">
                       <Film className="w-4 h-4 text-blue-500" />
-                      <span>Event Footage & B-roll Assets</span>
+                      <span>Klip Video B-Roll & Dokumentasi Highlight</span>
                     </div>
                     <span className="text-[11px] text-slate-400">
-                      {eventFootageList.length} attached
+                      {eventFootageList.length} klip terlampir
                     </span>
                   </div>
 
                   {eventFootageList.length > 0 && (
-                    <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                      {eventFootageList.map((f) => (
+                    <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                      {eventFootageList.map((f, idx) => (
                         <div
-                          key={f.id}
-                          className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"
+                          key={f.id || idx}
+                          className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"
                         >
-                          <div className="flex items-center gap-2 truncate pr-2">
-                            <Video className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                            <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
-                              {f.title}
-                            </span>
-                            <span className="text-slate-400 font-mono text-[10px]">
-                              ({f.duration})
-                            </span>
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            <Video className="w-4 h-4 text-blue-500 shrink-0" />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                  {f.title}
+                                </span>
+                                <span className="text-[10px] font-mono text-slate-400">
+                                  ({f.duration || "01:30"})
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-slate-400 truncate block font-mono">
+                                {f.filePath}
+                              </span>
+                            </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveFootage(f.id)}
-                            className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer transition-colors"
-                            title="Remove footage clip"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                openFootageModal(
+                                  {
+                                    id: editId || "temp",
+                                    name: eventName || "Preview",
+                                    eventType,
+                                    status: eventStatus,
+                                    budget: Number(eventBudget) || 0,
+                                    targetAttendee: 0,
+                                    attendeeCount: 0,
+                                    footage: eventFootageList,
+                                    mediaUrl: eventMediaUrl,
+                                  },
+                                  idx
+                                );
+                              }}
+                              className="p-1 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+                              title="Putar / Preview video"
+                            >
+                              <Play className="w-3 h-3 fill-current" />
+                              <span>Putar</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFootage(f.id)}
+                              className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer transition-colors"
+                              title="Hapus klip"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Add footage input line */}
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-1">
-                    <input
-                      type="text"
-                      placeholder="Footage Title (e.g. Crowd Highlights)"
-                      value={newFootageTitle}
-                      onChange={(e) => setNewFootageTitle(e.target.value)}
-                      className="sm:col-span-2 px-2.5 py-1.5 rounded-md text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Duration (e.g. 02:15)"
-                      value={newFootageDuration}
-                      onChange={(e) => setNewFootageDuration(e.target.value)}
-                      className="px-2.5 py-1.5 rounded-md text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddFootage}
-                      className="px-3 py-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-semibold flex items-center justify-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Add Clip
-                    </button>
+                  {/* Add footage input form */}
+                  <div className="p-3 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/60 dark:bg-slate-800/40 space-y-2">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                      <span>Tambah Klip Baru:</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openDriveSelector({
+                            defaultKind: "video",
+                            onSelect: (atts) => {
+                              if (atts[0]) {
+                                setNewFootagePath(atts[0].url);
+                                if (!newFootageTitle.trim()) {
+                                  setNewFootageTitle(atts[0].name.replace(/\.[^/.]+$/, ""));
+                                }
+                                toast.success("Video Google Drive berhasil dipilih");
+                              }
+                            },
+                          })
+                        }
+                        className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Pilih dari Google Drive</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <input
+                        type="text"
+                        placeholder="Judul Klip (misal: Crowd Highlights)"
+                        value={newFootageTitle}
+                        onChange={(e) => setNewFootageTitle(e.target.value)}
+                        className="sm:col-span-2 px-2.5 py-1.5 rounded-md text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Durasi (misal: 02:15)"
+                        value={newFootageDuration}
+                        onChange={(e) => setNewFootageDuration(e.target.value)}
+                        className="px-2.5 py-1.5 rounded-md text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="url"
+                        placeholder="URL Video (Google Drive / Direct MP4 / WebM / Cloud URL)"
+                        value={newFootagePath}
+                        onChange={(e) => setNewFootagePath(e.target.value)}
+                        className="flex-1 px-2.5 py-1.5 rounded-md text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono text-[11px]"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddFootage}
+                        className="px-3.5 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1 shrink-0 cursor-pointer shadow-2xs"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Tambah Klip
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1934,6 +2239,22 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Event Footage Player Modal */}
+      <EventFootageModal
+        isOpen={Boolean(activeFootageEvent)}
+        onClose={closeFootageModal}
+        event={activeFootageEvent}
+        initialClipIndex={activeClipIndex}
+      />
+
+      {/* Google Drive Link Modal */}
+      <GoogleDriveLinkModal
+        isOpen={isDriveModalOpen}
+        onClose={closeDriveModal}
+        onAttach={handleManualAttach}
+        defaultKind="video"
+      />
     </div>
   );
 }

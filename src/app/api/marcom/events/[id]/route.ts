@@ -53,6 +53,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (data.status !== undefined && !VALID_STATUSES.includes(data.status as (typeof VALID_STATUSES)[number])) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
+
+  if (body?.footage !== undefined && Array.isArray(body.footage)) {
+    const footageData = body.footage
+      .filter((f: any) => f && (f.title || f.filePath))
+      .map((f: any) => ({
+        title: String(f.title || "Footage").trim(),
+        filePath: String(f.filePath || "").trim(),
+        duration: String(f.duration || "").trim(),
+      }))
+      .filter((f: any) => f.filePath);
+
+    data["footage"] = {
+      deleteMany: {},
+      create: footageData,
+    };
+  }
+
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
   }

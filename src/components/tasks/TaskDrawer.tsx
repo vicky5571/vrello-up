@@ -35,6 +35,8 @@ import {
   Folder,
   ExternalLink,
   ChevronRight,
+  ArrowLeft,
+  Flag,
 } from "lucide-react";
 import { TiptapEditor } from "./TiptapEditor";
 import { SubtaskManager } from "./SubtaskManager";
@@ -88,6 +90,8 @@ export function TaskDrawer() {
     toggleTaskTag,
     presenceByTaskId,
     currentUserId,
+    navigatedFromMarcom,
+    setNavigatedFromMarcom,
   } = useWorkspaceStore();
 
   const liveTask = tasks.find((t) => t.id === selectedTaskId);
@@ -364,6 +368,33 @@ export function TaskDrawer() {
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
             className="relative z-10 w-full max-w-2xl sm:max-w-3xl h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
           >
+            {/* Return to Marcom / Field Events Banner */}
+            {(navigatedFromMarcom || (task?.relatedMarcomId && task?.title?.startsWith("[Field Event]"))) && (
+              <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-transparent border-b border-blue-200/80 dark:border-blue-900/60 px-4 py-2 flex items-center justify-between text-xs shrink-0">
+                <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 min-w-0 pr-2">
+                  <Flag className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <span className="font-medium truncate">
+                    Tautan Aktif: {navigatedFromMarcom?.label || "Field Events"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const targetView = (navigatedFromMarcom?.view as any) || "events";
+                    setSelectedTaskId(null);
+                    setNavigatedFromMarcom(null);
+                    setAppMode("marcom");
+                    setActiveView(targetView);
+                    toast.info("Kembali ke Field Events");
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] shadow-2xs transition-all cursor-pointer shrink-0"
+                >
+                  <ArrowLeft className="w-3 h-3" />
+                  <span>Kembali ke Field Events</span>
+                </button>
+              </div>
+            )}
+
             {/* Header / Actions */}
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
               <div className="flex items-center flex-wrap gap-1.5 text-xs text-slate-500 font-medium min-w-0">

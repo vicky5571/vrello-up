@@ -28,6 +28,7 @@ import {
   buildInitialWorkspace,
   removeWorkspaceAndCascadeTasks,
 } from "@/lib/store/workspaceCrud";
+import { syncFieldEventOnTaskStatusChange } from "@/lib/tasks/eventTaskSync";
 
 // Default Seed Users
 export const SEED_USERS: User[] = [
@@ -492,8 +493,10 @@ interface WorkspaceState {
   lastSeenNotificationsAt: string | null;
   marcomFilters: Record<string, string>;
   selectedBranchId: string | null;
+  navigatedFromMarcom: { view: ViewMode | string; label: string } | null;
 
   // Actions
+  setNavigatedFromMarcom: (context: { view: ViewMode | string; label: string } | null) => void;
   setAppMode: (mode: AppMode) => void;
   setCommandPaletteOpen: (open: boolean) => void;
   openCommandPalette: () => void;
@@ -1184,7 +1187,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       appMode: "tasks",
       lastTaskView: "list",
       lastMarcomView: "events",
+      navigatedFromMarcom: null,
 
+      setNavigatedFromMarcom: (context) => set({ navigatedFromMarcom: context }),
       setAppMode: (mode) =>
         set((state) => {
           if (state.appMode === mode) return {};
@@ -1398,6 +1403,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           ),
         }));
         syncUpdateTask(id, updates);
+        if (updates.statusId && prev?.relatedMarcomId) {
+          const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
+          syncFieldEventOnTaskStatusChange(prev, updates.statusId, currentWs?.spaces || []);
+        }
         // rule-1 "Auto-assign Urgent Tasks": assign the lead and ensure a
         // due date of today. Nested updateTask can't refire (no priority key).
         if (!escalatesToUrgent || !get().automationEnabled["rule-1"]) return;
@@ -1540,6 +1549,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           statusId: newStatusId,
           orderIndex: newOrderIndex,
         });
+        if (prev?.relatedMarcomId) {
+          const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
+          syncFieldEventOnTaskStatusChange(prev, newStatusId, currentWs?.spaces || []);
+        }
         // rule-2 "Completion Notification": log completion with assignee count.
         if (!prev || prev.statusId === newStatusId) return;
         const state = get();
