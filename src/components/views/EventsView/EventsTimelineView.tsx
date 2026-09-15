@@ -111,9 +111,9 @@ export function EventsTimelineView({
       if (!detail) continue;
       const rawStart = (e.startDate || e.date)?.slice(0, 10);
       const rawEnd = (e.endDate || e.startDate || e.date)?.slice(0, 10) || rawStart;
-      if (!rawStart) continue;
-      const sObj = new Date(rawStart);
-      const eObj = new Date(rawEnd);
+      if (!rawStart || !rawEnd) continue;
+      const sObj = new Date(`${rawStart}T00:00:00`);
+      const eObj = new Date(`${rawEnd}T00:00:00`);
       if (eObj >= windowStart && sObj <= windowEnd) {
         if (detail.hasSameBranchConflict) sameBranch++;
         if (detail.hasCrossBranchConflict) crossBranch++;
@@ -371,7 +371,9 @@ export function EventsTimelineView({
                                 <span className="text-[10px] font-bold opacity-80 shrink-0" title="Activation started before current visible window">◀</span>
                               )}
                               {eventConflict?.hasSameBranchConflict && (
-                                <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-200" title="Venue clash in this branch" />
+                                <span title="Venue clash in this branch">
+                                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-200" />
+                                </span>
                               )}
                               {eventConflict?.hasCrossBranchConflict && !eventConflict.hasSameBranchConflict && (
                                 <span className="text-[10px] shrink-0" title="Simultaneous cross-branch activation">🌐</span>

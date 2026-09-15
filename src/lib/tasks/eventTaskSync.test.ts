@@ -1,18 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node strip-types requires explicit .ts extension
-import {
-  getEventChecklistTemplate,
-  findMemberForPic,
-  buildEventTaskPayload,
-  buildEventDescription,
-  mapEventStatusToTaskStatusId,
-  mapTaskCategoryToEventStatus,
-  formatEventDateRange,
-  detectEventConflicts,
-  calculateFieldEventsKPI,
-  calculateTimelineBarMetrics,
-} from "./eventTaskSync.ts";
+import { getEventChecklistTemplate, findMemberForPic, buildEventTaskPayload, buildEventDescription, mapEventStatusToTaskStatusId, mapTaskCategoryToEventStatus, formatEventDateRange, detectEventConflicts, calculateFieldEventsKPI, calculateTimelineBarMetrics } from "./eventTaskSync.ts";
 import type { User, Subtask, Status } from "@/types";
 
 const mockMembers: User[] = [
