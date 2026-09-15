@@ -31,6 +31,8 @@ import {
   Loader2,
   Paperclip,
   Eye,
+  Folder,
+  ExternalLink,
 } from "lucide-react";
 import { TiptapEditor } from "./TiptapEditor";
 import { SubtaskManager } from "./SubtaskManager";
@@ -39,6 +41,10 @@ import { formatDate, cn } from "@/lib/utils";
 import { toastTaskDeleted } from "@/lib/tasks/deleteUndo";
 import { toast } from "sonner";
 import { useState, useEffect, useRef } from "react";
+import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
+import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
+import { GoogleDrivePreviewModal } from "@/components/ui/GoogleDrivePreviewModal";
+import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
 
 function formatBytes(bytes: number): string {
   if (!bytes || bytes <= 0) return "0 B";
@@ -104,6 +110,13 @@ export function TaskDrawer() {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<TaskAttachment | null>(null);
+  const [drivePreviewAttachment, setDrivePreviewAttachment] = useState<TaskAttachment | null>(null);
+  const {
+    openSelector,
+    isModalOpen: isDriveModalOpen,
+    closeModal: closeDriveModal,
+    handleManualAttach,
+  } = useGoogleDrivePicker();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (files: FileList | null) => {
@@ -551,34 +564,98 @@ export function TaskDrawer() {
                     className="w-full px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-teal-500"
                   />
 
-                  {task.mediaUrl && (
-                    <div className="relative rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video bg-slate-900 flex items-center justify-center max-h-48">
-                      {task.mediaUrl.endsWith(".mp4") ? (
-                        <video
-                          src={task.mediaUrl}
-                          controls
-                          className="w-full h-full object-contain"
-                        />
-                      ) : (
-                        /* eslint-disable-next-line @next/next/no-img-element */
+                  {task.mediaUrl && (() => {
+                    const parsedDriveCover = parseGoogleDriveUrl(task.mediaUrl);
+                    if (task.mediaUrl.endsWith(".mp4")) {
+                      return (
+                        <div className="relative rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video bg-slate-900 flex items-center justify-center max-h-48">
+                          <video
+                            src={task.mediaUrl}
+                            controls
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      );
+                    }
+                    if (parsedDriveCover.isValid && parsedDriveCover.embedUrl) {
+                      return (
+                        <div className="relative rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video bg-slate-900 flex items-center justify-center max-h-48">
+                          <iframe
+                            src={parsedDriveCover.embedUrl}
+                            title="Cover preview"
+                            className="w-full h-full border-0"
+                            allow="autoplay"
+                          />
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="relative rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video bg-slate-900 flex items-center justify-center max-h-48">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={task.mediaUrl}
                           alt="Content preview"
                           className="w-full h-full object-cover"
                         />
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Multi-File Footage & Attachments */}
                 <div className="space-y-2.5 pt-2 border-t border-teal-100 dark:border-teal-900/40">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                       <Paperclip className="w-3 h-3 text-teal-600" />
                       Footage & Attachments ({(task.attachments || []).length})
                     </label>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400">Max 25MB per file (MP4, PNG, JPG, PDF)</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openSelector({
+                            onSelect: (newAtts) => {
+                              const updated = [...(task.attachments || []), ...newAtts];
+                              const updates: Partial<Task> = { attachments: updated };
+                              if (!task.mediaUrl && newAtts[0]?.url) {
+                                updates.mediaUrl = newAtts[0].url;
+                              }
+                              updateTask(task.id, updates);
+                              toast.success(`Berhasil menambahkan ${newAtts.length} aset Google Drive`);
+                            },
+                          })
+                        }
+                        className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 dark:hover:bg-teal-900/60 cursor-pointer transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 87.3 78" fill="none">
+                          <path
+                            d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z"
+                            fill="#0066DA"
+                          />
+                          <path
+                            d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44c-.8 1.4-1.2 2.95-1.2 4.5h27.5z"
+                            fill="#00AC47"
+                          />
+                          <path
+                            d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l6.85-11.85 3.8-6.65c.8-1.4 1.2-2.95 1.2-4.5h-55.2l13.75 23.8z"
+                            fill="#EA4335"
+                          />
+                          <path
+                            d="m43.65 25 13.75-23.8c-1.35-.8-2.95-1.2-4.5-1.2h-18.5c-1.55 0-3.15.4-4.5 1.2z"
+                            fill="#00832D"
+                          />
+                          <path
+                            d="m57.4 1.2-13.75 23.8 27.6 47.7c.8-1.35 1.2-2.95 1.2-4.5l-25.4-44c-.8-1.4-1.95-2.5-3.3-3.3z"
+                            fill="#FFBA00"
+                          />
+                          <path
+                            d="m73.55 76.8h-46.05l-13.75-23.8h55.2z"
+                            fill="#2684FC"
+                          />
+                        </svg>
+                        <span>Google Drive</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Hidden File Input */}
@@ -632,6 +709,7 @@ export function TaskDrawer() {
                         const isVideo = att.type === "video" || att.name.endsWith(".mp4");
                         const isImg = att.type === "image";
                         const isCover = task.mediaUrl === att.url;
+                        const isFolder = Boolean(att.isSharedFolder);
 
                         return (
                           <div
@@ -640,7 +718,9 @@ export function TaskDrawer() {
                           >
                             <div className="flex items-center gap-2 overflow-hidden min-w-0">
                               <span className="p-1 rounded bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-400 shrink-0">
-                                {isVideo ? (
+                                {isFolder ? (
+                                  <Folder className="w-3.5 h-3.5 text-amber-500" />
+                                ) : isVideo ? (
                                   <Film className="w-3.5 h-3.5" />
                                 ) : isImg ? (
                                   <ImageIcon className="w-3.5 h-3.5" />
@@ -650,7 +730,20 @@ export function TaskDrawer() {
                               </span>
                               <div className="truncate min-w-0">
                                 <div className="font-semibold text-slate-800 dark:text-slate-200 truncate flex items-center gap-1.5">
-                                  <span>{att.name}</span>
+                                  <span className="truncate">{att.name}</span>
+                                  {att.source === "gdrive" && (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/60 shrink-0">
+                                      <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 87.3 78" fill="none">
+                                        <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066DA" />
+                                        <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00AC47" />
+                                        <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l6.85-11.85 3.8-6.65c.8-1.4 1.2-2.95 1.2-4.5h-55.2l13.75 23.8z" fill="#EA4335" />
+                                        <path d="m43.65 25 13.75-23.8c-1.35-.8-2.95-1.2-4.5-1.2h-18.5c-1.55 0-3.15.4-4.5 1.2z" fill="#00832D" />
+                                        <path d="m57.4 1.2-13.75 23.8 27.6 47.7c.8-1.35 1.2-2.95 1.2-4.5l-25.4-44c-.8-1.4-1.95-2.5-3.3-3.3z" fill="#FFBA00" />
+                                        <path d="m73.55 76.8h-46.05l-13.75-23.8h55.2z" fill="#2684FC" />
+                                      </svg>
+                                      Drive
+                                    </span>
+                                  )}
                                   {isCover && (
                                     <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
                                       Cover
@@ -658,7 +751,12 @@ export function TaskDrawer() {
                                   )}
                                 </div>
                                 <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                                  {formatBytes(att.sizeBytes)} • {att.uploadedAt ? formatDate(att.uploadedAt) : "Uploaded"}
+                                  {att.sizeBytes && att.sizeBytes > 0
+                                    ? `${formatBytes(att.sizeBytes)} • `
+                                    : att.source === "gdrive"
+                                    ? "Google Drive • "
+                                    : ""}
+                                  {att.uploadedAt ? formatDate(att.uploadedAt) : "Uploaded"}
                                 </div>
                               </div>
                             </div>
@@ -667,7 +765,13 @@ export function TaskDrawer() {
                               {/* Preview / Play */}
                               <button
                                 type="button"
-                                onClick={() => setPreviewAttachment(att)}
+                                onClick={() => {
+                                  if (att.source === "gdrive" || att.embedUrl || att.driveFileId) {
+                                    setDrivePreviewAttachment(att);
+                                  } else {
+                                    setPreviewAttachment(att);
+                                  }
+                                }}
                                 title={isVideo ? "Play footage" : "Preview file"}
                                 className="p-1 rounded text-slate-500 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                               >
@@ -689,11 +793,13 @@ export function TaskDrawer() {
                               {/* Download Link */}
                               <a
                                 href={att.url}
-                                download={att.name}
-                                title="Download file"
+                                download={att.source === "gdrive" ? undefined : att.name}
+                                target={att.source === "gdrive" ? "_blank" : undefined}
+                                rel={att.source === "gdrive" ? "noopener noreferrer" : undefined}
+                                title={att.source === "gdrive" ? "Buka di Google Drive" : "Download file"}
                                 className="p-1 rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                               >
-                                <Download className="w-3.5 h-3.5" />
+                                {att.source === "gdrive" ? <ExternalLink className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
                               </a>
 
                               {/* Delete */}
@@ -1124,6 +1230,19 @@ export function TaskDrawer() {
               </div>
             </div>
           )}
+
+          {/* Google Drive Link Modal */}
+          <GoogleDriveLinkModal
+            isOpen={isDriveModalOpen}
+            onClose={closeDriveModal}
+            onAttach={handleManualAttach}
+          />
+
+          {/* Google Drive Preview Modal */}
+          <GoogleDrivePreviewModal
+            attachment={drivePreviewAttachment}
+            onClose={() => setDrivePreviewAttachment(null)}
+          />
         </div>
       )}
     </AnimatePresence>
