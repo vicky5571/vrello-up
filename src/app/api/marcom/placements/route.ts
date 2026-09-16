@@ -11,39 +11,47 @@ const placementInclude = {
 } as const;
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get("workspaceId") || "ws-main";
-  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
-  if (authError) return authError;
+  try {
+    const { searchParams } = new URL(request.url);
+    const workspaceId = searchParams.get("workspaceId") || "ws-main";
+    const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
+    if (authError) return authError;
 
-  const outletId = searchParams.get("outletId");
-  const status = searchParams.get("status");
-  const query = searchParams.get("q")?.toLowerCase();
+    const outletId = searchParams.get("outletId");
+    const status = searchParams.get("status");
+    const query = searchParams.get("q")?.toLowerCase();
 
-  if (status && status !== "ALL" && !VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-  }
+    if (status && status !== "ALL" && !VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
 
-  const where: Prisma.PlacementWhereInput = {
-    workspaceId,
-  };
-  if (outletId && outletId !== "ALL") {
-    where.outletId = outletId;
-  }
-  if (status && status !== "ALL") {
-    where.status = status as (typeof VALID_STATUSES)[number];
-  }
-  if (query) {
-    const contains = { contains: query, mode: "insensitive" as const };
-    where.OR = [{ picName: contains }, { notes: contains }, { dimensions: contains }];
-  }
+    const where: Prisma.PlacementWhereInput = {
+      workspaceId,
+    };
+    if (outletId && outletId !== "ALL") {
+      where.outletId = outletId;
+    }
+    if (status && status !== "ALL") {
+      where.status = status as (typeof VALID_STATUSES)[number];
+    }
+    if (query) {
+      const contains = { contains: query, mode: "insensitive" as const };
+      where.OR = [{ picName: contains }, { notes: contains }, { dimensions: contains }];
+    }
 
-  const placements = await prisma.placement.findMany({
-    where,
-    orderBy: { id: "asc" },
-    include: placementInclude,
-  });
-  return NextResponse.json({ total: placements.length, data: placements });
+    const placements = await prisma.placement.findMany({
+      where,
+      orderBy: { id: "asc" },
+      include: placementInclude,
+    });
+    return NextResponse.json({ total: placements.length, data: placements });
+  } catch (err) {
+    console.error("GET /api/marcom/placements error:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Failed to load placements" },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(request: Request) {
