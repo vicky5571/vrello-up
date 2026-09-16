@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardList, Download, Plus, Edit2, CheckSquare, Store, X } from "lucide-react";
+import { ClipboardList, Download, Plus, Edit2, CheckSquare, Store, X, MapPin, ExternalLink } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn, formatIDR } from "@/lib/utils";
@@ -10,6 +10,8 @@ import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
+import { LocationPicker } from "./LocationPicker";
+import { buildGoogleMapsUrl, isValidCoordinate } from "@/lib/marcom/locationUtils";
 
 export type PlacementStatus = "NOT_STARTED" | "ON_PROGRESS" | "DONE" | "ISSUE";
 
@@ -24,6 +26,10 @@ export interface MarcomPlacement {
   dimensions: string;
   cost: number;
   notes: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  shareLocationUrl?: string;
+  locationNotes?: string;
   outlet?: { id: string; code: string; name: string };
   material?: { id: string; type: string; name: string };
 }
@@ -226,7 +232,22 @@ export function PlacementsView() {
   const handleSavePlacement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!modalPlacement) return;
-    const { id, outletId, materialId, status, dimensions, cost, picName, notes, photoUrl, date } = modalPlacement;
+    const {
+      id,
+      outletId,
+      materialId,
+      status,
+      dimensions,
+      cost,
+      picName,
+      notes,
+      photoUrl,
+      date,
+      latitude,
+      longitude,
+      shareLocationUrl,
+      locationNotes,
+    } = modalPlacement;
     if (!outletId || !materialId) {
       toast.error("Outlet and Material are required");
       return;
@@ -239,7 +260,22 @@ export function PlacementsView() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ outletId, materialId, status: status || "NOT_STARTED", dimensions: dimensions || "", cost: cost != null ? Number(cost) : undefined, picName: picName || "", notes: notes || "", photoUrl: photoUrl || "", date: date || new Date().toISOString(), workspaceId: activeWorkspaceId }),
+        body: JSON.stringify({
+          outletId,
+          materialId,
+          status: status || "NOT_STARTED",
+          dimensions: dimensions || "",
+          cost: cost != null ? Number(cost) : undefined,
+          picName: picName || "",
+          notes: notes || "",
+          photoUrl: photoUrl || "",
+          date: date || new Date().toISOString(),
+          workspaceId: activeWorkspaceId,
+          latitude: typeof latitude === "number" ? latitude : null,
+          longitude: typeof longitude === "number" ? longitude : null,
+          shareLocationUrl: shareLocationUrl || "",
+          locationNotes: locationNotes || "",
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -278,7 +314,23 @@ export function PlacementsView() {
         deleteRequiresMessage="Delete requires staff or admin role"
         onDeleteOne={deleteOne}
         canAdd={canManage}
-        onAdd={() => setModalPlacement({ outletId: outletsList[0]?.id || "", materialId: materialsList[0]?.id || "", status: "NOT_STARTED", dimensions: "", cost: undefined, picName: "", notes: "", photoUrl: "", date: new Date().toISOString().slice(0, 10) })}
+        onAdd={() =>
+          setModalPlacement({
+            outletId: outletsList[0]?.id || "",
+            materialId: materialsList[0]?.id || "",
+            status: "NOT_STARTED",
+            dimensions: "",
+            cost: undefined,
+            picName: "",
+            notes: "",
+            photoUrl: "",
+            date: new Date().toISOString().slice(0, 10),
+            latitude: null,
+            longitude: null,
+            shareLocationUrl: "",
+            locationNotes: "",
+          })
+        }
         addLabel="Add Placement"
         addIcon={Plus}
         addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer"
@@ -288,39 +340,72 @@ export function PlacementsView() {
             <span>Export</span>
           </button>
         }
-        renderExpanded={(placement) => (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Dimensions</div>
-                <div className="text-slate-700 dark:text-slate-300">{placement.dimensions || "—"}</div>
+        renderExpanded={(placement) => {
+          const hasCoords = isValidCoordinate(
+            placement.latitude ?? Number.NaN,
+            placement.longitude ?? Number.NaN,
+          );
+          return (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Dimensions</div>
+                  <div className="text-slate-700 dark:text-slate-300">{placement.dimensions || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC</div>
+                  <div className="text-slate-700 dark:text-slate-300">{placement.picName || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Lokasi & GPS</div>
+                  <div className="text-slate-700 dark:text-slate-300">
+                    {hasCoords ? (
+                      <div className="space-y-0.5">
+                        <a
+                          href={buildGoogleMapsUrl(placement.latitude as number, placement.longitude as number)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+                        >
+                          <MapPin className="w-3 h-3 text-emerald-500" />
+                          <span>Lihat di Maps</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                        {placement.locationNotes && (
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                            {placement.locationNotes}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 italic">Belum ada titik GPS</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Notes</div>
+                  <div className="text-slate-700 dark:text-slate-300">{placement.notes || "—"}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC</div>
-                <div className="text-slate-700 dark:text-slate-300">{placement.picName || "—"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Notes</div>
-                <div className="text-slate-700 dark:text-slate-300">{placement.notes || "—"}</div>
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">Track installation checklist & operations in workspace:</span>
-              <div className="flex items-center gap-2">
-                {canManage && (
-                  <button type="button" onClick={(e) => { e.stopPropagation(); setModalPlacement(placement); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
-                    <Edit2 className="w-3.5 h-3.5 text-lime-600" />
-                    <span>Edit Placement</span>
+              <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">Track installation checklist & operations in workspace:</span>
+                <div className="flex items-center gap-2">
+                  {canManage && (
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setModalPlacement(placement); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
+                      <Edit2 className="w-3.5 h-3.5 text-lime-600" />
+                      <span>Edit Placement</span>
+                    </button>
+                  )}
+                  <button type="button" onClick={(e) => { e.stopPropagation(); handleTrackAsTask(placement); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer">
+                    <CheckSquare className="w-3.5 h-3.5" />
+                    <span>Track as Task Progress</span>
                   </button>
-                )}
-                <button type="button" onClick={(e) => { e.stopPropagation(); handleTrackAsTask(placement); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer">
-                  <CheckSquare className="w-3.5 h-3.5" />
-                  <span>Track as Task Progress</span>
-                </button>
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          );
+        }}
         filterBar={
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
@@ -351,7 +436,7 @@ export function PlacementsView() {
 
       {modalPlacement && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+          <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <ClipboardList className="w-4 h-4 text-lime-600" />
@@ -415,6 +500,18 @@ export function PlacementsView() {
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Notes</label>
                 <textarea rows={2} placeholder="Additional installation requirements..." value={modalPlacement.notes || ""} onChange={(e) => setModalPlacement({ ...modalPlacement, notes: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500" />
               </div>
+
+              {/* Location & GPS Shareloc Picker */}
+              <LocationPicker
+                latitude={modalPlacement.latitude}
+                longitude={modalPlacement.longitude}
+                shareLocationUrl={modalPlacement.shareLocationUrl}
+                locationNotes={modalPlacement.locationNotes}
+                onChange={(loc) =>
+                  setModalPlacement((prev) => (prev ? { ...prev, ...loc } : prev))
+                }
+              />
+
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button type="button" onClick={() => setModalPlacement(null)} disabled={isSaving} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
                 <button type="submit" disabled={isSaving} className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50">{isSaving ? "Saving..." : modalPlacement.id ? "Update Placement" : "Create Placement"}</button>

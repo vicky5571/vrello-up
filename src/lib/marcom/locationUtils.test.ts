@@ -1,12 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import {
-  parseCoordinatesFromText,
-  parseGoogleMapsUrl,
-  isValidCoordinate,
-  buildGoogleMapsUrl,
-} from "./locationUtils.ts";
+import { parseCoordinatesFromText, parseGoogleMapsUrl, isValidCoordinate, buildGoogleMapsUrl } from "./locationUtils.ts";
 
 describe("locationUtils", () => {
   it("parses raw comma-separated coordinates", () => {
