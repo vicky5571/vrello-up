@@ -251,6 +251,10 @@ export interface Placement {
   dimensions?: string;
   cost?: number;
   notes?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  shareLocationUrl?: string;
+  locationNotes?: string;
   outlet?: { id: string; code: string; name: string };
   material?: { id: string; type: string; name: string };
 }

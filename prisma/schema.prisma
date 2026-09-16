@@ -107,6 +107,7 @@ model Outlet {
   picName    String      @default("")
   picPhone   String      @default("")
   active     Boolean     @default(true)
+  brand      String      @default("")
   branchId   String
   branch     Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
   placements Placement[]
@@ -134,6 +135,11 @@ model Placement {
   dimensions  String          @default("")
   cost        Float           @default(0)
   notes       String          @default("")
+
+  latitude         Float?
+  longitude        Float?
+  shareLocationUrl String          @default("")
+  locationNotes    String          @default("")
 
   @@index([workspaceId])
 }
