@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
   if (authError) return authError;
 
-  const { outletId, materialId, status, date, picName, photoUrl, dimensions, cost, notes } = body ?? {};
+  const { outletId, materialId, status, date, picName, photoUrl, dimensions, cost, notes, latitude, longitude, shareLocationUrl, locationNotes } = body ?? {};
   if (!outletId || !materialId) {
     return NextResponse.json({ error: "Missing required fields: outletId, materialId" }, { status: 400 });
   }
@@ -60,9 +60,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
+  const parsedLat = typeof latitude === "number" && !Number.isNaN(latitude) ? latitude : null;
+  const parsedLng = typeof longitude === "number" && !Number.isNaN(longitude) ? longitude : null;
+
   try {
     const placement = await prisma.placement.create({
-      data: { workspaceId, outletId, materialId, status, date, picName, photoUrl, dimensions, cost, notes },
+      data: {
+        workspaceId,
+        outletId,
+        materialId,
+        status,
+        date,
+        picName,
+        photoUrl,
+        dimensions,
+        cost,
+        notes,
+        latitude: parsedLat,
+        longitude: parsedLng,
+        shareLocationUrl: typeof shareLocationUrl === "string" ? shareLocationUrl : "",
+        locationNotes: typeof locationNotes === "string" ? locationNotes : "",
+      },
       include: placementInclude,
     });
     return NextResponse.json(placement, { status: 201 });

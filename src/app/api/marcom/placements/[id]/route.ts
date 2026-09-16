@@ -5,7 +5,21 @@ import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { canTransitionPlacement, type PlacementStatus } from "@/lib/marcom/placementMachine";
 
 const VALID_STATUSES = ["NOT_STARTED", "ON_PROGRESS", "DONE", "ISSUE"] as const;
-const PATCHABLE_FIELDS = ["outletId", "materialId", "status", "date", "picName", "photoUrl", "dimensions", "cost", "notes"] as const;
+const PATCHABLE_FIELDS = [
+  "outletId",
+  "materialId",
+  "status",
+  "date",
+  "picName",
+  "photoUrl",
+  "dimensions",
+  "cost",
+  "notes",
+  "latitude",
+  "longitude",
+  "shareLocationUrl",
+  "locationNotes",
+] as const;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
