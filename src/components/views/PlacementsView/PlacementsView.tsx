@@ -27,6 +27,7 @@ import {
 } from "@/components/views/shared/MarcomTableShell";
 import { LocationPicker } from "./LocationPicker";
 import { buildGoogleMapsUrl, isValidCoordinate } from "@/lib/marcom/locationUtils";
+import { getBrandMeta, BRAND_CONFIG } from "@/lib/marcom/brandUtils";
 
 const PlacementsMapView = dynamic(
   () => import("./PlacementsMapView").then((mod) => mod.PlacementsMapView),
@@ -50,6 +51,7 @@ export interface MarcomPlacement {
   outletId: string;
   materialId: string;
   status: PlacementStatus;
+  brand?: "IM3" | "3" | string;
   date: string | null;
   picName: string;
   photoUrl: string;
@@ -60,11 +62,17 @@ export interface MarcomPlacement {
   longitude?: number | null;
   shareLocationUrl?: string;
   locationNotes?: string;
-  outlet?: { id: string; code: string; name: string };
+  outlet?: { id: string; code: string; name: string; brand?: string };
   material?: { id: string; type: string; name: string };
 }
 
 const columnHelper = createMarcomColumnHelper<MarcomPlacement>();
+
+const BRAND_CHIPS: { label: string; value: string; color?: string }[] = [
+  { label: "All Brands", value: "ALL" },
+  { label: "IM3", value: "IM3", color: "#EAB308" },
+  { label: "3 (Tri)", value: "3", color: "#EC4899" },
+];
 
 const PLACEMENT_STATUS_CHIPS: { label: string; value: string }[] = [
   { label: "All", value: "ALL" },
@@ -99,8 +107,9 @@ export function PlacementsView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [selectedBrand, setSelectedBrand] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<"table" | "map">("table");
-  const [outletsList, setOutletsList] = useState<{ id: string; name: string }[]>([]);
+  const [outletsList, setOutletsList] = useState<{ id: string; name: string; brand?: string }[]>([]);
   const [materialsList, setMaterialsList] = useState<{ id: string; name: string }[]>([]);
   const [modalPlacement, setModalPlacement] = useState<Partial<MarcomPlacement> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -109,24 +118,32 @@ export function PlacementsView() {
 
   const filteredPlacements = useMemo(() => {
     const query = (marcomFilters["placements"] || "").toLowerCase().trim();
-    if (!query) return placements;
     return placements.filter((p) => {
+      if (selectedBrand !== "ALL") {
+        const pBrand = (p.brand || "IM3").toUpperCase();
+        const target = selectedBrand.toUpperCase();
+        if (target === "3" && pBrand !== "3" && pBrand !== "TRI") return false;
+        if (target === "IM3" && pBrand !== "IM3") return false;
+      }
+      if (!query) return true;
       const outlet = p.outlet?.name?.toLowerCase() || "";
       const code = p.outlet?.code?.toLowerCase() || "";
       const material = p.material?.name?.toLowerCase() || "";
       const pic = p.picName?.toLowerCase() || "";
       const notes = p.notes?.toLowerCase() || "";
       const locNotes = p.locationNotes?.toLowerCase() || "";
+      const brand = (p.brand || "").toLowerCase();
       return (
         outlet.includes(query) ||
         code.includes(query) ||
         material.includes(query) ||
         pic.includes(query) ||
         notes.includes(query) ||
-        locNotes.includes(query)
+        locNotes.includes(query) ||
+        brand.includes(query)
       );
     });
-  }, [placements, marcomFilters]);
+  }, [placements, marcomFilters, selectedBrand]);
 
   const handleTrackAsTask = (placement: MarcomPlacement) => {
     const existing = tasks.find((t) => t.relatedMarcomId === placement.id);
@@ -161,7 +178,7 @@ export function PlacementsView() {
   };
 
   const fetchPlacements = useCallback(
-    async (statusFilter = selectedStatus) => {
+    async (statusFilter = selectedStatus, brandFilter = selectedBrand) => {
       setIsLoading(true);
       setError(null);
       try {
@@ -169,6 +186,9 @@ export function PlacementsView() {
         params.set("workspaceId", activeWorkspaceId);
         if (statusFilter && statusFilter !== "ALL") {
           params.set("status", statusFilter);
+        }
+        if (brandFilter && brandFilter !== "ALL") {
+          params.set("brand", brandFilter);
         }
         const placementsUrl = `/api/marcom/placements?${params.toString()}`;
         const [resPlacements, resOutlets, resMaterials] = await Promise.all([
@@ -193,17 +213,23 @@ export function PlacementsView() {
         setIsLoading(false);
       }
     },
-    [selectedStatus, activeWorkspaceId],
+    [selectedStatus, selectedBrand, activeWorkspaceId],
   );
 
   useEffect(() => {
-    fetchPlacements(selectedStatus);
-  }, [fetchPlacements, selectedStatus, activeWorkspaceId]);
+    fetchPlacements(selectedStatus, selectedBrand);
+  }, [fetchPlacements, selectedStatus, selectedBrand, activeWorkspaceId]);
 
   const handleStatusFilter = (status: string) => {
     const next = selectedStatus === status && status !== "ALL" ? "ALL" : status;
     setSelectedStatus(next);
-    fetchPlacements(next);
+    fetchPlacements(next, selectedBrand);
+  };
+
+  const handleBrandFilter = (brand: string) => {
+    const next = selectedBrand === brand && brand !== "ALL" ? "ALL" : brand;
+    setSelectedBrand(next);
+    fetchPlacements(selectedStatus, next);
   };
 
   const columns = useMemo(
@@ -244,6 +270,21 @@ export function PlacementsView() {
                 <Store className="w-3.5 h-3.5 text-orange-500 shrink-0" />
                 <span className="truncate">{outletName ?? row.original.outletId}</span>
               </button>
+            );
+          },
+        }),
+        columnHelper.display({
+          id: "brand",
+          header: "Brand",
+          size: 110,
+          minSize: 90,
+          cell: ({ row }) => {
+            const bMeta = getBrandMeta(row.original.brand);
+            return (
+              <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold", bMeta.badgeClass)}>
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: bMeta.color }} />
+                <span>{bMeta.label}</span>
+              </span>
             );
           },
         }),
@@ -289,6 +330,7 @@ export function PlacementsView() {
       outletId,
       materialId,
       status,
+      brand,
       dimensions,
       cost,
       picName,
@@ -316,6 +358,7 @@ export function PlacementsView() {
           outletId,
           materialId,
           status: status || "NOT_STARTED",
+          brand: brand || "IM3",
           dimensions: dimensions || "",
           cost: cost != null ? Number(cost) : undefined,
           picName: picName || "",
@@ -403,6 +446,12 @@ export function PlacementsView() {
               outletId: outletsList[0]?.id || "",
               materialId: materialsList[0]?.id || "",
               status: "NOT_STARTED",
+              brand:
+                outletsList[0]?.brand &&
+                (outletsList[0].brand.toUpperCase() === "3" ||
+                  outletsList[0].brand.toUpperCase() === "TRI")
+                  ? "3"
+                  : "IM3",
               dimensions: "",
               cost: undefined,
               picName: "",
@@ -420,6 +469,29 @@ export function PlacementsView() {
           addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer"
           headerExtra={
             <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+                {BRAND_CHIPS.map((chip) => {
+                  const isActive = selectedBrand === chip.value;
+                  return (
+                    <button
+                      key={chip.value}
+                      type="button"
+                      onClick={() => handleBrandFilter(chip.value)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                        isActive
+                          ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+                      )}
+                    >
+                      {chip.color && (
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: chip.color }} />
+                      )}
+                      <span>{chip.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
               {viewSwitcherControls}
               <button
                 type="button"
@@ -578,6 +650,12 @@ export function PlacementsView() {
                       outletId: outletsList[0]?.id || "",
                       materialId: materialsList[0]?.id || "",
                       status: "NOT_STARTED",
+                      brand:
+                        outletsList[0]?.brand &&
+                        (outletsList[0].brand.toUpperCase() === "3" ||
+                          outletsList[0].brand.toUpperCase() === "TRI")
+                          ? "3"
+                          : "IM3",
                       dimensions: "",
                       cost: undefined,
                       picName: "",
@@ -600,30 +678,59 @@ export function PlacementsView() {
           </div>
 
           {/* Filter Bar in Map Mode */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
-              {PLACEMENT_STATUS_CHIPS.map((chip) => {
-                const isActive = selectedStatus === chip.value;
-                return (
-                  <button
-                    key={chip.value}
-                    type="button"
-                    onClick={() => handleStatusFilter(chip.value)}
-                    className={cn(
-                      "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
-                      isActive
-                        ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
-                    )}
-                  >
-                    {chip.label}
-                  </button>
-                );
-              })}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Brand Chips */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Brand:</span>
+                {BRAND_CHIPS.map((chip) => {
+                  const isActive = selectedBrand === chip.value;
+                  return (
+                    <button
+                      key={chip.value}
+                      type="button"
+                      onClick={() => handleBrandFilter(chip.value)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
+                        isActive
+                          ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
+                      )}
+                    >
+                      {chip.color && (
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: chip.color }} />
+                      )}
+                      <span>{chip.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Status Chips */}
+              <div className="flex items-center gap-1.5 border-l border-slate-200 dark:border-slate-800 pl-3">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
+                {PLACEMENT_STATUS_CHIPS.map((chip) => {
+                  const isActive = selectedStatus === chip.value;
+                  return (
+                    <button
+                      key={chip.value}
+                      type="button"
+                      onClick={() => handleStatusFilter(chip.value)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
+                        isActive
+                          ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
+                      )}
+                    >
+                      {chip.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full md:w-64">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
@@ -667,17 +774,80 @@ export function PlacementsView() {
               </button>
             </div>
             <form onSubmit={handleSavePlacement} className="space-y-3">
+              {/* Brand Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Brand *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalPlacement((prev) => (prev ? { ...prev, brand: "IM3" } : prev))}
+                    className={cn(
+                      "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer",
+                      (modalPlacement.brand || "IM3") === "IM3"
+                        ? "bg-yellow-400/20 text-yellow-900 dark:text-yellow-200 border-yellow-400 shadow-xs ring-2 ring-yellow-400/30"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-yellow-50/50",
+                    )}
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#EAB308]" />
+                    <span>IM3 (Kuning)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModalPlacement((prev) => (prev ? { ...prev, brand: "3" } : prev))}
+                    className={cn(
+                      "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer",
+                      modalPlacement.brand === "3"
+                        ? "bg-pink-500/20 text-pink-900 dark:text-pink-200 border-pink-500 shadow-xs ring-2 ring-pink-500/30"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-pink-50/50",
+                    )}
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#EC4899]" />
+                    <span>3 (Pink)</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Outlet *</label>
-                  <select required value={modalPlacement.outletId || ""} onChange={(e) => setModalPlacement({ ...modalPlacement, outletId: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer">
+                  <select
+                    required
+                    value={modalPlacement.outletId || ""}
+                    onChange={(e) => {
+                      const selId = e.target.value;
+                      const selOutlet = outletsList.find((o) => o.id === selId);
+                      const brandSuggestion =
+                        selOutlet?.brand &&
+                        (selOutlet.brand.toUpperCase() === "3" ||
+                          selOutlet.brand.toUpperCase() === "TRI")
+                          ? "3"
+                          : "IM3";
+                      setModalPlacement((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              outletId: selId,
+                              brand: prev.brand || brandSuggestion,
+                            }
+                          : prev,
+                      );
+                    }}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
+                  >
                     <option value="">Select Outlet...</option>
                     {outletsList.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Material *</label>
-                  <select required value={modalPlacement.materialId || ""} onChange={(e) => setModalPlacement({ ...modalPlacement, materialId: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer">
+                  <select
+                    required
+                    value={modalPlacement.materialId || ""}
+                    onChange={(e) => setModalPlacement((prev) => (prev ? { ...prev, materialId: e.target.value } : prev))}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
+                  >
                     <option value="">Select Material...</option>
                     {materialsList.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                   </select>
@@ -686,7 +856,11 @@ export function PlacementsView() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Status</label>
-                  <select value={modalPlacement.status || "NOT_STARTED"} onChange={(e) => setModalPlacement({ ...modalPlacement, status: e.target.value as PlacementStatus })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer">
+                  <select
+                    value={modalPlacement.status || "NOT_STARTED"}
+                    onChange={(e) => setModalPlacement((prev) => (prev ? { ...prev, status: e.target.value as PlacementStatus } : prev))}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
+                  >
                     <option value="NOT_STARTED">Not Started</option>
                     <option value="ON_PROGRESS">On Progress</option>
                     <option value="DONE">Done</option>
@@ -695,7 +869,13 @@ export function PlacementsView() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Dimensions</label>
-                  <input type="text" placeholder="e.g. 2x1 meter" value={modalPlacement.dimensions || ""} onChange={(e) => setModalPlacement({ ...modalPlacement, dimensions: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500" />
+                  <input
+                    type="text"
+                    placeholder="e.g. 2x1 meter"
+                    value={modalPlacement.dimensions || ""}
+                    onChange={(e) => setModalPlacement((prev) => (prev ? { ...prev, dimensions: e.target.value } : prev))}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500"
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">

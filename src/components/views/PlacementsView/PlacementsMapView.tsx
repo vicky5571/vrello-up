@@ -22,6 +22,7 @@ import {
   isValidCoordinate,
   buildGoogleMapsUrl,
 } from "@/lib/marcom/locationUtils";
+import { getBrandMeta, BRAND_CONFIG } from "@/lib/marcom/brandUtils";
 import { cn, formatIDR } from "@/lib/utils";
 
 interface PlacementsMapViewProps {
@@ -68,24 +69,37 @@ const STATUS_CONFIG: Record<
 const DEFAULT_CENTER: [number, number] = [-6.2088, 106.8456]; // Jakarta
 const DEFAULT_ZOOM = 11;
 
-function createStatusPinIcon(leaflet: typeof L, status: PlacementStatus) {
-  const config = STATUS_CONFIG[status] || STATUS_CONFIG.NOT_STARTED;
-  const pinColor = config.color;
+function createBrandPinIcon(
+  leaflet: typeof L,
+  brand?: string,
+  status: PlacementStatus = "NOT_STARTED",
+) {
+  const brandMeta = getBrandMeta(brand);
+  const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.NOT_STARTED;
+  const pinColor = brandMeta.color; // Yellow (#EAB308) for IM3, Pink (#EC4899) for 3
+  const brandCode = brandMeta.shortLabel;
+  const textColor = brandMeta.contrastColor;
+  const statusPipColor = statusCfg.color;
 
   return leaflet.divIcon({
-    className: "custom-status-pin",
+    className: "custom-brand-pin",
     html: `
-      <div style="transform: translate(-50%, -100%); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); cursor: pointer;">
-        <svg width="34" height="44" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M17 0C7.61116 0 0 7.61116 0 17C0 28.5 15.1 42.6 16.2 43.7C16.6 44.1 17.4 44.1 17.8 43.7C18.9 42.6 34 28.5 34 17C34 7.61116 26.3888 0 17 0Z" fill="${pinColor}" />
-          <circle cx="17" cy="17" r="10" fill="white" />
-          <circle cx="17" cy="17" r="5" fill="${pinColor}" />
+      <div style="transform: translate(-50%, -100%); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35)); cursor: pointer; transition: transform 0.15s ease;">
+        <svg width="36" height="46" viewBox="0 0 36 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Pin Body: Yellow for IM3, Pink for 3 -->
+          <path d="M18 0C8.05888 0 0 8.05888 0 18C0 30.2 16.1 45.1 17.2 46.1C17.6 46.5 18.4 46.5 18.8 46.1C19.9 45.1 36 30.2 36 18C36 8.05888 27.9411 0 18 0Z" fill="${pinColor}" stroke="#ffffff" stroke-width="1.5" />
+          <!-- Inner White Badge Circle -->
+          <circle cx="18" cy="18" r="11" fill="white" />
+          <!-- Brand text: IM3 or 3 -->
+          <text x="18" y="${brandCode === '3' ? 22.5 : 21.5}" font-family="system-ui, -apple-system, sans-serif" font-size="${brandCode === '3' ? '13' : '9.5'}" font-weight="900" text-anchor="middle" fill="${textColor}">${brandCode}</text>
+          <!-- Status Pip Indicator -->
+          <circle cx="27" cy="9" r="4.5" fill="${statusPipColor}" stroke="white" stroke-width="1.5" />
         </svg>
       </div>
     `,
-    iconSize: [34, 44],
-    iconAnchor: [0, 0],
-    popupAnchor: [0, -36],
+    iconSize: [36, 46],
+    iconAnchor: [18, 46],
+    popupAnchor: [0, -42],
   });
 }
 
@@ -189,7 +203,7 @@ export function PlacementsMapView({
       const lng = placement.longitude as number;
       bounds.extend([lat, lng]);
 
-      const icon = createStatusPinIcon(L, placement.status);
+      const icon = createBrandPinIcon(L, placement.brand, placement.status);
       const marker = L.marker([lat, lng], { icon });
 
       // Click event selects placement to view rich card
@@ -197,10 +211,12 @@ export function PlacementsMapView({
         setSelectedPlacement(placement);
       });
 
+      const brandMeta = getBrandMeta(placement.brand);
+
       // Simple tooltip on hover
       marker.bindTooltip(
-        `<strong>${placement.outlet?.name || "Outlet"}</strong><br/>${placement.material?.name || "Material"} (${placement.status.replace("_", " ")})`,
-        { direction: "top", offset: [0, -32] },
+        `<strong>[${brandMeta.shortLabel}] ${placement.outlet?.name || "Outlet"}</strong><br/>${placement.material?.name || "Material"} (${placement.status.replace("_", " ")})`,
+        { direction: "top", offset: [0, -38] },
       );
 
       markersGroup.addLayer(marker);
@@ -267,14 +283,28 @@ export function PlacementsMapView({
           )}
         </div>
 
-        {/* Legend pills */}
-        <div className="hidden md:flex items-center gap-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-md text-[11px] font-semibold">
-          {Object.entries(STATUS_CONFIG).map(([st, cfg]) => (
-            <div key={st} className="flex items-center gap-1 px-1.5 py-0.5 rounded-md">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cfg.color }} />
-              <span className="text-slate-600 dark:text-slate-300">{cfg.label}</span>
+        {/* Legend pills: Brand & Status */}
+        <div className="hidden lg:flex items-center gap-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-md text-[11px] font-semibold">
+          <div className="flex items-center gap-1.5 pr-2 border-r border-slate-200 dark:border-slate-750">
+            <span className="text-[10px] uppercase font-bold text-slate-400">Brand:</span>
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-yellow-400/15 text-yellow-800 dark:text-yellow-300 border border-yellow-400/30">
+              <span className="w-2 h-2 rounded-full bg-[#EAB308]" />
+              <span>IM3 (Kuning)</span>
             </div>
-          ))}
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-pink-500/15 text-pink-700 dark:text-pink-300 border border-pink-500/30">
+              <span className="w-2 h-2 rounded-full bg-[#EC4899]" />
+              <span>3 (Pink)</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400">Status:</span>
+            {Object.entries(STATUS_CONFIG).map(([st, cfg]) => (
+              <div key={st} className="flex items-center gap-1 px-1 py-0.5 rounded-md">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.color }} />
+                <span className="text-slate-600 dark:text-slate-300">{cfg.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -322,6 +352,15 @@ export function PlacementsMapView({
               </div>
             </div>
             <div className="flex items-center gap-1.5">
+              {/* Brand Badge */}
+              {(() => {
+                const bMeta = getBrandMeta(selectedPlacement.brand);
+                return (
+                  <span className={cn("px-2 py-0.5 rounded-md text-[10px] font-bold uppercase", bMeta.badgeClass)}>
+                    {bMeta.label}
+                  </span>
+                );
+              })()}
               <span
                 className={cn(
                   "px-2 py-0.5 rounded-md text-[10px] font-bold uppercase",
@@ -480,15 +519,25 @@ export function PlacementsMapView({
                     <span className="font-bold text-slate-900 dark:text-slate-100 truncate">
                       {p.outlet?.name || "Outlet"}
                     </span>
-                    <span
-                      className={cn(
-                        "text-[9px] font-bold px-1.5 py-0.5 rounded-md shrink-0 uppercase",
-                        STATUS_CONFIG[p.status]?.bg,
-                        STATUS_CONFIG[p.status]?.text,
-                      )}
-                    >
-                      {p.status.replace("_", " ")}
-                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {(() => {
+                        const bMeta = getBrandMeta(p.brand);
+                        return (
+                          <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase", bMeta.badgeClass)}>
+                            {bMeta.shortLabel}
+                          </span>
+                        );
+                      })()}
+                      <span
+                        className={cn(
+                          "text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase",
+                          STATUS_CONFIG[p.status]?.bg,
+                          STATUS_CONFIG[p.status]?.text,
+                        )}
+                      >
+                        {p.status.replace("_", " ")}
+                      </span>
+                    </div>
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                     Material: {p.material?.name || p.materialId}

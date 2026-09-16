@@ -9,6 +9,7 @@ const PATCHABLE_FIELDS = [
   "outletId",
   "materialId",
   "status",
+  "brand",
   "date",
   "picName",
   "photoUrl",
@@ -38,6 +39,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if (data.status !== undefined && !VALID_STATUSES.includes(data.status as (typeof VALID_STATUSES)[number])) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+  }
+  if (data.brand !== undefined && typeof data.brand === "string") {
+    data.brand = data.brand.toUpperCase() === "3" || data.brand.toUpperCase() === "TRI" ? "3" : "IM3";
   }
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });

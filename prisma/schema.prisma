@@ -129,6 +129,7 @@ model Placement {
   materialId  String
   material    Material        @relation(fields: [materialId], references: [id])
   status      PlacementStatus @default(NOT_STARTED)
+  brand       String          @default("IM3")
   date        DateTime?
   picName     String          @default("")
   photoUrl    String          @default("")

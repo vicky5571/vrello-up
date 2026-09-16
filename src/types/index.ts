@@ -245,6 +245,7 @@ export interface Placement {
   outletId: string;
   materialId: string;
   status: PlacementStatus;
+  brand?: "IM3" | "3" | string;
   date?: string | null;
   picName?: string;
   photoUrl?: string;
@@ -255,7 +256,7 @@ export interface Placement {
   longitude?: number | null;
   shareLocationUrl?: string;
   locationNotes?: string;
-  outlet?: { id: string; code: string; name: string };
+  outlet?: { id: string; code: string; name: string; brand?: string };
   material?: { id: string; type: string; name: string };
 }
 
