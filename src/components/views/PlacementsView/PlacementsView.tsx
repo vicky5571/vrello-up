@@ -2,7 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardList, Download, Plus, Edit2, CheckSquare, Store, X, MapPin, ExternalLink } from "lucide-react";
+import dynamic from "next/dynamic";
+import {
+  ClipboardList,
+  Download,
+  Plus,
+  Edit2,
+  CheckSquare,
+  Store,
+  X,
+  MapPin,
+  ExternalLink,
+  TableProperties,
+  Search,
+  RefreshCw,
+  Layers,
+} from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn, formatIDR } from "@/lib/utils";
@@ -12,6 +27,21 @@ import {
 } from "@/components/views/shared/MarcomTableShell";
 import { LocationPicker } from "./LocationPicker";
 import { buildGoogleMapsUrl, isValidCoordinate } from "@/lib/marcom/locationUtils";
+
+const PlacementsMapView = dynamic(
+  () => import("./PlacementsMapView").then((mod) => mod.PlacementsMapView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-[500px] flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-400 text-xs">
+        <span className="inline-flex items-center gap-2">
+          <MapPin className="w-4 h-4 animate-bounce text-emerald-500" />
+          Memuat Peta Placements...
+        </span>
+      </div>
+    ),
+  },
+);
 
 export type PlacementStatus = "NOT_STARTED" | "ON_PROGRESS" | "DONE" | "ISSUE";
 
@@ -69,12 +99,34 @@ export function PlacementsView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [viewMode, setViewMode] = useState<"table" | "map">("table");
   const [outletsList, setOutletsList] = useState<{ id: string; name: string }[]>([]);
   const [materialsList, setMaterialsList] = useState<{ id: string; name: string }[]>([]);
   const [modalPlacement, setModalPlacement] = useState<Partial<MarcomPlacement> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const canManage = can("CREATE_PLACEMENT");
+
+  const filteredPlacements = useMemo(() => {
+    const query = (marcomFilters["placements"] || "").toLowerCase().trim();
+    if (!query) return placements;
+    return placements.filter((p) => {
+      const outlet = p.outlet?.name?.toLowerCase() || "";
+      const code = p.outlet?.code?.toLowerCase() || "";
+      const material = p.material?.name?.toLowerCase() || "";
+      const pic = p.picName?.toLowerCase() || "";
+      const notes = p.notes?.toLowerCase() || "";
+      const locNotes = p.locationNotes?.toLowerCase() || "";
+      return (
+        outlet.includes(query) ||
+        code.includes(query) ||
+        material.includes(query) ||
+        pic.includes(query) ||
+        notes.includes(query) ||
+        locNotes.includes(query)
+      );
+    });
+  }, [placements, marcomFilters]);
 
   const handleTrackAsTask = (placement: MarcomPlacement) => {
     const existing = tasks.find((t) => t.relatedMarcomId === placement.id);
@@ -296,143 +348,311 @@ export function PlacementsView() {
     return res.ok;
   }, []);
 
+  const viewSwitcherControls = (
+    <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+      <button
+        type="button"
+        onClick={() => setViewMode("table")}
+        className={cn(
+          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+          viewMode === "table"
+            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+        )}
+      >
+        <TableProperties className="w-3.5 h-3.5" />
+        <span>Table</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setViewMode("map")}
+        className={cn(
+          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+          viewMode === "map"
+            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+        )}
+      >
+        <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+        <span>Map View</span>
+      </button>
+    </div>
+  );
+
   return (
     <>
-      <MarcomTableShell
-        data={placements}
-        columns={columns}
-        getRowId={(row) => row.id}
-        initialSorting={[{ id: "outlet", desc: false }]}
-        title="Placements"
-        titleIcon={ClipboardList}
-        entityName="placement"
-        entityPlural="placements"
-        isLoading={isLoading}
-        error={error}
-        onRefresh={fetchPlacements}
-        canDelete={canManage}
-        deleteRequiresMessage="Delete requires staff or admin role"
-        onDeleteOne={deleteOne}
-        canAdd={canManage}
-        onAdd={() =>
-          setModalPlacement({
-            outletId: outletsList[0]?.id || "",
-            materialId: materialsList[0]?.id || "",
-            status: "NOT_STARTED",
-            dimensions: "",
-            cost: undefined,
-            picName: "",
-            notes: "",
-            photoUrl: "",
-            date: new Date().toISOString().slice(0, 10),
-            latitude: null,
-            longitude: null,
-            shareLocationUrl: "",
-            locationNotes: "",
-          })
-        }
-        addLabel="Add Placement"
-        addIcon={Plus}
-        addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer"
-        headerExtra={
-          <button type="button" onClick={() => setExportCenterOpen(true)} title="Open Export Center — PDF summaries & Excel sheets" className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer">
-            <Download className="w-3.5 h-3.5" />
-            <span>Export</span>
-          </button>
-        }
-        renderExpanded={(placement) => {
-          const hasCoords = isValidCoordinate(
-            placement.latitude ?? Number.NaN,
-            placement.longitude ?? Number.NaN,
-          );
-          return (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Dimensions</div>
-                  <div className="text-slate-700 dark:text-slate-300">{placement.dimensions || "—"}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC</div>
-                  <div className="text-slate-700 dark:text-slate-300">{placement.picName || "—"}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Lokasi & GPS</div>
-                  <div className="text-slate-700 dark:text-slate-300">
-                    {hasCoords ? (
-                      <div className="space-y-0.5">
-                        <a
-                          href={buildGoogleMapsUrl(placement.latitude as number, placement.longitude as number)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
-                        >
-                          <MapPin className="w-3 h-3 text-emerald-500" />
-                          <span>Lihat di Maps</span>
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </a>
-                        {placement.locationNotes && (
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 italic">
-                            {placement.locationNotes}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 italic">Belum ada titik GPS</span>
-                    )}
+      {viewMode === "table" ? (
+        <MarcomTableShell
+          data={placements}
+          columns={columns}
+          getRowId={(row) => row.id}
+          initialSorting={[{ id: "outlet", desc: false }]}
+          title="Placements"
+          titleIcon={ClipboardList}
+          entityName="placement"
+          entityPlural="placements"
+          isLoading={isLoading}
+          error={error}
+          onRefresh={fetchPlacements}
+          canDelete={canManage}
+          deleteRequiresMessage="Delete requires staff or admin role"
+          onDeleteOne={deleteOne}
+          canAdd={canManage}
+          onAdd={() =>
+            setModalPlacement({
+              outletId: outletsList[0]?.id || "",
+              materialId: materialsList[0]?.id || "",
+              status: "NOT_STARTED",
+              dimensions: "",
+              cost: undefined,
+              picName: "",
+              notes: "",
+              photoUrl: "",
+              date: new Date().toISOString().slice(0, 10),
+              latitude: null,
+              longitude: null,
+              shareLocationUrl: "",
+              locationNotes: "",
+            })
+          }
+          addLabel="Add Placement"
+          addIcon={Plus}
+          addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer"
+          headerExtra={
+            <div className="flex items-center gap-2">
+              {viewSwitcherControls}
+              <button
+                type="button"
+                onClick={() => setExportCenterOpen(true)}
+                title="Open Export Center — PDF summaries & Excel sheets"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export</span>
+              </button>
+            </div>
+          }
+          renderExpanded={(placement: MarcomPlacement) => {
+            const hasCoords = isValidCoordinate(
+              placement.latitude ?? Number.NaN,
+              placement.longitude ?? Number.NaN,
+            );
+            return (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Dimensions</div>
+                    <div className="text-slate-700 dark:text-slate-300">{placement.dimensions || "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC</div>
+                    <div className="text-slate-700 dark:text-slate-300">{placement.picName || "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Lokasi & GPS</div>
+                    <div className="text-slate-700 dark:text-slate-300">
+                      {hasCoords ? (
+                        <div className="space-y-0.5">
+                          <a
+                            href={buildGoogleMapsUrl(placement.latitude as number, placement.longitude as number)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+                          >
+                            <MapPin className="w-3 h-3 text-emerald-500" />
+                            <span>Lihat di Maps</span>
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                          {placement.locationNotes && (
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                              {placement.locationNotes}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 italic">Belum ada titik GPS</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Notes</div>
+                    <div className="text-slate-700 dark:text-slate-300">{placement.notes || "—"}</div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Notes</div>
-                  <div className="text-slate-700 dark:text-slate-300">{placement.notes || "—"}</div>
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">Track installation checklist & operations in workspace:</span>
-                <div className="flex items-center gap-2">
-                  {canManage && (
-                    <button type="button" onClick={(e) => { e.stopPropagation(); setModalPlacement(placement); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
-                      <Edit2 className="w-3.5 h-3.5 text-lime-600" />
-                      <span>Edit Placement</span>
+                <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Track installation checklist & operations in workspace:</span>
+                  <div className="flex items-center gap-2">
+                    {canManage && (
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setModalPlacement(placement); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
+                        <Edit2 className="w-3.5 h-3.5 text-lime-600" />
+                        <span>Edit Placement</span>
+                      </button>
+                    )}
+                    <button type="button" onClick={(e) => { e.stopPropagation(); handleTrackAsTask(placement); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer">
+                      <CheckSquare className="w-3.5 h-3.5" />
+                      <span>Track as Task Progress</span>
                     </button>
-                  )}
-                  <button type="button" onClick={(e) => { e.stopPropagation(); handleTrackAsTask(placement); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer">
-                    <CheckSquare className="w-3.5 h-3.5" />
-                    <span>Track as Task Progress</span>
-                  </button>
+                  </div>
                 </div>
+              </>
+            );
+          }}
+          filterBar={
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
+              {PLACEMENT_STATUS_CHIPS.map((chip) => {
+                const isActive = selectedStatus === chip.value;
+                return (
+                  <button
+                    key={chip.value}
+                    type="button"
+                    onClick={() => handleStatusFilter(chip.value)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
+                      isActive
+                        ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
+                    )}
+                  >
+                    {chip.label}
+                  </button>
+                );
+              })}
+            </div>
+          }
+          searchTerm={marcomFilters["placements"] || ""}
+          onSearchChange={(q) => setMarcomFilter("placements", q)}
+          emptyLabel="No placements found."
+        />
+      ) : (
+        <div className="space-y-4">
+          {/* Header Bar in Map Mode */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-lime-500/10 text-lime-600 dark:text-lime-400">
+                <ClipboardList className="w-5 h-5" />
               </div>
-            </>
-          );
-        }}
-        filterBar={
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
-            {PLACEMENT_STATUS_CHIPS.map((chip) => {
-              const isActive = selectedStatus === chip.value;
-              return (
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    Placements Map
+                  </h1>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    {filteredPlacements.length}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Visualisasi sebaran titik materi promosi di outlet lapangan
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {viewSwitcherControls}
+
+              <button
+                type="button"
+                onClick={() => fetchPlacements()}
+                title="Refresh data"
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setExportCenterOpen(true)}
+                title="Open Export Center"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export</span>
+              </button>
+
+              {canManage && (
                 <button
-                  key={chip.value}
                   type="button"
-                  onClick={() => handleStatusFilter(chip.value)}
-                  className={cn(
-                    "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
-                    isActive
-                      ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
-                  )}
+                  onClick={() =>
+                    setModalPlacement({
+                      outletId: outletsList[0]?.id || "",
+                      materialId: materialsList[0]?.id || "",
+                      status: "NOT_STARTED",
+                      dimensions: "",
+                      cost: undefined,
+                      picName: "",
+                      notes: "",
+                      photoUrl: "",
+                      date: new Date().toISOString().slice(0, 10),
+                      latitude: null,
+                      longitude: null,
+                      shareLocationUrl: "",
+                      locationNotes: "",
+                    })
+                  }
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer"
                 >
-                  {chip.label}
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Placement</span>
                 </button>
-              );
-            })}
+              )}
+            </div>
           </div>
-        }
-        searchTerm={marcomFilters["placements"] || ""}
-        onSearchChange={(q) => setMarcomFilter("placements", q)}
-        emptyLabel="No placements found."
-      />
+
+          {/* Filter Bar in Map Mode */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
+              {PLACEMENT_STATUS_CHIPS.map((chip) => {
+                const isActive = selectedStatus === chip.value;
+                return (
+                  <button
+                    key={chip.value}
+                    type="button"
+                    onClick={() => handleStatusFilter(chip.value)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
+                      isActive
+                        ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
+                    )}
+                  >
+                    {chip.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="relative w-full sm:w-64">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Cari placement / outlet..."
+                value={marcomFilters["placements"] || ""}
+                onChange={(e) => setMarcomFilter("placements", e.target.value)}
+                className="w-full pl-8 pr-8 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500"
+              />
+              {marcomFilters["placements"] && (
+                <button
+                  type="button"
+                  onClick={() => setMarcomFilter("placements", "")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Interactive Map */}
+          <PlacementsMapView
+            placements={filteredPlacements}
+            onEditPlacement={(p) => setModalPlacement(p)}
+            onTrackAsTask={handleTrackAsTask}
+            canManage={canManage}
+          />
+        </div>
+      )}
 
       {modalPlacement && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
