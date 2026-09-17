@@ -18,6 +18,10 @@ import {
   RefreshCw,
   Layers,
   Camera,
+  Wallet,
+  CheckCircle2,
+  Radio,
+  Clock,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -26,6 +30,8 @@ import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
+import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
+import { calculatePlacementKPIs } from "@/lib/marcom/placementAnalytics";
 import { LocationPicker } from "./LocationPicker";
 import { PlacementPhotoUploader } from "./PlacementPhotoUploader";
 import { PlacementBulkActionBar } from "./PlacementBulkActionBar";
@@ -152,6 +158,43 @@ export function PlacementsView() {
       );
     });
   }, [placements, marcomFilters, selectedBrand]);
+
+  const kpiItems: KpiCardItem[] = useMemo(() => {
+    const kpis = calculatePlacementKPIs(filteredPlacements);
+    return [
+      {
+        label: "Total Budget Terpakai",
+        value: formatIDR(kpis.totalCost),
+        helper:
+          kpis.totalCount > 0
+            ? `Rata-rata ${formatIDR(Math.round(kpis.totalCost / kpis.totalCount))} / titik`
+            : "Belum ada pengeluaran",
+        icon: Wallet,
+        color: "emerald",
+      },
+      {
+        label: "Tingkat Penyelesaian",
+        value: `${kpis.completionRate}%`,
+        helper: `${kpis.doneCount} dari ${kpis.totalCount} placement selesai`,
+        icon: CheckCircle2,
+        color: "blue",
+      },
+      {
+        label: "Rasio Pemasangan",
+        value: `${kpis.im3Count} : ${kpis.triCount}`,
+        helper: `${kpis.im3Count} IM3 (Kuning) • ${kpis.triCount} 3 (Pink)`,
+        icon: Radio,
+        color: "amber",
+      },
+      {
+        label: "Menunggu vs Selesai",
+        value: `${kpis.pendingCount} Menunggu / ${kpis.doneCount} Selesai`,
+        helper: `${kpis.notStartedCount} To Do • ${kpis.inProgressCount} In Progress`,
+        icon: Clock,
+        color: "orange",
+      },
+    ];
+  }, [filteredPlacements]);
 
   const handleTrackAsTask = (placement: MarcomPlacement) => {
     const existing = tasks.find((t) => t.relatedMarcomId === placement.id);
@@ -516,6 +559,7 @@ export function PlacementsView() {
           titleIcon={ClipboardList}
           entityName="placement"
           entityPlural="placements"
+          kpiBar={<KpiSummaryCards items={kpiItems} />}
           isLoading={isLoading}
           error={error}
           onRefresh={fetchPlacements}
@@ -760,6 +804,9 @@ export function PlacementsView() {
               )}
             </div>
           </div>
+
+          {/* Mini KPI Bar in Map Mode */}
+          <KpiSummaryCards items={kpiItems} />
 
           {/* Filter Bar in Map Mode */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
