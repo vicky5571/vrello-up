@@ -288,7 +288,20 @@ export function PlacementsMapView({
         zoom: userCoords ? 15 : DEFAULT_ZOOM,
         zoomControl: false, // We provide custom clean controls
         attributionControl: false,
+        touchZoom: true, // Allow 2-finger pinch on touchscreen devices
+        scrollWheelZoom: true, // Handled below to only permit pinch gestures
       });
+
+      // Filter wheel events: only allow pinch gestures (trackpad pinch with ctrlKey: true)
+      // to zoom the map, completely ignoring standard mouse wheel or trackpad scroll up/down.
+      const scrollHandler = (map as unknown as { scrollWheelZoom?: { _onWheelScroll: (e: WheelEvent) => void } }).scrollWheelZoom;
+      if (scrollHandler && typeof scrollHandler._onWheelScroll === "function") {
+        const origWheel = scrollHandler._onWheelScroll;
+        scrollHandler._onWheelScroll = function (e: WheelEvent) {
+          if (!e.ctrlKey) return;
+          return origWheel.call(this, e);
+        };
+      }
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
