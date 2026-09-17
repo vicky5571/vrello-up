@@ -23,10 +23,19 @@ import {
   Share2,
   Kanban,
   X,
+  AlertCircle,
+  Smartphone,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
-import { PostPlatform, PostFormat, Priority, ContentPostItem, type Task } from "@/types";
+import {
+  PostPlatform,
+  PostFormat,
+  Priority,
+  ContentPostItem,
+  PostStatus,
+  type Task,
+} from "@/types";
 import { formatDate, cn } from "@/lib/utils";
 import {
   getWorkspaceSpacesAndLists,
@@ -42,8 +51,13 @@ import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
 import { PlatformIcon } from "@/components/ui/BrandIcons";
-
-export type PostStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
+import {
+  getContentStatusMeta,
+  canTransitionContentStatus,
+  calculateContentPipelineKPIs,
+} from "@/lib/marcom/contentWorkflow";
+import { ContentFeedGridView } from "./ContentFeedGridView";
+import { ContentCalendarView } from "./ContentCalendarView";
 
 const PLATFORM_CONFIG: Record<
   PostPlatform,
@@ -142,8 +156,8 @@ export function ContentPlannerView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // View state: Cards vs Table
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  // View state: Cards vs Feed vs Calendar vs Table
+  const [viewMode, setViewMode] = useState<"cards" | "feed" | "calendar" | "table">("cards");
   const [selectedPlatform, setSelectedPlatform] = useState<PostPlatform | "all">(
     "all"
   );
@@ -153,6 +167,10 @@ export function ContentPlannerView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Quick Revision Modal State
+  const [revisionModalPost, setRevisionModalPost] = useState<ContentPostItem | null>(null);
+  const [revisionInput, setRevisionInput] = useState("");
 
   // Google Drive Picker
   const {
@@ -174,6 +192,7 @@ export function ContentPlannerView() {
   const [branchName, setBranchName] = useState("");
   const [caption, setCaption] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
+  const [revisionNotes, setRevisionNotes] = useState("");
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [postSubtasks, setPostSubtasks] = useState<
     { id: string; title: string }[]
@@ -236,6 +255,43 @@ export function ContentPlannerView() {
     fetchPosts();
   }, [fetchPosts, activeWorkspaceId]);
 
+  const handleQuickTransition = async (
+    post: ContentPostItem,
+    targetStatus: PostStatus,
+    notes?: string,
+  ) => {
+    const check = canTransitionContentStatus(
+      post.status,
+      targetStatus,
+      can("CREATE_EVENT") ? "lead" : "staff",
+    );
+    if (!check.allowed) {
+      toast.error(check.reason || "Transisi status tidak diizinkan");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/marcom/content/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: targetStatus,
+          revisionNotes: notes !== undefined ? notes : post.revisionNotes || "",
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Gagal memperbarui status postingan");
+      }
+
+      const statusMeta = getContentStatusMeta(targetStatus);
+      toast.success(`Post "${post.title}" diubah menjadi [${statusMeta.label}]`);
+      await fetchPosts();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal memperbarui status");
+    }
+  };
+
   const openCreateModal = useCallback(() => {
     setEditId(null);
     setTitle("");
@@ -247,6 +303,7 @@ export function ContentPlannerView() {
     setBranchName(branches[0]?.name || "");
     setCaption("");
     setMediaUrl("");
+    setRevisionNotes("");
     setAssigneeIds(members[0] ? [members[0].id] : []);
     setPostSubtasks(
       DEFAULT_POST_SUBTASKS.map((t, i) => ({ id: `sub-init-${i}`, title: t }))
@@ -278,11 +335,12 @@ export function ContentPlannerView() {
         ? item.publishDate.slice(0, 10)
         : new Date().toISOString().slice(0, 10)
     );
-    setStatus((item.status as PostStatus) || "SCHEDULED");
+    setStatus(item.status || "SCHEDULED");
     setPriority("normal");
     setBranchName(item.branchName || branches[0]?.name || "");
     setCaption(item.caption || "");
     setMediaUrl(item.mediaUrl || "");
+    setRevisionNotes(item.revisionNotes || "");
     setAssigneeIds(members[0] ? [members[0].id] : []);
     setPostSubtasks(
       Array.isArray(item.subtasks) && item.subtasks.length > 0
@@ -344,6 +402,7 @@ export function ContentPlannerView() {
         picName: assigneeIds.length
           ? members.find((m) => m.id === assigneeIds[0])?.name || undefined
           : undefined,
+        revisionNotes: revisionNotes.trim(),
         subtasks: postSubtasks,
         workspaceId: activeWorkspaceId,
       };
@@ -582,34 +641,38 @@ export function ContentPlannerView() {
 
   // KPI calculations
   const kpiItems = useMemo(() => {
-    const totalScheduled = posts.filter(
-      (p) => p.status === "SCHEDULED" || p.status === "DRAFT"
-    ).length;
-    const publishedCount = posts.filter((p) => p.status === "PUBLISHED").length;
-    const igCount = posts.filter((p) => p.platform === "instagram").length;
-    const tiktokCount = posts.filter((p) => p.platform === "tiktok").length;
+    const kpis = calculateContentPipelineKPIs(posts);
+    const igCount = kpis.platformBreakdown["instagram"] || 0;
+    const tiktokCount = kpis.platformBreakdown["tiktok"] || 0;
 
     return [
       {
-        label: "Scheduled Posts",
-        value: totalScheduled,
-        helper: "Upcoming content calendar",
+        label: "Total Posts Planned",
+        value: kpis.totalPosts,
+        helper: `${kpis.publishedCount} Tayang (${kpis.publishedRate}%)`,
         icon: Sparkles,
         color: "rose" as const,
       },
       {
-        label: "Published Releases",
-        value: publishedCount,
-        helper: "Live digital assets",
-        icon: Video,
-        color: "teal" as const,
+        label: "Menunggu Review",
+        value: kpis.inReviewCount,
+        helper: `${kpis.revisionCount} perlu revisi kreatif`,
+        icon: Flame,
+        color: "amber" as const,
       },
       {
-        label: "Instagram / TikTok Ratio",
-        value: `${igCount} IG • ${tiktokCount} TT`,
-        helper: "Core viral channels",
-        icon: Share2,
+        label: "Siap & Terjadwal",
+        value: kpis.scheduledCount + kpis.approvedCount,
+        helper: `${kpis.approvedCount} approved • ${kpis.scheduledCount} scheduled`,
+        icon: Video,
         color: "blue" as const,
+      },
+      {
+        label: "Core Channels Ratio",
+        value: `${igCount} IG • ${tiktokCount} TT`,
+        helper: "Distribusi Instagram vs TikTok",
+        icon: Share2,
+        color: "teal" as const,
       },
     ];
   }, [posts]);
@@ -842,32 +905,63 @@ export function ContentPlannerView() {
             />
           </div>
 
-          <div className="flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          {/* 4 View Modes Switcher */}
+          <div className="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setViewMode("cards")}
               className={cn(
-                "p-1.5 rounded-md transition-colors cursor-pointer",
+                "p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs",
                 viewMode === "cards"
-                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs"
+                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs font-semibold"
                   : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               )}
               title="Box / Cards View"
             >
               <LayoutGrid className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Cards</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("feed")}
+              className={cn(
+                "p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs",
+                viewMode === "feed"
+                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs font-semibold"
+                  : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              )}
+              title="Feed Grid Simulator (1:1 & 9:16)"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Feed Grid</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("calendar")}
+              className={cn(
+                "p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs",
+                viewMode === "calendar"
+                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs font-semibold"
+                  : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              )}
+              title="Multi-Channel Calendar View"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Calendar</span>
             </button>
             <button
               type="button"
               onClick={() => setViewMode("table")}
               className={cn(
-                "p-1.5 rounded-md transition-colors cursor-pointer",
+                "p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs",
                 viewMode === "table"
-                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs"
+                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs font-semibold"
                   : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               )}
               title="Row / Table View"
             >
               <TableProperties className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Table</span>
             </button>
           </div>
 
@@ -888,18 +982,38 @@ export function ContentPlannerView() {
         </div>
       </div>
 
-      {/* 4. Content Area: Cards or Table */}
+      {/* 4. Content Area: Feed Grid, Calendar, Cards, or Table */}
       {isLoading ? (
         <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-2">
           <RefreshCw className="w-6 h-6 animate-spin text-pink-500" />
           <p className="text-xs">Loading content planner...</p>
         </div>
+      ) : viewMode === "feed" ? (
+        <ContentFeedGridView
+          posts={filteredPosts}
+          onSelectPost={(p) => openEditModal(p)}
+          onEditPost={(p) => openEditModal(p)}
+          onAddNewPost={openCreateModal}
+          canManage={can("CREATE_EVENT")}
+        />
+      ) : viewMode === "calendar" ? (
+        <ContentCalendarView
+          posts={filteredPosts}
+          onSelectPost={(p) => openEditModal(p)}
+          onAddPostForDate={(dateStr) => {
+            openCreateModal();
+            setPublishDate(dateStr);
+          }}
+          canManage={can("CREATE_EVENT")}
+        />
       ) : viewMode === "cards" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPosts.map((post) => {
             const cfg =
               PLATFORM_CONFIG[post.platform as PostPlatform] ||
               PLATFORM_CONFIG.instagram;
+            const statusMeta = getContentStatusMeta(post.status);
+
             return (
               <div
                 key={post.id}
@@ -927,13 +1041,11 @@ export function ContentPlannerView() {
 
                     <span
                       className={cn(
-                        "px-2 py-0.5 text-[9px] font-bold rounded-full uppercase tracking-wider",
-                        post.status === "PUBLISHED"
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                          : "bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400"
+                        "px-2.5 py-0.5 text-[10px] font-bold rounded-full border uppercase tracking-wider",
+                        statusMeta.badgeClass
                       )}
                     >
-                      {post.status}
+                      {statusMeta.label}
                     </span>
                   </div>
 
@@ -945,6 +1057,17 @@ export function ContentPlannerView() {
                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1 italic">
                       "{post.caption}"
                     </p>
+                  )}
+
+                  {/* Revision Notes Alert Banner */}
+                  {post.status === "REVISION" && post.revisionNotes && (
+                    <div className="mt-2.5 p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-xs text-rose-700 dark:text-rose-300">
+                      <div className="font-bold text-[10px] uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-0.5 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 text-rose-500" />
+                        <span>Catatan Revisi Lead</span>
+                      </div>
+                      <p className="line-clamp-2 text-[11px]">{post.revisionNotes}</p>
+                    </div>
                   )}
 
                   {post.mediaUrl && (
@@ -1022,40 +1145,97 @@ export function ContentPlannerView() {
                   })()}
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    <span>
-                      {post.publishDate
-                        ? formatDate(post.publishDate)
-                        : "No Date"}
-                    </span>
+                {/* Quick Approval Action Bar & Metadata Footer */}
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2.5">
+                  <div className="flex items-center justify-between gap-1 flex-wrap">
+                    {/* Quick Approval Transitions */}
+                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      {(post.status === "DRAFT" || post.status === "REVISION") && (
+                        <button
+                          type="button"
+                          onClick={() => handleQuickTransition(post, "IN_REVIEW")}
+                          className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300/40 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors cursor-pointer"
+                          title="Kirim ke Lead untuk ditinjau"
+                        >
+                          Ajukan Review
+                        </button>
+                      )}
+                      {post.status === "IN_REVIEW" && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleQuickTransition(post, "APPROVED")}
+                            className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-300/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors cursor-pointer flex items-center gap-1"
+                            title="Setujui konten"
+                          >
+                            <CheckSquare className="w-3 h-3 text-blue-600" />
+                            <span>Setujui</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRevisionModalPost(post);
+                              setRevisionInput(post.revisionNotes || "");
+                            }}
+                            className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-300/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors cursor-pointer"
+                            title="Minta revisi"
+                          >
+                            Revisi
+                          </button>
+                        </>
+                      )}
+                      {(post.status === "APPROVED" || post.status === "SCHEDULED") && (
+                        <button
+                          type="button"
+                          onClick={() => handleQuickTransition(post, "PUBLISHED")}
+                          className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer flex items-center gap-1"
+                          title="Tandai konten sudah tayang live"
+                        >
+                          <Sparkles className="w-3 h-3 text-emerald-600" />
+                          <span>Tandai Tayang</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(post);
+                        }}
+                        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                        title="Edit Post"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigateToTask(post);
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/50 cursor-pointer transition-colors"
+                        title="Buka dan beralih ke Kanban Board"
+                      >
+                        <Kanban className="w-3 h-3" />
+                        <span>Board</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditModal(post);
-                      }}
-                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                      title="Edit Post"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigateToTask(post);
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/50 cursor-pointer transition-colors"
-                      title="Buka dan beralih ke Kanban Board"
-                    >
-                      <Kanban className="w-3 h-3" />
-                      <span>Lihat di Board</span>
-                    </button>
+                  <div className="flex items-center justify-between text-xs text-slate-400">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>
+                        {post.publishDate ? formatDate(post.publishDate) : "Belum terjadwal"}
+                      </span>
+                    </div>
+                    {post.picName && (
+                      <span className="text-[11px] text-slate-500 truncate max-w-[120px]">
+                        PIC: {post.picName}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1262,13 +1442,33 @@ export function ContentPlannerView() {
                     onChange={(e) => setStatus(e.target.value as PostStatus)}
                     className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
                   >
-                    <option value="SCHEDULED">SCHEDULED</option>
-                    <option value="DRAFT">DRAFT</option>
-                    <option value="PUBLISHED">PUBLISHED</option>
-                    <option value="ARCHIVED">ARCHIVED</option>
+                    <option value="DRAFT">DRAFT (Konsep)</option>
+                    <option value="IN_REVIEW">IN_REVIEW (Menunggu Review)</option>
+                    <option value="REVISION">REVISION (Perlu Revisi)</option>
+                    <option value="APPROVED">APPROVED (Disetujui)</option>
+                    <option value="SCHEDULED">SCHEDULED (Terjadwal)</option>
+                    <option value="PUBLISHED">PUBLISHED (Sudah Tayang)</option>
+                    <option value="ARCHIVED">ARCHIVED (Diarsipkan)</option>
                   </select>
                 </div>
               </div>
+
+              {/* Revision Notes / Feedback */}
+              {(status === "REVISION" || revisionNotes.trim()) && (
+                <div className="p-3 rounded-xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/40 space-y-1.5">
+                  <label className="block text-xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Catatan Revisi / Feedback Kreatif</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Instruksi revisi copy, visual, atau timing..."
+                    value={revisionNotes}
+                    onChange={(e) => setRevisionNotes(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-lg bg-white dark:bg-slate-900 border border-rose-300/80 dark:border-rose-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-rose-500 resize-none"
+                  />
+                </div>
+              )}
 
               {/* Caption & Copy */}
               <div>
@@ -1375,6 +1575,73 @@ export function ContentPlannerView() {
         onAttach={handleManualAttach}
         defaultKind="video"
       />
+
+      {/* Quick Revision Modal */}
+      {revisionModalPost && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#18191B] border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h2 className="text-sm font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                <span>Minta Revisi Konten</span>
+              </h2>
+              <button
+                type="button"
+                onClick={() => setRevisionModalPost(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                Tuliskan catatan feedback atau revisi untuk:{" "}
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  {revisionModalPost.title}
+                </span>
+              </p>
+              <textarea
+                rows={4}
+                autoFocus
+                placeholder="Contoh: Perbaiki CTA di akhir video, ganti thumbnail ke visual promo paket data..."
+                value={revisionInput}
+                onChange={(e) => setRevisionInput(e.target.value)}
+                className="w-full px-3 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-rose-500 resize-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setRevisionModalPost(null)}
+                className="px-3.5 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!revisionInput.trim()) {
+                    toast.error("Mohon tuliskan instruksi revisi");
+                    return;
+                  }
+                  await handleQuickTransition(
+                    revisionModalPost,
+                    "REVISION",
+                    revisionInput.trim()
+                  );
+                  setRevisionModalPost(null);
+                }}
+                className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>Kirim Permintaan Revisi</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

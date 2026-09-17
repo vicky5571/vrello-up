@@ -3,7 +3,15 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 
-const VALID_POST_STATUSES = ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED"] as const;
+const VALID_POST_STATUSES = [
+  "DRAFT",
+  "IN_REVIEW",
+  "REVISION",
+  "APPROVED",
+  "SCHEDULED",
+  "PUBLISHED",
+  "ARCHIVED",
+] as const;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -65,6 +73,7 @@ export async function POST(request: Request) {
     mediaUrl = "",
     branchName = "",
     picName = "",
+    revisionNotes = "",
     subtasks = [],
   } = body ?? {};
 
@@ -92,6 +101,7 @@ export async function POST(request: Request) {
         mediaUrl: String(mediaUrl || "").trim(),
         branchName: String(branchName || "").trim(),
         picName: String(picName || "").trim(),
+        revisionNotes: String(revisionNotes || "").trim(),
         subtasks: Array.isArray(subtasks) ? subtasks : [],
       },
     });

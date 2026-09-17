@@ -190,10 +190,11 @@ model ContentPost {
   caption     String        @default("")
   mediaUrl    String        @default("")
   branchName  String        @default("")
-  picName     String        @default("")
-  subtasks    Json          @default("[]")
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  picName       String        @default("")
+  revisionNotes String        @default("")
+  subtasks      Json          @default("[]")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   @@index([workspaceId])
   @@index([platform])

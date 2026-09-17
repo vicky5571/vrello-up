@@ -182,6 +182,15 @@ export type ViewMode =
   | "reports"
   | "analytics";
 
+export type PostStatus =
+  | "DRAFT"
+  | "IN_REVIEW"
+  | "REVISION"
+  | "APPROVED"
+  | "SCHEDULED"
+  | "PUBLISHED"
+  | "ARCHIVED";
+
 export interface ContentPostItem {
   id: string;
   workspaceId?: string;
@@ -189,11 +198,12 @@ export interface ContentPostItem {
   platform: PostPlatform;
   format: PostFormat;
   publishDate?: string | null;
-  status: "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
+  status: PostStatus;
   caption?: string;
   mediaUrl?: string;
   branchName?: string;
   picName?: string;
+  revisionNotes?: string;
   subtasks?: { id: string; title: string; completed?: boolean }[];
   createdAt?: string;
   updatedAt?: string;
