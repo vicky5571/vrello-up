@@ -24,7 +24,6 @@ import {
   Kanban,
   X,
   AlertCircle,
-  Smartphone,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -56,8 +55,6 @@ import {
   canTransitionContentStatus,
   calculateContentPipelineKPIs,
 } from "@/lib/marcom/contentWorkflow";
-import { ContentFeedGridView } from "./ContentFeedGridView";
-import { ContentCalendarView } from "./ContentCalendarView";
 
 const PLATFORM_CONFIG: Record<
   PostPlatform,
@@ -156,8 +153,8 @@ export function ContentPlannerView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // View state: Cards vs Feed vs Calendar vs Table
-  const [viewMode, setViewMode] = useState<"cards" | "feed" | "calendar" | "table">("cards");
+  // View state: Cards vs Table
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [selectedPlatform, setSelectedPlatform] = useState<PostPlatform | "all">(
     "all"
   );
@@ -923,34 +920,6 @@ export function ContentPlannerView() {
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("feed")}
-              className={cn(
-                "p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs",
-                viewMode === "feed"
-                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs font-semibold"
-                  : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              )}
-              title="Feed Grid Simulator (1:1 & 9:16)"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Feed Grid</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("calendar")}
-              className={cn(
-                "p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs",
-                viewMode === "calendar"
-                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs font-semibold"
-                  : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              )}
-              title="Multi-Channel Calendar View"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Calendar</span>
-            </button>
-            <button
-              type="button"
               onClick={() => setViewMode("table")}
               className={cn(
                 "p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs",
@@ -982,30 +951,12 @@ export function ContentPlannerView() {
         </div>
       </div>
 
-      {/* 4. Content Area: Feed Grid, Calendar, Cards, or Table */}
+      {/* 4. Content Area: Cards or Table */}
       {isLoading ? (
         <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-2">
           <RefreshCw className="w-6 h-6 animate-spin text-pink-500" />
           <p className="text-xs">Loading content planner...</p>
         </div>
-      ) : viewMode === "feed" ? (
-        <ContentFeedGridView
-          posts={filteredPosts}
-          onSelectPost={(p) => openEditModal(p)}
-          onEditPost={(p) => openEditModal(p)}
-          onAddNewPost={openCreateModal}
-          canManage={can("CREATE_EVENT")}
-        />
-      ) : viewMode === "calendar" ? (
-        <ContentCalendarView
-          posts={filteredPosts}
-          onSelectPost={(p) => openEditModal(p)}
-          onAddPostForDate={(dateStr) => {
-            openCreateModal();
-            setPublishDate(dateStr);
-          }}
-          canManage={can("CREATE_EVENT")}
-        />
       ) : viewMode === "cards" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPosts.map((post) => {
