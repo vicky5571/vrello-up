@@ -35,6 +35,8 @@ interface LocationPickerProps {
 
 const DEFAULT_CENTER: [number, number] = [-6.2088, 106.8456]; // Jakarta
 const DEFAULT_ZOOM = 13;
+const MIN_ZOOM = 5;
+const MAX_ZOOM = 19;
 
 function createPinIcon(leaflet: typeof L) {
   return leaflet.divIcon({
@@ -93,6 +95,8 @@ export function LocationPicker({
       const map = L.map(mapContainerRef.current, {
         center: initialCenter,
         zoom: hasCoords ? 15 : DEFAULT_ZOOM,
+        minZoom: MIN_ZOOM,
+        maxZoom: MAX_ZOOM,
         zoomControl: true,
         attributionControl: false,
         touchZoom: true,
