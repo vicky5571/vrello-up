@@ -580,10 +580,25 @@ export function PlacementsMapView({
             <Plus className="w-4 h-4" />
           </button>
 
-          {/* Vertical Scroll / Slider Bar */}
-          <div className="relative flex flex-col items-center justify-center h-28 w-8 my-0.5">
+          {/* Vertical Scroll / Slider Bar (Extended Height for Smooth Control) */}
+          <div className="relative flex flex-col items-center justify-center h-60 w-9 my-1">
+            {/* Subtle Zoom Reference Ticks */}
+            <div className="absolute left-1.5 flex flex-col justify-between h-48 py-1 pointer-events-none opacity-40">
+              {[18, 15, 11, 7, 3].map((lvl) => (
+                <span
+                  key={lvl}
+                  className={cn(
+                    "rounded-full transition-all duration-150",
+                    currentZoom === lvl
+                      ? "w-2 h-0.5 bg-emerald-500"
+                      : "w-1 h-0.5 bg-slate-400 dark:bg-slate-500",
+                  )}
+                />
+              ))}
+            </div>
+
             {/* Background Track with Emerald Fill */}
-            <div className="w-1.5 h-24 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex flex-col justify-end pointer-events-none">
+            <div className="w-1.5 h-52 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex flex-col justify-end pointer-events-none">
               <div
                 className="w-full bg-emerald-500 rounded-full transition-all duration-75"
                 style={{
@@ -594,11 +609,13 @@ export function PlacementsMapView({
 
             {/* Draggable knob / thumb indicator */}
             <div
-              className="absolute w-3.5 h-3.5 rounded-full bg-white dark:bg-slate-900 border-2 border-emerald-500 shadow-md pointer-events-none transition-all duration-75"
+              className="absolute w-4 h-4 rounded-full bg-white dark:bg-slate-900 border-2 border-emerald-500 shadow-md pointer-events-none transition-all duration-75 flex items-center justify-center"
               style={{
-                bottom: `calc(8px + ${Math.max(0, Math.min(1, (currentZoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM))) * 78}px)`,
+                bottom: `calc(16px + ${Math.max(0, Math.min(1, (currentZoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM))) * 192}px)`,
               }}
-            />
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            </div>
 
             {/* Invisible native range input overlay for intuitive drag & click */}
             <input
@@ -608,11 +625,16 @@ export function PlacementsMapView({
               step={1}
               value={currentZoom}
               onChange={handleSliderZoom}
-              title={`Zoom: ${currentZoom}`}
+              title={`Level Zoom: ${currentZoom}`}
               aria-label="Slider Zoom Peta"
-              className="absolute w-24 h-8 -rotate-90 origin-center opacity-0 cursor-pointer z-10"
+              className="absolute w-52 h-8 -rotate-90 origin-center opacity-0 cursor-pointer z-10"
             />
           </div>
+
+          {/* Current Zoom Level Badge */}
+          <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-500 pb-0.5 select-none tracking-tight">
+            {currentZoom}x
+          </span>
 
           {/* Zoom Out (-) */}
           <button
