@@ -1,8 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
-import { Store, Plus, Edit2, Building2, ClipboardList, Filter, Layers, X } from "lucide-react";
+import {
+  Store,
+  Plus,
+  Edit2,
+  Building2,
+  ClipboardList,
+  Filter,
+  Layers,
+  X,
+  MapPin,
+  Table as TableIcon,
+  Compass,
+  FileText,
+  Navigation,
+  CheckCircle2,
+  AlertCircle,
+  Eye,
+} from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn } from "@/lib/utils";
@@ -11,6 +29,21 @@ import {
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
 import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
+import { calculateEnhancedOutletKPIs } from "@/lib/marcom/outletAnalytics";
+import { Outlet360Drawer } from "./Outlet360Drawer";
+
+const OutletMapView = dynamic(
+  () => import("./OutletMapView").then((mod) => mod.OutletMapView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[650px] w-full rounded-2xl bg-slate-100 dark:bg-slate-900 animate-pulse flex flex-col items-center justify-center gap-2 text-xs text-slate-400 border border-slate-200 dark:border-slate-800">
+        <Compass className="w-8 h-8 text-orange-500 animate-spin" />
+        <span>Memuat peta sebaran outlet & koordinat GPS...</span>
+      </div>
+    ),
+  },
+);
 
 export type OutletType = "TRADITIONAL" | "MODERN_RETAIL" | "EXCLUSIVE" | "CAMPUS_OUTLET";
 export type OutletTier = "TIER_1" | "TIER_2" | "TIER_3";
@@ -21,6 +54,7 @@ export interface MarcomOutlet {
   name: string;
   type: OutletType;
   tier?: OutletTier;
+  brand?: string;
   address: string;
   city: string;
   picName: string;
@@ -29,6 +63,9 @@ export interface MarcomOutlet {
   branchId: string;
   branch?: { id: string; code: string; name: string };
   placementCount?: number;
+  mouCount?: number;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 const columnHelper = createMarcomColumnHelper<MarcomOutlet>();
@@ -44,6 +81,8 @@ export function OutletsView() {
   const { can, role } = useMarcomPermissions();
   const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId } = useWorkspaceStore();
 
+  const [viewMode, setViewMode] = useState<"table" | "map">("table");
+  const [selectedOutletIdForDrawer, setSelectedOutletIdForDrawer] = useState<string | null>(null);
   const [outlets, setOutlets] = useState<MarcomOutlet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +91,7 @@ export function OutletsView() {
   const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>([]);
   const [modalOutlet, setModalOutlet] = useState<Partial<MarcomOutlet> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLocatingInModal, setIsLocatingInModal] = useState(false);
 
   const canManage = can("MANAGE_MASTER_DATA");
   const canAddOutlet = canManage || role !== "viewer";
@@ -145,34 +185,47 @@ export function OutletsView() {
         columnHelper.accessor("code", {
           id: "code",
           header: "Code",
-          size: 100,
+          size: 95,
           minSize: 80,
           cell: ({ row }) => <span className="font-semibold text-slate-900 dark:text-slate-100">{row.original.code}</span>,
         }),
         columnHelper.accessor("name", {
           id: "name",
           header: "Outlet Name",
-          size: 220,
-          minSize: 140,
-          cell: ({ row }) => <span className="truncate text-slate-700 dark:text-slate-300">{row.original.name}</span>,
+          size: 240,
+          minSize: 160,
+          cell: ({ row }) => (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedOutletIdForDrawer(row.original.id);
+              }}
+              className="group text-left font-semibold text-slate-800 dark:text-slate-100 hover:text-orange-600 dark:hover:text-orange-400 flex items-center gap-1.5 cursor-pointer"
+              title="Klik untuk membuka Profil 360°"
+            >
+              <span className="truncate">{row.original.name}</span>
+              <Eye className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-orange-500 transition-opacity shrink-0" />
+            </button>
+          ),
         }),
         columnHelper.accessor("type", {
           id: "type",
           header: "Type",
-          size: 150,
-          minSize: 120,
+          size: 140,
+          minSize: 110,
           cell: ({ row }) => (
             <span className={cn("inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold", TYPE_STYLES[row.original.type] ?? TYPE_STYLES.TRADITIONAL)}>
               {row.original.type.replaceAll("_", " ")}
             </span>
           ),
         }),
-        columnHelper.accessor("city", { id: "city", header: "City", size: 140, minSize: 100 }),
+        columnHelper.accessor("city", { id: "city", header: "City", size: 120, minSize: 90 }),
         columnHelper.display({
           id: "branch",
           header: "Branch",
-          size: 190,
-          minSize: 130,
+          size: 180,
+          minSize: 120,
           enableSorting: false,
           cell: ({ row }) => {
             const branch = row.original.branch;
@@ -190,6 +243,29 @@ export function OutletsView() {
                 <Building2 className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">{branch.name}</span>
               </button>
+            );
+          },
+        }),
+        columnHelper.display({
+          id: "mou",
+          header: "MoU Status",
+          size: 130,
+          minSize: 100,
+          enableSorting: false,
+          cell: ({ row }) => {
+            const mouCount = row.original.mouCount ?? 0;
+            if (mouCount > 0) {
+              return (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                  <FileText className="w-3 h-3 text-amber-500" />
+                  <span>{mouCount} MoU Aktif</span>
+                </span>
+              );
+            }
+            return (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-500/10 text-slate-400">
+                Belum ada MoU
+              </span>
             );
           },
         }),
@@ -218,10 +294,35 @@ export function OutletsView() {
           },
         }),
         columnHelper.display({
-          id: "active",
-          header: "Active",
+          id: "gps",
+          header: "GPS",
           size: 90,
           minSize: 70,
+          enableSorting: false,
+          cell: ({ row }) => {
+            const hasGPS =
+              typeof row.original.latitude === "number" &&
+              typeof row.original.longitude === "number";
+            return (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold",
+                  hasGPS
+                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                    : "bg-slate-500/10 text-slate-400",
+                )}
+              >
+                <MapPin className="w-2.5 h-2.5" />
+                <span>{hasGPS ? "Mapped" : "None"}</span>
+              </span>
+            );
+          },
+        }),
+        columnHelper.display({
+          id: "active",
+          header: "Active",
+          size: 85,
+          minSize: 65,
           enableSorting: false,
           cell: ({ row }) => (
             <span className={cn("inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold", row.original.active ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-slate-500/10 text-slate-500 dark:text-slate-400")}>
@@ -230,22 +331,65 @@ export function OutletsView() {
           ),
         }),
         columnHelper.display({
-          id: "expander",
+          id: "actions",
           header: () => null,
-          size: 40,
-          minSize: 40,
-          maxSize: 40,
+          size: 90,
+          minSize: 75,
+          maxSize: 110,
           enableSorting: false,
-          cell: () => <div className="flex justify-end"><span className="w-4 h-4 text-slate-400 flex items-center justify-center">›</span></div>,
+          cell: ({ row }) => (
+            <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setSelectedOutletIdForDrawer(row.original.id)}
+                className="p-1 rounded-md text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40 transition-colors"
+                title="Buka Profil 360°"
+              >
+                <Store className="w-4 h-4" />
+              </button>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => setModalOutlet(row.original)}
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                  title="Edit Outlet"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ),
         }),
       ]),
-    [navigateToMarcom, setSelectedBranchId],
+    [navigateToMarcom, setSelectedBranchId, canManage],
   );
+
+  const handleGetLocationInModal = () => {
+    if (typeof window === "undefined" || !("geolocation" in navigator)) {
+      toast.error("Geolocation tidak didukung oleh browser Anda");
+      return;
+    }
+    setIsLocatingInModal(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setIsLocatingInModal(false);
+        const lat = Number(pos.coords.latitude.toFixed(6));
+        const lng = Number(pos.coords.longitude.toFixed(6));
+        setModalOutlet((prev) => (prev ? { ...prev, latitude: lat, longitude: lng } : null));
+        toast.success(`Koordinat GPS terdeteksi: ${lat}, ${lng}`);
+      },
+      (err) => {
+        setIsLocatingInModal(false);
+        toast.error(`Gagal mendeteksi lokasi GPS: ${err.message}`);
+      },
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  };
 
   const handleSaveOutlet = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!modalOutlet) return;
-    const { id, code, name, type, tier, branchId, city, address, picName, picPhone } = modalOutlet;
+    const { id, code, name, type, tier, branchId, city, address, picName, picPhone, latitude, longitude } = modalOutlet;
     if (!code || !name || !type || !tier || !branchId) {
       toast.error("Code, name, type, tier, and branch are required");
       return;
@@ -255,10 +399,29 @@ export function OutletsView() {
       const isEdit = Boolean(id);
       const url = isEdit ? `/api/marcom/outlets/${id}` : "/api/marcom/outlets";
       const method = isEdit ? "PATCH" : "POST";
+      const payload: Record<string, any> = {
+        code,
+        name,
+        type,
+        tier: modalOutlet.tier || "TIER_1",
+        branchId,
+        city: city || "",
+        address: address || "",
+        picName: picName || "",
+        picPhone: picPhone || "",
+      };
+
+      if (latitude !== undefined && latitude !== null && latitude !== ("" as any)) {
+        payload.latitude = Number(latitude);
+      }
+      if (longitude !== undefined && longitude !== null && longitude !== ("" as any)) {
+        payload.longitude = Number(longitude);
+      }
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, name, type, tier: modalOutlet.tier || "TIER_1", branchId, city: city || "", address: address || "", picName: picName || "", picPhone: picPhone || "" }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -280,29 +443,41 @@ export function OutletsView() {
   }, []);
 
   const kpiItems = useMemo(() => {
-    const totalOutlets = outlets.length;
-    const activeBranchesCovered = new Set(outlets.map((o) => o.branchId).filter(Boolean)).size;
-    const placementsInstalled = outlets.reduce((acc, o) => acc + (o.placementCount || 0), 0);
+    const kpis = calculateEnhancedOutletKPIs(outlets);
 
     return [
       {
         label: "Total Outlets",
-        value: totalOutlets,
-        helper: "Registered store network",
+        value: kpis.totalOutlets,
+        helper: `${kpis.activeCount} Aktif (${kpis.activePercentage}%)`,
         icon: Store,
         color: "orange" as const,
       },
       {
-        label: "Active Branches Covered",
-        value: activeBranchesCovered,
+        label: "Active Branches",
+        value: kpis.branchCoverage,
         helper: "Regional hub coverage",
         icon: Building2,
         color: "teal" as const,
       },
       {
+        label: "Brand Portfolio",
+        value: `${kpis.im3Count} : ${kpis.triCount}`,
+        helper: "IM3 vs 3 (Tri) distribution",
+        icon: Compass,
+        color: "amber" as const,
+      },
+      {
+        label: "MoU Partnerships",
+        value: kpis.withMouCount,
+        helper: "Toko dengan kontrak MoU aktif",
+        icon: FileText,
+        color: "violet" as const,
+      },
+      {
         label: "Placements Installed",
-        value: placementsInstalled,
-        helper: "Branding materials active",
+        value: outlets.reduce((acc, o) => acc + (o.placementCount || 0), 0),
+        helper: `${kpis.withPlacementCount} toko ber-material fisik`,
         icon: Layers,
         color: "emerald" as const,
       },
@@ -311,177 +486,330 @@ export function OutletsView() {
 
   return (
     <>
-      <MarcomTableShell
-        data={outlets}
-        columns={columns}
-        getRowId={(row) => row.id}
-        initialSorting={[{ id: "code", desc: false }]}
-        title="Outlets"
-        titleIcon={Store}
-        entityName="outlet"
-        entityPlural="outlets"
-        isLoading={isLoading}
-        error={error}
-        onRefresh={fetchOutlets}
-        canDelete={canManage}
-        deleteRequiresMessage="Delete requires admin role"
-        onDeleteOne={deleteOne}
-        canAdd={canAddOutlet}
-        onAdd={() => setModalOutlet({ code: "", name: "", type: "TRADITIONAL", branchId: branches[0]?.id || "", city: "", address: "", picName: "", picPhone: "" })}
-        addLabel="Add Outlet"
-        addIcon={Plus}
-        addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
-        kpiBar={<KpiSummaryCards items={kpiItems} />}
-        filterBar={
-          <div className="flex flex-wrap items-center gap-2.5 text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-slate-500 dark:text-slate-400">Branch:</span>
-              <select
-                value={selectedBranch}
-                onChange={(e) => handleBranchChange(e.target.value)}
-                aria-label="Filter by branch"
-                className="max-w-[190px] sm:max-w-[240px] px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 truncate cursor-pointer"
-              >
-                <option value="ALL">All Branches</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name} ({b.code})
-                  </option>
-                ))}
-              </select>
+      <div className="space-y-4">
+        {/* View Mode Switcher Header */}
+        <div className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold">
+              <Store className="w-4 h-4" />
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-slate-500 dark:text-slate-400">Store Type:</span>
-              <select
-                value={selectedType}
-                onChange={(e) => handleTypeChange(e.target.value)}
-                aria-label="Filter by store type"
-                className="px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
-              >
-                <option value="ALL">All Store Types</option>
-                <option value="TRADITIONAL">Traditional</option>
-                <option value="MODERN_RETAIL">Modern Retail</option>
-                <option value="EXCLUSIVE">Official Store / Exclusive</option>
-                <option value="CAMPUS_OUTLET">Campus Outlet</option>
-              </select>
+            <div>
+              <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                <span>Store Command Center</span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800">
+                  Profil 360° & Peta GPS
+                </span>
+              </h1>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Pusat data jaringan outlet, integrasi MoU, riwayat branding fisik, dan geolokasi.
+              </p>
             </div>
-            {(selectedBranch !== "ALL" || selectedType !== "ALL") && (
-              <button
-                type="button"
-                onClick={handleResetFilters}
-                className="text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 underline font-medium cursor-pointer"
-              >
-                Reset Filters
-              </button>
-            )}
           </div>
-        }
-        renderExpanded={(outlet) => (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Address</div>
-                <div className="text-slate-700 dark:text-slate-300">{outlet.address || "—"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC</div>
-                <div className="text-slate-700 dark:text-slate-300">{outlet.picName || "—"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC Phone</div>
-                <div className="text-slate-700 dark:text-slate-300">{outlet.picPhone || "—"}</div>
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                {outlet.branch && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedBranchId(outlet.branchId);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 transition-colors shadow-2xs cursor-pointer"
-                    >
-                      <Building2 className="w-3.5 h-3.5 text-cyan-500" />
-                      <span>Branch Details ({outlet.branch.name})</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleBranchChange(outlet.branchId);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
-                    >
-                      <Filter className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Filter by this Branch</span>
-                    </button>
-                  </>
-                )}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigateToMarcom("placements", outlet.name);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-lime-700 dark:text-lime-300 bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 hover:bg-lime-100 dark:hover:bg-lime-900/40 transition-colors shadow-2xs cursor-pointer"
-                >
-                  <ClipboardList className="w-3.5 h-3.5 text-lime-500" />
-                  <span>View Placements ({outlet.placementCount ?? 0})</span>
-                </button>
-              </div>
-              {canAddOutlet && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); setModalOutlet(outlet); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
-                  <Edit2 className="w-3.5 h-3.5 text-orange-600" />
-                  <span>Edit Outlet</span>
-                </button>
+
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
+                viewMode === "table"
+                  ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
               )}
-            </div>
-          </>
+            >
+              <TableIcon className="w-3.5 h-3.5" />
+              <span>Tabel Data</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("map")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
+                viewMode === "map"
+                  ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+              )}
+            >
+              <MapPin className="w-3.5 h-3.5 text-orange-500" />
+              <span>Peta Sebaran</span>
+            </button>
+          </div>
+        </div>
+
+        {viewMode === "map" ? (
+          <div className="space-y-4">
+            <KpiSummaryCards items={kpiItems} />
+            <OutletMapView
+              outlets={outlets}
+              onSelectOutlet={(id) => setSelectedOutletIdForDrawer(id)}
+              onEditOutlet={(o) => setModalOutlet(o)}
+              canManage={canManage}
+            />
+          </div>
+        ) : (
+          <MarcomTableShell
+            data={outlets}
+            columns={columns}
+            getRowId={(row) => row.id}
+            initialSorting={[{ id: "code", desc: false }]}
+            title="Outlets"
+            titleIcon={Store}
+            entityName="outlet"
+            entityPlural="outlets"
+            isLoading={isLoading}
+            error={error}
+            onRefresh={fetchOutlets}
+            canDelete={canManage}
+            deleteRequiresMessage="Delete requires admin role"
+            onDeleteOne={deleteOne}
+            canAdd={canAddOutlet}
+            onAdd={() =>
+              setModalOutlet({
+                code: "",
+                name: "",
+                type: "TRADITIONAL",
+                branchId: branches[0]?.id || "",
+                city: "",
+                address: "",
+                picName: "",
+                picPhone: "",
+              })
+            }
+            addLabel="Add Outlet"
+            addIcon={Plus}
+            addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
+            kpiBar={<KpiSummaryCards items={kpiItems} />}
+            filterBar={
+              <div className="flex flex-wrap items-center gap-2.5 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-500 dark:text-slate-400">Branch:</span>
+                  <select
+                    value={selectedBranch}
+                    onChange={(e) => handleBranchChange(e.target.value)}
+                    aria-label="Filter by branch"
+                    className="max-w-[190px] sm:max-w-[240px] px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 truncate cursor-pointer"
+                  >
+                    <option value="ALL">All Branches</option>
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name} ({b.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-500 dark:text-slate-400">Store Type:</span>
+                  <select
+                    value={selectedType}
+                    onChange={(e) => handleTypeChange(e.target.value)}
+                    aria-label="Filter by store type"
+                    className="px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                  >
+                    <option value="ALL">All Store Types</option>
+                    <option value="TRADITIONAL">Traditional</option>
+                    <option value="MODERN_RETAIL">Modern Retail</option>
+                    <option value="EXCLUSIVE">Official Store / Exclusive</option>
+                    <option value="CAMPUS_OUTLET">Campus Outlet</option>
+                  </select>
+                </div>
+                {(selectedBranch !== "ALL" || selectedType !== "ALL") && (
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 underline font-medium cursor-pointer"
+                  >
+                    Reset Filters
+                  </button>
+                )}
+              </div>
+            }
+            renderExpanded={(outlet) => (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
+                      Address
+                    </div>
+                    <div className="text-slate-700 dark:text-slate-300">{outlet.address || "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
+                      PIC & Telepon
+                    </div>
+                    <div className="text-slate-700 dark:text-slate-300">
+                      {outlet.picName || "—"} {outlet.picPhone ? `(${outlet.picPhone})` : ""}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
+                      Koordinat GPS
+                    </div>
+                    <div className="text-slate-700 dark:text-slate-300 font-mono text-[11px]">
+                      {outlet.latitude && outlet.longitude
+                        ? `${outlet.latitude.toFixed(5)}, ${outlet.longitude.toFixed(5)}`
+                        : "Belum disetel"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
+                      Status MoU
+                    </div>
+                    <div className="text-slate-700 dark:text-slate-300">
+                      {outlet.mouCount && outlet.mouCount > 0
+                        ? `${outlet.mouCount} Kontrak Aktif`
+                        : "Tidak ada MoU"}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedOutletIdForDrawer(outlet.id);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
+                    >
+                      <Store className="w-3.5 h-3.5" />
+                      <span>Buka Profil 360°</span>
+                    </button>
+
+                    {outlet.branch && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedBranchId(outlet.branchId);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 transition-colors shadow-2xs cursor-pointer"
+                      >
+                        <Building2 className="w-3.5 h-3.5 text-cyan-500" />
+                        <span>Branch ({outlet.branch.name})</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigateToMarcom("placements", outlet.name);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-lime-700 dark:text-lime-300 bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 hover:bg-lime-100 dark:hover:bg-lime-900/40 transition-colors shadow-2xs cursor-pointer"
+                    >
+                      <ClipboardList className="w-3.5 h-3.5 text-lime-500" />
+                      <span>Placements ({outlet.placementCount ?? 0})</span>
+                    </button>
+                  </div>
+                  {canAddOutlet && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setModalOutlet(outlet);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 text-orange-600" />
+                      <span>Edit Outlet</span>
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+            searchTerm={marcomFilters["outlets"] || ""}
+            onSearchChange={(q) => setMarcomFilter("outlets", q)}
+            emptyLabel="No outlets found."
+          />
         )}
-        searchTerm={marcomFilters["outlets"] || ""}
-        onSearchChange={(q) => setMarcomFilter("outlets", q)}
-        emptyLabel="No outlets found."
+      </div>
+
+      {/* Outlet 360 Degree Profile Drawer */}
+      <Outlet360Drawer
+        outletId={selectedOutletIdForDrawer}
+        onClose={() => setSelectedOutletIdForDrawer(null)}
+        onEditOutlet={(o) => {
+          setSelectedOutletIdForDrawer(null);
+          setModalOutlet(o);
+        }}
+        canManage={canManage}
       />
 
+      {/* Modal Add / Edit Outlet */}
       {modalOutlet && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Store className="w-4 h-4 text-orange-600" />
                 {modalOutlet.id ? "Edit Outlet" : "Add New Outlet"}
               </h2>
-              <button type="button" onClick={() => setModalOutlet(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setModalOutlet(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
             <form onSubmit={handleSaveOutlet} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Outlet Code *</label>
-                  <input type="text" required placeholder="e.g. OUT-001" value={modalOutlet.code || ""} onChange={(e) => setModalOutlet({ ...modalOutlet, code: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500" />
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Outlet Code *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. OUT-001"
+                    value={modalOutlet.code || ""}
+                    onChange={(e) => setModalOutlet({ ...modalOutlet, code: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Parent Branch *</label>
-                  <select required value={modalOutlet.branchId || ""} onChange={(e) => setModalOutlet({ ...modalOutlet, branchId: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Parent Branch *
+                  </label>
+                  <select
+                    required
+                    value={modalOutlet.branchId || ""}
+                    onChange={(e) => setModalOutlet({ ...modalOutlet, branchId: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                  >
                     <option value="">Select Branch...</option>
                     {branches.map((b) => (
-                      <option key={b.id} value={b.id}>{b.name} ({b.code})</option>
+                      <option key={b.id} value={b.id}>
+                        {b.name} ({b.code})
+                      </option>
                     ))}
                   </select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Outlet Name *</label>
-                  <input type="text" required placeholder="e.g. Toko Berkah Mandiri" value={modalOutlet.name || ""} onChange={(e) => setModalOutlet({ ...modalOutlet, name: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500" />
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Outlet Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Toko Berkah Mandiri"
+                    value={modalOutlet.name || ""}
+                    onChange={(e) => setModalOutlet({ ...modalOutlet, name: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Type *</label>
-                  <select value={modalOutlet.type || "TRADITIONAL"} onChange={(e) => setModalOutlet({ ...modalOutlet, type: e.target.value as OutletType })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Type *
+                  </label>
+                  <select
+                    value={modalOutlet.type || "TRADITIONAL"}
+                    onChange={(e) =>
+                      setModalOutlet({ ...modalOutlet, type: e.target.value as OutletType })
+                    }
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                  >
                     <option value="TRADITIONAL">Traditional</option>
                     <option value="MODERN_RETAIL">Modern Retail</option>
                     <option value="EXCLUSIVE">Exclusive</option>
@@ -491,27 +819,146 @@ export function OutletsView() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">City</label>
-                  <input type="text" placeholder="e.g. Jakarta" value={modalOutlet.city || ""} onChange={(e) => setModalOutlet({ ...modalOutlet, city: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500" />
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Jakarta"
+                    value={modalOutlet.city || ""}
+                    onChange={(e) => setModalOutlet({ ...modalOutlet, city: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">PIC Name</label>
-                  <input type="text" placeholder="e.g. Andi" value={modalOutlet.picName || ""} onChange={(e) => setModalOutlet({ ...modalOutlet, picName: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500" />
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Tier
+                  </label>
+                  <select
+                    value={modalOutlet.tier || "TIER_1"}
+                    onChange={(e) =>
+                      setModalOutlet({ ...modalOutlet, tier: e.target.value as OutletTier })
+                    }
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                  >
+                    <option value="TIER_1">Tier 1 (Prioritas)</option>
+                    <option value="TIER_2">Tier 2 (Reguler)</option>
+                    <option value="TIER_3">Tier 3 (Basic)</option>
+                  </select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">PIC Phone</label>
-                  <input type="text" placeholder="e.g. +62 812 9999 8888" value={modalOutlet.picPhone || ""} onChange={(e) => setModalOutlet({ ...modalOutlet, picPhone: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500" />
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    PIC Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Andi"
+                    value={modalOutlet.picName || ""}
+                    onChange={(e) => setModalOutlet({ ...modalOutlet, picName: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Address</label>
-                  <input type="text" placeholder="e.g. Pasar Minggu Blok B" value={modalOutlet.address || ""} onChange={(e) => setModalOutlet({ ...modalOutlet, address: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500" />
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    PIC Phone
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. +62 812 9999 8888"
+                    value={modalOutlet.picPhone || ""}
+                    onChange={(e) => setModalOutlet({ ...modalOutlet, picPhone: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                  />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setModalOutlet(null)} disabled={isSaving} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
-                <button type="submit" disabled={isSaving} className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50">{isSaving ? "Saving..." : modalOutlet.id ? "Update Outlet" : "Create Outlet"}</button>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Address
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Pasar Minggu Blok B"
+                  value={modalOutlet.address || ""}
+                  onChange={(e) => setModalOutlet({ ...modalOutlet, address: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+
+              {/* GPS Coordinates Section */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-orange-600" />
+                    <span>Koordinat Lokasi GPS (Peta)</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleGetLocationInModal}
+                    disabled={isLocatingInModal}
+                    className="text-[11px] font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <Navigation className={cn("w-3 h-3", isLocatingInModal && "animate-spin")} />
+                    <span>{isLocatingInModal ? "Mendeteksi..." : "Lokasi GPS Saya"}</span>
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
+                      Latitude
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      placeholder="-6.2088"
+                      value={modalOutlet.latitude ?? ""}
+                      onChange={(e) =>
+                        setModalOutlet({
+                          ...modalOutlet,
+                          latitude: e.target.value === "" ? null : Number(e.target.value),
+                        })
+                      }
+                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
+                      Longitude
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      placeholder="106.8456"
+                      value={modalOutlet.longitude ?? ""}
+                      onChange={(e) =>
+                        setModalOutlet({
+                          ...modalOutlet,
+                          longitude: e.target.value === "" ? null : Number(e.target.value),
+                        })
+                      }
+                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setModalOutlet(null)}
+                  disabled={isSaving}
+                  className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+                >
+                  {isSaving ? "Saving..." : modalOutlet.id ? "Update Outlet" : "Create Outlet"}
+                </button>
               </div>
             </form>
           </div>

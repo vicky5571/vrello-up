@@ -49,12 +49,13 @@ export async function GET(request: Request) {
     orderBy: { code: "asc" },
     include: {
       branch: { select: { id: true, code: true, name: true, city: true, region: true, picName: true, picPhone: true, address: true } },
-      _count: { select: { placements: true } },
+      _count: { select: { placements: true, mous: true } },
     },
   });
   const data = outlets.map((o) => ({
     ...o,
     placementCount: o._count?.placements ?? 0,
+    mouCount: o._count?.mous ?? 0,
   }));
   return NextResponse.json({ total: data.length, data });
 }
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { code, name, type, tier, branchId, address, city, picName, picPhone, active } = body ?? {};
+  const { code, name, type, tier, branchId, address, city, picName, picPhone, active, latitude, longitude } = body ?? {};
   if (!code || !name || !type || !tier || !branchId) {
     return NextResponse.json({ error: "Missing required fields: code, name, type, tier, branchId" }, { status: 400 });
   }
@@ -83,9 +84,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
   }
 
+  const parsedLat = typeof latitude === "number" && !Number.isNaN(latitude) ? latitude : null;
+  const parsedLng = typeof longitude === "number" && !Number.isNaN(longitude) ? longitude : null;
+
   try {
     const outlet = await prisma.outlet.create({
-      data: { code, name, type, tier, branchId, address, city, picName, picPhone, active },
+      data: {
+        code,
+        name,
+        type,
+        tier,
+        branchId,
+        address,
+        city,
+        picName,
+        picPhone,
+        active,
+        latitude: parsedLat,
+        longitude: parsedLng,
+      },
     });
     return NextResponse.json(outlet, { status: 201 });
   } catch (e) {

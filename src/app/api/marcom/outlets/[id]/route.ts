@@ -6,7 +6,43 @@ import { hasPermission } from "@/lib/marcom/guards";
 
 const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET"] as const;
 const VALID_TIERS = ["TIER_1", "TIER_2", "TIER_3"] as const;
-const PATCHABLE_FIELDS = ["code", "name", "type", "tier", "branchId", "address", "city", "picName", "picPhone", "active"] as const;
+const PATCHABLE_FIELDS = ["code", "name", "type", "tier", "branchId", "address", "city", "picName", "picPhone", "active", "latitude", "longitude"] as const;
+
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    await requireMember("ws-main");
+  } catch (e) {
+    if (e instanceof Response) return e;
+    throw e;
+  }
+
+  const { id } = await params;
+  const outlet = await prisma.outlet.findUnique({
+    where: { id },
+    include: {
+      branch: { select: { id: true, code: true, name: true, city: true, region: true, picName: true, picPhone: true, address: true } },
+      placements: {
+        orderBy: { id: "desc" },
+        include: {
+          material: { select: { id: true, name: true, type: true } },
+          mou: { select: { id: true, partnerName: true, status: true, compensationValue: true } },
+        },
+      },
+      mous: {
+        orderBy: { id: "desc" },
+        include: {
+          branch: { select: { id: true, code: true, name: true } },
+        },
+      },
+    },
+  });
+
+  if (!outlet) {
+    return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
+  }
+
+  return NextResponse.json(outlet);
+}
 
 async function requireMasterData() {
   let role;
