@@ -8,6 +8,7 @@ const VALID_STATUSES = ["NOT_STARTED", "ON_PROGRESS", "DONE", "ISSUE"] as const;
 const PATCHABLE_FIELDS = [
   "outletId",
   "materialId",
+  "mouId",
   "status",
   "brand",
   "date",
@@ -36,6 +37,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const data: Record<string, unknown> = {};
   for (const field of PATCHABLE_FIELDS) {
     if (body?.[field] !== undefined) data[field] = body[field];
+  }
+  if (data.mouId !== undefined) {
+    data.mouId =
+      typeof data.mouId === "string" && data.mouId.trim() && data.mouId !== "NONE"
+        ? data.mouId.trim()
+        : null;
   }
   if (data.status !== undefined && !VALID_STATUSES.includes(data.status as (typeof VALID_STATUSES)[number])) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });

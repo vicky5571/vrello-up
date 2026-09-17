@@ -22,6 +22,9 @@ import {
   CheckCircle2,
   Radio,
   Clock,
+  FileText,
+  AlertTriangle,
+  ShieldCheck,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -32,6 +35,12 @@ import {
 } from "@/components/views/shared/MarcomTableShell";
 import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
 import { calculatePlacementKPIs } from "@/lib/marcom/placementAnalytics";
+import {
+  isPermanentMaterial,
+  findAvailableMousForOutlet,
+  validatePlacementMouRequirement,
+  type MouSummaryInfo,
+} from "@/lib/marcom/placementMouBridge";
 import { LocationPicker } from "./LocationPicker";
 import { PlacementPhotoUploader } from "./PlacementPhotoUploader";
 import { PlacementBulkActionBar } from "./PlacementBulkActionBar";
@@ -65,6 +74,7 @@ export interface MarcomPlacement {
   id: string;
   outletId: string;
   materialId: string;
+  mouId?: string | null;
   status: PlacementStatus;
   brand?: "IM3" | "3" | string;
   date: string | null;
@@ -79,6 +89,15 @@ export interface MarcomPlacement {
   locationNotes?: string;
   outlet?: { id: string; code: string; name: string; brand?: string };
   material?: { id: string; type: string; name: string };
+  mou?: {
+    id: string;
+    partnerName: string;
+    status: string;
+    mouType: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    compensationValue?: number;
+  } | null;
 }
 
 const columnHelper = createMarcomColumnHelper<MarcomPlacement>();
@@ -125,6 +144,7 @@ export function PlacementsView() {
   const [viewMode, setViewMode] = useState<"table" | "map">("table");
   const [outletsList, setOutletsList] = useState<{ id: string; name: string; brand?: string; picName?: string }[]>([]);
   const [materialsList, setMaterialsList] = useState<{ id: string; name: string }[]>([]);
+  const [mousList, setMousList] = useState<MouSummaryInfo[]>([]);
   const [modalPlacement, setModalPlacement] = useState<Partial<MarcomPlacement> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -252,10 +272,11 @@ export function PlacementsView() {
           params.set("brand", brandFilter);
         }
         const placementsUrl = `/api/marcom/placements?${params.toString()}`;
-        const [resPlacements, resOutlets, resMaterials] = await Promise.all([
+        const [resPlacements, resOutlets, resMaterials, resMous] = await Promise.all([
           fetch(placementsUrl),
           fetch("/api/marcom/outlets"),
           fetch("/api/marcom/materials"),
+          fetch("/api/marcom/mous"),
         ]);
         if (!resPlacements.ok) throw new Error(`Request failed (${resPlacements.status})`);
         const jsonPlacements = await resPlacements.json();
@@ -267,6 +288,10 @@ export function PlacementsView() {
         if (resMaterials.ok) {
           const jsonMaterials = await resMaterials.json();
           setMaterialsList(Array.isArray(jsonMaterials.data) ? jsonMaterials.data : []);
+        }
+        if (resMous.ok) {
+          const jsonMous = await resMous.json();
+          setMousList(Array.isArray(jsonMous.data) ? jsonMous.data : []);
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load placements");
@@ -297,6 +322,9 @@ export function PlacementsView() {
     const firstOutlet = outletsList[0];
     const firstOutletId = firstOutlet?.id || "";
     const inherited = findOutletCoordinates(firstOutletId, placements);
+    const matchingMous = findAvailableMousForOutlet(mousList, firstOutletId, firstOutlet?.name);
+    const defaultMou = matchingMous.find((m) => m.status === "APPROVED") || matchingMous[0];
+
     const brandSuggestion =
       firstOutlet?.brand &&
       (firstOutlet.brand.toUpperCase() === "3" ||
@@ -307,6 +335,7 @@ export function PlacementsView() {
     setModalPlacement({
       outletId: firstOutletId,
       materialId: materialsList[0]?.id || "",
+      mouId: defaultMou?.id || "",
       status: "NOT_STARTED",
       brand: brandSuggestion,
       dimensions: "",
@@ -326,7 +355,7 @@ export function PlacementsView() {
         duration: 3000,
       });
     }
-  }, [outletsList, materialsList, placements]);
+  }, [outletsList, materialsList, placements, mousList]);
 
   const columns = useMemo(
     () =>
@@ -387,8 +416,56 @@ export function PlacementsView() {
         columnHelper.display({
           id: "material",
           header: "Material",
-          size: 200, minSize: 140, enableSorting: false,
+          size: 190, minSize: 130, enableSorting: false,
           cell: ({ row }) => <span className="truncate text-slate-700 dark:text-slate-300">{row.original.material?.name ?? row.original.materialId}</span>,
+        }),
+        columnHelper.display({
+          id: "mou",
+          header: "MoU / Legal",
+          size: 180, minSize: 130, enableSorting: false,
+          cell: ({ row }) => {
+            const p = row.original;
+            const mou = p.mou;
+            const isPerm = isPermanentMaterial(p.material?.name || p.material?.type);
+
+            if (mou) {
+              const isApproved = mou.status === "APPROVED";
+              return (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateToMarcom("mous", mou.partnerName || mou.id);
+                  }}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors cursor-pointer hover:underline",
+                    isApproved
+                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                      : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                  )}
+                  title={`Buka MoU: ${mou.partnerName || mou.id} (${mou.status})`}
+                >
+                  <FileText className="w-3 h-3 shrink-0" />
+                  <span className="truncate max-w-[100px]">{mou.partnerName || `MoU #${mou.id.slice(0, 6)}`}</span>
+                  <span className="text-[9px] uppercase font-bold opacity-80">({mou.status})</span>
+                </button>
+              );
+            }
+
+            if (isPerm) {
+              return (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                  title="Material permanen/sewa ini belum ditautkan ke MoU aktif"
+                >
+                  <AlertTriangle className="w-2.5 h-2.5 shrink-0" />
+                  <span>No MoU</span>
+                </span>
+              );
+            }
+
+            return <span className="text-slate-400 text-xs">—</span>;
+          },
         }),
         columnHelper.accessor("status", {
           id: "status",
@@ -472,6 +549,7 @@ export function PlacementsView() {
         body: JSON.stringify({
           outletId,
           materialId,
+          mouId: modalPlacement.mouId ? modalPlacement.mouId : null,
           status: status || "NOT_STARTED",
           brand: brand || "IM3",
           dimensions: dimensions || "",
@@ -956,11 +1034,15 @@ export function PlacementsView() {
                           ? "3"
                           : "IM3";
                       const inherited = findOutletCoordinates(selId, placements);
+                      const matchingMous = findAvailableMousForOutlet(mousList, selId, selOutlet?.name);
+                      const defaultMou = matchingMous.find((m) => m.status === "APPROVED") || matchingMous[0];
+
                       setModalPlacement((prev) =>
                         prev
                           ? {
                               ...prev,
                               outletId: selId,
+                              mouId: defaultMou?.id || "",
                               brand: prev.brand || brandSuggestion,
                               picName: prev.picName || selOutlet?.picName || "",
                               latitude: inherited ? inherited.latitude : prev.latitude,
@@ -970,11 +1052,6 @@ export function PlacementsView() {
                             }
                           : prev,
                       );
-                      if (inherited) {
-                        toast.info("Koordinat outlet otomatis diisi dari riwayat pemasangan sebelumnya", {
-                          duration: 3000,
-                        });
-                      }
                     }}
                     className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
                   >
@@ -995,6 +1072,76 @@ export function PlacementsView() {
                   </select>
                 </div>
               </div>
+
+              {/* MoU Linking & Legal Compliance Validation */}
+              {(() => {
+                const outletMous = findAvailableMousForOutlet(
+                  mousList,
+                  modalPlacement.outletId,
+                  outletsList.find((o) => o.id === modalPlacement.outletId)?.name,
+                );
+                const selectedMat = materialsList.find((m) => m.id === modalPlacement.materialId);
+                const selectedMou = mousList.find((m) => m.id === modalPlacement.mouId);
+                const mouValidation = validatePlacementMouRequirement({
+                  materialName: selectedMat?.name,
+                  selectedMou,
+                  outletMousCount: outletMous.length,
+                });
+
+                return (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Tautkan MoU Perjanjian (Branding Outlet)
+                      </label>
+                      <span className="text-[10px] text-slate-400">
+                        {outletMous.length} MoU terdaftar
+                      </span>
+                    </div>
+                    <select
+                      value={modalPlacement.mouId || ""}
+                      onChange={(e) =>
+                        setModalPlacement((prev) => (prev ? { ...prev, mouId: e.target.value || null } : prev))
+                      }
+                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
+                    >
+                      <option value="">Tanpa MoU (Materi Umum / Bebas Kontrak)</option>
+                      {outletMous.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          [{m.status}] {m.partnerName || m.outletName || m.id} ({m.mouType} - Rp {m.compensationValue?.toLocaleString("id-ID") || "0"})
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Dynamic Legal Compliance Banner */}
+                    {mouValidation.severity !== "none" && (
+                      <div
+                        className={cn(
+                          "p-2.5 rounded-xl border text-xs flex items-start gap-2 transition-all",
+                          mouValidation.severity === "warning"
+                            ? "bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-300"
+                            : "bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
+                        )}
+                      >
+                        {mouValidation.severity === "warning" ? (
+                          <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                        ) : (
+                          <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                        )}
+                        <div>
+                          <p className="font-semibold">{mouValidation.message}</p>
+                          {mouValidation.requiresMou && !modalPlacement.mouId && (
+                            <p className="text-[11px] opacity-80 mt-0.5">
+                              Disarankan menautkan MoU agar pertanggungjawaban kontrak sewa toko dan realisasi anggaran tercatat otomatis.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Status</label>

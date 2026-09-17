@@ -5,7 +5,7 @@ import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { canTransitionMou, MOU_STATUSES, type MouStatus } from "@/lib/marcom/mouMachine";
 
 const VALID_STATUSES = MOU_STATUSES;
-const PATCHABLE_FIELDS = ["branchId", "outletName", "partnerName", "mouType", "submissionDate", "startDate", "endDate", "status", "picName", "picPhone", "docPath", "compensationValue", "notes"] as const;
+const PATCHABLE_FIELDS = ["branchId", "outletId", "outletName", "partnerName", "mouType", "submissionDate", "startDate", "endDate", "status", "picName", "picPhone", "docPath", "compensationValue", "notes"] as const;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,6 +27,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         data[field] = body[field];
       }
     }
+  }
+  if (data.outletId !== undefined) {
+    data.outletId =
+      typeof data.outletId === "string" && data.outletId.trim() && data.outletId !== "NONE"
+        ? data.outletId.trim()
+        : null;
   }
   if (data.status !== undefined && !VALID_STATUSES.includes(data.status as (typeof VALID_STATUSES)[number])) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });

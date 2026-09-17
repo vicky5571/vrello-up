@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDropdown } from "@/components/ui/useDropdown";
-import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins, X } from "lucide-react";
+import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins, X, Layers } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { cn, formatIDR } from "@/lib/utils";
@@ -18,6 +18,7 @@ export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE"
 export interface MarcomMou {
   id: string;
   branchId: string;
+  outletId?: string | null;
   outletName: string;
   partnerName: string;
   mouType: string;
@@ -31,6 +32,14 @@ export interface MarcomMou {
   compensationValue: number;
   notes: string;
   branch?: { id: string; code: string; name: string };
+  outlet?: { id: string; code: string; name: string };
+  placements?: Array<{
+    id: string;
+    status: string;
+    cost: number;
+    photoUrl?: string;
+    material?: { id: string; name: string; type: string };
+  }>;
 }
 
 const columnHelper = createMarcomColumnHelper<MarcomMou>();
@@ -275,6 +284,42 @@ export function MousView() {
           cell: ({ row }) => <span className="text-slate-700 dark:text-slate-300">{typeof row.original.compensationValue === "number" ? formatIDR(row.original.compensationValue) : "—"}</span>,
         }),
         columnHelper.display({
+          id: "placements",
+          header: "Realisasi Fisik",
+          size: 180, minSize: 130, enableSorting: false,
+          cell: ({ row }) => {
+            const pls = row.original.placements || [];
+            if (pls.length === 0) {
+              return (
+                <span className="text-slate-400 text-xs italic">
+                  Belum ada materi
+                </span>
+              );
+            }
+            const doneCount = pls.filter((p) => p.status === "DONE").length;
+            const totalCost = pls.reduce((acc, p) => acc + (p.cost || 0), 0);
+            return (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToMarcom("placements", row.original.partnerName || row.original.outletName || "");
+                }}
+                className="inline-flex flex-col text-left group cursor-pointer"
+                title="Lihat titik pemasangan fisik di Placements"
+              >
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-lime-600 transition-colors">
+                  <Layers className="w-3 h-3 text-lime-500 shrink-0" />
+                  <span>{pls.length} Titik ({doneCount} Selesai)</span>
+                </span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                  Biaya: {formatIDR(totalCost)}
+                </span>
+              </button>
+            );
+          },
+        }),
+        columnHelper.display({
           id: "expander",
           header: () => null,
           size: 40, minSize: 40, maxSize: 40, enableSorting: false,
@@ -329,7 +374,21 @@ export function MousView() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branchId, partnerName, mouType, outletName: outletName || "", startDate: startDate || undefined, endDate: endDate || undefined, picName: picName || "", picPhone: picPhone || "", docPath: docPath || "", compensationValue: compensationValue != null ? Math.max(0, Number(compensationValue)) : 0, notes: notes || "", workspaceId: activeWorkspaceId }),
+        body: JSON.stringify({
+          branchId,
+          outletId: modalMou.outletId || undefined,
+          partnerName,
+          mouType,
+          outletName: outletName || "",
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+          picName: picName || "",
+          picPhone: picPhone || "",
+          docPath: docPath || "",
+          compensationValue: compensationValue != null ? Math.max(0, Number(compensationValue)) : 0,
+          notes: notes || "",
+          workspaceId: activeWorkspaceId,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -489,6 +548,17 @@ export function MousView() {
                     <span>Branch Details</span>
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateToMarcom("placements", mou.partnerName || mou.outletName);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-lime-700 dark:text-lime-300 bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 hover:bg-lime-100 dark:hover:bg-lime-900/40 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <Layers className="w-3.5 h-3.5 text-lime-600" />
+                  <span>Realisasi Fisik ({mou.placements?.length || 0})</span>
+                </button>
               </div>
               <div className="flex items-center gap-2">
                 {mou.status === "DRAFT" && canCreate && (
@@ -724,7 +794,17 @@ export function MousView() {
                     list="mou-outlets-list"
                     placeholder="e.g. Toko Berkah"
                     value={modalMou.outletName || ""}
-                    onChange={(e) => setModalMou({ ...modalMou, outletName: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const matched = availableOutlets.find(
+                        (o) => o.name.toLowerCase() === val.toLowerCase()
+                      );
+                      setModalMou({
+                        ...modalMou,
+                        outletName: val,
+                        outletId: matched ? matched.id : null,
+                      });
+                    }}
                     className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
                   />
                   <datalist id="mou-outlets-list">

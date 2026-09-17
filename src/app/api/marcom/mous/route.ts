@@ -12,6 +12,16 @@ const CREATABLE_STATUSES = ["DRAFT", "SUBMITTED"] as const;
 
 const mouInclude = {
   branch: { select: { id: true, code: true, name: true } },
+  outlet: { select: { id: true, code: true, name: true } },
+  placements: {
+    select: {
+      id: true,
+      status: true,
+      cost: true,
+      photoUrl: true,
+      material: { select: { id: true, name: true, type: true } },
+    },
+  },
 } as const;
 
 export async function GET(request: Request) {
@@ -21,6 +31,7 @@ export async function GET(request: Request) {
   if (authError) return authError;
 
   const branchId = searchParams.get("branchId") ?? searchParams.get("branch");
+  const outletId = searchParams.get("outletId");
   const status = searchParams.get("status");
   const query = searchParams.get("q")?.toLowerCase();
 
@@ -33,6 +44,9 @@ export async function GET(request: Request) {
   };
   if (branchId && branchId !== "ALL") {
     where.branchId = branchId;
+  }
+  if (outletId && outletId !== "ALL") {
+    where.outletId = outletId;
   }
   if (status && status !== "ALL") {
     where.status = status as (typeof VALID_STATUSES)[number];
@@ -56,7 +70,7 @@ export async function POST(request: Request) {
   const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
   if (authError) return authError;
 
-  const { branchId, outletName, partnerName, mouType, submissionDate, startDate, endDate, status, picName, picPhone, docPath, compensationValue, notes } = body ?? {};
+  const { branchId, outletId, outletName, partnerName, mouType, submissionDate, startDate, endDate, status, picName, picPhone, docPath, compensationValue, notes } = body ?? {};
   if (!branchId || !partnerName || !mouType) {
     return NextResponse.json({ error: "Missing required fields: branchId, partnerName, mouType" }, { status: 400 });
   }
@@ -64,12 +78,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid status: only DRAFT or SUBMITTED can be set on creation" }, { status: 400 });
   }
 
+  const targetOutletId = typeof outletId === "string" && outletId.trim() && outletId !== "NONE" ? outletId.trim() : null;
+  const targetOutletName = typeof outletName === "string" ? outletName : "";
+
   try {
     const mou = await prisma.mou.create({
       data: {
         workspaceId,
         branchId,
-        outletName,
+        outletId: targetOutletId,
+        outletName: targetOutletName,
         partnerName,
         mouType,
         submissionDate: submissionDate ? new Date(submissionDate) : undefined,
@@ -88,7 +106,7 @@ export async function POST(request: Request) {
   } catch (e) {
     console.error("[MOU POST] failed", e, { branchId, partnerName, mouType });
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
-      return NextResponse.json({ error: "Branch not found" }, { status: 400 });
+      return NextResponse.json({ error: "Branch or Outlet not found" }, { status: 400 });
     }
     return NextResponse.json({ error: e instanceof Error ? e.message : "Internal Server Error" }, { status: 500 });
   }

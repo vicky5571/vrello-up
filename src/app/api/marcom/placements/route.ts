@@ -8,6 +8,17 @@ const VALID_STATUSES = ["NOT_STARTED", "ON_PROGRESS", "DONE", "ISSUE"] as const;
 const placementInclude = {
   outlet: { select: { id: true, code: true, name: true, brand: true } },
   material: { select: { id: true, type: true, name: true } },
+  mou: {
+    select: {
+      id: true,
+      partnerName: true,
+      status: true,
+      mouType: true,
+      startDate: true,
+      endDate: true,
+      compensationValue: true,
+    },
+  },
 } as const;
 
 export async function GET(request: Request) {
@@ -18,6 +29,7 @@ export async function GET(request: Request) {
     if (authError) return authError;
 
     const outletId = searchParams.get("outletId");
+    const mouId = searchParams.get("mouId");
     const status = searchParams.get("status");
     const brand = searchParams.get("brand");
     const query = searchParams.get("q")?.toLowerCase();
@@ -31,6 +43,9 @@ export async function GET(request: Request) {
     };
     if (outletId && outletId !== "ALL") {
       where.outletId = outletId;
+    }
+    if (mouId && mouId !== "ALL") {
+      where.mouId = mouId;
     }
     if (status && status !== "ALL") {
       where.status = status as (typeof VALID_STATUSES)[number];
@@ -65,7 +80,7 @@ export async function POST(request: Request) {
   const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
   if (authError) return authError;
 
-  const { outletId, materialId, status, brand, date, picName, photoUrl, dimensions, cost, notes, latitude, longitude, shareLocationUrl, locationNotes } = body ?? {};
+  const { outletId, materialId, mouId, status, brand, date, picName, photoUrl, dimensions, cost, notes, latitude, longitude, shareLocationUrl, locationNotes } = body ?? {};
   if (!outletId || !materialId) {
     return NextResponse.json({ error: "Missing required fields: outletId, materialId" }, { status: 400 });
   }
@@ -76,6 +91,7 @@ export async function POST(request: Request) {
   const parsedLat = typeof latitude === "number" && !Number.isNaN(latitude) ? latitude : null;
   const parsedLng = typeof longitude === "number" && !Number.isNaN(longitude) ? longitude : null;
   const normalizedBrand = typeof brand === "string" && (brand.toUpperCase() === "3" || brand.toUpperCase() === "TRI") ? "3" : "IM3";
+  const targetMouId = typeof mouId === "string" && mouId.trim() && mouId !== "NONE" ? mouId.trim() : null;
 
   try {
     const placement = await prisma.placement.create({
@@ -83,6 +99,7 @@ export async function POST(request: Request) {
         workspaceId,
         outletId,
         materialId,
+        mouId: targetMouId,
         status,
         brand: normalizedBrand,
         date,

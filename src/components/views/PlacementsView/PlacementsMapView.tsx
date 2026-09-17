@@ -17,6 +17,7 @@ import {
   Crosshair,
   Plus,
   Minus,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import type * as L from "leaflet";
@@ -757,6 +758,30 @@ export function PlacementsMapView({
                   : "—"}
               </div>
             </div>
+
+            {selectedPlacement.mou && (
+              <div className="col-span-2 pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold flex items-center gap-1">
+                  <FileText className="w-3 h-3 text-slate-400" />
+                  MoU Terkait
+                </span>
+                <div className="font-medium text-xs text-slate-800 dark:text-slate-200 flex items-center justify-between mt-0.5">
+                  <span className="truncate">
+                    {selectedPlacement.mou.partnerName || `MoU #${selectedPlacement.mou.id.slice(0, 8)}`}
+                  </span>
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.2 rounded text-[10px] font-bold uppercase",
+                      selectedPlacement.mou.status === "APPROVED"
+                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                        : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                    )}
+                  >
+                    {selectedPlacement.mou.status}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {selectedPlacement.locationNotes && (
