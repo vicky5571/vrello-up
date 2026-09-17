@@ -86,9 +86,9 @@ function createBrandPinIcon(
   const statusPipColor = statusCfg.color;
 
   return leaflet.divIcon({
-    className: "custom-brand-pin",
+    className: "!bg-transparent !border-0",
     html: `
-      <div style="transform: translate(-50%, -100%); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35)); cursor: pointer; transition: transform 0.15s ease;">
+      <div style="width: 36px; height: 46px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.35)); cursor: pointer; transition: transform 0.15s ease;">
         <svg width="36" height="46" viewBox="0 0 36 46" fill="none" xmlns="http://www.w3.org/2000/svg">
           <!-- Pin Body: Yellow for IM3, Pink for 3 -->
           <path d="M18 0C8.05888 0 0 8.05888 0 18C0 30.2 16.1 45.1 17.2 46.1C17.6 46.5 18.4 46.5 18.8 46.1C19.9 45.1 36 30.2 36 18C36 8.05888 27.9411 0 18 0Z" fill="${pinColor}" stroke="#ffffff" stroke-width="1.5" />
@@ -109,10 +109,10 @@ function createBrandPinIcon(
 
 function createUserLocationIcon(leaflet: typeof L) {
   return leaflet.divIcon({
-    className: "custom-user-location-marker",
+    className: "!bg-transparent !border-0",
     html: `
-      <div style="transform: translate(-50%, -50%); position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-        <span style="position: absolute; width: 100%; height: 100%; border-radius: 9999px; background-color: rgba(59, 130, 246, 0.4);" class="animate-ping"></span>
+      <div style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+        <span style="position: absolute; width: 24px; height: 24px; border-radius: 9999px; background-color: rgba(59, 130, 246, 0.4); pointer-events: none;" class="animate-ping"></span>
         <span style="position: relative; width: 14px; height: 14px; background-color: #2563eb; border: 2.5px solid #ffffff; border-radius: 9999px; box-shadow: 0 2px 5px rgba(0,0,0,0.35);"></span>
       </div>
     `,
@@ -139,6 +139,7 @@ export function PlacementsMapView({
   const [activeDrawer, setActiveDrawer] = useState<"mapped" | "unmapped" | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // Split into mapped and unmapped
   const mappedPlacements = useMemo(
@@ -216,6 +217,49 @@ export function PlacementsMapView({
     [renderUserMarker],
   );
 
+  const renderMarkers = useCallback(
+    (currentMappedPlacements: MarcomPlacement[]) => {
+      const map = mapInstanceRef.current;
+      const L = leafletRef.current;
+      const markersGroup = markersLayerRef.current;
+      if (!map || !L || !markersGroup) return null;
+
+      markersGroup.clearLayers();
+      const bounds = L.latLngBounds([]);
+
+      currentMappedPlacements.forEach((placement) => {
+        const lat = placement.latitude;
+        const lng = placement.longitude;
+        if (!isValidCoordinate(lat ?? Number.NaN, lng ?? Number.NaN)) return;
+        bounds.extend([lat as number, lng as number]);
+
+        const icon = createBrandPinIcon(L, placement.brand, placement.status);
+        const marker = L.marker([lat as number, lng as number], {
+          icon,
+          zIndexOffset: 500,
+        });
+
+        // Click event selects placement to view rich card
+        marker.on("click", () => {
+          setSelectedPlacement(placement);
+        });
+
+        const brandMeta = getBrandMeta(placement.brand);
+
+        // Simple tooltip on hover
+        marker.bindTooltip(
+          `<strong>[${brandMeta.shortLabel}] ${placement.outlet?.name || "Outlet"}</strong><br/>${placement.material?.name || "Material"} (${STATUS_CONFIG[placement.status]?.label || placement.status})`,
+          { direction: "top", offset: [0, -42] },
+        );
+
+        markersGroup.addLayer(marker);
+      });
+
+      return bounds;
+    },
+    [],
+  );
+
   // Initialize Map
   useEffect(() => {
     let isCancelled = false;
@@ -248,6 +292,10 @@ export function PlacementsMapView({
       const markersGroup = L.layerGroup().addTo(map);
       markersLayerRef.current = markersGroup;
       mapInstanceRef.current = map;
+      setIsMapReady(true);
+
+      // Render initial markers immediately so they are never missed
+      renderMarkers(mappedPlacements);
 
       // Invalidate size after layout mounts
       setTimeout(() => {
@@ -268,8 +316,11 @@ export function PlacementsMapView({
             setUserCoords([lat, lng]);
             hasCenteredOnUserRef.current = true;
 
-            mapInstanceRef.current.setView([lat, lng], 14, { animate: true });
+            mapInstanceRef.current.setView([lat, lng], 14);
+            mapInstanceRef.current.invalidateSize();
             renderUserMarker(lat, lng, L);
+            // Re-render markers to ensure they are cleanly drawn after view change
+            renderMarkers(mappedPlacements);
           },
           (err) => {
             if (isCancelled) return;
@@ -277,16 +328,9 @@ export function PlacementsMapView({
             console.warn("Initial user geolocation unavailable:", err.message);
             // Fallback: If user location denied/failed and placements exist, fit bounds to placements
             if (!hasCenteredOnUserRef.current && mapInstanceRef.current) {
-              const validPlacements = placements.filter((p) =>
-                isValidCoordinate(p.latitude ?? Number.NaN, p.longitude ?? Number.NaN),
-              );
-              if (validPlacements.length > 0) {
-                const bounds = L.latLngBounds(
-                  validPlacements.map((p) => [p.latitude as number, p.longitude as number]),
-                );
-                if (bounds.isValid()) {
-                  mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-                }
+              const bounds = renderMarkers(mappedPlacements);
+              if (bounds && bounds.isValid()) {
+                mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
               }
             }
           },
@@ -299,6 +343,7 @@ export function PlacementsMapView({
 
     return () => {
       isCancelled = true;
+      setIsMapReady(false);
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
         userMarkerRef.current = null;
@@ -311,46 +356,16 @@ export function PlacementsMapView({
     };
   }, []);
 
-  // Update Markers when mapped placements change
+  // Update Markers when mapped placements change or when map becomes ready
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    const L = leafletRef.current;
-    const markersGroup = markersLayerRef.current;
-    if (!map || !L || !markersGroup) return;
-
-    markersGroup.clearLayers();
-
-    const bounds = L.latLngBounds([]);
-
-    mappedPlacements.forEach((placement) => {
-      const lat = placement.latitude as number;
-      const lng = placement.longitude as number;
-      bounds.extend([lat, lng]);
-
-      const icon = createBrandPinIcon(L, placement.brand, placement.status);
-      const marker = L.marker([lat, lng], { icon });
-
-      // Click event selects placement to view rich card
-      marker.on("click", () => {
-        setSelectedPlacement(placement);
-      });
-
-      const brandMeta = getBrandMeta(placement.brand);
-
-      // Simple tooltip on hover
-      marker.bindTooltip(
-        `<strong>[${brandMeta.shortLabel}] ${placement.outlet?.name || "Outlet"}</strong><br/>${placement.material?.name || "Material"} (${STATUS_CONFIG[placement.status]?.label || placement.status})`,
-        { direction: "top", offset: [0, -38] },
-      );
-
-      markersGroup.addLayer(marker);
-    });
+    if (!isMapReady) return;
+    const bounds = renderMarkers(mappedPlacements);
 
     // Only fitBounds automatically if user location has NOT centered the map
-    if (!hasCenteredOnUserRef.current && mappedPlacements.length > 0 && bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+    if (!hasCenteredOnUserRef.current && mappedPlacements.length > 0 && bounds && bounds.isValid()) {
+      mapInstanceRef.current?.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
-  }, [mappedPlacements]);
+  }, [mappedPlacements, isMapReady, renderMarkers]);
 
   // Handle Fit All Pins
   const handleFitAll = useCallback(() => {
@@ -358,13 +373,11 @@ export function PlacementsMapView({
     const L = leafletRef.current;
     if (!map || !L || mappedPlacements.length === 0) return;
 
-    const bounds = L.latLngBounds(
-      mappedPlacements.map((p) => [p.latitude as number, p.longitude as number]),
-    );
-    if (bounds.isValid()) {
+    const bounds = renderMarkers(mappedPlacements);
+    if (bounds && bounds.isValid()) {
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
-  }, [mappedPlacements]);
+  }, [mappedPlacements, renderMarkers]);
 
   // Center on single placement
   const handleCenterOn = useCallback((placement: MarcomPlacement) => {
