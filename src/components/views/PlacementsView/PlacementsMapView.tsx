@@ -74,7 +74,7 @@ const DISPLAY_STATUS_KEYS: PlacementStatus[] = ["NOT_STARTED", "ON_PROGRESS", "D
 
 const DEFAULT_CENTER: [number, number] = [-6.2088, 106.8456]; // Jakarta
 const DEFAULT_ZOOM = 11;
-const MIN_ZOOM = 3;
+const MIN_ZOOM = 5;
 const MAX_ZOOM = 18;
 
 function createBrandPinIcon(
@@ -306,6 +306,8 @@ export function PlacementsMapView({
       const map = L.map(mapContainerRef.current, {
         center: userCoords ?? DEFAULT_CENTER,
         zoom: userCoords ? 15 : DEFAULT_ZOOM,
+        minZoom: MIN_ZOOM,
+        maxZoom: MAX_ZOOM,
         zoomControl: false, // We provide custom clean controls
         attributionControl: false,
         touchZoom: true, // Allow 2-finger pinch on touchscreen devices
@@ -584,7 +586,7 @@ export function PlacementsMapView({
           <div className="relative flex flex-col items-center justify-center h-60 w-9 my-1">
             {/* Subtle Zoom Reference Ticks */}
             <div className="absolute left-1.5 flex flex-col justify-between h-48 py-1 pointer-events-none opacity-40">
-              {[18, 15, 11, 7, 3].map((lvl) => (
+              {[18, 15, 11, 8, 5].map((lvl) => (
                 <span
                   key={lvl}
                   className={cn(
