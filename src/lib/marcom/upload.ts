@@ -96,3 +96,22 @@ export function isServableFilePath(filePath: string): boolean {
   }
   return true;
 }
+
+// Validates a document file path: accepts either internal authenticated files
+// path (/api/marcom/files/...) or valid cloud URLs (https:// or http://).
+export function isValidDocumentFilePath(filePath: string): boolean {
+  if (typeof filePath !== "string") return false;
+  const trimmed = filePath.trim();
+  if (!trimmed) return false;
+  if (isServableFilePath(trimmed)) return true;
+  if (trimmed.startsWith("https://") || trimmed.startsWith("http://")) {
+    try {
+      const parsed = new URL(trimmed);
+      return parsed.protocol === "https:" || parsed.protocol === "http:";
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
