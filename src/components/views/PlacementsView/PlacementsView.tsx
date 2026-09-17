@@ -17,6 +17,7 @@ import {
   Search,
   RefreshCw,
   Layers,
+  Camera,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -26,6 +27,8 @@ import {
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
 import { LocationPicker } from "./LocationPicker";
+import { PlacementPhotoUploader } from "./PlacementPhotoUploader";
+import { parsePlacementPhotos } from "@/lib/marcom/photoUtils";
 import { buildGoogleMapsUrl, isValidCoordinate } from "@/lib/marcom/locationUtils";
 import { getBrandMeta, BRAND_CONFIG } from "@/lib/marcom/brandUtils";
 import {
@@ -594,6 +597,43 @@ export function PlacementsView() {
                     <div className="text-slate-700 dark:text-slate-300">{placement.notes || "—"}</div>
                   </div>
                 </div>
+
+                {/* Photo Proof Gallery in Expanded Row */}
+                {(() => {
+                  const proofPhotos = parsePlacementPhotos(placement.photoUrl);
+                  if (proofPhotos.length === 0) return null;
+                  return (
+                    <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800">
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Foto Bukti Pemasangan ({proofPhotos.length})</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {proofPhotos.map((url, i) => (
+                          <a
+                            key={`${url}-${i}`}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            title={`Lihat Foto #${i + 1}`}
+                            className="group relative w-14 h-14 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:scale-105 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                          >
+                            <img
+                              src={url}
+                              alt={`Bukti #${i + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <span className="absolute bottom-0.5 right-0.5 px-1 rounded text-[8px] font-mono font-bold bg-black/60 text-white">
+                              #{i + 1}
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">Track installation checklist & operations in workspace:</span>
                   <div className="flex items-center gap-2">
@@ -933,10 +973,17 @@ export function PlacementsView() {
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 cursor-pointer">Date</label>
                 <input type="date" value={modalPlacement.date ? modalPlacement.date.slice(0, 10) : ""} onClick={(e) => { try { e.currentTarget.showPicker(); } catch {} }} onFocus={(e) => { try { e.currentTarget.showPicker(); } catch {} }} onChange={(e) => setModalPlacement({ ...modalPlacement, date: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer" />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Photo / Proof URL (optional)</label>
-                <input type="url" placeholder="https://..." value={modalPlacement.photoUrl || ""} onChange={(e) => setModalPlacement({ ...modalPlacement, photoUrl: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500" />
-              </div>
+              {/* Multi-Photo Field Proof Uploader (Camera, Gallery, Compress) */}
+              <PlacementPhotoUploader
+                photoUrl={modalPlacement.photoUrl || ""}
+                placementId={modalPlacement.id}
+                disabled={isSaving}
+                onChange={(newPhotoUrl) =>
+                  setModalPlacement((prev) =>
+                    prev ? { ...prev, photoUrl: newPhotoUrl } : prev,
+                  )
+                }
+              />
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Notes</label>
                 <textarea rows={2} placeholder="Additional installation requirements..." value={modalPlacement.notes || ""} onChange={(e) => setModalPlacement({ ...modalPlacement, notes: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500" />

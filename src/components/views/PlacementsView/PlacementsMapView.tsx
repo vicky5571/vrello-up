@@ -28,6 +28,7 @@ import {
 } from "@/lib/marcom/locationUtils";
 import { getBrandMeta, BRAND_CONFIG } from "@/lib/marcom/brandUtils";
 import { cn, formatIDR } from "@/lib/utils";
+import { PlacementPhotoGallery } from "./PlacementPhotoGallery";
 
 interface PlacementsMapViewProps {
   placements: MarcomPlacement[];
@@ -769,18 +770,11 @@ export function PlacementsMapView({
             </div>
           )}
 
-          {selectedPlacement.photoUrl && (
-            <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 h-28 bg-slate-100 dark:bg-slate-800">
-              <img
-                src={selectedPlacement.photoUrl}
-                alt="Installation proof"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = "none";
-                }}
-              />
-            </div>
-          )}
+          {/* Photo Gallery for Installation Proofs */}
+          <PlacementPhotoGallery
+            photoUrl={selectedPlacement.photoUrl}
+            thumbnailHeight="h-28"
+          />
 
           {/* Action Buttons */}
           <div className="flex items-center gap-1.5 pt-1">

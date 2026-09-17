@@ -249,6 +249,7 @@ export interface Placement {
   date?: string | null;
   picName?: string;
   photoUrl?: string;
+  photoUrls?: string[];
   dimensions?: string;
   cost?: number;
   notes?: string;

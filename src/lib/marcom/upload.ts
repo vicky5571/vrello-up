@@ -2,7 +2,14 @@ import path from "node:path";
 
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
-export const ALLOWED_UPLOAD_EXTENSIONS = ["pdf", "png", "jpg", "mp4"] as const;
+export const ALLOWED_UPLOAD_EXTENSIONS = [
+  "pdf",
+  "png",
+  "jpg",
+  "jpeg",
+  "webp",
+  "mp4",
+] as const;
 export type AllowedUploadExtension =
   (typeof ALLOWED_UPLOAD_EXTENSIONS)[number];
 

@@ -12,7 +12,7 @@ import {
   validateUpload,
 } from "@/lib/marcom/upload";
 
-const VALID_KINDS = ["documents", "events", "tasks"] as const;
+const VALID_KINDS = ["documents", "events", "tasks", "placements"] as const;
 
 export async function POST(request: Request) {
   let role;
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     !(VALID_KINDS as readonly string[]).includes(kind)
   ) {
     return NextResponse.json(
-      { error: "Invalid kind: expected documents, events, or tasks" },
+      { error: "Invalid kind: expected documents, events, tasks, or placements" },
       { status: 400 },
     );
   }
@@ -50,7 +50,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing required field: file" }, { status: 400 });
   }
 
-  const required = kind === "documents" ? "UPLOAD_DOCUMENT" : "UPLOAD_VIDEO_FOOTAGE";
+  const required =
+    kind === "documents"
+      ? "UPLOAD_DOCUMENT"
+      : kind === "placements"
+      ? "CREATE_PLACEMENT"
+      : "UPLOAD_VIDEO_FOOTAGE";
   if (!hasPermission(role, required)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }

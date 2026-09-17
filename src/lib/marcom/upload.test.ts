@@ -26,8 +26,15 @@ test("rejects ../ path-traversal filenames", () => {
   }
 });
 
-test("accepts pdf/png/jpg/mp4 at or under 25 MB", () => {
-  for (const filename of ["doc.pdf", "photo.png", "photo.jpg", "clip.mp4"]) {
+test("accepts pdf/png/jpg/jpeg/webp/mp4 at or under 25 MB", () => {
+  for (const filename of [
+    "doc.pdf",
+    "photo.png",
+    "photo.jpg",
+    "photo.jpeg",
+    "photo.webp",
+    "clip.mp4",
+  ]) {
     assert.equal(
       validateUpload({ filename, sizeBytes: 25 * MB }).ok,
       true,
