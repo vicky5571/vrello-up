@@ -15,6 +15,8 @@ import {
   Filter,
   Eye,
   Crosshair,
+  Plus,
+  Minus,
 } from "lucide-react";
 import { toast } from "sonner";
 import type * as L from "leaflet";
@@ -72,6 +74,8 @@ const DISPLAY_STATUS_KEYS: PlacementStatus[] = ["NOT_STARTED", "ON_PROGRESS", "D
 
 const DEFAULT_CENTER: [number, number] = [-6.2088, 106.8456]; // Jakarta
 const DEFAULT_ZOOM = 11;
+const MIN_ZOOM = 3;
+const MAX_ZOOM = 18;
 
 function createBrandPinIcon(
   leaflet: typeof L,
@@ -140,6 +144,21 @@ export function PlacementsMapView({
   const [isLocating, setIsLocating] = useState(false);
   const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState<number>(userCoords ? 15 : DEFAULT_ZOOM);
+
+  const handleSliderZoom = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const targetZoom = Number(e.target.value);
+    setCurrentZoom(targetZoom);
+    mapInstanceRef.current?.setZoom(targetZoom);
+  }, []);
+
+  const handleZoomIn = useCallback(() => {
+    mapInstanceRef.current?.zoomIn();
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    mapInstanceRef.current?.zoomOut();
+  }, []);
 
   // Split into mapped and unmapped
   const mappedPlacements = useMemo(
@@ -333,6 +352,13 @@ export function PlacementsMapView({
       markersLayerRef.current = markersGroup;
       mapInstanceRef.current = map;
       setIsMapReady(true);
+
+      // Keep currentZoom state in sync with Leaflet zoom events
+      map.on("zoom zoomend", () => {
+        if (!isCancelled) {
+          setCurrentZoom(Math.round(map.getZoom()));
+        }
+      });
 
       // Render initial markers immediately so they are never missed
       renderMarkers(mappedPlacements);
@@ -538,45 +564,93 @@ export function PlacementsMapView({
         </div>
       </div>
 
-      {/* Floating Right Map Zoom & Reset Actions */}
-      <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5 pointer-events-auto">
-        <button
-          type="button"
-          onClick={() => mapInstanceRef.current?.zoomIn()}
-          title="Zoom In"
-          className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer font-bold text-base"
-        >
-          +
-        </button>
-        <button
-          type="button"
-          onClick={() => mapInstanceRef.current?.zoomOut()}
-          title="Zoom Out"
-          className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer font-bold text-base"
-        >
-          -
-        </button>
-        <button
-          type="button"
-          onClick={() => handleCenterOnUser(true)}
-          title="Pusatkan ke Lokasi Saya Saat Ini"
-          className={cn(
-            "w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center transition-colors cursor-pointer",
-            isLocating
-              ? "text-blue-600 bg-blue-50 dark:bg-blue-950/40"
-              : "text-slate-700 dark:text-slate-200 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700",
-          )}
-        >
-          <Crosshair className={cn("w-4 h-4", isLocating && "animate-spin text-blue-600")} />
-        </button>
-        <button
-          type="button"
-          onClick={handleFitAll}
-          title="Lihat Semua Pin"
-          className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer"
-        >
-          <Maximize2 className="w-4 h-4 text-emerald-600" />
-        </button>
+      {/* Floating Right Map Zoom Slider (+/-) & Utility Actions */}
+      <div className="absolute top-3 right-3 z-10 flex flex-col items-center gap-2 pointer-events-auto">
+        {/* Zoom Control Group: + Button, Vertical Scroll/Slider Bar, - Button */}
+        <div className="flex flex-col items-center bg-white/95 dark:bg-slate-800/95 backdrop-blur-md rounded-2xl border border-slate-200/90 dark:border-slate-700/90 shadow-md p-1">
+          {/* Zoom In (+) */}
+          <button
+            type="button"
+            onClick={handleZoomIn}
+            disabled={currentZoom >= MAX_ZOOM}
+            title="Zoom In (+)"
+            aria-label="Zoom In"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all cursor-pointer font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+
+          {/* Vertical Scroll / Slider Bar */}
+          <div className="relative flex flex-col items-center justify-center h-28 w-8 my-0.5">
+            {/* Background Track with Emerald Fill */}
+            <div className="w-1.5 h-24 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex flex-col justify-end pointer-events-none">
+              <div
+                className="w-full bg-emerald-500 rounded-full transition-all duration-75"
+                style={{
+                  height: `${Math.max(0, Math.min(100, ((currentZoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM)) * 100))}%`,
+                }}
+              />
+            </div>
+
+            {/* Draggable knob / thumb indicator */}
+            <div
+              className="absolute w-3.5 h-3.5 rounded-full bg-white dark:bg-slate-900 border-2 border-emerald-500 shadow-md pointer-events-none transition-all duration-75"
+              style={{
+                bottom: `calc(8px + ${Math.max(0, Math.min(1, (currentZoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM))) * 78}px)`,
+              }}
+            />
+
+            {/* Invisible native range input overlay for intuitive drag & click */}
+            <input
+              type="range"
+              min={MIN_ZOOM}
+              max={MAX_ZOOM}
+              step={1}
+              value={currentZoom}
+              onChange={handleSliderZoom}
+              title={`Zoom: ${currentZoom}`}
+              aria-label="Slider Zoom Peta"
+              className="absolute w-24 h-8 -rotate-90 origin-center opacity-0 cursor-pointer z-10"
+            />
+          </div>
+
+          {/* Zoom Out (-) */}
+          <button
+            type="button"
+            onClick={handleZoomOut}
+            disabled={currentZoom <= MIN_ZOOM}
+            title="Zoom Out (-)"
+            aria-label="Zoom Out"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all cursor-pointer font-bold disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <Minus className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Action Buttons: Center on User & Fit All */}
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => handleCenterOnUser(true)}
+            title="Pusatkan ke Lokasi Saya Saat Ini"
+            className={cn(
+              "w-9 h-9 rounded-xl bg-white/95 dark:bg-slate-800/95 border border-slate-200/90 dark:border-slate-700/90 shadow-md flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer",
+              isLocating
+                ? "text-blue-600 bg-blue-50 dark:bg-blue-950/40"
+                : "text-slate-700 dark:text-slate-200 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700",
+            )}
+          >
+            <Crosshair className={cn("w-4 h-4", isLocating && "animate-spin text-blue-600")} />
+          </button>
+          <button
+            type="button"
+            onClick={handleFitAll}
+            title="Lihat Semua Pin"
+            className="w-9 h-9 rounded-xl bg-white/95 dark:bg-slate-800/95 text-slate-700 dark:text-slate-200 border border-slate-200/90 dark:border-slate-700/90 shadow-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+          >
+            <Maximize2 className="w-4 h-4 text-emerald-600" />
+          </button>
+        </div>
       </div>
 
       {/* Selected Marker Detail Card (Bottom or Floating) */}
