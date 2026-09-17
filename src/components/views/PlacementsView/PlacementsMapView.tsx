@@ -167,7 +167,7 @@ export function PlacementsMapView({
     } else {
       const marker = L.marker([lat, lng], {
         icon: createUserLocationIcon(L),
-        zIndexOffset: 1000,
+        zIndexOffset: 200,
       });
       marker.bindTooltip("<strong>Lokasi Anda Saat Ini</strong>", {
         direction: "top",
@@ -177,45 +177,6 @@ export function PlacementsMapView({
       userMarkerRef.current = marker;
     }
   }, []);
-
-  const handleCenterOnUser = useCallback(
-    (showFeedback = true) => {
-      if (typeof window === "undefined" || !("geolocation" in navigator)) {
-        if (showFeedback) toast.error("Geolocation tidak didukung pada browser ini");
-        return;
-      }
-
-      setIsLocating(true);
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setIsLocating(false);
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          setUserCoords([lat, lng]);
-          hasCenteredOnUserRef.current = true;
-
-          const map = mapInstanceRef.current;
-          const L = leafletRef.current;
-          if (map && L) {
-            map.setView([lat, lng], 14, { animate: true });
-            renderUserMarker(lat, lng, L);
-          }
-          if (showFeedback) {
-            toast.success("Berhasil menemukan lokasi Anda");
-          }
-        },
-        (err) => {
-          setIsLocating(false);
-          console.warn("Geolocation warning:", err.message);
-          if (showFeedback) {
-            toast.error("Gagal mendeteksi lokasi GPS: " + err.message);
-          }
-        },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 },
-      );
-    },
-    [renderUserMarker],
-  );
 
   const renderMarkers = useCallback(
     (currentMappedPlacements: MarcomPlacement[]) => {
@@ -236,7 +197,7 @@ export function PlacementsMapView({
         const icon = createBrandPinIcon(L, placement.brand, placement.status);
         const marker = L.marker([lat as number, lng as number], {
           icon,
-          zIndexOffset: 500,
+          zIndexOffset: 600,
         });
 
         // Click event selects placement to view rich card
@@ -260,6 +221,56 @@ export function PlacementsMapView({
     [],
   );
 
+  const handleCenterOnUser = useCallback(
+    (showFeedback = true) => {
+      if (typeof window === "undefined" || !("geolocation" in navigator)) {
+        if (showFeedback) toast.error("Geolocation tidak didukung pada browser ini");
+        return;
+      }
+
+      setIsLocating(true);
+      const onGeoSuccess = (pos: GeolocationPosition) => {
+        setIsLocating(false);
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setUserCoords([lat, lng]);
+        hasCenteredOnUserRef.current = true;
+
+        const map = mapInstanceRef.current;
+        const L = leafletRef.current;
+        if (map && L) {
+          map.flyTo([lat, lng], 15, { duration: 1.2 });
+          renderUserMarker(lat, lng, L);
+          renderMarkers(mappedPlacements);
+        }
+        if (showFeedback) {
+          toast.success("Berhasil menemukan lokasi Anda");
+        }
+      };
+
+      const onGeoFallback = () => {
+        navigator.geolocation.getCurrentPosition(
+          onGeoSuccess,
+          (err) => {
+            setIsLocating(false);
+            console.warn("Geolocation warning:", err.message);
+            if (showFeedback) {
+              toast.error("Gagal mendeteksi lokasi GPS: " + err.message);
+            }
+          },
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+        );
+      };
+
+      navigator.geolocation.getCurrentPosition(
+        onGeoSuccess,
+        onGeoFallback,
+        { enableHighAccuracy: true, timeout: 4000, maximumAge: 60000 },
+      );
+    },
+    [renderUserMarker, renderMarkers, mappedPlacements],
+  );
+
   // Initialize Map
   useEffect(() => {
     let isCancelled = false;
@@ -273,8 +284,8 @@ export function PlacementsMapView({
       leafletRef.current = L;
 
       const map = L.map(mapContainerRef.current, {
-        center: DEFAULT_CENTER,
-        zoom: DEFAULT_ZOOM,
+        center: userCoords ?? DEFAULT_CENTER,
+        zoom: userCoords ? 15 : DEFAULT_ZOOM,
         zoomControl: false, // We provide custom clean controls
         attributionControl: false,
       });
@@ -304,38 +315,54 @@ export function PlacementsMapView({
         }
       }, 200);
 
-      // Request user current location immediately for the initial view
+      // Auto-zoom to user current location immediately for the initial view
       if (typeof window !== "undefined" && "geolocation" in navigator) {
         setIsLocating(true);
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            if (isCancelled || !mapInstanceRef.current) return;
-            setIsLocating(false);
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            setUserCoords([lat, lng]);
-            hasCenteredOnUserRef.current = true;
+        const onInitialGeoSuccess = (pos: GeolocationPosition) => {
+          if (isCancelled || !mapInstanceRef.current) return;
+          setIsLocating(false);
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          setUserCoords([lat, lng]);
+          hasCenteredOnUserRef.current = true;
 
-            mapInstanceRef.current.setView([lat, lng], 14);
-            mapInstanceRef.current.invalidateSize();
-            renderUserMarker(lat, lng, L);
-            // Re-render markers to ensure they are cleanly drawn after view change
-            renderMarkers(mappedPlacements);
-          },
-          (err) => {
-            if (isCancelled) return;
-            setIsLocating(false);
-            console.warn("Initial user geolocation unavailable:", err.message);
-            // Fallback: If user location denied/failed and placements exist, fit bounds to placements
-            if (!hasCenteredOnUserRef.current && mapInstanceRef.current) {
-              const bounds = renderMarkers(mappedPlacements);
-              if (bounds && bounds.isValid()) {
-                mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+          // Smooth animated auto-zoom directly into user's location
+          mapInstanceRef.current.flyTo([lat, lng], 15, { duration: 1.2 });
+          renderUserMarker(lat, lng, L);
+          renderMarkers(mappedPlacements);
+        };
+
+        const onInitialGeoFallback = () => {
+          if (isCancelled) return;
+          // Fallback to standard accuracy if high accuracy timed out or is slow
+          navigator.geolocation.getCurrentPosition(
+            onInitialGeoSuccess,
+            (fallbackErr) => {
+              if (isCancelled) return;
+              setIsLocating(false);
+              console.warn("Initial user geolocation unavailable:", fallbackErr.message);
+              // Fallback: If user location denied/failed and placements exist, fit bounds to placements
+              if (!hasCenteredOnUserRef.current && mapInstanceRef.current) {
+                const bounds = renderMarkers(mappedPlacements);
+                if (bounds && bounds.isValid()) {
+                  mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+                }
               }
-            }
-          },
-          { enableHighAccuracy: true, timeout: 7000, maximumAge: 60000 },
+            },
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+          );
+        };
+
+        navigator.geolocation.getCurrentPosition(
+          onInitialGeoSuccess,
+          onInitialGeoFallback,
+          { enableHighAccuracy: true, timeout: 4000, maximumAge: 60000 },
         );
+      } else {
+        const bounds = renderMarkers(mappedPlacements);
+        if (bounds && bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+        }
       }
     }
 
@@ -344,6 +371,7 @@ export function PlacementsMapView({
     return () => {
       isCancelled = true;
       setIsMapReady(false);
+      hasCenteredOnUserRef.current = false;
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
         userMarkerRef.current = null;
@@ -359,12 +387,7 @@ export function PlacementsMapView({
   // Update Markers when mapped placements change or when map becomes ready
   useEffect(() => {
     if (!isMapReady) return;
-    const bounds = renderMarkers(mappedPlacements);
-
-    // Only fitBounds automatically if user location has NOT centered the map
-    if (!hasCenteredOnUserRef.current && mappedPlacements.length > 0 && bounds && bounds.isValid()) {
-      mapInstanceRef.current?.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-    }
+    renderMarkers(mappedPlacements);
   }, [mappedPlacements, isMapReady, renderMarkers]);
 
   // Handle Fit All Pins
