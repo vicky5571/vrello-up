@@ -14,7 +14,9 @@ import {
   ChevronRight,
   Filter,
   Eye,
+  Crosshair,
 } from "lucide-react";
+import { toast } from "sonner";
 import type * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { MarcomPlacement, PlacementStatus } from "./PlacementsView";
@@ -103,6 +105,21 @@ function createBrandPinIcon(
   });
 }
 
+function createUserLocationIcon(leaflet: typeof L) {
+  return leaflet.divIcon({
+    className: "custom-user-location-marker",
+    html: `
+      <div style="transform: translate(-50%, -50%); position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+        <span style="position: absolute; width: 100%; height: 100%; border-radius: 9999px; background-color: rgba(59, 130, 246, 0.4);" class="animate-ping"></span>
+        <span style="position: relative; width: 14px; height: 14px; background-color: #2563eb; border: 2.5px solid #ffffff; border-radius: 9999px; box-shadow: 0 2px 5px rgba(0,0,0,0.35);"></span>
+      </div>
+    `,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
+  });
+}
+
 export function PlacementsMapView({
   placements,
   onEditPlacement,
@@ -113,9 +130,13 @@ export function PlacementsMapView({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const leafletRef = useRef<typeof L | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const userMarkerRef = useRef<L.Marker | null>(null);
+  const hasCenteredOnUserRef = useRef(false);
 
   const [selectedPlacement, setSelectedPlacement] = useState<MarcomPlacement | null>(null);
   const [isUnmappedDrawerOpen, setIsUnmappedDrawerOpen] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
 
   // Split into mapped and unmapped
   const mappedPlacements = useMemo(
@@ -132,6 +153,65 @@ export function PlacementsMapView({
         (p) => !isValidCoordinate(p.latitude ?? Number.NaN, p.longitude ?? Number.NaN),
       ),
     [placements],
+  );
+
+  const renderUserMarker = useCallback((lat: number, lng: number, L: typeof import("leaflet")) => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (userMarkerRef.current) {
+      userMarkerRef.current.setLatLng([lat, lng]);
+    } else {
+      const marker = L.marker([lat, lng], {
+        icon: createUserLocationIcon(L),
+        zIndexOffset: 1000,
+      });
+      marker.bindTooltip("<strong>Lokasi Anda Saat Ini</strong>", {
+        direction: "top",
+        offset: [0, -14],
+      });
+      marker.addTo(map);
+      userMarkerRef.current = marker;
+    }
+  }, []);
+
+  const handleCenterOnUser = useCallback(
+    (showFeedback = true) => {
+      if (typeof window === "undefined" || !("geolocation" in navigator)) {
+        if (showFeedback) toast.error("Geolocation tidak didukung pada browser ini");
+        return;
+      }
+
+      setIsLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setIsLocating(false);
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          setUserCoords([lat, lng]);
+          hasCenteredOnUserRef.current = true;
+
+          const map = mapInstanceRef.current;
+          const L = leafletRef.current;
+          if (map && L) {
+            map.setView([lat, lng], 14, { animate: true });
+            renderUserMarker(lat, lng, L);
+          }
+          if (showFeedback) {
+            toast.success("Berhasil menemukan lokasi Anda");
+          }
+        },
+        (err) => {
+          setIsLocating(false);
+          console.warn("Geolocation warning:", err.message);
+          if (showFeedback) {
+            toast.error("Gagal mendeteksi lokasi GPS: " + err.message);
+          }
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 },
+      );
+    },
+    [renderUserMarker],
   );
 
   // Initialize Map
@@ -173,12 +253,54 @@ export function PlacementsMapView({
           mapInstanceRef.current.invalidateSize();
         }
       }, 200);
+
+      // Request user current location immediately for the initial view
+      if (typeof window !== "undefined" && "geolocation" in navigator) {
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (isCancelled || !mapInstanceRef.current) return;
+            setIsLocating(false);
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            setUserCoords([lat, lng]);
+            hasCenteredOnUserRef.current = true;
+
+            mapInstanceRef.current.setView([lat, lng], 14, { animate: true });
+            renderUserMarker(lat, lng, L);
+          },
+          (err) => {
+            if (isCancelled) return;
+            setIsLocating(false);
+            console.warn("Initial user geolocation unavailable:", err.message);
+            // Fallback: If user location denied/failed and placements exist, fit bounds to placements
+            if (!hasCenteredOnUserRef.current && mapInstanceRef.current) {
+              const validPlacements = placements.filter((p) =>
+                isValidCoordinate(p.latitude ?? Number.NaN, p.longitude ?? Number.NaN),
+              );
+              if (validPlacements.length > 0) {
+                const bounds = L.latLngBounds(
+                  validPlacements.map((p) => [p.latitude as number, p.longitude as number]),
+                );
+                if (bounds.isValid()) {
+                  mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+                }
+              }
+            }
+          },
+          { enableHighAccuracy: true, timeout: 7000, maximumAge: 60000 },
+        );
+      }
     }
 
     initMap();
 
     return () => {
       isCancelled = true;
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -222,7 +344,8 @@ export function PlacementsMapView({
       markersGroup.addLayer(marker);
     });
 
-    if (mappedPlacements.length > 0 && bounds.isValid()) {
+    // Only fitBounds automatically if user location has NOT centered the map
+    if (!hasCenteredOnUserRef.current && mappedPlacements.length > 0 && bounds.isValid()) {
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
   }, [mappedPlacements]);
@@ -268,6 +391,20 @@ export function PlacementsMapView({
             <MapPin className="w-4 h-4 text-emerald-600" />
             <span>{mappedPlacements.length} Terpetakan</span>
           </div>
+          {userCoords && (
+            <>
+              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <button
+                type="button"
+                onClick={() => handleCenterOnUser(false)}
+                title="Klik untuk pusatkan ke lokasi Anda"
+                className="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              >
+                <Crosshair className="w-3.5 h-3.5 text-blue-600" />
+                <span>Area Anda</span>
+              </button>
+            </>
+          )}
           {unmappedPlacements.length > 0 && (
             <>
               <span className="text-slate-300 dark:text-slate-700">|</span>
@@ -325,6 +462,19 @@ export function PlacementsMapView({
           className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer font-bold text-base"
         >
           -
+        </button>
+        <button
+          type="button"
+          onClick={() => handleCenterOnUser(true)}
+          title="Pusatkan ke Lokasi Saya Saat Ini"
+          className={cn(
+            "w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md flex items-center justify-center transition-colors cursor-pointer",
+            isLocating
+              ? "text-blue-600 bg-blue-50 dark:bg-blue-950/40"
+              : "text-slate-700 dark:text-slate-200 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700",
+          )}
+        >
+          <Crosshair className={cn("w-4 h-4", isLocating && "animate-spin text-blue-600")} />
         </button>
         <button
           type="button"
