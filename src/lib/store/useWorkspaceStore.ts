@@ -29,6 +29,7 @@ import {
   removeWorkspaceAndCascadeTasks,
 } from "@/lib/store/workspaceCrud";
 import { syncFieldEventOnTaskStatusChange } from "@/lib/tasks/eventTaskSync";
+import { syncPlacementOnTaskStatusChange } from "@/lib/tasks/placementTaskSync";
 
 // Default Seed Users
 export const SEED_USERS: User[] = [
@@ -1406,6 +1407,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         if (updates.statusId && prev?.relatedMarcomId) {
           const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
           syncFieldEventOnTaskStatusChange(prev, updates.statusId, currentWs?.spaces || []);
+          syncPlacementOnTaskStatusChange(prev, updates.statusId, currentWs?.spaces || []);
         }
         // rule-1 "Auto-assign Urgent Tasks": assign the lead and ensure a
         // due date of today. Nested updateTask can't refire (no priority key).
@@ -1552,6 +1554,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         if (prev?.relatedMarcomId) {
           const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
           syncFieldEventOnTaskStatusChange(prev, newStatusId, currentWs?.spaces || []);
+          syncPlacementOnTaskStatusChange(prev, newStatusId, currentWs?.spaces || []);
         }
         // rule-2 "Completion Notification": log completion with assignee count.
         if (!prev || prev.statusId === newStatusId) return;

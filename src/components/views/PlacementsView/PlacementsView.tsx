@@ -28,6 +28,10 @@ import {
 import { LocationPicker } from "./LocationPicker";
 import { buildGoogleMapsUrl, isValidCoordinate } from "@/lib/marcom/locationUtils";
 import { getBrandMeta, BRAND_CONFIG } from "@/lib/marcom/brandUtils";
+import {
+  buildPlacementTaskPayload,
+  syncTaskOnPlacementStatusChange,
+} from "@/lib/tasks/placementTaskSync";
 
 const PlacementsMapView = dynamic(
   () => import("./PlacementsMapView").then((mod) => mod.PlacementsMapView),
@@ -76,10 +80,9 @@ const BRAND_CHIPS: { label: string; value: string; color?: string }[] = [
 
 const PLACEMENT_STATUS_CHIPS: { label: string; value: string }[] = [
   { label: "All", value: "ALL" },
-  { label: "Not Started", value: "NOT_STARTED" },
-  { label: "On Progress", value: "ON_PROGRESS" },
+  { label: "To Do", value: "NOT_STARTED" },
+  { label: "In Progress", value: "ON_PROGRESS" },
   { label: "Done", value: "DONE" },
-  { label: "Issue", value: "ISSUE" },
 ];
 
 const STATUS_STYLES: Record<PlacementStatus, string> = {
@@ -153,25 +156,35 @@ export function PlacementsView() {
       return;
     }
     const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
+    const targetSpace =
+      currentWorkspace?.spaces.find((s) => s.lists.some((l) => l.id === "list-field-ops")) ||
+      currentWorkspace?.spaces[0];
     const members = currentWorkspace?.members || [];
-    const statusId = "status-in-progress";
+    const taskPayload = buildPlacementTaskPayload(
+      {
+        id: placement.id,
+        materialName: placement.material?.name,
+        outletName: placement.outlet?.name,
+        dimensions: placement.dimensions,
+        picName: placement.picName,
+        notes: placement.notes,
+        photoUrl: placement.photoUrl,
+        status: placement.status,
+      },
+      targetSpace,
+    );
+
     const task = createTask({
-      listId: "list-field-ops",
-      title: `[Placement] ${placement.material?.name || "Branding"} - ${placement.outlet?.name || "Outlet"}`,
-      description: `<p><strong>Material:</strong> ${placement.material?.name || "N/A"}</p><p><strong>Dimensions:</strong> ${placement.dimensions || "To be measured"}</p><p><strong>PIC:</strong> ${placement.picName || "Unassigned"}</p><p>${placement.notes || ""}</p>`,
-      statusId,
-      priority: placement.status === "ISSUE" ? "urgent" : "normal",
+      ...taskPayload,
       assignees: members[0] ? [members[0]] : [],
-      relatedMarcomId: placement.id,
-      mediaUrl: placement.photoUrl || undefined,
       tags: [],
-      subtasks: [
-        { id: `st-place-${Date.now()}-1`, title: `Survey outlet site & confirm dimensions: ${placement.dimensions || "N/A"}`, completed: false, createdAt: new Date().toISOString() },
-        { id: `st-place-${Date.now()}-2`, title: "Artwork design & print vendor proof approval", completed: false, createdAt: new Date().toISOString() },
-        { id: `st-place-${Date.now()}-3`, title: "Logistics dispatch & on-site installation", completed: false, createdAt: new Date().toISOString() },
-        { id: `st-place-${Date.now()}-4`, title: "Upload verified installation photo proof", completed: false, createdAt: new Date().toISOString() },
-      ],
-      orderIndex: Math.max(-1, ...tasks.filter((t) => t.statusId === statusId).map((t) => t.orderIndex)) + 1,
+      orderIndex:
+        Math.max(
+          -1,
+          ...tasks
+            .filter((t) => t.statusId === taskPayload.statusId)
+            .map((t) => t.orderIndex),
+        ) + 1,
     });
     toast.success("Production task created in Field Operations!");
     setSelectedTaskId(task.id);
@@ -298,7 +311,26 @@ export function PlacementsView() {
           id: "status",
           header: "Status",
           size: 130, minSize: 110,
-          cell: ({ row }) => <span className={cn("inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold", STATUS_STYLES[row.original.status] ?? STATUS_STYLES.NOT_STARTED)}>{row.original.status.replaceAll("_", " ")}</span>,
+          cell: ({ row }) => {
+            const label =
+              row.original.status === "NOT_STARTED"
+                ? "To Do"
+                : row.original.status === "ON_PROGRESS"
+                ? "In Progress"
+                : row.original.status === "DONE"
+                ? "Done"
+                : row.original.status.replaceAll("_", " ");
+            return (
+              <span
+                className={cn(
+                  "inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold",
+                  STATUS_STYLES[row.original.status] ?? STATUS_STYLES.NOT_STARTED,
+                )}
+              >
+                {label}
+              </span>
+            );
+          },
         }),
         columnHelper.display({
           id: "date",
@@ -377,6 +409,16 @@ export function PlacementsView() {
         throw new Error(data.error || `Failed to save placement (${res.status})`);
       }
       toast.success(`Placement ${isEdit ? "updated" : "created"} successfully`);
+      if (isEdit && id) {
+        const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
+        syncTaskOnPlacementStatusChange(
+          id,
+          status || "NOT_STARTED",
+          tasks,
+          currentWorkspace?.spaces || [],
+          (taskId, updates) => useWorkspaceStore.getState().updateTask(taskId, updates),
+        );
+      }
       setModalPlacement(null);
       await fetchPlacements();
     } catch (err) {
@@ -861,10 +903,9 @@ export function PlacementsView() {
                     onChange={(e) => setModalPlacement((prev) => (prev ? { ...prev, status: e.target.value as PlacementStatus } : prev))}
                     className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
                   >
-                    <option value="NOT_STARTED">Not Started</option>
-                    <option value="ON_PROGRESS">On Progress</option>
+                    <option value="NOT_STARTED">To Do</option>
+                    <option value="ON_PROGRESS">In Progress</option>
                     <option value="DONE">Done</option>
-                    <option value="ISSUE">Issue</option>
                   </select>
                 </div>
                 <div>

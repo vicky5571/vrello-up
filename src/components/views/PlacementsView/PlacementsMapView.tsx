@@ -39,14 +39,14 @@ const STATUS_CONFIG: Record<
   { label: string; color: string; bg: string; text: string; ring: string }
 > = {
   NOT_STARTED: {
-    label: "Not Started",
+    label: "To Do",
     color: "#64748B",
     bg: "bg-slate-500/10",
     text: "text-slate-500 dark:text-slate-400",
     ring: "#94A3B8",
   },
   ON_PROGRESS: {
-    label: "On Progress",
+    label: "In Progress",
     color: "#D97706",
     bg: "bg-amber-500/10",
     text: "text-amber-600 dark:text-amber-400",
@@ -67,6 +67,8 @@ const STATUS_CONFIG: Record<
     ring: "#FB7185",
   },
 };
+
+const DISPLAY_STATUS_KEYS: PlacementStatus[] = ["NOT_STARTED", "ON_PROGRESS", "DONE"];
 
 const DEFAULT_CENTER: [number, number] = [-6.2088, 106.8456]; // Jakarta
 const DEFAULT_ZOOM = 11;
@@ -134,7 +136,7 @@ export function PlacementsMapView({
   const hasCenteredOnUserRef = useRef(false);
 
   const [selectedPlacement, setSelectedPlacement] = useState<MarcomPlacement | null>(null);
-  const [isUnmappedDrawerOpen, setIsUnmappedDrawerOpen] = useState(false);
+  const [activeDrawer, setActiveDrawer] = useState<"mapped" | "unmapped" | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
 
@@ -337,7 +339,7 @@ export function PlacementsMapView({
 
       // Simple tooltip on hover
       marker.bindTooltip(
-        `<strong>[${brandMeta.shortLabel}] ${placement.outlet?.name || "Outlet"}</strong><br/>${placement.material?.name || "Material"} (${placement.status.replace("_", " ")})`,
+        `<strong>[${brandMeta.shortLabel}] ${placement.outlet?.name || "Outlet"}</strong><br/>${placement.material?.name || "Material"} (${STATUS_CONFIG[placement.status]?.label || placement.status})`,
         { direction: "top", offset: [0, -38] },
       );
 
@@ -387,10 +389,22 @@ export function PlacementsMapView({
       {/* Top Floating Stats & Controls */}
       <div className="absolute top-3 left-3 z-10 flex flex-wrap items-center gap-2 pointer-events-auto">
         <div className="flex items-center gap-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-md text-xs">
-          <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-slate-100">
+          <button
+            type="button"
+            onClick={() =>
+              setActiveDrawer((prev) => (prev === "mapped" ? null : "mapped"))
+            }
+            title="Klik untuk melihat daftar placement terpetakan"
+            className={cn(
+              "flex items-center gap-1.5 font-bold transition-colors cursor-pointer rounded-md py-0.5 px-1 -mx-1",
+              activeDrawer === "mapped"
+                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300"
+                : "text-slate-900 dark:text-slate-100 hover:text-emerald-600 dark:hover:text-emerald-400",
+            )}
+          >
             <MapPin className="w-4 h-4 text-emerald-600" />
             <span>{mappedPlacements.length} Terpetakan</span>
-          </div>
+          </button>
           {userCoords && (
             <>
               <span className="text-slate-300 dark:text-slate-700">|</span>
@@ -410,8 +424,16 @@ export function PlacementsMapView({
               <span className="text-slate-300 dark:text-slate-700">|</span>
               <button
                 type="button"
-                onClick={() => setIsUnmappedDrawerOpen(true)}
-                className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                onClick={() =>
+                  setActiveDrawer((prev) => (prev === "unmapped" ? null : "unmapped"))
+                }
+                title="Klik untuk melihat daftar placement yang belum memiliki koordinat"
+                className={cn(
+                  "inline-flex items-center gap-1 font-semibold transition-colors cursor-pointer rounded-md py-0.5 px-1 -mx-1",
+                  activeDrawer === "unmapped"
+                    ? "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300"
+                    : "text-amber-600 dark:text-amber-400 hover:underline",
+                )}
               >
                 <AlertCircle className="w-3.5 h-3.5" />
                 <span>{unmappedPlacements.length} Belum Ada Titik</span>
@@ -435,12 +457,15 @@ export function PlacementsMapView({
           </div>
           <div className="flex items-center gap-1">
             <span className="text-[10px] uppercase font-bold text-slate-400">Status:</span>
-            {Object.entries(STATUS_CONFIG).map(([st, cfg]) => (
-              <div key={st} className="flex items-center gap-1 px-1 py-0.5 rounded-md">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.color }} />
-                <span className="text-slate-600 dark:text-slate-300">{cfg.label}</span>
-              </div>
-            ))}
+            {DISPLAY_STATUS_KEYS.map((st) => {
+              const cfg = STATUS_CONFIG[st];
+              return (
+                <div key={st} className="flex items-center gap-1 px-1 py-0.5 rounded-md">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cfg.color }} />
+                  <span className="text-slate-600 dark:text-slate-300">{cfg.label}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -635,8 +660,103 @@ export function PlacementsMapView({
         </div>
       )}
 
+      {/* Mapped Placements Drawer */}
+      {activeDrawer === "mapped" && (
+        <div className="absolute inset-y-0 right-0 w-full sm:w-80 z-30 pointer-events-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col animate-in slide-in-from-right-full duration-200">
+          <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-emerald-600" />
+              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                Placement Terpetakan ({mappedPlacements.length})
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveDrawer(null)}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            {mappedPlacements.length === 0 ? (
+              <div className="text-center py-8 text-xs text-slate-500 dark:text-slate-400">
+                Belum ada placement yang terpetakan.
+              </div>
+            ) : (
+              mappedPlacements.map((p) => {
+                const bMeta = getBrandMeta(p.brand);
+                const isSelected = selectedPlacement?.id === p.id;
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => handleCenterOn(p)}
+                    className={cn(
+                      "p-2.5 rounded-xl border transition-all text-xs space-y-1.5 cursor-pointer",
+                      isSelected
+                        ? "border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 shadow-xs"
+                        : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/80",
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-1">
+                      <span className="font-bold text-slate-900 dark:text-slate-100 truncate">
+                        {p.outlet?.name || "Outlet"}
+                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase", bMeta.badgeClass)}>
+                          {bMeta.shortLabel}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase",
+                            STATUS_CONFIG[p.status]?.bg,
+                            STATUS_CONFIG[p.status]?.text,
+                          )}
+                        >
+                          {STATUS_CONFIG[p.status]?.label || p.status}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      {p.material?.name || p.materialId}
+                      {p.locationNotes ? ` • ${p.locationNotes}` : ""}
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {p.latitude?.toFixed(4)}, {p.longitude?.toFixed(4)}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {canManage && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDrawer(null);
+                              onEditPlacement(p);
+                            }}
+                            className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                            title="Edit Placement"
+                          >
+                            <Edit2 className="w-3 h-3 text-lime-600" />
+                          </button>
+                        )}
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                          <span>Pusatkan</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Unmapped Placements Drawer */}
-      {isUnmappedDrawerOpen && (
+      {activeDrawer === "unmapped" && (
         <div className="absolute inset-y-0 right-0 w-full sm:w-80 z-30 pointer-events-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col animate-in slide-in-from-right-full duration-200">
           <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
@@ -647,7 +767,7 @@ export function PlacementsMapView({
             </div>
             <button
               type="button"
-              onClick={() => setIsUnmappedDrawerOpen(false)}
+              onClick={() => setActiveDrawer(null)}
               className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
             >
               <X className="w-4 h-4" />
@@ -685,7 +805,7 @@ export function PlacementsMapView({
                           STATUS_CONFIG[p.status]?.text,
                         )}
                       >
-                        {p.status.replace("_", " ")}
+                        {STATUS_CONFIG[p.status]?.label || p.status}
                       </span>
                     </div>
                   </div>
@@ -696,7 +816,7 @@ export function PlacementsMapView({
                     <button
                       type="button"
                       onClick={() => {
-                        setIsUnmappedDrawerOpen(false);
+                        setActiveDrawer(null);
                         onEditPlacement(p);
                       }}
                       className="w-full mt-1 inline-flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors cursor-pointer"
