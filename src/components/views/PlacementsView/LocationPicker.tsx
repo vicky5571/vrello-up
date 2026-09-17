@@ -76,6 +76,7 @@ export function LocationPicker({
   // Initialize Leaflet mini-map
   useEffect(() => {
     let isCancelled = false;
+    let pinchCleanup: (() => void) | null = null;
 
     async function initMap() {
       if (!mapContainerRef.current || mapInstanceRef.current) return;
@@ -95,17 +96,31 @@ export function LocationPicker({
         zoomControl: true,
         attributionControl: false,
         touchZoom: true,
-        scrollWheelZoom: true,
+        scrollWheelZoom: false, // Explicitly disable scroll up/down zoom
       });
 
-      // Filter wheel events: only allow pinch gestures (trackpad pinch with ctrlKey: true)
-      // to zoom the map, completely ignoring standard mouse wheel or trackpad scroll up/down.
-      const scrollHandler = (map as unknown as { scrollWheelZoom?: { _onWheelScroll: (e: WheelEvent) => void } }).scrollWheelZoom;
-      if (scrollHandler && typeof scrollHandler._onWheelScroll === "function") {
-        const origWheel = scrollHandler._onWheelScroll;
-        scrollHandler._onWheelScroll = function (e: WheelEvent) {
-          if (!e.ctrlKey) return;
-          return origWheel.call(this, e);
+      // Ensure native scroll wheel zoom is completely disabled in Leaflet
+      map.scrollWheelZoom.disable();
+
+      // Only permit pinch gestures (trackpad pinch with ctrlKey: true)
+      const container = mapContainerRef.current;
+      const scrollHandler = map.scrollWheelZoom as unknown as {
+        _delta?: number;
+        _onWheelScroll?: (e: WheelEvent) => void;
+      };
+      scrollHandler._delta = 0;
+
+      const handlePinchOnlyWheel = (e: WheelEvent) => {
+        if (!e.ctrlKey) return;
+        if (typeof scrollHandler._onWheelScroll === "function") {
+          scrollHandler._onWheelScroll.call(scrollHandler, e);
+        }
+      };
+
+      if (container) {
+        container.addEventListener("wheel", handlePinchOnlyWheel, { passive: false });
+        pinchCleanup = () => {
+          container.removeEventListener("wheel", handlePinchOnlyWheel);
         };
       }
 
@@ -139,8 +154,9 @@ export function LocationPicker({
       }
 
       // Map click handler to place or move marker
-      map.on("click", (e) => {
-        const { lat, lng } = e.latlng;
+      map.on("click", (e: L.LeafletMouseEvent) => {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
         if (!isValidCoordinate(lat, lng)) return;
 
         if (markerRef.current) {
@@ -187,6 +203,9 @@ export function LocationPicker({
 
     return () => {
       isCancelled = true;
+      if (pinchCleanup) {
+        pinchCleanup();
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;

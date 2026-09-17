@@ -274,6 +274,7 @@ export function PlacementsMapView({
   // Initialize Map
   useEffect(() => {
     let isCancelled = false;
+    let pinchCleanup: (() => void) | null = null;
 
     async function initMap() {
       if (!mapContainerRef.current || mapInstanceRef.current) return;
@@ -289,17 +290,32 @@ export function PlacementsMapView({
         zoomControl: false, // We provide custom clean controls
         attributionControl: false,
         touchZoom: true, // Allow 2-finger pinch on touchscreen devices
-        scrollWheelZoom: true, // Handled below to only permit pinch gestures
+        scrollWheelZoom: false, // Explicitly disable scroll up/down zoom
       });
 
-      // Filter wheel events: only allow pinch gestures (trackpad pinch with ctrlKey: true)
-      // to zoom the map, completely ignoring standard mouse wheel or trackpad scroll up/down.
-      const scrollHandler = (map as unknown as { scrollWheelZoom?: { _onWheelScroll: (e: WheelEvent) => void } }).scrollWheelZoom;
-      if (scrollHandler && typeof scrollHandler._onWheelScroll === "function") {
-        const origWheel = scrollHandler._onWheelScroll;
-        scrollHandler._onWheelScroll = function (e: WheelEvent) {
-          if (!e.ctrlKey) return;
-          return origWheel.call(this, e);
+      // Ensure native scroll wheel zoom is completely disabled in Leaflet
+      map.scrollWheelZoom.disable();
+
+      // Only permit pinch gestures (on trackpad, pinch dispatches WheelEvent with ctrlKey: true).
+      // Standard scroll up/down (ctrlKey: false) is completely ignored.
+      const container = mapContainerRef.current;
+      const scrollHandler = map.scrollWheelZoom as unknown as {
+        _delta?: number;
+        _onWheelScroll?: (e: WheelEvent) => void;
+      };
+      scrollHandler._delta = 0;
+
+      const handlePinchOnlyWheel = (e: WheelEvent) => {
+        if (!e.ctrlKey) return;
+        if (typeof scrollHandler._onWheelScroll === "function") {
+          scrollHandler._onWheelScroll.call(scrollHandler, e);
+        }
+      };
+
+      if (container) {
+        container.addEventListener("wheel", handlePinchOnlyWheel, { passive: false });
+        pinchCleanup = () => {
+          container.removeEventListener("wheel", handlePinchOnlyWheel);
         };
       }
 
@@ -385,6 +401,9 @@ export function PlacementsMapView({
       isCancelled = true;
       setIsMapReady(false);
       hasCenteredOnUserRef.current = false;
+      if (pinchCleanup) {
+        pinchCleanup();
+      }
       if (userMarkerRef.current) {
         userMarkerRef.current.remove();
         userMarkerRef.current = null;
