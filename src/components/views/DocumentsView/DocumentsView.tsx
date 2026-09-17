@@ -30,13 +30,13 @@ import {
 import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
-import { isValidDocumentFilePath } from "@/lib/marcom/upload";
 import {
   calculateDocumentKPIs,
   filterDocuments,
   formatFileSize,
   getDocumentTypeMeta,
   isCloudDocumentUrl,
+  isValidDocumentFilePath,
 } from "@/lib/marcom/documentWorkflow";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { DocumentCardsView } from "./DocumentCardsView";

@@ -93,6 +93,39 @@ export function isCloudDocumentUrl(url?: string | null): boolean {
   return trimmed.startsWith("https://") || trimmed.startsWith("http://");
 }
 
+export const FILES_URL_PREFIX = "/api/marcom/files/";
+
+export function isServableFilePath(filePath: string): boolean {
+  if (typeof filePath !== "string") return false;
+  if (!filePath.startsWith(FILES_URL_PREFIX)) return false;
+  const rest = filePath.slice(FILES_URL_PREFIX.length);
+  if (!rest) return false;
+  if (
+    rest.includes("..") ||
+    rest.includes("\\") ||
+    rest.includes("\0")
+  ) {
+    return false;
+  }
+  return true;
+}
+
+export function isValidDocumentFilePath(filePath: string): boolean {
+  if (typeof filePath !== "string") return false;
+  const trimmed = filePath.trim();
+  if (!trimmed) return false;
+  if (isServableFilePath(trimmed)) return true;
+  if (trimmed.startsWith("https://") || trimmed.startsWith("http://")) {
+    try {
+      const parsed = new URL(trimmed);
+      return parsed.protocol === "https:" || parsed.protocol === "http:";
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
 export function getDocumentTypeMeta(fileType: DocFileType): DocumentTypeMeta {
   return DOCUMENT_TYPE_CONFIG[fileType] || DOCUMENT_TYPE_CONFIG.PDF;
 }

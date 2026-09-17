@@ -63,7 +63,6 @@ export function sanitizeFilename(filename: string): string {
 // serves it back via GET /api/marcom/files/[...path]. Document/event rows
 // must only reference files under this prefix — never external URLs.
 export const UPLOAD_ROOT_DIRNAME = "uploads";
-export const FILES_URL_PREFIX = "/api/marcom/files/";
 
 // Defense-in-depth write confinement: resolves the destination against the
 // uploads root and returns null when it escapes (mirrors the read side).
@@ -80,8 +79,8 @@ export function resolveUploadPath(
   return resolved;
 }
 
-// Accepts only paths served by the authenticated files route. Rejects
-// external URLs, other API prefixes, and embedded traversal/backslashes.
+export const FILES_URL_PREFIX = "/api/marcom/files/";
+
 export function isServableFilePath(filePath: string): boolean {
   if (typeof filePath !== "string") return false;
   if (!filePath.startsWith(FILES_URL_PREFIX)) return false;
@@ -97,8 +96,6 @@ export function isServableFilePath(filePath: string): boolean {
   return true;
 }
 
-// Validates a document file path: accepts either internal authenticated files
-// path (/api/marcom/files/...) or valid cloud URLs (https:// or http://).
 export function isValidDocumentFilePath(filePath: string): boolean {
   if (typeof filePath !== "string") return false;
   const trimmed = filePath.trim();
