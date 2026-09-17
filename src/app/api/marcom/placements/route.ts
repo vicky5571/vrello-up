@@ -106,3 +106,47 @@ export async function POST(request: Request) {
     throw e;
   }
 }
+
+export async function PATCH(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  const workspaceId = body?.workspaceId || "ws-main";
+  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
+  if (authError) return authError;
+
+  const { ids, updates } = body ?? {};
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return NextResponse.json({ error: "Missing or empty field: ids" }, { status: 400 });
+  }
+  if (!updates || typeof updates !== "object") {
+    return NextResponse.json({ error: "Missing updates object" }, { status: 400 });
+  }
+
+  const dataToUpdate: Prisma.PlacementUpdateManyMutationInput = {};
+  if (updates.status !== undefined) {
+    if (!VALID_STATUSES.includes(updates.status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+    dataToUpdate.status = updates.status;
+  }
+  if (typeof updates.picName === "string") {
+    dataToUpdate.picName = updates.picName;
+  }
+
+  try {
+    const result = await prisma.placement.updateMany({
+      where: {
+        id: { in: ids },
+        workspaceId,
+      },
+      data: dataToUpdate,
+    });
+    return NextResponse.json({ updatedCount: result.count });
+  } catch (err) {
+    console.error("PATCH /api/marcom/placements error:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Failed to bulk update placements" },
+      { status: 500 },
+    );
+  }
+}
+

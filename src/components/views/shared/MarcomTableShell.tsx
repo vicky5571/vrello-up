@@ -81,6 +81,8 @@ interface MarcomTableShellProps<T extends object & { id: string }> {
   // search/filter control
   searchTerm?: string;
   onSearchChange?: (term: string) => void;
+  // bulk custom actions
+  renderFloatingBulkBar?: (selectedIds: string[], clearSelection: () => void) => React.ReactNode;
   // empty
   emptyLabel?: string;
   // layout controls
@@ -116,6 +118,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
   renderExpanded,
   searchTerm,
   onSearchChange,
+  renderFloatingBulkBar,
   emptyLabel = `No ${entityPlural} found.`,
   hideHeader = false,
   hideSearch = false,
@@ -294,7 +297,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
       )}
 
       {/* Bulk Action Bar */}
-      {selectedRowIds.length > 0 && (
+      {!renderFloatingBulkBar && selectedRowIds.length > 0 && (
         <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 px-3 py-1.5 rounded-lg text-xs animate-in fade-in slide-in-from-top-1 duration-150 mb-3">
           <span className="font-semibold text-blue-900 dark:text-blue-200">{selectedRowIds.length} selected</span>
           <div className="h-3.5 w-px bg-blue-200 dark:bg-blue-800" />
@@ -485,6 +488,11 @@ export function MarcomTableShell<T extends object & { id: string }>({
           </div>
         </div>
       )}
+
+      {/* Floating Bulk Action Bar */}
+      {renderFloatingBulkBar && selectedRowIds.length > 0
+        ? renderFloatingBulkBar(selectedRowIds, () => setRowSelection({}))
+        : null}
     </div>
   );
 }

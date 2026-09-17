@@ -28,7 +28,9 @@ import {
 } from "@/components/views/shared/MarcomTableShell";
 import { LocationPicker } from "./LocationPicker";
 import { PlacementPhotoUploader } from "./PlacementPhotoUploader";
+import { PlacementBulkActionBar } from "./PlacementBulkActionBar";
 import { parsePlacementPhotos } from "@/lib/marcom/photoUtils";
+import { findOutletCoordinates } from "@/lib/marcom/outletInherit";
 import { buildGoogleMapsUrl, isValidCoordinate } from "@/lib/marcom/locationUtils";
 import { getBrandMeta, BRAND_CONFIG } from "@/lib/marcom/brandUtils";
 import {
@@ -115,7 +117,7 @@ export function PlacementsView() {
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedBrand, setSelectedBrand] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<"table" | "map">("table");
-  const [outletsList, setOutletsList] = useState<{ id: string; name: string; brand?: string }[]>([]);
+  const [outletsList, setOutletsList] = useState<{ id: string; name: string; brand?: string; picName?: string }[]>([]);
   const [materialsList, setMaterialsList] = useState<{ id: string; name: string }[]>([]);
   const [modalPlacement, setModalPlacement] = useState<Partial<MarcomPlacement> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -247,6 +249,41 @@ export function PlacementsView() {
     setSelectedBrand(next);
     fetchPlacements(selectedStatus, next);
   };
+
+  const handleOpenAddPlacement = useCallback(() => {
+    const firstOutlet = outletsList[0];
+    const firstOutletId = firstOutlet?.id || "";
+    const inherited = findOutletCoordinates(firstOutletId, placements);
+    const brandSuggestion =
+      firstOutlet?.brand &&
+      (firstOutlet.brand.toUpperCase() === "3" ||
+        firstOutlet.brand.toUpperCase() === "TRI")
+        ? "3"
+        : "IM3";
+
+    setModalPlacement({
+      outletId: firstOutletId,
+      materialId: materialsList[0]?.id || "",
+      status: "NOT_STARTED",
+      brand: brandSuggestion,
+      dimensions: "",
+      cost: undefined,
+      picName: firstOutlet?.picName || "",
+      notes: "",
+      photoUrl: "",
+      date: new Date().toISOString().slice(0, 10),
+      latitude: inherited?.latitude ?? null,
+      longitude: inherited?.longitude ?? null,
+      shareLocationUrl: inherited?.shareLocationUrl ?? "",
+      locationNotes: inherited?.locationNotes ?? "",
+    });
+
+    if (inherited) {
+      toast.info("Koordinat outlet otomatis diambil dari riwayat pemasangan sebelumnya", {
+        duration: 3000,
+      });
+    }
+  }, [outletsList, materialsList, placements]);
 
   const columns = useMemo(
     () =>
@@ -486,29 +523,16 @@ export function PlacementsView() {
           deleteRequiresMessage="Delete requires staff or admin role"
           onDeleteOne={deleteOne}
           canAdd={canManage}
-          onAdd={() =>
-            setModalPlacement({
-              outletId: outletsList[0]?.id || "",
-              materialId: materialsList[0]?.id || "",
-              status: "NOT_STARTED",
-              brand:
-                outletsList[0]?.brand &&
-                (outletsList[0].brand.toUpperCase() === "3" ||
-                  outletsList[0].brand.toUpperCase() === "TRI")
-                  ? "3"
-                  : "IM3",
-              dimensions: "",
-              cost: undefined,
-              picName: "",
-              notes: "",
-              photoUrl: "",
-              date: new Date().toISOString().slice(0, 10),
-              latitude: null,
-              longitude: null,
-              shareLocationUrl: "",
-              locationNotes: "",
-            })
-          }
+          onAdd={handleOpenAddPlacement}
+          renderFloatingBulkBar={(selectedIds, clearSelection) => (
+            <PlacementBulkActionBar
+              selectedIds={selectedIds}
+              placements={placements}
+              onClearSelection={clearSelection}
+              onRefresh={fetchPlacements}
+              canManage={canManage}
+            />
+          )}
           addLabel="Add Placement"
           addIcon={Plus}
           addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer"
@@ -727,29 +751,7 @@ export function PlacementsView() {
               {canManage && (
                 <button
                   type="button"
-                  onClick={() =>
-                    setModalPlacement({
-                      outletId: outletsList[0]?.id || "",
-                      materialId: materialsList[0]?.id || "",
-                      status: "NOT_STARTED",
-                      brand:
-                        outletsList[0]?.brand &&
-                        (outletsList[0].brand.toUpperCase() === "3" ||
-                          outletsList[0].brand.toUpperCase() === "TRI")
-                          ? "3"
-                          : "IM3",
-                      dimensions: "",
-                      cost: undefined,
-                      picName: "",
-                      notes: "",
-                      photoUrl: "",
-                      date: new Date().toISOString().slice(0, 10),
-                      latitude: null,
-                      longitude: null,
-                      shareLocationUrl: "",
-                      locationNotes: "",
-                    })
-                  }
+                  onClick={handleOpenAddPlacement}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -906,15 +908,26 @@ export function PlacementsView() {
                           selOutlet.brand.toUpperCase() === "TRI")
                           ? "3"
                           : "IM3";
+                      const inherited = findOutletCoordinates(selId, placements);
                       setModalPlacement((prev) =>
                         prev
                           ? {
                               ...prev,
                               outletId: selId,
                               brand: prev.brand || brandSuggestion,
+                              picName: prev.picName || selOutlet?.picName || "",
+                              latitude: inherited ? inherited.latitude : prev.latitude,
+                              longitude: inherited ? inherited.longitude : prev.longitude,
+                              shareLocationUrl: inherited?.shareLocationUrl ?? prev.shareLocationUrl,
+                              locationNotes: inherited?.locationNotes ?? prev.locationNotes,
                             }
                           : prev,
                       );
+                      if (inherited) {
+                        toast.info("Koordinat outlet otomatis diisi dari riwayat pemasangan sebelumnya", {
+                          duration: 3000,
+                        });
+                      }
                     }}
                     className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
                   >
