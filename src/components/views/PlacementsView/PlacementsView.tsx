@@ -276,7 +276,7 @@ export function PlacementsView() {
           fetch(placementsUrl),
           fetch("/api/marcom/outlets"),
           fetch("/api/marcom/materials"),
-          fetch("/api/marcom/mous"),
+          fetch(`/api/marcom/mous?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
         ]);
         if (!resPlacements.ok) throw new Error(`Request failed (${resPlacements.status})`);
         const jsonPlacements = await resPlacements.json();
