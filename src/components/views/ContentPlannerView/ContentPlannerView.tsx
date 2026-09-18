@@ -58,6 +58,7 @@ import {
   canTransitionContentStatus,
   calculateContentPipelineKPIs,
 } from "@/lib/marcom/contentWorkflow";
+import { ContentDrawer } from "./ContentDrawer";
 
 const PLATFORM_CONFIG: Record<
   PostPlatform,
@@ -176,10 +177,10 @@ export function ContentPlannerView() {
     "all"
   );
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedDrawerPost, setSelectedDrawerPost] = useState<ContentPostItem | null>(null);
 
-  // Modal State
+  // Modal State (Schedule New Post)
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Quick Revision Modal State
@@ -329,7 +330,6 @@ export function ContentPlannerView() {
   };
 
   const openCreateModal = useCallback(() => {
-    setEditId(null);
     setTitle("");
     setPlatform("instagram");
     setFormat("reel");
@@ -361,54 +361,8 @@ export function ContentPlannerView() {
     }
   }, [isCreatePostModalOpen, openCreateModal, setCreatePostModalOpen]);
 
-  const openEditModal = (item: ContentPostItem) => {
-    setEditId(item.id);
-    setTitle(item.title);
-    setPlatform(item.platform as PostPlatform);
-    setFormat(item.format as PostFormat);
-    setPublishDate(
-      item.publishDate
-        ? item.publishDate.slice(0, 10)
-        : new Date().toISOString().slice(0, 10)
-    );
-    setStatus(item.status || "SCHEDULED");
-    setPriority("normal");
-    setBranchName(item.branchName || branches[0]?.name || "");
-    setCaption(item.caption || "");
-    setMediaUrl(item.mediaUrl || "");
-    setRevisionNotes(item.revisionNotes || "");
-    setAssigneeIds(members[0] ? [members[0].id] : []);
-    setPostSubtasks(
-      Array.isArray(item.subtasks) && item.subtasks.length > 0
-        ? item.subtasks.map((s, i) => ({
-            id: s.id || `sub-edit-${i}`,
-            title: s.title,
-          }))
-        : DEFAULT_POST_SUBTASKS.map((t, i) => ({
-            id: `sub-edit-${i}`,
-            title: t,
-          }))
-    );
-
-    const existingTask = tasks.find((t) => t.relatedMarcomId === item.id);
-    if (existingTask) {
-      const owningSpace = findSpaceByListId(rawSpaces, existingTask.listId);
-      if (owningSpace) {
-        setTargetSpaceId(owningSpace.id);
-        setTargetListId(existingTask.listId);
-      }
-    } else {
-      const dest = getDefaultDestinationForChannel(rawSpaces, "social");
-      setTargetSpaceId(dest.spaceId);
-      setTargetListId(dest.listId);
-    }
-
-    setIsModalOpen(true);
-  };
-
   const closeModal = () => {
     setIsModalOpen(false);
-    setEditId(null);
   };
 
   const handleSavePost = async (e: React.FormEvent) => {
@@ -420,12 +374,6 @@ export function ContentPlannerView() {
 
     setIsSaving(true);
     try {
-      const isEditing = Boolean(editId);
-      const url = isEditing
-        ? `/api/marcom/content/${editId}`
-        : "/api/marcom/content";
-      const method = isEditing ? "PATCH" : "POST";
-
       const payload = {
         title: title.trim(),
         platform,
@@ -443,8 +391,8 @@ export function ContentPlannerView() {
         workspaceId: activeWorkspaceId,
       };
 
-      const res = await fetch(url, {
-        method,
+      const res = await fetch("/api/marcom/content", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -456,64 +404,43 @@ export function ContentPlannerView() {
 
       const savedItem: ContentPostItem = await res.json();
 
-      // Create linked task if newly created, or sync existing task
-      if (!isEditing) {
-        const chosenListId =
-          targetListId || activeListId || "list-content-planner";
-        const targetSpace = rawSpaces.find((s) => s.id === targetSpaceId);
-        const targetStatus =
-          targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
-        const assignedUsers = members.filter((u) => assigneeIds.includes(u.id));
-
-        createTask({
-          listId: chosenListId,
-          title: `[Content] ${title.trim()}`,
-          description: caption.trim()
-            ? `<p>${caption.trim()}</p>`
-            : "<p>Draft post copy...</p>",
-          statusId: targetStatus,
-          priority,
-          assignees:
-            assignedUsers.length > 0
-              ? assignedUsers
-              : members[0]
-              ? [members[0]]
-              : [],
-          dueDate: publishDate || undefined,
-          postPlatform: platform,
-          postFormat: format,
-          mediaUrl: mediaUrl.trim() || undefined,
-          relatedMarcomId: savedItem.id,
-          tags: [],
-          subtasks: postSubtasks.map((s, i) => ({
-            id: `sub-${Date.now()}-${i}`,
-            title: s.title,
-            completed: false,
-            createdAt: new Date().toISOString(),
-          })),
-          orderIndex: 0,
-        });
-      } else {
-        const existingTask = tasks.find((t) => t.relatedMarcomId === editId);
-        if (existingTask) {
-          const updates: Partial<Task> = {
-            title: `[Content] ${title.trim()}`,
-            description: caption.trim()
-              ? `<p>${caption.trim()}</p>`
-              : "<p>Draft post copy...</p>",
-            dueDate: publishDate || undefined,
-            postPlatform: platform,
-            postFormat: format,
-            mediaUrl: mediaUrl.trim() || undefined,
-          };
-          if (targetListId && targetListId !== existingTask.listId) {
-            updates.listId = targetListId;
-          }
-          updateTask(existingTask.id, updates);
-        }
-      }
-
+      // Create linked task
+      const chosenListId =
+        targetListId || activeListId || "list-content-planner";
       const targetSpace = rawSpaces.find((s) => s.id === targetSpaceId);
+      const targetStatus =
+        targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
+      const assignedUsers = members.filter((u) => assigneeIds.includes(u.id));
+
+      createTask({
+        listId: chosenListId,
+        title: `[Content] ${title.trim()}`,
+        description: caption.trim()
+          ? `<p>${caption.trim()}</p>`
+          : "<p>Draft post copy...</p>",
+        statusId: targetStatus,
+        priority,
+        assignees:
+          assignedUsers.length > 0
+            ? assignedUsers
+            : members[0]
+            ? [members[0]]
+            : [],
+        dueDate: publishDate || undefined,
+        postPlatform: platform,
+        postFormat: format,
+        mediaUrl: mediaUrl.trim() || undefined,
+        relatedMarcomId: savedItem.id,
+        tags: [],
+        subtasks: postSubtasks.map((s, i) => ({
+          id: `sub-${Date.now()}-${i}`,
+          title: s.title,
+          completed: false,
+          createdAt: new Date().toISOString(),
+        })),
+        orderIndex: 0,
+      });
+
       const targetListName =
         targetSpace?.lists.find((l) => l.id === targetListId)?.name ||
         targetSpace?.folders
@@ -522,17 +449,12 @@ export function ContentPlannerView() {
         "List";
       const locationLabel = `${targetSpace?.name || "Space"} › ${targetListName}`;
 
-      toast.success(
-        isEditing
-          ? `Postingan diperbarui & disinkronkan ke "${locationLabel}"`
-          : `Postingan dibuat & tersimpan di "${locationLabel}"`,
-        {
-          action: {
-            label: "Lihat di Board",
-            onClick: () => navigateToTask(savedItem),
-          },
-        }
-      );
+      toast.success(`Postingan dibuat & tersimpan di "${locationLabel}"`, {
+        action: {
+          label: "Lihat di Board",
+          onClick: () => navigateToTask(savedItem),
+        },
+      });
       closeModal();
       await fetchPosts();
     } catch (err) {
@@ -544,22 +466,71 @@ export function ContentPlannerView() {
     }
   };
 
-  const handleDeletePost = async () => {
-    if (!editId) return;
-    if (!confirm("Are you sure you want to delete this content post?")) return;
+  const handleDrawerUpdate = async (updated: ContentPostItem) => {
     try {
-      const res = await fetch(`/api/marcom/content/${editId}`, {
+      const res = await fetch(`/api/marcom/content/${updated.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: updated.title,
+          platform: updated.platform,
+          format: updated.format,
+          publishDate: updated.publishDate || undefined,
+          status: updated.status,
+          caption: updated.caption,
+          mediaUrl: updated.mediaUrl,
+          branchName: updated.branchName,
+          revisionNotes: updated.revisionNotes,
+          subtasks: updated.subtasks,
+          workspaceId: activeWorkspaceId,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Failed with status ${res.status}`);
+      }
+
+      const savedItem: ContentPostItem = await res.json();
+      setPosts((prev) => prev.map((p) => (p.id === savedItem.id ? savedItem : p)));
+      updateCachedPost(activeWorkspaceId, savedItem);
+      setSelectedDrawerPost(savedItem);
+
+      // Sync linked task if exists
+      const existingTask = tasks.find((t) => t.relatedMarcomId === savedItem.id);
+      if (existingTask) {
+        updateTask(existingTask.id, {
+          title: `[Content] ${savedItem.title}`,
+          description: savedItem.caption ? `<p>${savedItem.caption}</p>` : existingTask.description,
+          dueDate: savedItem.publishDate ? savedItem.publishDate.slice(0, 10) : undefined,
+          postPlatform: savedItem.platform,
+          postFormat: savedItem.format,
+          mediaUrl: savedItem.mediaUrl || undefined,
+        });
+      }
+
+      await fetchPosts({ silent: true });
+    } catch (err) {
+      console.error("Failed to update post from drawer:", err);
+      throw err;
+    }
+  };
+
+  const handleDrawerDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/marcom/content/${id}`, {
         method: "DELETE",
       });
-      if (res.ok) {
-        toast.success("Post deleted successfully");
-        closeModal();
-        await fetchPosts();
-      } else {
-        toast.error("Failed to delete post");
+      if (!res.ok) {
+        throw new Error("Failed to delete post");
       }
-    } catch {
-      toast.error("Failed to delete post");
+      setPosts((prev) => prev.filter((p) => p.id !== id));
+      removeCachedPost(activeWorkspaceId, id);
+      setSelectedDrawerPost(null);
+      await fetchPosts({ silent: true });
+    } catch (err) {
+      console.error("Failed to delete post from drawer:", err);
+      throw err;
     }
   };
 
@@ -610,16 +581,6 @@ export function ContentPlannerView() {
       members,
       createTask,
     ]
-  );
-
-  const openTaskDrawerInPlace = useCallback(
-    (item: ContentPostItem) => {
-      const task = getOrCreateLinkedTask(item);
-      if (task) {
-        setSelectedTaskId(task.id);
-      }
-    },
-    [getOrCreateLinkedTask, setSelectedTaskId]
   );
 
   const navigateToTask = useCallback(
@@ -722,9 +683,9 @@ export function ContentPlannerView() {
         cell: ({ row }) => (
           <button
             type="button"
-            onClick={() => openTaskDrawerInPlace(row.original)}
+            onClick={() => setSelectedDrawerPost(row.original)}
             className="flex items-center gap-2.5 text-left group/title cursor-pointer w-full"
-            title="Klik untuk membuka Task Detail Drawer & Lampiran"
+            title="Klik untuk membuka Content Detail Drawer & Editor"
           >
             <span className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
               <PlatformIcon
@@ -836,9 +797,9 @@ export function ContentPlannerView() {
           <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => openEditModal(row.original)}
+              onClick={() => setSelectedDrawerPost(row.original)}
               className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-              title="Edit Post"
+              title="Buka Content Drawer"
             >
               <Edit2 className="w-3.5 h-3.5" />
             </button>
@@ -855,7 +816,7 @@ export function ContentPlannerView() {
         ),
       }),
     ],
-    [openEditModal, navigateToTask, openTaskDrawerInPlace, tasks, rawSpaces]
+    [setSelectedDrawerPost, navigateToTask, tasks, rawSpaces]
   );
 
   return (
@@ -1007,9 +968,9 @@ export function ContentPlannerView() {
             return (
               <div
                 key={post.id}
-                onClick={() => openTaskDrawerInPlace(post)}
+                onClick={() => setSelectedDrawerPost(post)}
                 className="group relative rounded-2xl bg-white dark:bg-[#18191B] border border-slate-200 dark:border-slate-800/80 hover:border-pink-500/50 dark:hover:border-pink-500/50 p-4 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer"
-                title="Klik kartu untuk membuka Task Detail Drawer & Lampiran Footage"
+                title="Klik kartu untuk membuka Content Detail Drawer & Editor"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2.5">
@@ -1241,17 +1202,6 @@ export function ContentPlannerView() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          openEditModal(post);
-                        }}
-                        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                        title="Edit Post"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
                           navigateToTask(post);
                         }}
                         className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/50 cursor-pointer transition-colors"
@@ -1327,7 +1277,7 @@ export function ContentPlannerView() {
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-pink-500" />
-                <span>{editId ? "Edit Social Post" : "Schedule New Post"}</span>
+                <span>Schedule New Post</span>
               </h2>
               <button
                 type="button"
@@ -1572,39 +1522,24 @@ export function ContentPlannerView() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
-                {editId ? (
-                  <button
-                    type="button"
-                    onClick={handleDeletePost}
-                    className="text-xs font-semibold text-red-500 hover:text-red-700 cursor-pointer flex items-center gap-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Delete</span>
-                  </button>
-                ) : (
-                  <div />
-                )}
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="px-3.5 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSaving}
-                    className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-                  >
-                    {isSaving && (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    )}
-                    <span>{editId ? "Save Changes" : "Schedule Post"}</span>
-                  </button>
-                </div>
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-3.5 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {isSaving && (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  )}
+                  <span>Schedule Post</span>
+                </button>
               </div>
             </form>
           </div>
@@ -1777,6 +1712,17 @@ export function ContentPlannerView() {
           </div>
         </div>
       )}
+
+      {/* Dedicated Content Side Drawer (Option B) */}
+      <ContentDrawer
+        post={selectedDrawerPost}
+        onClose={() => setSelectedDrawerPost(null)}
+        onUpdatePost={handleDrawerUpdate}
+        onDeletePost={handleDrawerDelete}
+        onNavigateToTask={navigateToTask}
+        onOpenDrivePicker={openSelector}
+        onPreviewMedia={setPreviewMedia}
+      />
     </div>
   );
 }
