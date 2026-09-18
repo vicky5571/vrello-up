@@ -56,7 +56,15 @@ export async function GET(request: Request) {
     }
     if (query) {
       const contains = { contains: query, mode: "insensitive" as const };
-      where.OR = [{ picName: contains }, { notes: contains }, { dimensions: contains }];
+      where.OR = [
+        { picName: contains },
+        { notes: contains },
+        { dimensions: contains },
+        { locationNotes: contains },
+        { outlet: { name: contains } },
+        { outlet: { code: contains } },
+        { material: { name: contains } },
+      ];
     }
 
     const placements = await prisma.placement.findMany({
