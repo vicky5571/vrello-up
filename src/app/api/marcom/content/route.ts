@@ -21,7 +21,10 @@ export async function GET(request: Request) {
 
   const status = searchParams.get("status");
   const platform = searchParams.get("platform");
+  const branchName = searchParams.get("branchName");
   const query = searchParams.get("q")?.toLowerCase();
+  const limitParam = searchParams.get("limit");
+  const pageParam = searchParams.get("page");
 
   const where: Prisma.ContentPostWhereInput = {
     workspaceId,
@@ -32,6 +35,9 @@ export async function GET(request: Request) {
   }
   if (platform && platform !== "ALL" && platform !== "all") {
     where.platform = platform;
+  }
+  if (branchName && branchName !== "ALL" && branchName !== "all") {
+    where.branchName = { equals: branchName, mode: "insensitive" };
   }
   if (query) {
     const contains = { contains: query, mode: "insensitive" as const };
@@ -45,12 +51,28 @@ export async function GET(request: Request) {
     ];
   }
 
+  const limit = limitParam
+    ? Math.max(1, Math.min(200, parseInt(limitParam, 10) || 50))
+    : undefined;
+  const page = pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
+  const skip = limit ? (page - 1) * limit : undefined;
+
   try {
-    const posts = await prisma.contentPost.findMany({
-      where,
-      orderBy: { publishDate: "desc" },
+    const [total, posts] = await Promise.all([
+      prisma.contentPost.count({ where }),
+      prisma.contentPost.findMany({
+        where,
+        orderBy: { publishDate: "desc" },
+        take: limit,
+        skip,
+      }),
+    ]);
+    return NextResponse.json({
+      total,
+      page: limit ? page : 1,
+      totalPages: limit ? Math.ceil(total / limit) : 1,
+      data: posts,
     });
-    return NextResponse.json({ total: posts.length, data: posts });
   } catch (err) {
     console.error("Failed to fetch ContentPosts:", err);
     return NextResponse.json({ total: 0, data: [] });

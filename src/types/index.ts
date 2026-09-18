@@ -377,3 +377,27 @@ export interface CustomAutomationRule {
   runCount: number;
   createdAt: string;
 }
+
+export type BranchStatus = "DONE" | "ON_PROGRESS" | "PENDING";
+
+export interface BranchItem {
+  id: string;
+  code: string;
+  name: string;
+  region: string;
+  city: string;
+  status?: BranchStatus;
+  picName: string;
+  picPhone: string;
+  address: string;
+  outletCount?: number;
+  mouCount?: number;
+  progress?: number;
+}
+
+export interface MaterialItem {
+  id: string;
+  name: string;
+  type: string;
+}
+

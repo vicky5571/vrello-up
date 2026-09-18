@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn } from "@/lib/utils";
 import {
   MarcomTableShell,
@@ -95,28 +96,28 @@ export function DocumentsView() {
 
   const canManage = can("DELETE_DOCUMENT");
   const canUpload = can("UPLOAD_DOCUMENT");
+  const { fetchBranches } = useMarcomDataStore();
 
   const fetchDocuments = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [resDocs, resBranches] = await Promise.all([
+      const [resDocs, branchList] = await Promise.all([
         fetch(`/api/marcom/documents?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
-        fetch("/api/marcom/branches"),
+        fetchBranches(),
       ]);
       if (!resDocs.ok) throw new Error(`Request failed (${resDocs.status})`);
       const jsonDocs = await resDocs.json();
       setDocuments(Array.isArray(jsonDocs.data) ? jsonDocs.data : []);
-      if (resBranches.ok) {
-        const jsonBranches = await resBranches.json();
-        setBranches(Array.isArray(jsonBranches.data) ? jsonBranches.data : []);
+      if (Array.isArray(branchList)) {
+        setBranches(branchList);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load documents");
     } finally {
       setIsLoading(false);
     }
-  }, [activeWorkspaceId]);
+  }, [activeWorkspaceId, fetchBranches]);
 
   useEffect(() => {
     fetchDocuments();

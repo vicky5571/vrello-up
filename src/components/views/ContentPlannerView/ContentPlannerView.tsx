@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import {
   PostPlatform,
   PostFormat,
@@ -148,9 +149,23 @@ export function ContentPlannerView() {
     [rawSpaces]
   );
 
-  const [posts, setPosts] = useState<ContentPostItem[]>([]);
-  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    fetchBranches,
+    branches: storeBranches,
+    getCachedPosts,
+    setCachedPosts,
+    updateCachedPost,
+    removeCachedPost,
+  } = useMarcomDataStore();
+
+  const cachedPosts = getCachedPosts(activeWorkspaceId);
+  const [posts, setPosts] = useState<ContentPostItem[]>(() => cachedPosts || []);
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>(() =>
+    storeBranches.length > 0
+      ? storeBranches.map((b) => ({ id: b.id, name: b.name }))
+      : []
+  );
+  const [isLoading, setIsLoading] = useState(!cachedPosts);
   const [error, setError] = useState<string | null>(null);
 
   // View state: Cards vs Table
@@ -217,40 +232,40 @@ export function ContentPlannerView() {
     setTargetListId(dest.listId);
   };
 
-  const fetchPosts = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [resPosts, resBranches] = await Promise.all([
-        fetch(`/api/marcom/content?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
-        fetch("/api/marcom/branches"),
-      ]);
+  const fetchPosts = useCallback(
+    async (options?: { silent?: boolean } | React.SyntheticEvent) => {
+      const isSilent =
+        options && "silent" in options ? Boolean(options.silent) : false;
+      if (!isSilent) setIsLoading(true);
+      setError(null);
+      try {
+        const [resPosts, branchList] = await Promise.all([
+          fetch(`/api/marcom/content?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
+          fetchBranches(),
+        ]);
 
-      if (resPosts.ok) {
-        const json = await resPosts.json();
-        setPosts(Array.isArray(json.data) ? json.data : []);
+        if (resPosts.ok) {
+          const json = await resPosts.json();
+          const postList = Array.isArray(json.data) ? json.data : [];
+          setPosts(postList);
+          setCachedPosts(activeWorkspaceId, postList);
+        }
+        if (Array.isArray(branchList) && branchList.length > 0) {
+          setBranches(branchList.map((b) => ({ id: b.id, name: b.name })));
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load content posts");
+      } finally {
+        setIsLoading(false);
       }
-      if (resBranches.ok) {
-        const jsonBranches = await resBranches.json();
-        setBranches(
-          Array.isArray(jsonBranches.data)
-            ? jsonBranches.data.map((b: { id: string; name: string }) => ({
-                id: b.id,
-                name: b.name,
-              }))
-            : []
-        );
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load content posts");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeWorkspaceId]);
+    },
+    [activeWorkspaceId, fetchBranches, setCachedPosts]
+  );
 
   useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts, activeWorkspaceId]);
+    const hasCache = Boolean(getCachedPosts(activeWorkspaceId));
+    fetchPosts({ silent: hasCache });
+  }, [fetchPosts, activeWorkspaceId, getCachedPosts]);
 
   const handleQuickTransition = async (
     post: ContentPostItem,
@@ -283,7 +298,12 @@ export function ContentPlannerView() {
 
       const statusMeta = getContentStatusMeta(targetStatus);
       toast.success(`Post "${post.title}" diubah menjadi [${statusMeta.label}]`);
-      await fetchPosts();
+      updateCachedPost(activeWorkspaceId, {
+        id: post.id,
+        status: targetStatus,
+        revisionNotes: notes !== undefined ? notes : post.revisionNotes || "",
+      });
+      await fetchPosts({ silent: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal memperbarui status");
     }
@@ -1220,7 +1240,10 @@ export function ContentPlannerView() {
           deleteRequiresMessage="Delete requires admin role"
           onDeleteOne={async (id) => {
             const res = await fetch(`/api/marcom/content/${id}`, { method: "DELETE" });
-            if (res.ok) await fetchPosts();
+            if (res.ok) {
+              removeCachedPost(activeWorkspaceId, id);
+              await fetchPosts({ silent: true });
+            }
             return res.ok;
           }}
           hideHeader

@@ -6,6 +6,7 @@ import { useDropdown } from "@/components/ui/useDropdown";
 import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins, X, Layers } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn, formatIDR } from "@/lib/utils";
 import {
   MarcomTableShell,
@@ -67,12 +68,17 @@ export function MousView() {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId, setExportCenterOpen } = useWorkspaceStore();
+  const { fetchBranches, branches: storeBranches } = useMarcomDataStore();
 
   const [mous, setMous] = useState<MarcomMou[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
-  const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>(() =>
+    storeBranches.length > 0
+      ? storeBranches.map((b) => ({ id: b.id, name: b.name, code: b.code }))
+      : []
+  );
   const [outletsList, setOutletsList] = useState<{ id: string; name: string; code?: string; branchId: string }[]>([]);
   const [branchSearch, setBranchSearch] = useState("");
   const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
@@ -140,17 +146,16 @@ export function MousView() {
           params.set("status", statusFilter);
         }
         const mousUrl = `/api/marcom/mous?${params.toString()}`;
-        const [resMous, resBranches, resOutlets] = await Promise.all([
+        const [resMous, branchList, resOutlets] = await Promise.all([
           fetch(mousUrl),
-          fetch("/api/marcom/branches"),
+          fetchBranches(),
           fetch("/api/marcom/outlets"),
         ]);
         if (!resMous.ok) throw new Error(`Request failed (${resMous.status})`);
         const jsonMous = await resMous.json();
         setMous(Array.isArray(jsonMous.data) ? jsonMous.data : []);
-        if (resBranches.ok) {
-          const jsonBranches = await resBranches.json();
-          setBranches(Array.isArray(jsonBranches.data) ? jsonBranches.data : []);
+        if (Array.isArray(branchList) && branchList.length > 0) {
+          setBranches(branchList.map((b) => ({ id: b.id, name: b.name, code: b.code })));
         }
         if (resOutlets.ok) {
           const jsonOutlets = await resOutlets.json();

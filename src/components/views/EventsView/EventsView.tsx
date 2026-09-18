@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn, formatIDR } from "@/lib/utils";
 import type { FieldEventItem, EventStatus, EventFootage } from "@/types";
 import {
@@ -115,28 +116,29 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setActiveFootageEvent(null);
   }, []);
 
+  const { fetchBranches } = useMarcomDataStore();
+
   // Fetch field events and branches
   const fetchEvents = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [resEvents, resBranches] = await Promise.all([
+      const [resEvents, branchList] = await Promise.all([
         fetch(`/api/marcom/events?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
-        fetch("/api/marcom/branches"),
+        fetchBranches(),
       ]);
       if (!resEvents.ok) throw new Error(`Request failed (${resEvents.status})`);
       const jsonEvents = await resEvents.json();
       setEvents(Array.isArray(jsonEvents.data) ? jsonEvents.data : []);
-      if (resBranches.ok) {
-        const jsonBranches = await resBranches.json();
-        setBranches(Array.isArray(jsonBranches.data) ? jsonBranches.data : []);
+      if (Array.isArray(branchList)) {
+        setBranches(branchList);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load field events");
     } finally {
       setIsLoading(false);
     }
-  }, [activeWorkspaceId]);
+  }, [activeWorkspaceId, fetchBranches]);
 
   useEffect(() => {
     fetchEvents();

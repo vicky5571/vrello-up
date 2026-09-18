@@ -221,14 +221,14 @@ export default function WorkspacePage() {
 
         {/* View Transition Area */}
         <div className="flex-1 overflow-hidden relative bg-[#FAFBFC] dark:bg-[#121316]">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="popLayout" initial={false}>
             {activeView === "home" && (
               <motion.div
                 key="home-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <HomeView />
@@ -237,10 +237,10 @@ export default function WorkspacePage() {
             {activeView === "list" && (
               <motion.div
                 key="list-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <ListView />
@@ -250,10 +250,10 @@ export default function WorkspacePage() {
             {activeView === "board" && (
               <motion.div
                 key="board-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <BoardView />
@@ -263,10 +263,10 @@ export default function WorkspacePage() {
             {activeView === "table" && (
               <motion.div
                 key="table-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <TableView />
@@ -276,10 +276,10 @@ export default function WorkspacePage() {
             {activeView === "calendar" && (
               <motion.div
                 key="calendar-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <CalendarView />
@@ -289,10 +289,10 @@ export default function WorkspacePage() {
             {activeView === "gantt" && (
               <motion.div
                 key="gantt-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <GanttView />
@@ -302,10 +302,10 @@ export default function WorkspacePage() {
             {activeView === "channel" && (
               <motion.div
                 key="channel-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <ChannelView />
@@ -315,24 +315,23 @@ export default function WorkspacePage() {
             {activeView === "content" && (
               <motion.div
                 key="content-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <ContentPlannerView />
               </motion.div>
             )}
 
-
             {activeView === "branches" && (
               <motion.div
                 key="branches-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <BranchesView />
@@ -342,10 +341,10 @@ export default function WorkspacePage() {
             {activeView === "outlets" && (
               <motion.div
                 key="outlets-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <OutletsView />
@@ -355,10 +354,10 @@ export default function WorkspacePage() {
             {activeView === "placements" && (
               <motion.div
                 key="placements-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <PlacementsView />
@@ -368,10 +367,10 @@ export default function WorkspacePage() {
             {activeView === "mous" && (
               <motion.div
                 key="mous-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <MousView />
@@ -381,10 +380,10 @@ export default function WorkspacePage() {
             {activeView === "content-planner" && (
               <motion.div
                 key="content-planner-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <ContentPlannerView />
@@ -394,10 +393,10 @@ export default function WorkspacePage() {
             {activeView === "events" && (
               <motion.div
                 key="events-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <EventsView />
@@ -407,10 +406,10 @@ export default function WorkspacePage() {
             {activeView === "documents" && (
               <motion.div
                 key="documents-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <DocumentsView />
@@ -420,10 +419,10 @@ export default function WorkspacePage() {
             {activeView === "reports" && (
               <motion.div
                 key="reports-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <ReportsView />
@@ -433,10 +432,10 @@ export default function WorkspacePage() {
             {activeView === "analytics" && (
               <motion.div
                 key="analytics-view"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
                 className="h-full w-full"
               >
                 <AnalyticsView />

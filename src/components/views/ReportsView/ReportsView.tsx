@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn } from "@/lib/utils";
 import { summarizeReports } from "@/lib/marcom/analytics";
 import type { ReportDraftResult, DraftActivityItem } from "@/lib/marcom/reportDraftEngine";
@@ -125,10 +126,19 @@ export function ReportsView() {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const { setExportCenterOpen } = useWorkspaceStore();
+  const {
+    getCachedReports,
+    setCachedReports,
+    getCachedDocuments,
+    setCachedDocuments,
+  } = useMarcomDataStore();
 
-  const [reports, setReports] = useState<MarcomReport[]>([]);
-  const [documents, setDocuments] = useState<MarcomDocument[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const cachedReports = getCachedReports(activeWorkspaceId);
+  const cachedDocs = getCachedDocuments(activeWorkspaceId);
+
+  const [reports, setReports] = useState<MarcomReport[]>(() => (cachedReports as unknown as MarcomReport[]) || []);
+  const [documents, setDocuments] = useState<MarcomDocument[]>(() => (cachedDocs as unknown as MarcomDocument[]) || []);
+  const [isLoading, setIsLoading] = useState(() => !cachedReports && !cachedDocs);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -148,31 +158,44 @@ export function ReportsView() {
   // the server route). Export stays open to all roles (EXPORT_REPORTS).
   const canManage = can("MANAGE_MASTER_DATA");
 
-  const fetchReports = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [reportsRes, docsRes] = await Promise.all([
-        fetch(`/api/marcom/reports?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
-        fetch(`/api/marcom/documents?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
-      ]);
-      if (!reportsRes.ok) throw new Error(`Request failed (${reportsRes.status})`);
-      const json = await reportsRes.json();
-      setReports(Array.isArray(json.data) ? json.data : []);
-      if (docsRes.ok) {
-        const docsJson = await docsRes.json();
-        setDocuments(Array.isArray(docsJson.data) ? docsJson.data : []);
+  const fetchReports = useCallback(
+    async (options?: { silent?: boolean } | React.SyntheticEvent) => {
+      const isSilent =
+        options && "silent" in options ? Boolean(options.silent) : false;
+      if (!isSilent) setIsLoading(true);
+      setError(null);
+      try {
+        const [reportsRes, docsRes] = await Promise.all([
+          fetch(`/api/marcom/reports?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
+          fetch(`/api/marcom/documents?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
+        ]);
+        if (!reportsRes.ok) throw new Error(`Request failed (${reportsRes.status})`);
+        const json = await reportsRes.json();
+        const reportList = Array.isArray(json.data) ? json.data : [];
+        setReports(reportList);
+        setCachedReports(activeWorkspaceId, reportList as any);
+
+        if (docsRes.ok) {
+          const docsJson = await docsRes.json();
+          const docList = Array.isArray(docsJson.data) ? docsJson.data : [];
+          setDocuments(docList);
+          setCachedDocuments(activeWorkspaceId, docList as any);
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load reports");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load reports");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeWorkspaceId]);
+    },
+    [activeWorkspaceId, setCachedReports, setCachedDocuments]
+  );
 
   useEffect(() => {
-    fetchReports();
-  }, [fetchReports, activeWorkspaceId]);
+    const hasCache = Boolean(
+      getCachedReports(activeWorkspaceId) || getCachedDocuments(activeWorkspaceId)
+    );
+    fetchReports({ silent: hasCache });
+  }, [fetchReports, activeWorkspaceId, getCachedReports, getCachedDocuments]);
 
   // Reports are not tasks: row click toggles a local expandable detail row.
   // TaskDrawer (setSelectedTaskId) is deliberately not wired here.
