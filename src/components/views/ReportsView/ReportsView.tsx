@@ -9,11 +9,30 @@ import {
   Layers,
   Plus,
   RefreshCw,
+  Sparkles,
+  CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { cn } from "@/lib/utils";
 import { summarizeReports } from "@/lib/marcom/analytics";
+import type { ReportDraftResult, DraftActivityItem } from "@/lib/marcom/reportDraftEngine";
+
+const MONTH_OPTIONS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
 
 // Mirrors GET /api/marcom/reports rows (MonthlyReport shape with Json
 // sub-arrays; there is intentionally no supportingDocuments column —
@@ -55,7 +74,10 @@ function renderJsonItem(item: unknown, fallback: string) {
   if (item && typeof item === "object") {
     const record = item as Record<string, unknown>;
     const text = ["title", "name", "description"].map((k) => record[k]).find((v) => typeof v === "string");
-    if (text) return text;
+    if (text) {
+      const extra = typeof record.detail === "string" && record.detail ? ` · ${record.detail}` : "";
+      return text + extra;
+    }
     try {
       return JSON.stringify(item);
     } catch {
@@ -111,10 +133,16 @@ export function ReportsView() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [month, setMonth] = useState("");
+  const [month, setMonth] = useState<string>(() => MONTH_OPTIONS[new Date().getMonth()]);
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [totalActivities, setTotalActivities] = useState("");
   const [completionRate, setCompletionRate] = useState("");
+  const [isDrafting, setIsDrafting] = useState(false);
+  const [draftData, setDraftData] = useState<ReportDraftResult | null>(null);
+  const [achievementsText, setAchievementsText] = useState("");
+  const [keyIssuesText, setKeyIssuesText] = useState("");
+  const [actionPlansText, setActionPlansText] = useState("");
+  const [activitiesList, setActivitiesList] = useState<DraftActivityItem[]>([]);
 
   // Report creation is gated on MANAGE_MASTER_DATA (admin-only, matching
   // the server route). Export stays open to all roles (EXPORT_REPORTS).
@@ -177,42 +205,113 @@ export function ReportsView() {
     toast.success("Report downloaded successfully!");
   };
 
+  const handleAutoDraft = async () => {
+    if (!month.trim()) {
+      toast.error("Pilih bulan terlebih dahulu");
+      return;
+    }
+    const parsedYear = Number(year);
+    if (!Number.isInteger(parsedYear)) {
+      toast.error("Tahun tidak valid");
+      return;
+    }
+    setIsDrafting(true);
+    try {
+      const res = await fetch(
+        `/api/marcom/reports/draft?workspaceId=${encodeURIComponent(activeWorkspaceId)}&month=${encodeURIComponent(month.trim())}&year=${parsedYear}`,
+      );
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Gagal menarik data (${res.status})`);
+      }
+      const json = await res.json();
+      const draft: ReportDraftResult = json.draft;
+      if (draft) {
+        setDraftData(draft);
+        setTotalActivities(String(draft.summary.totalActivities));
+        setCompletionRate(String(draft.summary.completionRate));
+        setAchievementsText(draft.achievements.join("\n"));
+        setKeyIssuesText(draft.keyIssues.join("\n"));
+        setActionPlansText(draft.actionPlans.join("\n"));
+        setActivitiesList(draft.activities);
+        toast.success("Draf laporan berhasil disusun dari data operasional!");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal membuat draf laporan");
+    } finally {
+      setIsDrafting(false);
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canManage) {
-      toast.error("Only workspace admins can create reports");
+      toast.error("Hanya admin workspace yang dapat membuat laporan");
       return;
     }
     const parsedYear = Number(year);
     if (!month.trim() || !Number.isInteger(parsedYear)) {
-      toast.error("Month and a valid year are required");
+      toast.error("Bulan dan tahun yang valid wajib diisi");
       return;
     }
     setIsCreating(true);
     try {
+      const parseLines = (text: string) =>
+        text
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l.length > 0);
+
+      const parsedTotal =
+        totalActivities === ""
+          ? (draftData?.summary.totalActivities ?? 0)
+          : Number(totalActivities);
+      const parsedRate =
+        completionRate === ""
+          ? (draftData?.summary.completionRate ?? 0)
+          : Number(completionRate);
+
+      const payloadSummary = draftData?.summary
+        ? {
+            ...draftData.summary,
+            totalActivities: parsedTotal,
+            completionRate: parsedRate,
+          }
+        : {
+            totalActivities: parsedTotal,
+            completionRate: parsedRate,
+          };
+
       const res = await fetch("/api/marcom/reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           month: month.trim(),
           year: parsedYear,
-          summary: {
-            totalActivities: totalActivities === "" ? 0 : Number(totalActivities),
-            completionRate: completionRate === "" ? 0 : Number(completionRate),
-          },
+          summary: payloadSummary,
+          activities: activitiesList.length > 0 ? activitiesList : (draftData?.activities ?? []),
+          achievements: parseLines(achievementsText),
+          keyIssues: parseLines(keyIssuesText),
+          actionPlans: parseLines(actionPlansText),
           workspaceId: activeWorkspaceId,
         }),
       });
-      if (!res.ok) throw new Error(`Request failed (${res.status})`);
-      toast.success("Report created");
-      setMonth("");
-      setYear(String(new Date().getFullYear()));
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Request failed (${res.status})`);
+      }
+      toast.success("Laporan bulanan berhasil dibuat dan disimpan!");
       setTotalActivities("");
       setCompletionRate("");
+      setAchievementsText("");
+      setKeyIssuesText("");
+      setActionPlansText("");
+      setActivitiesList([]);
+      setDraftData(null);
       setShowCreateForm(false);
       await fetchReports();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create report");
+      toast.error(err instanceof Error ? err.message : "Gagal membuat laporan");
     } finally {
       setIsCreating(false);
     }
@@ -297,53 +396,188 @@ export function ReportsView() {
             <span>New monthly report</span>
           </button>
           {showCreateForm && (
-            <form onSubmit={handleCreate} className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-4 gap-3">
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
-                Month
-                <input
-                  type="text"
-                  value={month}
-                  onChange={(e) => setMonth(e.target.value)}
-                  placeholder="September"
-                  className="mt-1 w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-normal focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                />
-              </label>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
-                Year
-                <input
-                  type="number"
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  className="mt-1 w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-normal focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                />
-              </label>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
-                Total activities
-                <input
-                  type="number"
-                  value={totalActivities}
-                  onChange={(e) => setTotalActivities(e.target.value)}
-                  placeholder="0"
-                  className="mt-1 w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-normal focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                />
-              </label>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
-                Completion %
-                <input
-                  type="number"
-                  value={completionRate}
-                  onChange={(e) => setCompletionRate(e.target.value)}
-                  placeholder="0"
-                  className="mt-1 w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-normal focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-                />
-              </label>
-              <div className="sm:col-span-4 flex justify-end">
+            <form onSubmit={handleCreate} className="px-4 pb-4 space-y-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  Bulan (Month)
+                  <select
+                    value={month}
+                    onChange={(e) => setMonth(e.target.value)}
+                    className="mt-1 w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-normal focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {MONTH_OPTIONS.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  Tahun (Year)
+                  <input
+                    type="number"
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    className="mt-1 w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-normal focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  Total Aktivitas
+                  <input
+                    type="number"
+                    value={totalActivities}
+                    onChange={(e) => setTotalActivities(e.target.value)}
+                    placeholder={draftData ? String(draftData.summary.totalActivities) : "0"}
+                    className="mt-1 w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-normal focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  Completion %
+                  <input
+                    type="number"
+                    value={completionRate}
+                    onChange={(e) => setCompletionRate(e.target.value)}
+                    placeholder={draftData ? String(draftData.summary.completionRate) : "0"}
+                    className="mt-1 w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-normal focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </label>
+              </div>
+
+              {/* Auto-Draft trigger banner */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-violet-50/80 dark:bg-violet-950/20 border border-violet-200/80 dark:border-violet-900/50">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" />
+                  <div className="text-xs text-slate-700 dark:text-slate-300">
+                    <span className="font-bold text-violet-900 dark:text-violet-200">
+                      Otomasi Laporan:
+                    </span>{" "}
+                    Tarik metrik riil dari POSM, MOU, Media Sosial, & Field Events untuk periode{" "}
+                    <strong>{month} {year}</strong>.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAutoDraft}
+                  disabled={isDrafting}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 transition-colors"
+                >
+                  <Sparkles className={cn("w-3.5 h-3.5", isDrafting && "animate-spin")} />
+                  <span>{isDrafting ? "Menghitung data..." : "⚡ Tarik Data Otomatis (Auto-Draft)"}</span>
+                </button>
+              </div>
+
+              {/* Operational Stats Breakdown if Drafted */}
+              {draftData && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800">
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                    <div className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                      Materi POSM
+                    </div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+                      {draftData.summary.placementsDone} / {draftData.summary.placementsTotal} Selesai
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Biaya: Rp {Math.round(draftData.summary.placementTotalCost).toLocaleString("id-ID")}
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                    <div className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                      Kemitraan MOU
+                    </div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+                      {draftData.summary.mousApproved} / {draftData.summary.mousTotal} Disetujui
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Plafon: Rp {Math.round(draftData.summary.mouTotalCompensation).toLocaleString("id-ID")}
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                    <div className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                      Konten Medsos
+                    </div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+                      {draftData.summary.contentPublished} / {draftData.summary.contentTotal} Tayang
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Rasio: {draftData.summary.contentTotal > 0 ? Math.round((draftData.summary.contentPublished / draftData.summary.contentTotal) * 100) : 0}%
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                    <div className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                      Field Events
+                    </div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+                      {draftData.summary.eventsCompleted} / {draftData.summary.eventsTotal} Selesai
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Audiens: {draftData.summary.eventsTotalAttendees.toLocaleString("id-ID")}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Qualitative Narratives - Human in the loop */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="flex items-center gap-1.5 mb-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    Pencapaian Utama (Achievements)
+                  </span>
+                  <textarea
+                    rows={4}
+                    value={achievementsText}
+                    onChange={(e) => setAchievementsText(e.target.value)}
+                    placeholder="Tulis capaian bulan ini (1 poin per baris)..."
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-normal focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </label>
+
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="flex items-center gap-1.5 mb-1">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                    Kendala Lapangan (Key Issues)
+                  </span>
+                  <textarea
+                    rows={4}
+                    value={keyIssuesText}
+                    onChange={(e) => setKeyIssuesText(e.target.value)}
+                    placeholder="Tulis kendala operasional (1 poin per baris)..."
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-normal focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </label>
+
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="flex items-center gap-1.5 mb-1">
+                    <BarChart3 className="w-3.5 h-3.5 text-blue-500" />
+                    Rencana Aksi (Action Plans)
+                  </span>
+                  <textarea
+                    rows={4}
+                    value={actionPlansText}
+                    onChange={(e) => setActionPlansText(e.target.value)}
+                    placeholder="Tulis rencana tindak lanjut (1 poin per baris)..."
+                    className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-normal focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  />
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(false)}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
                 <button
                   type="submit"
                   disabled={isCreating}
                   className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  {isCreating ? "Creating..." : "Create report"}
+                  {isCreating ? "Menyimpan..." : "Simpan & Terbitkan Laporan"}
                 </button>
               </div>
             </form>
