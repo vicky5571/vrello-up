@@ -14,11 +14,74 @@ export function hasPermission(role: MarcomRole, action: PermissionAction): boole
   return (rolePermissions[role] || []).includes(action);
 }
 
+export interface ScopedPermissionContext {
+  role: MarcomRole;
+  action: PermissionAction;
+  userBranchIds?: string[];
+  targetBranchId?: string;
+}
+
 /**
- * Pure role resolution for the active workspace member. Unknown members
- * (e.g. Google-login users absent from the store roster) default to
- * `staff` so a signed-in demo user like Vicky can still create MOUs —
- * viewer remains fail-closed only for explicit viewer role.
+ * Checks whether a user with a given role and branch assignments can access
+ * a target branch.
+ */
+export function canAccessBranch(
+  role: MarcomRole,
+  userBranchIds: string[] = [],
+  targetBranchId?: string,
+): boolean {
+  if (role === "admin") return true;
+  if (!targetBranchId) return true;
+  if (userBranchIds.length === 0) return true;
+  return userBranchIds.includes(targetBranchId);
+}
+
+/**
+ * Evaluates whether a user can perform an action, taking into account
+ * role capabilities and branch scope boundaries.
+ *
+ * Rules:
+ * - admin: full permissions across all branches.
+ * - viewer: only EXPORT_REPORTS.
+ * - staff:
+ *   - Forbidden: DELETE_MOU, DELETE_DOCUMENT, MANAGE_MASTER_DATA.
+ *   - APPROVE_MOU: allowed only if targetBranchId is assigned to the user (userBranchIds).
+ *   - Branch-scoped actions (CREATE/UPDATE): if targetBranchId is specified and user has assignedBranchIds,
+ *     it must be in userBranchIds.
+ */
+export function hasScopedPermission(ctx: ScopedPermissionContext): boolean {
+  const { role, action, userBranchIds = [], targetBranchId } = ctx;
+
+  if (role === "admin") return true;
+  if (role === "viewer") return action === "EXPORT_REPORTS";
+
+  // Role is staff
+  if (action === "DELETE_MOU" || action === "DELETE_DOCUMENT" || action === "MANAGE_MASTER_DATA") {
+    return false;
+  }
+
+  // APPROVE_MOU: requires targetBranchId and targetBranchId must be in userBranchIds
+  if (action === "APPROVE_MOU") {
+    if (!targetBranchId) return false;
+    if (userBranchIds.length > 0) {
+      return userBranchIds.includes(targetBranchId);
+    }
+    return false;
+  }
+
+  // For other permitted actions, verify branch scope if specified
+  if (targetBranchId && userBranchIds.length > 0) {
+    if (!userBranchIds.includes(targetBranchId)) {
+      return false;
+    }
+  }
+
+  return (rolePermissions.staff || []).includes(action);
+}
+
+/**
+ * Pure role resolution for the active workspace member.
+ * Fail-closed: unknown or unmapped members default to `viewer`.
  */
 export function resolveMarcomRole(
   members: { id: string; role?: string }[],
@@ -27,5 +90,5 @@ export function resolveMarcomRole(
   const role = members.find((m) => m.id === currentUserId)?.role;
   return role === "admin" || role === "staff" || role === "viewer"
     ? role
-    : "staff";
+    : "viewer";
 }

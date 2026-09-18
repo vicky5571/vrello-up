@@ -21,6 +21,7 @@ export interface User {
   email: string;
   avatar: string;
   role?: "admin" | "staff" | "viewer";
+  assignedBranchIds?: string[];
 }
 
 export interface Tag {

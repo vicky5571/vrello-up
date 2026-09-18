@@ -44,6 +44,7 @@ export interface WorkspaceAccessResult {
   error?: string;
   role?: WorkspaceRole;
   email?: string;
+  assignedBranchIds?: string[];
 }
 
 export interface ValidateWorkspaceAccessOptions {
@@ -125,8 +126,26 @@ export async function validateWorkspaceAccess(
 
   if (member) {
     const role = member.role as WorkspaceRole;
+    let assignedBranchIds: string[] = [];
+    try {
+      const ws = await prisma.workspaceItem.findUnique({
+        where: { id: workspaceId },
+        select: { members: true },
+      });
+      if (ws && Array.isArray(ws.members)) {
+        const jm = (ws.members as Array<{ email?: string; assignedBranchIds?: string[] }>).find(
+          (m) => m && m.email === user.email,
+        );
+        if (Array.isArray(jm?.assignedBranchIds)) {
+          assignedBranchIds = jm.assignedBranchIds;
+        }
+      }
+    } catch {
+      // ignore JSON lookup fallback errors
+    }
+
     if (isRoleSufficient(role, requiredRole)) {
-      return { authorized: true, status: 200, role, email: user.email };
+      return { authorized: true, status: 200, role, email: user.email, assignedBranchIds };
     }
     return {
       authorized: false,
@@ -134,6 +153,7 @@ export async function validateWorkspaceAccess(
       error: `Forbidden: Requires ${requiredRole} role, but your role is ${role}`,
       role,
       email: user.email,
+      assignedBranchIds,
     };
   }
 
@@ -151,7 +171,7 @@ export async function validateWorkspaceAccess(
   }
 
   const membersArray = Array.isArray(workspace.members)
-    ? (workspace.members as Array<{ email?: string; role?: string }>)
+    ? (workspace.members as Array<{ email?: string; role?: string; assignedBranchIds?: string[] }>)
     : [];
 
   const jsonMember = membersArray.find((m) => m && m.email === user.email);
@@ -161,6 +181,9 @@ export async function validateWorkspaceAccess(
       jsonMember.role === "admin" || jsonMember.role === "staff"
         ? (jsonMember.role as WorkspaceRole)
         : "viewer";
+    const assignedBranchIds = Array.isArray(jsonMember.assignedBranchIds)
+      ? jsonMember.assignedBranchIds
+      : [];
 
     // Auto-sync into WorkspaceMember
     await prisma.workspaceMember.upsert({
@@ -175,7 +198,7 @@ export async function validateWorkspaceAccess(
     });
 
     if (isRoleSufficient(role, requiredRole)) {
-      return { authorized: true, status: 200, role, email: user.email };
+      return { authorized: true, status: 200, role, email: user.email, assignedBranchIds };
     }
     return {
       authorized: false,
@@ -183,6 +206,7 @@ export async function validateWorkspaceAccess(
       error: `Forbidden: Requires ${requiredRole} role, but your role is ${role}`,
       role,
       email: user.email,
+      assignedBranchIds,
     };
   }
 
@@ -198,7 +222,7 @@ export async function validateWorkspaceAccess(
         role: "admin",
       },
     });
-    return { authorized: true, status: 200, role: "admin", email: user.email };
+    return { authorized: true, status: 200, role: "admin", email: user.email, assignedBranchIds: [] };
   }
 
   return {

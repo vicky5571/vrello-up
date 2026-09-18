@@ -24,6 +24,8 @@ import {
   Kanban,
   X,
   AlertCircle,
+  Play,
+  Film,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -212,6 +214,23 @@ export function ContentPlannerView() {
     DEFAULT_POST_SUBTASKS.map((t, i) => ({ id: `sub-init-${i}`, title: t }))
   );
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+
+  // On-demand media preview state (lightbox / player modal)
+  const [previewMedia, setPreviewMedia] = useState<{
+    title: string;
+    mediaUrl: string;
+    platform?: string;
+    format?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!previewMedia) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPreviewMedia(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [previewMedia]);
 
   // Target Space & List selection
   const [targetSpaceId, setTargetSpaceId] = useState<string>("");
@@ -1042,37 +1061,86 @@ export function ContentPlannerView() {
                   )}
 
                   {post.mediaUrl && (
-                    <div className="mt-3 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 aspect-video bg-slate-100 dark:bg-slate-800 relative">
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPreviewMedia({
+                          title: post.title,
+                          mediaUrl: post.mediaUrl!,
+                          platform: post.platform,
+                          format: post.format,
+                        });
+                      }}
+                      className="group/media relative mt-3 rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-800 aspect-video bg-slate-950 cursor-pointer shadow-2xs hover:border-pink-500/60 transition-all"
+                      title="Klik untuk memutar / melihat media"
+                    >
                       {(() => {
                         const parsedDrive = parseGoogleDriveUrl(post.mediaUrl);
-                        if (parsedDrive.isValid && parsedDrive.embedUrl) {
+                        const isVideoFile =
+                          post.mediaUrl.endsWith(".mp4") ||
+                          post.mediaUrl.endsWith(".mov") ||
+                          post.mediaUrl.endsWith(".webm");
+
+                        if (parsedDrive.isValid) {
                           return (
-                            <iframe
-                              src={parsedDrive.embedUrl}
-                              title={post.title}
-                              className="w-full h-full border-0"
-                              allow="autoplay"
-                            />
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-pink-950/20 to-slate-900 p-3 text-center relative">
+                              <Film className="w-7 h-7 text-pink-400 mb-1 opacity-80 group-hover/media:scale-110 transition-transform" />
+                              <span className="text-[11px] text-slate-200 font-medium truncate max-w-[85%]">
+                                {post.title}
+                              </span>
+                              <span className="text-[10px] text-pink-400/90 mt-0.5 font-medium flex items-center gap-1">
+                                <span>Google Drive Media</span>
+                              </span>
+
+                              {/* Play Button Overlay */}
+                              <div className="absolute inset-0 bg-black/30 group-hover/media:bg-black/15 flex items-center justify-center transition-colors">
+                                <div className="w-10 h-10 rounded-full bg-pink-600/90 text-white flex items-center justify-center shadow-lg group-hover/media:scale-110 transition-transform">
+                                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                                </div>
+                              </div>
+                            </div>
                           );
                         }
-                        if (post.mediaUrl.endsWith(".mp4") || post.mediaUrl.endsWith(".mov")) {
+
+                        if (isVideoFile) {
                           return (
-                            <video
-                              src={post.mediaUrl}
-                              controls
-                              className="w-full h-full object-contain bg-slate-900"
-                            />
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-purple-950/30 to-slate-900 p-3 text-center relative">
+                              <Video className="w-7 h-7 text-purple-400 mb-1 opacity-80 group-hover/media:scale-110 transition-transform" />
+                              <span className="text-[11px] text-slate-200 font-medium truncate max-w-[85%]">
+                                {post.title}
+                              </span>
+                              <span className="text-[10px] text-purple-400/90 mt-0.5 font-medium">
+                                Video Clip ({post.mediaUrl.split(".").pop()?.toUpperCase()})
+                              </span>
+
+                              {/* Play Button Overlay */}
+                              <div className="absolute inset-0 bg-black/30 group-hover/media:bg-black/15 flex items-center justify-center transition-colors">
+                                <div className="w-10 h-10 rounded-full bg-purple-600/90 text-white flex items-center justify-center shadow-lg group-hover/media:scale-110 transition-transform">
+                                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                                </div>
+                              </div>
+                            </div>
                           );
                         }
+
                         return (
-                          <img
-                            src={post.mediaUrl}
-                            alt={post.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLElement).style.display = "none";
-                            }}
-                          />
+                          <div className="relative w-full h-full bg-slate-100 dark:bg-slate-900">
+                            <img
+                              src={post.mediaUrl}
+                              alt={post.title}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-full h-full object-cover group-hover/media:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = "none";
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/20 group-hover/media:bg-black/0 transition-colors flex items-center justify-center opacity-0 group-hover/media:opacity-100">
+                              <span className="px-2.5 py-1 rounded-lg bg-black/70 text-white text-[10px] font-medium backdrop-blur-xs flex items-center gap-1">
+                                <ExternalLink className="w-3 h-3" /> Preview
+                              </span>
+                            </div>
+                          </div>
                         );
                       })()}
                     </div>
@@ -1612,6 +1680,99 @@ export function ContentPlannerView() {
                 <AlertCircle className="w-3.5 h-3.5" />
                 <span>Kirim Permintaan Revisi</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* On-Demand Media Lightbox / Player Modal */}
+      {previewMedia && (
+        <div
+          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setPreviewMedia(null)}
+        >
+          <div
+            className="w-full max-w-3xl rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/90">
+              <div className="flex items-center gap-2 min-w-0 pr-4">
+                {previewMedia.platform && (
+                  <PlatformIcon
+                    platform={previewMedia.platform as PostPlatform}
+                    className="w-4 h-4 shrink-0"
+                  />
+                )}
+                <h3 className="text-sm font-bold text-white truncate">
+                  {previewMedia.title}
+                </h3>
+                {previewMedia.format && (
+                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                    {previewMedia.format}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={previewMedia.mediaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                  title="Buka URL di Tab Baru"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMedia(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Media Body (Mounted strictly on-demand) */}
+            <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
+              {(() => {
+                const parsedDrive = parseGoogleDriveUrl(previewMedia.mediaUrl);
+                const isVideoFile =
+                  previewMedia.mediaUrl.endsWith(".mp4") ||
+                  previewMedia.mediaUrl.endsWith(".mov") ||
+                  previewMedia.mediaUrl.endsWith(".webm");
+
+                if (parsedDrive.isValid && parsedDrive.embedUrl) {
+                  return (
+                    <iframe
+                      src={parsedDrive.embedUrl}
+                      title={previewMedia.title}
+                      className="w-full h-full border-0"
+                      allow="autoplay; encrypted-media; picture-in-picture"
+                      allowFullScreen
+                    />
+                  );
+                }
+
+                if (isVideoFile) {
+                  return (
+                    <video
+                      src={previewMedia.mediaUrl}
+                      controls
+                      autoPlay
+                      className="w-full h-full object-contain bg-black"
+                    />
+                  );
+                }
+
+                return (
+                  <img
+                    src={previewMedia.mediaUrl}
+                    alt={previewMedia.title}
+                    className="w-full h-full object-contain"
+                  />
+                );
+              })()}
             </div>
           </div>
         </div>

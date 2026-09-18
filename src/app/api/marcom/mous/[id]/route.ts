@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
+import { requireWorkspaceAccess, validateWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { canTransitionMou, MOU_STATUSES, type MouStatus } from "@/lib/marcom/mouMachine";
 
 const VALID_STATUSES = MOU_STATUSES;
@@ -14,8 +14,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "MOU not found" }, { status: 404 });
   }
 
-  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
+  const auth = await validateWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
+  if (!auth.authorized) {
+    return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: auth.status });
+  }
+
+  // Branch scope check for staff: cannot modify MOU outside assigned branch(es)
+  if (auth.role !== "admin" && auth.assignedBranchIds && auth.assignedBranchIds.length > 0) {
+    if (!auth.assignedBranchIds.includes(existing.branchId)) {
+      return NextResponse.json(
+        { error: "Forbidden: Cannot modify MOU outside assigned branch" },
+        { status: 403 },
+      );
+    }
+  }
 
   const body = await request.json().catch(() => ({}));
   const data: Record<string, unknown> = {};
@@ -41,6 +53,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
   }
 
+  // If moving MOU to another branch, verify staff has access to the target branch as well
+  if (data.branchId && typeof data.branchId === "string" && data.branchId !== existing.branchId) {
+    if (auth.role !== "admin" && auth.assignedBranchIds && auth.assignedBranchIds.length > 0) {
+      if (!auth.assignedBranchIds.includes(data.branchId)) {
+        return NextResponse.json(
+          { error: "Forbidden: Cannot reassign MOU to an unassigned branch" },
+          { status: 403 },
+        );
+      }
+    }
+  }
+
   if (typeof data.status === "string" && data.status !== existing.status) {
     if (!canTransitionMou(existing.status as MouStatus, data.status as MouStatus)) {
       return NextResponse.json(
@@ -49,8 +73,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       );
     }
     if (existing.status === "SUBMITTED" && (data.status === "APPROVED" || data.status === "REJECTED")) {
-      const adminAuthError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "admin", request });
-      if (adminAuthError) return adminAuthError;
+      // Admin can approve/reject any branch; staff can only approve/reject within their assigned branches
+      if (auth.role !== "admin") {
+        const userBranchIds = auth.assignedBranchIds ?? [];
+        if (!userBranchIds.includes(existing.branchId)) {
+          return NextResponse.json(
+            { error: "Forbidden: PIC cannot approve or reject MOU outside assigned branch" },
+            { status: 403 },
+          );
+        }
+      }
     }
   }
 
@@ -72,7 +104,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return NextResponse.json({ error: "MOU not found" }, { status: 404 });
   }
 
-  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
+  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "admin", request });
   if (authError) return authError;
 
   try {

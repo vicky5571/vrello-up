@@ -2,23 +2,42 @@
 
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import {
-  hasPermission,
+  hasScopedPermission,
+  canAccessBranch,
   resolveMarcomRole,
   type MarcomRole,
   type PermissionAction,
 } from "./guards";
 
 /**
- * Returns the active member's marcom role plus a `can(action)` checker
- * reusing the guards matrix. UI-only gating: server routes enforce.
+ * Returns the active member's marcom role, branch assignments,
+ * plus a `can(action, targetBranchId?)` and `canAccessBranch(targetBranchId?)` checker.
+ * UI-only gating: server routes enforce.
  */
 export function useMarcomPermissions(): {
   role: MarcomRole;
-  can: (action: PermissionAction) => boolean;
+  assignedBranchIds: string[];
+  can: (action: PermissionAction, targetBranchId?: string) => boolean;
+  canAccessBranch: (targetBranchId?: string) => boolean;
 } {
   const { workspaces, activeWorkspaceId, currentUserId } = useWorkspaceStore();
   const members =
     workspaces.find((w) => w.id === activeWorkspaceId)?.members ?? [];
+  const currentMember = members.find((m) => m.id === currentUserId);
   const role = resolveMarcomRole(members, currentUserId);
-  return { role, can: (action) => hasPermission(role, action) };
+  const assignedBranchIds = currentMember?.assignedBranchIds ?? [];
+
+  return {
+    role,
+    assignedBranchIds,
+    can: (action, targetBranchId) =>
+      hasScopedPermission({
+        role,
+        action,
+        userBranchIds: assignedBranchIds,
+        targetBranchId,
+      }),
+    canAccessBranch: (targetBranchId) =>
+      canAccessBranch(role, assignedBranchIds, targetBranchId),
+  };
 }

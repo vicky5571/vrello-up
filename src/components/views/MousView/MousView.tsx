@@ -660,23 +660,23 @@ export function MousView() {
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                {mou.status === "DRAFT" && canCreate && (
+                {mou.status === "DRAFT" && can("CREATE_MOU", mou.branchId) && (
                   <button type="button" onClick={(e) => { e.stopPropagation(); handleStatusTransition(mou, "SUBMITTED"); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 transition-colors shadow-2xs cursor-pointer">
                     <span>Submit for Approval</span>
                   </button>
                 )}
-                {mou.status === "SUBMITTED" && canApprove && (
+                {mou.status === "SUBMITTED" && can("APPROVE_MOU", mou.branchId) && (
                   <button type="button" onClick={(e) => { e.stopPropagation(); handleStatusTransition(mou, "APPROVED"); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer">
                     <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Approve MOU</span>
                   </button>
                 )}
-                {mou.status === "APPROVED" && canCreate && (
+                {mou.status === "APPROVED" && can("CREATE_MOU", mou.branchId) && (
                   <button type="button" onClick={(e) => { e.stopPropagation(); handleStatusTransition(mou, "DONE"); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-colors shadow-2xs cursor-pointer">
                     <span>Mark Done</span>
                   </button>
                 )}
-                {canCreate && (
+                {can("CREATE_MOU", mou.branchId) && (
                   <button type="button" onClick={(e) => { e.stopPropagation(); setIsBranchDropdownOpen(false); setBranchSearch(""); setModalMou(mou); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
                     <Edit2 className="w-3.5 h-3.5 text-fuchsia-600" />
                     <span>Edit MOU</span>
