@@ -14,3 +14,49 @@ export function canTransitionPlacement(
 ): boolean {
   return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false;
 }
+
+export interface PlacementValidationContext {
+  photoUrl?: string | null;
+  notes?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  shareLocationUrl?: string | null;
+}
+
+export interface PlacementValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+/**
+ * Validates status transition and field guards for POSM placement.
+ * - Enforces canTransitionPlacement state machine rules
+ * - Enforces mandatory photoUrl when transitioning to DONE
+ * - Enforces mandatory notes when transitioning to ISSUE
+ */
+export function validatePlacementUpdate(
+  fromStatus: PlacementStatus,
+  toStatus: PlacementStatus,
+  context: PlacementValidationContext,
+): PlacementValidationResult {
+  if (fromStatus !== toStatus && !canTransitionPlacement(fromStatus, toStatus)) {
+    return { valid: false, error: `Illegal status transition: ${fromStatus} → ${toStatus}` };
+  }
+  if (toStatus === "DONE") {
+    if (!context.photoUrl || !context.photoUrl.trim()) {
+      return {
+        valid: false,
+        error: "Bukti foto pemasangan fisik (photoUrl) wajib diunggah sebelum status diselesaikan (DONE)",
+      };
+    }
+  }
+  if (toStatus === "ISSUE") {
+    if (!context.notes || !context.notes.trim()) {
+      return {
+        valid: false,
+        error: "Catatan kendala lapangan (notes) wajib diisi saat menandai status ISSUE",
+      };
+    }
+  }
+  return { valid: true };
+}

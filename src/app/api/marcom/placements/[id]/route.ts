@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
-import { canTransitionPlacement, type PlacementStatus } from "@/lib/marcom/placementMachine";
+import { canTransitionPlacement, validatePlacementUpdate, type PlacementStatus } from "@/lib/marcom/placementMachine";
 
 const VALID_STATUSES = ["NOT_STARTED", "ON_PROGRESS", "DONE", "ISSUE"] as const;
 const PATCHABLE_FIELDS = [
@@ -54,15 +54,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
   }
 
-  if (
-    typeof data.status === "string" &&
-    data.status !== existing.status &&
-    !canTransitionPlacement(existing.status as PlacementStatus, data.status as PlacementStatus)
-  ) {
-    return NextResponse.json(
-      { error: `Illegal status transition: ${existing.status} → ${data.status}` },
-      { status: 400 },
-    );
+  const targetStatus = (data.status as PlacementStatus) || (existing.status as PlacementStatus);
+  const validation = validatePlacementUpdate(
+    existing.status as PlacementStatus,
+    targetStatus,
+    {
+      photoUrl: (data.photoUrl !== undefined ? data.photoUrl : existing.photoUrl) as string | null,
+      notes: (data.notes !== undefined ? data.notes : existing.notes) as string | null,
+      latitude: (data.latitude !== undefined ? data.latitude : existing.latitude) as number | null,
+      longitude: (data.longitude !== undefined ? data.longitude : existing.longitude) as number | null,
+      shareLocationUrl: (data.shareLocationUrl !== undefined ? data.shareLocationUrl : existing.shareLocationUrl) as string | null,
+    },
+  );
+
+  if (!validation.valid) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
   try {

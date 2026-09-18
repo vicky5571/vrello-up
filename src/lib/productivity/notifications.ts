@@ -16,6 +16,7 @@ import type { Task } from "@/types";
 export type NotificationKind =
   | "assignment"
   | "mou_approval"
+  | "mou_expiry"
   | "status"
   | "overdue";
 
@@ -33,6 +34,8 @@ export interface MouLike {
   partnerName: string;
   status: string;
   submissionDate?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
   updatedAt?: string | null;
 }
 
@@ -157,9 +160,15 @@ export function deriveTaskNotifications(
   );
 }
 
-/** MOUs awaiting approval (SUBMITTED) become approval notifications. */
-export function deriveMouNotifications(mous: MouLike[]): AppNotification[] {
-  return mous
+/** MOUs awaiting approval (SUBMITTED) or near expiry (APPROVED/DONE with endDate) become notifications. */
+export function deriveMouNotifications(
+  mous: MouLike[],
+  now = new Date(),
+): AppNotification[] {
+  const notifs: AppNotification[] = [];
+
+  // 1. Approvals: sitting in SUBMITTED
+  const approvals = mous
     .filter((m) => m.status === "SUBMITTED")
     .slice(0, MAX_PER_KIND)
     .map((m) => ({
@@ -168,8 +177,43 @@ export function deriveMouNotifications(mous: MouLike[]): AppNotification[] {
       title: `MOU awaiting approval: ${m.partnerName}`,
       body: m.submissionDate ?? undefined,
       createdAt:
-        m.updatedAt ?? m.submissionDate ?? new Date().toISOString(),
+        m.updatedAt ?? m.submissionDate ?? now.toISOString(),
     }));
+  notifs.push(...approvals);
+
+  // 2. Expiry watchdog: APPROVED or DONE MOUs approaching endDate or already expired
+  const nowMs = now.getTime();
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+  for (const m of mous) {
+    if ((m.status !== "APPROVED" && m.status !== "DONE") || !m.endDate) continue;
+    const endMs = new Date(m.endDate).getTime();
+    if (isNaN(endMs)) continue;
+    const diffMs = endMs - nowMs;
+    const daysLeft = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+
+    if (daysLeft <= 0) {
+      notifs.push({
+        id: `mou-exp-${m.id}`,
+        kind: "mou_expiry" as const,
+        title: `MOU Expired: ${m.partnerName}`,
+        body: `Masa berlaku MOU berakhir pada ${m.endDate.slice(0, 10)}.`,
+        createdAt: m.endDate,
+      });
+    } else if (diffMs <= thirtyDaysMs) {
+      notifs.push({
+        id: `mou-exp-${m.id}`,
+        kind: "mou_expiry" as const,
+        title: `MOU Expiring Soon (${daysLeft}d): ${m.partnerName}`,
+        body: `Masa berlaku MOU akan berakhir pada ${m.endDate.slice(0, 10)}.`,
+        createdAt: now.toISOString(),
+      });
+    }
+  }
+
+  return notifs
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, MAX_PER_KIND * 2);
 }
 
 /** Items newer than the last-seen timestamp count as unread. */

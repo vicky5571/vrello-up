@@ -8,6 +8,7 @@ import {
   ArrowLeftRight,
   AlarmClock,
   CheckCheck,
+  AlertTriangle,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import {
@@ -33,6 +34,11 @@ const KIND_META: Record<
     icon: FileCheck,
     className: "bg-violet-500/10 text-violet-500",
   },
+  mou_expiry: {
+    label: "MOU expiry",
+    icon: AlertTriangle,
+    className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  },
   status: {
     label: "Status changes",
     icon: ArrowLeftRight,
@@ -47,6 +53,7 @@ const KIND_META: Record<
 
 const KIND_ORDER: NotificationKind[] = [
   "overdue",
+  "mou_expiry",
   "mou_approval",
   "assignment",
   "status",
@@ -111,7 +118,7 @@ export function NotificationCenter() {
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
-    fetch("/api/marcom/mous")
+    fetch(`/api/marcom/mous?workspaceId=${encodeURIComponent(activeWorkspaceId)}`)
       .then((r) => (r.ok ? r.json() : { data: [] }))
       .then((json) => {
         if (!cancelled && Array.isArray(json.data)) setMouRows(json.data);

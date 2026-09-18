@@ -95,6 +95,18 @@ export async function POST(request: Request) {
   if (status !== undefined && !VALID_STATUSES.includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
+  if (status === "DONE" && (!photoUrl || !photoUrl.trim())) {
+    return NextResponse.json(
+      { error: "Bukti foto pemasangan fisik (photoUrl) wajib diunggah sebelum status diselesaikan (DONE)" },
+      { status: 400 },
+    );
+  }
+  if (status === "ISSUE" && (!notes || !notes.trim())) {
+    return NextResponse.json(
+      { error: "Catatan kendala lapangan (notes) wajib diisi saat menandai status ISSUE" },
+      { status: 400 },
+    );
+  }
 
   const parsedLat = typeof latitude === "number" && !Number.isNaN(latitude) ? latitude : null;
   const parsedLng = typeof longitude === "number" && !Number.isNaN(longitude) ? longitude : null;

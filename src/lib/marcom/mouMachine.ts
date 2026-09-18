@@ -11,14 +11,15 @@ export const MOU_STATUSES: readonly MouStatus[] = [
   "DONE",
 ];
 
-// Terminal-wins, same reconciliation as the placement machine:
-// DONE and REJECTED are terminal; the only legal moves are the
-// four approval-flow edges below.
+// Reconciled transitions with revision loop:
+// - SUBMITTED can be APPROVED, REJECTED, or pulled back to DRAFT for corrections
+// - REJECTED can transition back to DRAFT so field staff can amend documents/details and resubmit
+// - DONE is terminal
 const ALLOWED_TRANSITIONS: Record<MouStatus, readonly MouStatus[]> = {
   DRAFT: ["SUBMITTED"],
-  SUBMITTED: ["APPROVED", "REJECTED"],
+  SUBMITTED: ["APPROVED", "REJECTED", "DRAFT"],
   APPROVED: ["DONE"],
-  REJECTED: [],
+  REJECTED: ["DRAFT"],
   DONE: [],
 };
 

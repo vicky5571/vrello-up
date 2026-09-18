@@ -85,20 +85,59 @@ export async function checkUpcomingEvents(): Promise<number> {
   }
 }
 
+const notifiedExpiringMous = new Set<string>();
+
+export async function checkExpiringMous(): Promise<number> {
+  if (typeof window === "undefined") return 0;
+  const state = useWorkspaceStore.getState();
+  const activeWorkspaceId = state.activeWorkspaceId || "ws-main";
+
+  try {
+    const res = await fetch(
+      `/api/marcom/mous?workspaceId=${encodeURIComponent(activeWorkspaceId)}`,
+    );
+    if (!res.ok) return 0;
+    const json = await res.json();
+    const mous = Array.isArray(json.data) ? json.data : [];
+
+    const now = Date.now();
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    let warned = 0;
+
+    for (const mou of mous) {
+      if ((mou.status === "APPROVED" || mou.status === "DONE") && mou.endDate) {
+        if (notifiedExpiringMous.has(mou.id)) continue;
+        const endMs = new Date(mou.endDate).getTime();
+        if (isNaN(endMs)) continue;
+        const diff = endMs - now;
+        if (diff <= thirtyDaysMs) {
+          notifiedExpiringMous.add(mou.id);
+          warned++;
+        }
+      }
+    }
+    return warned;
+  } catch {
+    return 0;
+  }
+}
+
 let timer: ReturnType<typeof setInterval> | null = null;
 
 /**
- * Polls automations (rule-4 overdue and custom event triggers) on an interval.
+ * Polls automations (rule-4 overdue, custom event triggers, and MOU expiry) on an interval.
  */
 export function startAutomationScheduler(
   intervalMs = 60_000,
 ): () => void {
   runOverdueEscalation();
   checkUpcomingEvents();
+  checkExpiringMous();
   if (timer === null) {
     timer = setInterval(() => {
       runOverdueEscalation();
       checkUpcomingEvents();
+      checkExpiringMous();
     }, intervalMs);
   }
   return stopAutomationScheduler;

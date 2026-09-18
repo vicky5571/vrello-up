@@ -48,7 +48,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         { status: 400 },
       );
     }
-    if (existing.status === "SUBMITTED") {
+    if (existing.status === "SUBMITTED" && (data.status === "APPROVED" || data.status === "REJECTED")) {
       const adminAuthError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "admin", request });
       if (adminAuthError) return adminAuthError;
     }
