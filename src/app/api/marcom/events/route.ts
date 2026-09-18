@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const where: Prisma.MarcomEventWhereInput = {
+  const where: Prisma.FieldEventWhereInput = {
     workspaceId,
   };
   if (status && status !== "ALL") {
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     where.OR = [{ name: contains }, { location: contains }, { branchName: contains }, { picName: contains }, { eventType: contains }];
   }
 
-  const events = await prisma.marcomEvent.findMany({
+  const events = await prisma.fieldEvent.findMany({
     where,
     orderBy: { id: "asc" },
     include: eventInclude,
@@ -41,8 +41,8 @@ export async function GET(request: Request) {
 
   const normalizedEvents = events.map((e) => ({
     ...e,
-    startDate: e.date ? e.date.toISOString() : null,
-    date: e.date ? e.date.toISOString() : null,
+    startDate: e.startDate ? e.startDate.toISOString() : null,
+    date: e.startDate ? e.startDate.toISOString() : null,
     endDate: e.endDate ? e.endDate.toISOString() : null,
   }));
 
@@ -69,9 +69,6 @@ export async function POST(request: Request) {
     attendeeCount,
     targetAttendee,
     notes,
-    postPlatform,
-    postFormat,
-    mediaUrl,
     footage,
   } = body ?? {};
 
@@ -99,11 +96,11 @@ export async function POST(request: Request) {
         .filter((f: any) => f.filePath)
     : [];
 
-  const event = await prisma.marcomEvent.create({
+  const event = await prisma.fieldEvent.create({
     data: {
       workspaceId,
       name,
-      date: eventDate ? new Date(eventDate) : undefined,
+      startDate: eventDate ? new Date(eventDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
       location,
       branchName,
@@ -114,9 +111,6 @@ export async function POST(request: Request) {
       attendeeCount,
       targetAttendee,
       notes,
-      postPlatform,
-      postFormat,
-      mediaUrl,
       ...(footageData.length > 0 ? { footage: { create: footageData } } : {}),
     },
     include: eventInclude,
@@ -124,8 +118,8 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ...event,
-    startDate: event.date ? event.date.toISOString() : null,
-    date: event.date ? event.date.toISOString() : null,
+    startDate: event.startDate ? event.startDate.toISOString() : null,
+    date: event.startDate ? event.startDate.toISOString() : null,
     endDate: event.endDate ? event.endDate.toISOString() : null,
   }, { status: 201 });
 }

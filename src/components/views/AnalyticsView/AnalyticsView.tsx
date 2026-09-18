@@ -15,6 +15,7 @@ import {
   YAxis,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import {
   compareReportPeriodAsc,
   summarizeBranches,
@@ -74,6 +75,7 @@ function ChartCard({
 }
 
 export function AnalyticsView() {
+  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const [branches, setBranches] = useState<BranchRow[]>([]);
   const [mous, setMous] = useState<MouRow[]>([]);
   const [reports, setReports] = useState<ReportRow[]>([]);
@@ -86,8 +88,8 @@ export function AnalyticsView() {
     try {
       const [branchesRes, mousRes, reportsRes] = await Promise.all([
         fetch("/api/marcom/branches"),
-        fetch("/api/marcom/mous"),
-        fetch("/api/marcom/reports"),
+        fetch(`/api/marcom/mous?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
+        fetch(`/api/marcom/reports?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
       ]);
       const [branchesJson, mousJson, reportsJson] = await Promise.all([
         branchesRes.ok ? branchesRes.json() : { data: [] },
@@ -105,7 +107,7 @@ export function AnalyticsView() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [activeWorkspaceId]);
 
   useEffect(() => {
     fetchAnalytics();

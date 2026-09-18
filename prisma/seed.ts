@@ -929,7 +929,7 @@ async function main() {
         index < eventDefinitions.length
           ? base.name
           : `${base.name} Vol. ${Math.floor(index / eventDefinitions.length) + 1}`,
-      date: toDate(`2026-${monthStr}-${String(startDay).padStart(2, "0")}`),
+      startDate: toDate(`2026-${monthStr}-${String(startDay).padStart(2, "0")}`),
       endDate: toDate(`2026-${monthStr}-${String(startDay + 2).padStart(2, "0")}`),
       location: base.location,
       branchName: branch.name,
@@ -950,7 +950,7 @@ async function main() {
   });
   for (const e of events) {
     const { id, footage, ...data } = e;
-    await prisma.marcomEvent.upsert({ where: { id }, update: data, create: { id, ...data } });
+    await prisma.fieldEvent.upsert({ where: { id }, update: data, create: { id, ...data } });
     await prisma.eventFootage.upsert({
       where: { id: footage.id },
       update: { eventId: id, title: footage.title, filePath: footage.filePath, duration: footage.duration },
@@ -1009,7 +1009,7 @@ async function main() {
     materials: await prisma.material.count(),
     placements: await prisma.placement.count(),
     mous: await prisma.mou.count(),
-    events: await prisma.marcomEvent.count(),
+    events: await prisma.fieldEvent.count(),
     footage: await prisma.eventFootage.count(),
     documents: await prisma.documentItem.count(),
     monthlyReports: await prisma.monthlyReport.count(),

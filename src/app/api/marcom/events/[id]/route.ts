@@ -18,9 +18,6 @@ const PATCHABLE_FIELDS = [
   "attendeeCount",
   "targetAttendee",
   "notes",
-  "postPlatform",
-  "postFormat",
-  "mediaUrl",
 ] as const;
 
 const eventInclude = {
@@ -29,7 +26,7 @@ const eventInclude = {
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const existing = await prisma.marcomEvent.findUnique({ where: { id } });
+  const existing = await prisma.fieldEvent.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
@@ -41,11 +38,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const data: Record<string, unknown> = {};
   for (const field of PATCHABLE_FIELDS) {
     if (body?.[field] !== undefined) {
-      if (field === "startDate" && body.date === undefined) {
-        data["date"] = body[field] ? new Date(body[field] as string) : null;
-      } else if (field === "date" || field === "endDate") {
+      if (field === "startDate" || field === "date") {
+        data["startDate"] = body[field] ? new Date(body[field] as string) : null;
+      } else if (field === "endDate") {
         data[field] = typeof body[field] === "string" && body[field] ? new Date(body[field] as string) : null;
-      } else if (field !== "startDate") {
+      } else {
         data[field] = body[field];
       }
     }
@@ -54,7 +51,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const effectiveStartDate = data["date"] !== undefined ? (data["date"] as Date | null) : existing.date;
+  const effectiveStartDate = data["startDate"] !== undefined ? (data["startDate"] as Date | null) : existing.startDate;
   const effectiveEndDate = data["endDate"] !== undefined ? (data["endDate"] as Date | null) : existing.endDate;
 
   if (effectiveStartDate && effectiveEndDate && effectiveEndDate < effectiveStartDate) {
@@ -82,11 +79,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   try {
-    const event = await prisma.marcomEvent.update({ where: { id }, data, include: eventInclude });
+    const event = await prisma.fieldEvent.update({ where: { id }, data, include: eventInclude });
     return NextResponse.json({
       ...event,
-      startDate: event.date ? event.date.toISOString() : null,
-      date: event.date ? event.date.toISOString() : null,
+      startDate: event.startDate ? event.startDate.toISOString() : null,
+      date: event.startDate ? event.startDate.toISOString() : null,
       endDate: event.endDate ? event.endDate.toISOString() : null,
     });
   } catch (e) {
@@ -99,7 +96,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const existing = await prisma.marcomEvent.findUnique({ where: { id } });
+  const existing = await prisma.fieldEvent.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
@@ -108,7 +105,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (authError) return authError;
 
   try {
-    await prisma.marcomEvent.delete({ where: { id } });
+    await prisma.fieldEvent.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {

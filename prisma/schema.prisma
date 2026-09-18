@@ -227,40 +227,13 @@ model FieldEvent {
   @@index([startDate])
   @@index([branchName])
 }
-
-model MarcomEvent {
-  id             String         @id @default(cuid())
-  workspaceId    String         @default("ws-main")
-  workspace      WorkspaceItem  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name           String
-  date           DateTime?
-  endDate        DateTime?
-  location       String         @default("")
-  branchName     String         @default("")
-  picName        String         @default("")
-  eventType      String
-  status         EventStatus    @default(UPCOMING)
-  budget         Float          @default(0)
-  attendeeCount  Int            @default(0)
-  targetAttendee Int            @default(0)
-  notes          String         @default("")
-  postPlatform   String?
-  postFormat     String?
-  mediaUrl       String?
-  footage        EventFootage[]
-
-  @@index([workspaceId])
-}
-
 model EventFootage {
-  id           String       @id @default(cuid())
-  eventId      String
-  event        MarcomEvent? @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  fieldEvent   FieldEvent?  @relation(fields: [fieldEventId], references: [id], onDelete: Cascade)
-  fieldEventId String?
-  title        String
-  filePath     String
-  duration     String       @default("")
+  id       String     @id @default(cuid())
+  eventId  String
+  event    FieldEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  title    String
+  filePath String
+  duration String     @default("")
 }
 
 model DocumentItem {
@@ -305,7 +278,6 @@ model WorkspaceItem {
   placements     Placement[]
   mous           Mou[]
   fieldEvents    FieldEvent[]
-  marcomEvents   MarcomEvent[]
   contentPosts   ContentPost[]
   monthlyReports MonthlyReport[]
   documents      DocumentItem[]
