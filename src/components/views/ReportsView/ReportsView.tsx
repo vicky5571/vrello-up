@@ -87,20 +87,6 @@ function renderJsonItem(item: unknown, fallback: string) {
   }
   return fallback;
 }
-
-// Reuses the SettingsModal JSON-download pattern (Blob + object URL).
-function downloadJson(filename: string, payload: unknown) {
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {
-    type: "application/json",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 function ReportSection({ title, items }: { title: string; items: unknown[] }) {
   return (
     <div>
@@ -209,24 +195,6 @@ export function ReportsView() {
       ),
     [reports],
   );
-
-  const handleExportAll = () => {
-    downloadJson(`marcom-reports-${new Date().toISOString().slice(0, 10)}.json`, {
-      exportedAt: new Date().toISOString(),
-      summary,
-      reports,
-    });
-    toast.success("Reports backup downloaded successfully!");
-  };
-
-  const handleExportOne = (report: MarcomReport) => {
-    downloadJson(`marcom-report-${periodLabel(report).replace(/\s+/g, "-").toLowerCase()}.json`, {
-      exportedAt: new Date().toISOString(),
-      report,
-      supportingDocuments: documents.filter((d) => matchesPeriod(d.period, report)),
-    });
-    toast.success("Report downloaded successfully!");
-  };
 
   const handleAutoDraft = async () => {
     if (!month.trim()) {
@@ -362,16 +330,6 @@ export function ReportsView() {
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export Center</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleExportAll}
-            disabled={isLoading || reports.length === 0}
-            title="Download all reports as JSON"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export JSON</span>
           </button>
           <button
             type="button"
@@ -692,16 +650,6 @@ export function ReportsView() {
                             ))}
                           </ul>
                         )}
-                      </div>
-                      <div className="mt-3 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handleExportOne(report)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Export JSON</span>
-                        </button>
                       </div>
                     </div>
                   )}
