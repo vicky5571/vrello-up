@@ -136,6 +136,7 @@ export interface MouRealizationSummary {
   totalCost: number;
   compensationValue: number;
   budgetUtilizationRate: number;
+  isOverBudget: boolean;
 }
 
 /**
@@ -154,10 +155,17 @@ export function calculateMouPlacementRealization(
       totalCost: 0,
       compensationValue: mou.compensationValue || 0,
       budgetUtilizationRate: 0,
+      isOverBudget: false,
     };
   }
 
-  const linked = placements.filter((p) => p.mouId === mou.id);
+  const hasExplicitMouIds = placements.some(
+    (p) => p.mouId !== undefined && p.mouId !== null,
+  );
+  const linked = hasExplicitMouIds
+    ? placements.filter((p) => p.mouId === mou.id)
+    : placements;
+
   const totalLinked = linked.length;
   let doneCount = 0;
   let inProgressCount = 0;
@@ -179,7 +187,9 @@ export function calculateMouPlacementRealization(
       : 0;
 
   const budgetUtilizationRate =
-    compensationValue > 0 ? Math.min(100, Math.round((totalCost / compensationValue) * 100)) : 0;
+    compensationValue > 0 ? Math.round((totalCost / compensationValue) * 100) : 0;
+
+  const isOverBudget = compensationValue > 0 && totalCost > compensationValue;
 
   return {
     totalLinked,
@@ -189,5 +199,6 @@ export function calculateMouPlacementRealization(
     totalCost,
     compensationValue,
     budgetUtilizationRate,
+    isOverBudget,
   };
 }

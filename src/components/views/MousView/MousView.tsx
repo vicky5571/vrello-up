@@ -12,6 +12,7 @@ import {
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
 import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
+import { calculateMouPlacementRealization } from "@/lib/marcom/placementMouBridge";
 
 export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE";
 
@@ -35,6 +36,7 @@ export interface MarcomMou {
   outlet?: { id: string; code: string; name: string };
   placements?: Array<{
     id: string;
+    mouId?: string | null;
     status: string;
     cost: number;
     photoUrl?: string;
@@ -286,7 +288,7 @@ export function MousView() {
         columnHelper.display({
           id: "placements",
           header: "Realisasi Fisik",
-          size: 180, minSize: 130, enableSorting: false,
+          size: 210, minSize: 160, enableSorting: false,
           cell: ({ row }) => {
             const pls = row.original.placements || [];
             if (pls.length === 0) {
@@ -296,8 +298,24 @@ export function MousView() {
                 </span>
               );
             }
-            const doneCount = pls.filter((p) => p.status === "DONE").length;
-            const totalCost = pls.reduce((acc, p) => acc + (p.cost || 0), 0);
+
+            const realization = calculateMouPlacementRealization(row.original, pls);
+            const comp = row.original.compensationValue || 0;
+            const rate = realization.budgetUtilizationRate;
+            const isOver = realization.isOverBudget;
+
+            const progressColor = isOver
+              ? "bg-rose-500"
+              : rate >= 80
+              ? "bg-amber-500"
+              : "bg-emerald-500";
+
+            const badgeClass = isOver
+              ? "text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800"
+              : rate >= 80
+              ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800"
+              : "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800";
+
             return (
               <button
                 type="button"
@@ -305,16 +323,38 @@ export function MousView() {
                   e.stopPropagation();
                   navigateToMarcom("placements", row.original.partnerName || row.original.outletName || "");
                 }}
-                className="inline-flex flex-col text-left group cursor-pointer"
+                className="w-full inline-flex flex-col text-left group cursor-pointer space-y-1 py-0.5"
                 title="Lihat titik pemasangan fisik di Placements"
               >
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-lime-600 transition-colors">
-                  <Layers className="w-3 h-3 text-lime-500 shrink-0" />
-                  <span>{pls.length} Titik ({doneCount} Selesai)</span>
-                </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                  Biaya: {formatIDR(totalCost)}
-                </span>
+                <div className="flex items-center justify-between gap-1.5 w-full">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-lime-600 transition-colors">
+                    <Layers className="w-3 h-3 text-lime-500 shrink-0" />
+                    <span>{realization.totalLinked} Titik ({realization.doneCount} Selesai)</span>
+                  </span>
+                  {comp > 0 && (
+                    <span className={cn("text-[9px] font-bold px-1.5 py-0.2 rounded border shadow-2xs shrink-0", badgeClass)}>
+                      {rate}%{isOver ? " Over" : ""}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 w-full">
+                  <span>Biaya: {formatIDR(realization.totalCost)}</span>
+                  {comp > 0 && (
+                    <span className="text-[9px] text-slate-400 dark:text-slate-500">
+                      Plafon: {formatIDR(comp)}
+                    </span>
+                  )}
+                </div>
+
+                {comp > 0 && (
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all duration-300", progressColor)}
+                      style={{ width: `${Math.min(100, rate)}%` }}
+                    />
+                  </div>
+                )}
               </button>
             );
           },
@@ -520,6 +560,60 @@ export function MousView() {
                 <div className="text-slate-700 dark:text-slate-300">{mou.notes || "—"}</div>
               </div>
             </div>
+
+            {/* Realisasi Anggaran & Titik Fisik */}
+            {(() => {
+              const realization = calculateMouPlacementRealization(mou, mou.placements || []);
+              const comp = mou.compensationValue || 0;
+              const rate = realization.budgetUtilizationRate;
+              const isOver = realization.isOverBudget;
+              const progressColor = isOver
+                ? "bg-rose-500"
+                : rate >= 80
+                ? "bg-amber-500"
+                : "bg-emerald-500";
+              const badgeClass = isOver
+                ? "text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800"
+                : rate >= 80
+                ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800"
+                : "text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800";
+
+              return (
+                <div className="mt-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-lime-600 dark:text-lime-400 shrink-0" />
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        Realisasi Anggaran & Materi POSM
+                      </span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        ({realization.totalLinked} titik: {realization.doneCount} selesai, {realization.inProgressCount} proses, {realization.notStartedCount} pending)
+                      </span>
+                    </div>
+                    {comp > 0 && (
+                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border shadow-2xs", badgeClass)}>
+                        {rate}% Serapan {isOver ? "(Over Budget)" : ""}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                    <span>Total Biaya Terpasang: <strong className="text-slate-900 dark:text-slate-100">{formatIDR(realization.totalCost)}</strong></span>
+                    {comp > 0 && (
+                      <span>Plafon Kompensasi: <strong className="text-slate-900 dark:text-slate-100">{formatIDR(comp)}</strong></span>
+                    )}
+                  </div>
+                  {comp > 0 && (
+                    <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full transition-all duration-300", progressColor)}
+                        style={{ width: `${Math.min(100, rate)}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 {mou.outletName && (

@@ -106,9 +106,23 @@ test("calculateMouPlacementRealization aggregates linked placements and costs", 
   assert.equal(result.totalCost, 3000000);
   assert.equal(result.compensationValue, 5000000);
   assert.equal(result.budgetUtilizationRate, 60);
+  assert.equal(result.isOverBudget, false);
+
+  // Over-budget realization test
+  const overBudgetMou = { id: "mou-over", compensationValue: 2000000 };
+  const overPlacements: PlacementSummaryInfo[] = [
+    { id: "p1", status: "DONE", cost: 1500000 },
+    { id: "p2", status: "DONE", cost: 1000000 },
+  ];
+  const overResult = calculateMouPlacementRealization(overBudgetMou, overPlacements);
+  assert.equal(overResult.totalLinked, 2);
+  assert.equal(overResult.totalCost, 2500000);
+  assert.equal(overResult.budgetUtilizationRate, 125);
+  assert.equal(overResult.isOverBudget, true);
 
   const emptyResult = calculateMouPlacementRealization({ id: "mou-empty", compensationValue: 0 }, []);
   assert.equal(emptyResult.totalLinked, 0);
   assert.equal(emptyResult.totalCost, 0);
   assert.equal(emptyResult.budgetUtilizationRate, 0);
+  assert.equal(emptyResult.isOverBudget, false);
 });

@@ -16,6 +16,7 @@ const mouInclude = {
   placements: {
     select: {
       id: true,
+      mouId: true,
       status: true,
       cost: true,
       photoUrl: true,
