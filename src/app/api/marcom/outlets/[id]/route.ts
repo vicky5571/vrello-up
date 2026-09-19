@@ -41,7 +41,37 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
   }
 
-  return NextResponse.json(outlet);
+  const eventOr: Prisma.FieldEventWhereInput[] = [];
+  if (outlet.branch?.name) {
+    eventOr.push({ branchName: outlet.branch.name });
+  }
+  if (outlet.name) {
+    eventOr.push({ location: { contains: outlet.name, mode: "insensitive" } });
+  }
+
+  const [events, contents] = await Promise.all([
+    eventOr.length > 0
+      ? prisma.fieldEvent.findMany({
+          where: { OR: eventOr },
+          orderBy: { startDate: "desc" },
+          include: { footage: true },
+        })
+      : Promise.resolve([]),
+    outlet.branch?.name
+      ? prisma.contentPost.findMany({
+          where: {
+            branchName: { equals: outlet.branch.name, mode: "insensitive" },
+          },
+          orderBy: { publishDate: "desc" },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  return NextResponse.json({
+    ...outlet,
+    events,
+    contents,
+  });
 }
 
 async function requireMasterData() {
