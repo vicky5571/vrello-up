@@ -209,9 +209,9 @@ export function PlacementsView() {
       {
         label: "Menunggu vs Selesai",
         value: `${kpis.pendingCount} Menunggu / ${kpis.doneCount} Selesai`,
-        helper: `${kpis.notStartedCount} To Do • ${kpis.inProgressCount} In Progress`,
+        helper: `${kpis.notStartedCount} To Do • ${kpis.inProgressCount} In Progress${kpis.issueCount > 0 ? ` • ${kpis.issueCount} Kendala` : ""}`,
         icon: Clock,
-        color: "orange",
+        color: kpis.issueCount > 0 ? "rose" : "orange",
       },
     ];
   }, [filteredPlacements]);

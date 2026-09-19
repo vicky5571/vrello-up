@@ -8,6 +8,11 @@
  * - Priority Outlet Tier Branding Penetration
  */
 
+import {
+  calculateActionableMarcomMetrics,
+  type ActionableMarcomMetrics,
+} from "@/lib/marcom/analyticsFacade";
+
 export interface MouAnalyticsInput {
   id: string;
   status: string;
@@ -132,6 +137,7 @@ export interface OutletAnalyticsInput {
   tier: string; // TIER_1, TIER_2, TIER_3
   name?: string;
   code?: string;
+  active?: boolean;
 }
 
 export interface TierCoverageMetric {
@@ -183,6 +189,7 @@ export interface MarcomAnalyticsDashboardData {
   contentMetrics: ContentAnalyticsResult;
   eventEfficiency: EventEfficiencyResult;
   outletTierCoverage: OutletTierCoverageResult;
+  actionable: ActionableMarcomMetrics;
 }
 
 /**
@@ -646,6 +653,14 @@ export function buildMarcomAnalyticsDashboard(params: {
     eventEfficiency,
     outletTierCoverage
   );
+  const actionable = calculateActionableMarcomMetrics({
+    mous: params.mous,
+    placements: params.placements,
+    contents: params.contents,
+    events: params.events,
+    outlets: params.outlets,
+    now: params.now,
+  });
 
   return {
     kpis,
@@ -654,6 +669,7 @@ export function buildMarcomAnalyticsDashboard(params: {
     contentMetrics,
     eventEfficiency,
     outletTierCoverage,
+    actionable,
   };
 }
 

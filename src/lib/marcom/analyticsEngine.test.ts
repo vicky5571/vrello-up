@@ -285,6 +285,9 @@ describe("analyticsEngine", () => {
       assert.ok(data.contentMetrics);
       assert.ok(data.eventEfficiency);
       assert.ok(data.outletTierCoverage);
+      assert.ok(data.actionable);
+      assert.equal(typeof data.actionable.costPerOutlet.avgCostPerOutlet, "number");
+      assert.equal(typeof data.actionable.eventEfficiency.costPerAttendee, "number");
     });
   });
 });

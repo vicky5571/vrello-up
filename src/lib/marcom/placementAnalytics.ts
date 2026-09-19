@@ -3,6 +3,7 @@ export interface PlacementAnalyticsKPIs {
   totalCost: number;
   doneCount: number;
   inProgressCount: number;
+  issueCount: number;
   notStartedCount: number;
   pendingCount: number;
   completionRate: number; // 0 to 100
@@ -28,6 +29,7 @@ export function calculatePlacementKPIs<
       totalCost: 0,
       doneCount: 0,
       inProgressCount: 0,
+      issueCount: 0,
       notStartedCount: 0,
       pendingCount: 0,
       completionRate: 0,
@@ -39,6 +41,7 @@ export function calculatePlacementKPIs<
   let totalCost = 0;
   let doneCount = 0;
   let inProgressCount = 0;
+  let issueCount = 0;
   let notStartedCount = 0;
   let im3Count = 0;
   let triCount = 0;
@@ -55,6 +58,8 @@ export function calculatePlacementKPIs<
       doneCount++;
     } else if (st === "ON_PROGRESS") {
       inProgressCount++;
+    } else if (st === "ISSUE") {
+      issueCount++;
     } else {
       notStartedCount++;
     }
@@ -77,6 +82,7 @@ export function calculatePlacementKPIs<
     totalCost,
     doneCount,
     inProgressCount,
+    issueCount,
     notStartedCount,
     pendingCount,
     completionRate,

@@ -82,6 +82,7 @@ export async function GET(request: Request) {
           tier: true,
           name: true,
           code: true,
+          active: true,
         },
       }),
     ]);
