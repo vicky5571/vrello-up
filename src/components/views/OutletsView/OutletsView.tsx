@@ -23,7 +23,10 @@ import {
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn } from "@/lib/utils";
+import type { OutletItem as MarcomOutlet, OutletType, OutletTier } from "@/types";
+export type { OutletType, OutletTier, MarcomOutlet };
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
@@ -45,29 +48,6 @@ const OutletMapView = dynamic(
   },
 );
 
-export type OutletType = "TRADITIONAL" | "MODERN_RETAIL" | "EXCLUSIVE" | "CAMPUS_OUTLET";
-export type OutletTier = "TIER_1" | "TIER_2" | "TIER_3";
-
-export interface MarcomOutlet {
-  id: string;
-  code: string;
-  name: string;
-  type: OutletType;
-  tier?: OutletTier;
-  brand?: string;
-  address: string;
-  city: string;
-  picName: string;
-  picPhone: string;
-  active: boolean;
-  branchId: string;
-  branch?: { id: string; code: string; name: string };
-  placementCount?: number;
-  mouCount?: number;
-  latitude?: number | null;
-  longitude?: number | null;
-}
-
 const columnHelper = createMarcomColumnHelper<MarcomOutlet>();
 
 const TYPE_STYLES: Record<OutletType, string> = {
@@ -80,6 +60,7 @@ const TYPE_STYLES: Record<OutletType, string> = {
 export function OutletsView() {
   const { can, role } = useMarcomPermissions();
   const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId } = useWorkspaceStore();
+  const { fetchBranches, setOutlets: setStoreOutlets, branches: storeBranches } = useMarcomDataStore();
 
   const [viewMode, setViewMode] = useState<"table" | "map">("table");
   const [selectedOutletIdForDrawer, setSelectedOutletIdForDrawer] = useState<string | null>(null);
@@ -88,7 +69,11 @@ export function OutletsView() {
   const [error, setError] = useState<string | null>(null);
   const [selectedBranch, setSelectedBranch] = useState<string>("ALL");
   const [selectedType, setSelectedType] = useState<string>("ALL");
-  const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>(() =>
+    storeBranches.length > 0
+      ? storeBranches.map((b) => ({ id: b.id, name: b.name, code: b.code }))
+      : []
+  );
   const [modalOutlet, setModalOutlet] = useState<Partial<MarcomOutlet> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLocatingInModal, setIsLocatingInModal] = useState(false);
@@ -106,16 +91,19 @@ export function OutletsView() {
         if (typeFilter && typeFilter !== "ALL") params.set("type", typeFilter);
         const outletsUrl = `/api/marcom/outlets${params.toString() ? `?${params.toString()}` : ""}`;
 
-        const [resOutlets, resBranches] = await Promise.all([
+        const [resOutlets, branchList] = await Promise.all([
           fetch(outletsUrl),
-          fetch("/api/marcom/branches"),
+          fetchBranches(),
         ]);
         if (!resOutlets.ok) throw new Error(`Request failed (${resOutlets.status})`);
         const jsonOutlets = await resOutlets.json();
-        setOutlets(Array.isArray(jsonOutlets.data) ? jsonOutlets.data : []);
-        if (resBranches.ok) {
-          const jsonBranches = await resBranches.json();
-          setBranches(Array.isArray(jsonBranches.data) ? jsonBranches.data : []);
+        const outletItems = Array.isArray(jsonOutlets.data) ? jsonOutlets.data : [];
+        setOutlets(outletItems);
+        if (branchFilter === "ALL" && typeFilter === "ALL") {
+          setStoreOutlets(outletItems);
+        }
+        if (Array.isArray(branchList) && branchList.length > 0) {
+          setBranches(branchList.map((b) => ({ id: b.id, name: b.name, code: b.code })));
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load outlets");

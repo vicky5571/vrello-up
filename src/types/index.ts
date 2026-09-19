@@ -402,3 +402,26 @@ export interface MaterialItem {
   type: string;
 }
 
+export type OutletType = "TRADITIONAL" | "MODERN_RETAIL" | "EXCLUSIVE" | "CAMPUS_OUTLET";
+export type OutletTier = "TIER_1" | "TIER_2" | "TIER_3";
+
+export interface OutletItem {
+  id: string;
+  code: string;
+  name: string;
+  type: OutletType;
+  tier?: OutletTier;
+  brand?: string;
+  address: string;
+  city: string;
+  picName: string;
+  picPhone: string;
+  active: boolean;
+  branchId: string;
+  branch?: { id: string; code: string; name: string };
+  placementCount?: number;
+  mouCount?: number;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+

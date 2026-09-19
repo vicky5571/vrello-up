@@ -12,6 +12,10 @@ describe("useMarcomDataStore", () => {
       materials: [],
       isMaterialsLoaded: false,
       isMaterialsLoading: false,
+      outlets: [],
+      isOutletsLoaded: false,
+      isOutletsLoading: false,
+      lastError: null,
       postsByWorkspace: {},
       reportsByWorkspace: {},
       documentsByWorkspace: {},
@@ -39,6 +43,49 @@ describe("useMarcomDataStore", () => {
       assert.equal(state.isBranchesLoaded, true);
       assert.equal(state.branches.length, 1);
       assert.equal(state.branches[0].name, "Semarang Pusat");
+    });
+
+    it("stores and retrieves outlets and materials synchronously from state", () => {
+      const store = useMarcomDataStore.getState();
+      assert.equal(store.isOutletsLoaded, false);
+
+      store.setOutlets([
+        {
+          id: "out-1",
+          code: "OUT-01",
+          name: "Toko Sinar Rejeki",
+          type: "TRADITIONAL",
+          address: "Jl. Gajah Mada",
+          city: "Semarang",
+          picName: "Siti",
+          picPhone: "0811111111",
+          active: true,
+          branchId: "b1",
+        },
+      ]);
+
+      store.setMaterials([
+        { id: "mat-1", name: "Neon Box", type: "PERMANENT" },
+      ]);
+
+      const state = useMarcomDataStore.getState();
+      assert.equal(state.isOutletsLoaded, true);
+      assert.equal(state.outlets.length, 1);
+      assert.equal(state.outlets[0].name, "Toko Sinar Rejeki");
+      assert.equal(state.isMaterialsLoaded, true);
+      assert.equal(state.materials.length, 1);
+      assert.equal(state.materials[0].name, "Neon Box");
+    });
+
+    it("tracks and clears errors gracefully", () => {
+      const store = useMarcomDataStore.getState();
+      assert.equal(store.lastError, null);
+
+      useMarcomDataStore.setState({ lastError: "Network connection lost" });
+      assert.equal(useMarcomDataStore.getState().lastError, "Network connection lost");
+
+      useMarcomDataStore.getState().clearError();
+      assert.equal(useMarcomDataStore.getState().lastError, null);
     });
   });
 

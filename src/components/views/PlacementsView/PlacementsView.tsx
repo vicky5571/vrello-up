@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn, formatIDR } from "@/lib/utils";
 import {
   MarcomTableShell,
@@ -136,14 +137,29 @@ export function PlacementsView() {
     navigateToMarcom,
   } = useWorkspaceStore();
 
+  const {
+    fetchOutlets,
+    fetchMaterials,
+    outlets: storeOutlets,
+    materials: storeMaterials,
+  } = useMarcomDataStore();
+
   const [placements, setPlacements] = useState<MarcomPlacement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedBrand, setSelectedBrand] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<"table" | "map">("table");
-  const [outletsList, setOutletsList] = useState<{ id: string; name: string; brand?: string; picName?: string }[]>([]);
-  const [materialsList, setMaterialsList] = useState<{ id: string; name: string }[]>([]);
+  const [outletsList, setOutletsList] = useState<{ id: string; name: string; brand?: string; picName?: string }[]>(() =>
+    storeOutlets.length > 0
+      ? storeOutlets.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName }))
+      : []
+  );
+  const [materialsList, setMaterialsList] = useState<{ id: string; name: string }[]>(() =>
+    storeMaterials.length > 0
+      ? storeMaterials.map((m) => ({ id: m.id, name: m.name }))
+      : []
+  );
   const [mousList, setMousList] = useState<MouSummaryInfo[]>([]);
   const [modalPlacement, setModalPlacement] = useState<Partial<MarcomPlacement> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -272,22 +288,20 @@ export function PlacementsView() {
           params.set("brand", brandFilter);
         }
         const placementsUrl = `/api/marcom/placements?${params.toString()}`;
-        const [resPlacements, resOutlets, resMaterials, resMous] = await Promise.all([
+        const [resPlacements, outletsData, materialsData, resMous] = await Promise.all([
           fetch(placementsUrl),
-          fetch("/api/marcom/outlets"),
-          fetch("/api/marcom/materials"),
+          fetchOutlets(),
+          fetchMaterials(),
           fetch(`/api/marcom/mous?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
         ]);
         if (!resPlacements.ok) throw new Error(`Request failed (${resPlacements.status})`);
         const jsonPlacements = await resPlacements.json();
         setPlacements(Array.isArray(jsonPlacements.data) ? jsonPlacements.data : []);
-        if (resOutlets.ok) {
-          const jsonOutlets = await resOutlets.json();
-          setOutletsList(Array.isArray(jsonOutlets.data) ? jsonOutlets.data : []);
+        if (Array.isArray(outletsData) && outletsData.length > 0) {
+          setOutletsList(outletsData.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName })));
         }
-        if (resMaterials.ok) {
-          const jsonMaterials = await resMaterials.json();
-          setMaterialsList(Array.isArray(jsonMaterials.data) ? jsonMaterials.data : []);
+        if (Array.isArray(materialsData) && materialsData.length > 0) {
+          setMaterialsList(materialsData.map((m) => ({ id: m.id, name: m.name })));
         }
         if (resMous.ok) {
           const jsonMous = await resMous.json();

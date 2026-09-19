@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type {
   BranchItem,
   MaterialItem,
+  OutletItem,
   ContentPostItem,
   MonthlyReport,
   DocumentItem,
@@ -15,6 +16,13 @@ export interface MarcomDataState {
   materials: MaterialItem[];
   isMaterialsLoaded: boolean;
   isMaterialsLoading: boolean;
+  outlets: OutletItem[];
+  isOutletsLoaded: boolean;
+  isOutletsLoading: boolean;
+
+  // Resilient Error Tracking
+  lastError: string | null;
+  clearError: () => void;
 
   // SWR View Caches keyed by workspaceId
   postsByWorkspace: Record<string, ContentPostItem[]>;
@@ -24,7 +32,10 @@ export interface MarcomDataState {
   // Master data actions
   fetchBranches: (force?: boolean) => Promise<BranchItem[]>;
   fetchMaterials: (force?: boolean) => Promise<MaterialItem[]>;
+  fetchOutlets: (force?: boolean) => Promise<OutletItem[]>;
   setBranches: (branches: BranchItem[]) => void;
+  setMaterials: (materials: MaterialItem[]) => void;
+  setOutlets: (outlets: OutletItem[]) => void;
 
   // View cache actions
   getCachedPosts: (workspaceId: string) => ContentPostItem[] | undefined;
@@ -54,6 +65,13 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
   isMaterialsLoaded: false,
   isMaterialsLoading: false,
 
+  outlets: [],
+  isOutletsLoaded: false,
+  isOutletsLoading: false,
+
+  lastError: null,
+  clearError: () => set({ lastError: null }),
+
   postsByWorkspace: {},
   reportsByWorkspace: {},
   documentsByWorkspace: {},
@@ -67,16 +85,18 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
       return state.branches;
     }
 
-    set({ isBranchesLoading: true });
+    set({ isBranchesLoading: true, lastError: null });
     try {
       const res = await fetch("/api/marcom/branches");
-      if (!res.ok) throw new Error("Failed to fetch branches");
+      if (!res.ok) throw new Error(`Failed to fetch branches (${res.status})`);
       const json = await res.json();
       const list = Array.isArray(json.data) ? json.data : [];
       set({ branches: list, isBranchesLoaded: true, isBranchesLoading: false });
       return list;
-    } catch {
-      set({ isBranchesLoading: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to fetch branches";
+      console.error("[marcomDataStore] fetchBranches error:", err);
+      set({ isBranchesLoading: false, lastError: message });
       return state.branches;
     }
   },
@@ -90,22 +110,57 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
       return state.materials;
     }
 
-    set({ isMaterialsLoading: true });
+    set({ isMaterialsLoading: true, lastError: null });
     try {
       const res = await fetch("/api/marcom/materials");
-      if (!res.ok) throw new Error("Failed to fetch materials");
+      if (!res.ok) throw new Error(`Failed to fetch materials (${res.status})`);
       const json = await res.json();
       const list = Array.isArray(json.data) ? json.data : [];
       set({ materials: list, isMaterialsLoaded: true, isMaterialsLoading: false });
       return list;
-    } catch {
-      set({ isMaterialsLoading: false });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to fetch materials";
+      console.error("[marcomDataStore] fetchMaterials error:", err);
+      set({ isMaterialsLoading: false, lastError: message });
       return state.materials;
+    }
+  },
+
+  fetchOutlets: async (force = false) => {
+    const state = get();
+    if (state.isOutletsLoaded && state.outlets.length > 0 && !force) {
+      return state.outlets;
+    }
+    if (state.isOutletsLoading) {
+      return state.outlets;
+    }
+
+    set({ isOutletsLoading: true, lastError: null });
+    try {
+      const res = await fetch("/api/marcom/outlets");
+      if (!res.ok) throw new Error(`Failed to fetch outlets (${res.status})`);
+      const json = await res.json();
+      const list = Array.isArray(json.data) ? json.data : [];
+      set({ outlets: list, isOutletsLoaded: true, isOutletsLoading: false });
+      return list;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to fetch outlets";
+      console.error("[marcomDataStore] fetchOutlets error:", err);
+      set({ isOutletsLoading: false, lastError: message });
+      return state.outlets;
     }
   },
 
   setBranches: (branches: BranchItem[]) => {
     set({ branches, isBranchesLoaded: true });
+  },
+
+  setMaterials: (materials: MaterialItem[]) => {
+    set({ materials, isMaterialsLoaded: true });
+  },
+
+  setOutlets: (outlets: OutletItem[]) => {
+    set({ outlets, isOutletsLoaded: true });
   },
 
   getCachedPosts: (workspaceId: string) => {

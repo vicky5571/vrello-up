@@ -68,7 +68,7 @@ export function MousView() {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId, setExportCenterOpen } = useWorkspaceStore();
-  const { fetchBranches, branches: storeBranches } = useMarcomDataStore();
+  const { fetchBranches, fetchOutlets, branches: storeBranches, outlets: storeOutlets } = useMarcomDataStore();
 
   const [mous, setMous] = useState<MarcomMou[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,7 +79,11 @@ export function MousView() {
       ? storeBranches.map((b) => ({ id: b.id, name: b.name, code: b.code }))
       : []
   );
-  const [outletsList, setOutletsList] = useState<{ id: string; name: string; code?: string; branchId: string }[]>([]);
+  const [outletsList, setOutletsList] = useState<{ id: string; name: string; code?: string; branchId: string }[]>(() =>
+    storeOutlets.length > 0
+      ? storeOutlets.map((o) => ({ id: o.id, name: o.name, code: o.code, branchId: o.branchId }))
+      : []
+  );
   const [branchSearch, setBranchSearch] = useState("");
   const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
   const [modalMou, setModalMou] = useState<Partial<MarcomMou> | null>(null);
@@ -146,10 +150,10 @@ export function MousView() {
           params.set("status", statusFilter);
         }
         const mousUrl = `/api/marcom/mous?${params.toString()}`;
-        const [resMous, branchList, resOutlets] = await Promise.all([
+        const [resMous, branchList, outletList] = await Promise.all([
           fetch(mousUrl),
           fetchBranches(),
-          fetch("/api/marcom/outlets"),
+          fetchOutlets(),
         ]);
         if (!resMous.ok) throw new Error(`Request failed (${resMous.status})`);
         const jsonMous = await resMous.json();
@@ -157,9 +161,8 @@ export function MousView() {
         if (Array.isArray(branchList) && branchList.length > 0) {
           setBranches(branchList.map((b) => ({ id: b.id, name: b.name, code: b.code })));
         }
-        if (resOutlets.ok) {
-          const jsonOutlets = await resOutlets.json();
-          setOutletsList(Array.isArray(jsonOutlets.data) ? jsonOutlets.data : []);
+        if (Array.isArray(outletList) && outletList.length > 0) {
+          setOutletsList(outletList.map((o) => ({ id: o.id, name: o.name, code: o.code, branchId: o.branchId })));
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load MOUs");
