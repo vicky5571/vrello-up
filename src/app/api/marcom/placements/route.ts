@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
+import { validatePlacementUpdate, type PlacementStatus } from "@/lib/marcom/placementMachine";
 
 const VALID_STATUSES = ["NOT_STARTED", "ON_PROGRESS", "DONE", "ISSUE"] as const;
 
@@ -95,21 +96,23 @@ export async function POST(request: Request) {
   if (status !== undefined && !VALID_STATUSES.includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
-  if (status === "DONE" && (!photoUrl || !photoUrl.trim())) {
-    return NextResponse.json(
-      { error: "Bukti foto pemasangan fisik (photoUrl) wajib diunggah sebelum status diselesaikan (DONE)" },
-      { status: 400 },
-    );
-  }
-  if (status === "ISSUE" && (!notes || !notes.trim())) {
-    return NextResponse.json(
-      { error: "Catatan kendala lapangan (notes) wajib diisi saat menandai status ISSUE" },
-      { status: 400 },
-    );
-  }
 
   const parsedLat = typeof latitude === "number" && !Number.isNaN(latitude) ? latitude : null;
   const parsedLng = typeof longitude === "number" && !Number.isNaN(longitude) ? longitude : null;
+
+  if (status) {
+    const validation = validatePlacementUpdate(status as PlacementStatus, status as PlacementStatus, {
+      photoUrl,
+      notes,
+      latitude: parsedLat,
+      longitude: parsedLng,
+      shareLocationUrl,
+    });
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+  }
+
   const normalizedBrand = typeof brand === "string" && (brand.toUpperCase() === "3" || brand.toUpperCase() === "TRI") ? "3" : "IM3";
   const targetMouId = typeof mouId === "string" && mouId.trim() && mouId !== "NONE" ? mouId.trim() : null;
 

@@ -10,6 +10,7 @@ import {
   AlertCircle,
   HelpCircle,
   Navigation,
+  Map,
 } from "lucide-react";
 import type * as L from "leaflet";
 import {
@@ -72,11 +73,29 @@ export function LocationPicker({
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isResolving, setIsResolving] = useState(false);
+  const [showInteractiveMap, setShowInteractiveMap] = useState(false);
+
+  useEffect(() => {
+    setInputUrl(shareLocationUrl || "");
+  }, [shareLocationUrl]);
+
+  useEffect(() => {
+    setNotes(locationNotes || "");
+  }, [locationNotes]);
 
   const hasCoords = isValidCoordinate(latitude ?? Number.NaN, longitude ?? Number.NaN);
 
-  // Initialize Leaflet mini-map
+  // Initialize Leaflet mini-map on-demand (only when showInteractiveMap is true)
   useEffect(() => {
+    if (!showInteractiveMap) {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+        markerRef.current = null;
+      }
+      return;
+    }
+
     let isCancelled = false;
     let pinchCleanup: (() => void) | null = null;
 
@@ -216,11 +235,11 @@ export function LocationPicker({
         markerRef.current = null;
       }
     };
-  }, []); // Run once on mount
+  }, [showInteractiveMap]);
 
   // Sync external coordinate changes to map marker
   useEffect(() => {
-    if (!mapInstanceRef.current || !leafletRef.current) return;
+    if (!showInteractiveMap || !mapInstanceRef.current || !leafletRef.current) return;
 
     if (hasCoords) {
       const lat = latitude as number;
@@ -255,7 +274,7 @@ export function LocationPicker({
       markerRef.current.remove();
       markerRef.current = null;
     }
-  }, [latitude, longitude, hasCoords]);
+  }, [latitude, longitude, hasCoords, showInteractiveMap]);
 
   // Handle URL paste / text change with auto-parse
   const handleUrlChange = useCallback(
@@ -384,7 +403,7 @@ export function LocationPicker({
         {hasCoords && (
           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 px-2 py-0.5 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Terpetakan
+            Terpetakan ({latitude?.toFixed(4)}, {longitude?.toFixed(4)})
           </span>
         )}
       </div>
@@ -438,23 +457,47 @@ export function LocationPicker({
         )}
       </div>
 
-      {/* Mini-map Leaflet canvas */}
-      <div className="space-y-1">
-        <div
-          ref={mapContainerRef}
-          className="w-full h-44 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-2xs relative z-0"
-        />
-        <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 px-1">
-          <span className="flex items-center gap-1">
-            <HelpCircle className="w-3 h-3" />
-            Klik peta atau geser pin hijau untuk mengatur titik presisi
-          </span>
-          {hasCoords && (
-            <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">
-              {latitude?.toFixed(6)}, {longitude?.toFixed(6)}
-            </span>
+      {/* Interactive Leaflet Map Toggle & Container (Lazy on-demand for mobile efficiency) */}
+      <div className="space-y-2 pt-0.5">
+        <button
+          type="button"
+          onClick={() => setShowInteractiveMap((prev) => !prev)}
+          className={cn(
+            "w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer",
+            showInteractiveMap
+              ? "bg-slate-100 dark:bg-slate-800/80 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70"
+              : "bg-white dark:bg-slate-800/70 border-dashed border-slate-300 dark:border-slate-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 hover:border-emerald-400",
           )}
-        </div>
+        >
+          <Map className="w-3.5 h-3.5 shrink-0" />
+          <span>
+            {showInteractiveMap
+              ? "Tutup Peta Interaktif (Mode Hemat RAM/Data)"
+              : hasCoords
+                ? "🗺️ Sesuaikan Titik di Peta (Pinpoint Presisi)"
+                : "🗺️ Buka Peta Pinpoint (Opsional)"}
+          </span>
+        </button>
+
+        {showInteractiveMap && (
+          <div className="space-y-1">
+            <div
+              ref={mapContainerRef}
+              className="w-full h-44 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-2xs relative z-0"
+            />
+            <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 px-1">
+              <span className="flex items-center gap-1">
+                <HelpCircle className="w-3 h-3" />
+                Klik peta atau geser pin hijau untuk mengatur titik presisi
+              </span>
+              {hasCoords && (
+                <span className="font-mono text-slate-700 dark:text-slate-300 font-semibold">
+                  {latitude?.toFixed(6)}, {longitude?.toFixed(6)}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Coordinates readout bar & External link */}

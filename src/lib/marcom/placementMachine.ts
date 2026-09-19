@@ -1,3 +1,6 @@
+// @ts-expect-error Node strip-types requires explicit .ts extension
+import { isValidCoordinate } from "./locationUtils.ts";
+
 export type PlacementStatus = "NOT_STARTED" | "ON_PROGRESS" | "DONE" | "ISSUE";
 
 // Reconciled rule: ISSUE is reachable from any non-terminal state; DONE is terminal.
@@ -32,6 +35,7 @@ export interface PlacementValidationResult {
  * Validates status transition and field guards for POSM placement.
  * - Enforces canTransitionPlacement state machine rules
  * - Enforces mandatory photoUrl when transitioning to DONE
+ * - Enforces mandatory physical location verification (GPS or shareLocationUrl) when transitioning to DONE
  * - Enforces mandatory notes when transitioning to ISSUE
  */
 export function validatePlacementUpdate(
@@ -49,6 +53,21 @@ export function validatePlacementUpdate(
         error: "Bukti foto pemasangan fisik (photoUrl) wajib diunggah sebelum status diselesaikan (DONE)",
       };
     }
+    const hasValidCoords =
+      context.latitude != null &&
+      context.longitude != null &&
+      isValidCoordinate(context.latitude, context.longitude);
+    const hasValidShareUrl =
+      typeof context.shareLocationUrl === "string" &&
+      context.shareLocationUrl.trim().length > 0;
+
+    if (!hasValidCoords && !hasValidShareUrl) {
+      return {
+        valid: false,
+        error:
+          "Verifikasi lokasi fisik (koordinat GPS atau URL share location Google Maps) wajib disertakan sebelum status diselesaikan (DONE)",
+      };
+    }
   }
   if (toStatus === "ISSUE") {
     if (!context.notes || !context.notes.trim()) {
@@ -60,3 +79,4 @@ export function validatePlacementUpdate(
   }
   return { valid: true };
 }
+

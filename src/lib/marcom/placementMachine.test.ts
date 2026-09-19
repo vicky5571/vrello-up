@@ -10,24 +10,53 @@ test("placement lifecycle", () => {
   assert.equal(canTransitionPlacement("DONE", "ISSUE"), false);
 });
 
-test("validatePlacementUpdate enforces photo proof for DONE status", () => {
-  // Reject DONE if photoUrl is missing or empty
+test("validatePlacementUpdate enforces photo proof and physical location for DONE status", () => {
+  // Reject DONE if photoUrl is missing or empty even with valid coords
   const withoutPhoto = validatePlacementUpdate("ON_PROGRESS", "DONE", {
     photoUrl: "",
+    latitude: -6.2088,
+    longitude: 106.8456,
   });
   assert.equal(withoutPhoto.valid, false);
   assert.ok(withoutPhoto.error?.includes("photoUrl"));
 
   const withNullPhoto = validatePlacementUpdate("ON_PROGRESS", "DONE", {
     photoUrl: null,
+    latitude: -6.2088,
+    longitude: 106.8456,
   });
   assert.equal(withNullPhoto.valid, false);
 
-  // Accept DONE if photoUrl is present
-  const withPhoto = validatePlacementUpdate("ON_PROGRESS", "DONE", {
+  // Reject DONE if photoUrl is present but location is completely missing
+  const withoutLocation = validatePlacementUpdate("ON_PROGRESS", "DONE", {
     photoUrl: "https://example.com/photos/placement-123.jpg",
   });
-  assert.equal(withPhoto.valid, true);
+  assert.equal(withoutLocation.valid, false);
+  assert.ok(withoutLocation.error?.includes("lokasi"));
+
+  // Reject DONE if coordinates are invalid out of bounds
+  const withInvalidCoords = validatePlacementUpdate("ON_PROGRESS", "DONE", {
+    photoUrl: "https://example.com/photos/placement-123.jpg",
+    latitude: 999,
+    longitude: 999,
+  });
+  assert.equal(withInvalidCoords.valid, false);
+  assert.ok(withInvalidCoords.error?.includes("lokasi"));
+
+  // Accept DONE if photoUrl and valid GPS coordinates are present
+  const withCoords = validatePlacementUpdate("ON_PROGRESS", "DONE", {
+    photoUrl: "https://example.com/photos/placement-123.jpg",
+    latitude: -6.2088,
+    longitude: 106.8456,
+  });
+  assert.equal(withCoords.valid, true);
+
+  // Accept DONE if photoUrl and shareLocationUrl are present
+  const withShareUrl = validatePlacementUpdate("ON_PROGRESS", "DONE", {
+    photoUrl: "https://example.com/photos/placement-123.jpg",
+    shareLocationUrl: "https://maps.app.goo.gl/example",
+  });
+  assert.equal(withShareUrl.valid, true);
 });
 
 test("validatePlacementUpdate enforces notes for ISSUE status", () => {

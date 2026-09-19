@@ -538,6 +538,25 @@ export function PlacementsView() {
       toast.error("Outlet and Material are required");
       return;
     }
+    if (status === "DONE") {
+      if (!photoUrl || !photoUrl.trim()) {
+        toast.error("Bukti foto fisik wajib diunggah sebelum status diselesaikan (DONE)");
+        return;
+      }
+      const hasValidCoords =
+        typeof latitude === "number" &&
+        typeof longitude === "number" &&
+        isValidCoordinate(latitude, longitude);
+      const hasValidShare =
+        typeof shareLocationUrl === "string" && shareLocationUrl.trim().length > 0;
+
+      if (!hasValidCoords && !hasValidShare) {
+        toast.error(
+          "Verifikasi lokasi fisik (koordinat GPS atau URL share location) wajib disertakan sebelum status diselesaikan (DONE)",
+        );
+        return;
+      }
+    }
     setIsSaving(true);
     try {
       const isEdit = Boolean(id);
@@ -1166,6 +1185,15 @@ export function PlacementsView() {
                   />
                 </div>
               </div>
+
+              {modalPlacement.status === "DONE" && (
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-800 dark:text-amber-300">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span>
+                    <strong>Syarat Status Selesai (DONE):</strong> Wajib menyertakan <strong>bukti foto fisik</strong> dan <strong>verifikasi lokasi (GPS / shareloc)</strong> sebelum menyimpan.
+                  </span>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Cost (Rp)</label>
