@@ -154,11 +154,12 @@ test.describe('Vrello Up Marcom Hub Modal Smoke Tests', () => {
     const drawer = page.locator('.fixed.inset-y-0.right-0');
     await expect(drawer).toBeVisible({ timeout: 15000 });
 
-    const overviewTab = drawer.locator('button', { hasText: 'Overview' });
-    const placementsTab = drawer.locator('button', { hasText: /Placements/i });
-    const mousTab = drawer.locator('button', { hasText: /MoUs/i });
-    const eventsTab = drawer.locator('button', { hasText: /Field Events/i });
-    const contentTab = drawer.locator('button', { hasText: /Konten Media/i });
+    const tabStrip = drawer.locator('div.border-b.overflow-x-auto');
+    const overviewTab = tabStrip.locator('button', { hasText: 'Overview' });
+    const placementsTab = tabStrip.locator('button', { hasText: /Placements/i });
+    const mousTab = tabStrip.locator('button', { hasText: /MoUs/i });
+    const eventsTab = tabStrip.locator('button', { hasText: /Field Events/i });
+    const contentTab = tabStrip.locator('button', { hasText: /Konten Media/i });
 
     await expect(overviewTab).toBeVisible({ timeout: 10000 });
     await expect(placementsTab).toBeVisible();

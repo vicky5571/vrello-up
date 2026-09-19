@@ -212,7 +212,7 @@ export default function WorkspacePage() {
 
         {/* View Transition Area */}
         <div className="flex-1 overflow-hidden relative bg-[#FAFBFC] dark:bg-[#121316]">
-          <AnimatePresence mode="popLayout" initial={false}>
+          <AnimatePresence mode="wait" initial={false}>
             {activeView === "home" && (
               <motion.div
                 key="home-view"

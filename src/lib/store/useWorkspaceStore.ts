@@ -468,6 +468,7 @@ const INITIAL_WORKSPACE: Workspace = {
 };
 
 const MARCOM_VIEW_SET = new Set<ViewMode>([
+  "pipeline",
   "events",
   "content",
   "content-planner",

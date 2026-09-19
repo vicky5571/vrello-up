@@ -1,5 +1,13 @@
 import type { AppMode, FilterOptions, Status, Task, ViewMode } from "@/types";
 
+export const FILTERABLE_TASK_VIEWS = new Set<ViewMode>([
+  "board",
+  "list",
+  "table",
+  "calendar",
+  "gantt",
+]);
+
 export const NON_FILTERABLE_TASK_VIEWS = new Set<ViewMode>(["home", "channel"]);
 
 /**
@@ -10,7 +18,7 @@ export function isFilterBarSupported(
   appMode: AppMode,
   activeView: ViewMode,
 ): boolean {
-  return appMode === "tasks" && !NON_FILTERABLE_TASK_VIEWS.has(activeView);
+  return appMode === "tasks" && FILTERABLE_TASK_VIEWS.has(activeView);
 }
 
 export function matchesFilters(

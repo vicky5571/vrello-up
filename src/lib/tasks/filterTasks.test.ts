@@ -141,6 +141,7 @@ test("isFilterBarSupported validates task and marcom view support correctly", ()
 
   // All marcom views must not show task FilterBar
   const marcomViews: ViewMode[] = [
+    "pipeline",
     "outlets",
     "placements",
     "mous",
@@ -155,7 +156,8 @@ test("isFilterBarSupported validates task and marcom view support correctly", ()
   for (const v of marcomViews) {
     assert.equal(isFilterBarSupported("marcom", v), false, `Expected ${v} to hide task FilterBar`);
     // Even if appMode is tasks (e.g. during race condition or navigation), marcom view should not be supported
-    assert.equal(isFilterBarSupported("marcom", v), false);
+    assert.equal(isFilterBarSupported("tasks", v), false, `Expected tasks mode with ${v} to hide task FilterBar`);
   }
+  assert.equal(isFilterBarSupported("tasks", "pipeline"), false);
 });
 

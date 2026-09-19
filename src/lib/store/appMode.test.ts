@@ -49,6 +49,9 @@ test("setActiveView auto-syncs appMode when selecting views from either domain",
   api().setActiveView("outlets");
   assert.equal(api().appMode, "marcom");
 
+  api().setActiveView("pipeline");
+  assert.equal(api().appMode, "marcom");
+
   api().setActiveView("list");
   assert.equal(api().appMode, "tasks");
 });
