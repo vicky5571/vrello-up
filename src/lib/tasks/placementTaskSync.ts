@@ -1,5 +1,6 @@
 import type { Space, Task } from "@/types";
 import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 
 export type UnifiedPlacementStatus = "NOT_STARTED" | "ON_PROGRESS" | "DONE";
 
@@ -175,9 +176,16 @@ export function syncPlacementOnTaskStatusChange(
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: mappedPlacementStatus }),
-    }).catch((err) => {
-      console.warn("Failed to sync placement on task status change:", err);
-    });
+    })
+      .then((res) => {
+        if (res.ok) {
+          useMarcomDataStore.getState().invalidatePlacements();
+          useMarcomDataStore.getState().invalidateMous();
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to sync placement on task status change:", err);
+      });
   }
 }
 

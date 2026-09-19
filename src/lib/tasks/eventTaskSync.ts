@@ -1,6 +1,7 @@
 import type { User, Subtask, Priority, Task, Status, Space } from "@/types";
 import { formatIDR, formatDate } from "@/lib/utils";
 import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { differenceInDays, startOfDay } from "date-fns";
 
 export const DEFAULT_EVENT_CHECKLISTS: Record<string, string[]> = {
@@ -490,7 +491,13 @@ export function syncFieldEventOnTaskStatusChange(
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: mappedEventStatus }),
-    }).catch(() => {});
+    })
+      .then((res) => {
+        if (res.ok) {
+          useMarcomDataStore.getState().invalidateEvents();
+        }
+      })
+      .catch(() => {});
   }
 }
 
