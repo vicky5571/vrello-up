@@ -137,19 +137,7 @@ const TrashModal = dynamic(
   { ssr: false },
 );
 
-const NO_FILTER_BAR_VIEWS = new Set<string>([
-  "home",
-  "channel",
-  "content",
-  "branches",
-  "outlets",
-  "placements",
-  "mous",
-  "events",
-  "documents",
-  "reports",
-  "analytics",
-]);
+import { isFilterBarSupported } from "@/lib/tasks/filterTasks";
 
 export default function WorkspacePage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -215,9 +203,7 @@ export default function WorkspacePage() {
         <TopNav />
 
         {/* Global Filter Bar (tasks mode only) */}
-        {appMode === "tasks" &&
-          !NO_FILTER_BAR_VIEWS.has(activeView) &&
-          isFilterBarOpen && <FilterBar />}
+        {isFilterBarSupported(appMode, activeView) && isFilterBarOpen && <FilterBar />}
 
         {/* View Transition Area */}
         <div className="flex-1 overflow-hidden relative bg-[#FAFBFC] dark:bg-[#121316]">

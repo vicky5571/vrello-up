@@ -1,4 +1,17 @@
-import type { FilterOptions, Status, Task } from "@/types";
+import type { AppMode, FilterOptions, Status, Task, ViewMode } from "@/types";
+
+export const NON_FILTERABLE_TASK_VIEWS = new Set<ViewMode>(["home", "channel"]);
+
+/**
+ * Single source of truth determining whether the global Task FilterBar
+ * should be rendered for the active view and application mode.
+ */
+export function isFilterBarSupported(
+  appMode: AppMode,
+  activeView: ViewMode,
+): boolean {
+  return appMode === "tasks" && !NON_FILTERABLE_TASK_VIEWS.has(activeView);
+}
 
 export function matchesFilters(
   task: Task,

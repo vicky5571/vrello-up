@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { matchesFilters } from "./filterTasks.ts";
-import type { FilterOptions, Status, Task } from "../../types/index.ts";
+import { matchesFilters, isFilterBarSupported } from "./filterTasks.ts";
+import type { FilterOptions, Status, Task, ViewMode } from "../../types/index.ts";
 
 const open: Status = { id: "s-open", name: "To Do", color: "#000", category: "open", order: 0 };
 const progress: Status = { id: "s-prog", name: "In Progress", color: "#000", category: "in_progress", order: 1 };
@@ -127,3 +127,35 @@ test("matchesFilters applies assignee filters including unassigned", () => {
     false,
   );
 });
+
+test("isFilterBarSupported validates task and marcom view support correctly", () => {
+  // Supported task views
+  const supportedViews: ViewMode[] = ["board", "list", "table", "calendar", "gantt"];
+  for (const v of supportedViews) {
+    assert.equal(isFilterBarSupported("tasks", v), true, `Expected ${v} to support FilterBar`);
+  }
+
+  // Non-filterable task views (home dashboard, channel chat)
+  assert.equal(isFilterBarSupported("tasks", "home"), false);
+  assert.equal(isFilterBarSupported("tasks", "channel"), false);
+
+  // All marcom views must not show task FilterBar
+  const marcomViews: ViewMode[] = [
+    "outlets",
+    "placements",
+    "mous",
+    "events",
+    "content",
+    "content-planner",
+    "branches",
+    "documents",
+    "reports",
+    "analytics",
+  ];
+  for (const v of marcomViews) {
+    assert.equal(isFilterBarSupported("marcom", v), false, `Expected ${v} to hide task FilterBar`);
+    // Even if appMode is tasks (e.g. during race condition or navigation), marcom view should not be supported
+    assert.equal(isFilterBarSupported("marcom", v), false);
+  }
+});
+

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { isFilterBarSupported } from "@/lib/tasks/filterTasks";
 import type { ViewMode } from "@/types";
 
 // Mirrors HelpDocsModal: 1-5 → List, Board, Calendar, Gantt, Home
@@ -78,7 +80,24 @@ export function useWorkspaceHotkeys() {
         e.key.toLowerCase() === "f"
       ) {
         e.preventDefault();
-        state.setFilterBarOpen(!state.isFilterBarOpen);
+        if (state.appMode === "tasks") {
+          if (isFilterBarSupported(state.appMode, state.activeView)) {
+            state.setFilterBarOpen(!state.isFilterBarOpen);
+          } else {
+            toast.info(`Filter bar tidak tersedia pada tampilan ${state.activeView}`);
+          }
+        } else {
+          // Marcom mode: auto-focus active table search input
+          const searchInput = document.querySelector<HTMLInputElement>(
+            'input[type="search"], input[placeholder*="Search"]'
+          );
+          if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+          } else {
+            toast.info("Gunakan filter dan kolom pencarian pada modul Marcom ini");
+          }
+        }
         return;
       }
       if (e.metaKey || e.ctrlKey || e.altKey) return;

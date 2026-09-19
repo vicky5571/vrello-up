@@ -28,16 +28,7 @@ import { cn } from "@/lib/utils";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { toast } from "sonner";
-
-const NO_FILTER_BAR_VIEWS = new Set<string>([
-  "home",
-  "mous",
-  "documents",
-  "placements",
-  "outlets",
-  "analytics",
-  "reports",
-]);
+import { isFilterBarSupported } from "@/lib/tasks/filterTasks";
 
 export function FilterBar() {
   const {
@@ -49,6 +40,7 @@ export function FilterBar() {
     resetViewPreferences,
     workspaces,
     activeWorkspaceId,
+    appMode,
     activeView,
     tags,
     setCreatePostModalOpen,
@@ -165,7 +157,7 @@ export function FilterBar() {
     GROUP_BY_OPTIONS.find((g) => g.id === filters.groupBy) || GROUP_BY_OPTIONS[0];
   const GroupIcon = currentGroupOption.icon;
 
-  if (NO_FILTER_BAR_VIEWS.has(activeView)) {
+  if (!isFilterBarSupported(appMode, activeView)) {
     return null;
   }
 
