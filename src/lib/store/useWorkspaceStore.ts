@@ -28,6 +28,15 @@ import {
   buildInitialWorkspace,
   removeWorkspaceAndCascadeTasks,
 } from "@/lib/store/workspaceCrud";
+import {
+  TRASH_LIMIT,
+  TRASH_RETENTION_MS,
+  applyDeleteTaskWithTrash,
+  applyRestoreTasksFromTrash,
+  applyPermanentlyDeleteTask,
+  applyEmptyTrash,
+  applyPurgeExpiredTrash,
+} from "@/lib/store/trashOperations";
 import { syncFieldEventOnTaskStatusChange } from "@/lib/tasks/eventTaskSync";
 import { syncPlacementOnTaskStatusChange } from "@/lib/tasks/placementTaskSync";
 
@@ -970,10 +979,7 @@ export interface TrashedTask {
 }
 
 /** Trash keeps at most this many soft-deleted tasks (newest first). */
-export const TRASH_LIMIT = 50;
-
-/** Soft-deleted tasks older than this are auto-purged when trash is touched. */
-export const TRASH_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+export { TRASH_LIMIT, TRASH_RETENTION_MS } from "@/lib/store/trashOperations";
 
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
@@ -1452,71 +1458,34 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       deleteTask: (id) => {
-        const doomed = get().tasks.find((t) => t.id === id);
-        const now = new Date().toISOString();
-        set((state) => ({
-          tasks: state.tasks
-            .filter((t) => t.id !== id)
-            .map((t) =>
-              t.dependencies && t.dependencies.includes(id)
-                ? {
-                    ...t,
-                    dependencies: t.dependencies.filter((depId) => depId !== id),
-                    updatedAt: now,
-                  }
-                : t,
-            ),
-          // Soft-delete: keep a snapshot in trash for restore/undo.
-          // Dependency links into the deleted task are pruned and are
-          // not re-attached on restore (restore only revives the task).
-          trash: doomed
-            ? [{ task: doomed, deletedAt: now }, ...(state.trash ?? [])].slice(
-                0,
-                TRASH_LIMIT,
-              )
-            : (state.trash ?? []),
-          selectedTaskId:
-            state.selectedTaskId === id ? null : state.selectedTaskId,
-          lastSelectedTaskId:
-            state.lastSelectedTaskId === id ? null : state.lastSelectedTaskId,
-          selectedTaskIds: state.selectedTaskIds.filter((t) => t !== id),
-        }));
+        set((state) => applyDeleteTaskWithTrash(state, id));
         // The server mirrors live tasks only; trash itself stays local.
         syncDeleteTask(id);
       },
 
       restoreTasks: (ids) => {
-        if (ids.length === 0) return 0;
-        const targets = new Set(ids);
-        const entries = (get().trash ?? []).filter((e) => targets.has(e.task.id));
-        if (entries.length === 0) return 0;
-        const revivedIds = new Set(entries.map((e) => e.task.id));
-        const now = new Date().toISOString();
+        const result = applyRestoreTasksFromTrash(get().tasks, get().trash, ids);
+        if (result.revivedCount === 0) return 0;
         set((state) => ({
-          trash: (state.trash ?? []).filter((e) => !revivedIds.has(e.task.id)),
-          tasks: [
-            ...entries.map((e) => ({ ...e.task, updatedAt: now })),
-            ...state.tasks,
-          ],
+          ...state,
+          tasks: result.nextState.tasks,
+          trash: result.nextState.trash,
         }));
         // Re-persist revived tasks; the earlier soft-delete removed them.
-        for (const entry of entries) syncCreateTask({ ...entry.task, updatedAt: now });
-        return entries.length;
+        for (const entry of result.revivedTasks) syncCreateTask(entry);
+        return result.revivedCount;
       },
 
       permanentlyDeleteTask: (id) =>
         set((state) => ({
-          trash: (state.trash ?? []).filter((e) => e.task.id !== id),
+          trash: applyPermanentlyDeleteTask(state.trash, id),
         })),
 
-      emptyTrash: () => set({ trash: [] }),
+      emptyTrash: () => set({ trash: applyEmptyTrash() }),
 
       purgeExpiredTrash: () => {
-        const cutoff = Date.now() - TRASH_RETENTION_MS;
         set((state) => ({
-          trash: (state.trash ?? []).filter(
-            (e) => new Date(e.deletedAt).getTime() >= cutoff,
-          ),
+          trash: applyPurgeExpiredTrash(state.trash),
         }));
       },
 
