@@ -23,7 +23,6 @@ import {
 } from "@/types";
 import { generateId } from "@/lib/utils";
 import {
-  getSpaceListIds,
   applyCreateSpace,
   applyUpdateSpace,
   applyDeleteSpace,
@@ -45,8 +44,6 @@ import {
   removeWorkspaceAndCascadeTasks,
 } from "@/lib/store/workspaceCrud";
 import {
-  TRASH_LIMIT,
-  TRASH_RETENTION_MS,
   applyDeleteTaskWithTrash,
   applyRestoreTasksFromTrash,
   applyPermanentlyDeleteTask,

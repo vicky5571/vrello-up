@@ -10,3 +10,4 @@ export const MARCOM_VIEW_LABELS: Record<string, string> = {
   reports: "Reports",
   analytics: "Analytics",
 };
+

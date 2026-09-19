@@ -16,7 +16,6 @@ import {
   TableProperties,
   Search,
   RefreshCw,
-  Layers,
   Camera,
   Wallet,
   CheckCircle2,
@@ -24,7 +23,6 @@ import {
   Clock,
   FileText,
   AlertTriangle,
-  ShieldCheck,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -39,7 +37,6 @@ import { calculatePlacementKPIs } from "@/lib/marcom/placementAnalytics";
 import {
   isPermanentMaterial,
   findAvailableMousForOutlet,
-  validatePlacementMouRequirement,
   type MouSummaryInfo,
 } from "@/lib/marcom/placementMouBridge";
 import { PlacementBulkActionBar } from "./PlacementBulkActionBar";
@@ -47,7 +44,7 @@ import { PlacementFormModal } from "./PlacementFormModal";
 import { parsePlacementPhotos } from "@/lib/marcom/photoUtils";
 import { findOutletCoordinates } from "@/lib/marcom/outletInherit";
 import { buildGoogleMapsUrl, isValidCoordinate } from "@/lib/marcom/locationUtils";
-import { getBrandMeta, BRAND_CONFIG } from "@/lib/marcom/brandUtils";
+import { getBrandMeta } from "@/lib/marcom/brandUtils";
 import {
   buildPlacementTaskPayload,
   syncTaskOnPlacementStatusChange,

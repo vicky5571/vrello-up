@@ -9,7 +9,13 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export interface UserMenuDropdownProps {
-  session: any;
+  session: {
+    user?: {
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
+  } | null;
   me: User;
   members: User[];
   setCurrentUserId: (id: string) => void;
@@ -137,3 +143,4 @@ export function UserMenuDropdown({
     </div>
   );
 }
+

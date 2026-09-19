@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -12,8 +12,6 @@ import {
   Film,
   Video,
   Play,
-  ListTodo,
-  RotateCcw,
   Layers,
 } from "lucide-react";
 import type {
@@ -51,7 +49,9 @@ interface EventFormModalProps {
   rawSpaces: Space[];
   activeWorkspaceId: string;
   tasks: Task[];
-  createTask: (payload: any) => Task;
+  createTask: (payload: Omit<Task, "id" | "createdAt" | "updatedAt" | "listId"> & {
+    listId?: string | null;
+  }) => Task;
   updateTask: (id: string, updates: Partial<Task>) => void;
   onSaved: (savedEvent: FieldEventItem, locationLabel: string) => void;
   onOpenFootageModal?: (event: FieldEventItem, clipIdx?: number) => void;

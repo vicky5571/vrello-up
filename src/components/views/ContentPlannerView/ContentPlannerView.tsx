@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -10,15 +9,12 @@ import {
   CheckSquare,
   RefreshCw,
   Video,
-  Image as ImageIcon,
   Layers,
   Calendar,
   Flame,
-  Trash2,
   LayoutGrid,
   TableProperties,
   Search,
-  Copy,
   ExternalLink,
   Share2,
   Kanban,
@@ -36,7 +32,6 @@ import {
   Priority,
   ContentPostItem,
   PostStatus,
-  type Task,
 } from "@/types";
 import { formatDate, cn } from "@/lib/utils";
 import {
@@ -79,7 +74,6 @@ export function ContentPlannerView() {
     workspaces,
     activeSpaceId,
     activeListId,
-    tags,
     isCreatePostModalOpen,
     setCreatePostModalOpen,
     marcomFilters,
@@ -132,7 +126,7 @@ export function ContentPlannerView() {
   const [selectedPlatform, setSelectedPlatform] = useState<PostPlatform | "all">(
     "all"
   );
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter] = useState<string>("all");
   const [selectedDrawerPost, setSelectedDrawerPost] = useState<ContentPostItem | null>(null);
 
   // Modal State (Schedule New Post)
@@ -170,7 +164,6 @@ export function ContentPlannerView() {
   >(() =>
     DEFAULT_POST_SUBTASKS.map((t, i) => ({ id: `sub-init-${i}`, title: t }))
   );
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
 
   // On-demand media preview state (lightbox / player modal)
   const [previewMedia, setPreviewMedia] = useState<{
@@ -300,7 +293,6 @@ export function ContentPlannerView() {
     setPostSubtasks(
       DEFAULT_POST_SUBTASKS.map((t, i) => ({ id: `sub-init-${i}`, title: t }))
     );
-    setNewSubtaskTitle("");
 
     // Resolve Target Space & List
     const dest = getDefaultDestinationForChannel(rawSpaces, "social");
@@ -564,10 +556,6 @@ export function ContentPlannerView() {
       setSelectedTaskId,
     ]
   );
-
-  const handleTrackAsTask = (item: ContentPostItem) => {
-    navigateToTask(item);
-  };
 
   const filteredPosts = useMemo(() => {
     const q = (marcomFilters["content-planner"] || "").trim().toLowerCase();
@@ -962,7 +950,7 @@ export function ContentPlannerView() {
 
                   {post.caption && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1 italic">
-                      "{post.caption}"
+                      &ldquo;{post.caption}&rdquo;
                     </p>
                   )}
 

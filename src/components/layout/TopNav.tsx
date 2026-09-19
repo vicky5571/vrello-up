@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { ViewSwitcher } from "./ViewSwitcher";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { UserAvatar } from "@/components/ui/UserAvatar";
 import { NotificationCenter } from "./NotificationCenter";
 import {
   ChevronDown,
@@ -29,8 +28,7 @@ import {
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
-import { cn } from "@/lib/utils";
-import type { User } from "@/types";
+import type { ViewMode } from "@/types";
 
 const AgentsModal = dynamic(
   () => import("@/components/modals/AgentsModal").then((m) => m.AgentsModal),
@@ -567,7 +565,7 @@ export function TopNav() {
                 <button
                   type="button"
                   onClick={() => {
-                    const targetView = (navigatedFromMarcom.view as any) || "events";
+                    const targetView = (navigatedFromMarcom.view as ViewMode) || "events";
                     setNavigatedFromMarcom(null);
                     setAppMode("marcom");
                     setActiveView(targetView);
