@@ -87,10 +87,17 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   );
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
 
+  const { fetchBranches, getCachedEvents, setCachedEvents } = useMarcomDataStore();
+
   // Server state
-  const [events, setEvents] = useState<FieldEventItem[]>([]);
-  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const cachedEvents = getCachedEvents(activeWorkspaceId);
+  const [events, setEvents] = useState<FieldEventItem[]>(() => cachedEvents || []);
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>(() =>
+    useMarcomDataStore.getState().branches.length > 0
+      ? useMarcomDataStore.getState().branches
+      : []
+  );
+  const [isLoading, setIsLoading] = useState(!cachedEvents);
   const [error, setError] = useState<string | null>(null);
 
   // View mode and filters
@@ -116,11 +123,11 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setActiveFootageEvent(null);
   }, []);
 
-  const { fetchBranches } = useMarcomDataStore();
-
   // Fetch field events and branches
   const fetchEvents = useCallback(async () => {
-    setIsLoading(true);
+    if (!getCachedEvents(activeWorkspaceId)) {
+      setIsLoading(true);
+    }
     setError(null);
     try {
       const [resEvents, branchList] = await Promise.all([
@@ -129,7 +136,9 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
       ]);
       if (!resEvents.ok) throw new Error(`Request failed (${resEvents.status})`);
       const jsonEvents = await resEvents.json();
-      setEvents(Array.isArray(jsonEvents.data) ? jsonEvents.data : []);
+      const eventsData = Array.isArray(jsonEvents.data) ? jsonEvents.data : [];
+      setEvents(eventsData);
+      setCachedEvents(activeWorkspaceId, eventsData);
       if (Array.isArray(branchList)) {
         setBranches(branchList);
       }
@@ -138,7 +147,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     } finally {
       setIsLoading(false);
     }
-  }, [activeWorkspaceId, fetchBranches]);
+  }, [activeWorkspaceId, fetchBranches, getCachedEvents, setCachedEvents]);
 
   useEffect(() => {
     fetchEvents();

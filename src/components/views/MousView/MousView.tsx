@@ -67,11 +67,25 @@ const STATUS_STYLES: Record<MouStatus, string> = {
 export function MousView() {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
-  const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId, setExportCenterOpen } = useWorkspaceStore();
-  const { fetchBranches, fetchOutlets, branches: storeBranches, outlets: storeOutlets } = useMarcomDataStore();
+  const {
+    marcomFilters,
+    setMarcomFilter,
+    navigateToMarcom,
+    setSelectedBranchId,
+    setExportCenterOpen,
+  } = useWorkspaceStore();
+  const {
+    fetchBranches,
+    fetchOutlets,
+    branches: storeBranches,
+    outlets: storeOutlets,
+    getCachedMous,
+    setCachedMous,
+  } = useMarcomDataStore();
 
-  const [mous, setMous] = useState<MarcomMou[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const cachedMous = getCachedMous(activeWorkspaceId);
+  const [mous, setMous] = useState<MarcomMou[]>(() => cachedMous || []);
+  const [isLoading, setIsLoading] = useState(!cachedMous);
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>(() =>
@@ -141,7 +155,9 @@ export function MousView() {
 
   const fetchMous = useCallback(
     async (statusFilter = selectedStatus) => {
-      setIsLoading(true);
+      if (!getCachedMous(activeWorkspaceId)) {
+        setIsLoading(true);
+      }
       setError(null);
       try {
         const params = new URLSearchParams();
@@ -157,7 +173,11 @@ export function MousView() {
         ]);
         if (!resMous.ok) throw new Error(`Request failed (${resMous.status})`);
         const jsonMous = await resMous.json();
-        setMous(Array.isArray(jsonMous.data) ? jsonMous.data : []);
+        const mousData = Array.isArray(jsonMous.data) ? jsonMous.data : [];
+        setMous(mousData);
+        if (statusFilter === "ALL") {
+          setCachedMous(activeWorkspaceId, mousData);
+        }
         if (Array.isArray(branchList) && branchList.length > 0) {
           setBranches(branchList.map((b) => ({ id: b.id, name: b.name, code: b.code })));
         }
@@ -170,7 +190,7 @@ export function MousView() {
         setIsLoading(false);
       }
     },
-    [selectedStatus, activeWorkspaceId],
+    [selectedStatus, activeWorkspaceId, getCachedMous, setCachedMous, fetchBranches, fetchOutlets],
   );
 
   useEffect(() => {

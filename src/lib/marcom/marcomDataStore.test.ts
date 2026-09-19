@@ -1,7 +1,15 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
-import type { ContentPostItem, MonthlyReport, DocumentItem, BranchItem } from "@/types";
+import type {
+  ContentPostItem,
+  MonthlyReport,
+  DocumentItem,
+  BranchItem,
+  MarcomMou,
+  MarcomPlacement,
+  FieldEventItem,
+} from "@/types";
 
 describe("useMarcomDataStore", () => {
   beforeEach(() => {
@@ -19,6 +27,9 @@ describe("useMarcomDataStore", () => {
       postsByWorkspace: {},
       reportsByWorkspace: {},
       documentsByWorkspace: {},
+      mousByWorkspace: {},
+      placementsByWorkspace: {},
+      eventsByWorkspace: {},
     });
   });
 
@@ -168,6 +179,133 @@ describe("useMarcomDataStore", () => {
       store.invalidateReports(wsId);
       assert.equal(store.getCachedReports(wsId), undefined);
       assert.equal(store.getCachedDocuments(wsId)?.length, 1); // Docs untouched
+    });
+  });
+
+  describe("SWR MOUs Cache", () => {
+    it("sets, gets, and invalidates MOUs per workspace", () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-mou-1";
+
+      const mockMous: MarcomMou[] = [
+        {
+          id: "mou-1",
+          workspaceId: wsId,
+          branchId: "b1",
+          outletName: "Outlet 1",
+          partnerName: "Partner A",
+          mouType: "REVENUE_SHARE",
+          submissionDate: "2026-09-01",
+          startDate: "2026-09-01",
+          endDate: "2027-09-01",
+          status: "APPROVED",
+          picName: "John",
+          picPhone: "081234",
+          docPath: "/mou.pdf",
+          compensationValue: 1000000,
+          notes: "Annual MOU",
+        },
+      ];
+
+      assert.equal(store.getCachedMous(wsId), undefined);
+
+      store.setCachedMous(wsId, mockMous);
+      const cached = store.getCachedMous(wsId);
+      assert.ok(cached);
+      assert.equal(cached.length, 1);
+      assert.equal(cached[0].partnerName, "Partner A");
+
+      // Invalidate specific workspace
+      store.invalidateMous(wsId);
+      assert.equal(store.getCachedMous(wsId), undefined);
+
+      // Invalidate all workspaces
+      store.setCachedMous("ws-mou-2", mockMous);
+      store.invalidateMous();
+      assert.equal(store.getCachedMous("ws-mou-2"), undefined);
+    });
+  });
+
+  describe("SWR Placements Cache", () => {
+    it("sets, gets, and invalidates Placements per workspace", () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-place-1";
+
+      const mockPlacements: MarcomPlacement[] = [
+        {
+          id: "plc-1",
+          workspaceId: wsId,
+          outletId: "out-1",
+          materialId: "mat-1",
+          status: "DONE",
+          brand: "IM3",
+          date: "2026-09-10",
+          picName: "Rudi",
+          photoUrl: "/photo.jpg",
+          dimensions: "2x1m",
+          cost: 500000,
+          notes: "Front store placement",
+        },
+      ];
+
+      assert.equal(store.getCachedPlacements(wsId), undefined);
+
+      store.setCachedPlacements(wsId, mockPlacements);
+      const cached = store.getCachedPlacements(wsId);
+      assert.ok(cached);
+      assert.equal(cached.length, 1);
+      assert.equal(cached[0].picName, "Rudi");
+
+      // Invalidate specific workspace
+      store.invalidatePlacements(wsId);
+      assert.equal(store.getCachedPlacements(wsId), undefined);
+
+      // Invalidate all
+      store.setCachedPlacements("ws-place-2", mockPlacements);
+      store.invalidatePlacements();
+      assert.equal(store.getCachedPlacements("ws-place-2"), undefined);
+    });
+  });
+
+  describe("SWR Events Cache", () => {
+    it("sets, gets, and invalidates Field Events per workspace", () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-event-1";
+
+      const mockEvents: FieldEventItem[] = [
+        {
+          id: "evt-1",
+          workspaceId: wsId,
+          name: "Car Free Day Promo",
+          eventType: "ROADSHOW",
+          branchName: "Semarang",
+          startDate: "2026-09-20",
+          endDate: "2026-09-20",
+          status: "UPCOMING",
+          picName: "Andi",
+          location: "Simpang Lima",
+          budget: 2000000,
+          targetAttendee: 500,
+          attendeeCount: 0,
+        },
+      ];
+
+      assert.equal(store.getCachedEvents(wsId), undefined);
+
+      store.setCachedEvents(wsId, mockEvents);
+      const cached = store.getCachedEvents(wsId);
+      assert.ok(cached);
+      assert.equal(cached.length, 1);
+      assert.equal(cached[0].name, "Car Free Day Promo");
+
+      // Invalidate specific workspace
+      store.invalidateEvents(wsId);
+      assert.equal(store.getCachedEvents(wsId), undefined);
+
+      // Invalidate all
+      store.setCachedEvents("ws-event-2", mockEvents);
+      store.invalidateEvents();
+      assert.equal(store.getCachedEvents("ws-event-2"), undefined);
     });
   });
 });

@@ -6,6 +6,9 @@ import type {
   ContentPostItem,
   MonthlyReport,
   DocumentItem,
+  MarcomMou,
+  MarcomPlacement,
+  FieldEventItem,
 } from "@/types";
 
 export interface MarcomDataState {
@@ -28,6 +31,9 @@ export interface MarcomDataState {
   postsByWorkspace: Record<string, ContentPostItem[]>;
   reportsByWorkspace: Record<string, MonthlyReport[]>;
   documentsByWorkspace: Record<string, DocumentItem[]>;
+  mousByWorkspace: Record<string, MarcomMou[]>;
+  placementsByWorkspace: Record<string, MarcomPlacement[]>;
+  eventsByWorkspace: Record<string, FieldEventItem[]>;
 
   // Master data actions
   fetchBranches: (force?: boolean) => Promise<BranchItem[]>;
@@ -54,6 +60,18 @@ export interface MarcomDataState {
   getCachedDocuments: (workspaceId: string) => DocumentItem[] | undefined;
   setCachedDocuments: (workspaceId: string, documents: DocumentItem[]) => void;
   invalidateDocuments: (workspaceId?: string) => void;
+
+  getCachedMous: (workspaceId: string) => MarcomMou[] | undefined;
+  setCachedMous: (workspaceId: string, mous: MarcomMou[]) => void;
+  invalidateMous: (workspaceId?: string) => void;
+
+  getCachedPlacements: (workspaceId: string) => MarcomPlacement[] | undefined;
+  setCachedPlacements: (workspaceId: string, placements: MarcomPlacement[]) => void;
+  invalidatePlacements: (workspaceId?: string) => void;
+
+  getCachedEvents: (workspaceId: string) => FieldEventItem[] | undefined;
+  setCachedEvents: (workspaceId: string, events: FieldEventItem[]) => void;
+  invalidateEvents: (workspaceId?: string) => void;
 }
 
 export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
@@ -75,6 +93,9 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
   postsByWorkspace: {},
   reportsByWorkspace: {},
   documentsByWorkspace: {},
+  mousByWorkspace: {},
+  placementsByWorkspace: {},
+  eventsByWorkspace: {},
 
   fetchBranches: async (force = false) => {
     const state = get();
@@ -254,6 +275,69 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
         return { documentsByWorkspace: copy };
       }
       return { documentsByWorkspace: {} };
+    });
+  },
+
+  getCachedMous: (workspaceId: string) => {
+    return get().mousByWorkspace[workspaceId];
+  },
+
+  setCachedMous: (workspaceId: string, mous: MarcomMou[]) => {
+    set((s) => ({
+      mousByWorkspace: { ...s.mousByWorkspace, [workspaceId]: mous },
+    }));
+  },
+
+  invalidateMous: (workspaceId?: string) => {
+    set((s) => {
+      if (workspaceId) {
+        const copy = { ...s.mousByWorkspace };
+        delete copy[workspaceId];
+        return { mousByWorkspace: copy };
+      }
+      return { mousByWorkspace: {} };
+    });
+  },
+
+  getCachedPlacements: (workspaceId: string) => {
+    return get().placementsByWorkspace[workspaceId];
+  },
+
+  setCachedPlacements: (workspaceId: string, placements: MarcomPlacement[]) => {
+    set((s) => ({
+      placementsByWorkspace: { ...s.placementsByWorkspace, [workspaceId]: placements },
+    }));
+  },
+
+  invalidatePlacements: (workspaceId?: string) => {
+    set((s) => {
+      if (workspaceId) {
+        const copy = { ...s.placementsByWorkspace };
+        delete copy[workspaceId];
+        return { placementsByWorkspace: copy };
+      }
+      return { placementsByWorkspace: {} };
+    });
+  },
+
+  getCachedEvents: (workspaceId: string) => {
+    return get().eventsByWorkspace[workspaceId];
+  },
+
+  setCachedEvents: (workspaceId: string, events: FieldEventItem[]) => {
+    set((s) => ({
+      eventsByWorkspace: { ...s.eventsByWorkspace, [workspaceId]: events },
+    }));
+  },
+
+  invalidateEvents: (workspaceId?: string) => {
+    set((s) => {
+      if (workspaceId) {
+        const copy = { ...s.eventsByWorkspace };
+        delete copy[workspaceId];
+        return { eventsByWorkspace: copy };
+      }
+      return { eventsByWorkspace: {} };
     });
   },
 }));

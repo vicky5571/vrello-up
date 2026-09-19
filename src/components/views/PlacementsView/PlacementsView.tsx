@@ -142,10 +142,13 @@ export function PlacementsView() {
     fetchMaterials,
     outlets: storeOutlets,
     materials: storeMaterials,
+    getCachedPlacements,
+    setCachedPlacements,
   } = useMarcomDataStore();
 
-  const [placements, setPlacements] = useState<MarcomPlacement[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const cachedPlacements = getCachedPlacements(activeWorkspaceId);
+  const [placements, setPlacements] = useState<MarcomPlacement[]>(() => cachedPlacements || []);
+  const [isLoading, setIsLoading] = useState(!cachedPlacements);
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedBrand, setSelectedBrand] = useState<string>("ALL");
@@ -276,7 +279,9 @@ export function PlacementsView() {
 
   const fetchPlacements = useCallback(
     async (statusFilter = selectedStatus, brandFilter = selectedBrand) => {
-      setIsLoading(true);
+      if (!getCachedPlacements(activeWorkspaceId)) {
+        setIsLoading(true);
+      }
       setError(null);
       try {
         const params = new URLSearchParams();
@@ -296,7 +301,11 @@ export function PlacementsView() {
         ]);
         if (!resPlacements.ok) throw new Error(`Request failed (${resPlacements.status})`);
         const jsonPlacements = await resPlacements.json();
-        setPlacements(Array.isArray(jsonPlacements.data) ? jsonPlacements.data : []);
+        const placementsData = Array.isArray(jsonPlacements.data) ? jsonPlacements.data : [];
+        setPlacements(placementsData);
+        if (statusFilter === "ALL" && brandFilter === "ALL") {
+          setCachedPlacements(activeWorkspaceId, placementsData);
+        }
         if (Array.isArray(outletsData) && outletsData.length > 0) {
           setOutletsList(outletsData.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName })));
         }
@@ -313,7 +322,7 @@ export function PlacementsView() {
         setIsLoading(false);
       }
     },
-    [selectedStatus, selectedBrand, activeWorkspaceId],
+    [selectedStatus, selectedBrand, activeWorkspaceId, getCachedPlacements, setCachedPlacements, fetchOutlets, fetchMaterials],
   );
 
   useEffect(() => {

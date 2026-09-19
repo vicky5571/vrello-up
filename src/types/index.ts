@@ -274,6 +274,37 @@ export interface Placement {
 
 export type PlacementItem = Placement;
 
+export interface MarcomPlacement {
+  id: string;
+  workspaceId?: string;
+  outletId: string;
+  materialId: string;
+  mouId?: string | null;
+  status: PlacementStatus;
+  brand?: "IM3" | "3" | string;
+  date: string | null;
+  picName: string;
+  photoUrl: string;
+  dimensions: string;
+  cost: number;
+  notes: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  shareLocationUrl?: string;
+  locationNotes?: string;
+  outlet?: { id: string; code: string; name: string; brand?: string };
+  material?: { id: string; type: string; name: string };
+  mou?: {
+    id: string;
+    partnerName: string;
+    status: string;
+    mouType: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    compensationValue?: number;
+  } | null;
+}
+
 export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE";
 
 export interface Mou {
@@ -296,6 +327,35 @@ export interface Mou {
 }
 
 export type MouItem = Mou;
+
+export interface MarcomMou {
+  id: string;
+  workspaceId?: string;
+  branchId: string;
+  outletId?: string | null;
+  outletName: string;
+  partnerName: string;
+  mouType: string;
+  submissionDate: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  status: MouStatus;
+  picName: string;
+  picPhone: string;
+  docPath: string;
+  compensationValue: number;
+  notes: string;
+  branch?: { id: string; code: string; name: string };
+  outlet?: { id: string; code: string; name: string };
+  placements?: Array<{
+    id: string;
+    mouId?: string | null;
+    status: string;
+    cost: number;
+    photoUrl?: string;
+    material?: { id: string; name: string; type: string };
+  }>;
+}
 
 export type DocFileType = "PDF" | "XLSX" | "DOCX" | "ZIP" | "CSV" | "MP4" | "PNG" | "JPG";
 
