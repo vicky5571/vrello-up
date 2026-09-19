@@ -601,33 +601,38 @@ export function FilterBar() {
           </div>
 
           {/* ClickUp Solid Add Task CTA / New Post CTA */}
-          <button
-            type="button"
-            onClick={() => {
-              if (activeView === "content") {
-                setCreatePostModalOpen(true);
-              } else {
-                setIsCreateTaskOpen(true);
-              }
-            }}
-            className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold text-white transition-all cursor-pointer shadow-2xs ml-1",
-              activeView === "content"
-                ? "bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 shadow-xs"
-                : "bg-[#111318] hover:bg-black dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white"
-            )}
-          >
-            {activeView === "content" ? (
-              <Sparkles className="w-3.5 h-3.5" />
-            ) : (
-              <Plus className="w-3.5 h-3.5" />
-            )}
-            <span>{activeView === "content" ? "New Post" : "Add Task"}</span>
-            <ChevronDown className={cn(
-              "w-3 h-3 ml-0.5",
-              activeView === "content" ? "text-pink-200" : "text-slate-400 dark:text-slate-600"
-            )} />
-          </button>
+          {(() => {
+            const isContentPlanner = activeView === "content" || activeView === "content-planner";
+            return (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isContentPlanner) {
+                    setCreatePostModalOpen(true);
+                  } else {
+                    setIsCreateTaskOpen(true);
+                  }
+                }}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold text-white transition-all cursor-pointer shadow-2xs ml-1",
+                  isContentPlanner
+                    ? "bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 shadow-xs"
+                    : "bg-[#111318] hover:bg-black dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white"
+                )}
+              >
+                {isContentPlanner ? (
+                  <Sparkles className="w-3.5 h-3.5" />
+                ) : (
+                  <Plus className="w-3.5 h-3.5" />
+                )}
+                <span>{isContentPlanner ? "New Post" : "Add Task"}</span>
+                <ChevronDown className={cn(
+                  "w-3 h-3 ml-0.5",
+                  isContentPlanner ? "text-pink-200" : "text-slate-400 dark:text-slate-600"
+                )} />
+              </button>
+            );
+          })()}
         </div>
       </div>
 

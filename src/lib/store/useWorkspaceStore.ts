@@ -463,6 +463,14 @@ const MARCOM_VIEW_SET = new Set<ViewMode>([
   "analytics",
 ]);
 
+/**
+ * Normalizes legacy view aliases to canonical view names.
+ * e.g., "content" -> "content-planner"
+ */
+export function normalizeViewMode(view: ViewMode | string): ViewMode {
+  return (view === "content" ? "content-planner" : view) as ViewMode;
+}
+
 interface WorkspaceState {
   workspaces: Workspace[];
   activeWorkspaceId: string;
@@ -1230,13 +1238,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setActiveList: (id) => set({ activeListId: id }),
       setActiveView: (view) =>
         set((state) => {
-          const isMarcom = MARCOM_VIEW_SET.has(view);
+          const canonicalView = normalizeViewMode(view);
+          const isMarcom = MARCOM_VIEW_SET.has(canonicalView);
           const newMode: AppMode = isMarcom ? "marcom" : "tasks";
           return {
-            activeView: view,
+            activeView: canonicalView,
             appMode: newMode,
-            lastTaskView: !isMarcom ? view : state.lastTaskView,
-            lastMarcomView: isMarcom ? view : state.lastMarcomView,
+            lastTaskView: !isMarcom ? canonicalView : state.lastTaskView,
+            lastMarcomView: isMarcom ? canonicalView : state.lastMarcomView,
           };
         }),
       setSelectedTaskId: (id) =>
@@ -1246,19 +1255,25 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         })),
       setSelectedBranchId: (id) => set({ selectedBranchId: id }),
       setMarcomFilter: (view, query) =>
-        set((state) => ({
-          marcomFilters: { ...state.marcomFilters, [view]: query },
-        })),
+        set((state) => {
+          const canonicalKey = view === "content" ? "content-planner" : view;
+          return {
+            marcomFilters: { ...state.marcomFilters, [canonicalKey]: query },
+          };
+        }),
       navigateToMarcom: (view, search) =>
-        set((state) => ({
-          appMode: "marcom",
-          activeView: view,
-          lastMarcomView: view,
-          marcomFilters:
-            search !== undefined
-              ? { ...state.marcomFilters, [view]: search }
-              : state.marcomFilters,
-        })),
+        set((state) => {
+          const canonicalView = normalizeViewMode(view);
+          return {
+            appMode: "marcom",
+            activeView: canonicalView,
+            lastMarcomView: canonicalView,
+            marcomFilters:
+              search !== undefined
+                ? { ...state.marcomFilters, [canonicalView]: search }
+                : state.marcomFilters,
+          };
+        }),
       setCurrentUserId: (id) => set({ currentUserId: id }),
       toggleSidebar: () =>
         set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
@@ -2486,20 +2501,29 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       version: 1,
       storage: createJSONStorage(() => quotaAwareStorage),
       onRehydrateStorage: () => (state) => {
-        if (state && Array.isArray(state.workspaces)) {
-          state.workspaces = state.workspaces.map((w) => ({
-            ...w,
-            members: (w.members || []).map((m) => {
-              if (m.id === "user-1" && !m.role) return { ...m, role: "admin" as const };
-              if (m.id.startsWith("google-") && !m.role) return { ...m, role: "admin" as const };
-              return m;
-            }),
-          }));
+        if (state) {
+          if ((state.activeView as string) === "content") {
+            state.activeView = "content-planner";
+          }
+          if ((state.lastMarcomView as string) === "content") {
+            state.lastMarcomView = "content-planner";
+          }
 
-          const activeWs = state.workspaces.find((w) => w.id === state.activeWorkspaceId);
-          if (activeWs && !activeWs.spaces.some((s) => s.id === state.activeSpaceId)) {
-            state.activeSpaceId = activeWs.spaces[0]?.id || "";
-            state.activeListId = null;
+          if (Array.isArray(state.workspaces)) {
+            state.workspaces = state.workspaces.map((w) => ({
+              ...w,
+              members: (w.members || []).map((m) => {
+                if (m.id === "user-1" && !m.role) return { ...m, role: "admin" as const };
+                if (m.id.startsWith("google-") && !m.role) return { ...m, role: "admin" as const };
+                return m;
+              }),
+            }));
+
+            const activeWs = state.workspaces.find((w) => w.id === state.activeWorkspaceId);
+            if (activeWs && !activeWs.spaces.some((s) => s.id === state.activeSpaceId)) {
+              state.activeSpaceId = activeWs.spaces[0]?.id || "";
+              state.activeListId = null;
+            }
           }
         }
       },
@@ -2570,8 +2594,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             activeWorkspaceId: (typeof state.activeWorkspaceId === "string" && state.activeWorkspaceId) || activeWs?.id || "ws-main",
             activeSpaceId: (typeof state.activeSpaceId === "string" && state.activeSpaceId !== "space-eng" && state.activeSpaceId) || activeSpace?.id || "space-product",
             activeListId: state.activeListId === null ? null : ((typeof state.activeListId === "string" && !engListIds.has(state.activeListId) && state.activeListId) || activeList || "list-design-system"),
-            activeView: (state.activeView as ViewMode) || "list",
+            activeView: normalizeViewMode((state.activeView as ViewMode) || "list"),
           };
+        }
+
+        if (state) {
+          if (state.activeView === "content") {
+            state.activeView = "content-planner";
+          }
+          if (state.lastMarcomView === "content") {
+            state.lastMarcomView = "content-planner";
+          }
         }
 
         return state;

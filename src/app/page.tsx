@@ -298,18 +298,6 @@ export default function WorkspacePage() {
               </motion.div>
             )}
 
-            {activeView === "content" && (
-              <motion.div
-                key="content-view"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.08 }}
-                className="h-full w-full"
-              >
-                <ContentPlannerView />
-              </motion.div>
-            )}
 
             {activeView === "branches" && (
               <motion.div
@@ -363,7 +351,7 @@ export default function WorkspacePage() {
               </motion.div>
             )}
 
-            {activeView === "content-planner" && (
+            {(activeView === "content-planner" || (activeView as string) === "content") && (
               <motion.div
                 key="content-planner-view"
                 initial={{ opacity: 0 }}

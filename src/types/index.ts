@@ -172,7 +172,7 @@ export type ViewMode =
   | "calendar"
   | "gantt"
   | "channel"
-  | "content"
+  | "content" // Deprecated legacy alias for "content-planner", normalized automatically in useWorkspaceStore
   | "content-planner"
   | "branches"
   | "outlets"
