@@ -606,3 +606,4 @@ export function applyDeleteSpaceStatus(
     tasks: tasks.map((t) => (t.statusId === statusId ? { ...t, statusId: fallback } : t)),
   };
 }
+
