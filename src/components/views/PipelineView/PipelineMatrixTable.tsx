@@ -13,7 +13,6 @@ import {
   Building2,
   CheckCircle2,
   Clock,
-  ExternalLink,
 } from "lucide-react";
 import { cn, formatIDR, formatDate } from "@/lib/utils";
 import type {
@@ -281,7 +280,7 @@ export function PipelineMatrixTable({
                         </div>
 
                         <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                          <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded text-[10px]">
+                          <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">
                             {outlet.code || "NO-CODE"}
                           </span>
                           {outlet.city && <span>• {outlet.city}</span>}

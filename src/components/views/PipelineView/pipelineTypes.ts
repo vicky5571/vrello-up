@@ -141,7 +141,7 @@ export function filterPipelineData(
   let result = rows;
 
   if (filters.branchId && filters.branchId.toUpperCase() !== "ALL") {
-    result = result.filter((r) => r.branch.id === filters.branchId);
+    result = result.filter((r) => r.branch?.id === filters.branchId);
   }
 
   if (filters.tier && filters.tier.toUpperCase() !== "ALL") {

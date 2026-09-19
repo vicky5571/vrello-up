@@ -179,7 +179,7 @@ export function PipelineFilterBar({
             {bottleneckCount > 0 && (
               <span
                 className={cn(
-                  "ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold",
+                  "ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
                   filters.bottleneckOnly
                     ? "bg-white text-rose-600"
                     : "bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300"

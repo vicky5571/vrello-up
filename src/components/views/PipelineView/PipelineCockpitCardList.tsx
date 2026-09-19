@@ -11,9 +11,6 @@ import {
   Navigation,
   CheckCircle2,
   Clock,
-  Building2,
-  MapPin,
-  ExternalLink,
 } from "lucide-react";
 import { cn, formatIDR, formatDate } from "@/lib/utils";
 import { buildGoogleMapsUrl } from "@/lib/marcom/locationUtils";
@@ -99,7 +96,7 @@ function renderPlatformBadge(platform?: string) {
   }
 
   return (
-    <span className={cn("px-1.5 py-0.2 rounded text-[9px] font-bold uppercase", color)}>
+    <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-bold uppercase", color)}>
       {label}
     </span>
   );
@@ -163,7 +160,7 @@ export function PipelineCockpitCardList({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded text-[10px]">
+                  <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">
                     {outlet.code || "NO-CODE"}
                   </span>
                   {outlet.city && <span>• {outlet.city}</span>}
@@ -317,7 +314,7 @@ export function PipelineCockpitCardList({
                   e.stopPropagation();
                   onSelectOutlet(outlet.id);
                 }}
-                className="flex-1.5 inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white shadow-2xs transition-colors cursor-pointer"
+                className="flex-[1.5] inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold bg-orange-500 hover:bg-orange-600 text-white shadow-2xs transition-colors cursor-pointer"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
                 <span>Buka 360°</span>

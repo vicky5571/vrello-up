@@ -6,7 +6,6 @@ import {
   FileText,
   Layers,
   Calendar,
-  Sparkles,
   RefreshCw,
   AlertTriangle,
   SearchX,
@@ -21,7 +20,6 @@ import { PipelineCockpitCardList } from "./PipelineCockpitCardList";
 import {
   type PipelineFilterState,
   type PipelineSortField,
-  type PipelineSortOrder,
   type PipelineSortState,
   type PipelineViewProps,
   DEFAULT_PIPELINE_FILTERS,
