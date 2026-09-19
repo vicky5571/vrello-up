@@ -176,14 +176,21 @@ export function buildOutletPipelineRows(
     let totalCompensationValue = 0;
 
     if (totalMous > 0) {
-      // Sort to get the most recent MoU
+      // Sort to get the most recent MoU (items with timestamps sorted before items without)
       const sortedMous = [...mous].sort((a, b) => {
         const dateA = a.startDate || a.submissionDate || ("createdAt" in a && typeof a.createdAt === "string" ? a.createdAt : "");
         const dateB = b.startDate || b.submissionDate || ("createdAt" in b && typeof b.createdAt === "string" ? b.createdAt : "");
-        if (dateA && dateB) {
-          return new Date(dateB).getTime() - new Date(dateA).getTime();
-        }
-        return 0;
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        const timeA = new Date(dateA).getTime();
+        const timeB = new Date(dateB).getTime();
+        const validA = !Number.isNaN(timeA);
+        const validB = !Number.isNaN(timeB);
+        if (!validA && !validB) return 0;
+        if (!validA) return 1;
+        if (!validB) return -1;
+        return timeB - timeA;
       });
 
       const latestMou = sortedMous[0];
@@ -214,10 +221,10 @@ export function buildOutletPipelineRows(
       totalPlacementCost += cost;
 
       // Bottleneck detection:
-      // Permanent material requires an active approved MoU;
-      // or placement has an explicit "ISSUE" status.
+      // An item is blocked if it has an explicit "ISSUE" status,
+      // or if it is a pending/in-progress permanent material lacking an active approved MoU.
       const isPermanent = isPermanentMaterial(p.material);
-      if (statusUpper === "ISSUE" || (isPermanent && !hasApprovedMou)) {
+      if (statusUpper === "ISSUE" || (statusUpper !== "DONE" && isPermanent && !hasApprovedMou)) {
         hasBlockedItems = true;
       }
     }
@@ -251,6 +258,12 @@ export function buildOutletPipelineRows(
 
         const timeA = new Date(rawDateA).getTime();
         const timeB = new Date(rawDateB).getTime();
+        const validA = !Number.isNaN(timeA);
+        const validB = !Number.isNaN(timeB);
+
+        if (!validA && !validB) return 0;
+        if (!validA) return 1;
+        if (!validB) return -1;
 
         const isFutureA = timeA >= now - 86400000;
         const isFutureB = timeB >= now - 86400000;
@@ -265,7 +278,12 @@ export function buildOutletPipelineRows(
       if (nearest) {
         nearestEventName = nearest.name;
         const rawDate = nearest.startDate || nearest.date;
-        nearestEventDate = rawDate ? new Date(rawDate).toISOString() : undefined;
+        if (rawDate) {
+          const parsed = new Date(rawDate);
+          if (!Number.isNaN(parsed.getTime())) {
+            nearestEventDate = parsed.toISOString();
+          }
+        }
         nearestEventStatus = nearest.status;
       }
     }
@@ -287,13 +305,21 @@ export function buildOutletPipelineRows(
 
     let latestPlatform: string | undefined;
     if (totalContents > 0) {
+      // Sort to get the most recent content (items with timestamps sorted before items without)
       const sortedContents = [...matchedContents].sort((a, b) => {
         const dateA = a.publishDate || a.createdAt || "";
         const dateB = b.publishDate || b.createdAt || "";
-        if (dateA && dateB) {
-          return new Date(dateB).getTime() - new Date(dateA).getTime();
-        }
-        return 0;
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        const timeA = new Date(dateA).getTime();
+        const timeB = new Date(dateB).getTime();
+        const validA = !Number.isNaN(timeA);
+        const validB = !Number.isNaN(timeB);
+        if (!validA && !validB) return 0;
+        if (!validA) return 1;
+        if (!validB) return -1;
+        return timeB - timeA;
       });
       latestPlatform = sortedContents[0]?.platform;
     }

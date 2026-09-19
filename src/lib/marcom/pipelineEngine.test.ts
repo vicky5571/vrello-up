@@ -202,3 +202,84 @@ test("pipelineEngine: aggregates branch-level events and contents across multipl
   assert.equal(rowB.eventSummary.total, 0);
   assert.equal(rowB.contentSummary.total, 0);
 });
+
+test("pipelineEngine: handles invalid date string in events without throwing RangeError", () => {
+  const outlets = [
+    {
+      id: "outlet-inv-date",
+      name: "Toko Tangguh",
+      branch: { id: "b1", name: "Malang", code: "MLG" },
+      branchId: "b1",
+    },
+  ];
+  const events = [
+    {
+      id: "evt-inv",
+      name: "Event TBD",
+      branchName: "Malang",
+      startDate: "invalid-date-string",
+      status: "UPCOMING",
+    },
+  ];
+
+  // Must not throw RangeError: Invalid time value
+  const result = buildOutletPipelineRows(outlets, events, []);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].eventSummary.total, 1);
+  assert.equal(result[0].eventSummary.nearestEventName, "Event TBD");
+  assert.equal(result[0].eventSummary.nearestEventDate, undefined);
+});
+
+test("pipelineEngine: completed permanent placement (status: DONE) does not trigger bottleneck even without approved MoU", () => {
+  const outlets = [
+    {
+      id: "outlet-done-perm",
+      name: "Toko Selesai",
+      branch: { id: "b2", name: "Kediri", code: "KDR" },
+      branchId: "b2",
+      mous: [
+        { id: "mou-draft", status: "DRAFT", compensationValue: 0 },
+      ],
+      placements: [
+        { id: "p1", status: "DONE", cost: 1000000, material: { name: "Neon Box", type: "PERMANENT" } },
+      ],
+    },
+  ];
+
+  const result = buildOutletPipelineRows(outlets, [], []);
+  assert.equal(result.length, 1);
+  const row = result[0];
+  assert.equal(row.mouSummary.isHealthy, false);
+  assert.equal(row.placementSummary.doneCount, 1);
+  // Completed item is NOT blocked
+  assert.equal(row.placementSummary.hasBlockedItems, false);
+});
+
+test("pipelineEngine: stably prioritizes items with timestamps before items without timestamps", () => {
+  const outlets = [
+    {
+      id: "outlet-sort",
+      name: "Toko Sort",
+      branch: { id: "b3", name: "Surabaya", code: "SBY" },
+      branchId: "b3",
+      mous: [
+        { id: "mou-no-date", status: "DRAFT" }, // no timestamp
+        { id: "mou-with-date", status: "APPROVED", startDate: "2026-05-01T00:00:00Z" },
+      ],
+    },
+  ];
+  const contents = [
+    { id: "c-no-date", title: "Promo", branchName: "Surabaya", platform: "tiktok" }, // no timestamp
+    { id: "c-with-date", title: "Promo Reel", branchName: "Surabaya", platform: "instagram", publishDate: "2026-06-01T00:00:00Z" },
+  ];
+
+  const result = buildOutletPipelineRows(outlets, [], contents);
+  assert.equal(result.length, 1);
+  const row = result[0];
+  // Latest MoU is the one with date (APPROVED)
+  assert.equal(row.mouSummary.latestStatus, "APPROVED");
+  assert.equal(row.mouSummary.isHealthy, true);
+  // Latest platform is the one with date (instagram)
+  assert.equal(row.contentSummary.latestPlatform, "instagram");
+});
+
