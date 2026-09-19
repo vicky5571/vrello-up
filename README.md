@@ -100,8 +100,12 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `npm run typecheck` | Validates TypeScript static types (`tsc --noEmit`) |
 | `npm test` | Runs the full unit & integration test suite via Node test runner |
 | `npm test -- <path>` | Runs a specific test file with fast feedback loop |
+| `npm run test:e2e` | Runs Playwright End-to-End (E2E) smoke tests headlessly |
+| `npm run test:e2e:ui` | Launches Playwright interactive UI test runner |
 
 ### Running Tests
+
+#### 1. Unit & Integration Tests (Fast Feedback Loop)
 The project leverages Node's native test runner with custom module resolution (`test/register-alias.mjs`), executing hundreds of tests in seconds:
 
 ```bash
@@ -111,6 +115,17 @@ npm test
 # Run specific slice test
 npm test -- src/lib/store/taskCrud.test.ts
 npm test -- src/lib/marcom/mouMachine.test.ts
+```
+
+#### 2. End-to-End (E2E) Tests (Playwright)
+Validates real browser rendering, view mode transitions, and interactive task workflows:
+
+```bash
+# Run E2E smoke tests in headless mode
+npm run test:e2e
+
+# Run with interactive UI mode
+npm run test:e2e:ui
 ```
 
 ---
