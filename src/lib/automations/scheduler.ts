@@ -3,6 +3,22 @@ import {
   useWorkspaceStore,
 } from "@/lib/store/useWorkspaceStore";
 import { isOverdue } from "@/lib/utils";
+import { toast } from "sonner";
+import {
+  evaluateMouSla,
+  evaluateContentSla,
+  evaluateUpcomingEvents,
+  isAlertNotified,
+  markAlertNotified,
+  pruneAlertCache,
+  type EventSlaCandidate,
+} from "@/lib/automations/slaRules";
+import {
+  buildEventTaskPayload,
+  getEventChecklistTemplate,
+} from "@/lib/tasks/eventTaskSync";
+import { getDefaultDestinationForChannel } from "@/lib/tasks/targetSpaceList";
+import type { Subtask } from "@/types";
 
 function isTaskDoneCategory(category: string | undefined): boolean {
   return category === "done" || category === "closed";
@@ -25,8 +41,7 @@ export function runOverdueEscalation(): number {
       (s) => s.id === task.statusId,
     )?.category;
     if (isTaskDoneCategory(category)) continue;
-    // Nested updateTask may cascade into rule-1 (urgent → assign lead);
-    // that is intended rules-engine behavior.
+
     state.updateTask(task.id, { priority: "urgent" });
     state.logActivity(
       task.id,
@@ -46,47 +61,100 @@ export function runOverdueEscalation(): number {
   return escalated;
 }
 
-const notifiedEvents = new Set<string>();
-
+/**
+ * SLA Watchdog: Evaluates Field Events within H-3 lead time.
+ * Automatically injects an operational preparation Task into the target Space/List.
+ */
 export async function checkUpcomingEvents(): Promise<number> {
   if (typeof window === "undefined") return 0;
   const state = useWorkspaceStore.getState();
-  const hasEventRule = state.customAutomations.some(
-    (r) => r.enabled && r.trigger === "event:in_3_days",
+  const currentWorkspace = state.workspaces.find(
+    (w) => w.id === state.activeWorkspaceId,
   );
-  if (!hasEventRule) return 0;
 
   try {
     const res = await fetch("/api/marcom/events?status=UPCOMING");
     if (!res.ok) return 0;
-    const events = await res.json();
+    const events: EventSlaCandidate[] = await res.json();
     if (!Array.isArray(events)) return 0;
 
-    const now = Date.now();
-    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
-    let triggered = 0;
-
-    for (const ev of events) {
-      if (!ev.startDate || notifiedEvents.has(ev.id)) continue;
-      const eventTime = new Date(ev.startDate).getTime();
-      const diff = eventTime - now;
-      if (diff > 0 && diff <= threeDaysMs) {
-        notifiedEvents.add(ev.id);
-        await state.runAutomationsForTrigger("event:in_3_days", {
-          eventId: ev.id,
-          eventTitle: ev.name,
-        });
-        triggered++;
+    // Build existing task lookup for idempotency
+    const existingTaskMarcomIdsOrTitles = new Set<string>();
+    for (const task of state.tasks) {
+      if (task.relatedMarcomId) {
+        existingTaskMarcomIdsOrTitles.add(task.relatedMarcomId);
       }
+      existingTaskMarcomIdsOrTitles.add(task.title.toLowerCase());
     }
-    return triggered;
+
+    const eligibleEvents = evaluateUpcomingEvents(
+      events,
+      existingTaskMarcomIdsOrTitles,
+    );
+    let createdCount = 0;
+
+    for (const ev of eligibleEvents) {
+      const alertKey = `sla:event:task:${ev.id}`;
+      if (isAlertNotified(alertKey)) continue;
+
+      // Determine target space and list
+      const spaces = currentWorkspace?.spaces || [];
+      const destination = getDefaultDestinationForChannel(spaces, "on_ground");
+      if (!destination.listId || !destination.spaceId) continue;
+
+      const targetSpace = spaces.find((s) => s.id === destination.spaceId);
+      const defaultStatusId = targetSpace?.statuses[0]?.id || "status-todo";
+
+      // Template checklist items
+      const nowIso = new Date().toISOString();
+      const rawChecklist = getEventChecklistTemplate(ev.eventType || "default");
+      const subtasks: Subtask[] = rawChecklist.map((title, idx) => ({
+        id: `subtask-auto-${ev.id}-${idx}`,
+        title,
+        completed: false,
+        createdAt: nowIso,
+      }));
+
+      const payload = buildEventTaskPayload({
+        event: {
+          ...ev,
+          eventType: ev.eventType || "default",
+        },
+        listId: destination.listId,
+        statusId: defaultStatusId,
+        members: currentWorkspace?.members || [],
+        picIdOrName: ev.picName,
+        subtasks,
+        priority: "high",
+      });
+
+      state.createTask(payload);
+      markAlertNotified(alertKey);
+      createdCount++;
+
+      toast.info(`Auto-created preparation task for Event: "${ev.name}" (H-3)`, {
+        id: alertKey,
+        duration: 5000,
+      });
+
+      // Also trigger any custom automation configured for event:in_3_days
+      await state.runAutomationsForTrigger("event:in_3_days", {
+        eventId: ev.id,
+        eventTitle: ev.name,
+      });
+    }
+
+    return createdCount;
   } catch {
     return 0;
   }
 }
 
-const notifiedExpiringMous = new Set<string>();
-
+/**
+ * SLA Watchdog: Evaluates MOUs for:
+ * 1. SUBMITTED > 3 days auto-escalation alert.
+ * 2. H-30 days expiration toast warning.
+ */
 export async function checkExpiringMous(): Promise<number> {
   if (typeof window === "undefined") return 0;
   const state = useWorkspaceStore.getState();
@@ -100,23 +168,75 @@ export async function checkExpiringMous(): Promise<number> {
     const json = await res.json();
     const mous = Array.isArray(json.data) ? json.data : [];
 
-    const now = Date.now();
-    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-    let warned = 0;
+    const evaluation = evaluateMouSla(mous);
+    let alertedCount = 0;
 
-    for (const mou of mous) {
-      if ((mou.status === "APPROVED" || mou.status === "DONE") && mou.endDate) {
-        if (notifiedExpiringMous.has(mou.id)) continue;
-        const endMs = new Date(mou.endDate).getTime();
-        if (isNaN(endMs)) continue;
-        const diff = endMs - now;
-        if (diff <= thirtyDaysMs) {
-          notifiedExpiringMous.add(mou.id);
-          warned++;
-        }
+    // 1. Escalate MOUs waiting > 3 days
+    for (const item of evaluation.escalatedMous) {
+      const alertKey = `sla:mou:escalate:${item.mou.id}`;
+      if (!isAlertNotified(alertKey)) {
+        markAlertNotified(alertKey);
+        toast.error(
+          `SLA Breach: MOU with "${item.mou.partnerName}" has been pending approval for ${item.daysPending} days!`,
+          { id: alertKey, duration: 6000 },
+        );
+        alertedCount++;
       }
     }
-    return warned;
+
+    // 2. Warn on MOUs expiring within 30 days
+    for (const item of evaluation.expiringMous) {
+      const alertKey = `sla:mou:expire:${item.mou.id}`;
+      if (!isAlertNotified(alertKey)) {
+        markAlertNotified(alertKey);
+        toast.warning(
+          `MOU Expiring Soon: "${item.mou.partnerName}" (${item.daysLeft} days remaining). Please prepare renewal.`,
+          { id: alertKey, duration: 5000 },
+        );
+        alertedCount++;
+      }
+    }
+
+    return alertedCount;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * SLA Watchdog: Evaluates Content Posts in IN_REVIEW for > 2 days.
+ */
+export async function checkContentReviewSla(): Promise<number> {
+  if (typeof window === "undefined") return 0;
+  const state = useWorkspaceStore.getState();
+  const activeWorkspaceId = state.activeWorkspaceId || "ws-main";
+
+  try {
+    const res = await fetch(
+      `/api/marcom/content?workspaceId=${encodeURIComponent(
+        activeWorkspaceId,
+      )}&status=IN_REVIEW`,
+    );
+    if (!res.ok) return 0;
+    const json = await res.json();
+    const contents = Array.isArray(json.data) ? json.data : [];
+
+    const evaluation = evaluateContentSla(contents);
+    let alertedCount = 0;
+
+    for (const item of evaluation.overdueReviewContents) {
+      const alertKey = `sla:content:review:${item.content.id}`;
+      if (!isAlertNotified(alertKey)) {
+        markAlertNotified(alertKey);
+        toast.warning(
+          `Content Review SLA: "${item.content.title}" has been waiting in review for ${item.daysInReview} days.`,
+          { id: alertKey, duration: 5000 },
+        );
+        alertedCount++;
+      }
+    }
+
+    return alertedCount;
   } catch {
     return 0;
   }
@@ -125,19 +245,23 @@ export async function checkExpiringMous(): Promise<number> {
 let timer: ReturnType<typeof setInterval> | null = null;
 
 /**
- * Polls automations (rule-4 overdue, custom event triggers, and MOU expiry) on an interval.
+ * Polls automations (rule-4 overdue, SLA monitors, upcoming events, and MOU expiry) on an interval.
  */
 export function startAutomationScheduler(
   intervalMs = 60_000,
 ): () => void {
+  pruneAlertCache();
   runOverdueEscalation();
   checkUpcomingEvents();
   checkExpiringMous();
+  checkContentReviewSla();
+
   if (timer === null) {
     timer = setInterval(() => {
       runOverdueEscalation();
       checkUpcomingEvents();
       checkExpiringMous();
+      checkContentReviewSla();
     }, intervalMs);
   }
   return stopAutomationScheduler;
