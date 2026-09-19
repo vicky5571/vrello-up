@@ -1,4 +1,5 @@
 import { monthIndex } from "@/lib/marcom/analytics";
+import type { MouStatus } from "@/types";
 
 export interface PlacementItemInput {
   id: string;
@@ -14,7 +15,7 @@ export interface PlacementItemInput {
 export interface MouItemInput {
   id: string;
   partnerName: string;
-  status: "DRAFT" | "IN_REVIEW" | "APPROVED" | "ACTIVE" | "COMPLETED" | "EXPIRED" | "TERMINATED" | string;
+  status: MouStatus | string;
   mouType?: string | null;
   compensationValue?: number | null;
   outletName?: string | null;
@@ -128,7 +129,7 @@ export function generateReportDraft(input: GenerateReportDraftInput): ReportDraf
   // --- MOUs Metrics ---
   const mousTotal = mous.length;
   const isMouApproved = (status: string) =>
-    status === "APPROVED" || status === "DONE" || status === "ACTIVE" || status === "COMPLETED";
+    status === "APPROVED" || status === "DONE";
   const mousApproved = mous.filter((m) => isMouApproved(m.status)).length;
   const mouTotalCompensation = mous
     .filter((m) => isMouApproved(m.status))

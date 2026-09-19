@@ -18,7 +18,6 @@ import {
   Eye,
   Cloud,
   Copy,
-  ExternalLink,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -41,6 +40,7 @@ import {
 } from "@/lib/marcom/documentWorkflow";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { DocumentCardsView } from "./DocumentCardsView";
+import type { DocumentStatus } from "@/types";
 
 export type DocFileType = "PDF" | "XLSX" | "DOCX" | "ZIP" | "CSV" | "MP4" | "PNG" | "JPG";
 
@@ -51,7 +51,7 @@ export interface MarcomDocument {
   period: string;
   branchName: string;
   ownerPic: string;
-  status: string;
+  status: DocumentStatus | string;
   fileType: DocFileType;
   fileSizeMb: number;
   filePath: string;
@@ -77,7 +77,7 @@ export function DocumentsView() {
   // View & Filter States
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [selectedStatus] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Modals
@@ -308,7 +308,6 @@ export function DocumentsView() {
           size: 260,
           minSize: 180,
           cell: ({ row }) => {
-            const typeMeta = getDocumentTypeMeta(row.original.fileType);
             return (
               <div
                 className="flex items-center gap-2 cursor-pointer group"
@@ -641,7 +640,7 @@ export function DocumentsView() {
               name: "",
               category: selectedCategory !== "ALL" ? selectedCategory : "Brand Guidelines",
               branchName: branches[0]?.name || "",
-              status: "Active",
+              status: "ACTIVE",
               fileType: "PDF",
               fileSizeMb: 0,
               filePath: "",
@@ -775,15 +774,15 @@ export function DocumentsView() {
                     Status
                   </label>
                   <select
-                    value={modalDocument.status || "Active"}
+                    value={(modalDocument.status || "ACTIVE").toUpperCase()}
                     onChange={(e) =>
                       setModalDocument({ ...modalDocument, status: e.target.value })
                     }
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
                   >
-                    <option value="Active">Active</option>
-                    <option value="Draft">Draft</option>
-                    <option value="Archived">Archived</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="DRAFT">Draft</option>
+                    <option value="ARCHIVED">Archived</option>
                   </select>
                 </div>
               </div>

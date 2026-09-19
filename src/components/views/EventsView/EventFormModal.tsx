@@ -38,6 +38,7 @@ import {
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import { EventChecklistSection } from "./EventChecklistSection";
+import { canTransitionEvent } from "@/lib/marcom/eventMachine";
 
 interface EventFormModalProps {
   isOpen: boolean;
@@ -661,10 +662,26 @@ export function EventFormModal({
                     onChange={(e) => setEventStatus(e.target.value as EventStatus)}
                     className="w-full px-3 py-2 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
                   >
-                    <option value="UPCOMING">Upcoming</option>
-                    <option value="ON_PROGRESS">On Progress</option>
-                    <option value="COMPLETED">Completed</option>
-                    <option value="CANCELLED">Cancelled</option>
+                    {[
+                      { value: "UPCOMING", label: "Upcoming" },
+                      { value: "ON_PROGRESS", label: "On Progress" },
+                      { value: "COMPLETED", label: "Completed" },
+                      { value: "CANCELLED", label: "Cancelled" },
+                    ].map((opt) => {
+                      const isAllowed =
+                        !event?.id ||
+                        canTransitionEvent(event.status, opt.value as EventStatus);
+                      return (
+                        <option
+                          key={opt.value}
+                          value={opt.value}
+                          disabled={!isAllowed}
+                        >
+                          {opt.label}
+                          {!isAllowed ? " (Not allowed)" : ""}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 

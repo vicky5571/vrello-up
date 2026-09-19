@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
+import { canTransitionEvent, type EventStatus } from "@/lib/marcom/eventMachine";
 
 const VALID_STATUSES = ["UPCOMING", "ON_PROGRESS", "COMPLETED", "CANCELLED"] as const;
 const PATCHABLE_FIELDS = [
@@ -47,8 +48,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
     }
   }
-  if (data.status !== undefined && !VALID_STATUSES.includes(data.status as (typeof VALID_STATUSES)[number])) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+  if (data.status !== undefined) {
+    if (!VALID_STATUSES.includes(data.status as (typeof VALID_STATUSES)[number])) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+    const fromStatus = existing.status as EventStatus;
+    const toStatus = data.status as EventStatus;
+    if (!canTransitionEvent(fromStatus, toStatus)) {
+      return NextResponse.json(
+        { error: `Cannot transition event status from ${fromStatus} to ${toStatus}` },
+        { status: 400 }
+      );
+    }
   }
 
   const effectiveStartDate = data["startDate"] !== undefined ? (data["startDate"] as Date | null) : existing.startDate;
@@ -59,14 +70,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   if (body?.footage !== undefined && Array.isArray(body.footage)) {
-    const footageData = body.footage
-      .filter((f: any) => f && (f.title || f.filePath))
-      .map((f: any) => ({
+    const rawFootage = body.footage as Array<{
+      title?: unknown;
+      filePath?: unknown;
+      duration?: unknown;
+    }>;
+    const footageData = rawFootage
+      .filter((f) => f && (f.title || f.filePath))
+      .map((f) => ({
         title: String(f.title || "Footage").trim(),
         filePath: String(f.filePath || "").trim(),
         duration: String(f.duration || "").trim(),
       }))
-      .filter((f: any) => f.filePath);
+      .filter((f) => f.filePath);
 
     data["footage"] = {
       deleteMany: {},
