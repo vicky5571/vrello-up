@@ -1,7 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-// @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { buildMousCsv, buildPlacementsCsv, buildPrintHtml, buildReportsCsv, buildTasksCsv, buildTasksPrint, toCsv } from "./exportCenter.ts";
+import {
+  buildMousCsv,
+  buildPlacementsCsv,
+  buildPrintHtml,
+  buildReportsCsv,
+  buildSingleMonthlyReportPrint,
+  buildTasksCsv,
+  buildTasksPrint,
+  toCsv,
+} from "@/lib/productivity/exportCenter";
 
 test("toCsv quotes commas, quotes, and newlines (RFC-4180)", () => {
   const csv = toCsv([
@@ -63,4 +71,59 @@ test("buildTasksPrint summarizes the batch selection", () => {
   ]);
   assert.match(html, /Selected Tasks/);
   assert.ok(html.includes("Fix login"));
+});
+
+test("buildSingleMonthlyReportPrint renders full executive briefing layout", () => {
+  const html = buildSingleMonthlyReportPrint({
+    month: "September",
+    year: 2026,
+    summary: {
+      totalActivities: 12,
+      completionRate: 85,
+      placementsDone: 6,
+      placementsTotal: 8,
+      placementTotalCost: 7500000,
+      mousApproved: 2,
+      mouTotalCompensation: 12000000,
+      eventsCompleted: 2,
+      eventsTotal: 2,
+      eventsTotalAttendees: 1500,
+      contentPublished: 4,
+    },
+    achievements: ["Realisasi POSM mencapai 75% target wilayah"],
+    keyIssues: ["Kendala perizinan neon box di 2 titik"],
+    actionPlans: ["Koordinasi ulang dengan dinas perizinan"],
+    activities: [
+      {
+        type: "PLACEMENT",
+        title: "Neon Box Toko Maju",
+        status: "DONE",
+        date: "2026-09-15",
+        detail: "Biaya: Rp 2.500.000",
+      },
+    ],
+  }, { workspaceName: "Indosat Ooredoo Hutchison" });
+
+  assert.match(html, /Laporan Eksekutif Bulanan/);
+  assert.match(html, /Periode: September 2026/);
+  assert.match(html, /Indosat Ooredoo Hutchison/);
+  assert.match(html, /Realisasi POSM mencapai 75%/);
+  assert.match(html, /Kendala perizinan neon box/);
+  assert.match(html, /Koordinasi ulang dengan dinas perizinan/);
+  assert.match(html, /Neon Box Toko Maju/);
+  assert.match(html, /Disusun Oleh/);
+  assert.match(html, /Disetujui Oleh/);
+});
+
+test("buildSingleMonthlyReportPrint handles minimal or empty dataset gracefully with fallbacks", () => {
+  const html = buildSingleMonthlyReportPrint({
+    month: "Oktober",
+    year: 2026,
+  });
+
+  assert.match(html, /Laporan Eksekutif Bulanan/);
+  assert.match(html, /Periode: Oktober 2026/);
+  assert.match(html, /Belum ada pencapaian operasional yang selesai/);
+  assert.match(html, /Seluruh kegiatan operasional berjalan lancar/);
+  assert.match(html, /Tidak ada rencana tindak lanjut khusus/);
 });

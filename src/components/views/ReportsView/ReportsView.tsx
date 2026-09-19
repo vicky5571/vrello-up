@@ -8,6 +8,7 @@ import {
   Download,
   Layers,
   Plus,
+  Printer,
   RefreshCw,
   Sparkles,
   CheckCircle2,
@@ -18,6 +19,7 @@ import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn } from "@/lib/utils";
 import { summarizeReports } from "@/lib/marcom/analytics";
+import { printSingleMonthlyReport } from "@/lib/productivity/exportCenter";
 import type { ReportDraftResult, DraftActivityItem } from "@/lib/marcom/reportDraftEngine";
 
 const MONTH_OPTIONS = [
@@ -139,6 +141,9 @@ export function ReportsView() {
   const [keyIssuesText, setKeyIssuesText] = useState("");
   const [actionPlansText, setActionPlansText] = useState("");
   const [activitiesList, setActivitiesList] = useState<DraftActivityItem[]>([]);
+  const workspaces = useWorkspaceStore((state) => state.workspaces);
+  const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
+  const [isInstantExporting, setIsInstantExporting] = useState(false);
 
   // Report creation is gated on MANAGE_MASTER_DATA (admin-only, matching
   // the server route). Export stays open to all roles (EXPORT_REPORTS).
@@ -234,6 +239,34 @@ export function ReportsView() {
     }
   };
 
+  const handleInstantExecutiveExport = async () => {
+    setIsInstantExporting(true);
+    try {
+      const activeMonth = month || MONTH_OPTIONS[new Date().getMonth()];
+      const activeYear = Number(year) || new Date().getFullYear();
+
+      const res = await fetch(
+        `/api/marcom/reports/draft?workspaceId=${encodeURIComponent(activeWorkspaceId)}&month=${encodeURIComponent(activeMonth)}&year=${activeYear}`,
+      );
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Gagal menarik data draf (${res.status})`);
+      }
+      const json = await res.json();
+      if (!json.draft) {
+        throw new Error("Draf laporan kosong");
+      }
+      printSingleMonthlyReport(json.draft, {
+        workspaceName: activeWorkspace?.name || "Vrello Marcom Operations",
+      });
+      toast.success(`Membuka Dokumen Eksekutif ${activeMonth} ${activeYear} (Save as PDF)...`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal generate laporan 1-klik");
+    } finally {
+      setIsInstantExporting(false);
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canManage) {
@@ -322,6 +355,16 @@ export function ReportsView() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleInstantExecutiveExport}
+            disabled={isInstantExporting}
+            title="1-Klik tarik data riil & buka cetak PDF Laporan Eksekutif Bulanan"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shadow-xs bg-gradient-to-r from-violet-600 to-indigo-600 border-indigo-500 text-white hover:from-violet-700 hover:to-indigo-700 cursor-pointer disabled:opacity-50"
+          >
+            <Sparkles className={cn("w-3.5 h-3.5", isInstantExporting && "animate-spin")} />
+            <span>{isInstantExporting ? "Menyusun PDF..." : "⚡ 1-Click Executive PDF"}</span>
+          </button>
           <button
             type="button"
             onClick={() => setExportCenterOpen(true)}
@@ -607,15 +650,53 @@ export function ReportsView() {
                         {report.summary?.completionRate ?? 0}%
                       </span>
                     </div>
-                    <ChevronDown
-                      className={cn(
-                        "w-4 h-4 text-slate-400 shrink-0 transition-transform",
-                        isExpanded && "rotate-180",
-                      )}
-                    />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          printSingleMonthlyReport(report, {
+                            workspaceName: activeWorkspace?.name || "Vrello Marcom Operations",
+                          });
+                        }}
+                        title={`Export PDF ${periodLabel(report)}`}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors cursor-pointer shadow-2xs"
+                      >
+                        <Printer className="w-3 h-3 text-rose-500" />
+                        <span>Export PDF</span>
+                      </button>
+                      <ChevronDown
+                        className={cn(
+                          "w-4 h-4 text-slate-400 shrink-0 transition-transform",
+                          isExpanded && "rotate-180",
+                        )}
+                      />
+                    </div>
                   </div>
                   {isExpanded && (
                     <div className="px-4 py-3 bg-slate-50/60 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800/60">
+                      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-3 border-b border-slate-200/60 dark:border-slate-800">
+                        <div>
+                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                            Rincian Dokumen Laporan — {periodLabel(report)}
+                          </span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                            Dokumen resmi siap cetak atau simpan sebagai PDF eksekutif
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            printSingleMonthlyReport(report, {
+                              workspaceName: activeWorkspace?.name || "Vrello Marcom Operations",
+                            })
+                          }
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          <span>Cetak Dokumen Resmi (Save as PDF)</span>
+                        </button>
+                      </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                         <ReportSection title="Activities" items={report.activities ?? []} />
                         <ReportSection title="Achievements" items={report.achievements ?? []} />
