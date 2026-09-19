@@ -59,8 +59,16 @@ const TYPE_STYLES: Record<OutletType, string> = {
 
 export function OutletsView() {
   const { can, role } = useMarcomPermissions();
+  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId } = useWorkspaceStore();
-  const { fetchBranches, setOutlets: setStoreOutlets, branches: storeBranches } = useMarcomDataStore();
+  const {
+    fetchBranches,
+    setOutlets: setStoreOutlets,
+    branches: storeBranches,
+    invalidateOutlets,
+    invalidatePlacements,
+    invalidateMous,
+  } = useMarcomDataStore();
 
   const [viewMode, setViewMode] = useState<"table" | "map">("table");
   const [selectedOutletIdForDrawer, setSelectedOutletIdForDrawer] = useState<string | null>(null);
@@ -416,6 +424,9 @@ export function OutletsView() {
         throw new Error(data.error || `Failed to save outlet (${res.status})`);
       }
       toast.success(`Outlet ${isEdit ? "updated" : "created"} successfully`);
+      invalidateOutlets();
+      invalidatePlacements(activeWorkspaceId);
+      invalidateMous(activeWorkspaceId);
       setModalOutlet(null);
       await fetchOutlets();
     } catch (err) {
@@ -425,10 +436,18 @@ export function OutletsView() {
     }
   };
 
-  const deleteOne = useCallback(async (id: string) => {
-    const res = await fetch(`/api/marcom/outlets/${id}`, { method: "DELETE" });
-    return res.ok;
-  }, []);
+  const deleteOne = useCallback(
+    async (id: string) => {
+      const res = await fetch(`/api/marcom/outlets/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        invalidateOutlets();
+        invalidatePlacements(activeWorkspaceId);
+        invalidateMous(activeWorkspaceId);
+      }
+      return res.ok;
+    },
+    [activeWorkspaceId, invalidateOutlets, invalidatePlacements, invalidateMous],
+  );
 
   const kpiItems = useMemo(() => {
     const kpis = calculateEnhancedOutletKPIs(outlets);

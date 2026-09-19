@@ -87,7 +87,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   );
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
 
-  const { fetchBranches, getCachedEvents, setCachedEvents } = useMarcomDataStore();
+  const { fetchBranches, getCachedEvents, setCachedEvents, invalidateEvents } = useMarcomDataStore();
 
   // Server state
   const cachedEvents = getCachedEvents(activeWorkspaceId);
@@ -192,6 +192,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
       const res = await fetch(`/api/marcom/events/${id}`, { method: "DELETE" });
       if (!res.ok) return false;
       toast.success("Field event deleted");
+      invalidateEvents(activeWorkspaceId);
       if (editingEvent?.id === id) closeFormModal();
       await fetchEvents();
       return true;
@@ -199,7 +200,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
       toast.error("Failed to delete event");
       return false;
     }
-  }, [editingEvent, closeFormModal, fetchEvents]);
+  }, [activeWorkspaceId, editingEvent, closeFormModal, fetchEvents, invalidateEvents]);
 
   // Navigate to linked Board Task
   const navigateToTask = useCallback(
@@ -281,9 +282,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           },
         }
       );
+      invalidateEvents(activeWorkspaceId);
       fetchEvents();
     },
-    [editingEvent, navigateToTask, fetchEvents]
+    [activeWorkspaceId, editingEvent, navigateToTask, fetchEvents, invalidateEvents]
   );
 
   // Filtered Events

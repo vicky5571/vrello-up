@@ -42,6 +42,9 @@ export interface MarcomDataState {
   setBranches: (branches: BranchItem[]) => void;
   setMaterials: (materials: MaterialItem[]) => void;
   setOutlets: (outlets: OutletItem[]) => void;
+  invalidateBranches: () => void;
+  invalidateMaterials: () => void;
+  invalidateOutlets: () => void;
 
   // View cache actions
   getCachedPosts: (workspaceId: string) => ContentPostItem[] | undefined;
@@ -182,6 +185,18 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
 
   setOutlets: (outlets: OutletItem[]) => {
     set({ outlets, isOutletsLoaded: true });
+  },
+
+  invalidateBranches: () => {
+    set({ isBranchesLoaded: false });
+  },
+
+  invalidateMaterials: () => {
+    set({ isMaterialsLoaded: false });
+  },
+
+  invalidateOutlets: () => {
+    set({ isOutletsLoaded: false });
   },
 
   getCachedPosts: (workspaceId: string) => {

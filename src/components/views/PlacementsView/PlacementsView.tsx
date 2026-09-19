@@ -144,6 +144,8 @@ export function PlacementsView() {
     materials: storeMaterials,
     getCachedPlacements,
     setCachedPlacements,
+    invalidatePlacements,
+    invalidateMous,
   } = useMarcomDataStore();
 
   const cachedPlacements = getCachedPlacements(activeWorkspaceId);
@@ -612,6 +614,8 @@ export function PlacementsView() {
         throw new Error(data.error || `Failed to save placement (${res.status})`);
       }
       toast.success(`Placement ${isEdit ? "updated" : "created"} successfully`);
+      invalidatePlacements(activeWorkspaceId);
+      invalidateMous(activeWorkspaceId);
       if (isEdit && id) {
         const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
         syncTaskOnPlacementStatusChange(
@@ -631,10 +635,17 @@ export function PlacementsView() {
     }
   };
 
-  const deleteOne = useCallback(async (id: string) => {
-    const res = await fetch(`/api/marcom/placements/${id}`, { method: "DELETE" });
-    return res.ok;
-  }, []);
+  const deleteOne = useCallback(
+    async (id: string) => {
+      const res = await fetch(`/api/marcom/placements/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        invalidatePlacements(activeWorkspaceId);
+        invalidateMous(activeWorkspaceId);
+      }
+      return res.ok;
+    },
+    [activeWorkspaceId, invalidatePlacements, invalidateMous],
+  );
 
   const viewSwitcherControls = (
     <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">

@@ -98,6 +98,50 @@ describe("useMarcomDataStore", () => {
       useMarcomDataStore.getState().clearError();
       assert.equal(useMarcomDataStore.getState().lastError, null);
     });
+
+    it("invalidates master data caches on demand", () => {
+      const store = useMarcomDataStore.getState();
+      store.setBranches([
+        {
+          id: "b1",
+          code: "B1",
+          name: "Branch 1",
+          region: "R1",
+          city: "C1",
+          picName: "P1",
+          picPhone: "123",
+          address: "A1",
+        },
+      ]);
+      store.setMaterials([{ id: "m1", name: "Mat 1", type: "PERMANENT" }]);
+      store.setOutlets([
+        {
+          id: "o1",
+          code: "O1",
+          name: "Out 1",
+          type: "TRADITIONAL",
+          address: "A1",
+          city: "C1",
+          picName: "P1",
+          picPhone: "123",
+          active: true,
+          branchId: "b1",
+        },
+      ]);
+
+      assert.equal(useMarcomDataStore.getState().isBranchesLoaded, true);
+      assert.equal(useMarcomDataStore.getState().isMaterialsLoaded, true);
+      assert.equal(useMarcomDataStore.getState().isOutletsLoaded, true);
+
+      store.invalidateBranches();
+      assert.equal(useMarcomDataStore.getState().isBranchesLoaded, false);
+
+      store.invalidateMaterials();
+      assert.equal(useMarcomDataStore.getState().isMaterialsLoaded, false);
+
+      store.invalidateOutlets();
+      assert.equal(useMarcomDataStore.getState().isOutletsLoaded, false);
+    });
   });
 
   describe("SWR Content Posts Cache", () => {

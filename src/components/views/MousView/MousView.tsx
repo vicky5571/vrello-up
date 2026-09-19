@@ -81,6 +81,8 @@ export function MousView() {
     outlets: storeOutlets,
     getCachedMous,
     setCachedMous,
+    invalidateMous,
+    invalidatePlacements,
   } = useMarcomDataStore();
 
   const cachedMous = getCachedMous(activeWorkspaceId);
@@ -139,6 +141,8 @@ export function MousView() {
         throw new Error(data.error || `Failed to transition MOU to ${nextStatus}`);
       }
       toast.success(`MOU status updated to ${nextStatus}`);
+      invalidateMous(activeWorkspaceId);
+      invalidatePlacements(activeWorkspaceId);
       if (nextStatus === "APPROVED") {
         const triggered = await useWorkspaceStore.getState().runAutomationsForTrigger("mou:approved", {
           mouId: mou.id,
@@ -493,6 +497,8 @@ export function MousView() {
         throw new Error(data.error || `Failed to save MOU (${res.status})`);
       }
       toast.success(`MOU ${isEdit ? "updated" : "created"} successfully`);
+      invalidateMous(activeWorkspaceId);
+      invalidatePlacements(activeWorkspaceId);
       setModalMou(null);
       setIsBranchDropdownOpen(false);
       setBranchSearch("");
@@ -504,10 +510,17 @@ export function MousView() {
     }
   };
 
-  const deleteOne = useCallback(async (id: string) => {
-    const res = await fetch(`/api/marcom/mous/${id}`, { method: "DELETE" });
-    return res.ok;
-  }, []);
+  const deleteOne = useCallback(
+    async (id: string) => {
+      const res = await fetch(`/api/marcom/mous/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        invalidateMous(activeWorkspaceId);
+        invalidatePlacements(activeWorkspaceId);
+      }
+      return res.ok;
+    },
+    [activeWorkspaceId, invalidateMous, invalidatePlacements],
+  );
 
   const kpiItems = useMemo(() => {
     const activeCount = mous.filter((m) => m.status === "APPROVED").length;
