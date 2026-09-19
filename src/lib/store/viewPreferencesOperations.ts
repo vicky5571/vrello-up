@@ -1,4 +1,4 @@
-import { type ViewPreferences } from "@/types";
+import { type ViewPreferences, type VisibleFields } from "@/types";
 
 export const DEFAULT_VIEW_PREFERENCES: ViewPreferences = {
   density: "standard",
@@ -11,12 +11,17 @@ export const DEFAULT_VIEW_PREFERENCES: ViewPreferences = {
   },
 };
 
+export type ViewPreferencesUpdate = {
+  density?: ViewPreferences["density"];
+  visibleFields?: Partial<VisibleFields>;
+};
+
 /**
  * Pure function to deep-merge view preferences updates.
  */
 export function applyViewPreferences(
   current: ViewPreferences = DEFAULT_VIEW_PREFERENCES,
-  prefs: Partial<ViewPreferences>,
+  prefs: ViewPreferencesUpdate,
 ): ViewPreferences {
   return {
     ...current,

@@ -22,7 +22,23 @@ import {
   type CustomAutomationRule,
 } from "@/types";
 import { generateId } from "@/lib/utils";
-import { reorderSpacesList, moveSpaceDirection } from "@/lib/spaces/spaceOrder";
+import {
+  getSpaceListIds,
+  applyCreateSpace,
+  applyUpdateSpace,
+  applyDeleteSpace,
+  applyReorderSpaces,
+  applyMoveSpace,
+  applyCreateFolder,
+  applyUpdateFolder,
+  applyDeleteFolder,
+  applyCreateList,
+  applyUpdateList,
+  applyDeleteList,
+  applyAddStatusToSpace,
+  applyUpdateSpaceStatus,
+  applyDeleteSpaceStatus,
+} from "@/lib/store/spacesOperations";
 import { switchWorkspace, extractSpaceListIds } from "@/lib/store/workspaceSwitch";
 import {
   buildInitialWorkspace,
@@ -716,21 +732,7 @@ export function findWorkspaceForListId(
 /**
  * Returns all list IDs contained in a space (both top-level and inside folders).
  */
-export function getSpaceListIds(space?: Space | null): string[] {
-  if (!space) return [];
-  const listIds: string[] = [];
-  if (Array.isArray(space.lists)) {
-    for (const l of space.lists) listIds.push(l.id);
-  }
-  if (Array.isArray(space.folders)) {
-    for (const f of space.folders) {
-      if (Array.isArray(f.lists)) {
-        for (const l of f.lists) listIds.push(l.id);
-      }
-    }
-  }
-  return listIds;
-}
+export { getSpaceListIds } from "@/lib/store/spacesOperations";
 
 /**
  * Reconciles client workspaces (from localStorage) with server workspaces (from database)
@@ -1877,468 +1879,209 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       createSpace: (name, icon, color) => {
-        const id = generateId("space");
-        const newSpace: Space = {
-          id,
-          workspaceId: get().activeWorkspaceId,
+        const { workspaces, activeSpaceId, activeListId, newSpace } = applyCreateSpace(
+          get().workspaces,
+          get().activeWorkspaceId,
           name,
           icon,
           color,
-          statuses: DEFAULT_STATUSES,
-          folders: [],
-          lists: [
-            {
-              id: generateId("list"),
-              spaceId: id,
-              name: "General",
-              icon: "List",
-            },
-          ],
-        };
-
-        set((state) => ({
-          workspaces: state.workspaces.map((w) =>
-            w.id === state.activeWorkspaceId
-              ? { ...w, spaces: [...w.spaces, newSpace] }
-              : w,
-          ),
-          activeSpaceId: id,
-          activeListId: newSpace.lists[0].id,
-        }));
+          DEFAULT_STATUSES,
+        );
+        set({ workspaces, activeSpaceId, activeListId });
         syncWorkspaces(get().workspaces);
         return newSpace;
       },
 
       updateSpace: (spaceId, updates) => {
         set((state) => ({
-          workspaces: state.workspaces.map((w) =>
-            w.id === state.activeWorkspaceId
-              ? {
-                  ...w,
-                  spaces: w.spaces.map((s) =>
-                    s.id === spaceId ? { ...s, ...updates } : s,
-                  ),
-                }
-              : w,
-          ),
+          workspaces: applyUpdateSpace(state.workspaces, state.activeWorkspaceId, spaceId, updates),
         }));
         syncWorkspaces(get().workspaces);
       },
 
       deleteSpace: (spaceId) => {
         const state = get();
-        const activeWs = state.workspaces.find(
-          (w) => w.id === state.activeWorkspaceId,
+        const res = applyDeleteSpace(
+          state.workspaces,
+          state.activeWorkspaceId,
+          state.tasks,
+          state.activeSpaceId,
+          state.activeListId,
+          state.selectedTaskId,
+          state.lastSelectedTaskId,
+          state.selectedTaskIds,
+          spaceId,
         );
-        const spaceToDelete = activeWs?.spaces.find((s) => s.id === spaceId);
-        if (!spaceToDelete) return;
-
-        const listIdsToDelete = new Set<string>(getSpaceListIds(spaceToDelete));
-
-        const remainingSpaces =
-          activeWs?.spaces.filter((s) => s.id !== spaceId) || [];
-        const nextSpace = remainingSpaces[0];
-        const nextListId =
-          nextSpace?.lists[0]?.id ||
-          nextSpace?.folders[0]?.lists[0]?.id ||
-          null;
-
-        const tasksToDelete = state.tasks.filter((t) =>
-          listIdsToDelete.has(t.listId),
-        );
-        const deletedTaskIds = new Set(tasksToDelete.map((t) => t.id));
-
-        set((prev) => ({
-          workspaces: prev.workspaces.map((w) =>
-            w.id === prev.activeWorkspaceId
-              ? { ...w, spaces: w.spaces.filter((s) => s.id !== spaceId) }
-              : w,
-          ),
-          tasks: prev.tasks
-            .filter((t) => !listIdsToDelete.has(t.listId))
-            .map((t) =>
-              t.dependencies && t.dependencies.some((depId) => deletedTaskIds.has(depId))
-                ? {
-                    ...t,
-                    dependencies: t.dependencies.filter((depId) => !deletedTaskIds.has(depId)),
-                  }
-                : t,
-            ),
-          selectedTaskId:
-            prev.selectedTaskId && deletedTaskIds.has(prev.selectedTaskId)
-              ? null
-              : prev.selectedTaskId,
-          lastSelectedTaskId:
-            prev.lastSelectedTaskId && deletedTaskIds.has(prev.lastSelectedTaskId)
-              ? null
-              : prev.lastSelectedTaskId,
-          selectedTaskIds: prev.selectedTaskIds.filter((id) => !deletedTaskIds.has(id)),
-          activeSpaceId:
-            prev.activeSpaceId === spaceId
-              ? (nextSpace?.id || "")
-              : prev.activeSpaceId,
-          activeListId:
-            prev.activeSpaceId === spaceId ? nextListId : prev.activeListId,
-        }));
-
-        tasksToDelete.forEach((t) => syncDeleteTask(t.id));
+        set({
+          workspaces: res.workspaces,
+          tasks: res.tasks,
+          activeSpaceId: res.activeSpaceId,
+          activeListId: res.activeListId,
+          selectedTaskId: res.selectedTaskId,
+          lastSelectedTaskId: res.lastSelectedTaskId,
+          selectedTaskIds: res.selectedTaskIds,
+        });
+        res.tasksToDelete.forEach((t) => syncDeleteTask(t.id));
         syncWorkspaces(get().workspaces);
       },
 
       reorderSpaces: (orderedSpaceIds) => {
         set((state) => ({
-          workspaces: state.workspaces.map((w) =>
-            w.id === state.activeWorkspaceId
-              ? { ...w, spaces: reorderSpacesList(w.spaces, orderedSpaceIds) }
-              : w,
-          ),
+          workspaces: applyReorderSpaces(state.workspaces, state.activeWorkspaceId, orderedSpaceIds),
         }));
         syncWorkspaces(get().workspaces);
       },
 
       moveSpace: (spaceId, direction) => {
         set((state) => ({
-          workspaces: state.workspaces.map((w) =>
-            w.id === state.activeWorkspaceId
-              ? { ...w, spaces: moveSpaceDirection(w.spaces, spaceId, direction) }
-              : w,
-          ),
+          workspaces: applyMoveSpace(state.workspaces, state.activeWorkspaceId, spaceId, direction),
         }));
         syncWorkspaces(get().workspaces);
       },
 
       createFolder: (spaceId, name) => {
-        const newFolder: Folder = {
-          id: generateId("folder"),
+        const { workspaces, newFolder } = applyCreateFolder(
+          get().workspaces,
+          get().activeWorkspaceId,
           spaceId,
           name,
-          lists: [],
-        };
-
-        set((state) => ({
-          workspaces: state.workspaces.map((w) => {
-            if (w.id !== state.activeWorkspaceId) return w;
-            return {
-              ...w,
-              spaces: w.spaces.map((s) =>
-                s.id === spaceId
-                  ? { ...s, folders: [...s.folders, newFolder] }
-                  : s,
-              ),
-            };
-          }),
-        }));
+        );
+        set({ workspaces });
         syncWorkspaces(get().workspaces);
         return newFolder;
       },
 
       updateFolder: (spaceId, folderId, name) => {
         set((state) => ({
-          workspaces: state.workspaces.map((w) => {
-            if (w.id !== state.activeWorkspaceId) return w;
-            return {
-              ...w,
-              spaces: w.spaces.map((s) => {
-                if (s.id !== spaceId) return s;
-                return {
-                  ...s,
-                  folders: s.folders.map((f) =>
-                    f.id === folderId ? { ...f, name } : f,
-                  ),
-                };
-              }),
-            };
-          }),
+          workspaces: applyUpdateFolder(
+            state.workspaces,
+            state.activeWorkspaceId,
+            spaceId,
+            folderId,
+            name,
+          ),
         }));
         syncWorkspaces(get().workspaces);
       },
 
       deleteFolder: (spaceId, folderId) => {
         const state = get();
-        const activeWs = state.workspaces.find(
-          (w) => w.id === state.activeWorkspaceId,
+        const res = applyDeleteFolder(
+          state.workspaces,
+          state.activeWorkspaceId,
+          state.tasks,
+          state.activeListId,
+          state.selectedTaskId,
+          state.lastSelectedTaskId,
+          state.selectedTaskIds,
+          spaceId,
+          folderId,
         );
-        const currentSpace = activeWs?.spaces.find((s) => s.id === spaceId);
-        const folderToDelete = currentSpace?.folders.find(
-          (f) => f.id === folderId,
-        );
-        if (!folderToDelete) return;
-
-        const folderListIds = new Set(folderToDelete.lists.map((l) => l.id));
-
-        let nextListId = state.activeListId;
-        if (state.activeListId && folderListIds.has(state.activeListId)) {
-          nextListId =
-            currentSpace?.lists[0]?.id ||
-            currentSpace?.folders.find((f) => f.id !== folderId)?.lists[0]
-              ?.id ||
-            null;
-        }
-
-        const tasksToDelete = state.tasks.filter((t) =>
-          folderListIds.has(t.listId),
-        );
-        const deletedTaskIds = new Set(tasksToDelete.map((t) => t.id));
-
-        set((prev) => ({
-          workspaces: prev.workspaces.map((w) => {
-            if (w.id !== prev.activeWorkspaceId) return w;
-            return {
-              ...w,
-              spaces: w.spaces.map((s) => {
-                if (s.id !== spaceId) return s;
-                return {
-                  ...s,
-                  folders: s.folders.filter((f) => f.id !== folderId),
-                };
-              }),
-            };
-          }),
-          tasks: prev.tasks
-            .filter((t) => !folderListIds.has(t.listId))
-            .map((t) =>
-              t.dependencies && t.dependencies.some((depId) => deletedTaskIds.has(depId))
-                ? {
-                    ...t,
-                    dependencies: t.dependencies.filter((depId) => !deletedTaskIds.has(depId)),
-                  }
-                : t,
-            ),
-          selectedTaskId:
-            prev.selectedTaskId && deletedTaskIds.has(prev.selectedTaskId)
-              ? null
-              : prev.selectedTaskId,
-          lastSelectedTaskId:
-            prev.lastSelectedTaskId && deletedTaskIds.has(prev.lastSelectedTaskId)
-              ? null
-              : prev.lastSelectedTaskId,
-          selectedTaskIds: prev.selectedTaskIds.filter((id) => !deletedTaskIds.has(id)),
-          activeListId: nextListId,
-        }));
-
-        tasksToDelete.forEach((t) => syncDeleteTask(t.id));
+        set({
+          workspaces: res.workspaces,
+          tasks: res.tasks,
+          activeListId: res.activeListId,
+          selectedTaskId: res.selectedTaskId,
+          lastSelectedTaskId: res.lastSelectedTaskId,
+          selectedTaskIds: res.selectedTaskIds,
+        });
+        res.tasksToDelete.forEach((t) => syncDeleteTask(t.id));
         syncWorkspaces(get().workspaces);
       },
 
       createList: (spaceId, name, folderId) => {
-        const newList: List = {
-          id: generateId("list"),
+        const { workspaces, activeListId, newList } = applyCreateList(
+          get().workspaces,
+          get().activeWorkspaceId,
           spaceId,
-          folderId,
           name,
-          icon: "ListTodo",
-        };
-
-        set((state) => ({
-          workspaces: state.workspaces.map((w) => {
-            if (w.id !== state.activeWorkspaceId) return w;
-            return {
-              ...w,
-              spaces: w.spaces.map((s) => {
-                if (s.id !== spaceId) return s;
-                if (folderId) {
-                  return {
-                    ...s,
-                    folders: s.folders.map((f) =>
-                      f.id === folderId
-                        ? { ...f, lists: [...f.lists, newList] }
-                        : f,
-                    ),
-                  };
-                }
-                return { ...s, lists: [...s.lists, newList] };
-              }),
-            };
-          }),
-          activeListId: newList.id,
-        }));
+          folderId,
+        );
+        set({ workspaces, activeListId });
         syncWorkspaces(get().workspaces);
         return newList;
       },
 
       updateList: (spaceId, listId, updates, folderId) => {
         set((state) => ({
-          workspaces: state.workspaces.map((w) => {
-            if (w.id !== state.activeWorkspaceId) return w;
-            return {
-              ...w,
-              spaces: w.spaces.map((s) => {
-                if (s.id !== spaceId) return s;
-                if (folderId) {
-                  return {
-                    ...s,
-                    folders: s.folders.map((f) =>
-                      f.id === folderId
-                        ? {
-                            ...f,
-                            lists: f.lists.map((l) =>
-                              l.id === listId ? { ...l, ...updates } : l,
-                            ),
-                          }
-                        : f,
-                    ),
-                  };
-                }
-                return {
-                  ...s,
-                  lists: s.lists.map((l) =>
-                    l.id === listId ? { ...l, ...updates } : l,
-                  ),
-                };
-              }),
-            };
-          }),
+          workspaces: applyUpdateList(
+            state.workspaces,
+            state.activeWorkspaceId,
+            spaceId,
+            listId,
+            updates,
+            folderId,
+          ),
         }));
         syncWorkspaces(get().workspaces);
       },
 
       deleteList: (spaceId, listId, folderId) => {
         const state = get();
-        const activeWs = state.workspaces.find(
-          (w) => w.id === state.activeWorkspaceId,
+        const res = applyDeleteList(
+          state.workspaces,
+          state.activeWorkspaceId,
+          state.tasks,
+          state.activeListId,
+          state.selectedTaskId,
+          state.lastSelectedTaskId,
+          state.selectedTaskIds,
+          spaceId,
+          listId,
+          folderId,
         );
-        const currentSpace = activeWs?.spaces.find((s) => s.id === spaceId);
-
-        let nextListId = state.activeListId;
-        if (state.activeListId === listId) {
-          const otherDirectLists =
-            currentSpace?.lists.filter((l) => l.id !== listId) || [];
-          const otherFolderLists =
-            currentSpace?.folders
-              .flatMap((f) => f.lists)
-              .filter((l) => l.id !== listId) || [];
-          nextListId = otherDirectLists[0]?.id || otherFolderLists[0]?.id || null;
-        }
-
-        const tasksToDelete = state.tasks.filter((t) => t.listId === listId);
-        const deletedTaskIds = new Set(tasksToDelete.map((t) => t.id));
-
-        set((prev) => ({
-          workspaces: prev.workspaces.map((w) => {
-            if (w.id !== prev.activeWorkspaceId) return w;
-            return {
-              ...w,
-              spaces: w.spaces.map((s) => {
-                if (s.id !== spaceId) return s;
-                if (folderId) {
-                  return {
-                    ...s,
-                    folders: s.folders.map((f) =>
-                      f.id === folderId
-                        ? {
-                            ...f,
-                            lists: f.lists.filter((l) => l.id !== listId),
-                          }
-                        : f,
-                    ),
-                  };
-                }
-                return {
-                  ...s,
-                  lists: s.lists.filter((l) => l.id !== listId),
-                };
-              }),
-            };
-          }),
-          tasks: prev.tasks
-            .filter((t) => t.listId !== listId)
-            .map((t) =>
-              t.dependencies && t.dependencies.some((depId) => deletedTaskIds.has(depId))
-                ? {
-                    ...t,
-                    dependencies: t.dependencies.filter((depId) => !deletedTaskIds.has(depId)),
-                  }
-                : t,
-            ),
-          selectedTaskId:
-            prev.selectedTaskId && deletedTaskIds.has(prev.selectedTaskId)
-              ? null
-              : prev.selectedTaskId,
-          lastSelectedTaskId:
-            prev.lastSelectedTaskId && deletedTaskIds.has(prev.lastSelectedTaskId)
-              ? null
-              : prev.lastSelectedTaskId,
-          selectedTaskIds: prev.selectedTaskIds.filter((id) => !deletedTaskIds.has(id)),
-          activeListId: nextListId,
-        }));
-
-        tasksToDelete.forEach((t) => syncDeleteTask(t.id));
+        set({
+          workspaces: res.workspaces,
+          tasks: res.tasks,
+          activeListId: res.activeListId,
+          selectedTaskId: res.selectedTaskId,
+          lastSelectedTaskId: res.lastSelectedTaskId,
+          selectedTaskIds: res.selectedTaskIds,
+        });
+        res.tasksToDelete.forEach((t) => syncDeleteTask(t.id));
         syncWorkspaces(get().workspaces);
       },
 
       addStatusToSpace: (spaceId, name, color) => {
         set((state) => ({
-          workspaces: state.workspaces.map((w) => {
-            if (w.id !== state.activeWorkspaceId) return w;
-            return {
-              ...w,
-              spaces: w.spaces.map((s) => {
-                if (s.id !== spaceId) return s;
-                const newStatus: Status = {
-                  id: generateId("status"),
-                  name: name.toUpperCase(),
-                  color,
-                  category: "in_progress",
-                  order: s.statuses.length,
-                };
-                return { ...s, statuses: [...s.statuses, newStatus] };
-              }),
-            };
-          }),
+          workspaces: applyAddStatusToSpace(
+            state.workspaces,
+            state.activeWorkspaceId,
+            spaceId,
+            name,
+            color,
+          ),
         }));
         syncWorkspaces(get().workspaces);
       },
 
       updateStatus: (spaceId, statusId, updates) => {
         set((state) => ({
-          workspaces: state.workspaces.map((w) => {
-            if (w.id !== state.activeWorkspaceId) return w;
-            return {
-              ...w,
-              spaces: w.spaces.map((s) => {
-                if (s.id !== spaceId) return s;
-                return {
-                  ...s,
-                  statuses: s.statuses.map((st) =>
-                    st.id === statusId ? { ...st, ...updates } : st,
-                  ),
-                };
-              }),
-            };
-          }),
+          workspaces: applyUpdateSpaceStatus(
+            state.workspaces,
+            state.activeWorkspaceId,
+            spaceId,
+            statusId,
+            updates,
+          ),
         }));
         syncWorkspaces(get().workspaces);
       },
 
       deleteStatus: (spaceId, statusId, fallbackStatusId) => {
         const state = get();
-        const activeWs = state.workspaces.find(
-          (w) => w.id === state.activeWorkspaceId,
+        const res = applyDeleteSpaceStatus(
+          state.workspaces,
+          state.activeWorkspaceId,
+          state.tasks,
+          spaceId,
+          statusId,
+          fallbackStatusId,
         );
-        const currentSpace = activeWs?.spaces.find((s) => s.id === spaceId);
-        const remainingStatuses =
-          currentSpace?.statuses.filter((st) => st.id !== statusId) || [];
-        const fallback =
-          fallbackStatusId || remainingStatuses[0]?.id || "status-todo";
-
-        set((prev) => ({
-          workspaces: prev.workspaces.map((w) => {
-            if (w.id !== prev.activeWorkspaceId) return w;
-            return {
-              ...w,
-              spaces: w.spaces.map((s) => {
-                if (s.id !== spaceId) return s;
-                return {
-                  ...s,
-                  statuses: s.statuses.filter((st) => st.id !== statusId),
-                };
-              }),
-            };
-          }),
-          tasks: prev.tasks.map((t) =>
-            t.statusId === statusId ? { ...t, statusId: fallback } : t,
-          ),
-        }));
+        set({
+          workspaces: res.workspaces,
+          tasks: res.tasks,
+        });
         syncWorkspaces(get().workspaces);
       },
 
