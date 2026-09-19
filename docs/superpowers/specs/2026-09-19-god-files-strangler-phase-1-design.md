@@ -137,3 +137,4 @@ Bertanggung jawab atas hirarki ruang kerja, folder, list, dan status workflow:
 ## 5. Non-Goals (Out of Scope for Phase 1)
 - Memodifikasi UI komponen visual (`PlacementsView.tsx`, `ContentPlannerView.tsx`, `EventFormModal.tsx`). Ini dilakukan pada Fase 2 & 3 setelah E2E harness terpasang.
 - Mengubah skema database Prisma atau REST API routes.
+
