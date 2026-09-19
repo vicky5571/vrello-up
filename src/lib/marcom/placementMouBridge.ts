@@ -159,12 +159,7 @@ export function calculateMouPlacementRealization(
     };
   }
 
-  const hasExplicitMouIds = placements.some(
-    (p) => p.mouId !== undefined && p.mouId !== null,
-  );
-  const linked = hasExplicitMouIds
-    ? placements.filter((p) => p.mouId === mou.id)
-    : placements;
+  const linked = placements.filter((p) => p.mouId === mou.id);
 
   const totalLinked = linked.length;
   let doneCount = 0;
