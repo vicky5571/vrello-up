@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { isPermanentMaterial, findAvailableMousForOutlet, validatePlacementMouRequirement, calculateMouPlacementRealization, type MouSummaryInfo, type PlacementSummaryInfo } from "./placementMouBridge.ts";
 
 test("isPermanentMaterial identifies permanent and temporary materials", () => {
+  // String keyword fallback tests
   assert.equal(isPermanentMaterial("Signboard Toko 3x1"), true);
   assert.equal(isPermanentMaterial("Shopblind Outdoor"), true);
   assert.equal(isPermanentMaterial("Neon Box Utama"), true);
@@ -16,6 +17,23 @@ test("isPermanentMaterial identifies permanent and temporary materials", () => {
   assert.equal(isPermanentMaterial("Tent Card Meja"), false);
   assert.equal(isPermanentMaterial(null), false);
   assert.equal(isPermanentMaterial(undefined), false);
+
+  // String domain type tests
+  assert.equal(isPermanentMaterial("PERMANENT"), true);
+  assert.equal(isPermanentMaterial("TEMPORARY"), false);
+
+  // Explicit object SSOT tests
+  assert.equal(isPermanentMaterial({ type: "PERMANENT", name: "Totem Gate Custom" }), true);
+  assert.equal(isPermanentMaterial({ type: "PERMANENT", name: "Any Custom Name" }), true);
+  
+  // False positive immunity: TEMPORARY type must NOT be fooled by keyword in name
+  assert.equal(isPermanentMaterial({ type: "TEMPORARY", name: "Spanduk Sosialisasi Sewa Gedung" }), false);
+  assert.equal(isPermanentMaterial({ type: "TEMPORARY", name: "Stiker Permanen Anti Air" }), false);
+  assert.equal(isPermanentMaterial({ type: "TEMPORARY", name: "Mini Neon Box Standee" }), false);
+
+  // Fallback to name when type is not provided
+  assert.equal(isPermanentMaterial({ name: "Signboard Toko" }), true);
+  assert.equal(isPermanentMaterial({ name: "Brosur Lipat" }), false);
 });
 
 test("findAvailableMousForOutlet matches by direct outletId and falls back to outletName", () => {
@@ -51,6 +69,15 @@ test("validatePlacementMouRequirement handles temporary materials correctly", ()
   });
   assert.equal(generalWithMou.severity, "success");
   assert.equal(generalWithMou.requiresMou, false);
+
+  // Temporary type with deceptive keyword name must not require MoU
+  const tempWithDeceptiveName = validatePlacementMouRequirement({
+    materialName: "Spanduk Sewa Lapangan",
+    materialType: "TEMPORARY",
+    selectedMou: null,
+  });
+  assert.equal(tempWithDeceptiveName.severity, "none");
+  assert.equal(tempWithDeceptiveName.requiresMou, false);
 });
 
 test("validatePlacementMouRequirement flags permanent materials lacking approved MoUs", () => {

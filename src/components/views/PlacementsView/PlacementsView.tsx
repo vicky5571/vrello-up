@@ -160,9 +160,9 @@ export function PlacementsView() {
       ? storeOutlets.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName }))
       : []
   );
-  const [materialsList, setMaterialsList] = useState<{ id: string; name: string }[]>(() =>
+  const [materialsList, setMaterialsList] = useState<{ id: string; name: string; type?: string }[]>(() =>
     storeMaterials.length > 0
-      ? storeMaterials.map((m) => ({ id: m.id, name: m.name }))
+      ? storeMaterials.map((m) => ({ id: m.id, name: m.name, type: m.type }))
       : []
   );
   const [mousList, setMousList] = useState<MouSummaryInfo[]>([]);
@@ -312,7 +312,7 @@ export function PlacementsView() {
           setOutletsList(outletsData.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName })));
         }
         if (Array.isArray(materialsData) && materialsData.length > 0) {
-          setMaterialsList(materialsData.map((m) => ({ id: m.id, name: m.name })));
+          setMaterialsList(materialsData.map((m) => ({ id: m.id, name: m.name, type: m.type })));
         }
         if (resMous.ok) {
           const jsonMous = await resMous.json();
@@ -451,7 +451,7 @@ export function PlacementsView() {
           cell: ({ row }) => {
             const p = row.original;
             const mou = p.mou;
-            const isPerm = isPermanentMaterial(p.material?.name || p.material?.type);
+            const isPerm = isPermanentMaterial(p.material);
 
             if (mou) {
               const isApproved = mou.status === "APPROVED";
@@ -1137,6 +1137,7 @@ export function PlacementsView() {
                 const selectedMou = mousList.find((m) => m.id === modalPlacement.mouId);
                 const mouValidation = validatePlacementMouRequirement({
                   materialName: selectedMat?.name,
+                  materialType: selectedMat?.type,
                   selectedMou,
                   outletMousCount: outletMous.length,
                 });

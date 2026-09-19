@@ -36,13 +36,41 @@ const PERMANENT_KEYWORDS = [
   "facade",
 ];
 
+export interface MaterialIdentifier {
+  name?: string | null;
+  type?: string | null;
+}
+
 /**
  * Checks if a promotional material is considered permanent / rental branding
  * that requires an active legal MoU agreement.
+ * Prioritizes explicit material.type (PERMANENT vs TEMPORARY) as the Single Source of Truth.
  */
-export function isPermanentMaterial(materialNameOrType?: string | null): boolean {
-  if (!materialNameOrType || typeof materialNameOrType !== "string") return false;
-  const lower = materialNameOrType.trim().toLowerCase();
+export function isPermanentMaterial(
+  material?: MaterialIdentifier | string | null,
+): boolean {
+  if (!material) return false;
+
+  let explicitType: string | undefined;
+  let materialName: string | undefined;
+
+  if (typeof material === "object") {
+    explicitType = material.type?.trim().toUpperCase();
+    materialName = material.name?.trim();
+  } else if (typeof material === "string") {
+    const trimmed = material.trim().toUpperCase();
+    if (trimmed === "PERMANENT") return true;
+    if (trimmed === "TEMPORARY") return false;
+    materialName = material.trim();
+  }
+
+  // 1. Explicit domain type takes absolute precedence (Single Source of Truth)
+  if (explicitType === "PERMANENT") return true;
+  if (explicitType === "TEMPORARY") return false;
+
+  // 2. Fallback heuristic keyword matching on material name (legacy / unclassified items)
+  if (!materialName) return false;
+  const lower = materialName.toLowerCase();
   return PERMANENT_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
@@ -82,8 +110,10 @@ export function validatePlacementMouRequirement(params: {
   selectedMou?: MouSummaryInfo | null;
   outletMousCount?: number;
 }): MouValidationResult {
-  const isPermanent =
-    isPermanentMaterial(params.materialName) || isPermanentMaterial(params.materialType);
+  const isPermanent = isPermanentMaterial({
+    name: params.materialName,
+    type: params.materialType,
+  });
 
   if (!isPermanent) {
     if (params.selectedMou) {
