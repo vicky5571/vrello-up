@@ -3,9 +3,16 @@ export interface MouSummaryInfo {
   partnerName?: string;
   outletId?: string | null;
   outletName?: string;
+  branchId?: string | null;
   status: string;
   mouType?: string;
   compensationValue?: number;
+}
+
+export interface OutletSearchCriteria {
+  id?: string | null;
+  name?: string | null;
+  branchId?: string | null;
 }
 
 export interface PlacementSummaryInfo {
@@ -76,21 +83,54 @@ export function isPermanentMaterial(
 
 /**
  * Finds all MoUs associated with a given outlet, matching by outletId first,
- * or falling back to a normalized outletName match.
+ * or falling back to a normalized outletName match with anti-name-collision guards.
  */
 export function findAvailableMousForOutlet<T extends MouSummaryInfo>(
   mous: T[],
-  outletId?: string | null,
+  outletIdOrCriteria?: string | OutletSearchCriteria | null,
   outletName?: string | null,
+  branchId?: string | null,
 ): T[] {
   if (!Array.isArray(mous) || mous.length === 0) return [];
-  const normalizedName = outletName?.trim().toLowerCase();
+
+  let targetId: string | null | undefined;
+  let targetName: string | null | undefined;
+  let targetBranchId: string | null | undefined;
+
+  if (typeof outletIdOrCriteria === "object" && outletIdOrCriteria !== null) {
+    targetId = outletIdOrCriteria.id;
+    targetName = outletIdOrCriteria.name;
+    targetBranchId = outletIdOrCriteria.branchId;
+  } else {
+    targetId = outletIdOrCriteria;
+    targetName = outletName;
+    targetBranchId = branchId;
+  }
+
+  const normalizedName = targetName?.trim().toLowerCase();
 
   return mous.filter((mou) => {
-    if (outletId && mou.outletId === outletId) return true;
-    if (normalizedName && mou.outletName && mou.outletName.trim().toLowerCase() === normalizedName) {
+    // 1. Direct Primary Key Match (Single Source of Truth)
+    if (targetId && mou.outletId && mou.outletId === targetId) {
       return true;
     }
+
+    // 2. Strict Anti-Collision Guard:
+    // If the MoU is explicitly linked to a specific outlet ID, it belongs exclusively to that outlet.
+    // It must NEVER be matched by another outlet ID or loose name fallback.
+    if (mou.outletId) {
+      return false;
+    }
+
+    // 3. Fallback for unlinked/legacy MoUs (where mou.outletId is null or missing)
+    if (normalizedName && mou.outletName && mou.outletName.trim().toLowerCase() === normalizedName) {
+      // If branch info is present on both, reject if branches differ (e.g. Semarang vs Solo)
+      if (targetBranchId && mou.branchId && targetBranchId !== mou.branchId) {
+        return false;
+      }
+      return true;
+    }
+
     return false;
   });
 }

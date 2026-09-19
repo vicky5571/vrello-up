@@ -155,9 +155,9 @@ export function PlacementsView() {
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedBrand, setSelectedBrand] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<"table" | "map">("table");
-  const [outletsList, setOutletsList] = useState<{ id: string; name: string; brand?: string; picName?: string }[]>(() =>
+  const [outletsList, setOutletsList] = useState<{ id: string; name: string; brand?: string; picName?: string; branchId?: string }[]>(() =>
     storeOutlets.length > 0
-      ? storeOutlets.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName }))
+      ? storeOutlets.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName, branchId: o.branchId }))
       : []
   );
   const [materialsList, setMaterialsList] = useState<{ id: string; name: string; type?: string }[]>(() =>
@@ -309,7 +309,7 @@ export function PlacementsView() {
           setCachedPlacements(activeWorkspaceId, placementsData);
         }
         if (Array.isArray(outletsData) && outletsData.length > 0) {
-          setOutletsList(outletsData.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName })));
+          setOutletsList(outletsData.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName, branchId: o.branchId })));
         }
         if (Array.isArray(materialsData) && materialsData.length > 0) {
           setMaterialsList(materialsData.map((m) => ({ id: m.id, name: m.name, type: m.type })));
@@ -347,7 +347,7 @@ export function PlacementsView() {
     const firstOutlet = outletsList[0];
     const firstOutletId = firstOutlet?.id || "";
     const inherited = findOutletCoordinates(firstOutletId, placements);
-    const matchingMous = findAvailableMousForOutlet(mousList, firstOutletId, firstOutlet?.name);
+    const matchingMous = findAvailableMousForOutlet(mousList, firstOutlet || firstOutletId);
     const defaultMou = matchingMous.find((m) => m.status === "APPROVED") || matchingMous[0];
 
     const brandSuggestion =
@@ -1087,7 +1087,7 @@ export function PlacementsView() {
                           ? "3"
                           : "IM3";
                       const inherited = findOutletCoordinates(selId, placements);
-                      const matchingMous = findAvailableMousForOutlet(mousList, selId, selOutlet?.name);
+                      const matchingMous = findAvailableMousForOutlet(mousList, selOutlet || selId);
                       const defaultMou = matchingMous.find((m) => m.status === "APPROVED") || matchingMous[0];
 
                       setModalPlacement((prev) =>
@@ -1128,10 +1128,10 @@ export function PlacementsView() {
 
               {/* MoU Linking & Legal Compliance Validation */}
               {(() => {
+                const selOutlet = outletsList.find((o) => o.id === modalPlacement.outletId);
                 const outletMous = findAvailableMousForOutlet(
                   mousList,
-                  modalPlacement.outletId,
-                  outletsList.find((o) => o.id === modalPlacement.outletId)?.name,
+                  selOutlet || modalPlacement.outletId,
                 );
                 const selectedMat = materialsList.find((m) => m.id === modalPlacement.materialId);
                 const selectedMou = mousList.find((m) => m.id === modalPlacement.mouId);

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { isPermanentMaterial, findAvailableMousForOutlet, validatePlacementMouRequirement, calculateMouPlacementRealization, type MouSummaryInfo, type PlacementSummaryInfo } from "./placementMouBridge.ts";
+import { isPermanentMaterial, findAvailableMousForOutlet, validatePlacementMouRequirement, calculateMouPlacementRealization, type MouSummaryInfo, type PlacementSummaryInfo, type OutletSearchCriteria } from "./placementMouBridge.ts";
 
 test("isPermanentMaterial identifies permanent and temporary materials", () => {
   // String keyword fallback tests
@@ -47,12 +47,67 @@ test("findAvailableMousForOutlet matches by direct outletId and falls back to ou
   assert.equal(foundById.length, 1);
   assert.equal(foundById[0].id, "mou-1");
 
+  // Supports OutletSearchCriteria object
+  const foundByCriteria = findAvailableMousForOutlet(sampleMous, { id: "outlet-101", name: "Different Name" });
+  assert.equal(foundByCriteria.length, 1);
+  assert.equal(foundByCriteria[0].id, "mou-1");
+
   const foundByName = findAvailableMousForOutlet(sampleMous, "unknown-outlet", " toko makmur ");
   assert.equal(foundByName.length, 1);
   assert.equal(foundByName[0].id, "mou-3");
 
   assert.deepEqual(findAvailableMousForOutlet([], "outlet-999"), []);
   assert.deepEqual(findAvailableMousForOutlet(sampleMous, "outlet-999", "Unknown"), []);
+});
+
+test("findAvailableMousForOutlet enforces anti-name-collision and branch scoping", () => {
+  const mous: MouSummaryInfo[] = [
+    // mou-1 belongs strictly to outlet-smg-1 ("Berkah Cell" in Semarang)
+    {
+      id: "mou-1",
+      outletId: "outlet-smg-1",
+      outletName: "Berkah Cell",
+      branchId: "branch-smg",
+      status: "APPROVED",
+    },
+    // mou-legacy has no outletId, but named "Berkah Cell" in Semarang
+    {
+      id: "mou-legacy",
+      outletId: null,
+      outletName: "Berkah Cell",
+      branchId: "branch-smg",
+      status: "APPROVED",
+    },
+  ];
+
+  // Outlet 2 has the same name "Berkah Cell", but ID is outlet-slo-2 in Solo
+  const outletSolo: OutletSearchCriteria = {
+    id: "outlet-slo-2",
+    name: "Berkah Cell",
+    branchId: "branch-slo",
+  };
+
+  const matchesForSolo = findAvailableMousForOutlet(mous, outletSolo);
+  // mou-1 must NOT match because it belongs to outlet-smg-1 (Anti-collision guard)
+  // mou-legacy must NOT match because branch-slo !== branch-smg (Branch scoping)
+  assert.equal(matchesForSolo.length, 0);
+
+  // Unlinked legacy outlet in Solo without ID
+  const legacySoloWithoutId: OutletSearchCriteria = {
+    name: "Berkah Cell",
+    branchId: "branch-slo",
+  };
+  const matchesForLegacySolo = findAvailableMousForOutlet(mous, legacySoloWithoutId);
+  assert.equal(matchesForLegacySolo.length, 0);
+
+  // Unlinked legacy outlet in Semarang with matching branch
+  const legacySemarang: OutletSearchCriteria = {
+    name: "Berkah Cell",
+    branchId: "branch-smg",
+  };
+  const matchesForSemarang = findAvailableMousForOutlet(mous, legacySemarang);
+  assert.equal(matchesForSemarang.length, 1);
+  assert.equal(matchesForSemarang[0].id, "mou-legacy");
 });
 
 test("validatePlacementMouRequirement handles temporary materials correctly", () => {
