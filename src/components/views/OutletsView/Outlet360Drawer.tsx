@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState, useMemo } from "react";
 import {
@@ -12,14 +13,12 @@ import {
   FileText,
   Calendar,
   Wallet,
-  CheckCircle2,
   Clock,
   Building2,
   Plus,
   RefreshCw,
   Edit2,
   AlertCircle,
-  Eye,
   Maximize2,
   Share2,
   Users,
@@ -116,10 +115,26 @@ export function Outlet360Drawer({
     if (!events.length) return null;
     const validEvents = events.filter((e: any) => e.status !== "CANCELLED");
     const candidates = validEvents.length > 0 ? validEvents : events;
+    const now = Date.now();
     return [...candidates].sort((a: any, b: any) => {
-      const timeA = a.startDate ? new Date(a.startDate).getTime() : Infinity;
-      const timeB = b.startDate ? new Date(b.startDate).getTime() : Infinity;
-      return timeA - timeB;
+      const rawA = a.startDate || a.date;
+      const rawB = b.startDate || b.date;
+      if (!rawA && !rawB) return 0;
+      if (!rawA) return 1;
+      if (!rawB) return -1;
+      const timeA = new Date(rawA).getTime();
+      const timeB = new Date(rawB).getTime();
+      const validA = !Number.isNaN(timeA);
+      const validB = !Number.isNaN(timeB);
+      if (!validA && !validB) return 0;
+      if (!validA) return 1;
+      if (!validB) return -1;
+      const isFutureA = timeA >= now - 86400000;
+      const isFutureB = timeB >= now - 86400000;
+      if (isFutureA && !isFutureB) return -1;
+      if (!isFutureA && isFutureB) return 1;
+      if (isFutureA && isFutureB) return timeA - timeB;
+      return timeB - timeA;
     })[0];
   }, [events]);
 
@@ -130,7 +145,12 @@ export function Outlet360Drawer({
   if (!outletId) return null;
 
   const markerMeta = data ? getOutletMarkerMeta(data) : null;
-  const mapsUrl = data
+  const hasLocation = Boolean(
+    (data?.latitude && data?.longitude) ||
+    data?.address?.trim() ||
+    data?.city?.trim()
+  );
+  const mapsUrl = data && hasLocation
     ? buildGoogleMapsUrl({
         address: data.address,
         city: data.city,

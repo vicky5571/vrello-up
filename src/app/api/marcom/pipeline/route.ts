@@ -27,12 +27,14 @@ export async function GET(request: Request) {
       include: {
         branch: true,
         placements: {
+          where: { workspaceId },
           include: {
             material: true,
             mou: true,
           },
         },
         mous: {
+          where: { workspaceId },
           include: {
             branch: true,
           },
