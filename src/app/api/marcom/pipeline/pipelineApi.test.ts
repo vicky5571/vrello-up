@@ -74,7 +74,7 @@ const mockRows: OutletPipelineRow[] = [
   },
 ];
 
-test("filterPipelineRows: filters by branchId and ignores 'ALL' or empty", () => {
+test("filterPipelineRows: filters by branchId and ignores 'ALL', lowercase 'all', or empty", () => {
   const smgOnly = filterPipelineRows(mockRows, { branchId: "branch-smg" });
   assert.equal(smgOnly.length, 2);
   assert.deepEqual(smgOnly.map((r) => r.id), ["outlet-1", "outlet-4"]);
@@ -82,11 +82,14 @@ test("filterPipelineRows: filters by branchId and ignores 'ALL' or empty", () =>
   const allBranches = filterPipelineRows(mockRows, { branchId: "ALL" });
   assert.equal(allBranches.length, 4);
 
+  const lowercaseAllBranches = filterPipelineRows(mockRows, { branchId: "all" });
+  assert.equal(lowercaseAllBranches.length, 4);
+
   const emptyBranch = filterPipelineRows(mockRows, { branchId: "" });
   assert.equal(emptyBranch.length, 4);
 });
 
-test("filterPipelineRows: filters by tier and ignores 'ALL' or empty", () => {
+test("filterPipelineRows: filters by tier and ignores 'ALL', lowercase 'all', or empty", () => {
   const tier1 = filterPipelineRows(mockRows, { tier: "TIER_1" });
   assert.equal(tier1.length, 2);
   assert.deepEqual(tier1.map((r) => r.id), ["outlet-1", "outlet-3"]);
@@ -97,6 +100,9 @@ test("filterPipelineRows: filters by tier and ignores 'ALL' or empty", () => {
 
   const allTiers = filterPipelineRows(mockRows, { tier: "ALL" });
   assert.equal(allTiers.length, 4);
+
+  const lowercaseAllTiers = filterPipelineRows(mockRows, { tier: "all" });
+  assert.equal(lowercaseAllTiers.length, 4);
 });
 
 test("filterPipelineRows: search query q matches name, code, city, or picName case-insensitively", () => {

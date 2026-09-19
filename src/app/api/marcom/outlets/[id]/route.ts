@@ -43,10 +43,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const eventOr: Prisma.FieldEventWhereInput[] = [];
   if (outlet.branch?.name) {
-    eventOr.push({ branchName: outlet.branch.name });
+    eventOr.push({ branchName: { equals: outlet.branch.name, mode: "insensitive" } });
   }
   if (outlet.name) {
     eventOr.push({ location: { contains: outlet.name, mode: "insensitive" } });
+    eventOr.push({ name: { contains: outlet.name, mode: "insensitive" } });
   }
 
   const [events, contents] = await Promise.all([
@@ -54,6 +55,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       ? prisma.fieldEvent.findMany({
           where: { OR: eventOr },
           orderBy: { startDate: "desc" },
+          take: 50,
           include: { footage: true },
         })
       : Promise.resolve([]),
@@ -63,6 +65,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
             branchName: { equals: outlet.branch.name, mode: "insensitive" },
           },
           orderBy: { publishDate: "desc" },
+          take: 50,
         })
       : Promise.resolve([]),
   ]);

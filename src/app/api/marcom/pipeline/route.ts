@@ -21,12 +21,12 @@ export function filterPipelineRows(
   let result = rows;
 
   const branchId = filters.branchId;
-  if (branchId && branchId !== "ALL") {
+  if (branchId && branchId.toUpperCase() !== "ALL") {
     result = result.filter((row) => row.branch.id === branchId);
   }
 
   const tier = filters.tier;
-  if (tier && tier !== "ALL") {
+  if (tier && tier.toUpperCase() !== "ALL") {
     result = result.filter((row) => row.tier === tier);
   }
 
@@ -53,14 +53,16 @@ export function filterPipelineRows(
 }
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const workspaceId = searchParams.get("workspaceId") || "ws-main";
+
   try {
-    await requireMember("ws-main");
+    await requireMember(workspaceId);
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;
   }
 
-  const { searchParams } = new URL(request.url);
   const branchId = searchParams.get("branchId");
   const tier = searchParams.get("tier");
   const q = searchParams.get("q");
@@ -85,10 +87,12 @@ export async function GET(request: Request) {
       },
     }),
     prisma.fieldEvent.findMany({
+      where: { workspaceId },
       orderBy: { startDate: "asc" },
       include: { footage: true },
     }),
     prisma.contentPost.findMany({
+      where: { workspaceId },
       orderBy: { publishDate: "desc" },
     }),
   ]);
