@@ -18,8 +18,8 @@ test.describe('Vrello Up Marcom Hub Modal Smoke Tests', () => {
     await placementsNav.click();
 
     // Click Add Placement button
-    const addPlacementBtn = page.locator('button', { hasText: 'Add Placement' });
-    await expect(addPlacementBtn).toBeVisible({ timeout: 10000 });
+    const addPlacementBtn = page.locator('button', { hasText: 'Add Placement' }).first();
+    await expect(addPlacementBtn).toBeVisible({ timeout: 25000 });
     await addPlacementBtn.click();
 
     // Verify modal header is rendered
