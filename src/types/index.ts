@@ -165,6 +165,7 @@ export interface Workspace {
 export type AppMode = "tasks" | "marcom";
 
 export type ViewMode =
+  | "pipeline"
   | "home"
   | "list"
   | "board"
@@ -486,4 +487,47 @@ export interface OutletItem {
   latitude?: number | null;
   longitude?: number | null;
 }
+
+export type Outlet = OutletItem;
+
+export interface OutletPipelineRow {
+  id: string;
+  code: string;
+  name: string;
+  type: string;
+  tier: string;
+  city: string;
+  address: string;
+  picName: string;
+  picPhone: string;
+  active: boolean;
+  branch: { id: string; name: string; code: string };
+  mouSummary: {
+    total: number;
+    latestStatus: "APPROVED" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE";
+    compensationValue: number;
+    isHealthy: boolean;
+  };
+  placementSummary: {
+    total: number;
+    doneCount: number;
+    pendingCount: number;
+    totalCost: number;
+    hasBlockedItems: boolean;
+  };
+  eventSummary: {
+    total: number;
+    upcomingCount: number;
+    nearestEventName?: string;
+    nearestEventDate?: string;
+    status?: string;
+  };
+  contentSummary: {
+    total: number;
+    publishedCount: number;
+    inReviewCount: number;
+    latestPlatform?: string;
+  };
+}
+
 
