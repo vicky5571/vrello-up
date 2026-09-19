@@ -11,6 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "test": "node --test --import ./test/register-alias.mjs"
   },
   "dependencies": {
