@@ -69,6 +69,30 @@ test("evaluateMouSla detects MOUs expiring within 30 days", () => {
   assert.equal(result.expiringMous[0].daysLeft, 21);
 });
 
+test("evaluateMouSla detects expired MOUs requiring manual human action (APPROVED past endDate)", () => {
+  const now = new Date("2026-09-19T10:00:00Z");
+
+  const mous = [
+    {
+      id: "mou-expired-active",
+      partnerName: "Partner Expired Still Approved",
+      status: "APPROVED",
+      endDate: "2026-09-10T00:00:00Z", // expired 9 days ago
+    },
+    {
+      id: "mou-done-archived",
+      partnerName: "Partner Finished",
+      status: "DONE",
+      endDate: "2026-09-01T00:00:00Z", // already DONE, no action needed
+    },
+  ];
+
+  const result = evaluateMouSla(mous, now);
+  assert.equal(result.expiredMous.length, 1);
+  assert.equal(result.expiredMous[0].mou.id, "mou-expired-active");
+  assert.ok(result.expiredMous[0].daysExpired >= 9);
+});
+
 test("evaluateContentSla identifies content stuck in IN_REVIEW > 2 days", () => {
   const now = new Date("2026-09-19T10:00:00Z");
 

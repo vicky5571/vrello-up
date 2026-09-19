@@ -40,6 +40,7 @@ export interface EventSlaCandidate {
 export interface MouSlaEvaluation {
   escalatedMous: Array<{ mou: MouSlaCandidate; daysPending: number }>;
   expiringMous: Array<{ mou: MouSlaCandidate; daysLeft: number }>;
+  expiredMous: Array<{ mou: MouSlaCandidate; daysExpired: number }>;
 }
 
 export interface ContentSlaEvaluation {
@@ -55,7 +56,8 @@ const EVENT_LEAD_TIME_DAYS = 3;
 /**
  * Evaluates MOUs for:
  * 1. SLA Breach: Sitting in SUBMITTED for > 3 days.
- * 2. Expiry Watchdog: APPROVED/DONE with end date within 30 days.
+ * 2. Expiry Watchdog: APPROVED with end date within 30 days.
+ * 3. Expired: APPROVED with end date in the past (requires manual human action: renew or mark done).
  */
 export function evaluateMouSla(
   mous: MouSlaCandidate[],
@@ -64,6 +66,7 @@ export function evaluateMouSla(
   const nowMs = now.getTime();
   const escalatedMous: MouSlaEvaluation["escalatedMous"] = [];
   const expiringMous: MouSlaEvaluation["expiringMous"] = [];
+  const expiredMous: MouSlaEvaluation["expiredMous"] = [];
 
   for (const mou of mous) {
     // 1. Check SUBMITTED > 3 days
@@ -80,20 +83,22 @@ export function evaluateMouSla(
       }
     }
 
-    // 2. Check Expiry within 30 days
+    // 2. Check Expiry within 30 days & Already Expired
     if ((mou.status === "APPROVED" || mou.status === "DONE") && mou.endDate) {
       const endMs = new Date(mou.endDate).getTime();
       if (!isNaN(endMs)) {
         const diffMs = endMs - nowMs;
         const daysLeft = Math.ceil(diffMs / MS_PER_DAY);
-        if (daysLeft > 0 && daysLeft <= MOU_EXPIRING_DAYS) {
+        if (daysLeft <= 0 && mou.status !== "DONE") {
+          expiredMous.push({ mou, daysExpired: Math.abs(daysLeft) });
+        } else if (daysLeft > 0 && daysLeft <= MOU_EXPIRING_DAYS) {
           expiringMous.push({ mou, daysLeft });
         }
       }
     }
   }
 
-  return { escalatedMous, expiringMous };
+  return { escalatedMous, expiringMous, expiredMous };
 }
 
 /**

@@ -197,6 +197,19 @@ export async function checkExpiringMous(): Promise<number> {
       }
     }
 
+    // 3. Alert on MOUs that are already Expired (endDate < now and not DONE)
+    for (const item of evaluation.expiredMous) {
+      const alertKey = `sla:mou:expired:${item.mou.id}`;
+      if (!isAlertNotified(alertKey)) {
+        markAlertNotified(alertKey);
+        toast.error(
+          `MOU Expired: Kerjasama dengan "${item.mou.partnerName}" telah kadaluwarsa (${item.daysExpired} hari lalu). Silakan ambil tindakan manual: perpanjang (Renew) atau tandai selesai (Mark Done).`,
+          { id: alertKey, duration: 7000 },
+        );
+        alertedCount++;
+      }
+    }
+
     return alertedCount;
   } catch {
     return 0;
