@@ -1,56 +1,9 @@
 import { prisma } from "@/lib/marcom/db";
 import { requireMember } from "@/lib/marcom/auth";
-import { buildOutletPipelineRows } from "@/lib/marcom/pipelineEngine";
-import type { OutletPipelineRow } from "@/lib/marcom/pipelineEngine";
-
-export interface PipelineFilterParams {
-  q?: string | null;
-  branchId?: string | null;
-  tier?: string | null;
-  bottleneckOnly?: boolean | string | null;
-}
-
-/**
- * Pure filter helper for pipeline rows.
- * Supports filtering by branch, tier, search query (name, code, city, picName), and bottleneck flag.
- */
-export function filterPipelineRows(
-  rows: OutletPipelineRow[],
-  filters: PipelineFilterParams
-): OutletPipelineRow[] {
-  let result = rows;
-
-  const branchId = filters.branchId;
-  if (branchId && branchId.toUpperCase() !== "ALL") {
-    result = result.filter((row) => row.branch.id === branchId);
-  }
-
-  const tier = filters.tier;
-  if (tier && tier.toUpperCase() !== "ALL") {
-    result = result.filter((row) => row.tier === tier);
-  }
-
-  const query = filters.q?.trim().toLowerCase();
-  if (query) {
-    result = result.filter(
-      (row) =>
-        (row.name && row.name.toLowerCase().includes(query)) ||
-        (row.code && row.code.toLowerCase().includes(query)) ||
-        (row.city && row.city.toLowerCase().includes(query)) ||
-        (row.picName && row.picName.toLowerCase().includes(query))
-    );
-  }
-
-  const isBottleneck =
-    filters.bottleneckOnly === true ||
-    filters.bottleneckOnly === "true" ||
-    filters.bottleneckOnly === "1";
-  if (isBottleneck) {
-    result = result.filter((row) => row.placementSummary.hasBlockedItems === true);
-  }
-
-  return result;
-}
+import {
+  buildOutletPipelineRows,
+  filterPipelineRows,
+} from "@/lib/marcom/pipelineEngine";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

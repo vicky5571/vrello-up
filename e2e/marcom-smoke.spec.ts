@@ -109,4 +109,76 @@ test.describe('Vrello Up Marcom Hub Modal Smoke Tests', () => {
     // Verify modal is dismissed
     await expect(modalHeading).not.toBeVisible();
   });
+
+  test('should navigate to Pipeline 360°, verify responsive desktop/mobile viewports, and open Outlet 360° drawer', async ({ page }) => {
+    // 1. Switch to Pipeline 360° view
+    const pipelineNav = page.locator('button', { hasText: 'Pipeline 360°' }).first();
+    await expect(pipelineNav).toBeVisible({ timeout: 15000 });
+    await pipelineNav.click();
+
+    // Verify Pipeline View header and badge are rendered
+    const heading = page.locator('h1', { hasText: 'Pipeline Operasional Outlet' });
+    await expect(heading).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('span', { hasText: 'Cockpit 360°' }).first()).toBeVisible();
+
+    // 2. Set desktop viewport (1280x800) and verify Desktop Matrix Table is visible
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const desktopTable = page.locator('.hidden.md\\:block table');
+    const mobileCards = page.locator('.block.md\\:hidden');
+
+    await expect(desktopTable).toBeVisible({ timeout: 15000 });
+    await expect(mobileCards).not.toBeVisible();
+
+    // Verify matrix table column headers
+    await expect(desktopTable.locator('th', { hasText: 'Outlet & Lokasi' })).toBeVisible();
+    await expect(desktopTable.locator('th', { hasText: '1. Legal MoU' })).toBeVisible();
+    await expect(desktopTable.locator('th', { hasText: '2. POSM Placements' })).toBeVisible();
+    await expect(desktopTable.locator('th', { hasText: '3. Field Events' })).toBeVisible();
+    await expect(desktopTable.locator('th', { hasText: '4. Konten Media' })).toBeVisible();
+
+    // 3. Resize to mobile viewport (375x667) and verify Cockpit Card list is visible while desktop table is hidden
+    await page.setViewportSize({ width: 375, height: 667 });
+    await expect(desktopTable).not.toBeVisible();
+    await expect(mobileCards).toBeVisible({ timeout: 10000 });
+
+    // 4. Return to desktop viewport (1280x800) and click an outlet row to trigger Outlet 360° Drawer
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(desktopTable).toBeVisible({ timeout: 10000 });
+
+    // Wait for at least one outlet row to appear and click it
+    const firstRow = desktopTable.locator('tbody tr').first();
+    await expect(firstRow).toBeVisible({ timeout: 15000 });
+    await firstRow.click();
+
+    // Verify Outlet360Drawer is open with all tabs
+    const drawer = page.locator('.fixed.inset-y-0.right-0');
+    await expect(drawer).toBeVisible({ timeout: 15000 });
+
+    const overviewTab = drawer.locator('button', { hasText: 'Overview' });
+    const placementsTab = drawer.locator('button', { hasText: /Placements/i });
+    const mousTab = drawer.locator('button', { hasText: /MoUs/i });
+    const eventsTab = drawer.locator('button', { hasText: /Field Events/i });
+    const contentTab = drawer.locator('button', { hasText: /Konten Media/i });
+
+    await expect(overviewTab).toBeVisible({ timeout: 10000 });
+    await expect(placementsTab).toBeVisible();
+    await expect(mousTab).toBeVisible();
+    await expect(eventsTab).toBeVisible();
+    await expect(contentTab).toBeVisible();
+
+    // Switch to Events tab and Content tab
+    await eventsTab.click();
+    await expect(eventsTab).toHaveClass(/border-lime-600/);
+
+    await contentTab.click();
+    await expect(contentTab).toHaveClass(/border-lime-600/);
+
+    // Close the drawer
+    const closeBtn = drawer.locator('button:has(svg.lucide-x)');
+    await expect(closeBtn).toBeVisible();
+    await closeBtn.click();
+
+    // Verify drawer is closed
+    await expect(drawer).not.toBeVisible();
+  });
 });

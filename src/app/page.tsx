@@ -46,6 +46,11 @@ const GanttView = dynamic(
     import("@/components/views/GanttView/GanttView").then((m) => m.GanttView),
   { ssr: false, loading: () => <ViewFallback /> },
 );
+const PipelineView = dynamic(
+  () =>
+    import("@/components/views/PipelineView").then((m) => m.PipelineView),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
 const BranchesView = dynamic(
   () =>
     import("@/components/views/BranchesView/BranchesView").then(
@@ -298,6 +303,18 @@ export default function WorkspacePage() {
               </motion.div>
             )}
 
+            {activeView === "pipeline" && (
+              <motion.div
+                key="pipeline-view"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.08 }}
+                className="h-full w-full"
+              >
+                <PipelineView />
+              </motion.div>
+            )}
 
             {activeView === "branches" && (
               <motion.div

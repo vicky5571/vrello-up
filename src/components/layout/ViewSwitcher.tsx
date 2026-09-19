@@ -18,9 +18,9 @@ import {
   BarChart3,
   TrendingUp,
   Plus,
-  Megaphone,
   Sparkles,
   Flag,
+  Layers,
   LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,7 @@ const VIEWS: ViewTabItem[] = [
 ];
 
 export const WORK_ITEM_VIEWS: ViewTabItem[] = [
+  { id: "pipeline", label: "Pipeline 360°", icon: Layers, iconColor: "text-indigo-500", isAvailable: true },
   { id: "content-planner", label: "Content Planner", icon: Sparkles, iconColor: "text-pink-500", isAvailable: true },
   { id: "events", label: "Field Events", icon: Flag, iconColor: "text-blue-500", isAvailable: true },
   { id: "placements", label: "Placements", icon: ClipboardList, iconColor: "text-lime-500", isAvailable: true },

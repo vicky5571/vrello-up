@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import type { OutletPipelineRow } from "@/lib/marcom/pipelineEngine";
-import { filterPipelineRows } from "@/app/api/marcom/pipeline/route";
+import {
+  filterPipelineRows,
+  type OutletPipelineRow,
+} from "@/lib/marcom/pipelineEngine";
 
 const mockRows: OutletPipelineRow[] = [
   {
