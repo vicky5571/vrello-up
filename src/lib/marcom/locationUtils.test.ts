@@ -54,4 +54,17 @@ describe("locationUtils", () => {
       "https://www.google.com/maps/search/?api=1&query=-6.208763,106.845599",
     );
   });
+
+  it("builds valid Google Maps link from object params with coordinates", () => {
+    const link = buildGoogleMapsUrl({ latitude: -6.208763, longitude: 106.845599 });
+    assert.equal(link, "https://www.google.com/maps/search/?api=1&query=-6.208763,106.845599");
+  });
+
+  it("builds valid Google Maps link from object params with address fallback", () => {
+    const link = buildGoogleMapsUrl({ address: "Jl. Sudirman No. 1", city: "Jakarta" });
+    assert.equal(
+      link,
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("Jl. Sudirman No. 1, Jakarta")}`
+    );
+  });
 });

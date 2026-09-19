@@ -59,6 +59,34 @@ export function parseGoogleMapsUrl(url: string): Coordinates | null {
   return parseCoordinatesFromText(trimmed);
 }
 
-export function buildGoogleMapsUrl(lat: number, lng: number): string {
-  return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+export interface GoogleMapsLocationParams {
+  address?: string | null;
+  city?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export function buildGoogleMapsUrl(lat: number, lng: number): string;
+export function buildGoogleMapsUrl(params: GoogleMapsLocationParams): string;
+export function buildGoogleMapsUrl(
+  latOrParams: number | GoogleMapsLocationParams,
+  lng?: number
+): string {
+  if (typeof latOrParams === "object" && latOrParams !== null) {
+    const lat = latOrParams.latitude;
+    const lon = latOrParams.longitude;
+    if (
+      typeof lat === "number" &&
+      typeof lon === "number" &&
+      isValidCoordinate(lat, lon)
+    ) {
+      return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+    }
+    const query = [latOrParams.address, latOrParams.city].filter(Boolean).join(", ").trim();
+    if (query) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    }
+    return "https://www.google.com/maps";
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${latOrParams},${lng}`;
 }
