@@ -37,6 +37,10 @@ import {
   applyEmptyTrash,
   applyPurgeExpiredTrash,
 } from "@/lib/store/trashOperations";
+import {
+  DEFAULT_VIEW_PREFERENCES,
+  applyViewPreferences,
+} from "@/lib/store/viewPreferencesOperations";
 import { syncFieldEventOnTaskStatusChange } from "@/lib/tasks/eventTaskSync";
 import { syncPlacementOnTaskStatusChange } from "@/lib/tasks/placementTaskSync";
 
@@ -107,16 +111,7 @@ export const SEED_TAGS: Tag[] = [
   { id: "tag-security", name: "Security", color: "#EF4444" },
 ];
 
-export const DEFAULT_VIEW_PREFERENCES: ViewPreferences = {
-  density: "standard",
-  visibleFields: {
-    assignees: true,
-    priority: true,
-    dueDate: true,
-    tags: true,
-    subtasks: true,
-  },
-};
+export { DEFAULT_VIEW_PREFERENCES } from "@/lib/store/viewPreferencesOperations";
 
 const INITIAL_SPACES: Space[] = [
   {
@@ -1300,14 +1295,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }),
       setViewPreferences: (prefs) =>
         set((state) => ({
-          viewPreferences: {
-            ...state.viewPreferences,
-            ...prefs,
-            visibleFields: {
-              ...state.viewPreferences.visibleFields,
-              ...prefs.visibleFields,
-            },
-          },
+          viewPreferences: applyViewPreferences(state.viewPreferences, prefs),
         })),
       resetViewPreferences: () =>
         set({ viewPreferences: DEFAULT_VIEW_PREFERENCES }),
