@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDropdown } from "@/components/ui/useDropdown";
-import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins, X, Layers, AlertTriangle } from "lucide-react";
+import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins, X, Layers, AlertTriangle, ShieldAlert } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
@@ -291,7 +291,14 @@ export function MousView() {
             );
             return (
               <div className="flex flex-col items-start gap-1">
-                <span className={cn("inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold", STATUS_STYLES[row.original.status] ?? STATUS_STYLES.DRAFT)}>
+                <span
+                  className={cn("inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold", STATUS_STYLES[row.original.status] ?? STATUS_STYLES.DRAFT)}
+                  title={
+                    row.original.status === "SUBMITTED" && !can("APPROVE_MOU", row.original.branchId)
+                      ? "Menunggu persetujuan Admin atau PIC Cabang terkait"
+                      : undefined
+                  }
+                >
                   {row.original.status.replaceAll("_", " ")}
                 </span>
                 {isExpired && (
@@ -755,11 +762,28 @@ export function MousView() {
                     <span>Submit for Approval</span>
                   </button>
                 )}
-                {mou.status === "SUBMITTED" && can("APPROVE_MOU", mou.branchId) && (
-                  <button type="button" onClick={(e) => { e.stopPropagation(); handleStatusTransition(mou, "APPROVED"); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Approve MOU</span>
-                  </button>
+                {mou.status === "SUBMITTED" && (
+                  can("APPROVE_MOU", mou.branchId) ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStatusTransition(mou, "APPROVED");
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer"
+                    >
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Approve MOU</span>
+                    </button>
+                  ) : (
+                    <span
+                      title="Persetujuan MOU memerlukan wewenang Admin atau PIC resmi Cabang terkait (userBranchIds). Hubungi Admin untuk penugasan cabang."
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-amber-800 dark:text-amber-300 bg-amber-500/10 border border-amber-500/20 cursor-help select-none"
+                    >
+                      <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span>Perlu Approval PIC / Admin</span>
+                    </span>
+                  )
                 )}
                 {mou.status === "APPROVED" && can("CREATE_MOU", mou.branchId) && (
                   <button type="button" onClick={(e) => { e.stopPropagation(); handleStatusTransition(mou, "DONE"); }} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-colors shadow-2xs cursor-pointer">

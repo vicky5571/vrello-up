@@ -78,7 +78,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         const userBranchIds = auth.assignedBranchIds ?? [];
         if (!userBranchIds.includes(existing.branchId)) {
           return NextResponse.json(
-            { error: "Forbidden: PIC cannot approve or reject MOU outside assigned branch" },
+            {
+              error:
+                "Forbidden: Persetujuan MOU memerlukan wewenang Admin atau PIC resmi Cabang terkait (hubungi Admin untuk penugasan cabang)",
+            },
             { status: 403 },
           );
         }

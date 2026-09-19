@@ -61,6 +61,9 @@ export function hasScopedPermission(ctx: ScopedPermissionContext): boolean {
   }
 
   // APPROVE_MOU: requires targetBranchId and targetBranchId must be in userBranchIds
+  // Four-Eyes Principle / Segregation of Duties: MOU is a legally and financially binding agreement.
+  // Approval requires Admin role or explicitly designated Branch PICs (targetBranchId in userBranchIds).
+  // Staff without branch assignment can view & create, but cannot approve without branch assignment.
   if (action === "APPROVE_MOU") {
     if (!targetBranchId) return false;
     if (userBranchIds.length > 0) {
