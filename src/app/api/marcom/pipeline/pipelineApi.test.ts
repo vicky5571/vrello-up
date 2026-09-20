@@ -210,3 +210,35 @@ test("filterPipelineRows: handles edge cases like empty rows, undefined fields g
   const matchCity = filterPipelineRows(sparseRows, { q: "jakarta" });
   assert.equal(matchCity.length, 0);
 });
+
+test("pipeline GET route handler: executes with SQL pushdown for branchId, tier, and q", async () => {
+  // @ts-expect-error Node strip-types runner requires explicit extension
+  const { GET } = await import("./route.ts");
+
+  // Test with branch-1 filter
+  const reqBranch = new Request("http://localhost:3000/api/marcom/pipeline?workspaceId=ws-main&branchId=branch-1");
+  const resBranch = await GET(reqBranch);
+  assert.equal(resBranch.status, 200);
+  const jsonBranch = await resBranch.json();
+  assert.ok(jsonBranch.total > 0);
+  assert.ok(jsonBranch.data.every((r: OutletPipelineRow) => r.branch?.id === "branch-1"));
+
+  // Test with q search filter
+  const reqSearch = new Request("http://localhost:3000/api/marcom/pipeline?workspaceId=ws-main&q=Berkah");
+  const resSearch = await GET(reqSearch);
+  assert.equal(resSearch.status, 200);
+  const jsonSearch = await resSearch.json();
+  assert.ok(jsonSearch.total > 0);
+  assert.ok(jsonSearch.data.every((r: OutletPipelineRow) =>
+    r.name.toLowerCase().includes("berkah") ||
+    r.city.toLowerCase().includes("berkah") ||
+    r.code.toLowerCase().includes("berkah")
+  ));
+
+  // Test with 'ALL' branch and 'ALL' tier (returns full dataset without SQL filtering)
+  const reqAll = new Request("http://localhost:3000/api/marcom/pipeline?workspaceId=ws-main&branchId=ALL&tier=ALL");
+  const resAll = await GET(reqAll);
+  assert.equal(resAll.status, 200);
+  const jsonAll = await resAll.json();
+  assert.ok(jsonAll.total >= jsonBranch.total);
+});
