@@ -152,6 +152,8 @@ model Placement {
 
   @@index([workspaceId])
   @@index([mouId])
+  @@index([outletId])
+  @@index([materialId])
 }
 
 model Mou {
@@ -179,6 +181,7 @@ model Mou {
 
   @@index([workspaceId])
   @@index([outletId])
+  @@index([branchId])
 }
 
 model ContentPost {
@@ -306,6 +309,8 @@ model SpaceItem {
   lists       ListItem[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+
+  @@index([workspaceId])
 }
 
 model FolderItem {
@@ -316,6 +321,8 @@ model FolderItem {
   lists     ListItem[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+
+  @@index([spaceId])
 }
 
 model ListItem {
@@ -330,6 +337,9 @@ model ListItem {
   tasks     TaskItem[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+
+  @@index([spaceId])
+  @@index([folderId])
 }
 
 model TaskItem {
@@ -357,6 +367,13 @@ model TaskItem {
   comments        TaskCommentItem[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+
+  @@index([listId])
+  @@index([statusId])
+  @@index([listId, statusId])
+  @@index([listId, orderIndex])
+  @@index([relatedMarcomId])
+  @@index([dueDate])
 }
 
 model TaskCommentItem {
@@ -368,4 +385,8 @@ model TaskCommentItem {
   content     String
   attachments Json     @default("[]")
   createdAt   DateTime @default(now())
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([createdAt])
 }
