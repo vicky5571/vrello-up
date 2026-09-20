@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sparkles,
   X,
@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Copy,
   RefreshCw,
+  Store,
 } from "lucide-react";
 import { toast } from "sonner";
 import type {
@@ -21,6 +22,12 @@ export interface FlatSpaceItem {
   id: string;
   name: string;
   lists: { id: string; name: string }[];
+}
+
+export interface OutletOption {
+  id: string;
+  name: string;
+  code?: string;
 }
 
 export interface ContentPostModalProps {
@@ -51,6 +58,8 @@ export interface ContentPostModalProps {
   mediaUrl: string;
   setMediaUrl: (val: string) => void;
   onOpenDriveSelector: () => void;
+  outletId?: string;
+  setOutletId?: (val: string) => void;
 }
 
 export function ContentPostModal({
@@ -81,7 +90,22 @@ export function ContentPostModal({
   mediaUrl,
   setMediaUrl,
   onOpenDriveSelector,
+  outletId,
+  setOutletId,
 }: ContentPostModalProps) {
+  const [outlets, setOutlets] = useState<OutletOption[]>([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/marcom/outlets")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((json) => {
+        if (Array.isArray(json)) setOutlets(json);
+        else if (json && Array.isArray(json.data)) setOutlets(json.data);
+      })
+      .catch(() => {});
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const currentSpace = flatSpaces.find((s) => s.id === targetSpaceId);
@@ -253,6 +277,37 @@ export function ContentPostModal({
                 <option value="ARCHIVED">ARCHIVED (Diarsipkan)</option>
               </select>
             </div>
+          </div>
+
+          {/* Associated Outlet (Optional) */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Store className="w-3.5 h-3.5 text-pink-500" />
+                <span>Associated Outlet (Optional)</span>
+              </span>
+              {outletId && setOutletId && (
+                <button
+                  type="button"
+                  onClick={() => setOutletId("")}
+                  className="text-[10px] text-rose-500 hover:underline font-normal cursor-pointer"
+                >
+                  Clear link
+                </button>
+              )}
+            </label>
+            <select
+              value={outletId || ""}
+              onChange={(e) => setOutletId?.(e.target.value)}
+              className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
+            >
+              <option value="">-- None (Brand / General Social Post) --</option>
+              {outlets.map((o: OutletOption) => (
+                <option key={o.id} value={o.id}>
+                  {o.code ? `[${o.code}] ` : ""}{o.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Revision Notes / Feedback */}

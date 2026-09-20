@@ -114,6 +114,8 @@ model Outlet {
   branch     Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
   placements Placement[]
   mous       Mou[]
+  events     FieldEvent[]
+  posts      ContentPost[]
 }
 
 model Material {
@@ -193,6 +195,8 @@ model ContentPost {
   picName       String        @default("")
   revisionNotes String        @default("")
   subtasks      Json          @default("[]")
+  outletId      String?
+  outlet        Outlet?       @relation(fields: [outletId], references: [id], onDelete: SetNull)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -200,6 +204,7 @@ model ContentPost {
   @@index([platform])
   @@index([status])
   @@index([publishDate])
+  @@index([outletId])
 }
 
 model FieldEvent {
@@ -218,6 +223,8 @@ model FieldEvent {
   targetAttendee Int            @default(0)
   attendeeCount  Int            @default(0)
   notes          String         @default("")
+  outletId       String?
+  outlet         Outlet?        @relation(fields: [outletId], references: [id], onDelete: SetNull)
   footage        EventFootage[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -226,6 +233,7 @@ model FieldEvent {
   @@index([status])
   @@index([startDate])
   @@index([branchName])
+  @@index([outletId])
 }
 model EventFootage {
   id       String     @id @default(cuid())

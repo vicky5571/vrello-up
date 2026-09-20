@@ -7,6 +7,7 @@ const VALID_STATUSES = ["UPCOMING", "ON_PROGRESS", "COMPLETED", "CANCELLED"] as 
 
 const eventInclude = {
   footage: true,
+  outlet: { select: { id: true, code: true, name: true } },
 } as const;
 
 export async function GET(request: Request) {
@@ -70,6 +71,7 @@ export async function POST(request: Request) {
     targetAttendee,
     notes,
     footage,
+    outletId,
   } = body ?? {};
 
   if (!name || !eventType) {
@@ -111,6 +113,7 @@ export async function POST(request: Request) {
       attendeeCount,
       targetAttendee,
       notes,
+      outletId: outletId || null,
       ...(footageData.length > 0 ? { footage: { create: footageData } } : {}),
     },
     include: eventInclude,

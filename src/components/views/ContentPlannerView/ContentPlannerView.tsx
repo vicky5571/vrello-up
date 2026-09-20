@@ -156,6 +156,7 @@ export function ContentPlannerView() {
   const [priority, setPriority] = useState<Priority>("normal");
   const [branchName, setBranchName] = useState("");
   const [caption, setCaption] = useState("");
+  const [outletId, setOutletId] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
   const [revisionNotes, setRevisionNotes] = useState("");
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
@@ -287,6 +288,7 @@ export function ContentPlannerView() {
     setPriority("normal");
     setBranchName(branches[0]?.name || "");
     setCaption("");
+    setOutletId("");
     setMediaUrl("");
     setRevisionNotes("");
     setAssigneeIds(members[0] ? [members[0].id] : []);
@@ -336,6 +338,7 @@ export function ContentPlannerView() {
           : undefined,
         revisionNotes: revisionNotes.trim(),
         subtasks: postSubtasks,
+        outletId: outletId || null,
         workspaceId: activeWorkspaceId,
       };
 
@@ -1240,6 +1243,8 @@ export function ContentPlannerView() {
         setRevisionNotes={setRevisionNotes}
         caption={caption}
         setCaption={setCaption}
+        outletId={outletId}
+        setOutletId={setOutletId}
         mediaUrl={mediaUrl}
         setMediaUrl={setMediaUrl}
         onOpenDriveSelector={() =>

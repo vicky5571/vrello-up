@@ -207,6 +207,8 @@ export interface ContentPostItem {
   picName?: string;
   revisionNotes?: string;
   subtasks?: { id: string; title: string; completed?: boolean }[];
+  outletId?: string | null;
+  outlet?: { id: string; name: string; code: string } | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -242,6 +244,8 @@ export interface FieldEventItem {
   date?: string | null;
   mediaUrl?: string | null;
   footage?: EventFootage[];
+  outletId?: string | null;
+  outlet?: { id: string; name: string; code: string } | null;
   createdAt?: string;
   updatedAt?: string;
 }

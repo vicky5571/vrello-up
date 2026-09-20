@@ -19,10 +19,12 @@ const PATCHABLE_FIELDS = [
   "attendeeCount",
   "targetAttendee",
   "notes",
+  "outletId",
 ] as const;
 
 const eventInclude = {
   footage: true,
+  outlet: { select: { id: true, code: true, name: true } },
 } as const;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

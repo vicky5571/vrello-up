@@ -68,6 +68,7 @@ export async function GET(request: Request) {
 
   const normalizedEvents = events.map((e) => ({
     id: e.id,
+    outletId: e.outletId ?? undefined,
     name: e.name,
     branchName: e.branchName,
     location: e.location,
@@ -78,6 +79,7 @@ export async function GET(request: Request) {
 
   const normalizedContents = contents.map((c) => ({
     id: c.id,
+    outletId: c.outletId ?? undefined,
     title: c.title,
     branchName: c.branchName,
     platform: c.platform,

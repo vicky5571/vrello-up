@@ -75,75 +75,54 @@ function normalizeMouStatus(status?: string | null): "APPROVED" | "SUBMITTED" | 
 }
 
 /**
- * Checks if a FieldEvent matches an outlet by explicit ID, location name, or branch affiliation.
+ * Checks if a FieldEvent matches an outlet.
+ * Strict matching:
+ * 1. Explicit ID match (event.outletId === outlet.id) takes highest priority.
+ * 2. If event has no outletId, fallback ONLY to exact name/code match (e.g. location or event name exactly equals outlet name or code).
+ * Note: Branch-wide events without an outletId are NOT broadcast to every outlet in the branch.
  */
 function matchesEvent(event: PipelineEventInput, outlet: PipelineOutletInput): boolean {
-  if (event.outletId && event.outletId === outlet.id) {
-    return true;
+  if (event.outletId) {
+    return event.outletId === outlet.id;
   }
 
   const oName = (outlet.name || "").trim().toLowerCase();
-  const bName = (outlet.branch?.name || "").trim().toLowerCase();
-  const bCity = (outlet.city || "").trim().toLowerCase();
-  const bCode = (outlet.branch?.code || "").trim().toLowerCase();
-
+  const oCode = (outlet.code || "").trim().toLowerCase();
   const eLoc = (event.location || "").trim().toLowerCase();
   const eName = (event.name || "").trim().toLowerCase();
-  const eBranch = (event.branchName || "").trim().toLowerCase();
 
-  // 1. Direct outlet name match in location or event title (ensure non-empty before includes)
-  if (oName) {
-    if (eLoc && (eLoc.includes(oName) || oName.includes(eLoc))) {
-      return true;
-    }
-    if (eName && (eName.includes(oName) || oName.includes(eName))) {
-      return true;
-    }
+  // Fallback for legacy unlinked events: exact name or code match (prevent loose substrings)
+  if (oName && oName.length >= 2) {
+    if (eLoc === oName || eName === oName) return true;
   }
-
-  // 2. Branch match
-  if (event.branchId && (event.branchId === outlet.branchId || event.branchId === outlet.branch?.id)) {
-    return true;
-  }
-  if (eBranch && (eBranch === bName || eBranch === bCity || (bCode && eBranch === bCode))) {
-    return true;
+  if (oCode && oCode.length >= 2) {
+    if (eLoc === oCode || eName === oCode) return true;
   }
 
   return false;
 }
 
 /**
- * Checks if a ContentPost matches an outlet by explicit ID, title/caption mention, or branch affiliation.
+ * Checks if a ContentPost matches an outlet.
+ * Strict matching:
+ * 1. Explicit ID match (content.outletId === outlet.id) takes highest priority.
+ * 2. If content has no outletId, fallback ONLY to exact outlet name or explicit code tag in title.
+ * Note: Branch-wide content without an outletId is NOT broadcast to every outlet in the branch.
  */
 function matchesContent(content: PipelineContentInput, outlet: PipelineOutletInput): boolean {
-  if (content.outletId && content.outletId === outlet.id) {
-    return true;
+  if (content.outletId) {
+    return content.outletId === outlet.id;
   }
 
   const oName = (outlet.name || "").trim().toLowerCase();
-  const bName = (outlet.branch?.name || "").trim().toLowerCase();
-  const bCity = (outlet.city || "").trim().toLowerCase();
-  const bCode = (outlet.branch?.code || "").trim().toLowerCase();
-
+  const oCode = (outlet.code || "").trim().toLowerCase();
   const cTitle = (content.title || "").trim().toLowerCase();
-  const cCaption = (content.caption || "").trim().toLowerCase();
-  const cBranch = (content.branchName || "").trim().toLowerCase();
 
-  // 1. Outlet name mention in title or caption (ensure non-empty before includes)
-  if (oName) {
-    if (cTitle && (cTitle.includes(oName) || oName.includes(cTitle))) {
-      return true;
-    }
-    if (cCaption && (cCaption.includes(oName) || oName.includes(cCaption))) {
-      return true;
-    }
-  }
-
-  // 2. Branch match
-  if (content.branchId && (content.branchId === outlet.branchId || content.branchId === outlet.branch?.id)) {
+  // Fallback for legacy unlinked content: exact name or bracketed code in title
+  if (oName && oName.length >= 3 && (cTitle === oName || cTitle.includes(`[${oName}]`))) {
     return true;
   }
-  if (cBranch && (cBranch === bName || cBranch === bCity || (bCode && cBranch === bCode))) {
+  if (oCode && oCode.length >= 3 && (cTitle === oCode || cTitle.includes(`[${oCode}]`) || cTitle.includes(`(${oCode})`))) {
     return true;
   }
 

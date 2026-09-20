@@ -30,6 +30,7 @@ test("pipelineEngine: transforms outlet with approved MoU, completed placements,
   const events = [
     {
       id: "evt-1",
+      outletId: "outlet-1",
       name: "Semarang Expo",
       branchName: "Semarang",
       location: "Toko Berkah",
@@ -41,6 +42,7 @@ test("pipelineEngine: transforms outlet with approved MoU, completed placements,
   const contents = [
     {
       id: "cnt-1",
+      outletId: "outlet-1",
       title: "Reel Promo Berkah",
       branchName: "Semarang",
       platform: "instagram",
@@ -137,7 +139,7 @@ test("pipelineEngine: handles empty state for outlet with zero relations", () =>
   assert.equal(row.contentSummary.latestPlatform, undefined);
 });
 
-test("pipelineEngine: aggregates branch-level events and contents across multiple outlets in the branch", () => {
+test("pipelineEngine: isolates events and contents strictly by outletId and does not leak unlinked branch events", () => {
   const outlets = [
     {
       id: "outlet-a",
@@ -151,53 +153,74 @@ test("pipelineEngine: aggregates branch-level events and contents across multipl
       id: "outlet-b",
       code: "OUT-B",
       name: "Toko B",
-      branchId: "branch-slo",
-      branch: { id: "branch-slo", name: "Solo", code: "SLO" },
-      city: "Solo",
+      branchId: "branch-smg",
+      branch: { id: "branch-smg", name: "Semarang", code: "SMG" },
+      city: "Semarang",
     },
   ];
 
   const events = [
+    // Linked to outlet-a
     {
-      id: "evt-smg",
-      name: "Semarang Fest",
+      id: "evt-a",
+      outletId: "outlet-a",
+      name: "Toko A Activation",
       branchName: "Semarang",
       status: "UPCOMING",
       startDate: "2026-11-01T00:00:00Z",
     },
+    // General branch-wide event without outletId (should NOT bleed into outlet-a or outlet-b)
+    {
+      id: "evt-branch-wide",
+      name: "Semarang Carnival",
+      branchName: "Semarang",
+      status: "UPCOMING",
+      startDate: "2026-11-10T00:00:00Z",
+    },
   ];
 
   const contents = [
+    // Linked to outlet-a
     {
-      id: "cnt-smg-1",
-      title: "Reel Semarang 1",
+      id: "cnt-a-1",
+      outletId: "outlet-a",
+      title: "Reel Toko A 1",
       branchName: "Semarang",
       platform: "instagram",
       status: "PUBLISHED",
       publishDate: "2026-10-01T00:00:00Z",
     },
     {
-      id: "cnt-smg-2",
-      title: "TikTok Semarang 2",
+      id: "cnt-a-2",
+      outletId: "outlet-a",
+      title: "TikTok Toko A 2",
       branchName: "Semarang",
       platform: "tiktok",
       status: "IN_REVIEW",
       publishDate: "2026-10-05T00:00:00Z",
+    },
+    // General branch content without outletId (should NOT bleed)
+    {
+      id: "cnt-general",
+      title: "Semarang Promo Reel",
+      branchName: "Semarang",
+      platform: "instagram",
+      status: "PUBLISHED",
     },
   ];
 
   const result = buildOutletPipelineRows(outlets, events, contents);
   assert.equal(result.length, 2);
 
-  // Outlet A in Semarang should have 1 event and 2 contents
+  // Outlet A in Semarang should have only its 1 linked event and 2 linked contents
   const rowA = result.find((r) => r.id === "outlet-a")!;
   assert.equal(rowA.eventSummary.total, 1);
-  assert.equal(rowA.eventSummary.nearestEventName, "Semarang Fest");
+  assert.equal(rowA.eventSummary.nearestEventName, "Toko A Activation");
   assert.equal(rowA.contentSummary.total, 2);
   assert.equal(rowA.contentSummary.publishedCount, 1);
   assert.equal(rowA.contentSummary.inReviewCount, 1);
 
-  // Outlet B in Solo should have 0 events and 0 contents
+  // Outlet B in the same branch must NOT receive branch-wide unlinked items
   const rowB = result.find((r) => r.id === "outlet-b")!;
   assert.equal(rowB.eventSummary.total, 0);
   assert.equal(rowB.contentSummary.total, 0);
@@ -215,6 +238,7 @@ test("pipelineEngine: handles invalid date string in events without throwing Ran
   const events = [
     {
       id: "evt-inv",
+      outletId: "outlet-inv-date",
       name: "Event TBD",
       branchName: "Malang",
       startDate: "invalid-date-string",
@@ -269,8 +293,8 @@ test("pipelineEngine: stably prioritizes items with timestamps before items with
     },
   ];
   const contents = [
-    { id: "c-no-date", title: "Promo", branchName: "Surabaya", platform: "tiktok" }, // no timestamp
-    { id: "c-with-date", title: "Promo Reel", branchName: "Surabaya", platform: "instagram", publishDate: "2026-06-01T00:00:00Z" },
+    { id: "c-no-date", outletId: "outlet-sort", title: "Promo", branchName: "Surabaya", platform: "tiktok" }, // no timestamp
+    { id: "c-with-date", outletId: "outlet-sort", title: "Promo Reel", branchName: "Surabaya", platform: "instagram", publishDate: "2026-06-01T00:00:00Z" },
   ];
 
   const result = buildOutletPipelineRows(outlets, [], contents);
@@ -281,5 +305,79 @@ test("pipelineEngine: stably prioritizes items with timestamps before items with
   assert.equal(row.mouSummary.isHealthy, true);
   // Latest platform is the one with date (instagram)
   assert.equal(row.contentSummary.latestPlatform, "instagram");
+});
+
+test("pipelineEngine: prevents substring collisions and false-positive matches across outlets", () => {
+  const outlets = [
+    {
+      id: "outlet-kfc-mall",
+      code: "OUT-MALL-1",
+      name: "KFC Mall Grand Indonesia",
+      branchId: "b-jkt",
+      branch: { id: "b-jkt", name: "Jakarta" },
+    },
+    {
+      id: "outlet-grand-store",
+      code: "OUT-GRAND-2",
+      name: "Grand Cellular",
+      branchId: "b-jkt",
+      branch: { id: "b-jkt", name: "Jakarta" },
+    },
+  ];
+
+  const events = [
+    // Event has generic location "Mall" or "Grand" without outletId
+    {
+      id: "evt-generic-mall",
+      name: "Mall Exhibition",
+      location: "Mall",
+      branchName: "Jakarta",
+      status: "UPCOMING",
+    },
+    // Event strictly linked to outlet-kfc-mall
+    {
+      id: "evt-kfc",
+      outletId: "outlet-kfc-mall",
+      name: "KFC Booth Opening",
+      location: "Grand Indonesia",
+      branchName: "Jakarta",
+      status: "UPCOMING",
+    },
+  ];
+
+  const contents = [
+    // Content title mentions "Grand Promo" without outletId
+    {
+      id: "cnt-grand-generic",
+      title: "Grand Promo Diskon 50%",
+      branchName: "Jakarta",
+      platform: "instagram",
+      status: "PUBLISHED",
+    },
+    // Content explicitly tagged with code [OUT-MALL-1] in title
+    {
+      id: "cnt-kfc-tagged",
+      title: "[OUT-MALL-1] Brand Launch Promo",
+      branchName: "Jakarta",
+      platform: "tiktok",
+      status: "PUBLISHED",
+    },
+  ];
+
+  const result = buildOutletPipelineRows(outlets, events, contents);
+  assert.equal(result.length, 2);
+
+  const kfcRow = result.find((r) => r.id === "outlet-kfc-mall")!;
+  // Should only have 1 event (the explicit outletId event) - not evt-generic-mall
+  assert.equal(kfcRow.eventSummary.total, 1);
+  assert.equal(kfcRow.eventSummary.nearestEventName, "KFC Booth Opening");
+  // Should only have 1 content (the bracketed code tagged content) - not cnt-grand-generic
+  assert.equal(kfcRow.contentSummary.total, 1);
+  assert.equal(kfcRow.contentSummary.publishedCount, 1);
+
+  const grandRow = result.find((r) => r.id === "outlet-grand-store")!;
+  // Neither generic "Mall" event nor "Grand Promo" should match Grand Cellular
+  assert.equal(grandRow.eventSummary.total, 0);
+  assert.equal(grandRow.contentSummary.total, 0);
 });
 

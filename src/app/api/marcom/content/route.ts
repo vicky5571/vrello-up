@@ -65,6 +65,9 @@ export async function GET(request: Request) {
         orderBy: { publishDate: "desc" },
         take: limit,
         skip,
+        include: {
+          outlet: { select: { id: true, code: true, name: true } },
+        },
       }),
     ]);
     return NextResponse.json({
@@ -97,6 +100,7 @@ export async function POST(request: Request) {
     picName = "",
     revisionNotes = "",
     subtasks = [],
+    outletId,
   } = body ?? {};
 
   if (!title || !platform) {
@@ -125,6 +129,10 @@ export async function POST(request: Request) {
         picName: String(picName || "").trim(),
         revisionNotes: String(revisionNotes || "").trim(),
         subtasks: Array.isArray(subtasks) ? subtasks : [],
+        outletId: outletId || null,
+      },
+      include: {
+        outlet: { select: { id: true, code: true, name: true } },
       },
     });
 

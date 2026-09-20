@@ -41,33 +41,58 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
   }
 
-  const eventOr: Prisma.FieldEventWhereInput[] = [];
-  if (outlet.branch?.name) {
-    eventOr.push({ branchName: { equals: outlet.branch.name, mode: "insensitive" } });
+  const eventOr: Prisma.FieldEventWhereInput[] = [
+    { outletId: outlet.id },
+  ];
+  if (outlet.name && outlet.name.trim().length >= 3) {
+    eventOr.push({
+      AND: [
+        { outletId: null },
+        { location: { equals: outlet.name.trim(), mode: "insensitive" } },
+      ],
+    });
   }
-  if (outlet.name) {
-    eventOr.push({ location: { contains: outlet.name, mode: "insensitive" } });
-    eventOr.push({ name: { contains: outlet.name, mode: "insensitive" } });
+  if (outlet.code && outlet.code.trim().length >= 3) {
+    eventOr.push({
+      AND: [
+        { outletId: null },
+        { location: { equals: outlet.code.trim(), mode: "insensitive" } },
+      ],
+    });
+  }
+
+  const contentOr: Prisma.ContentPostWhereInput[] = [
+    { outletId: outlet.id },
+  ];
+  if (outlet.code && outlet.code.trim().length >= 3) {
+    contentOr.push({
+      AND: [
+        { outletId: null },
+        { title: { contains: `[${outlet.code.trim()}]`, mode: "insensitive" } },
+      ],
+    });
+  }
+  if (outlet.name && outlet.name.trim().length >= 3) {
+    contentOr.push({
+      AND: [
+        { outletId: null },
+        { title: { equals: outlet.name.trim(), mode: "insensitive" } },
+      ],
+    });
   }
 
   const [events, contents] = await Promise.all([
-    eventOr.length > 0
-      ? prisma.fieldEvent.findMany({
-          where: { OR: eventOr },
-          orderBy: { startDate: "desc" },
-          take: 50,
-          include: { footage: true },
-        })
-      : Promise.resolve([]),
-    outlet.branch?.name
-      ? prisma.contentPost.findMany({
-          where: {
-            branchName: { equals: outlet.branch.name, mode: "insensitive" },
-          },
-          orderBy: { publishDate: "desc" },
-          take: 50,
-        })
-      : Promise.resolve([]),
+    prisma.fieldEvent.findMany({
+      where: { OR: eventOr },
+      orderBy: { startDate: "desc" },
+      take: 50,
+      include: { footage: true },
+    }),
+    prisma.contentPost.findMany({
+      where: { OR: contentOr },
+      orderBy: { publishDate: "desc" },
+      take: 50,
+    }),
   ]);
 
   return NextResponse.json({

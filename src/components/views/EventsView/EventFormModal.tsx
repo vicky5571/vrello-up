@@ -13,6 +13,7 @@ import {
   Video,
   Play,
   Layers,
+  Store,
 } from "lucide-react";
 import type {
   FieldEventItem,
@@ -116,6 +117,22 @@ export function EventFormModal({
   const [newFootageDuration, setNewFootageDuration] = useState("");
   const [newFootagePath, setNewFootagePath] = useState("");
   const [eventMediaUrl, setEventMediaUrl] = useState("");
+  const [eventOutletId, setEventOutletId] = useState<string>("");
+  const [outlets, setOutlets] = useState<Array<{ id: string; name: string; code: string; branchId?: string }>>([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/marcom/outlets")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((json) => {
+        if (Array.isArray(json)) {
+          setOutlets(json);
+        } else if (json && Array.isArray(json.data)) {
+          setOutlets(json.data);
+        }
+      })
+      .catch(() => {});
+  }, [isOpen]);
 
   // Destination Space & List
   const flatSpaces = useMemo(() => getWorkspaceSpacesAndLists(rawSpaces), [rawSpaces]);
@@ -137,6 +154,14 @@ export function EventFormModal({
     const dest = getDefaultDestinationForChannel(rawSpaces, "on_ground", newSpaceId);
     setTargetListId(dest.listId);
   };
+
+  const filteredOutlets = useMemo(() => {
+    if (!eventBranchName) return outlets;
+    const selectedBranchObj = branches.find((b) => b.name.toLowerCase() === eventBranchName.toLowerCase());
+    if (!selectedBranchObj) return outlets;
+    const branchOutlets = outlets.filter((o) => o.branchId === selectedBranchObj.id);
+    return branchOutlets.length > 0 ? branchOutlets : outlets;
+  }, [outlets, eventBranchName, branches]);
 
   const handleStartDateChange = (val: string) => {
     setEventStartDate(val);
@@ -163,6 +188,7 @@ export function EventFormModal({
       setEventType(event.eventType || "Roadshow");
       setEventBranchName(event.branchName || branches[0]?.name || "Jakarta Central");
       setEventLocation(event.location || "");
+      setEventOutletId(event.outletId || "");
       const dateVal = event.startDate || event.date;
       setEventStartDate(dateVal ? dateVal.slice(0, 10) : "");
       setEventEndDate(event.endDate ? event.endDate.slice(0, 10) : "");
@@ -228,6 +254,7 @@ export function EventFormModal({
       setEventType("Roadshow");
       setEventBranchName(branches[0]?.name || "Jakarta Central");
       setEventLocation("");
+      setEventOutletId("");
       setEventStartDate(defaultDate || new Date().toISOString().slice(0, 10));
       setEventEndDate("");
       const defaultMember = members[0];
@@ -320,6 +347,7 @@ export function EventFormModal({
         eventType,
         branchName: eventBranchName,
         location: eventLocation.trim(),
+        outletId: eventOutletId || null,
         date: eventStartDate || undefined,
         endDate: eventEndDate || undefined,
         picName: eventPicName.trim(),
@@ -445,6 +473,7 @@ export function EventFormModal({
         notes: eventNotes,
         mediaUrl: eventMediaUrl.trim() || null,
         footage: eventFootageList,
+        outletId: eventOutletId || null,
       };
 
       onSaved(savedItem, locationLabel);
@@ -572,6 +601,44 @@ export function EventFormModal({
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Associated Outlet (Optional) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Store className="w-3.5 h-3.5 text-slate-400" />
+                    Associated Outlet (Optional)
+                  </span>
+                  {eventOutletId && (
+                    <button
+                      type="button"
+                      onClick={() => setEventOutletId("")}
+                      className="text-[10px] text-rose-500 hover:underline font-normal"
+                    >
+                      Clear link
+                    </button>
+                  )}
+                </label>
+                <select
+                  value={eventOutletId}
+                  onChange={(e) => {
+                    const chosenId = e.target.value;
+                    setEventOutletId(chosenId);
+                    if (chosenId && !eventLocation) {
+                      const found = outlets.find((o) => o.id === chosenId);
+                      if (found) setEventLocation(found.name);
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-lg text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
+                >
+                  <option value="">-- None (Branch-Wide / Non-Store Event) --</option>
+                  {filteredOutlets.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.code ? `[${o.code}] ` : ""}{o.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Schedule Dates & PIC */}

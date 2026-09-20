@@ -8,7 +8,12 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const post = await prisma.contentPost.findUnique({ where: { id } });
+    const post = await prisma.contentPost.findUnique({
+      where: { id },
+      include: {
+        outlet: { select: { id: true, code: true, name: true } },
+      },
+    });
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
@@ -52,11 +57,17 @@ export async function PATCH(
   if (body.picName !== undefined) data.picName = String(body.picName).trim();
   if (body.revisionNotes !== undefined) data.revisionNotes = String(body.revisionNotes).trim();
   if (body.subtasks !== undefined) data.subtasks = body.subtasks;
+  if (body.outletId !== undefined) {
+    data.outletId = body.outletId ? String(body.outletId).trim() : null;
+  }
 
   try {
     const updated = await prisma.contentPost.update({
       where: { id },
       data,
+      include: {
+        outlet: { select: { id: true, code: true, name: true } },
+      },
     });
     return NextResponse.json(updated);
   } catch (err) {
