@@ -20,7 +20,7 @@ const mouInclude = {
       status: true,
       cost: true,
       photoUrl: true,
-      material: { select: { id: true, name: true, type: true } },
+      material: { select: { id: true, name: true, type: true, requiresMou: true } },
     },
   },
 } as const;

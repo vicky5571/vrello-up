@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { type, name } = body ?? {};
+  const { type, name, requiresMou } = body ?? {};
   if (!type || !name) {
     return NextResponse.json({ error: "Missing required fields: type, name" }, { status: 400 });
   }
@@ -55,6 +55,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
   }
 
-  const material = await prisma.material.create({ data: { type, name } });
+  const resolvedRequiresMou =
+    typeof requiresMou === "boolean"
+      ? requiresMou
+      : (type === "BRANDING_SIGNBOARD" || type === "SHOPBLIND");
+
+  const material = await prisma.material.create({
+    data: { type, name, requiresMou: resolvedRequiresMou },
+  });
   return NextResponse.json(material, { status: 201 });
 }

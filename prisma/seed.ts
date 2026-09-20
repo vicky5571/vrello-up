@@ -33,11 +33,11 @@ const MATERIAL_ID_BY_NAME: Record<string, string> = {
 };
 
 const MATERIAL_DEFS = [
-  { id: "material-poster", type: "POSTER", name: "Poster" },
-  { id: "material-shopblind", type: "SHOPBLIND", name: "Shopblind" },
-  { id: "material-banner", type: "BANNER", name: "Banner" },
-  { id: "material-signboard", type: "BRANDING_SIGNBOARD", name: "Branding / Signboard" },
-  { id: "material-other", type: "OTHER_MATERIALS", name: "Other Materials" },
+  { id: "material-poster", type: "POSTER", name: "Poster", requiresMou: false },
+  { id: "material-shopblind", type: "SHOPBLIND", name: "Shopblind", requiresMou: true },
+  { id: "material-banner", type: "BANNER", name: "Banner", requiresMou: false },
+  { id: "material-signboard", type: "BRANDING_SIGNBOARD", name: "Branding / Signboard", requiresMou: true },
+  { id: "material-other", type: "OTHER_MATERIALS", name: "Other Materials", requiresMou: false },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -830,8 +830,8 @@ async function main() {
   for (const m of MATERIAL_DEFS) {
     await prisma.material.upsert({
       where: { id: m.id },
-      update: { type: m.type, name: m.name },
-      create: { id: m.id, type: m.type, name: m.name },
+      update: { type: m.type, name: m.name, requiresMou: m.requiresMou },
+      create: { id: m.id, type: m.type, name: m.name, requiresMou: m.requiresMou },
     });
   }
 

@@ -23,6 +23,7 @@ export interface PlacementSummaryInfo {
   material?: {
     name?: string;
     type?: string;
+    requiresMou?: boolean;
   };
 }
 
@@ -46,22 +47,31 @@ const PERMANENT_KEYWORDS = [
 export interface MaterialIdentifier {
   name?: string | null;
   type?: string | null;
+  requiresMou?: boolean | null;
 }
 
 /**
  * Checks if a promotional material is considered permanent / rental branding
  * that requires an active legal MoU agreement.
- * Prioritizes explicit material.type (PERMANENT vs TEMPORARY) as the Single Source of Truth.
+ *
+ * 3-Tier Resolution:
+ * Tier 1 (DB SSOT): Explicit material.requiresMou boolean flag.
+ * Tier 2 (Domain Taxonomy): MaterialType enum mapping (BRANDING_SIGNBOARD, SHOPBLIND, PERMANENT -> true; POSTER, BANNER, TEMPORARY -> false).
+ * Tier 3 (Legacy Substring Heuristic): Substring matching on material name for unclassified/freeform items.
  */
 export function isPermanentMaterial(
   material?: MaterialIdentifier | string | null,
 ): boolean {
   if (!material) return false;
 
+  let requiresMou: boolean | undefined;
   let explicitType: string | undefined;
   let materialName: string | undefined;
 
   if (typeof material === "object") {
+    if (typeof material.requiresMou === "boolean") {
+      requiresMou = material.requiresMou;
+    }
     explicitType = material.type?.trim().toUpperCase();
     materialName = material.name?.trim();
   } else if (typeof material === "string") {
@@ -71,11 +81,30 @@ export function isPermanentMaterial(
     materialName = material.trim();
   }
 
-  // 1. Explicit domain type takes absolute precedence (Single Source of Truth)
-  if (explicitType === "PERMANENT") return true;
-  if (explicitType === "TEMPORARY") return false;
+  // Tier 1: Explicit DB governance flag takes absolute precedence (Single Source of Truth)
+  if (typeof requiresMou === "boolean") {
+    return requiresMou;
+  }
 
-  // 2. Fallback heuristic keyword matching on material name (legacy / unclassified items)
+  // Tier 2: Domain Taxonomy mapping (Prisma MaterialType enum + legacy PERMANENT/TEMPORARY tokens)
+  if (explicitType) {
+    if (
+      explicitType === "BRANDING_SIGNBOARD" ||
+      explicitType === "SHOPBLIND" ||
+      explicitType === "PERMANENT"
+    ) {
+      return true;
+    }
+    if (
+      explicitType === "POSTER" ||
+      explicitType === "BANNER" ||
+      explicitType === "TEMPORARY"
+    ) {
+      return false;
+    }
+  }
+
+  // Tier 3: Fallback heuristic keyword matching on material name (legacy / unclassified items)
   if (!materialName) return false;
   const lower = materialName.toLowerCase();
   return PERMANENT_KEYWORDS.some((kw) => lower.includes(kw));
@@ -147,12 +176,14 @@ export interface MouValidationResult {
 export function validatePlacementMouRequirement(params: {
   materialName?: string | null;
   materialType?: string | null;
+  requiresMou?: boolean | null;
   selectedMou?: MouSummaryInfo | null;
   outletMousCount?: number;
 }): MouValidationResult {
   const isPermanent = isPermanentMaterial({
     name: params.materialName,
     type: params.materialType,
+    requiresMou: params.requiresMou,
   });
 
   if (!isPermanent) {

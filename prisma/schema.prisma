@@ -119,10 +119,11 @@ model Outlet {
 }
 
 model Material {
-  id         String       @id @default(cuid())
-  type       MaterialType
-  name       String
-  placements Placement[]
+  id          String       @id @default(cuid())
+  type        MaterialType
+  name        String
+  requiresMou Boolean      @default(false)
+  placements  Placement[]
 }
 
 model Placement {

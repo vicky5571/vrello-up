@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         },
         include: {
           outlet: { select: { name: true, code: true } },
-          material: { select: { name: true, type: true } },
+          material: { select: { name: true, type: true, requiresMou: true } },
         },
         orderBy: { date: "asc" },
       }),

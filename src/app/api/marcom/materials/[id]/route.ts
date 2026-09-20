@@ -5,7 +5,7 @@ import { requireMember } from "@/lib/marcom/auth";
 import { hasPermission } from "@/lib/marcom/guards";
 
 const VALID_TYPES = ["POSTER", "SHOPBLIND", "BANNER", "BRANDING_SIGNBOARD", "OTHER_MATERIALS"] as const;
-const PATCHABLE_FIELDS = ["type", "name"] as const;
+const PATCHABLE_FIELDS = ["type", "name", "requiresMou"] as const;
 
 async function requireMasterData() {
   let role;
@@ -36,6 +36,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if (data.type !== undefined && !VALID_TYPES.includes(data.type as (typeof VALID_TYPES)[number])) {
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+  }
+  if (data.requiresMou !== undefined && typeof data.requiresMou !== "boolean") {
+    return NextResponse.json({ error: "requiresMou must be a boolean" }, { status: 400 });
   }
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });

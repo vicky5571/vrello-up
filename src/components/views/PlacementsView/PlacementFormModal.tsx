@@ -30,7 +30,7 @@ export interface PlacementFormModalProps {
   >;
   isSaving: boolean;
   outletsList: { id: string; name: string; brand?: string; picName?: string; branchId?: string }[];
-  materialsList: { id: string; name: string; type?: string }[];
+  materialsList: { id: string; name: string; type?: string; requiresMou?: boolean }[];
   mousList: MouSummaryInfo[];
   placements: MarcomPlacement[];
 }
@@ -206,6 +206,7 @@ export function PlacementFormModal({
             const mouValidation = validatePlacementMouRequirement({
               materialName: selectedMat?.name,
               materialType: selectedMat?.type,
+              requiresMou: selectedMat?.requiresMou,
               selectedMou,
               outletMousCount: outletMous.length,
             });

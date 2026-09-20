@@ -24,7 +24,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       placements: {
         orderBy: { id: "desc" },
         include: {
-          material: { select: { id: true, name: true, type: true } },
+          material: { select: { id: true, name: true, type: true, requiresMou: true } },
           mou: { select: { id: true, partnerName: true, status: true, compensationValue: true } },
         },
       },

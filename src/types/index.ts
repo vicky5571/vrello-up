@@ -467,6 +467,7 @@ export interface MaterialItem {
   id: string;
   name: string;
   type: string;
+  requiresMou?: boolean;
 }
 
 export type OutletType = "TRADITIONAL" | "MODERN_RETAIL" | "EXCLUSIVE" | "CAMPUS_OUTLET";

@@ -156,9 +156,9 @@ export function PlacementsView() {
       ? storeOutlets.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName, branchId: o.branchId }))
       : []
   );
-  const [materialsList, setMaterialsList] = useState<{ id: string; name: string; type?: string }[]>(() =>
+  const [materialsList, setMaterialsList] = useState<{ id: string; name: string; type?: string; requiresMou?: boolean }[]>(() =>
     storeMaterials.length > 0
-      ? storeMaterials.map((m) => ({ id: m.id, name: m.name, type: m.type }))
+      ? storeMaterials.map((m) => ({ id: m.id, name: m.name, type: m.type, requiresMou: m.requiresMou }))
       : []
   );
   const [mousList, setMousList] = useState<MouSummaryInfo[]>([]);
@@ -308,7 +308,7 @@ export function PlacementsView() {
           setOutletsList(outletsData.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName, branchId: o.branchId })));
         }
         if (Array.isArray(materialsData) && materialsData.length > 0) {
-          setMaterialsList(materialsData.map((m) => ({ id: m.id, name: m.name, type: m.type })));
+          setMaterialsList(materialsData.map((m) => ({ id: m.id, name: m.name, type: m.type, requiresMou: m.requiresMou })));
         }
         if (resMous.ok) {
           const jsonMous = await resMous.json();

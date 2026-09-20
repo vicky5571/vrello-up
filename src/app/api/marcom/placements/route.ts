@@ -8,7 +8,7 @@ const VALID_STATUSES = ["NOT_STARTED", "ON_PROGRESS", "DONE", "ISSUE"] as const;
 
 const placementInclude = {
   outlet: { select: { id: true, code: true, name: true, brand: true } },
-  material: { select: { id: true, type: true, name: true } },
+  material: { select: { id: true, type: true, name: true, requiresMou: true } },
   mou: {
     select: {
       id: true,
