@@ -61,17 +61,20 @@ export interface PipelineContentInput extends Omit<Partial<ContentPost>, "platfo
 }
 
 /**
- * Normalizes MouStatus into the 5-state pipeline status union:
- * "APPROVED" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE"
+ * Normalizes MouStatus into the pipeline status union:
+ * "APPROVED" | "DONE" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE" | "UNKNOWN"
  */
-function normalizeMouStatus(status?: string | null): "APPROVED" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE" {
+function normalizeMouStatus(status?: string | null): "APPROVED" | "DONE" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE" | "UNKNOWN" {
   if (!status) return "NONE";
   const upper = status.trim().toUpperCase();
-  if (upper === "APPROVED" || upper === "DONE") return "APPROVED";
+  if (upper === "APPROVED") return "APPROVED";
+  if (upper === "DONE") return "DONE";
   if (upper === "SUBMITTED") return "SUBMITTED";
   if (upper === "REJECTED") return "REJECTED";
   if (upper === "DRAFT") return "DRAFT";
-  return "DRAFT";
+
+  console.warn(`[marcom/pipelineEngine] Unrecognized MouStatus encountered: "${status}"`);
+  return "UNKNOWN";
 }
 
 /**
@@ -151,7 +154,7 @@ export function buildOutletPipelineRows(
 
     // --- 1. MoU Summary ---
     const totalMous = mous.length;
-    let latestMouStatus: "APPROVED" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE" = "NONE";
+    let latestMouStatus: OutletPipelineRow["mouSummary"]["latestStatus"] = "NONE";
     let totalCompensationValue = 0;
 
     if (totalMous > 0) {

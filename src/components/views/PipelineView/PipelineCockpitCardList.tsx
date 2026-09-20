@@ -50,6 +50,13 @@ function renderMouBadge(status?: string) {
           Aktif
         </span>
       );
+    case "DONE":
+      return (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-500/10 text-slate-700 dark:text-slate-300">
+          <CheckCircle2 className="w-2.5 h-2.5 text-slate-500" />
+          Selesai
+        </span>
+      );
     case "SUBMITTED":
       return (
         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-400">
@@ -67,6 +74,13 @@ function renderMouBadge(status?: string) {
       return (
         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400">
           Ditolak
+        </span>
+      );
+    case "UNKNOWN":
+      return (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400">
+          <AlertTriangle className="w-2.5 h-2.5 text-amber-500" />
+          Invalid
         </span>
       );
     default:

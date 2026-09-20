@@ -508,7 +508,7 @@ export interface OutletPipelineRow {
   branch: { id: string; name: string; code: string };
   mouSummary: {
     total: number;
-    latestStatus: "APPROVED" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE";
+    latestStatus: "APPROVED" | "DONE" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE" | "UNKNOWN";
     compensationValue: number;
     isHealthy: boolean;
   };

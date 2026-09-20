@@ -381,3 +381,45 @@ test("pipelineEngine: prevents substring collisions and false-positive matches a
   assert.equal(grandRow.contentSummary.total, 0);
 });
 
+test("pipelineEngine: preserves DONE as terminal MoU status and flags unrecognized status as UNKNOWN with warning", () => {
+  const outlets = [
+    {
+      id: "outlet-done",
+      code: "OUT-DONE",
+      name: "Toko Selesai Kontrak",
+      branch: { id: "b1", name: "Solo" },
+      mous: [
+        { id: "mou-d", status: "DONE", compensationValue: 5000000 },
+      ],
+      placements: [
+        // Permanent placement: without an active APPROVED MoU, should trigger bottleneck warning
+        { id: "plc-1", status: "PENDING", cost: 1000000, material: { name: "Neon Box", type: "PERMANENT" } },
+      ],
+    },
+    {
+      id: "outlet-corrupt",
+      code: "OUT-CORRUPT",
+      name: "Toko Data Rusak",
+      branch: { id: "b2", name: "Semarang" },
+      mous: [
+        { id: "mou-bad", status: "CORRUPTED_STRING_VALUE", compensationValue: 2000000 },
+      ],
+      placements: [],
+    },
+  ];
+
+  const result = buildOutletPipelineRows(outlets, [], []);
+  assert.equal(result.length, 2);
+
+  // 1. Outlet with DONE MoU
+  const rowDone = result.find((r) => r.id === "outlet-done")!;
+  assert.equal(rowDone.mouSummary.latestStatus, "DONE");
+  assert.equal(rowDone.mouSummary.isHealthy, false); // Not active/approved
+  assert.equal(rowDone.placementSummary.hasBlockedItems, true); // Bottleneck flagged because MoU is DONE, not APPROVED
+
+  // 2. Outlet with unrecognized status
+  const rowCorrupt = result.find((r) => r.id === "outlet-corrupt")!;
+  assert.equal(rowCorrupt.mouSummary.latestStatus, "UNKNOWN");
+  assert.equal(rowCorrupt.mouSummary.isHealthy, false);
+});
+

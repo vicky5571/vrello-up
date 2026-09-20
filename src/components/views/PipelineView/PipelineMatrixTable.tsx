@@ -13,6 +13,7 @@ import {
   Building2,
   CheckCircle2,
   Clock,
+  AlertCircle,
 } from "lucide-react";
 import { cn, formatIDR, formatDate } from "@/lib/utils";
 import type {
@@ -25,15 +26,15 @@ import type { OutletPipelineRow } from "@/types";
 function renderSortIcon(
   field: PipelineSortField,
   currentField?: PipelineSortField,
-  currentOrder?: PipelineSortOrder
+  order?: PipelineSortOrder
 ) {
   if (currentField !== field) {
-    return <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 opacity-60" />;
+    return <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />;
   }
-  return currentOrder === "asc" ? (
-    <ArrowUp className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+  return order === "asc" ? (
+    <ArrowUp className="w-3 h-3 text-blue-600 dark:text-blue-400" />
   ) : (
-    <ArrowDown className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+    <ArrowDown className="w-3 h-3 text-blue-600 dark:text-blue-400" />
   );
 }
 
@@ -70,6 +71,13 @@ function renderMouBadge(status?: string) {
           MoU Aktif
         </span>
       );
+    case "DONE":
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
+          <CheckCircle2 className="w-2.5 h-2.5 text-slate-500" />
+          MoU Selesai
+        </span>
+      );
     case "SUBMITTED":
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
@@ -87,6 +95,13 @@ function renderMouBadge(status?: string) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
           Ditolak
+        </span>
+      );
+    case "UNKNOWN":
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+          <AlertCircle className="w-2.5 h-2.5 text-amber-500" />
+          Status Invalid
         </span>
       );
     default:
