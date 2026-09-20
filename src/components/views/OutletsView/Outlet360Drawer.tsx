@@ -1500,7 +1500,7 @@ export function Outlet360Drawer({
                 <button
                   type="button"
                   onClick={() => {
-                    navigateToMarcom("events", data.name);
+                    navigateToMarcom("events", data.code ? `[${data.code}]` : data.name);
                     onClose();
                   }}
                   className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
@@ -1616,7 +1616,7 @@ export function Outlet360Drawer({
                 <button
                   type="button"
                   onClick={() => {
-                    navigateToMarcom("content-planner", data.name);
+                    navigateToMarcom("content-planner", data.code ? `[${data.code}]` : data.name);
                     onClose();
                   }}
                   className="inline-flex items-center gap-1 text-xs font-semibold text-pink-600 dark:text-pink-400 hover:underline cursor-pointer"

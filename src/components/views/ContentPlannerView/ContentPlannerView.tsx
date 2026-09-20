@@ -43,6 +43,7 @@ import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
+import { matchOutletQuery } from "@/lib/marcom/outletRelations";
 import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
@@ -577,7 +578,8 @@ export function ContentPlannerView() {
         const branchMatch = Boolean(
           p.branchName && p.branchName.toLowerCase().includes(q)
         );
-        if (!titleMatch && !captionMatch && !branchMatch) return false;
+        const outletMatch = matchOutletQuery(q, p.outlet);
+        if (!titleMatch && !captionMatch && !branchMatch && !outletMatch) return false;
       }
       return true;
     });

@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireMember } from "@/lib/marcom/auth";
 import { hasPermission } from "@/lib/marcom/guards";
+import { buildOutletEventWhere, buildOutletContentWhere } from "@/lib/marcom/outletRelations";
 
 const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET"] as const;
 const VALID_TIERS = ["TIER_1", "TIER_2", "TIER_3"] as const;
@@ -46,61 +47,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
   }
 
-  const eventOr: Prisma.FieldEventWhereInput[] = [
-    { outletId: outlet.id },
-  ];
-  if (outlet.name && outlet.name.trim().length >= 3) {
-    eventOr.push({
-      AND: [
-        { outletId: null },
-        { location: { equals: outlet.name.trim(), mode: "insensitive" } },
-      ],
-    });
-  }
-  if (outlet.code && outlet.code.trim().length >= 3) {
-    eventOr.push({
-      AND: [
-        { outletId: null },
-        { location: { equals: outlet.code.trim(), mode: "insensitive" } },
-      ],
-    });
-  }
-
-  const contentOr: Prisma.ContentPostWhereInput[] = [
-    { outletId: outlet.id },
-  ];
-  if (outlet.code && outlet.code.trim().length >= 3) {
-    contentOr.push({
-      AND: [
-        { outletId: null },
-        { title: { contains: `[${outlet.code.trim()}]`, mode: "insensitive" } },
-      ],
-    });
-  }
-  if (outlet.name && outlet.name.trim().length >= 3) {
-    contentOr.push({
-      AND: [
-        { outletId: null },
-        { title: { equals: outlet.name.trim(), mode: "insensitive" } },
-      ],
-    });
-  }
-
   const [events, contents] = await Promise.all([
     prisma.fieldEvent.findMany({
-      where: {
-        workspaceId,
-        OR: eventOr,
-      },
+      where: buildOutletEventWhere(workspaceId, outlet.id),
       orderBy: { startDate: "desc" },
       take: 50,
       include: { footage: true },
     }),
     prisma.contentPost.findMany({
-      where: {
-        workspaceId,
-        OR: contentOr,
-      },
+      where: buildOutletContentWhere(workspaceId, outlet.id, outlet.code),
       orderBy: { publishDate: "desc" },
       take: 50,
     }),

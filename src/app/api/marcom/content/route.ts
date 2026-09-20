@@ -40,7 +40,9 @@ export async function GET(request: Request) {
     where.branchName = { equals: branchName, mode: "insensitive" };
   }
   if (query) {
+    const cleanQuery = query.replace(/^\[|\]$/g, "").trim();
     const contains = { contains: query, mode: "insensitive" as const };
+    const cleanContains = { contains: cleanQuery, mode: "insensitive" as const };
     where.OR = [
       { title: contains },
       { caption: contains },
@@ -48,6 +50,8 @@ export async function GET(request: Request) {
       { picName: contains },
       { platform: contains },
       { format: contains },
+      { outlet: { is: { code: cleanContains } } },
+      { outlet: { is: { name: cleanContains } } },
     ];
   }
 

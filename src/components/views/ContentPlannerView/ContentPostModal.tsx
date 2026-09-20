@@ -17,6 +17,7 @@ import type {
   PostStatus,
 } from "@/types";
 import { PLATFORM_CONFIG } from "./contentConstants";
+import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
 
 export interface FlatSpaceItem {
   id: string;
@@ -28,6 +29,7 @@ export interface OutletOption {
   id: string;
   name: string;
   code?: string;
+  city?: string;
 }
 
 export interface ContentPostModalProps {
@@ -304,7 +306,7 @@ export function ContentPostModal({
               <option value="">-- None (Brand / General Social Post) --</option>
               {outlets.map((o: OutletOption) => (
                 <option key={o.id} value={o.id}>
-                  {o.code ? `[${o.code}] ` : ""}{o.name}
+                  {formatOutletSelectLabel(o)}
                 </option>
               ))}
             </select>

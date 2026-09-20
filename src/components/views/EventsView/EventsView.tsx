@@ -42,6 +42,7 @@ import {
   STATUS_CONFIG,
   type ActivityViewMode,
 } from "./eventsConstants";
+import { matchOutletQuery } from "@/lib/marcom/outletRelations";
 
 export type FieldEvent = FieldEventItem;
 export type MarcomEvent = FieldEventItem;
@@ -302,7 +303,8 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           e.location?.toLowerCase().includes(q) ||
           e.branchName?.toLowerCase().includes(q) ||
           e.picName?.toLowerCase().includes(q) ||
-          e.eventType?.toLowerCase().includes(q)
+          e.eventType?.toLowerCase().includes(q) ||
+          matchOutletQuery(q, e.outlet)
       );
     }
     return list;

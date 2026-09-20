@@ -30,8 +30,18 @@ export async function GET(request: Request) {
     where.status = status as (typeof VALID_STATUSES)[number];
   }
   if (query) {
+    const cleanQuery = query.replace(/^\[|\]$/g, "").trim();
     const contains = { contains: query, mode: "insensitive" as const };
-    where.OR = [{ name: contains }, { location: contains }, { branchName: contains }, { picName: contains }, { eventType: contains }];
+    const cleanContains = { contains: cleanQuery, mode: "insensitive" as const };
+    where.OR = [
+      { name: contains },
+      { location: contains },
+      { branchName: contains },
+      { picName: contains },
+      { eventType: contains },
+      { outlet: { is: { code: cleanContains } } },
+      { outlet: { is: { name: cleanContains } } },
+    ];
   }
 
   const events = await prisma.fieldEvent.findMany({

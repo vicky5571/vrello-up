@@ -41,6 +41,7 @@ import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import { EventChecklistSection } from "./EventChecklistSection";
 import { canTransitionEvent } from "@/lib/marcom/eventMachine";
+import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
 
 interface EventFormModalProps {
   isOpen: boolean;
@@ -119,7 +120,7 @@ export function EventFormModal({
   const [newFootagePath, setNewFootagePath] = useState("");
   const [eventMediaUrl, setEventMediaUrl] = useState("");
   const [eventOutletId, setEventOutletId] = useState<string>("");
-  const [outlets, setOutlets] = useState<Array<{ id: string; name: string; code: string; branchId?: string }>>([]);
+  const [outlets, setOutlets] = useState<Array<{ id: string; name: string; code: string; branchId?: string; city?: string }>>([]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -636,7 +637,7 @@ export function EventFormModal({
                   <option value="">-- None (Branch-Wide / Non-Store Event) --</option>
                   {filteredOutlets.map((o) => (
                     <option key={o.id} value={o.id}>
-                      {o.code ? `[${o.code}] ` : ""}{o.name}
+                      {formatOutletSelectLabel(o)}
                     </option>
                   ))}
                 </select>
