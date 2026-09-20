@@ -23,6 +23,10 @@ import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
+import {
+  calculateEventUnitEconomics,
+  getEfficiencyBadgeClasses,
+} from "@/lib/marcom/eventCostAnalytics";
 import { STATUS_CONFIG, EVENT_TYPE_STYLES } from "./eventsConstants";
 
 const columnHelper = createMarcomColumnHelper<FieldEventItem>();
@@ -192,6 +196,32 @@ export function EventTableView({
                   style={{ width: `${pct}%` }}
                 />
               </div>
+            </div>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "costPerAttendee",
+        header: "Cost / Head & ROI",
+        size: 155,
+        cell: ({ row }) => {
+          const e = row.original;
+          const unitEcon = calculateEventUnitEconomics(e);
+          return (
+            <div className="flex flex-col gap-0.5">
+              <span className="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">
+                {unitEcon.costPerAttendee > 0
+                  ? `${formatIDR(unitEcon.costPerAttendee)} / org`
+                  : "—"}
+              </span>
+              <span
+                className={cn(
+                  "text-[9px] font-semibold px-1.5 py-0.2 rounded border w-fit truncate",
+                  getEfficiencyBadgeClasses(unitEcon.efficiencyCategory)
+                )}
+              >
+                {unitEcon.efficiencyLabel}
+              </span>
             </div>
           );
         },

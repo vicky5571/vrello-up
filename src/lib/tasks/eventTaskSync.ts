@@ -511,11 +511,14 @@ export interface FieldEventsKpiSummary {
   totalTargetAttendees: number;
   totalActualAttendees: number;
   branchCoverageCount: number;
+  avgCostPerAttendee: number;
+  overallTargetReachRate: number;
 }
 
 /**
  * Calculates Field Events KPIs strictly excluding CANCELLED events
  * from Committed Budget, Target Footfall, and Actual Attendance.
+ * Also computes aggregate unit economics (avgCostPerAttendee & overallTargetReachRate).
  */
 export function calculateFieldEventsKPI(
   events: Array<{
@@ -555,6 +558,15 @@ export function calculateFieldEventsKPI(
     }
   }
 
+  const avgCostPerAttendee =
+    totalActualAttendees > 0
+      ? Math.round(totalCommittedBudget / totalActualAttendees)
+      : 0;
+  const overallTargetReachRate =
+    totalTargetAttendees > 0
+      ? Math.round((totalActualAttendees / totalTargetAttendees) * 100)
+      : 0;
+
   return {
     totalActivations,
     activeCount,
@@ -565,6 +577,8 @@ export function calculateFieldEventsKPI(
     totalTargetAttendees,
     totalActualAttendees,
     branchCoverageCount: Math.max(branchesCount, 1),
+    avgCostPerAttendee,
+    overallTargetReachRate,
   };
 }
 

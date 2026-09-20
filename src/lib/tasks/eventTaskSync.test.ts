@@ -303,6 +303,11 @@ test("calculateFieldEventsKPI strictly excludes CANCELLED events from committed 
   assert.equal(kpis.totalActualAttendees, 770);
 
   assert.equal(kpis.branchCoverageCount, 4);
+
+  // Unit economics: 70M / 770 actual attendees = ~90.909 / org
+  assert.equal(kpis.avgCostPerAttendee, 90909);
+  // Target reach: (770 / 1800) * 100 = 43%
+  assert.equal(kpis.overallTargetReachRate, 43);
 });
 
 test("calculateTimelineBarMetrics accurately clamps events starting before windowStart", () => {

@@ -332,7 +332,9 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
       label: "Committed Budget",
       value: formatIDR(kpiSummary.totalCommittedBudget),
       helper:
-        kpiSummary.cancelledCount > 0
+        kpiSummary.avgCostPerAttendee > 0
+          ? `Avg ${formatIDR(kpiSummary.avgCostPerAttendee)} / pengunjung`
+          : kpiSummary.cancelledCount > 0
           ? `Excludes ${formatIDR(kpiSummary.cancelledBudget)} cancelled`
           : "Across all active branches",
       icon: Coins,
@@ -341,7 +343,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     {
       label: "Target Footfall",
       value: `${kpiSummary.totalTargetAttendees.toLocaleString()}`,
-      helper: `${kpiSummary.totalActualAttendees.toLocaleString()} reached (active events)`,
+      helper:
+        kpiSummary.overallTargetReachRate > 0
+          ? `${kpiSummary.totalActualAttendees.toLocaleString()} reached (${kpiSummary.overallTargetReachRate}% target)`
+          : `${kpiSummary.totalActualAttendees.toLocaleString()} reached (active events)`,
       icon: Users,
       color: "violet",
     },

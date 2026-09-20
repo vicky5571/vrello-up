@@ -22,6 +22,10 @@ import type { EventConflictDetail } from "@/lib/tasks/eventTaskSync";
 import { formatEventDateRange, findMemberForPic } from "@/lib/tasks/eventTaskSync";
 import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
+import {
+  calculateEventUnitEconomics,
+  getEfficiencyBadgeClasses,
+} from "@/lib/marcom/eventCostAnalytics";
 import { STATUS_CONFIG, EVENT_TYPE_STYLES } from "./eventsConstants";
 
 interface EventCardsViewProps {
@@ -170,33 +174,62 @@ export function EventCardsView({
               </div>
 
               {/* Metrics: Budget & Attendance */}
-              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-3">
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
-                    Budget
-                  </span>
-                  <div className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                    {formatIDR(event.budget)}
-                  </div>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
-                    Footfall / Target
-                  </span>
-                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                    {event.attendeeCount.toLocaleString()} /{" "}
-                    <span className="text-slate-400 font-normal">
-                      {event.targetAttendee.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1 mt-1 overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 rounded-full transition-all"
-                      style={{ width: `${attendancePct}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
+              {(() => {
+                const unitEcon = calculateEventUnitEconomics(event);
+                return (
+                  <>
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-3">
+                      <div>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+                          Budget
+                        </span>
+                        <div className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                          {formatIDR(event.budget)}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+                          Footfall / Target
+                        </span>
+                        <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          {event.attendeeCount.toLocaleString()} /{" "}
+                          <span className="text-slate-400 font-normal">
+                            {event.targetAttendee.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1 mt-1 overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500 rounded-full transition-all"
+                            style={{ width: `${attendancePct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Unit Economics & Cost Efficiency */}
+                    <div className="mt-2.5 pt-2 border-t border-dashed border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 shrink-0">
+                          Biaya / Org:
+                        </span>
+                        <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                          {unitEcon.costPerAttendee > 0
+                            ? `${formatIDR(unitEcon.costPerAttendee)} / org`
+                            : "—"}
+                        </span>
+                      </div>
+                      <span
+                        className={cn(
+                          "text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0",
+                          getEfficiencyBadgeClasses(unitEcon.efficiencyCategory)
+                        )}
+                      >
+                        {unitEcon.efficiencyLabel}
+                      </span>
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Video Footage Showcase (Optimized Lightweight Poster) */}
               {hasMedia ? (

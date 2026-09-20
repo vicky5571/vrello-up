@@ -14,6 +14,7 @@ import {
   Play,
   Layers,
   Store,
+  Coins,
 } from "lucide-react";
 import type {
   FieldEventItem,
@@ -24,7 +25,7 @@ import type {
   Space,
   User,
 } from "@/types";
-import { formatIDR } from "@/lib/utils";
+import { cn, formatIDR } from "@/lib/utils";
 import {
   getWorkspaceSpacesAndLists,
   findSpaceByListId,
@@ -797,6 +798,58 @@ export function EventFormModal({
                     className="w-full px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
                   />
                 </div>
+
+                {/* Live Unit Economics & ROI Preview */}
+                {(() => {
+                  const parsedBudget = Math.max(0, parseInt(eventBudget, 10) || 0);
+                  const parsedTarget = Math.max(0, parseInt(eventTargetAttendee, 10) || 0);
+                  const parsedActual = Math.max(0, parseInt(eventAttendeeCount, 10) || 0);
+                  if (parsedBudget === 0 && parsedTarget === 0 && parsedActual === 0) return null;
+                  return (
+                    <div className="sm:col-span-2 md:col-span-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                          <Coins className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                            Proyeksi Biaya per Pengunjung
+                          </span>
+                          <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                            {parsedTarget > 0 && parsedBudget > 0
+                              ? `${formatIDR(Math.round(parsedBudget / parsedTarget))} / orang (Target)`
+                              : "Isi Target Attendees & Budget untuk melihat proyeksi"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {parsedActual > 0 && parsedBudget > 0 && (
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                              Realisasi Riil
+                            </span>
+                            <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                              {formatIDR(Math.round(parsedBudget / parsedActual))} / org
+                            </span>
+                          </div>
+                          {parsedTarget > 0 && (
+                            <span
+                              className={cn(
+                                "px-2 py-0.5 rounded-full text-[10px] font-bold border",
+                                parsedActual >= parsedTarget
+                                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
+                                  : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20"
+                              )}
+                            >
+                              {Math.round((parsedActual / parsedTarget) * 100)}% Capaian
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Notes & Permits */}
