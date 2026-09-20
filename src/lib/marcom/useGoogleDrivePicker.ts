@@ -7,10 +7,35 @@ import {
   getGoogleDriveMimeCategory,
 } from "@/lib/marcom/googleDriveUtils";
 
+export interface GooglePickerDoc {
+  id: string;
+  name: string;
+  mimeType?: string;
+  url?: string;
+  sizeBytes?: number;
+  iconUrl?: string;
+  [key: string]: unknown;
+}
+
+export interface GooglePickerData {
+  action: string;
+  docs?: GooglePickerDoc[];
+}
+
+export interface GoogleTokenResponse {
+  access_token: string;
+  error?: string;
+  [key: string]: unknown;
+}
+
+// Third-party external SDK globals for Google Identity and GAPI
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type GoogleSdkGlobal = any;
+
 declare global {
   interface Window {
-    gapi?: any;
-    google?: any;
+    gapi?: GoogleSdkGlobal;
+    google?: GoogleSdkGlobal;
   }
 }
 
@@ -235,10 +260,10 @@ export function useGoogleDrivePicker(): UseGoogleDrivePickerReturn {
           .setOAuthToken(accessToken)
           .addView(docsView)
           .addView(uploadView)
-          .setCallback((data: any) => {
+          .setCallback((data: GooglePickerData) => {
             if (data.action === google.picker.Action.PICKED) {
               const docs = data.docs || [];
-              const attachments: TaskAttachment[] = docs.map((doc: any) =>
+              const attachments: TaskAttachment[] = docs.map((doc: GooglePickerDoc) =>
                 buildAttachmentFromGoogleDriveDoc(doc)
               );
 
@@ -290,7 +315,7 @@ export function useGoogleDrivePicker(): UseGoogleDrivePickerReturn {
         const tokenClient = window.google.accounts.oauth2.initTokenClient({
           client_id: CLIENT_ID,
           scope: "https://www.googleapis.com/auth/drive.file",
-          callback: (tokenResponse: any) => {
+          callback: (tokenResponse: GoogleTokenResponse) => {
             if (tokenResponse.error) {
               console.warn("GSI OAuth error:", tokenResponse);
               setIsModalOpen(true);

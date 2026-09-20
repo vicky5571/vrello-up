@@ -1,4 +1,4 @@
-import test, { beforeEach, afterEach } from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { type Workspace } from "@/types";
 // @ts-expect-error Node's strip-types runner requires explicit TypeScript extension

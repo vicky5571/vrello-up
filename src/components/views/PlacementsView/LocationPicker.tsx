@@ -17,7 +17,6 @@ import {
   parseGoogleMapsUrl,
   isValidCoordinate,
   buildGoogleMapsUrl,
-  type Coordinates,
 } from "@/lib/marcom/locationUtils";
 import { cn } from "@/lib/utils";
 

@@ -4,33 +4,16 @@ import { useState, useEffect } from "react";
 import { useDropdown } from "@/components/ui/useDropdown";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { type Space } from "@/types";
-import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronDown,
   Plus,
-  LayoutGrid,
-  Layout,
-  Folder as FolderIcon,
-  ListTodo,
-  Layers,
-  Code2,
-  Palette,
-  Sparkles,
-  Rocket,
-  Target,
-  Zap,
   Settings,
-  LucideIcon,
   HelpCircle,
-  MoreHorizontal,
-  Edit2,
   Trash2,
-  FolderPlus,
   Megaphone,
   Kanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MARKETING_VIEWS, WORK_ITEM_VIEWS, MASTER_DATA_VIEWS } from "@/components/layout/ViewSwitcher";
+import { WORK_ITEM_VIEWS, MASTER_DATA_VIEWS } from "@/components/layout/ViewSwitcher";
 import { CreateSpaceModal } from "@/components/spaces/CreateSpaceModal";
 import { EditSpaceModal } from "@/components/spaces/EditSpaceModal";
 import { CreateListModal } from "@/components/spaces/CreateListModal";
@@ -55,19 +38,6 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { SortableSpaceItem } from "@/components/spaces/SortableSpaceItem";
-
-const ICON_MAP: Record<string, LucideIcon> = {
-  Code2,
-  Palette,
-  Sparkles,
-  Layers,
-  LayoutGrid,
-  Layout,
-  Folder: FolderIcon,
-  Rocket,
-  Target,
-  Zap,
-};
 
 export function Sidebar() {
   const {
@@ -138,8 +108,6 @@ export function Sidebar() {
   }, [activeSpaceId]);
 
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
-
-  const [isMarketingExpanded, setIsMarketingExpanded] = useState(true);
 
   // Modal States
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);

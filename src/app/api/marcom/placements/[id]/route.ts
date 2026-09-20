@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
-import { canTransitionPlacement, validatePlacementUpdate, type PlacementStatus } from "@/lib/marcom/placementMachine";
+import { validatePlacementUpdate, type PlacementStatus } from "@/lib/marcom/placementMachine";
 
 const VALID_STATUSES = ["NOT_STARTED", "ON_PROGRESS", "DONE", "ISSUE"] as const;
 const PATCHABLE_FIELDS = [

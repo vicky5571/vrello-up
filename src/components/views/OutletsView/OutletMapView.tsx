@@ -3,25 +3,21 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   Store,
-  MapPin,
   ExternalLink,
   Edit2,
   Building2,
   Layers,
   FileText,
-  Phone,
   MessageCircle,
   Crosshair,
   Plus,
   Minus,
   Maximize2,
   Minimize2,
-  Filter,
   Search,
   AlertCircle,
   X,
   Compass,
-  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type * as L from "leaflet";
@@ -52,7 +48,8 @@ function createOutletPinIcon(
 ) {
   const meta = getOutletMarkerMeta(outlet);
   const pinColor = meta.brandColor; // Yellow for IM3, Pink for 3
-  const isTri = (outlet as any).brand === "3" || (outlet as any).brand === "TRI";
+  const outletBrand = (outlet as unknown as { brand?: string }).brand;
+  const isTri = outletBrand === "3" || outletBrand === "TRI";
   const brandCode = isTri ? "3" : "IM3";
   const contrastColor = isTri ? "#EC4899" : "#B45309";
   const activePipColor = outlet.active ? "#10B981" : "#94A3B8";
@@ -111,7 +108,6 @@ export function OutletMapView({
   const [isLocating, setIsLocating] = useState(false);
   const [userCoords, setUserCoords] = useState<[number, number] | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [currentZoom, setCurrentZoom] = useState<number>(DEFAULT_ZOOM);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Filters state
@@ -173,7 +169,8 @@ export function OutletMapView({
 
       // Brand filter
       if (selectedBrand !== "ALL") {
-        const brand = ((o as any).brand || "IM3").toUpperCase();
+        const outletBrand = (o as unknown as { brand?: string }).brand || "IM3";
+        const brand = outletBrand.toUpperCase();
         if (selectedBrand === "TRI" && brand !== "3" && brand !== "TRI") return false;
         if (selectedBrand === "IM3" && (brand === "3" || brand === "TRI")) return false;
       }
@@ -328,11 +325,6 @@ export function OutletMapView({
       const markersGroup = L.layerGroup().addTo(map);
       markersLayerRef.current = markersGroup;
       mapInstanceRef.current = map;
-
-      map.on("zoomend", () => {
-        setCurrentZoom(map.getZoom());
-      });
-
       setIsMapReady(true);
     }
 

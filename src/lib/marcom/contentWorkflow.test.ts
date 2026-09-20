@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import type { ContentPostItem } from "@/types";
 import {
   getContentStatusMeta,
   canTransitionContentStatus,
@@ -72,7 +73,7 @@ test("calculateContentPipelineKPIs aggregates status counts and publication rate
     { id: "4", title: "P4", platform: "youtube", format: "short", status: "IN_REVIEW" },
     { id: "5", title: "P5", platform: "instagram", format: "story", status: "REVISION" },
     { id: "6", title: "P6", platform: "facebook", format: "post", status: "ARCHIVED" },
-  ] as any;
+  ] as unknown as ContentPostItem[];
 
   const kpis = calculateContentPipelineKPIs(mockPosts);
 

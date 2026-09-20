@@ -17,7 +17,6 @@ import {
   Store,
   FileText,
   ClipboardList,
-  Megaphone,
   Flag,
   Files,
   BarChart3,

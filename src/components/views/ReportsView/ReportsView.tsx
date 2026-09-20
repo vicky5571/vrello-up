@@ -164,13 +164,19 @@ export function ReportsView() {
         const json = await reportsRes.json();
         const reportList = Array.isArray(json.data) ? json.data : [];
         setReports(reportList);
-        setCachedReports(activeWorkspaceId, reportList as any);
+        setCachedReports(
+          activeWorkspaceId,
+          reportList as unknown as Parameters<typeof setCachedReports>[1],
+        );
 
         if (docsRes.ok) {
           const docsJson = await docsRes.json();
           const docList = Array.isArray(docsJson.data) ? docsJson.data : [];
           setDocuments(docList);
-          setCachedDocuments(activeWorkspaceId, docList as any);
+          setCachedDocuments(
+            activeWorkspaceId,
+            docList as unknown as Parameters<typeof setCachedDocuments>[1],
+          );
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load reports");

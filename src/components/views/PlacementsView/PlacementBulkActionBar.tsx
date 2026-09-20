@@ -24,7 +24,6 @@ interface PlacementBulkActionBarProps {
 
 export function PlacementBulkActionBar({
   selectedIds,
-  placements,
   onClearSelection,
   onRefresh,
   canManage,
@@ -150,7 +149,7 @@ export function PlacementBulkActionBar({
       toast.success(`${successCount} placement berhasil dihapus`);
       onClearSelection();
       await onRefresh();
-    } catch (err) {
+    } catch {
       toast.error("Gagal menghapus beberapa placement");
     } finally {
       setIsUpdating(false);

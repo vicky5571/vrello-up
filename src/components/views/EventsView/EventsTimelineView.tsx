@@ -5,9 +5,7 @@ import {
   format,
   addDays,
   subDays,
-  differenceInDays,
   isToday,
-  isSameDay,
   startOfWeek,
 } from "date-fns";
 import {
@@ -17,7 +15,6 @@ import {
   AlertTriangle,
   Building2,
   Tag,
-  MapPin,
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import type { FieldEventItem } from "@/types";

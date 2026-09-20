@@ -1,7 +1,7 @@
 "use client";
 
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
-import { Task, Priority, PostPlatform, PostFormat, TaskAttachment, Folder as FolderModel, List as ListModel } from "@/types";
+import { Task, Priority, PostPlatform, PostFormat, TaskAttachment, Folder as FolderModel, List as ListModel, ViewMode } from "@/types";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -393,7 +393,7 @@ export function TaskDrawer() {
                 <button
                   type="button"
                   onClick={() => {
-                    const targetView = (navigatedFromMarcom?.view as any) || "events";
+                    const targetView = (navigatedFromMarcom?.view as ViewMode) || "events";
                     setSelectedTaskId(null);
                     setNavigatedFromMarcom(null);
                     setAppMode("marcom");

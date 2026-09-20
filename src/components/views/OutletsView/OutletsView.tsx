@@ -9,7 +9,6 @@ import {
   Edit2,
   Building2,
   ClipboardList,
-  Filter,
   Layers,
   X,
   MapPin,
@@ -17,8 +16,6 @@ import {
   Compass,
   FileText,
   Navigation,
-  CheckCircle2,
-  AlertCircle,
   Eye,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
@@ -395,7 +392,7 @@ export function OutletsView() {
       const isEdit = Boolean(id);
       const url = isEdit ? `/api/marcom/outlets/${id}` : "/api/marcom/outlets";
       const method = isEdit ? "PATCH" : "POST";
-      const payload: Record<string, any> = {
+      const payload: Record<string, unknown> = {
         code,
         name,
         type,
@@ -407,10 +404,10 @@ export function OutletsView() {
         picPhone: picPhone || "",
       };
 
-      if (latitude !== undefined && latitude !== null && latitude !== ("" as any)) {
+      if (latitude !== undefined && latitude !== null && !Number.isNaN(Number(latitude))) {
         payload.latitude = Number(latitude);
       }
-      if (longitude !== undefined && longitude !== null && longitude !== ("" as any)) {
+      if (longitude !== undefined && longitude !== null && !Number.isNaN(Number(longitude))) {
         payload.longitude = Number(longitude);
       }
 

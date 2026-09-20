@@ -12,8 +12,6 @@ import {
   Maximize2,
   X,
   ChevronRight,
-  Filter,
-  Eye,
   Crosshair,
   Plus,
   Minus,
@@ -27,7 +25,7 @@ import {
   isValidCoordinate,
   buildGoogleMapsUrl,
 } from "@/lib/marcom/locationUtils";
-import { getBrandMeta, BRAND_CONFIG } from "@/lib/marcom/brandUtils";
+import { getBrandMeta } from "@/lib/marcom/brandUtils";
 import { cn, formatIDR } from "@/lib/utils";
 import { PlacementPhotoGallery } from "./PlacementPhotoGallery";
 

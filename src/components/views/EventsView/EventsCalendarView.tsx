@@ -94,7 +94,7 @@ export function EventsCalendarView({
       }
 
       // Populate every day in the interval
-      let curr = new Date(rawStart);
+      const curr = new Date(rawStart);
       const endTarget = new Date(rawEnd);
 
       while (curr <= endTarget) {

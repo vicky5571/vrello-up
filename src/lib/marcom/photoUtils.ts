@@ -106,8 +106,7 @@ export async function compressImage(
         width = maxWidth;
       } else {
         width = Math.round((width * maxHeight) / height);
-        maxHeight;
-        height = Math.round((imageBitmap.height * maxHeight) / imageBitmap.width);
+        height = maxHeight;
       }
     } else if (file.size < 400 * 1024 && file.type === "image/jpeg") {
       // Already small enough JPEG, skip re-encoding

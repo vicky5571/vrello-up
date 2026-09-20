@@ -202,7 +202,7 @@ test("RealtimeHub in-memory event bus and presence tracker", async (t) => {
       publish(channel, event) {
         customBrokerCalls.push({ channel, event });
       },
-      subscribe(_channel, _listener) {
+      subscribe() {
         return () => {};
       },
     };

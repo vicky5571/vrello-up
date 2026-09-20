@@ -119,7 +119,6 @@ export function MousView() {
 
   const canManage = can("DELETE_MOU");
   const canCreate = can("CREATE_MOU");
-  const canApprove = can("APPROVE_MOU");
 
   useEffect(() => {
     if (isBranchDropdownOpen) {

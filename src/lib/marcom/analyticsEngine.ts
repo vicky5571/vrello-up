@@ -308,7 +308,6 @@ export function calculatePosmMaterialEconomics(
     const isDone = status === "DONE";
     const isInProgress = status === "ON_PROGRESS";
     const isIssue = status === "ISSUE";
-    const isNotStarted = status === "NOT_STARTED" || (!isDone && !isInProgress && !isIssue);
 
     if (isDone) donePlacements++;
     else if (isInProgress) inProgressPlacements++;

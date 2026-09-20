@@ -98,14 +98,14 @@ export async function POST(request: Request) {
   }
 
   const footageData = Array.isArray(footage)
-    ? footage
-        .filter((f: any) => f && (f.title || f.filePath))
-        .map((f: any) => ({
+    ? (footage as Array<{ title?: unknown; filePath?: unknown; duration?: unknown }>)
+        .filter((f) => f && (f.title || f.filePath))
+        .map((f) => ({
           title: String(f.title || "Footage").trim(),
           filePath: String(f.filePath || "").trim(),
           duration: String(f.duration || "").trim(),
         }))
-        .filter((f: any) => f.filePath)
+        .filter((f) => f.filePath)
     : [];
 
   const event = await prisma.fieldEvent.create({

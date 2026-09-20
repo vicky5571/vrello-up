@@ -293,7 +293,6 @@ test("cross-channel search resolution preserves matching activities across chann
   ];
 
   const query = "Roadshow";
-  const channelFilter = "social"; // user is on social media tab
 
   const matchesQuery = (e: { name: string }) => e.name.toLowerCase().includes(query.toLowerCase());
   const hasChannelMatch = events.some((e) => e.isSocial && matchesQuery(e));

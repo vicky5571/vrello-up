@@ -3,16 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
-  Award,
-  CheckCircle2,
   Clock,
-  Layers,
   RefreshCw,
-  Share2,
   ShieldCheck,
   Store,
-  Timer,
-  TrendingUp,
   Users,
 } from "lucide-react";
 import {

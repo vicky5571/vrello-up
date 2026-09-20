@@ -6,7 +6,6 @@ import {
   calculateContentPlatformMetrics,
   calculateEventEfficiency,
   calculateOutletTierCoverage,
-  calculateExecutiveKpis,
   buildMarcomAnalyticsDashboard,
   type MouAnalyticsInput,
   type PlacementAnalyticsInput,
