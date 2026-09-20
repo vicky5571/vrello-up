@@ -143,6 +143,7 @@ const TrashModal = dynamic(
 );
 
 import { isFilterBarSupported } from "@/lib/tasks/filterTasks";
+import { useUrlStateSync } from "@/lib/router/useUrlStateSync";
 
 export default function WorkspacePage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -156,6 +157,7 @@ export default function WorkspacePage() {
 
   useWorkspaceHotkeys();
   useRealtime();
+  useUrlStateSync();
 
   useEffect(() => {
     setIsMounted(true);

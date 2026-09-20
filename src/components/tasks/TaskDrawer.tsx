@@ -52,6 +52,7 @@ import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useDropdown } from "@/components/ui/useDropdown";
 import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
+import { buildShareableTaskUrl } from "@/lib/router/urlState";
 
 function formatBytes(bytes: number): string {
   if (!bytes || bytes <= 0) return "0 B";
@@ -335,6 +336,18 @@ export function TaskDrawer() {
     toastTaskDeleted([task.id]);
   };
 
+  const handleCopyLink = () => {
+    if (!task) return;
+    const url =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${buildShareableTaskUrl(task.id, window.location.search)}`
+        : buildShareableTaskUrl(task.id);
+    navigator.clipboard
+      .writeText(url)
+      .then(() => toast.success("Task link copied to clipboard"))
+      .catch(() => toast.error("Failed to copy link to clipboard"));
+  };
+
   const toggleAssignee = (userId: string) => {
     if (!task) return;
     const isAssigned = task.assignees.some((u) => u.id === userId);
@@ -482,6 +495,14 @@ export function TaskDrawer() {
                     </div>
                   </div>
                 )}
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  title="Copy Task Link"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+                >
+                  <LinkIcon className="w-4 h-4" />
+                </button>
                 <button
                   onClick={handleDelete}
                   title="Delete Task"
