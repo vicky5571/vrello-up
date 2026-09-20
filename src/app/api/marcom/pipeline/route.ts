@@ -44,6 +44,7 @@ export async function GET(request: Request) {
       { name: { contains: query, mode: "insensitive" } },
       { code: { contains: query, mode: "insensitive" } },
       { city: { contains: query, mode: "insensitive" } },
+      { address: { contains: query, mode: "insensitive" } },
       { picName: { contains: query, mode: "insensitive" } },
       { branch: { name: { contains: query, mode: "insensitive" } } },
     ];
@@ -64,7 +65,7 @@ export async function GET(request: Request) {
     }
   }
 
-  const [outlets, events, contents] = await Promise.all([
+  const [outlets, events, contents, branches] = await Promise.all([
     prisma.outlet.findMany({
       where: outletWhere,
       orderBy: { code: "asc" },
@@ -93,6 +94,10 @@ export async function GET(request: Request) {
     prisma.contentPost.findMany({
       where: { workspaceId },
       orderBy: { publishDate: "desc" },
+    }),
+    prisma.branch.findMany({
+      select: { id: true, name: true, code: true },
+      orderBy: { name: "asc" },
     }),
   ]);
 
@@ -140,5 +145,9 @@ export async function GET(request: Request) {
     bottleneckOnly,
   });
 
-  return Response.json({ total: data.length, data });
+  return Response.json({
+    total: data.length,
+    branches,
+    data,
+  });
 }

@@ -241,4 +241,9 @@ test("pipeline GET route handler: executes with SQL pushdown for branchId, tier,
   assert.equal(resAll.status, 200);
   const jsonAll = await resAll.json();
   assert.ok(jsonAll.total >= jsonBranch.total);
+
+  // Assert atomic branches payload is returned
+  assert.ok(Array.isArray(jsonAll.branches));
+  assert.ok(jsonAll.branches.length > 0);
+  assert.ok(jsonAll.branches[0].id && jsonAll.branches[0].name);
 });

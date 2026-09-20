@@ -355,6 +355,7 @@ export function buildOutletPipelineRows(
 
 export interface PipelineFilterParams {
   q?: string | null;
+  search?: string | null;
   branchId?: string | null;
   tier?: string | null;
   bottleneckOnly?: boolean | string | null;
@@ -362,7 +363,7 @@ export interface PipelineFilterParams {
 
 /**
  * Pure filter helper for pipeline rows.
- * Supports filtering by branch, tier, search query (name, code, city, picName), and bottleneck flag.
+ * Supports filtering by branch, tier, search query (name, code, city, picName, address), and bottleneck flag.
  */
 export function filterPipelineRows(
   rows: OutletPipelineRow[],
@@ -380,14 +381,15 @@ export function filterPipelineRows(
     result = result.filter((row) => row.tier === tier);
   }
 
-  const query = filters.q?.trim().toLowerCase();
+  const query = (filters.q ?? filters.search)?.trim().toLowerCase();
   if (query) {
     result = result.filter(
       (row) =>
         (row.name && row.name.toLowerCase().includes(query)) ||
         (row.code && row.code.toLowerCase().includes(query)) ||
         (row.city && row.city.toLowerCase().includes(query)) ||
-        (row.picName && row.picName.toLowerCase().includes(query))
+        (row.picName && row.picName.toLowerCase().includes(query)) ||
+        (row.address && row.address.toLowerCase().includes(query))
     );
   }
 

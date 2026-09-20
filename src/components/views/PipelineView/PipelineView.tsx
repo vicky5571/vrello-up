@@ -63,19 +63,23 @@ export function PipelineView({ workspaceId: propWorkspaceId, className }: Pipeli
       const rows: OutletPipelineRow[] = Array.isArray(json.data) ? json.data : [];
       setData(rows);
 
-      // Extract unique branches from rows as immediate fallback
-      const branchMap = new Map<string, { id: string; name: string; code?: string }>();
-      for (const row of rows) {
-        if (row.branch?.id && !branchMap.has(row.branch.id)) {
-          branchMap.set(row.branch.id, {
-            id: row.branch.id,
-            name: row.branch.name || "Cabang",
-            code: row.branch.code,
-          });
+      if (Array.isArray(json.branches) && json.branches.length > 0) {
+        setBranches(json.branches);
+      } else {
+        // Fallback: Extract unique branches from rows if branches array was omitted
+        const branchMap = new Map<string, { id: string; name: string; code?: string }>();
+        for (const row of rows) {
+          if (row.branch?.id && !branchMap.has(row.branch.id)) {
+            branchMap.set(row.branch.id, {
+              id: row.branch.id,
+              name: row.branch.name || "Cabang",
+              code: row.branch.code,
+            });
+          }
         }
-      }
-      if (branchMap.size > 0) {
-        setBranches((prev) => (prev.length > 0 ? prev : Array.from(branchMap.values())));
+        if (branchMap.size > 0) {
+          setBranches(Array.from(branchMap.values()));
+        }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Terjadi kesalahan saat memuat data pipeline.";
@@ -85,31 +89,9 @@ export function PipelineView({ workspaceId: propWorkspaceId, className }: Pipeli
     }
   }, [activeWorkspaceId]);
 
-  // Fetch Branches Master List
-  const fetchBranches = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/marcom/branches?workspaceId=${encodeURIComponent(activeWorkspaceId)}`);
-      if (res.ok) {
-        const json = await res.json();
-        if (Array.isArray(json.data)) {
-          setBranches(
-            json.data.map((b: { id: string; name: string; code?: string }) => ({
-              id: b.id,
-              name: b.name,
-              code: b.code,
-            }))
-          );
-        }
-      }
-    } catch {
-      // Non-blocking, fallback branches extracted from rows will be used
-    }
-  }, [activeWorkspaceId]);
-
   useEffect(() => {
     fetchPipeline();
-    fetchBranches();
-  }, [fetchPipeline, fetchBranches]);
+  }, [fetchPipeline]);
 
   // KPI Calculations across entire dataset
   const kpiMetrics = useMemo(() => calculatePipelineKPIs(data), [data]);

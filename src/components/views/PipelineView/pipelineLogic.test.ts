@@ -170,6 +170,13 @@ test("filterPipelineData filters by search, branch, tier, and bottleneck", () =>
   assert.equal(searchPic.length, 1);
   assert.equal(searchPic[0].id, "out-2");
 
+  const searchAddress = filterPipelineData(mockRows, {
+    ...DEFAULT_PIPELINE_FILTERS,
+    search: "Hayam Wuruk",
+  });
+  assert.equal(searchAddress.length, 1);
+  assert.equal(searchAddress[0].id, "out-1");
+
   // 2. Branch filter
   const branchFiltered = filterPipelineData(mockRows, {
     ...DEFAULT_PIPELINE_FILTERS,

@@ -1,4 +1,5 @@
 import type { OutletPipelineRow } from "@/types";
+import { filterPipelineRows } from "@/lib/marcom/pipelineEngine";
 
 export type { OutletPipelineRow };
 
@@ -133,38 +134,18 @@ export function calculatePipelineKPIs(rows: OutletPipelineRow[]): PipelineKpiMet
 
 /**
  * Pure client-side filtering for pipeline rows.
+ * Delegates to canonical filterPipelineRows (SSOT) from pipelineEngine.
  */
 export function filterPipelineData(
   rows: OutletPipelineRow[],
   filters: PipelineFilterState
 ): OutletPipelineRow[] {
-  let result = rows;
-
-  if (filters.branchId && filters.branchId.toUpperCase() !== "ALL") {
-    result = result.filter((r) => r.branch?.id === filters.branchId);
-  }
-
-  if (filters.tier && filters.tier.toUpperCase() !== "ALL") {
-    result = result.filter((r) => r.tier === filters.tier);
-  }
-
-  const q = filters.search.trim().toLowerCase();
-  if (q) {
-    result = result.filter(
-      (r) =>
-        (r.name && r.name.toLowerCase().includes(q)) ||
-        (r.code && r.code.toLowerCase().includes(q)) ||
-        (r.city && r.city.toLowerCase().includes(q)) ||
-        (r.picName && r.picName.toLowerCase().includes(q)) ||
-        (r.address && r.address.toLowerCase().includes(q))
-    );
-  }
-
-  if (filters.bottleneckOnly) {
-    result = result.filter((r) => r.placementSummary?.hasBlockedItems === true);
-  }
-
-  return result;
+  return filterPipelineRows(rows, {
+    branchId: filters.branchId,
+    tier: filters.tier,
+    search: filters.search,
+    bottleneckOnly: filters.bottleneckOnly,
+  });
 }
 
 /**
