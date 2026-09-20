@@ -30,15 +30,16 @@ export function useRealtime() {
   const currentUserRef = useRef(currentUser);
   currentUserRef.current = currentUser;
 
-  // 1. Establish SSE Connection
+  // 1. Establish SSE Connection scoped to active workspace
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !activeWorkspaceId) return;
 
     let eventSource: EventSource | null = null;
     let reconnectTimeout: NodeJS.Timeout | null = null;
 
     function connect() {
-      eventSource = new EventSource("/api/realtime");
+      const url = `/api/realtime?workspaceId=${encodeURIComponent(activeWorkspaceId)}`;
+      eventSource = new EventSource(url);
 
       eventSource.onmessage = (e) => {
         try {
@@ -77,11 +78,11 @@ export function useRealtime() {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
       if (eventSource) eventSource.close();
     };
-  }, [setPresenceByTaskId, applyRemoteTaskUpsert, applyRemoteTaskDelete]);
+  }, [activeWorkspaceId, setPresenceByTaskId, applyRemoteTaskUpsert, applyRemoteTaskDelete]);
 
-  // 2. Presence Heartbeat
+  // 2. Presence Heartbeat scoped to active workspace
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !activeWorkspaceId) return;
 
     function sendPresence(taskId: string | null) {
       const user = currentUserRef.current;
@@ -93,6 +94,7 @@ export function useRealtime() {
           userId: user.id,
           user,
           taskId,
+          workspaceId: activeWorkspaceId,
         }),
       }).catch(() => {});
     }
@@ -115,10 +117,10 @@ export function useRealtime() {
             userId: currentUserRef.current.id,
             user: currentUserRef.current,
             taskId: null,
+            workspaceId: activeWorkspaceId,
           }),
         );
       }
     };
-  }, [selectedTaskId]);
+  }, [activeWorkspaceId, selectedTaskId]);
 }
-

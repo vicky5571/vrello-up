@@ -433,7 +433,7 @@ export async function POST(request: Request) {
       updatedAt: task.updatedAt.toISOString(),
     };
 
-    realtimeHub.broadcastTaskUpsert(formattedTask);
+    realtimeHub.broadcastTaskUpsert(formattedTask, targetWsId || undefined);
     return NextResponse.json(formattedTask, { status: 201 });
   } catch (error) {
     console.error("Error creating task in database:", error);

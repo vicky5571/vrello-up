@@ -118,7 +118,7 @@ export async function PATCH(
       updatedAt: updated.updatedAt.toISOString(),
     };
 
-    realtimeHub.broadcastTaskUpsert(formattedTask);
+    realtimeHub.broadcastTaskUpsert(formattedTask, existingTask.list.space.workspaceId);
     return NextResponse.json(formattedTask);
   } catch (error) {
     console.error("Error updating task in database:", error);
@@ -154,7 +154,7 @@ export async function DELETE(
       where: { id },
     });
 
-    realtimeHub.broadcastTaskDelete(id);
+    realtimeHub.broadcastTaskDelete(id, existingTask.list.space.workspaceId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Error deleting task in database:", error);

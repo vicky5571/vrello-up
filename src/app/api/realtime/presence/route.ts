@@ -4,7 +4,7 @@ import { realtimeHub } from "@/lib/server/realtimeHub";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userId, user, taskId } = body;
+    const { userId, user, taskId, workspaceId } = body;
 
     if (!userId || !user) {
       return NextResponse.json(
@@ -13,7 +13,12 @@ export async function POST(request: Request) {
       );
     }
 
-    realtimeHub.updatePresence(userId, user, taskId || null);
+    realtimeHub.updatePresence(
+      userId,
+      user,
+      taskId || null,
+      workspaceId || "default",
+    );
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Error updating presence:", error);
@@ -23,4 +28,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
