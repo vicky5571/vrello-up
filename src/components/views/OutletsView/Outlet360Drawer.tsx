@@ -18,17 +18,25 @@ import {
   RefreshCw,
   Edit2,
   AlertCircle,
+  AlertTriangle,
   Maximize2,
   Share2,
   Users,
+  Check,
+  CheckCircle2,
+  Play,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn, formatIDR } from "@/lib/utils";
 import { getOutletMarkerMeta } from "@/lib/marcom/outletAnalytics";
 import { buildGoogleMapsUrl } from "@/lib/marcom/locationUtils";
 import { parsePlacementPhotos } from "@/lib/marcom/photoUtils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useMarcomPermissions } from "@/lib/marcom/permissions";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { getContentStatusMeta } from "@/lib/marcom/contentWorkflow";
 import { PLATFORM_CONFIG } from "@/components/views/ContentPlannerView/contentConstants";
+import { summarizeOutletPendingActions } from "./outlet360Actions";
 import type { OutletItem } from "@/types";
 
 export interface Outlet360Placement {
@@ -145,6 +153,7 @@ interface Outlet360DrawerProps {
   onClose: () => void;
   onEditOutlet?: (outlet: OutletItem) => void;
   canManage?: boolean;
+  onDataChange?: () => void;
 }
 
 export function Outlet360Drawer({
@@ -152,6 +161,7 @@ export function Outlet360Drawer({
   onClose,
   onEditOutlet,
   canManage = false,
+  onDataChange,
 }: Outlet360DrawerProps) {
   const [data, setData] = useState<Outlet360Data | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -160,9 +170,11 @@ export function Outlet360Drawer({
     "overview" | "placements" | "mous" | "events" | "content"
   >("overview");
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const navigateToMarcom = useWorkspaceStore((state) => state.navigateToMarcom);
+  const { can } = useMarcomPermissions();
 
   useEffect(() => {
     if (!outletId) {
@@ -219,6 +231,178 @@ export function Outlet360Drawer({
   const mous = useMemo(() => data?.mous || [], [data]);
   const events = useMemo(() => data?.events || [], [data]);
   const contents = useMemo(() => data?.contents || [], [data]);
+
+  const pendingSummary = useMemo(
+    () => summarizeOutletPendingActions(mous, placements),
+    [mous, placements]
+  );
+  const pendingMous = useMemo(
+    () => mous.filter((m) => m.status === "SUBMITTED"),
+    [mous]
+  );
+  const issuePlacements = useMemo(
+    () => placements.filter((p) => p.status === "ISSUE"),
+    [placements]
+  );
+  const unstartedPlacements = useMemo(
+    () => placements.filter((p) => p.status === "NOT_STARTED"),
+    [placements]
+  );
+
+  const handleApproveMou = async (mou: Outlet360Mou) => {
+    const mouBranchId = mou.branch?.id || data?.branch?.id || data?.branchId;
+    if (!can("APPROVE_MOU", mouBranchId)) {
+      toast.error("Persetujuan MOU memerlukan wewenang Admin atau PIC resmi Cabang terkait");
+      return;
+    }
+
+    setActionLoadingId(`mou-approve-${mou.id}`);
+    try {
+      const res = await fetch(`/api/marcom/mous/${mou.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "APPROVED" }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Gagal menyetujui MOU (${res.status})`);
+      }
+
+      setData((prev) => {
+        if (!prev) return prev;
+        const updatedMous = prev.mous.map((m) =>
+          m.id === mou.id ? { ...m, status: "APPROVED" } : m
+        );
+        const updated = { ...prev, mous: updatedMous };
+        if (outletId) {
+          outletDetailsCache.set(`${activeWorkspaceId}:${outletId}`, {
+            data: updated,
+            timestamp: Date.now(),
+          });
+        }
+        return updated;
+      });
+
+      useMarcomDataStore.getState().invalidateMous(activeWorkspaceId);
+      useMarcomDataStore.getState().invalidatePlacements(activeWorkspaceId);
+
+      try {
+        const triggered = await useWorkspaceStore.getState().runAutomationsForTrigger("mou:approved", {
+          mouId: mou.id,
+          partnerName: mou.partnerName,
+          branchId: mouBranchId,
+        });
+        if (triggered > 0) {
+          toast.info(`Otomasi berjalan: tugas setup dibuat untuk ${mou.partnerName}`);
+        }
+      } catch {
+        // Automation fail-safe
+      }
+
+      toast.success(`MoU "${mou.partnerName}" berhasil disetujui!`);
+      onDataChange?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyetujui MoU");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleRejectMou = async (mou: Outlet360Mou) => {
+    const mouBranchId = mou.branch?.id || data?.branch?.id || data?.branchId;
+    if (!can("APPROVE_MOU", mouBranchId)) {
+      toast.error("Penolakan MOU memerlukan wewenang Admin atau PIC resmi Cabang terkait");
+      return;
+    }
+
+    setActionLoadingId(`mou-reject-${mou.id}`);
+    try {
+      const res = await fetch(`/api/marcom/mous/${mou.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "REJECTED" }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Gagal menolak MOU (${res.status})`);
+      }
+
+      setData((prev) => {
+        if (!prev) return prev;
+        const updatedMous = prev.mous.map((m) =>
+          m.id === mou.id ? { ...m, status: "REJECTED" } : m
+        );
+        const updated = { ...prev, mous: updatedMous };
+        if (outletId) {
+          outletDetailsCache.set(`${activeWorkspaceId}:${outletId}`, {
+            data: updated,
+            timestamp: Date.now(),
+          });
+        }
+        return updated;
+      });
+
+      useMarcomDataStore.getState().invalidateMous(activeWorkspaceId);
+      toast.success(`MoU "${mou.partnerName}" telah ditolak`);
+      onDataChange?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menolak MoU");
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleUpdatePlacementStatus = async (
+    placement: Outlet360Placement,
+    targetStatus: "ON_PROGRESS" | "DONE"
+  ) => {
+    const targetBranchId = data?.branch?.id || data?.branchId;
+    if (!can("UPDATE_PLACEMENT", targetBranchId)) {
+      toast.error("Anda tidak memiliki akses untuk mengubah status placement di cabang ini");
+      return;
+    }
+
+    setActionLoadingId(`placement-${placement.id}-${targetStatus}`);
+    try {
+      const res = await fetch(`/api/marcom/placements/${placement.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: targetStatus }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Gagal mengubah status pemasangan (${res.status})`);
+      }
+
+      setData((prev) => {
+        if (!prev) return prev;
+        const updatedPlacements = prev.placements.map((p) =>
+          p.id === placement.id ? { ...p, status: targetStatus } : p
+        );
+        const updated = { ...prev, placements: updatedPlacements };
+        if (outletId) {
+          outletDetailsCache.set(`${activeWorkspaceId}:${outletId}`, {
+            data: updated,
+            timestamp: Date.now(),
+          });
+        }
+        return updated;
+      });
+
+      useMarcomDataStore.getState().invalidatePlacements(activeWorkspaceId);
+      const label = targetStatus === "DONE" ? "Selesai (DONE)" : "Sedang Dipasang (ON PROGRESS)";
+      toast.success(`Status materi "${placement.material?.name || "Promosi"}" diubah ke ${label}`);
+      onDataChange?.();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal memperbarui status placement";
+      toast.error(msg);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
   const placementStats = useMemo(() => {
     const total = placements.length;
@@ -731,6 +915,182 @@ export function Outlet360Drawer({
                 )}
               </div>
 
+              {/* Action Center / Quick Triage for Bottlenecks & Pending Approvals */}
+              {pendingSummary.totalPendingCount > 0 && (
+                <div className="p-3.5 sm:p-4 rounded-2xl border border-amber-200 dark:border-amber-900/50 bg-linear-to-br from-amber-50/70 via-amber-50/30 to-orange-50/40 dark:from-amber-950/20 dark:via-slate-900 dark:to-orange-950/20 space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                        <AlertTriangle className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                          Tindakan Cepat Cockpit
+                        </h4>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {pendingSummary.totalPendingCount} item butuh perhatian operasional
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                      Butuh Tindakan
+                    </span>
+                  </div>
+
+                  {/* Pending MoUs */}
+                  {pendingMous.map((m) => {
+                    const mouBranchId = m.branch?.id || data?.branch?.id || data?.branchId;
+                    const canApprove = can("APPROVE_MOU", mouBranchId);
+                    const isApproving = actionLoadingId === `mou-approve-${m.id}`;
+                    const isRejecting = actionLoadingId === `mou-reject-${m.id}`;
+                    return (
+                      <div
+                        key={m.id}
+                        className="p-3 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 text-xs"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                              MoU: {m.partnerName}
+                            </span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-800">
+                              SUBMITTED
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate mt-0.5">
+                            {formatIDR(safeAmount(m.compensationValue))} • Menunggu persetujuan
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            disabled={!canApprove || isApproving || isRejecting}
+                            onClick={() => handleApproveMou(m)}
+                            title={
+                              canApprove
+                                ? "Setujui perjanjian MoU ini"
+                                : "Persetujuan MOU memerlukan wewenang Admin atau PIC Cabang terkait"
+                            }
+                            className={cn(
+                              "px-2.5 py-1 rounded-lg text-xs font-bold text-white flex items-center gap-1 shadow-2xs transition-colors",
+                              canApprove
+                                ? "bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+                                : "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
+                            )}
+                          >
+                            {isApproving ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5" />
+                            )}
+                            <span>Setujui</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!canApprove || isApproving || isRejecting}
+                            onClick={() => handleRejectMou(m)}
+                            title={
+                              canApprove
+                                ? "Tolak perjanjian MoU ini"
+                                : "Penolakan MOU memerlukan wewenang Admin atau PIC Cabang terkait"
+                            }
+                            className={cn(
+                              "px-2 py-1 rounded-lg text-xs font-bold border transition-colors",
+                              canApprove
+                                ? "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100 cursor-pointer"
+                                : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 cursor-not-allowed"
+                            )}
+                          >
+                            {isRejecting ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <X className="w-3.5 h-3.5" />
+                            )}
+                            <span>Tolak</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Issue Placements */}
+                  {issuePlacements.map((p) => {
+                    const isResuming = actionLoadingId === `placement-${p.id}-ON_PROGRESS`;
+                    return (
+                      <div
+                        key={p.id}
+                        className="p-3 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-amber-200 dark:border-amber-900/40 flex items-center justify-between gap-3 text-xs"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                              {p.material?.name || "Pemasangan POSM"}
+                            </span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-semibold border border-rose-200 dark:border-rose-800">
+                              KENDALA (ISSUE)
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate mt-0.5">
+                            Pemasangan terhambat • Klik lanjutkan untuk memulai kembali
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={isResuming}
+                          onClick={() => handleUpdatePlacementStatus(p, "ON_PROGRESS")}
+                          className="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 transition-colors shadow-2xs flex items-center gap-1 shrink-0 cursor-pointer"
+                        >
+                          {isResuming ? (
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Play className="w-3.5 h-3.5" />
+                          )}
+                          <span>Lanjutkan Pasang</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  {/* Unstarted Placements */}
+                  {unstartedPlacements.map((p) => {
+                    const isStarting = actionLoadingId === `placement-${p.id}-ON_PROGRESS`;
+                    return (
+                      <div
+                        key={p.id}
+                        className="p-3 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 text-xs"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                              {p.material?.name || "Pemasangan POSM"}
+                            </span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold">
+                              BELUM MULAI
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block truncate mt-0.5">
+                            Siap dipasang ke toko
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={isStarting}
+                          onClick={() => handleUpdatePlacementStatus(p, "ON_PROGRESS")}
+                          className="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-2xs flex items-center gap-1 shrink-0 cursor-pointer"
+                        >
+                          {isStarting ? (
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Play className="w-3.5 h-3.5" />
+                          )}
+                          <span>Mulai Pasang</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* Profile Card */}
               <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
                 <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">
@@ -902,6 +1262,92 @@ export function Outlet360Drawer({
                           </div>
                         </div>
                       )}
+                      {/* Micro-Action status progression */}
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                        <span className="text-[11px] text-slate-400 truncate">
+                          {p.status === "DONE"
+                            ? "Pemasangan selesai & terverifikasi"
+                            : p.status === "ISSUE"
+                            ? "Kendala aktif dilaporkan"
+                            : p.status === "ON_PROGRESS"
+                            ? photos.length > 0
+                              ? "Foto bukti telah diunggah"
+                              : "Perlu bukti foto untuk selesai"
+                            : "Siap dipasang"}
+                        </span>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {p.status === "NOT_STARTED" && (
+                            <button
+                              type="button"
+                              disabled={actionLoadingId === `placement-${p.id}-ON_PROGRESS`}
+                              onClick={() => handleUpdatePlacementStatus(p, "ON_PROGRESS")}
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-2xs flex items-center gap-1 cursor-pointer"
+                            >
+                              {actionLoadingId === `placement-${p.id}-ON_PROGRESS` ? (
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Play className="w-3 h-3" />
+                              )}
+                              <span>Mulai Pasang</span>
+                            </button>
+                          )}
+
+                          {p.status === "ISSUE" && (
+                            <button
+                              type="button"
+                              disabled={actionLoadingId === `placement-${p.id}-ON_PROGRESS`}
+                              onClick={() => handleUpdatePlacementStatus(p, "ON_PROGRESS")}
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 transition-colors shadow-2xs flex items-center gap-1 cursor-pointer"
+                            >
+                              {actionLoadingId === `placement-${p.id}-ON_PROGRESS` ? (
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Play className="w-3 h-3" />
+                              )}
+                              <span>Lanjutkan Pasang</span>
+                            </button>
+                          )}
+
+                          {p.status === "ON_PROGRESS" && (
+                            photos.length > 0 ? (
+                              <button
+                                type="button"
+                                disabled={actionLoadingId === `placement-${p.id}-DONE`}
+                                onClick={() => handleUpdatePlacementStatus(p, "DONE")}
+                                className="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-2xs flex items-center gap-1 cursor-pointer"
+                              >
+                                {actionLoadingId === `placement-${p.id}-DONE` ? (
+                                  <RefreshCw className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Check className="w-3 h-3" />
+                                )}
+                                <span>Tandai Selesai</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  toast.info("Unggah foto bukti fisik di modul Placements untuk menyelesaikan status.");
+                                  navigateToMarcom("placements", data.name);
+                                  onClose();
+                                }}
+                                className="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1 cursor-pointer"
+                              >
+                                <ExternalLink className="w-3 h-3 text-slate-500" />
+                                <span>Upload Bukti Foto</span>
+                              </button>
+                            )
+                          )}
+
+                          {p.status === "DONE" && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Selesai</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   );
                 })
@@ -972,6 +1418,72 @@ export function Outlet360Drawer({
                           {formatIDR(safeAmount(m.compensationValue))}
                         </span>
                       </div>
+                      {/* Micro-Action for SUBMITTED MoU */}
+                      {m.status === "SUBMITTED" && (
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                          <span className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">
+                            Menunggu persetujuan branch/admin
+                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {(() => {
+                              const mouBranchId = m.branch?.id || data?.branch?.id || data?.branchId;
+                              const canApprove = can("APPROVE_MOU", mouBranchId);
+                              const isApproving = actionLoadingId === `mou-approve-${m.id}`;
+                              const isRejecting = actionLoadingId === `mou-reject-${m.id}`;
+                              return (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={!canApprove || isApproving || isRejecting}
+                                    onClick={() => handleApproveMou(m)}
+                                    title={
+                                      canApprove
+                                        ? "Setujui perjanjian MoU ini"
+                                        : "Persetujuan MOU memerlukan wewenang Admin atau PIC Cabang terkait"
+                                    }
+                                    className={cn(
+                                      "px-2.5 py-1 rounded-lg text-xs font-bold text-white flex items-center gap-1 shadow-2xs transition-colors",
+                                      canApprove
+                                        ? "bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+                                        : "bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed"
+                                    )}
+                                  >
+                                    {isApproving ? (
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Check className="w-3.5 h-3.5" />
+                                    )}
+                                    <span>Setujui</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={!canApprove || isApproving || isRejecting}
+                                    onClick={() => handleRejectMou(m)}
+                                    title={
+                                      canApprove
+                                        ? "Tolak perjanjian MoU ini"
+                                        : "Penolakan MOU memerlukan wewenang Admin atau PIC Cabang terkait"
+                                    }
+                                    className={cn(
+                                      "px-2 py-1 rounded-lg text-xs font-bold border transition-colors",
+                                      canApprove
+                                        ? "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-100 cursor-pointer"
+                                        : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 cursor-not-allowed"
+                                    )}
+                                  >
+                                    {isRejecting ? (
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <X className="w-3.5 h-3.5" />
+                                    )}
+                                    <span>Tolak</span>
+                                  </button>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))

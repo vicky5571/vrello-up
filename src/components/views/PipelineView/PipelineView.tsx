@@ -315,6 +315,7 @@ export function PipelineView({ workspaceId: propWorkspaceId, className }: Pipeli
       <Outlet360Drawer
         outletId={selectedOutletId}
         onClose={() => setSelectedOutletId(null)}
+        onDataChange={fetchPipeline}
       />
     </div>
   );

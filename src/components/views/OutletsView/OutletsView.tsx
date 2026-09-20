@@ -739,6 +739,9 @@ export function OutletsView() {
           setModalOutlet(o);
         }}
         canManage={canManage}
+        onDataChange={() => {
+          fetchOutlets();
+        }}
       />
 
       {/* Modal Add / Edit Outlet */}
