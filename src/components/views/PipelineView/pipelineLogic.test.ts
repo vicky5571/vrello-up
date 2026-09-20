@@ -218,4 +218,15 @@ test("sortPipelineData sorts ascending and descending correctly", () => {
   assert.equal(sortedMouDesc[0].id, "out-1"); // 12jt
   assert.equal(sortedMouDesc[1].id, "out-2"); // 5jt
   assert.equal(sortedMouDesc[2].id, "out-3"); // 0
+
+  // Sort by urgency desc (critical first)
+  const urgencyRows: OutletPipelineRow[] = [
+    { ...mockRows[0], urgencyLevel: "NORMAL" },
+    { ...mockRows[1], urgencyLevel: "CRITICAL", placementSummary: { ...mockRows[1].placementSummary, maxAgingDays: 14 } },
+    { ...mockRows[2], urgencyLevel: "WARNING", placementSummary: { ...mockRows[2].placementSummary, maxAgingDays: 4 } },
+  ];
+  const sortedUrgencyDesc = sortPipelineData(urgencyRows, "urgency", "desc");
+  assert.equal(sortedUrgencyDesc[0].urgencyLevel, "CRITICAL");
+  assert.equal(sortedUrgencyDesc[1].urgencyLevel, "WARNING");
+  assert.equal(sortedUrgencyDesc[2].urgencyLevel, "NORMAL");
 });

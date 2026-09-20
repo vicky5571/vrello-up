@@ -1,5 +1,6 @@
 import type {
   OutletPipelineRow,
+  PipelineUrgencyLevel,
   Outlet,
   OutletType,
   OutletTier,
@@ -15,7 +16,7 @@ import type {
 } from "@/types";
 import { isPermanentMaterial } from "@/lib/marcom/placementMouBridge";
 
-export type { OutletPipelineRow };
+export type { OutletPipelineRow, PipelineUrgencyLevel };
 
 export interface PipelineOutletInput extends Omit<Partial<Outlet>, "type" | "tier" | "branch" | "mous" | "placements"> {
   id: string;
@@ -152,10 +153,15 @@ export function buildOutletPipelineRows(
     const mous = Array.isArray(outlet.mous) ? outlet.mous : [];
     const placements = Array.isArray(outlet.placements) ? outlet.placements : [];
 
-    // --- 1. MoU Summary ---
+    // --- 1. MoU Summary & SLA Aging ---
     const totalMous = mous.length;
     let latestMouStatus: OutletPipelineRow["mouSummary"]["latestStatus"] = "NONE";
     let totalCompensationValue = 0;
+    let mouDaysLeft: number | undefined;
+    let mouIsExpiringSoon = false;
+    let mouIsExpired = false;
+    let mouDaysPendingApproval: number | undefined;
+    let mouEndDateStr: string | undefined;
 
     if (totalMous > 0) {
       // Sort to get the most recent MoU (items with timestamps sorted before items without)
@@ -182,16 +188,44 @@ export function buildOutletPipelineRows(
         const val = typeof m.compensationValue === "number" && !Number.isNaN(m.compensationValue) ? m.compensationValue : 0;
         totalCompensationValue += val;
       }
+
+      // SLA Aging for MoU
+      if (latestMou?.endDate) {
+        mouEndDateStr = typeof latestMou.endDate === "string" ? latestMou.endDate : new Date(latestMou.endDate).toISOString();
+        const endMs = new Date(latestMou.endDate).getTime();
+        if (!Number.isNaN(endMs)) {
+          const diffMs = endMs - now;
+          const daysLeft = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+          mouDaysLeft = daysLeft;
+          if (daysLeft <= 0 && latestMouStatus !== "DONE") {
+            mouIsExpired = true;
+          } else if (daysLeft > 0 && daysLeft <= 30) {
+            mouIsExpiringSoon = true;
+          }
+        }
+      }
+
+      if (latestMouStatus === "SUBMITTED") {
+        const rawSubmitDate = latestMou.submissionDate || ("updatedAt" in latestMou && typeof latestMou.updatedAt === "string" ? latestMou.updatedAt : ("createdAt" in latestMou && typeof latestMou.createdAt === "string" ? latestMou.createdAt : ""));
+        if (rawSubmitDate) {
+          const submitMs = new Date(rawSubmitDate).getTime();
+          if (!Number.isNaN(submitMs)) {
+            mouDaysPendingApproval = Math.max(0, Math.floor((now - submitMs) / (24 * 60 * 60 * 1000)));
+          }
+        }
+      }
     }
 
     const hasApprovedMou = mous.some((m) => normalizeMouStatus(m.status) === "APPROVED");
     const isHealthy = latestMouStatus === "APPROVED";
 
-    // --- 2. Placement Summary ---
+    // --- 2. Placement Summary & SLA Aging ---
     const totalPlacements = placements.length;
     let doneCount = 0;
     let totalPlacementCost = 0;
     let hasBlockedItems = false;
+    let maxAgingDays = 0;
+    let blockedCount = 0;
 
     for (const p of placements) {
       const statusUpper = (p.status || "").trim().toUpperCase();
@@ -206,8 +240,62 @@ export function buildOutletPipelineRows(
       // An item is blocked if it has an explicit "ISSUE" status,
       // or if it is a pending/in-progress permanent material lacking an active approved MoU.
       const isPermanent = isPermanentMaterial(p.material);
-      if (statusUpper === "ISSUE" || (statusUpper !== "DONE" && isPermanent && !hasApprovedMou)) {
+      const isBlockedItem = statusUpper === "ISSUE" || (statusUpper !== "DONE" && isPermanent && !hasApprovedMou);
+
+      if (isBlockedItem) {
         hasBlockedItems = true;
+        blockedCount++;
+
+        // Aging calculation based on last update / creation date
+        const rawDate = ("updatedAt" in p && typeof p.updatedAt === "string" ? p.updatedAt : ("createdAt" in p && typeof p.createdAt === "string" ? p.createdAt : (p.date || "")));
+        if (rawDate) {
+          const pMs = new Date(rawDate).getTime();
+          if (!Number.isNaN(pMs)) {
+            const days = Math.max(0, Math.floor((now - pMs) / (24 * 60 * 60 * 1000)));
+            if (days > maxAgingDays) {
+              maxAgingDays = days;
+            }
+          }
+        }
+      }
+    }
+
+    // --- Urgency Level & Triage Classification ---
+    const urgencyReasons: string[] = [];
+    let urgencyLevel: PipelineUrgencyLevel = "NORMAL";
+
+    // 1. Critical triggers
+    if (mouIsExpired) {
+      urgencyLevel = "CRITICAL";
+      urgencyReasons.push("MoU Kadaluwarsa");
+    } else if (mouDaysLeft !== undefined && mouDaysLeft <= 7 && latestMouStatus === "APPROVED") {
+      urgencyLevel = "CRITICAL";
+      urgencyReasons.push(`MoU Berakhir H-${mouDaysLeft}`);
+    }
+
+    if (hasBlockedItems && maxAgingDays > 7) {
+      urgencyLevel = "CRITICAL";
+      urgencyReasons.push(`POSM Tertahan ${maxAgingDays} Hari`);
+    }
+
+    if (mouDaysPendingApproval !== undefined && mouDaysPendingApproval > 3) {
+      urgencyLevel = "CRITICAL";
+      urgencyReasons.push(`MoU Menunggu Persetujuan ${mouDaysPendingApproval} Hari`);
+    }
+
+    // 2. Warning triggers (if not already CRITICAL)
+    if (urgencyLevel !== "CRITICAL") {
+      if (mouDaysLeft !== undefined && mouDaysLeft <= 30 && latestMouStatus === "APPROVED") {
+        urgencyLevel = "WARNING";
+        urgencyReasons.push(`MoU Berakhir H-${mouDaysLeft}`);
+      }
+      if (hasBlockedItems) {
+        urgencyLevel = "WARNING";
+        if (maxAgingDays > 0) {
+          urgencyReasons.push(`POSM Tertahan ${maxAgingDays} Hari`);
+        } else {
+          urgencyReasons.push("POSM Terkendala");
+        }
       }
     }
 
@@ -328,6 +416,11 @@ export function buildOutletPipelineRows(
         latestStatus: latestMouStatus,
         compensationValue: totalCompensationValue,
         isHealthy,
+        daysLeft: mouDaysLeft,
+        isExpiringSoon: mouIsExpiringSoon,
+        isExpired: mouIsExpired,
+        daysPendingApproval: mouDaysPendingApproval,
+        endDate: mouEndDateStr,
       },
       placementSummary: {
         total: totalPlacements,
@@ -335,6 +428,8 @@ export function buildOutletPipelineRows(
         pendingCount,
         totalCost: totalPlacementCost,
         hasBlockedItems,
+        maxAgingDays,
+        blockedCount,
       },
       eventSummary: {
         total: totalEvents,
@@ -349,6 +444,8 @@ export function buildOutletPipelineRows(
         inReviewCount,
         latestPlatform,
       },
+      urgencyLevel,
+      urgencyReasons,
     };
   });
 }
@@ -359,11 +456,12 @@ export interface PipelineFilterParams {
   branchId?: string | null;
   tier?: string | null;
   bottleneckOnly?: boolean | string | null;
+  urgencyLevel?: PipelineUrgencyLevel | "ALL" | null;
 }
 
 /**
  * Pure filter helper for pipeline rows.
- * Supports filtering by branch, tier, search query (name, code, city, picName, address), and bottleneck flag.
+ * Supports filtering by branch, tier, search query (name, code, city, picName, address), bottleneck flag, and SLA urgency level.
  */
 export function filterPipelineRows(
   rows: OutletPipelineRow[],
@@ -399,6 +497,11 @@ export function filterPipelineRows(
     filters.bottleneckOnly === "1";
   if (isBottleneck) {
     result = result.filter((row) => row.placementSummary.hasBlockedItems === true);
+  }
+
+  const urgency = filters.urgencyLevel;
+  if (urgency && urgency.toUpperCase() !== "ALL") {
+    result = result.filter((row) => row.urgencyLevel === urgency);
   }
 
   return result;

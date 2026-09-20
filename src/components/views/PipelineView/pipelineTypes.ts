@@ -8,6 +8,7 @@ export interface PipelineFilterState {
   branchId: string;
   tier: string;
   bottleneckOnly: boolean;
+  urgencyLevel?: "CRITICAL" | "WARNING" | "ALL";
 }
 
 export const DEFAULT_PIPELINE_FILTERS: PipelineFilterState = {
@@ -15,6 +16,7 @@ export const DEFAULT_PIPELINE_FILTERS: PipelineFilterState = {
   branchId: "ALL",
   tier: "ALL",
   bottleneckOnly: false,
+  urgencyLevel: "ALL",
 };
 
 export type PipelineSortField =
@@ -24,7 +26,8 @@ export type PipelineSortField =
   | "mou"
   | "placement"
   | "event"
-  | "content";
+  | "content"
+  | "urgency";
 
 export type PipelineSortOrder = "asc" | "desc";
 
@@ -145,6 +148,7 @@ export function filterPipelineData(
     tier: filters.tier,
     search: filters.search,
     bottleneckOnly: filters.bottleneckOnly,
+    urgencyLevel: filters.urgencyLevel,
   });
 }
 
@@ -159,6 +163,16 @@ export function sortPipelineData(
   const factor = order === "asc" ? 1 : -1;
   return [...rows].sort((a, b) => {
     switch (field) {
+      case "urgency": {
+        const score = (r: OutletPipelineRow) =>
+          r.urgencyLevel === "CRITICAL" ? 3 : r.urgencyLevel === "WARNING" ? 2 : 1;
+        const scoreA = score(a);
+        const scoreB = score(b);
+        if (scoreA !== scoreB) return factor * (scoreA - scoreB);
+        const agingA = a.placementSummary?.maxAgingDays || 0;
+        const agingB = b.placementSummary?.maxAgingDays || 0;
+        return factor * (agingA - agingB);
+      }
       case "name":
         return factor * (a.name || "").localeCompare(b.name || "");
       case "tier":

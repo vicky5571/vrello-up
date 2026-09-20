@@ -186,7 +186,19 @@ export function PipelineCockpitCardList({
                 </div>
               </div>
 
-              <div className="shrink-0 flex items-center gap-1">
+              <div className="shrink-0 flex items-center gap-1.5">
+                {outlet.urgencyLevel === "CRITICAL" && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    <span>{outlet.urgencyReasons?.[0] || "Butuh Tindakan"}</span>
+                  </span>
+                )}
+                {outlet.urgencyLevel === "WARNING" && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    <span>{outlet.urgencyReasons?.[0] || "Perhatian"}</span>
+                  </span>
+                )}
                 {renderTierBadge(outlet.tier)}
               </div>
             </div>
@@ -207,6 +219,34 @@ export function PipelineCockpitCardList({
                     ? formatIDR(outlet.mouSummary.compensationValue)
                     : "-"}
                 </div>
+                {/* SLA Aging for MoU */}
+                {outlet.mouSummary?.isExpired ? (
+                  <div className="text-[9px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-0.5 mt-1">
+                    <AlertTriangle className="w-2.5 h-2.5 shrink-0" />
+                    <span>MoU Kadaluwarsa</span>
+                  </div>
+                ) : outlet.mouSummary?.daysLeft !== undefined &&
+                  outlet.mouSummary.daysLeft <= 30 &&
+                  outlet.mouSummary.latestStatus === "APPROVED" ? (
+                  <div
+                    className={cn(
+                      "text-[9px] font-bold flex items-center gap-0.5 mt-1",
+                      outlet.mouSummary.daysLeft <= 7
+                        ? "text-rose-600 dark:text-rose-400"
+                        : "text-amber-600 dark:text-amber-400"
+                    )}
+                  >
+                    <Clock className="w-2.5 h-2.5 shrink-0" />
+                    <span>H-{outlet.mouSummary.daysLeft} Berakhir</span>
+                  </div>
+                ) : outlet.mouSummary?.latestStatus === "SUBMITTED" &&
+                  outlet.mouSummary.daysPendingApproval !== undefined &&
+                  outlet.mouSummary.daysPendingApproval > 3 ? (
+                  <div className="text-[9px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-0.5 mt-1">
+                    <Clock className="w-2.5 h-2.5 shrink-0" />
+                    <span>Menunggu {outlet.mouSummary.daysPendingApproval}h</span>
+                  </div>
+                ) : null}
               </div>
 
               {/* Tile 2: POSM Placements */}
@@ -233,10 +273,22 @@ export function PipelineCockpitCardList({
                     style={{ width: `${posmPercent}%` }}
                   />
                 </div>
+                {/* SLA Aging for POSM */}
                 {isBlocked && (
-                  <div className="text-[9px] font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-0.5">
+                  <div
+                    className={cn(
+                      "text-[9px] font-bold flex items-center gap-1 mt-0.5",
+                      (outlet.placementSummary?.maxAgingDays || 0) > 7
+                        ? "text-rose-600 dark:text-rose-400"
+                        : "text-amber-600 dark:text-amber-400"
+                    )}
+                  >
                     <AlertTriangle className="w-2.5 h-2.5 shrink-0" />
-                    <span>Bottleneck POSM</span>
+                    <span>
+                      {(outlet.placementSummary?.maxAgingDays || 0) > 0
+                        ? `Tertahan ${outlet.placementSummary.maxAgingDays}h`
+                        : "Bottleneck POSM"}
+                    </span>
                   </div>
                 )}
               </div>

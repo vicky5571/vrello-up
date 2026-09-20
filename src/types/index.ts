@@ -495,6 +495,8 @@ export interface OutletItem {
 
 export type Outlet = OutletItem;
 
+export type PipelineUrgencyLevel = "CRITICAL" | "WARNING" | "NORMAL";
+
 export interface OutletPipelineRow {
   id: string;
   code: string;
@@ -512,6 +514,11 @@ export interface OutletPipelineRow {
     latestStatus: "APPROVED" | "DONE" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE" | "UNKNOWN";
     compensationValue: number;
     isHealthy: boolean;
+    daysLeft?: number;
+    isExpiringSoon?: boolean;
+    isExpired?: boolean;
+    daysPendingApproval?: number;
+    endDate?: string;
   };
   placementSummary: {
     total: number;
@@ -519,6 +526,8 @@ export interface OutletPipelineRow {
     pendingCount: number;
     totalCost: number;
     hasBlockedItems: boolean;
+    maxAgingDays?: number;
+    blockedCount?: number;
   };
   eventSummary: {
     total: number;
@@ -533,6 +542,8 @@ export interface OutletPipelineRow {
     inReviewCount: number;
     latestPlatform?: string;
   };
+  urgencyLevel?: PipelineUrgencyLevel;
+  urgencyReasons?: string[];
 }
 
 
