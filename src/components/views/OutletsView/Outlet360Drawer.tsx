@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState, useMemo } from "react";
 import {
@@ -30,11 +29,121 @@ import { parsePlacementPhotos } from "@/lib/marcom/photoUtils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { getContentStatusMeta } from "@/lib/marcom/contentWorkflow";
 import { PLATFORM_CONFIG } from "@/components/views/ContentPlannerView/contentConstants";
+import type { OutletItem } from "@/types";
+
+export interface Outlet360Placement {
+  id: string;
+  status: string;
+  cost?: number | null;
+  date?: string | Date | null;
+  dimensions?: string | null;
+  picName?: string | null;
+  photoUrl?: string | null;
+  material?: {
+    id: string;
+    name: string;
+    type?: string;
+    requiresMou?: boolean;
+  } | null;
+  mou?: {
+    id: string;
+    partnerName: string;
+    status: string;
+    compensationValue?: number | null;
+  } | null;
+}
+
+export interface Outlet360Mou {
+  id: string;
+  partnerName: string;
+  mouType: string;
+  status: string;
+  compensationValue?: number | null;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
+  branch?: {
+    id: string;
+    code: string;
+    name: string;
+  } | null;
+}
+
+export interface Outlet360Event {
+  id: string;
+  name: string;
+  eventType?: string | null;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
+  date?: string | Date | null;
+  location?: string | null;
+  status: string;
+  budget?: number | null;
+  targetAttendee?: number | null;
+  attendeeCount?: number | null;
+  picName?: string | null;
+  footage?: Array<{
+    id: string;
+    title: string;
+    filePath: string;
+    duration?: string;
+  }> | null;
+}
+
+export interface Outlet360Content {
+  id: string;
+  title: string;
+  platform?: string | null;
+  format?: string | null;
+  publishDate?: string | Date | null;
+  status: string;
+  caption?: string | null;
+  mediaUrl?: string | null;
+  picName?: string | null;
+}
+
+export interface Outlet360Branch {
+  id: string;
+  code: string;
+  name: string;
+  city?: string | null;
+  region?: string | null;
+  picName?: string | null;
+  picPhone?: string | null;
+  address?: string | null;
+}
+
+export interface Outlet360Data extends Omit<OutletItem, "branch"> {
+  branch?: Outlet360Branch | null;
+  placements: Outlet360Placement[];
+  mous: Outlet360Mou[];
+  events: Outlet360Event[];
+  contents: Outlet360Content[];
+}
+
+interface CacheEntry {
+  data: Outlet360Data;
+  timestamp: number;
+}
+
+const outletDetailsCache = new Map<string, CacheEntry>();
+
+function safeAmount(val: unknown): number {
+  if (typeof val === "number" && !Number.isNaN(val) && val > 0) {
+    return val;
+  }
+  if (typeof val === "string") {
+    const parsed = Number(val);
+    if (!Number.isNaN(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return 0;
+}
 
 interface Outlet360DrawerProps {
   outletId: string | null;
   onClose: () => void;
-  onEditOutlet?: (outlet: any) => void;
+  onEditOutlet?: (outlet: OutletItem) => void;
   canManage?: boolean;
 }
 
@@ -44,7 +153,7 @@ export function Outlet360Drawer({
   onEditOutlet,
   canManage = false,
 }: Outlet360DrawerProps) {
-  const [data, setData] = useState<any | null>(null);
+  const [data, setData] = useState<Outlet360Data | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
@@ -52,6 +161,7 @@ export function Outlet360Drawer({
   >("overview");
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
 
+  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const navigateToMarcom = useWorkspaceStore((state) => state.navigateToMarcom);
 
   useEffect(() => {
@@ -59,23 +169,42 @@ export function Outlet360Drawer({
       setData(null);
       return;
     }
-    let isMounted = true;
-    setIsLoading(true);
-    setError(null);
 
-    fetch(`/api/marcom/outlets/${outletId}`)
+    const cacheKey = `${activeWorkspaceId}:${outletId}`;
+    const cached = outletDetailsCache.get(cacheKey);
+
+    if (cached) {
+      setData(cached.data);
+      setIsLoading(false);
+      setError(null);
+    } else {
+      setIsLoading(true);
+      setError(null);
+    }
+
+    let isMounted = true;
+
+    fetch(`/api/marcom/outlets/${outletId}?workspaceId=${encodeURIComponent(activeWorkspaceId)}`)
       .then(async (res) => {
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           throw new Error(err.error || `Failed to load outlet (${res.status})`);
         }
-        return res.json();
+        return res.json() as Promise<Outlet360Data>;
       })
       .then((json) => {
-        if (isMounted) setData(json);
+        if (!isMounted) return;
+        outletDetailsCache.set(cacheKey, { data: json, timestamp: Date.now() });
+        setData(json);
+        setError(null);
       })
       .catch((e) => {
-        if (isMounted) setError(e instanceof Error ? e.message : "Error loading outlet details");
+        if (!isMounted) return;
+        if (!cached) {
+          setError(e instanceof Error ? e.message : "Error loading outlet details");
+        } else {
+          console.warn("[Outlet360Drawer] Background revalidation failed:", e);
+        }
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -84,7 +213,7 @@ export function Outlet360Drawer({
     return () => {
       isMounted = false;
     };
-  }, [outletId]);
+  }, [outletId, activeWorkspaceId]);
 
   const placements = useMemo(() => data?.placements || [], [data]);
   const mous = useMemo(() => data?.mous || [], [data]);
@@ -93,30 +222,30 @@ export function Outlet360Drawer({
 
   const placementStats = useMemo(() => {
     const total = placements.length;
-    const done = placements.filter((p: any) => p.status === "DONE").length;
-    const cost = placements.reduce((acc: number, p: any) => acc + (p.cost || 0), 0);
+    const done = placements.filter((p) => p.status === "DONE").length;
+    const cost = placements.reduce((acc: number, p) => acc + safeAmount(p.cost), 0);
     return { total, done, cost };
   }, [placements]);
 
   const mouStats = useMemo(() => {
     const total = mous.length;
-    const approved = mous.filter((m: any) => m.status === "APPROVED").length;
-    const value = mous.reduce((acc: number, m: any) => acc + (m.compensationValue || 0), 0);
+    const approved = mous.filter((m) => m.status === "APPROVED" || m.status === "DONE").length;
+    const value = mous.reduce((acc: number, m) => acc + safeAmount(m.compensationValue), 0);
     return { total, approved, value };
   }, [mous]);
 
   const activeMouValue = useMemo(() => {
     return mous
-      .filter((m: any) => m.status === "APPROVED")
-      .reduce((acc: number, m: any) => acc + (m.compensationValue || 0), 0);
+      .filter((m) => m.status === "APPROVED" || m.status === "DONE")
+      .reduce((acc: number, m) => acc + safeAmount(m.compensationValue), 0);
   }, [mous]);
 
   const nearestEvent = useMemo(() => {
     if (!events.length) return null;
-    const validEvents = events.filter((e: any) => e.status !== "CANCELLED");
+    const validEvents = events.filter((e) => e.status !== "CANCELLED");
     const candidates = validEvents.length > 0 ? validEvents : events;
     const now = Date.now();
-    return [...candidates].sort((a: any, b: any) => {
+    return [...candidates].sort((a, b) => {
       const rawA = a.startDate || a.date;
       const rawB = b.startDate || b.date;
       if (!rawA && !rawB) return 0;
@@ -139,7 +268,7 @@ export function Outlet360Drawer({
   }, [events]);
 
   const publishedContentCount = useMemo(() => {
-    return contents.filter((c: any) => c.status === "PUBLISHED").length;
+    return contents.filter((c) => c.status === "PUBLISHED").length;
   }, [contents]);
 
   if (!outletId) return null;
@@ -250,7 +379,14 @@ export function Outlet360Drawer({
               {canManage && data && onEditOutlet && (
                 <button
                   type="button"
-                  onClick={() => onEditOutlet(data)}
+                  onClick={() =>
+                    onEditOutlet({
+                      ...data,
+                      branch: data.branch
+                        ? { id: data.branch.id, code: data.branch.code, name: data.branch.name }
+                        : undefined,
+                    })
+                  }
                   title="Edit Master Outlet"
                   className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
@@ -698,7 +834,7 @@ export function Outlet360Drawer({
                   Belum ada pemasangan materi promosi untuk outlet ini.
                 </div>
               ) : (
-                placements.map((p: any) => {
+                placements.map((p) => {
                   const photos = parsePlacementPhotos(p.photoUrl);
                   return (
                     <div
@@ -734,7 +870,7 @@ export function Outlet360Drawer({
                             {p.status.replace("_", " ")}
                           </span>
                           <span className="block text-xs font-bold text-slate-800 dark:text-slate-200 mt-1">
-                            {formatIDR(p.cost || 0)}
+                            {formatIDR(safeAmount(p.cost))}
                           </span>
                         </div>
                       </div>
@@ -797,7 +933,7 @@ export function Outlet360Drawer({
                   Belum ada dokumen perjanjian MoU yang terdaftar untuk outlet ini.
                 </div>
               ) : (
-                mous.map((m: any) => (
+                mous.map((m) => (
                   <div
                     key={m.id}
                     className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs space-y-2"
@@ -823,7 +959,7 @@ export function Outlet360Drawer({
                         <span
                           className={cn(
                             "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                            m.status === "APPROVED"
+                            m.status === "APPROVED" || m.status === "DONE"
                               ? "bg-emerald-500/10 text-emerald-600"
                               : m.status === "SUBMITTED"
                               ? "bg-blue-500/10 text-blue-600"
@@ -833,7 +969,7 @@ export function Outlet360Drawer({
                           {m.status}
                         </span>
                         <span className="block text-xs font-bold text-slate-800 dark:text-slate-200 mt-1">
-                          {formatIDR(m.compensationValue || 0)}
+                          {formatIDR(safeAmount(m.compensationValue))}
                         </span>
                       </div>
                     </div>
@@ -869,7 +1005,7 @@ export function Outlet360Drawer({
                   <p className="text-[11px] text-slate-400 mt-0.5">Tidak ada event promosi lapangan yang terhubung dengan outlet ini.</p>
                 </div>
               ) : (
-                events.map((ev: any) => {
+                events.map((ev) => {
                   const statusBadgeClass =
                     ev.status === "UPCOMING"
                       ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
@@ -929,7 +1065,7 @@ export function Outlet360Drawer({
                             {ev.status.replace("_", " ")}
                           </span>
                           <span className="block text-xs font-bold text-slate-800 dark:text-slate-200 mt-1">
-                            {formatIDR(ev.budget || 0)}
+                            {formatIDR(safeAmount(ev.budget))}
                           </span>
                         </div>
                       </div>
@@ -985,7 +1121,7 @@ export function Outlet360Drawer({
                   <p className="text-[11px] text-slate-400 mt-0.5">Tidak ada postingan media sosial yang terhubung dengan wilayah outlet ini.</p>
                 </div>
               ) : (
-                contents.map((post: any) => {
+                contents.map((post) => {
                   const statusMeta = getContentStatusMeta(post.status);
                   const platformKey = (post.platform || "").toLowerCase() as keyof typeof PLATFORM_CONFIG;
                   const platformMeta = PLATFORM_CONFIG[platformKey] || {

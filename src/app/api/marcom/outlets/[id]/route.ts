@@ -8,9 +8,12 @@ const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET
 const VALID_TIERS = ["TIER_1", "TIER_2", "TIER_3"] as const;
 const PATCHABLE_FIELDS = ["code", "name", "type", "tier", "branchId", "address", "city", "picName", "picPhone", "active", "latitude", "longitude"] as const;
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { searchParams } = new URL(request.url);
+  const workspaceId = searchParams.get("workspaceId") || "ws-main";
+
   try {
-    await requireMember("ws-main");
+    await requireMember(workspaceId);
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;
@@ -22,6 +25,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     include: {
       branch: { select: { id: true, code: true, name: true, city: true, region: true, picName: true, picPhone: true, address: true } },
       placements: {
+        where: { workspaceId },
         orderBy: { id: "desc" },
         include: {
           material: { select: { id: true, name: true, type: true, requiresMou: true } },
@@ -29,6 +33,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         },
       },
       mous: {
+        where: { workspaceId },
         orderBy: { id: "desc" },
         include: {
           branch: { select: { id: true, code: true, name: true } },
@@ -83,13 +88,19 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const [events, contents] = await Promise.all([
     prisma.fieldEvent.findMany({
-      where: { OR: eventOr },
+      where: {
+        workspaceId,
+        OR: eventOr,
+      },
       orderBy: { startDate: "desc" },
       take: 50,
       include: { footage: true },
     }),
     prisma.contentPost.findMany({
-      where: { OR: contentOr },
+      where: {
+        workspaceId,
+        OR: contentOr,
+      },
       orderBy: { publishDate: "desc" },
       take: 50,
     }),
