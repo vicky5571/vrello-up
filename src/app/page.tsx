@@ -147,13 +147,15 @@ import { useUrlStateSync } from "@/lib/router/useUrlStateSync";
 
 export default function WorkspacePage() {
   const [isMounted, setIsMounted] = useState(false);
-  const {
-    appMode,
-    activeView,
-    isCreateTaskModalOpen,
-    setCreateTaskModalOpen,
-    isFilterBarOpen,
-  } = useWorkspaceStore();
+  const appMode = useWorkspaceStore((s) => s.appMode);
+  const activeView = useWorkspaceStore((s) => s.activeView);
+  const isCreateTaskModalOpen = useWorkspaceStore(
+    (s) => s.isCreateTaskModalOpen,
+  );
+  const setCreateTaskModalOpen = useWorkspaceStore(
+    (s) => s.setCreateTaskModalOpen,
+  );
+  const isFilterBarOpen = useWorkspaceStore((s) => s.isFilterBarOpen);
 
   useWorkspaceHotkeys();
   useRealtime();
@@ -163,19 +165,8 @@ export default function WorkspacePage() {
     setIsMounted(true);
     useWorkspaceStore.getState().fetchServerTasks?.();
 
-    const handleDateInputClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target instanceof HTMLInputElement && target.type === "date") {
-        try {
-          target.showPicker();
-        } catch {}
-      }
-    };
-    document.addEventListener("click", handleDateInputClick);
-
     const cleanupScheduler = startAutomationScheduler();
     return () => {
-      document.removeEventListener("click", handleDateInputClick);
       cleanupScheduler();
     };
   }, []);

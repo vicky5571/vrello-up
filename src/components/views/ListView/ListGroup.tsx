@@ -33,13 +33,15 @@ interface ListGroupProps {
   };
 }
 
+const EMPTY_MEMBERS: User[] = [];
+
 export const ListGroup = memo(function ListGroup({
   status,
   allStatuses,
   tasks,
   onSelectTask,
   onMoveStatus,
-  selectedIds,
+  selectedIds = [],
   onToggleSelect,
   onToggleSelectAll,
   customHeader,
@@ -49,19 +51,13 @@ export const ListGroup = memo(function ListGroup({
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    activeListId,
-    activeWorkspaceId,
-    workspaces,
-    createTask,
-    updateTask,
-  } = useWorkspaceStore();
-
-  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const members = useMemo(
-    () => currentWorkspace?.members || [],
-    [currentWorkspace?.members],
-  );
+  const activeListId = useWorkspaceStore((s) => s.activeListId);
+  const members = useWorkspaceStore((s) => {
+    const ws = s.workspaces.find((w) => w.id === s.activeWorkspaceId);
+    return ws?.members || EMPTY_MEMBERS;
+  });
+  const createTask = useWorkspaceStore((s) => s.createTask);
+  const updateTask = useWorkspaceStore((s) => s.updateTask);
 
   useEffect(() => {
     if (isAddingTask) {

@@ -41,7 +41,8 @@ export const BoardColumn = memo(function BoardColumn({
     },
   });
 
-  const { activeListId, createTask } = useWorkspaceStore();
+  const activeListId = useWorkspaceStore((s) => s.activeListId);
+  const createTask = useWorkspaceStore((s) => s.createTask);
   const [isAddingQuickTask, setIsAddingQuickTask] = useState(false);
   const [quickTitle, setQuickTitle] = useState("");
 

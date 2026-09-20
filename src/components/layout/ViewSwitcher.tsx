@@ -99,7 +99,8 @@ function ViewTabButton({
 }
 
 export function ViewSwitcher() {
-  const { activeView, setActiveView } = useWorkspaceStore();
+  const activeView = useWorkspaceStore((s) => s.activeView);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
   const [isAddViewOpen, setIsAddViewOpen] = useState(false);
 
   return (

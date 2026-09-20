@@ -50,9 +50,11 @@ export const BoardCard = memo(function BoardCard({
   });
 
   const [showMoveMenu, setShowMoveMenu] = useState(false);
-  const { viewPreferences, presenceByTaskId, currentUserId } = useWorkspaceStore();
+  const viewPreferences = useWorkspaceStore((s) => s.viewPreferences);
   const { visibleFields } = viewPreferences;
-  const viewers = (presenceByTaskId[task.id] || []).filter((u) => u.id !== currentUserId);
+  const currentUserId = useWorkspaceStore((s) => s.currentUserId);
+  const taskViewers = useWorkspaceStore((s) => s.presenceByTaskId[task.id]);
+  const viewers = (taskViewers || []).filter((u) => u.id !== currentUserId);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useDropdown<HTMLDivElement>({
     isOpen: showMoveMenu,

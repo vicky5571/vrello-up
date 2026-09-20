@@ -70,7 +70,7 @@ export const ListTaskRow = memo(function ListTaskRow({
     null,
   );
   const editorRef = useRef<HTMLDivElement>(null);
-  const { viewPreferences } = useWorkspaceStore();
+  const viewPreferences = useWorkspaceStore((s) => s.viewPreferences);
   const { visibleFields } = viewPreferences;
 
   useEffect(() => {
