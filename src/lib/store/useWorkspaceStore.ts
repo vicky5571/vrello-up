@@ -56,6 +56,12 @@ import {
 } from "@/lib/store/viewPreferencesOperations";
 import { syncFieldEventOnTaskStatusChange } from "@/lib/tasks/eventTaskSync";
 import { syncPlacementOnTaskStatusChange } from "@/lib/tasks/placementTaskSync";
+import {
+  reconcileTasks,
+  syncCreateTaskApi,
+  syncUpdateTaskApi,
+  syncDeleteTaskApi,
+} from "@/lib/tasks/taskSync";
 
 // Default Seed Users
 export const SEED_USERS: User[] = [
@@ -916,11 +922,7 @@ export const quotaAwareStorage: StateStorage = {
 
 function syncCreateTask(task: Task, spaceId?: string, listName?: string) {
   if (typeof window === "undefined") return;
-  fetch("/api/tasks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...task, spaceId, listName }),
-  }).catch((err) => console.warn("[vrello sync] failed to persist task creation:", err));
+  syncCreateTaskApi(task, spaceId, listName);
 }
 
 function syncWorkspaces(workspaces: Workspace[]) {
@@ -945,18 +947,12 @@ function syncDeleteWorkspace(id: string) {
 
 function syncUpdateTask(id: string, updates: Partial<Task>) {
   if (typeof window === "undefined") return;
-  fetch(`/api/tasks/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updates),
-  }).catch((err) => console.warn("[vrello sync] failed to persist task update:", err));
+  syncUpdateTaskApi(id, updates);
 }
 
 function syncDeleteTask(id: string) {
   if (typeof window === "undefined") return;
-  fetch(`/api/tasks/${id}`, {
-    method: "DELETE",
-  }).catch((err) => console.warn("[vrello sync] failed to persist task deletion:", err));
+  syncDeleteTaskApi(id);
 }
 
 function syncAddComment(taskId: string, comment: TaskComment) {
@@ -1327,13 +1323,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
                 (targetWs?.spaces || []).flatMap((s) => extractSpaceListIds(s)),
               );
 
-              // Retain tasks belonging to other workspaces, and replace/update tasks for this workspace
-              const otherWsTasks = state.tasks.filter(
-                (t) => !targetListIds.has(t.listId),
-              );
+              const { tasks: mergedTasks, tasksToPushToServer } =
+                reconcileTasks(state.tasks, data.tasks, targetListIds);
+
+              if (tasksToPushToServer.length > 0) {
+                for (const t of tasksToPushToServer) {
+                  syncUpdateTaskApi(t.id, t);
+                }
+              }
 
               return {
-                tasks: [...otherWsTasks, ...data.tasks],
+                tasks: mergedTasks,
                 workspaces: reconciled,
               };
             }
