@@ -12,6 +12,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { cn, isOverdue } from "@/lib/utils";
+import { buildTaskGridTemplate } from "@/lib/tasks/taskColumns";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
@@ -102,12 +103,14 @@ export const ListTaskRow = memo(function ListTaskRow({
   const taskIsDone =
     taskStatus.category === "done" || taskStatus.category === "closed";
   const overdue = !taskIsDone && isOverdue(task.dueDate);
+  const { gridTemplateColumns, minWidth } = buildTaskGridTemplate(visibleFields);
 
   return (
     <div
       onClick={() => onSelectTask(task.id)}
+      style={{ gridTemplateColumns, minWidth }}
       className={cn(
-        "grid grid-cols-[28px_1fr_110px_110px_90px_130px_90px_60px] min-w-[680px] items-center px-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs text-slate-700 dark:text-slate-300 cursor-pointer group/row",
+        "grid items-center px-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-xs text-slate-700 dark:text-slate-300 cursor-pointer group/row",
         selected && "bg-indigo-50/60 dark:bg-indigo-950/20 hover:bg-indigo-50 dark:hover:bg-indigo-950/30",
         viewPreferences.density === "compact"
           ? "py-1"

@@ -24,6 +24,7 @@ import { useDropdown } from "@/components/ui/useDropdown";
 import { cn } from "@/lib/utils";
 import { matchesFilters } from "@/lib/tasks/filterTasks";
 import { sortTasks } from "@/lib/tasks/taskSort";
+import { buildTaskGridTemplate } from "@/lib/tasks/taskColumns";
 
 export function ListView() {
   const {
@@ -47,6 +48,10 @@ export function ListView() {
   // survives view switching, resets on reload.
   const sortField = viewPreferences.taskSortField;
   const sortDirection = viewPreferences.taskSortDirection;
+  // Header and rows share one grid template so hidden columns collapse everywhere.
+  const { gridTemplateColumns, minWidth } = buildTaskGridTemplate(
+    viewPreferences.visibleFields,
+  );
   const [showColumnsMenu, setShowColumnsMenu] = useState(false);
   const columnsMenuRef = useDropdown<HTMLDivElement>({
     isOpen: showColumnsMenu,
@@ -251,7 +256,7 @@ export function ListView() {
                     { key: "assignees", label: "Assignee" },
                     { key: "dueDate", label: "Due Date" },
                     { key: "priority", label: "Priority" },
-                    { key: "subtasks", label: "Subtasks" },
+                    { key: "subtasks", label: "Subtask counts" },
                   ].map(({ key, label }) => {
                     const isVisible =
                       viewPreferences.visibleFields[
@@ -292,7 +297,7 @@ export function ListView() {
         <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-2xs overflow-hidden">
           <div className="overflow-x-auto">
             {/* Single Unified Column Header Bar with Interactive Sort */}
-            <div className="grid grid-cols-[28px_1fr_110px_110px_90px_130px_90px_60px] min-w-[680px] items-center px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-800 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-50/70 dark:bg-slate-900/80 select-none">
+            <div style={{ gridTemplateColumns, minWidth }} className="grid items-center px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-800 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-50/70 dark:bg-slate-900/80 select-none">
               <div />
 
               {/* Name Sort */}
@@ -315,6 +320,7 @@ export function ListView() {
               </button>
 
               {/* Assignee Sort */}
+              {viewPreferences.visibleFields.assignees && (
               <button
                 type="button"
                 onClick={() => handleHeaderSort("assignee")}
@@ -332,8 +338,10 @@ export function ListView() {
                   <ArrowUpDown className="w-3 h-3 opacity-0 group-hover/hcol:opacity-40 transition-opacity" />
                 )}
               </button>
+              )}
 
               {/* Due Date Sort */}
+              {viewPreferences.visibleFields.dueDate && (
               <button
                 type="button"
                 onClick={() => handleHeaderSort("dueDate")}
@@ -351,8 +359,10 @@ export function ListView() {
                   <ArrowUpDown className="w-3 h-3 opacity-0 group-hover/hcol:opacity-40 transition-opacity" />
                 )}
               </button>
+              )}
 
               {/* Priority Sort */}
+              {viewPreferences.visibleFields.priority && (
               <button
                 type="button"
                 onClick={() => handleHeaderSort("priority")}
@@ -370,6 +380,7 @@ export function ListView() {
                   <ArrowUpDown className="w-3 h-3 opacity-0 group-hover/hcol:opacity-40 transition-opacity" />
                 )}
               </button>
+              )}
 
               {/* Status Sort */}
               <button
@@ -399,7 +410,7 @@ export function ListView() {
                 No tasks found matching current filters.
               </div>
             ) : (
-              <div className="divide-y divide-slate-200/60 dark:divide-slate-800/70 min-w-[680px]">
+              <div className="divide-y divide-slate-200/60 dark:divide-slate-800/70" style={{ minWidth }}>
                 {/* Render By Group Mode */}
                 {filters.groupBy === "priority" && (
                   <>
