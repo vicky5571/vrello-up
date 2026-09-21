@@ -273,6 +273,10 @@ export interface Placement {
   longitude?: number | null;
   shareLocationUrl?: string;
   locationNotes?: string;
+  quarter?: string;
+  campaignTheme?: string;
+  isLocationValid?: boolean;
+  locationDeviation?: number | null;
   outlet?: { id: string; code: string; name: string; brand?: string };
   material?: { id: string; type: string; name: string };
 }
@@ -297,6 +301,10 @@ export interface MarcomPlacement {
   longitude?: number | null;
   shareLocationUrl?: string;
   locationNotes?: string;
+  quarter?: string;
+  campaignTheme?: string;
+  isLocationValid?: boolean;
+  locationDeviation?: number | null;
   outlet?: { id: string; code: string; name: string; brand?: string };
   material?: { id: string; type: string; name: string };
   mou?: {

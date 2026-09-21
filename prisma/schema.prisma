@@ -149,11 +149,17 @@ model Placement {
   longitude        Float?
   shareLocationUrl String          @default("")
   locationNotes    String          @default("")
+  quarter          String          @default("Q3 2026")
+  campaignTheme    String          @default("")
+  isLocationValid  Boolean         @default(true)
+  locationDeviation Float?
 
   @@index([workspaceId])
   @@index([mouId])
   @@index([outletId])
   @@index([materialId])
+  @@index([quarter])
+  @@index([campaignTheme])
 }
 
 model Mou {
