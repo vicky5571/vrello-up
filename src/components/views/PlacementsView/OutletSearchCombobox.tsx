@@ -11,56 +11,30 @@ import {
   Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  formatCoordinates,
+  extractRecentPlacementMaterials,
+  getBrandBadgeMeta,
+  type OutletSearchResult,
+  type OutletSelectionPayload,
+  type OutletPlacementMaterial,
+  type OutletPlacementSummary,
+} from "./outletSearchComboboxHelpers";
 
-export interface OutletPlacementMaterial {
-  id?: string;
-  name?: string;
-  type?: string;
-  requiresMou?: boolean;
-}
-
-export interface OutletPlacementSummary {
-  id?: string;
-  material?: OutletPlacementMaterial | null;
-  [key: string]: unknown;
-}
-
-export interface OutletSearchResult {
-  id: string;
-  code: string;
-  name: string;
-  type?: string;
-  tier?: string;
-  address?: string;
-  city?: string;
-  picName?: string;
-  picPhone?: string;
-  active?: boolean;
-  brand?: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  branchId?: string;
-  branch?: {
-    id?: string;
-    code?: string;
-    name?: string;
-    city?: string;
-    region?: string;
-    picName?: string;
-    picPhone?: string;
-    address?: string;
-  } | null;
-  placements?: OutletPlacementSummary[];
-  placementCount?: number;
-  mouCount?: number;
-}
-
-export type OutletSelectionPayload = OutletSearchResult;
+export {
+  formatCoordinates,
+  extractRecentPlacementMaterials,
+  getBrandBadgeMeta,
+  type OutletSearchResult,
+  type OutletSelectionPayload,
+  type OutletPlacementMaterial,
+  type OutletPlacementSummary,
+};
 
 export interface OutletSearchComboboxProps {
   selectedOutletId?: string;
   selectedOutlet?: OutletSearchResult | null;
-  onSelectOutlet: (outlet: OutletSearchResult | null) => void;
+  onSelectOutlet: (outlet: OutletSelectionPayload) => void;
   workspaceId?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -70,51 +44,17 @@ export interface OutletSearchComboboxProps {
   id?: string;
 }
 
-export function extractRecentPlacementMaterials(
-  placements?: OutletPlacementSummary[] | null
-): string[] {
-  if (!placements || !Array.isArray(placements)) return [];
-  const tags = new Set<string>();
-  for (const p of placements) {
-    const matName = p.material?.name || p.material?.type;
-    if (matName && typeof matName === "string" && matName.trim()) {
-      tags.add(matName.trim());
-    }
-  }
-  return Array.from(tags);
-}
-
-export function formatCoordinates(
-  lat: number | null | undefined,
-  lng: number | null | undefined
-): { isSet: boolean; text: string } {
-  const hasLat = typeof lat === "number" && !Number.isNaN(lat);
-  const hasLng = typeof lng === "number" && !Number.isNaN(lng);
-  if (hasLat && hasLng) {
-    return {
-      isSet: true,
-      text: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-    };
-  }
-  return {
-    isSet: false,
-    text: "Titik GPS belum diatur",
-  };
-}
-
 export function renderBrandBadge(brand?: string | null) {
-  if (!brand || !brand.trim()) return null;
-  const upper = brand.toUpperCase().trim();
-  const is3 = upper === "3" || upper === "TRI";
-  const isIM3 = upper === "IM3";
+  const meta = getBrandBadgeMeta(brand);
+  if (!meta) return null;
 
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold border shrink-0",
-        isIM3
+        meta.isIM3
           ? "bg-yellow-400/20 text-yellow-900 dark:text-yellow-200 border-yellow-400/50"
-          : is3
+          : meta.is3
           ? "bg-pink-500/20 text-pink-900 dark:text-pink-200 border-pink-500/50"
           : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
       )}
@@ -122,10 +62,10 @@ export function renderBrandBadge(brand?: string | null) {
       <span
         className={cn(
           "w-1.5 h-1.5 rounded-full shrink-0",
-          isIM3 ? "bg-yellow-500" : is3 ? "bg-pink-500" : "bg-slate-400"
+          meta.isIM3 ? "bg-yellow-500" : meta.is3 ? "bg-pink-500" : "bg-slate-400"
         )}
       />
-      {brand}
+      {meta.normalizedBrand}
     </span>
   );
 }
@@ -230,16 +170,25 @@ export function OutletSearchCombobox({
         }
 
         const json = await res.json();
-        setResults(Array.isArray(json.data) ? json.data : []);
-        setIsOpen(true);
-        setHighlightedIndex(-1);
+        if (!controller.signal.aborted) {
+          setResults(Array.isArray(json.data) ? json.data : []);
+          if (
+            typeof document !== "undefined" &&
+            document.activeElement === inputRef.current
+          ) {
+            setIsOpen(true);
+          }
+          setHighlightedIndex(-1);
+        }
       } catch (err: unknown) {
         if (err instanceof DOMException && err.name === "AbortError") {
           return;
         }
         setFetchError("Gagal mencari outlet. Periksa koneksi.");
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     }, 300);
 
@@ -294,7 +243,9 @@ export function OutletSearchCombobox({
     setSearchQuery("");
     setHighlightedIndex(-1);
     onSelectOutlet(null);
-    inputRef.current?.focus();
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
   };
 
   const handleChangeClick = () => {
@@ -332,9 +283,13 @@ export function OutletSearchCombobox({
         prev > 0 ? prev - 1 : results.length - 1
       );
     } else if (e.key === "Enter") {
-      if (isOpen && highlightedIndex >= 0 && results[highlightedIndex]) {
+      if (isOpen) {
         e.preventDefault();
-        handleSelect(results[highlightedIndex]);
+        if (highlightedIndex >= 0 && results[highlightedIndex]) {
+          handleSelect(results[highlightedIndex]);
+        } else if (results.length > 0) {
+          handleSelect(results[0]);
+        }
       }
     } else if (e.key === "Escape") {
       e.preventDefault();
