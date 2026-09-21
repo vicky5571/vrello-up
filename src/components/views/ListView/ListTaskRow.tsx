@@ -11,7 +11,7 @@ import {
   MessageSquare,
   MoreHorizontal,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, isOverdue } from "@/lib/utils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
@@ -101,6 +101,7 @@ export const ListTaskRow = memo(function ListTaskRow({
   const taskIsProgress = taskStatus.category === "in_progress";
   const taskIsDone =
     taskStatus.category === "done" || taskStatus.category === "closed";
+  const overdue = !taskIsDone && isOverdue(task.dueDate);
 
   return (
     <div
@@ -286,13 +287,17 @@ export const ListTaskRow = memo(function ListTaskRow({
       >
         {visibleFields.dueDate && (
           <label
+            title={overdue ? "Overdue (deadline passed)" : undefined}
             className={cn(
               "group/date flex cursor-pointer items-center gap-1 text-[11px] transition-opacity",
               !task.dueDate && "opacity-0 group-hover/row:opacity-50 hover:!opacity-100",
             )}
           >
             <Calendar
-              className="h-3.5 w-3.5 text-slate-400"
+              className={cn(
+                "h-3.5 w-3.5 transition-colors",
+                overdue ? "text-rose-500 fill-rose-500/20" : "text-slate-400",
+              )}
               aria-hidden="true"
             />
             <span className="sr-only">Due date for {task.title}</span>
@@ -315,7 +320,12 @@ export const ListTaskRow = memo(function ListTaskRow({
                   dueDate: e.target.value || undefined,
                 })
               }
-              className="w-23 cursor-pointer rounded-md border border-transparent bg-transparent px-1 py-0.5 text-[11px] text-slate-600 dark:text-slate-400 transition-colors hover:border-slate-200 focus:border-[#0073ea] focus:outline-hidden dark:hover:border-slate-700"
+              className={cn(
+                "w-23 cursor-pointer rounded-md border border-transparent bg-transparent px-1 py-0.5 text-[11px] transition-colors hover:border-slate-200 focus:border-[#0073ea] focus:outline-hidden dark:hover:border-slate-700",
+                overdue
+                  ? "text-rose-600 dark:text-rose-400 font-semibold"
+                  : "text-slate-600 dark:text-slate-400",
+              )}
             />
           </label>
         )}

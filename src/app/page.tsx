@@ -29,11 +29,7 @@ const BoardView = dynamic(
     import("@/components/views/BoardView/BoardView").then((m) => m.BoardView),
   { ssr: false, loading: () => <ViewFallback /> },
 );
-const TableView = dynamic(
-  () =>
-    import("@/components/views/TableView/TableView").then((m) => m.TableView),
-  { ssr: false, loading: () => <ViewFallback /> },
-);
+
 const CalendarView = dynamic(
   () =>
     import("@/components/views/CalendarView/CalendarView").then(
@@ -218,7 +214,7 @@ export default function WorkspacePage() {
                 <HomeView />
               </motion.div>
             )}
-            {activeView === "list" && (
+            {(activeView === "list" || (activeView as string) === "table") && (
               <motion.div
                 key="list-view"
                 initial={{ opacity: 0 }}
@@ -241,19 +237,6 @@ export default function WorkspacePage() {
                 className="h-full w-full"
               >
                 <BoardView />
-              </motion.div>
-            )}
-
-            {activeView === "table" && (
-              <motion.div
-                key="table-view"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.08 }}
-                className="h-full w-full"
-              >
-                <TableView />
               </motion.div>
             )}
 

@@ -40,7 +40,6 @@ const VIEWS: ViewTabItem[] = [
   { id: "board", label: "Kanban", icon: Kanban, iconColor: "text-orange-500", isAvailable: true },
   { id: "calendar", label: "Calendar", icon: CalendarDays, iconColor: "text-rose-500", isAvailable: true },
   { id: "gantt", label: "Gantt", icon: Milestone, iconColor: "text-purple-500", isAvailable: true },
-  { id: "table", label: "Table", icon: TableProperties, iconColor: "text-emerald-500", isAvailable: true },
 ];
 
 export const WORK_ITEM_VIEWS: ViewTabItem[] = [
