@@ -7,7 +7,6 @@ import {
   Sparkles,
   Calendar,
   Milestone,
-  TableProperties,
   List as ListIcon,
   Kanban,
   Home,
@@ -181,14 +180,6 @@ export function MoreAppsMenu({
                 >
                   <Milestone className="w-3.5 h-3.5 text-purple-500" />
                   <span>Gantt</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleLaunchView("table")}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer text-left"
-                >
-                  <TableProperties className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Table</span>
                 </button>
               </div>
             </div>

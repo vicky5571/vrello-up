@@ -130,7 +130,7 @@ test("matchesFilters applies assignee filters including unassigned", () => {
 
 test("isFilterBarSupported validates task and marcom view support correctly", () => {
   // Supported task views
-  const supportedViews: ViewMode[] = ["board", "list", "table", "calendar", "gantt"];
+  const supportedViews: ViewMode[] = ["board", "list", "calendar", "gantt"];
   for (const v of supportedViews) {
     assert.equal(isFilterBarSupported("tasks", v), true, `Expected ${v} to support FilterBar`);
   }

@@ -214,7 +214,7 @@ export default function WorkspacePage() {
                 <HomeView />
               </motion.div>
             )}
-            {(activeView === "list" || (activeView as string) === "table") && (
+            {activeView === "list" && (
               <motion.div
                 key="list-view"
                 initial={{ opacity: 0 }}

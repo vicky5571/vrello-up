@@ -489,10 +489,12 @@ const MARCOM_VIEW_SET = new Set<ViewMode>([
 
 /**
  * Normalizes legacy view aliases to canonical view names.
- * e.g., "content" -> "content-planner"
+ * e.g., "content" -> "content-planner", "table" -> "list" (consolidated)
  */
 export function normalizeViewMode(view: ViewMode | string): ViewMode {
-  return (view === "content" ? "content-planner" : view) as ViewMode;
+  if (view === "content") return "content-planner";
+  if (view === "table") return "list";
+  return view as ViewMode;
 }
 
 interface WorkspaceState {
@@ -2203,8 +2205,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           if ((state.activeView as string) === "content") {
             state.activeView = "content-planner";
           }
+          if ((state.activeView as string) === "table") {
+            state.activeView = "list";
+          }
           if ((state.lastMarcomView as string) === "content") {
             state.lastMarcomView = "content-planner";
+          }
+          if ((state.lastTaskView as string) === "table") {
+            state.lastTaskView = "list";
           }
 
           if (Array.isArray(state.workspaces)) {
@@ -2300,8 +2308,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           if (state.activeView === "content") {
             state.activeView = "content-planner";
           }
+          if (state.activeView === "table") {
+            state.activeView = "list";
+          }
           if (state.lastMarcomView === "content") {
             state.lastMarcomView = "content-planner";
+          }
+          if (state.lastTaskView === "table") {
+            state.lastTaskView = "list";
           }
         }
 

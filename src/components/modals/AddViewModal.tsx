@@ -7,7 +7,6 @@ import {
   X,
   List as ListIcon,
   Kanban,
-  TableProperties,
   CalendarDays,
   Milestone,
   Hash,
@@ -37,14 +36,6 @@ const AVAILABLE_VIEWS = [
     color: "text-orange-500",
     bg: "bg-orange-50 dark:bg-orange-950/40",
     desc: "Visualize workflow stages across status columns with fluid drag-and-drop.",
-  },
-  {
-    id: "table" as ViewMode,
-    label: "Table View",
-    icon: TableProperties,
-    color: "text-emerald-500",
-    bg: "bg-emerald-50 dark:bg-emerald-950/40",
-    desc: "Dense spreadsheet view with inline editing, custom fields, and fast sorting.",
   },
   {
     id: "calendar" as ViewMode,

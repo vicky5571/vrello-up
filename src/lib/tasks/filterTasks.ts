@@ -3,7 +3,6 @@ import type { AppMode, FilterOptions, Status, Task, ViewMode } from "@/types";
 export const FILTERABLE_TASK_VIEWS = new Set<ViewMode>([
   "board",
   "list",
-  "table",
   "calendar",
   "gantt",
 ]);

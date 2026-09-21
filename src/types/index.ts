@@ -169,7 +169,6 @@ export type ViewMode =
   | "home"
   | "list"
   | "board"
-  | "table"
   | "calendar"
   | "gantt"
   | "channel"

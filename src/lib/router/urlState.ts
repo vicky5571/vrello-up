@@ -14,7 +14,6 @@ export const VALID_VIEW_MODES = new Set<ViewMode>([
   "home",
   "list",
   "board",
-  "table",
   "calendar",
   "gantt",
   "channel",
@@ -85,6 +84,8 @@ export function parseUrlNavState(
     const trimmedView = rawView.trim();
     if (trimmedView === "content") {
       state.view = "content-planner";
+    } else if (trimmedView === "table") {
+      state.view = "list";
     } else if (VALID_VIEW_MODES.has(trimmedView as ViewMode)) {
       state.view = trimmedView as ViewMode;
     }
