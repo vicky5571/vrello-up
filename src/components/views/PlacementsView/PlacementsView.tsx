@@ -23,6 +23,7 @@ import {
   Clock,
   FileText,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -49,6 +50,7 @@ import {
   buildPlacementTaskPayload,
   syncTaskOnPlacementStatusChange,
 } from "@/lib/tasks/placementTaskSync";
+import { QuarterlyRecapTab } from "./QuarterlyRecapTab";
 
 const PlacementsMapView = dynamic(
   () => import("./PlacementsMapView").then((mod) => mod.PlacementsMapView),
@@ -136,8 +138,10 @@ export function PlacementsView() {
   const {
     fetchOutlets,
     fetchMaterials,
+    fetchBranches,
     outlets: storeOutlets,
     materials: storeMaterials,
+    branches: storeBranches,
     getCachedPlacements,
     setCachedPlacements,
     invalidatePlacements,
@@ -150,7 +154,7 @@ export function PlacementsView() {
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedBrand, setSelectedBrand] = useState<string>("ALL");
-  const [viewMode, setViewMode] = useState<"table" | "map">("table");
+  const [viewMode, setViewMode] = useState<"table" | "map" | "recap">("table");
   const [outletsList, setOutletsList] = useState<{ id: string; name: string; brand?: string; picName?: string; branchId?: string }[]>(() =>
     storeOutlets.length > 0
       ? storeOutlets.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName, branchId: o.branchId }))
@@ -296,6 +300,7 @@ export function PlacementsView() {
           fetchOutlets(),
           fetchMaterials(),
           fetch(`/api/marcom/mous?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
+          fetchBranches(),
         ]);
         if (!resPlacements.ok) throw new Error(`Request failed (${resPlacements.status})`);
         const jsonPlacements = await resPlacements.json();
@@ -671,7 +676,35 @@ export function PlacementsView() {
         <MapPin className="w-3.5 h-3.5 text-emerald-600" />
         <span>Map View</span>
       </button>
+      <button
+        type="button"
+        onClick={() => setViewMode("recap")}
+        className={cn(
+          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+          viewMode === "recap"
+            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
+            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+        )}
+      >
+        <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+        <span>Rekap Kuartal</span>
+      </button>
     </div>
+  );
+
+  const handleDrillDown = useCallback(
+    (filter: { quarter: string; campaignTheme?: string; materialName?: string }) => {
+      setViewMode("table");
+      if (filter.campaignTheme) {
+        setMarcomFilter("placements", filter.campaignTheme);
+      } else if (filter.materialName) {
+        setMarcomFilter("placements", filter.materialName);
+      }
+      toast.info(
+        `Menampilkan toko dengan materi: ${filter.campaignTheme || filter.materialName || "Semua"} (${filter.quarter})`
+      );
+    },
+    [setMarcomFilter],
   );
 
   return (
@@ -874,7 +907,7 @@ export function PlacementsView() {
           onSearchChange={(q) => setMarcomFilter("placements", q)}
           emptyLabel="No placements found."
         />
-      ) : (
+      ) : viewMode === "map" ? (
         <div className="space-y-4">
           {/* Header Bar in Map Mode */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
@@ -1015,6 +1048,44 @@ export function PlacementsView() {
             onEditPlacement={(p) => setModalPlacement(p)}
             onTrackAsTask={handleTrackAsTask}
             canManage={canManage}
+          />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                <ClipboardList className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  Rekapitulasi POSM Regional (Kuartal &amp; Tema)
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Distribusi materi promosi per tema kampanye dan alokasi target kuartalan
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {viewSwitcherControls}
+              <button
+                type="button"
+                onClick={() => fetchPlacements()}
+                title="Refresh data"
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+              </button>
+            </div>
+          </div>
+
+          <QuarterlyRecapTab
+            placements={placements}
+            branches={storeBranches}
+            materials={materialsList}
+            workspaceId={activeWorkspaceId}
+            onDrillDown={handleDrillDown}
+            onRecordPlacement={canManage ? handleOpenAddPlacement : undefined}
           />
         </div>
       )}
