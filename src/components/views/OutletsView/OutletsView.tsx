@@ -17,6 +17,7 @@ import {
   FileText,
   Navigation,
   Eye,
+  Clock,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -31,6 +32,9 @@ import {
 import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
 import { calculateEnhancedOutletKPIs } from "@/lib/marcom/outletAnalytics";
 import { Outlet360Drawer } from "./Outlet360Drawer";
+import { OutletApprovalQueueTab } from "./OutletApprovalQueueTab";
+import { SubmitDraftOutletModal } from "./SubmitDraftOutletModal";
+import { filterPendingOutlets } from "./outletApprovalQueueHelpers";
 
 const OutletMapView = dynamic(
   () => import("./OutletMapView").then((mod) => mod.OutletMapView),
@@ -67,7 +71,7 @@ export function OutletsView() {
     invalidateMous,
   } = useMarcomDataStore();
 
-  const [viewMode, setViewMode] = useState<"table" | "map">("table");
+  const [viewMode, setViewMode] = useState<"table" | "map" | "approval">("table");
   const [selectedOutletIdForDrawer, setSelectedOutletIdForDrawer] = useState<string | null>(null);
   const [outlets, setOutlets] = useState<MarcomOutlet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,8 +84,11 @@ export function OutletsView() {
       : []
   );
   const [modalOutlet, setModalOutlet] = useState<Partial<MarcomOutlet> | null>(null);
+  const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLocatingInModal, setIsLocatingInModal] = useState(false);
+
+  const pendingCount = useMemo(() => filterPendingOutlets(outlets).length, [outlets]);
 
   const canManage = can("MANAGE_MASTER_DATA");
   const canAddOutlet = canManage || role !== "viewer";
@@ -537,10 +544,35 @@ export function OutletsView() {
               <MapPin className="w-3.5 h-3.5 text-orange-500" />
               <span>Peta Sebaran</span>
             </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("approval")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
+                viewMode === "approval"
+                  ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+              )}
+            >
+              <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <span>Antrean Approval</span>
+              {pendingCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white">
+                  {pendingCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
-        {viewMode === "map" ? (
+        {viewMode === "approval" ? (
+          <OutletApprovalQueueTab
+            outlets={outlets}
+            branches={branches}
+            workspaceId={activeWorkspaceId}
+            onRefresh={fetchOutlets}
+          />
+        ) : viewMode === "map" ? (
           <div className="space-y-4">
             <KpiSummaryCards items={kpiItems} />
             <OutletMapView
@@ -567,19 +599,23 @@ export function OutletsView() {
             deleteRequiresMessage="Delete requires admin role"
             onDeleteOne={deleteOne}
             canAdd={canAddOutlet}
-            onAdd={() =>
-              setModalOutlet({
-                code: "",
-                name: "",
-                type: "TRADITIONAL",
-                branchId: branches[0]?.id || "",
-                city: "",
-                address: "",
-                picName: "",
-                picPhone: "",
-              })
-            }
-            addLabel="Add Outlet"
+            onAdd={() => {
+              if (canManage) {
+                setModalOutlet({
+                  code: "",
+                  name: "",
+                  type: "TRADITIONAL",
+                  branchId: branches[0]?.id || "",
+                  city: "",
+                  address: "",
+                  picName: "",
+                  picPhone: "",
+                });
+              } else {
+                setIsDraftModalOpen(true);
+              }
+            }}
+            addLabel={canManage ? "Add Outlet" : "Ajukan Toko Baru"}
             addIcon={Plus}
             addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
             kpiBar={<KpiSummaryCards items={kpiItems} />}
@@ -806,146 +842,146 @@ export function OutletsView() {
                     className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Type *
-                  </label>
-                  <select
-                    value={modalOutlet.type || "TRADITIONAL"}
-                    onChange={(e) =>
-                      setModalOutlet({ ...modalOutlet, type: e.target.value as OutletType })
-                    }
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
-                  >
-                    <option value="TRADITIONAL">Traditional</option>
-                    <option value="MODERN_RETAIL">Modern Retail</option>
-                    <option value="EXCLUSIVE">Exclusive</option>
-                    <option value="CAMPUS_OUTLET">Campus Outlet</option>
-                  </select>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={modalOutlet.type ?? "TRADITIONAL"}
+                      onChange={(e) =>
+                        setModalOutlet({ ...modalOutlet, type: e.target.value as OutletType })
+                      }
+                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
+                    >
+                      <option value="TRADITIONAL">Traditional</option>
+                      <option value="MODERN_RETAIL">Modern Retail</option>
+                      <option value="EXCLUSIVE">Exclusive</option>
+                      <option value="CAMPUS_OUTLET">Campus Outlet</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      value={modalOutlet.city ?? ""}
+                      onChange={(e) => setModalOutlet({ ...modalOutlet, city: e.target.value })}
+                      placeholder="e.g. Semarang"
+                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Jakarta"
-                    value={modalOutlet.city || ""}
-                    onChange={(e) => setModalOutlet({ ...modalOutlet, city: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Tier
                   </label>
                   <select
-                    value={modalOutlet.tier || "TIER_1"}
+                    value={modalOutlet.tier ?? "TIER_1"}
                     onChange={(e) =>
                       setModalOutlet({ ...modalOutlet, tier: e.target.value as OutletTier })
                     }
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
                   >
-                    <option value="TIER_1">Tier 1 (Prioritas)</option>
-                    <option value="TIER_2">Tier 2 (Reguler)</option>
-                    <option value="TIER_3">Tier 3 (Basic)</option>
+                    <option value="TIER_1">Tier 1</option>
+                    <option value="TIER_2">Tier 2</option>
+                    <option value="TIER_3">Tier 3</option>
                   </select>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    PIC Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Andi"
-                    value={modalOutlet.picName || ""}
-                    onChange={(e) => setModalOutlet({ ...modalOutlet, picName: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    PIC Phone
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. +62 812 9999 8888"
-                    value={modalOutlet.picPhone || ""}
-                    onChange={(e) => setModalOutlet({ ...modalOutlet, picPhone: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Pasar Minggu Blok B"
-                  value={modalOutlet.address || ""}
-                  onChange={(e) => setModalOutlet({ ...modalOutlet, address: e.target.value })}
-                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
 
-              {/* GPS Coordinates Section */}
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-orange-600" />
-                    <span>Koordinat Lokasi GPS (Peta)</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleGetLocationInModal}
-                    disabled={isLocatingInModal}
-                    className="text-[11px] font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                  >
-                    <Navigation className={cn("w-3 h-3", isLocatingInModal && "animate-spin")} />
-                    <span>{isLocatingInModal ? "Mendeteksi..." : "Lokasi GPS Saya"}</span>
-                  </button>
-                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
-                      Latitude
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      PIC Name
                     </label>
                     <input
-                      type="number"
-                      step="any"
-                      placeholder="-6.2088"
-                      value={modalOutlet.latitude ?? ""}
-                      onChange={(e) =>
-                        setModalOutlet({
-                          ...modalOutlet,
-                          latitude: e.target.value === "" ? null : Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 font-mono"
+                      type="text"
+                      value={modalOutlet.picName ?? ""}
+                      onChange={(e) => setModalOutlet({ ...modalOutlet, picName: e.target.value })}
+                      placeholder="e.g. Budi"
+                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] text-slate-500 dark:text-slate-400 mb-0.5">
-                      Longitude
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      PIC Phone
                     </label>
                     <input
-                      type="number"
-                      step="any"
-                      placeholder="106.8456"
-                      value={modalOutlet.longitude ?? ""}
-                      onChange={(e) =>
-                        setModalOutlet({
-                          ...modalOutlet,
-                          longitude: e.target.value === "" ? null : Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 font-mono"
+                      type="text"
+                      value={modalOutlet.picPhone ?? ""}
+                      onChange={(e) => setModalOutlet({ ...modalOutlet, picPhone: e.target.value })}
+                      placeholder="e.g. 08123456789"
+                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Address
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={modalOutlet.address ?? ""}
+                    onChange={(e) => setModalOutlet({ ...modalOutlet, address: e.target.value })}
+                    placeholder="Full physical street address..."
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
+                  />
+                </div>
+
+                {/* GPS Coordinates Picker Block */}
+                <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+                      <MapPin className="w-3.5 h-3.5 text-orange-500" />
+                      <span>GPS Coordinates</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleGetLocationInModal}
+                      disabled={isLocatingInModal}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/20 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <Navigation className={cn("w-3 h-3", isLocatingInModal && "animate-spin")} />
+                      <span>{isLocatingInModal ? "Detecting..." : "Detect Current GPS"}</span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">Latitude</span>
+                      <input
+                        type="number"
+                        step="any"
+                        value={modalOutlet.latitude ?? ""}
+                        onChange={(e) =>
+                          setModalOutlet({
+                            ...modalOutlet,
+                            latitude: e.target.value === "" ? null : Number(e.target.value),
+                          })
+                        }
+                        placeholder="-6.9932"
+                        className="w-full px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-hidden text-slate-900 dark:text-slate-100 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <span className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">Longitude</span>
+                      <input
+                        type="number"
+                        step="any"
+                        value={modalOutlet.longitude ?? ""}
+                        onChange={(e) =>
+                          setModalOutlet({
+                            ...modalOutlet,
+                            longitude: e.target.value === "" ? null : Number(e.target.value),
+                          })
+                        }
+                        placeholder="110.4203"
+                        className="w-full px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-hidden text-slate-900 dark:text-slate-100 font-mono"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -971,6 +1007,16 @@ export function OutletsView() {
           </div>
         </div>
       )}
+
+      <SubmitDraftOutletModal
+        isOpen={isDraftModalOpen}
+        onClose={() => setIsDraftModalOpen(false)}
+        branches={branches}
+        workspaceId={activeWorkspaceId}
+        onSuccess={() => {
+          fetchOutlets();
+        }}
+      />
     </>
   );
 }
