@@ -16,8 +16,70 @@ test("staff cannot approve, delete, or manage master data in un-scoped checks", 
 });
 
 test("admin can do everything", () => {
-  const all = ["CREATE_MOU","APPROVE_MOU","DELETE_MOU","CREATE_PLACEMENT","UPDATE_PLACEMENT","CREATE_EVENT","UPLOAD_VIDEO_FOOTAGE","UPLOAD_DOCUMENT","DELETE_DOCUMENT","MANAGE_MASTER_DATA","EXPORT_REPORTS"] as const;
+  const all = [
+    "CREATE_MOU",
+    "APPROVE_MOU",
+    "DELETE_MOU",
+    "CREATE_PLACEMENT",
+    "UPDATE_PLACEMENT",
+    "CREATE_EVENT",
+    "UPLOAD_VIDEO_FOOTAGE",
+    "UPLOAD_DOCUMENT",
+    "DELETE_DOCUMENT",
+    "MANAGE_MASTER_DATA",
+    "EXPORT_REPORTS",
+    "SUBMIT_DRAFT_OUTLET",
+    "APPROVE_OUTLET",
+  ] as const;
   for (const a of all) assert.equal(hasPermission("admin", a), true);
+});
+
+test("staff can submit draft outlet, but cannot approve outlet without branch scope", () => {
+  assert.equal(hasPermission("staff", "SUBMIT_DRAFT_OUTLET"), true);
+  assert.equal(hasPermission("staff", "APPROVE_OUTLET"), false);
+  assert.equal(hasPermission("viewer", "SUBMIT_DRAFT_OUTLET"), false);
+  assert.equal(hasPermission("viewer", "APPROVE_OUTLET"), false);
+});
+
+test("hasScopedPermission enforces branch boundaries for outlet approval (Four-Eyes Principle)", () => {
+  // Admin can approve outlet in any branch
+  assert.equal(
+    hasScopedPermission({ role: "admin", action: "APPROVE_OUTLET", targetBranchId: "branch-smg" }),
+    true
+  );
+
+  // PIC Branch Solo can approve Solo outlet
+  assert.equal(
+    hasScopedPermission({
+      role: "staff",
+      action: "APPROVE_OUTLET",
+      userBranchIds: ["branch-solo"],
+      targetBranchId: "branch-solo",
+    }),
+    true
+  );
+
+  // PIC Branch Solo CANNOT approve Semarang outlet
+  assert.equal(
+    hasScopedPermission({
+      role: "staff",
+      action: "APPROVE_OUTLET",
+      userBranchIds: ["branch-solo"],
+      targetBranchId: "branch-smg",
+    }),
+    false
+  );
+
+  // Staff with no branch assignment cannot approve any outlet
+  assert.equal(
+    hasScopedPermission({
+      role: "staff",
+      action: "APPROVE_OUTLET",
+      userBranchIds: [],
+      targetBranchId: "branch-solo",
+    }),
+    false
+  );
 });
 
 test("canAccessBranch evaluates branch assignments correctly", () => {

@@ -2,11 +2,35 @@ export type MarcomRole = "admin" | "staff" | "viewer";
 export type PermissionAction =
   | "CREATE_MOU" | "APPROVE_MOU" | "DELETE_MOU" | "CREATE_PLACEMENT"
   | "UPDATE_PLACEMENT" | "CREATE_EVENT" | "UPLOAD_VIDEO_FOOTAGE"
-  | "UPLOAD_DOCUMENT" | "DELETE_DOCUMENT" | "MANAGE_MASTER_DATA" | "EXPORT_REPORTS";
+  | "UPLOAD_DOCUMENT" | "DELETE_DOCUMENT" | "MANAGE_MASTER_DATA" | "EXPORT_REPORTS"
+  | "SUBMIT_DRAFT_OUTLET" | "APPROVE_OUTLET";
 
 const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
-  admin: ["CREATE_MOU","APPROVE_MOU","DELETE_MOU","CREATE_PLACEMENT","UPDATE_PLACEMENT","CREATE_EVENT","UPLOAD_VIDEO_FOOTAGE","UPLOAD_DOCUMENT","DELETE_DOCUMENT","MANAGE_MASTER_DATA","EXPORT_REPORTS"],
-  staff: ["CREATE_MOU","CREATE_PLACEMENT","UPDATE_PLACEMENT","CREATE_EVENT","UPLOAD_VIDEO_FOOTAGE","UPLOAD_DOCUMENT","EXPORT_REPORTS"],
+  admin: [
+    "CREATE_MOU",
+    "APPROVE_MOU",
+    "DELETE_MOU",
+    "CREATE_PLACEMENT",
+    "UPDATE_PLACEMENT",
+    "CREATE_EVENT",
+    "UPLOAD_VIDEO_FOOTAGE",
+    "UPLOAD_DOCUMENT",
+    "DELETE_DOCUMENT",
+    "MANAGE_MASTER_DATA",
+    "EXPORT_REPORTS",
+    "SUBMIT_DRAFT_OUTLET",
+    "APPROVE_OUTLET",
+  ],
+  staff: [
+    "CREATE_MOU",
+    "CREATE_PLACEMENT",
+    "UPDATE_PLACEMENT",
+    "CREATE_EVENT",
+    "UPLOAD_VIDEO_FOOTAGE",
+    "UPLOAD_DOCUMENT",
+    "EXPORT_REPORTS",
+    "SUBMIT_DRAFT_OUTLET",
+  ],
   viewer: ["EXPORT_REPORTS"],
 };
 
@@ -45,8 +69,8 @@ export function canAccessBranch(
  * - viewer: only EXPORT_REPORTS.
  * - staff:
  *   - Forbidden: DELETE_MOU, DELETE_DOCUMENT, MANAGE_MASTER_DATA.
- *   - APPROVE_MOU: allowed only if targetBranchId is assigned to the user (userBranchIds).
- *   - Branch-scoped actions (CREATE/UPDATE): if targetBranchId is specified and user has assignedBranchIds,
+ *   - APPROVE_MOU & APPROVE_OUTLET: allowed only if targetBranchId is assigned to the user (userBranchIds).
+ *   - Branch-scoped actions (CREATE/UPDATE/SUBMIT): if targetBranchId is specified and user has assignedBranchIds,
  *     it must be in userBranchIds.
  */
 export function hasScopedPermission(ctx: ScopedPermissionContext): boolean {
@@ -60,11 +84,10 @@ export function hasScopedPermission(ctx: ScopedPermissionContext): boolean {
     return false;
   }
 
-  // APPROVE_MOU: requires targetBranchId and targetBranchId must be in userBranchIds
-  // Four-Eyes Principle / Segregation of Duties: MOU is a legally and financially binding agreement.
+  // APPROVE_MOU & APPROVE_OUTLET: requires targetBranchId and targetBranchId must be in userBranchIds
+  // Four-Eyes Principle / Segregation of Duties: Outlets and MOUs affect business commitments.
   // Approval requires Admin role or explicitly designated Branch PICs (targetBranchId in userBranchIds).
-  // Staff without branch assignment can view & create, but cannot approve without branch assignment.
-  if (action === "APPROVE_MOU") {
+  if (action === "APPROVE_MOU" || action === "APPROVE_OUTLET") {
     if (!targetBranchId) return false;
     if (userBranchIds.length > 0) {
       return userBranchIds.includes(targetBranchId);
