@@ -482,6 +482,7 @@ export interface MaterialItem {
 
 export type OutletType = "TRADITIONAL" | "MODERN_RETAIL" | "EXCLUSIVE" | "CAMPUS_OUTLET";
 export type OutletTier = "TIER_1" | "TIER_2" | "TIER_3";
+export type OutletStatus = "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
 
 export interface OutletItem {
   id: string;
@@ -501,6 +502,14 @@ export interface OutletItem {
   mouCount?: number;
   latitude?: number | null;
   longitude?: number | null;
+
+  // Lifecycle & Approval fields (Fase 2B)
+  status?: OutletStatus;
+  photoUrl?: string;
+  submittedBy?: string;
+  rejectionReason?: string;
+  approvedBy?: string;
+  approvedAt?: string | Date | null;
 }
 
 export type Outlet = OutletItem;

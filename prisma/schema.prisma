@@ -55,6 +55,13 @@ enum OutletTier {
   TIER_3
 }
 
+enum OutletStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
 enum MaterialType {
   POSTER
   SHOPBLIND
@@ -116,6 +123,17 @@ model Outlet {
   mous       Mou[]
   events     FieldEvent[]
   posts      ContentPost[]
+
+  // Lifecycle & Approval fields (Fase 2B)
+  status          OutletStatus  @default(APPROVED)
+  photoUrl        String        @default("")
+  submittedBy     String        @default("")
+  rejectionReason String        @default("")
+  approvedBy      String        @default("")
+  approvedAt      DateTime?
+
+  @@index([status])
+  @@index([branchId])
 }
 
 model Material {
