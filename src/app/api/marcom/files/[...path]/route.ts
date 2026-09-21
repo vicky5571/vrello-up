@@ -7,11 +7,14 @@ const CONTENT_TYPES: Record<string, string> = {
   pdf: "application/pdf",
   png: "image/png",
   jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  gif: "image/gif",
   mp4: "video/mp4",
 };
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   try {
@@ -40,9 +43,25 @@ export async function GET(
   }
 
   const ext = path.extname(resolved).slice(1).toLowerCase();
-  return new NextResponse(new Uint8Array(data), {
-    headers: {
-      "Content-Type": CONTENT_TYPES[ext] ?? "application/octet-stream",
-    },
-  });
+  const rawFilename = path.basename(resolved);
+  const cleanFilename = rawFilename.replace(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i,
+    "",
+  );
+  const filename = cleanFilename || rawFilename;
+
+  const url = new URL(request.url);
+  const isDownload =
+    url.searchParams.get("download") === "1" ||
+    url.searchParams.get("download") === "true";
+
+  const headers: Record<string, string> = {
+    "Content-Type": CONTENT_TYPES[ext] ?? "application/octet-stream",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Disposition": isDownload
+      ? `attachment; filename="${encodeURIComponent(filename)}"`
+      : `inline; filename="${encodeURIComponent(filename)}"`,
+  };
+
+  return new NextResponse(new Uint8Array(data), { headers });
 }

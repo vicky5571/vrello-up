@@ -30,7 +30,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         orderBy: { id: "desc" },
         include: {
           material: { select: { id: true, name: true, type: true, requiresMou: true } },
-          mou: { select: { id: true, partnerName: true, status: true, compensationValue: true } },
+          mou: { select: { id: true, partnerName: true, status: true, compensationValue: true, docPath: true } },
         },
       },
       mous: {

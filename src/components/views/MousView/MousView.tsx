@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDropdown } from "@/components/ui/useDropdown";
-import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins, X, Layers, AlertTriangle, ShieldAlert } from "lucide-react";
+import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins, X, Layers, AlertTriangle, ShieldAlert, Eye, ExternalLink } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
@@ -14,6 +14,8 @@ import {
 } from "@/components/views/shared/MarcomTableShell";
 import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
 import { calculateMouPlacementRealization } from "@/lib/marcom/placementMouBridge";
+import { parseMouDocumentSource } from "./mouDocumentHelpers";
+import { MouDocumentViewerModal } from "./MouDocumentViewerModal";
 
 export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE";
 
@@ -105,6 +107,7 @@ export function MousView() {
   const [modalMou, setModalMou] = useState<Partial<MarcomMou> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [viewingDocMou, setViewingDocMou] = useState<MarcomMou | null>(null);
 
   const branchTriggerRef = useRef<HTMLButtonElement | null>(null);
   const branchDropdownRef = useDropdown<HTMLDivElement>({
@@ -420,6 +423,50 @@ export function MousView() {
             );
           },
         }),
+        columnHelper.accessor("docPath", {
+          id: "document",
+          header: "Dokumen MOU",
+          size: 145,
+          minSize: 125,
+          enableSorting: false,
+          cell: ({ row }) => {
+            const doc = row.original.docPath;
+            const parsed = parseMouDocumentSource(doc, row.original.partnerName);
+            if (parsed.type === "EMPTY") {
+              return (
+                <span className="text-slate-400 text-xs italic">
+                  Tanpa Berkas
+                </span>
+              );
+            }
+            return (
+              <div
+                className="flex items-center gap-1.5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => setViewingDocMou(row.original)}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-700 dark:text-fuchsia-300 border border-fuchsia-200 dark:border-fuchsia-800 hover:bg-fuchsia-100 transition-colors cursor-pointer shadow-2xs"
+                  title="Lihat Pratinjau Dokumen"
+                >
+                  <Eye className="w-3 h-3 text-fuchsia-600 dark:text-fuchsia-400" />
+                  <span>{parsed.label}</span>
+                </button>
+                <a
+                  href={parsed.downloadUrl}
+                  download={parsed.filename || "dokumen-mou"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="Unduh Berkas Asli"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            );
+          },
+        }),
         columnHelper.display({
           id: "expander",
           header: () => null,
@@ -689,8 +736,44 @@ export function MousView() {
                 )}
               </div>
               <div className="sm:col-span-2">
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Document</div>
-                <div className="text-slate-700 dark:text-slate-300">{mou.docPath || "—"}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
+                  Dokumen Asli Perjanjian
+                </div>
+                {(() => {
+                  const parsed = parseMouDocumentSource(mou.docPath, mou.partnerName);
+                  if (parsed.type === "EMPTY") {
+                    return (
+                      <div className="text-slate-400 text-xs italic">
+                        Belum ada berkas terunggah
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setViewingDocMou(mou)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-700 dark:text-fuchsia-300 border border-fuchsia-200 dark:border-fuchsia-800 hover:bg-fuchsia-100 transition-colors shadow-2xs cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Pratinjau ({parsed.label})</span>
+                      </button>
+                      <a
+                        href={parsed.downloadUrl}
+                        download={parsed.filename || "dokumen-mou"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Unduh Berkas</span>
+                      </a>
+                      <span className="text-[11px] text-slate-400 font-mono truncate max-w-xs">
+                        {parsed.filename}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="sm:col-span-2">
                 <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Notes</div>
@@ -1196,6 +1279,45 @@ export function MousView() {
                   onChange={(e) => setModalMou({ ...modalMou, docPath: e.target.value })}
                   className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
                 />
+                {modalMou.docPath && (
+                  <div className="mt-1.5 flex items-center gap-2">
+                    {(() => {
+                      const p = parseMouDocumentSource(modalMou.docPath, modalMou.partnerName);
+                      return (
+                        <>
+                          <span className="text-[11px] px-2 py-0.5 rounded-md bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-700 dark:text-fuchsia-300 border border-fuchsia-200 dark:border-fuchsia-800 font-medium">
+                            {p.label}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setViewingDocMou({
+                                id: modalMou.id || "preview",
+                                branchId: modalMou.branchId || "",
+                                partnerName: modalMou.partnerName || "Pratinjau Dokumen",
+                                mouType: modalMou.mouType || "Compensation",
+                                outletName: modalMou.outletName || "",
+                                submissionDate: null,
+                                startDate: null,
+                                endDate: null,
+                                status: "DRAFT",
+                                picName: "",
+                                picPhone: "",
+                                docPath: modalMou.docPath || "",
+                                compensationValue: 0,
+                                notes: "",
+                              })
+                            }
+                            className="text-xs font-semibold text-fuchsia-600 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>Test Pratinjau</span>
+                          </button>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
               <div>
                 <label htmlFor="mou-notes" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -1218,6 +1340,16 @@ export function MousView() {
           </div>
         </div>
       )}
+      {/* Document Viewer Lightbox Modal */}
+      <MouDocumentViewerModal
+        isOpen={Boolean(viewingDocMou)}
+        onClose={() => setViewingDocMou(null)}
+        docPath={viewingDocMou?.docPath}
+        partnerName={viewingDocMou?.partnerName}
+        mouType={viewingDocMou?.mouType}
+        outletName={viewingDocMou?.outletName}
+        branchName={viewingDocMou?.branch?.name}
+      />
     </>
   );
 }

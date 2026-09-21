@@ -11,8 +11,11 @@ import {
   Sparkles,
   Camera,
   MapPin,
+  Eye,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MouDocumentViewerModal } from "@/components/views/MousView/MouDocumentViewerModal";
 import type {
   MarcomPlacement,
   PlacementStatus,
@@ -85,6 +88,8 @@ export function PlacementFormModal({
   mousList,
   placements,
 }: PlacementFormModalProps) {
+  const [viewingDocMou, setViewingDocMou] = React.useState<MouSummaryInfo | null>(null);
+
   if (!placement) return null;
 
   const selOutlet = outletsList.find((o) => o.id === placement.outletId);
@@ -529,6 +534,32 @@ export function PlacementFormModal({
                 ))}
               </select>
 
+              {/* Selected MOU Document Preview */}
+              {selectedMou && (
+                <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 truncate">
+                    <FileText className="w-3.5 h-3.5 text-fuchsia-600 shrink-0" />
+                    <span className="font-semibold truncate">
+                      {selectedMou.partnerName || "Perjanjian Kerjasama"} ({selectedMou.mouType})
+                    </span>
+                  </div>
+                  {selectedMou.docPath ? (
+                    <button
+                      type="button"
+                      onClick={() => setViewingDocMou(selectedMou)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-fuchsia-600 hover:underline shrink-0 cursor-pointer"
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>Lihat Berkas Dokumen</span>
+                    </button>
+                  ) : (
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 italic shrink-0">
+                      Belum ada berkas terunggah
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Dynamic Legal Compliance Banner */}
               {mouValidation.severity !== "none" && (
                 <div
@@ -785,6 +816,16 @@ export function PlacementFormModal({
           </div>
         </form>
       </div>
+
+      {/* MOU Document Lightbox Modal */}
+      <MouDocumentViewerModal
+        isOpen={Boolean(viewingDocMou)}
+        onClose={() => setViewingDocMou(null)}
+        docPath={viewingDocMou?.docPath}
+        partnerName={viewingDocMou?.partnerName}
+        mouType={viewingDocMou?.mouType}
+        outletName={selOutlet?.name || placement.outlet?.name}
+      />
     </div>
   );
 }

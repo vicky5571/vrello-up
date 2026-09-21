@@ -25,9 +25,13 @@ import {
   Check,
   CheckCircle2,
   Play,
+  Eye,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn, formatIDR } from "@/lib/utils";
+import { parseMouDocumentSource } from "@/components/views/MousView/mouDocumentHelpers";
+import { MouDocumentViewerModal } from "@/components/views/MousView/MouDocumentViewerModal";
 import { getOutletMarkerMeta } from "@/lib/marcom/outletAnalytics";
 import { buildGoogleMapsUrl } from "@/lib/marcom/locationUtils";
 import { parsePlacementPhotos } from "@/lib/marcom/photoUtils";
@@ -58,6 +62,7 @@ export interface Outlet360Placement {
     partnerName: string;
     status: string;
     compensationValue?: number | null;
+    docPath?: string | null;
   } | null;
 }
 
@@ -69,6 +74,7 @@ export interface Outlet360Mou {
   compensationValue?: number | null;
   startDate?: string | Date | null;
   endDate?: string | Date | null;
+  docPath?: string | null;
   branch?: {
     id: string;
     code: string;
@@ -171,6 +177,7 @@ export function Outlet360Drawer({
   >("overview");
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [viewingDocMou, setViewingDocMou] = useState<Outlet360Mou | null>(null);
 
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const navigateToMarcom = useWorkspaceStore((state) => state.navigateToMarcom);
@@ -1214,6 +1221,26 @@ export function Outlet360Drawer({
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                             Pasang: {p.date ? new Date(p.date).toLocaleDateString("id-ID") : "—"} • PIC: {p.picName || "—"}
                           </p>
+                          {p.mou?.docPath && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setViewingDocMou({
+                                  id: p.mou!.id,
+                                  partnerName: p.mou!.partnerName,
+                                  mouType: "Perjanjian Sewa",
+                                  status: p.mou!.status,
+                                  compensationValue: p.mou!.compensationValue,
+                                  docPath: p.mou!.docPath,
+                                  branch: data?.branch,
+                                })
+                              }
+                              className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-fuchsia-600 dark:text-fuchsia-400 hover:underline cursor-pointer"
+                            >
+                              <FileText className="w-3 h-3" />
+                              <span>Lihat Dokumen MoU ({p.mou.partnerName})</span>
+                            </button>
+                          )}
                         </div>
 
                         <div className="text-right">
@@ -1418,7 +1445,46 @@ export function Outlet360Drawer({
                           {formatIDR(safeAmount(m.compensationValue))}
                         </span>
                       </div>
-                      {/* Micro-Action for SUBMITTED MoU */}
+                    </div>
+
+                    {/* Document Attachment Preview & Download */}
+                    {(() => {
+                      const parsed = parseMouDocumentSource(m.docPath, m.partnerName);
+                      if (parsed.type === "EMPTY") return null;
+                      return (
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 truncate">
+                            <FileText className="w-3.5 h-3.5 text-fuchsia-600 shrink-0" />
+                            <span className="font-semibold">{parsed.label}:</span>
+                            <span className="truncate text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                              {parsed.filename}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setViewingDocMou(m)}
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold text-fuchsia-700 dark:text-fuchsia-300 bg-fuchsia-50 dark:bg-fuchsia-950/40 hover:bg-fuchsia-100 border border-fuchsia-200 dark:border-fuchsia-800 transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>Lihat Dokumen</span>
+                            </button>
+                            <a
+                              href={parsed.downloadUrl}
+                              download={parsed.filename || "mou-document"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                              title="Unduh Berkas Asli"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Micro-Action for SUBMITTED MoU */}
                       {m.status === "SUBMITTED" && (
                         <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
                           <span className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">
@@ -1485,11 +1551,10 @@ export function Outlet360Drawer({
                         </div>
                       )}
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+                  ))
+                )}
+              </div>
+            )}
 
           {!isLoading && data && activeTab === "events" && (
             <div className="space-y-3">
@@ -1734,6 +1799,17 @@ export function Outlet360Drawer({
           </div>
         </div>
       )}
+
+      {/* MOU Document Viewer Lightbox Modal */}
+      <MouDocumentViewerModal
+        isOpen={Boolean(viewingDocMou)}
+        onClose={() => setViewingDocMou(null)}
+        docPath={viewingDocMou?.docPath}
+        partnerName={viewingDocMou?.partnerName}
+        mouType={viewingDocMou?.mouType}
+        outletName={data?.name}
+        branchName={viewingDocMou?.branch?.name || data?.branch?.name}
+      />
     </>
   );
 }
