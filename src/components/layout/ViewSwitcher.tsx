@@ -6,7 +6,6 @@ import { ViewMode } from "@/types";
 import {
   List as ListIcon,
   Kanban,
-  TableProperties,
   CalendarDays,
   Milestone,
   Hash,
