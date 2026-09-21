@@ -16,6 +16,7 @@ import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
 import { calculateMouPlacementRealization } from "@/lib/marcom/placementMouBridge";
 import { parseMouDocumentSource } from "./mouDocumentHelpers";
 import { MouDocumentViewerModal } from "./MouDocumentViewerModal";
+import { compressImageFile } from "@/lib/marcom/imageCompression";
 
 export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE";
 
@@ -478,10 +479,11 @@ export function MousView() {
   );
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !modalMou) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile || !modalMou) return;
     setIsUploading(true);
     try {
+      const file = await compressImageFile(rawFile);
       const uploadId = modalMou.id || "new";
       const fd = new FormData();
       fd.append("kind", "documents");

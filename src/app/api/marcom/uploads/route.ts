@@ -7,6 +7,7 @@ import { hasPermission } from "@/lib/marcom/guards";
 import {
   MAX_UPLOAD_BYTES,
   UPLOAD_ROOT_DIRNAME,
+  getUploadRootDir,
   resolveUploadPath,
   sanitizeFilename,
   validateUpload,
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
   }
 
   const stored = `${randomUUID()}-${sanitizeFilename(file.name)}`;
-  const root = path.join(process.cwd(), UPLOAD_ROOT_DIRNAME);
+  const root = getUploadRootDir();
   const dest = resolveUploadPath(root, kind, id, stored);
   if (!dest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

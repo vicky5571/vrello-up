@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { validateUpload, resolveUploadPath, isServableFilePath } from "./upload.ts";
+import { validateUpload, resolveUploadPath, isServableFilePath, getUploadRootDir } from "./upload.ts";
 
 const MB = 1024 * 1024;
 
@@ -70,4 +70,12 @@ test("isServableFilePath only allows the authenticated files prefix", () => {
   assert.equal(isServableFilePath("/api/marcom/files/"), false);
   assert.equal(isServableFilePath("/api/marcom/files/../secret.pdf"), false);
   assert.equal(isServableFilePath("/api/marcom/files/documents/..\\x.pdf"), false);
+});
+
+test("getUploadRootDir resolves custom env directory and defaults to uploads", () => {
+  const custom = getUploadRootDir("/mnt/persistent/uploads");
+  assert.equal(custom, "/mnt/persistent/uploads");
+
+  const fallback = getUploadRootDir("");
+  assert.equal(fallback.endsWith("uploads"), true);
 });

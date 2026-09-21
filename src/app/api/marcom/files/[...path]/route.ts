@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { requireMember } from "@/lib/marcom/auth";
+import { getUploadRootDir } from "@/lib/marcom/upload";
 
 const CONTENT_TYPES: Record<string, string> = {
   pdf: "application/pdf",
@@ -25,7 +26,7 @@ export async function GET(
   }
 
   const { path: segments } = await params;
-  const root = path.join(process.cwd(), "uploads");
+  const root = getUploadRootDir();
   const resolved = path.resolve(root, ...(segments ?? []));
   if (resolved !== root && !resolved.startsWith(root + path.sep)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

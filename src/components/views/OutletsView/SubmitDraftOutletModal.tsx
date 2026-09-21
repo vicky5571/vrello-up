@@ -25,6 +25,7 @@ import {
   buildDraftSubmissionPayload,
   type DraftFormData,
 } from "./submitDraftOutletHelpers";
+import { compressImageFile } from "@/lib/marcom/imageCompression";
 
 export interface SubmitDraftOutletModalProps {
   isOpen: boolean;
@@ -103,9 +104,12 @@ export function SubmitDraftOutletModal({
     );
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
+
+    // Optimasi ukuran foto kamera (8-15MB -> ~500KB) sebelum dikonversi
+    const file = await compressImageFile(rawFile);
 
     // Local file preview via FileReader
     const reader = new FileReader();

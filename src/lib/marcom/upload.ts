@@ -64,6 +64,18 @@ export function sanitizeFilename(filename: string): string {
 // must only reference files under this prefix — never external URLs.
 export const UPLOAD_ROOT_DIRNAME = "uploads";
 
+/**
+ * Mengembalikan root directory penyimpanan berkas yang dapat dikonfigurasi via env UPLOADS_DIR.
+ * Jika UPLOADS_DIR tidak diatur, fallback ke folder ./uploads di root project.
+ */
+export function getUploadRootDir(envUploadsDir?: string): string {
+  const dir = (envUploadsDir ?? process.env.UPLOADS_DIR)?.trim();
+  if (dir) {
+    return path.resolve(dir);
+  }
+  return path.join(process.cwd(), UPLOAD_ROOT_DIRNAME);
+}
+
 // Defense-in-depth write confinement: resolves the destination against the
 // uploads root and returns null when it escapes (mirrors the read side).
 // Pure (rootDir is injected) so it is unit-testable.
