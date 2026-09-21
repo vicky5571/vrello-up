@@ -9,8 +9,11 @@ import {
   X,
   RefreshCw,
   Store,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SubmitDraftOutletModal } from "@/components/views/OutletsView/SubmitDraftOutletModal";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import {
   formatCoordinates,
   extractRecentPlacementMaterials,
@@ -35,6 +38,7 @@ export interface OutletSearchComboboxProps {
   selectedOutletId?: string;
   selectedOutlet?: OutletSearchResult | null;
   onSelectOutlet: (outlet: OutletSelectionPayload) => void;
+  onRequestNewOutlet?: (searchQuery: string) => void;
   workspaceId?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -74,6 +78,7 @@ export function OutletSearchCombobox({
   selectedOutletId,
   selectedOutlet,
   onSelectOutlet,
+  onRequestNewOutlet,
   workspaceId = "ws-main",
   placeholder = "Cari nama outlet atau kode (cth: O-SMG-001)...",
   disabled = false,
@@ -82,6 +87,15 @@ export function OutletSearchCombobox({
   required = false,
   id = "outlet-search-combobox",
 }: OutletSearchComboboxProps) {
+  const { branches, fetchBranches } = useMarcomDataStore();
+  const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (branches.length === 0) {
+      fetchBranches().catch(() => {});
+    }
+  }, [branches.length, fetchBranches]);
+
   const [internalSelected, setInternalSelected] =
     useState<OutletSearchResult | null>(selectedOutlet ?? null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -520,108 +534,166 @@ export function OutletSearchCombobox({
 
               {/* Empty state */}
               {results.length === 0 && !isLoading && (
-                <div className="px-4 py-4 text-xs text-center text-slate-500 dark:text-slate-400">
-                  Tidak ada outlet yang cocok dengan &quot;{searchQuery}&quot;
+                <div className="p-4 text-center space-y-2.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Tidak ada outlet yang cocok dengan &quot;{searchQuery}&quot;
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onRequestNewOutlet) {
+                        onRequestNewOutlet(searchQuery);
+                      } else {
+                        setIsDraftModalOpen(true);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30 text-xs font-semibold transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Toko belum terdaftar? Ajukan Toko Baru</span>
+                  </button>
                 </div>
               )}
 
               {/* Items List */}
               {results.length > 0 && (
-                <ul
-                  ref={listRef}
-                  id={`${id}-listbox`}
-                  role="listbox"
-                  className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 p-1"
-                >
-                  {results.map((outlet, index) => {
-                    const isHighlighted = highlightedIndex === index;
-                    const outletRecentMaterials =
-                      extractRecentPlacementMaterials(outlet.placements);
-                    const hasCoordinates =
-                      typeof outlet.latitude === "number" &&
-                      typeof outlet.longitude === "number";
+                <>
+                  <ul
+                    ref={listRef}
+                    id={`${id}-listbox`}
+                    role="listbox"
+                    className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 p-1"
+                  >
+                    {results.map((outlet, index) => {
+                      const isHighlighted = highlightedIndex === index;
+                      const outletRecentMaterials =
+                        extractRecentPlacementMaterials(outlet.placements);
+                      const hasCoordinates =
+                        typeof outlet.latitude === "number" &&
+                        typeof outlet.longitude === "number";
 
-                    return (
-                      <li
-                        key={outlet.id}
-                        id={`${id}-opt-${outlet.id}`}
-                        role="option"
-                        aria-selected={isHighlighted}
-                        onClick={() => handleSelect(outlet)}
-                        onMouseEnter={() => setHighlightedIndex(index)}
-                        className={cn(
-                          "flex flex-col gap-1 px-3 py-2 rounded-lg text-left cursor-pointer transition-colors",
-                          isHighlighted
-                            ? "bg-lime-50 dark:bg-lime-950/40 text-slate-900 dark:text-slate-100"
-                            : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-200"
-                        )}
-                      >
-                        {/* First line: Code, Name, Brand, Tier */}
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
-                            [{outlet.code}]
-                          </span>
-                          <span className="font-semibold text-xs text-slate-900 dark:text-slate-100 truncate">
-                            {outlet.name}
-                          </span>
-                          {renderBrandBadge(outlet.brand)}
-                          {outlet.tier && (
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
-                              • {outlet.tier}
-                            </span>
+                      return (
+                        <li
+                          key={outlet.id}
+                          id={`${id}-opt-${outlet.id}`}
+                          role="option"
+                          aria-selected={isHighlighted}
+                          onClick={() => handleSelect(outlet)}
+                          onMouseEnter={() => setHighlightedIndex(index)}
+                          className={cn(
+                            "flex flex-col gap-1 px-3 py-2 rounded-lg text-left cursor-pointer transition-colors",
+                            isHighlighted
+                              ? "bg-lime-50 dark:bg-lime-950/40 text-slate-900 dark:text-slate-100"
+                              : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-200"
                           )}
-                        </div>
-
-                        {/* Second line: Address / City / GPS */}
-                        <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                          <div className="flex items-center gap-1 truncate min-w-0">
-                            <MapPin className="w-3 h-3 shrink-0 text-slate-400" />
-                            <span className="truncate">
-                              {[outlet.address, outlet.city]
-                                .filter(Boolean)
-                                .join(", ") || "Alamat belum ada"}
+                        >
+                          {/* First line: Code, Name, Brand, Tier */}
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
+                              [{outlet.code}]
                             </span>
+                            <span className="font-semibold text-xs text-slate-900 dark:text-slate-100 truncate">
+                              {outlet.name}
+                            </span>
+                            {renderBrandBadge(outlet.brand)}
+                            {outlet.tier && (
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
+                                • {outlet.tier}
+                              </span>
+                            )}
                           </div>
 
-                          {hasCoordinates ? (
-                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 shrink-0 font-medium">
-                              📍 GPS Ada
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-amber-600 dark:text-amber-400 shrink-0 font-medium">
-                              ⚠️ GPS Kosong
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Third line: Recent Placement History preview */}
-                        {outletRecentMaterials.length > 0 && (
-                          <div className="flex items-center gap-1 text-[10px] text-slate-400 pt-0.5">
-                            <span>Riwayat:</span>
-                            <div className="flex items-center gap-1 flex-wrap">
-                              {outletRecentMaterials.slice(0, 3).map((mat) => (
-                                <span
-                                  key={mat}
-                                  className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px]"
-                                >
-                                  {mat}
-                                </span>
-                              ))}
-                              {outletRecentMaterials.length > 3 && (
-                                <span className="text-[10px] text-slate-400">
-                                  +{outletRecentMaterials.length - 3} lainnya
-                                </span>
-                              )}
+                          {/* Second line: Address / City / GPS */}
+                          <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-1 truncate min-w-0">
+                              <MapPin className="w-3 h-3 shrink-0 text-slate-400" />
+                              <span className="truncate">
+                                {[outlet.address, outlet.city]
+                                  .filter(Boolean)
+                                  .join(", ") || "Alamat belum ada"}
+                              </span>
                             </div>
+
+                            {hasCoordinates ? (
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 shrink-0 font-medium">
+                                📍 GPS Ada
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-amber-600 dark:text-amber-400 shrink-0 font-medium">
+                                ⚠️ GPS Kosong
+                              </span>
+                            )}
                           </div>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
+
+                          {/* Third line: Recent Placement History preview */}
+                          {outletRecentMaterials.length > 0 && (
+                            <div className="flex items-center gap-1 text-[10px] text-slate-400 pt-0.5">
+                              <span>Riwayat:</span>
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {outletRecentMaterials.slice(0, 3).map((mat) => (
+                                  <span
+                                    key={mat}
+                                    className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px]"
+                                  >
+                                    {mat}
+                                  </span>
+                                ))}
+                                {outletRecentMaterials.length > 3 && (
+                                  <span className="text-[10px] text-slate-400">
+                                    +{outletRecentMaterials.length - 3} lainnya
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {/* Dropdown footer action to submit new store */}
+                  <div className="p-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onRequestNewOutlet) {
+                          onRequestNewOutlet(searchQuery);
+                        } else {
+                          setIsDraftModalOpen(true);
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-1.5 py-1 text-center text-xs font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Toko tidak ditemukan? Ajukan Toko Baru</span>
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           )}
+
+          <SubmitDraftOutletModal
+            isOpen={isDraftModalOpen}
+            onClose={() => setIsDraftModalOpen(false)}
+            initialName={searchQuery}
+            branches={branches.map((b) => ({ id: b.id, name: b.name, code: b.code }))}
+            workspaceId={workspaceId}
+            onSuccess={(created) => {
+              handleSelect({
+                id: created.id,
+                code: created.code,
+                name: created.name,
+                brand: created.brand,
+                latitude: created.latitude,
+                longitude: created.longitude,
+                address: created.address,
+                city: created.city,
+                picName: created.picName,
+              });
+              setIsDraftModalOpen(false);
+            }}
+          />
         </div>
       )}
     </div>
