@@ -138,38 +138,45 @@ export const ListTaskRow = memo(function ListTaskRow({
       </div>
       {/* Name Column */}
       <div className="flex items-center gap-2.5 min-w-0 pr-4">
-        {/* Status Toggle Dot */}
+        {/* Status Toggle Dot: toggles between Done and Open */}
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            const currentIndex = allStatuses.findIndex(
-              (s) => s.id === task.statusId,
-            );
-            const nextStatus =
-              allStatuses[(currentIndex + 1) % allStatuses.length];
-            if (nextStatus) {
-              onMoveStatus(task.id, nextStatus.id);
+            if (isTaskDone) {
+              const openStatus =
+                allStatuses.find(
+                  (s) => s.category !== "done" && s.category !== "closed",
+                ) || allStatuses[0];
+              if (openStatus) onMoveStatus(task.id, openStatus.id);
+            } else {
+              const doneStatus =
+                allStatuses.find(
+                  (s) => s.category === "done" || s.category === "closed",
+                ) || allStatuses[allStatuses.length - 1];
+              if (doneStatus) onMoveStatus(task.id, doneStatus.id);
             }
           }}
-          aria-label={`Status for ${task.title}: ${taskStatus.name}. Activate to advance.`}
-          title={`Status: ${taskStatus.name} — click to advance`}
+          aria-label={`Status for ${task.title}: ${taskStatus.name}. Activate to toggle completion.`}
+          title={isTaskDone ? "Mark as Incomplete" : "Mark as Completed"}
           className="shrink-0 p-0.5 rounded-full hover:scale-110 transition-transform cursor-pointer"
         >
           {isTaskDone ? (
-            <Check className="w-3.5 h-3.5 text-emerald-500" />
+            <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-2xs">
+              <Check className="w-2.5 h-2.5 stroke-[2.5]" />
+            </div>
           ) : taskIsProgress ? (
-            <div className="w-3.5 h-3.5 rounded-full border-2 border-[#0073ea] flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#0073ea]" />
+            <div className="w-3.5 h-3.5 rounded-full border-2 border-blue-500 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
             </div>
           ) : (
-            <Circle className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" />
+            <Circle className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 transition-colors" />
           )}
         </button>
 
         <span
           className={cn(
-            "font-medium text-slate-800 dark:text-slate-200 truncate group-hover/row:text-[#0073ea] transition-colors",
+            "font-medium text-slate-800 dark:text-slate-200 truncate group-hover/row:text-indigo-600 dark:group-hover/row:text-indigo-400 transition-colors",
             isTaskDone && "line-through text-slate-400 dark:text-slate-500",
           )}
         >
@@ -180,9 +187,8 @@ export const ListTaskRow = memo(function ListTaskRow({
           <PlatformBadge platform={task.postPlatform} format={task.postFormat} />
         )}
 
-
         {visibleFields.subtasks && task.subtasks.length > 0 && (
-          <span className="shrink-0 text-[10px] text-slate-500 dark:text-slate-400 font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">
+          <span className="shrink-0 text-[10px] text-slate-400 dark:text-slate-500 font-medium px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800">
             {task.subtasks.filter((s) => s.completed).length}/
             {task.subtasks.length}
           </span>
@@ -198,77 +204,77 @@ export const ListTaskRow = memo(function ListTaskRow({
         {visibleFields.assignees && (
           <>
             <button
-          type="button"
-          aria-label={`Edit assignees for ${task.title}`}
-          aria-haspopup="menu"
-          aria-expanded={openEditor === "assignees"}
-          onClick={() =>
-            setOpenEditor((current) =>
-              current === "assignees" ? null : "assignees",
-            )
-          }
-          className="flex items-center gap-1.5 rounded-md p-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0073ea]"
-        >
-          {task.assignees.length > 0 ? (
-            <>
-              <div className="flex -space-x-1">
-                {task.assignees.slice(0, 2).map((user) => (
-                  <UserAvatar key={user.id} user={user} size="sm" />
-                ))}
-              </div>
-              <span className="truncate text-slate-600 dark:text-slate-400 text-[11px]">
-                {task.assignees.length > 1
-                  ? `+${task.assignees.length - 1}`
-                  : task.assignees[0].name.split(" ")[0]}
-              </span>
-            </>
-          ) : (
-            <span className="w-6 h-6 rounded-full border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:border-slate-400 hover:text-slate-600 transition-colors">
-              <UserIcon className="w-3 h-3" aria-hidden="true" />
-            </span>
-          )}
-        </button>
-
-        {openEditor === "assignees" && (
-          <div
-            role="menu"
-            aria-label={`Assignees for ${task.title}`}
-            className="absolute left-0 top-full z-30 mt-1 w-52 rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
-          >
-            <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Assign members
-            </div>
-            {members.map((user) => {
-              const isAssigned = task.assignees.some(
-                (assignee) => assignee.id === user.id,
-              );
-              return (
-                <button
-                  key={user.id}
-                  type="button"
-                  role="menuitemcheckbox"
-                  aria-checked={isAssigned}
-                  onClick={() => onAssigneeToggle(task, user.id)}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer"
-                >
-                  <UserAvatar user={user} size="xs" />
-                  <span className="min-w-0 flex-1 truncate">{user.name}</span>
-                  <span
-                    aria-hidden="true"
-                    className={cn(
-                      "flex h-3.5 w-3.5 items-center justify-center rounded border text-[10px] text-white",
-                      isAssigned
-                        ? "border-[#0073ea] bg-[#0073ea]"
-                        : "border-slate-300 dark:border-slate-600",
-                    )}
-                  >
-                    {isAssigned && <Check className="w-2.5 h-2.5" />}
+              type="button"
+              aria-label={`Edit assignees for ${task.title}`}
+              aria-haspopup="menu"
+              aria-expanded={openEditor === "assignees"}
+              onClick={() =>
+                setOpenEditor((current) =>
+                  current === "assignees" ? null : "assignees",
+                )
+              }
+              className="flex items-center gap-1.5 rounded-md p-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0073ea]"
+            >
+              {task.assignees.length > 0 ? (
+                <>
+                  <div className="flex -space-x-1">
+                    {task.assignees.slice(0, 2).map((user) => (
+                      <UserAvatar key={user.id} user={user} size="sm" />
+                    ))}
+                  </div>
+                  <span className="truncate text-slate-600 dark:text-slate-400 text-[11px]">
+                    {task.assignees.length > 1
+                      ? `+${task.assignees.length - 1}`
+                      : task.assignees[0].name.split(" ")[0]}
                   </span>
-                </button>
-              );
-            })}
-            </div>
-          )}
+                </>
+              ) : (
+                <span className="w-5 h-5 rounded-full border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 opacity-0 group-hover/row:opacity-60 hover:!opacity-100 transition-opacity">
+                  <UserIcon className="w-2.5 h-2.5" aria-hidden="true" />
+                </span>
+              )}
+            </button>
+
+            {openEditor === "assignees" && (
+              <div
+                role="menu"
+                aria-label={`Assignees for ${task.title}`}
+                className="absolute left-0 top-full z-30 mt-1 w-52 rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+              >
+                <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Assign members
+                </div>
+                {members.map((user) => {
+                  const isAssigned = task.assignees.some(
+                    (assignee) => assignee.id === user.id,
+                  );
+                  return (
+                    <button
+                      key={user.id}
+                      type="button"
+                      role="menuitemcheckbox"
+                      aria-checked={isAssigned}
+                      onClick={() => onAssigneeToggle(task, user.id)}
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer"
+                    >
+                      <UserAvatar user={user} size="xs" />
+                      <span className="min-w-0 flex-1 truncate">{user.name}</span>
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "flex h-3.5 w-3.5 items-center justify-center rounded border text-[10px] text-white",
+                          isAssigned
+                            ? "border-[#0073ea] bg-[#0073ea]"
+                            : "border-slate-300 dark:border-slate-600",
+                        )}
+                      >
+                        {isAssigned && <Check className="w-2.5 h-2.5" />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -279,34 +285,39 @@ export const ListTaskRow = memo(function ListTaskRow({
         className="flex items-center text-slate-500 dark:text-slate-400"
       >
         {visibleFields.dueDate && (
-          <label className="group/date flex cursor-pointer items-center gap-1 text-[11px]">
-          <Calendar
-            className="h-3.5 w-3.5 text-slate-400"
-            aria-hidden="true"
-          />
-          <span className="sr-only">Due date for {task.title}</span>
-          <input
-            type="date"
-            aria-label={`Due date for ${task.title}`}
-            value={task.dueDate || ""}
-            onClick={(e) => {
-              try {
-                e.currentTarget.showPicker();
-              } catch {}
-            }}
-            onFocus={(e) => {
-              try {
-                e.currentTarget.showPicker();
-              } catch {}
-            }}
-            onChange={(e) =>
-              onUpdateTask(task.id, {
-                dueDate: e.target.value || undefined,
-              })
-            }
-            className="w-23 cursor-pointer rounded-md border border-transparent bg-transparent px-1 py-0.5 text-[11px] text-slate-500 transition-colors hover:border-slate-200 focus:border-[#0073ea] focus:outline-hidden dark:text-slate-400 dark:hover:border-slate-700"
-          />
-        </label>
+          <label
+            className={cn(
+              "group/date flex cursor-pointer items-center gap-1 text-[11px] transition-opacity",
+              !task.dueDate && "opacity-0 group-hover/row:opacity-50 hover:!opacity-100",
+            )}
+          >
+            <Calendar
+              className="h-3.5 w-3.5 text-slate-400"
+              aria-hidden="true"
+            />
+            <span className="sr-only">Due date for {task.title}</span>
+            <input
+              type="date"
+              aria-label={`Due date for ${task.title}`}
+              value={task.dueDate || ""}
+              onClick={(e) => {
+                try {
+                  e.currentTarget.showPicker();
+                } catch {}
+              }}
+              onFocus={(e) => {
+                try {
+                  e.currentTarget.showPicker();
+                } catch {}
+              }}
+              onChange={(e) =>
+                onUpdateTask(task.id, {
+                  dueDate: e.target.value || undefined,
+                })
+              }
+              className="w-23 cursor-pointer rounded-md border border-transparent bg-transparent px-1 py-0.5 text-[11px] text-slate-600 dark:text-slate-400 transition-colors hover:border-slate-200 focus:border-[#0073ea] focus:outline-hidden dark:hover:border-slate-700"
+            />
+          </label>
         )}
       </div>
 
@@ -319,58 +330,61 @@ export const ListTaskRow = memo(function ListTaskRow({
         {visibleFields.priority && (
           <>
             <button
-          type="button"
-          aria-label={`Priority for ${task.title}: ${task.priority}. Activate to change.`}
-          title={`Priority: ${task.priority}`}
-          aria-haspopup="menu"
-          aria-expanded={openEditor === "priority"}
-          onClick={() =>
-            setOpenEditor((current) =>
-              current === "priority" ? null : "priority",
-            )
-          }
-          className="rounded-md p-1 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0073ea] dark:hover:bg-slate-800 cursor-pointer"
-        >
-          <Flag
-            className={cn(
-              "h-3.5 w-3.5 transition-colors",
-              getPriorityColor(task.priority),
-            )}
-            aria-hidden="true"
-          />
-        </button>
+              type="button"
+              aria-label={`Priority for ${task.title}: ${task.priority}. Activate to change.`}
+              title={`Priority: ${task.priority}`}
+              aria-haspopup="menu"
+              aria-expanded={openEditor === "priority"}
+              onClick={() =>
+                setOpenEditor((current) =>
+                  current === "priority" ? null : "priority",
+                )
+              }
+              className={cn(
+                "rounded-md p-1 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0073ea] dark:hover:bg-slate-800 cursor-pointer transition-opacity",
+                task.priority === "none" && "opacity-0 group-hover/row:opacity-40 hover:!opacity-100",
+              )}
+            >
+              <Flag
+                className={cn(
+                  "h-3.5 w-3.5 transition-colors",
+                  getPriorityColor(task.priority),
+                )}
+                aria-hidden="true"
+              />
+            </button>
 
-        {openEditor === "priority" && (
-          <div
-            role="menu"
-            aria-label={`Priority for ${task.title}`}
-            className="absolute left-0 top-full z-30 mt-1 w-32 rounded-lg border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-700 dark:bg-slate-900"
-          >
-            {PRIORITY_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="menuitemradio"
-                aria-checked={task.priority === option.value}
-                onClick={() => {
-                  onUpdateTask(task.id, { priority: option.value });
-                  setOpenEditor(null);
-                  toast.success("Priority updated");
-                }}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer"
+            {openEditor === "priority" && (
+              <div
+                role="menu"
+                aria-label={`Priority for ${task.title}`}
+                className="absolute left-0 top-full z-30 mt-1 w-32 rounded-lg border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-700 dark:bg-slate-900"
               >
-                <Flag
-                  className={cn(
-                    "h-3.5 w-3.5",
-                    getPriorityColor(option.value),
-                  )}
-                  aria-hidden="true"
-                />
-                {option.label}
-              </button>
-            ))}
-          </div>
-        )}
+                {PRIORITY_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={task.priority === option.value}
+                    onClick={() => {
+                      onUpdateTask(task.id, { priority: option.value });
+                      setOpenEditor(null);
+                      toast.success("Priority updated");
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer"
+                  >
+                    <Flag
+                      className={cn(
+                        "h-3.5 w-3.5",
+                        getPriorityColor(option.value),
+                      )}
+                      aria-hidden="true"
+                    />
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -388,17 +402,13 @@ export const ListTaskRow = memo(function ListTaskRow({
             toast.success("Status updated");
           }}
           className={cn(
-            "max-w-30 cursor-pointer rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0073ea]",
+            "max-w-28 cursor-pointer rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wide transition-all focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#0073ea]",
             taskIsProgress
-              ? "bg-[#0073ea] text-white"
+              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
               : taskIsDone
-                ? "bg-emerald-600 text-white"
-                : "border border-slate-300/80 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                : "border border-slate-200 dark:border-slate-700 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
           )}
-          style={{
-            color:
-              taskIsProgress || taskIsDone ? "white" : taskStatus.color,
-          }}
         >
           {allStatuses.map((candidate) => (
             <option key={candidate.id} value={candidate.id}>
@@ -409,7 +419,7 @@ export const ListTaskRow = memo(function ListTaskRow({
       </div>
 
       {/* Comments Column */}
-      <div className="flex items-center text-slate-400 hover:text-slate-600 transition-colors">
+      <div className="flex items-center text-slate-400 opacity-0 group-hover/row:opacity-60 hover:!opacity-100 transition-opacity">
         <MessageSquare className="w-3.5 h-3.5" />
       </div>
 

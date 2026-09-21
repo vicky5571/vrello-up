@@ -140,10 +140,10 @@ export function ListView() {
 
   return (
     <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 h-full bg-[#FAFBFC] dark:bg-[#0F1115]">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto space-y-4">
         {/* Batch selection toolbar */}
         {filteredTasks.length > 0 && (
-          <div className="flex items-center gap-2 mb-3 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
             {selectedTaskIds.length === 0 ? (
               <button
                 type="button"
@@ -165,90 +165,118 @@ export function ListView() {
             <span>Tip: hover any row and tick the checkbox for batch actions</span>
           </div>
         )}
-        {/* Render By Group Mode */}
-        {filters.groupBy === "priority" && (
-          <>
-            {priorityGroups.map((pGroup) => (
-              <ListGroup
-                key={pGroup.id}
-                status={defaultStatus}
-                allStatuses={statuses}
-                tasks={pGroup.tasks}
-                onSelectTask={setSelectedTaskId}
-                onMoveStatus={moveTaskStatus}
-                {...groupProps}
-                customHeader={{
-                  title: pGroup.label,
-                  icon: pGroup.icon,
-                  color: pGroup.color,
-                }}
-              />
-            ))}
-          </>
-        )}
 
-        {filters.groupBy === "assignee" && (
-          <>
-            {assigneeGroups.memberGroups.map(({ member, tasks: memberTasks }) => (
-              <ListGroup
-                key={member.id}
-                status={defaultStatus}
-                allStatuses={statuses}
-                tasks={memberTasks}
-                onSelectTask={setSelectedTaskId}
-                onMoveStatus={moveTaskStatus}
-                {...groupProps}
-                customHeader={{
-                  title: member.name,
-                  icon: <UserAvatar user={member} size="xs" />,
-                  color: "#7B68EE",
-                }}
-              />
-            ))}
-
-            <ListGroup
-              key="group-unassigned"
-              status={defaultStatus}
-              allStatuses={statuses}
-              tasks={assigneeGroups.unassignedTasks}
-              onSelectTask={setSelectedTaskId}
-              onMoveStatus={moveTaskStatus}
-              {...groupProps}
-              customHeader={{
-                title: "Unassigned",
-                icon: <UserIcon className="w-3 h-3 text-slate-300" />,
-                color: "#64748B",
-              }}
-            />
-          </>
-        )}
-
-        {(filters.groupBy === "status" || !filters.groupBy) && (
-          <>
-            {statusGroups.map(({ status, tasks: statusTasks }) => (
-              <ListGroup
-                key={status.id}
-                status={status}
-                allStatuses={statuses}
-                tasks={statusTasks}
-                onSelectTask={setSelectedTaskId}
-                onMoveStatus={moveTaskStatus}
-                {...groupProps}
-              />
-            ))}
-
-            {/* Bottom + New status button */}
-            <div className="pt-2 pb-12">
-              <button
-                type="button"
-                onClick={() => setIsCreateStatusOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>New status</span>
-              </button>
+        {/* Single Unified Table Container (Linear / Notion style) */}
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-2xs overflow-hidden">
+          <div className="overflow-x-auto">
+            {/* Single Unified Column Header Bar */}
+            <div className="grid grid-cols-[28px_1fr_110px_110px_90px_130px_90px_60px] min-w-[680px] items-center px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-800 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-50/70 dark:bg-slate-900/80 select-none">
+              <div />
+              <div>Name</div>
+              <div>Assignee</div>
+              <div>Due date</div>
+              <div>Priority</div>
+              <div>Status</div>
+              <div>Comments</div>
+              <div />
             </div>
-          </>
+
+            {filteredTasks.length === 0 ? (
+              <div className="py-16 text-center text-slate-400 text-xs">
+                No tasks found matching current filters.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-200/60 dark:divide-slate-800/70 min-w-[680px]">
+                {/* Render By Group Mode */}
+                {filters.groupBy === "priority" && (
+                  <>
+                    {priorityGroups.map((pGroup) => (
+                      <ListGroup
+                        key={pGroup.id}
+                        status={defaultStatus}
+                        allStatuses={statuses}
+                        tasks={pGroup.tasks}
+                        onSelectTask={setSelectedTaskId}
+                        onMoveStatus={moveTaskStatus}
+                        {...groupProps}
+                        customHeader={{
+                          title: pGroup.label,
+                          icon: pGroup.icon,
+                          color: pGroup.color,
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+
+                {filters.groupBy === "assignee" && (
+                  <>
+                    {assigneeGroups.memberGroups.map(({ member, tasks: memberTasks }) => (
+                      <ListGroup
+                        key={member.id}
+                        status={defaultStatus}
+                        allStatuses={statuses}
+                        tasks={memberTasks}
+                        onSelectTask={setSelectedTaskId}
+                        onMoveStatus={moveTaskStatus}
+                        {...groupProps}
+                        customHeader={{
+                          title: member.name,
+                          icon: <UserAvatar user={member} size="xs" />,
+                          color: "#7B68EE",
+                        }}
+                      />
+                    ))}
+
+                    <ListGroup
+                      key="group-unassigned"
+                      status={defaultStatus}
+                      allStatuses={statuses}
+                      tasks={assigneeGroups.unassignedTasks}
+                      onSelectTask={setSelectedTaskId}
+                      onMoveStatus={moveTaskStatus}
+                      {...groupProps}
+                      customHeader={{
+                        title: "Unassigned",
+                        icon: <UserIcon className="w-3 h-3 text-slate-300" />,
+                        color: "#64748B",
+                      }}
+                    />
+                  </>
+                )}
+
+                {(filters.groupBy === "status" || !filters.groupBy) && (
+                  <>
+                    {statusGroups.map(({ status, tasks: statusTasks }) => (
+                      <ListGroup
+                        key={status.id}
+                        status={status}
+                        allStatuses={statuses}
+                        tasks={statusTasks}
+                        onSelectTask={setSelectedTaskId}
+                        onMoveStatus={moveTaskStatus}
+                        {...groupProps}
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom + New status button (outside table container) */}
+        {(filters.groupBy === "status" || !filters.groupBy) && (
+          <div className="pt-1 pb-10">
+            <button
+              type="button"
+              onClick={() => setIsCreateStatusOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New status</span>
+            </button>
+          </div>
         )}
       </div>
 
