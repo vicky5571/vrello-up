@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { summarizeReports } from "@/lib/marcom/analytics";
 import { printSingleMonthlyReport } from "@/lib/productivity/exportCenter";
 import type { ReportDraftResult, DraftActivityItem } from "@/lib/marcom/reportDraftEngine";
+import { QuarterlyPosmReportTab } from "./QuarterlyPosmReportTab";
 
 const MONTH_OPTIONS = [
   "January",
@@ -113,7 +114,8 @@ function ReportSection({ title, items }: { title: string; items: unknown[] }) {
 export function ReportsView() {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
-  const { setExportCenterOpen } = useWorkspaceStore();
+  const { setExportCenterOpen, navigateToMarcom } = useWorkspaceStore();
+  const [reportTab, setReportTab] = useState<"monthly" | "posm_quarterly">("monthly");
   const {
     getCachedReports,
     setCachedReports,
@@ -349,49 +351,87 @@ export function ReportsView() {
 
   return (
     <div className="flex-1 overflow-auto p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3 gap-3">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-slate-500" />
-          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-            Reports
-          </h2>
-          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-            {reports.length} {reports.length === 1 ? "report" : "reports"}
-          </span>
+      {/* Top Header with Tab Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-slate-500" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              Reports
+            </h2>
+          </div>
+
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+            <button
+              type="button"
+              onClick={() => setReportTab("monthly")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                reportTab === "monthly"
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+              )}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Laporan Bulanan</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setReportTab("posm_quarterly")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                reportTab === "posm_quarterly"
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+              )}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>Rekap POSM Kuartalan</span>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleInstantExecutiveExport}
-            disabled={isInstantExporting}
-            title="1-Klik tarik data riil & buka cetak PDF Laporan Eksekutif Bulanan"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shadow-xs bg-gradient-to-r from-violet-600 to-indigo-600 border-indigo-500 text-white hover:from-violet-700 hover:to-indigo-700 cursor-pointer disabled:opacity-50"
-          >
-            <Sparkles className={cn("w-3.5 h-3.5", isInstantExporting && "animate-spin")} />
-            <span>{isInstantExporting ? "Menyusun PDF..." : "⚡ 1-Click Executive PDF"}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setExportCenterOpen(true)}
-            title="Open Export Center — PDF summaries & Excel sheets"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700 cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export Center</span>
-          </button>
-          <button
-            type="button"
-            onClick={fetchReports}
-            disabled={isLoading}
-            title="Refresh reports"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
-            <span>Refresh</span>
-          </button>
-        </div>
+
+        {reportTab === "monthly" && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleInstantExecutiveExport}
+              disabled={isInstantExporting}
+              title="1-Klik tarik data riil & buka cetak PDF Laporan Eksekutif Bulanan"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shadow-xs bg-gradient-to-r from-violet-600 to-indigo-600 border-indigo-500 text-white hover:from-violet-700 hover:to-indigo-700 cursor-pointer disabled:opacity-50"
+            >
+              <Sparkles className={cn("w-3.5 h-3.5", isInstantExporting && "animate-spin")} />
+              <span>{isInstantExporting ? "Menyusun PDF..." : "⚡ 1-Click Executive PDF"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setExportCenterOpen(true)}
+              title="Open Export Center — PDF summaries & Excel sheets"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700 cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Center</span>
+            </button>
+            <button
+              type="button"
+              onClick={fetchReports}
+              disabled={isLoading}
+              title="Refresh reports"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+              <span>Refresh</span>
+            </button>
+          </div>
+        )}
       </div>
+
+      {reportTab === "posm_quarterly" ? (
+        <QuarterlyPosmReportTab
+          onNavigateToPlacements={() => navigateToMarcom("placements")}
+        />
+      ) : (
+        <>
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
@@ -746,13 +786,15 @@ export function ReportsView() {
           </div>
         )}
 
-        {!isLoading && !error && reports.length === 0 && (
-          <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
-            <Layers className="w-8 h-8 text-slate-300 dark:text-slate-700" />
-            <span>No reports found.</span>
-          </div>
-        )}
-      </div>
+          {!isLoading && !error && reports.length === 0 && (
+            <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
+              <Layers className="w-8 h-8 text-slate-300 dark:text-slate-700" />
+              <span>No reports found.</span>
+            </div>
+          )}
+        </div>
+        </>
+      )}
     </div>
   );
 }
