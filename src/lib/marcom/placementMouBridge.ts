@@ -29,6 +29,9 @@ export interface PlacementSummaryInfo {
 
 const PERMANENT_KEYWORDS = [
   "signboard",
+  "shop sign",
+  "shop-sign",
+  "shopsign",
   "shopblind",
   "shop-blind",
   "shop blind",
@@ -179,6 +182,7 @@ export function validatePlacementMouRequirement(params: {
   requiresMou?: boolean | null;
   selectedMou?: MouSummaryInfo | null;
   outletMousCount?: number;
+  cost?: number | null;
 }): MouValidationResult {
   const isPermanent = isPermanentMaterial({
     name: params.materialName,
@@ -186,7 +190,11 @@ export function validatePlacementMouRequirement(params: {
     requiresMou: params.requiresMou,
   });
 
-  if (!isPermanent) {
+  const cost = typeof params.cost === "number" && !Number.isNaN(params.cost) ? params.cost : 0;
+  const isPaid = cost > 0;
+  const requiresMou = isPermanent || isPaid;
+
+  if (!requiresMou) {
     if (params.selectedMou) {
       return {
         severity: "success",
@@ -201,14 +209,20 @@ export function validatePlacementMouRequirement(params: {
     };
   }
 
-  // Material is permanent / rental branding
+  // Placement requires MoU due to permanent/high-value asset material or rental compensation cost > 0
   if (!params.selectedMou) {
     const hasAvailableMous = typeof params.outletMousCount === "number" && params.outletMousCount > 0;
+    const desc = isPaid && isPermanent
+      ? "Material permanen & berbayar"
+      : isPaid
+      ? "Penempatan berbayar"
+      : "Material permanen (Signboard/Shopblind)";
+
     return {
       severity: "warning",
       message: hasAvailableMous
-        ? "Material permanen (Signboard/Shopblind) memerlukan dasar MoU aktif. Tersedia MoU untuk outlet ini, silakan tautkan."
-        : "Peringatan: Material permanen (Signboard/Shopblind) memerlukan perjanjian sewa/MoU APPROVED. Belum ada MoU terdaftar untuk outlet ini.",
+        ? `${desc} memerlukan dasar MoU aktif. Tersedia MoU untuk outlet ini, silakan tautkan.`
+        : `Peringatan: ${desc} memerlukan perjanjian sewa/MoU APPROVED. Belum ada MoU terdaftar untuk outlet ini.`,
       requiresMou: true,
     };
   }
@@ -224,7 +238,9 @@ export function validatePlacementMouRequirement(params: {
 
   return {
     severity: "warning",
-    message: `Status MoU terkait masih ${params.selectedMou.status}. Pemasangan permanen disarankan setelah MoU berstatus APPROVED.`,
+    message: `Status MoU terkait masih ${params.selectedMou.status}. ${
+      isPaid ? "Penempatan berbayar" : "Pemasangan permanen"
+    } disarankan setelah MoU berstatus APPROVED.`,
     requiresMou: true,
   };
 }

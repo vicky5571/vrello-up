@@ -34,6 +34,7 @@ test("isPermanentMaterial identifies permanent and temporary materials across 3 
 
   // String keyword fallback tests
   assert.equal(isPermanentMaterial("Signboard Toko 3x1"), true);
+  assert.equal(isPermanentMaterial("Shop Sign 2x1"), true);
   assert.equal(isPermanentMaterial("Shopblind Outdoor"), true);
   assert.equal(isPermanentMaterial("Neon Box Utama"), true);
   assert.equal(isPermanentMaterial("Pylon Pole Sign"), true);
@@ -191,6 +192,38 @@ test("validatePlacementMouRequirement flags permanent materials lacking approved
   assert.equal(permWithDraftMou.severity, "warning");
   assert.equal(permWithDraftMou.requiresMou, true);
   assert.ok(permWithDraftMou.message.includes("SUBMITTED"));
+});
+
+test("enforces mandatory MOU when cost > 0 even for poster", () => {
+  const result = validatePlacementMouRequirement({
+    materialName: "Poster",
+    materialType: "POSTER",
+    cost: 500_000,
+    selectedMou: null,
+  });
+  assert.equal(result.requiresMou, true);
+  assert.equal(result.severity, "warning");
+});
+
+test("passes without MOU when cost is 0 for poster", () => {
+  const result = validatePlacementMouRequirement({
+    materialName: "Poster",
+    materialType: "POSTER",
+    cost: 0,
+    selectedMou: null,
+  });
+  assert.equal(result.requiresMou, false);
+  assert.equal(result.severity, "none");
+});
+
+test("requires asset protection MOU for Shop Sign even when cost is 0", () => {
+  const result = validatePlacementMouRequirement({
+    materialName: "Shop Sign",
+    cost: 0,
+    selectedMou: null,
+  });
+  assert.equal(result.requiresMou, true);
+  assert.equal(result.severity, "warning");
 });
 
 test("calculateMouPlacementRealization aggregates linked placements and costs", () => {
