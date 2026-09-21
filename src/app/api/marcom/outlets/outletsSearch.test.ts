@@ -97,9 +97,10 @@ describe("Outlet Search Limit Parser", () => {
     assert.equal(parseOutletSearchLimit(undefined, "agus"), 15);
   });
 
-  test("returns undefined when neither limit nor search query is provided", () => {
-    assert.equal(parseOutletSearchLimit(null, null), undefined);
-    assert.equal(parseOutletSearchLimit("", ""), undefined);
+  test("defaults to 100 when neither limit nor search query is provided", () => {
+    assert.equal(parseOutletSearchLimit(null, null), 100);
+    assert.equal(parseOutletSearchLimit("", ""), 100);
+    assert.equal(parseOutletSearchLimit(undefined, undefined), 100);
   });
 
   test("parses valid custom limit and enforces cap of 100", () => {
@@ -107,12 +108,19 @@ describe("Outlet Search Limit Parser", () => {
     assert.equal(parseOutletSearchLimit("50", "agus"), 50);
     assert.equal(parseOutletSearchLimit("250", "agus"), 100);
     assert.equal(parseOutletSearchLimit("100", null), 100);
+    assert.equal(parseOutletSearchLimit("500", null), 100);
   });
 
   test("falls back to default 15 for invalid or non-positive limit inputs when querying", () => {
     assert.equal(parseOutletSearchLimit("invalid", "agus"), 15);
     assert.equal(parseOutletSearchLimit("-10", "agus"), 15);
     assert.equal(parseOutletSearchLimit("0", "agus"), 15);
+  });
+
+  test("falls back to default 100 for invalid or non-positive limit inputs without query", () => {
+    assert.equal(parseOutletSearchLimit("invalid", null), 100);
+    assert.equal(parseOutletSearchLimit("-10", undefined), 100);
+    assert.equal(parseOutletSearchLimit("0", ""), 100);
   });
 });
 
@@ -151,6 +159,17 @@ describe("GET /api/marcom/outlets integration", () => {
         outlet.picName?.toLowerCase().includes("out");
       assert.ok(matches, `Expected outlet to match query: ${outlet.code}`);
     }
+  });
+
+  test("enforces safe default cap of 100 on bare query without limit or q", async () => {
+    // @ts-expect-error Node strip-types runner requires explicit extension
+    const { GET } = await import("./route.ts");
+    const req = new Request("http://localhost:3000/api/marcom/outlets?workspaceId=ws-main");
+    const res = await GET(req);
+    assert.equal(res.status, 200);
+    const json = await res.json();
+    assert.ok(Array.isArray(json.data));
+    assert.ok(json.data.length <= 100);
   });
 });
 

@@ -48,7 +48,7 @@ function createPinIcon(leaflet: typeof L) {
   return leaflet.divIcon({
     className: "custom-location-pin",
     html: `
-      <div style="transform: translate(-50%, -100%); cursor: grab;">
+      <div style="transform: translate(-50%, -100%);">
         <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M16 0C7.16344 0 0 7.16344 0 16C0 26.5 14 40.5 15.2 41.7C15.6 42.1 16.4 42.1 16.8 41.7C18 40.5 32 26.5 32 16C32 7.16344 24.8366 0 16 0Z" fill="#10B981" />
           <circle cx="16" cy="16" r="6" fill="white" />
@@ -91,7 +91,6 @@ export function LocationPicker({
   const outletMarkerRef = useRef<L.Marker | null>(null);
   const geofenceCircleRef = useRef<L.Circle | null>(null);
   const leafletRef = useRef<typeof L | null>(null);
-  const isDraggingRef = useRef(false);
   const lastFittedKeyRef = useRef("");
 
   const [inputUrl, setInputUrl] = useState(shareLocationUrl || "");
@@ -219,15 +218,6 @@ export function LocationPicker({
         maxZoom: 19,
       }).addTo(map);
 
-      // Map click handler to place or move sales marker
-      map.on("click", (e: L.LeafletMouseEvent) => {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
-        if (!isValidCoordinate(lat, lng)) return;
-        map.panTo([lat, lng]);
-        notifyChangeRef.current(lat, lng, inputUrlRef.current, notesRef.current);
-      });
-
       mapInstanceRef.current = map;
 
       // In case container had 0 height before render
@@ -333,26 +323,12 @@ export function LocationPicker({
       const lng = longitude as number;
 
       if (markerRef.current) {
-        if (!isDraggingRef.current) {
-          markerRef.current.setLatLng([lat, lng]);
-        }
+        markerRef.current.setLatLng([lat, lng]);
       } else {
         const marker = L.marker([lat, lng], {
           icon: createPinIcon(L),
-          draggable: true,
+          draggable: false,
         }).addTo(map);
-
-        marker.on("dragstart", () => {
-          isDraggingRef.current = true;
-        });
-
-        marker.on("dragend", () => {
-          isDraggingRef.current = false;
-          const pos = marker.getLatLng();
-          if (isValidCoordinate(pos.lat, pos.lng)) {
-            notifyChangeRef.current(pos.lat, pos.lng, inputUrlRef.current, notesRef.current);
-          }
-        });
 
         markerRef.current = marker;
       }
@@ -361,12 +337,12 @@ export function LocationPicker({
       markerRef.current = null;
     }
 
-    // 3. Pan or fit bounds on coordinate changes without resetting during drag
+    // 3. Pan or fit bounds on coordinate changes
     const fitKey = `${hasCoords ? `${latitude},${longitude}` : ""}_${
       hasOutletCoords ? `${outletCoordinates!.latitude},${outletCoordinates!.longitude}` : ""
     }`;
 
-    if (!isDraggingRef.current && fitKey && fitKey !== lastFittedKeyRef.current) {
+    if (fitKey && fitKey !== lastFittedKeyRef.current) {
       lastFittedKeyRef.current = fitKey;
       if (hasCoords && hasOutletCoords) {
         const bounds = L.latLngBounds([
@@ -627,7 +603,7 @@ export function LocationPicker({
             </div>
             <div className="text-[10px] text-slate-400 dark:text-slate-500 px-1 flex items-center gap-1">
               <HelpCircle className="w-3 h-3 shrink-0" />
-              <span>Klik peta atau geser pin hijau untuk mengatur titik presisi</span>
+              <span>Titik lokasi diambil otomatis dari GPS perangkat Anda (klik &apos;GPS Saya&apos;)</span>
             </div>
           </div>
         )}

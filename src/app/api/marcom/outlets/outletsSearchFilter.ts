@@ -12,14 +12,14 @@ export interface OutletSearchFilterOptions {
 
 /**
  * Parses and bounds the limit parameter for outlet search queries.
- * Defaults to 15 when search query is active or an explicit limit is provided.
+ * Defaults to 15 when search query is active.
+ * Enforces a safe default fallback of 100 when neither limit nor search query is provided.
  * Hard-capped at 100 to protect database performance with large outlet directories (~25k records).
- * Returns undefined when neither limit nor search query is given (unrestricted default view).
  */
 export function parseOutletSearchLimit(
   limitParam: string | null | undefined,
   queryParam: string | null | undefined
-): number | undefined {
+): number {
   const hasLimit = limitParam !== null && limitParam !== undefined && limitParam.trim() !== "";
   const hasQuery = queryParam !== null && queryParam !== undefined && queryParam.trim() !== "";
 
@@ -28,14 +28,14 @@ export function parseOutletSearchLimit(
     if (Number.isFinite(parsed) && parsed > 0) {
       return Math.min(parsed, 100);
     }
-    return 15;
+    return hasQuery ? 15 : 100;
   }
 
   if (hasQuery) {
     return 15;
   }
 
-  return undefined;
+  return 100;
 }
 
 /**

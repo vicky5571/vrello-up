@@ -46,7 +46,7 @@ export async function GET(request: Request) {
   const outlets = await prisma.outlet.findMany({
     where,
     orderBy: { code: "asc" },
-    ...(take !== undefined ? { take } : {}),
+    take,
     include: {
       branch: { select: { id: true, code: true, name: true, city: true, region: true, picName: true, picPhone: true, address: true } },
       _count: { select: { placements: true, mous: true } },
