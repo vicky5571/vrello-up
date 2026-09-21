@@ -554,4 +554,55 @@ export interface OutletPipelineRow {
   urgencyReasons?: string[];
 }
 
+// ---------------------------------------------------------------------------
+// POSM Quarterly & Campaign Theme Analytics
+// ---------------------------------------------------------------------------
 
+export interface PosmMatrixCell {
+  materialId: string;
+  materialName: string;
+  actual: number;
+  target: number;
+  percentage: number;
+}
+
+export interface PosmMatrixRow {
+  theme: string;
+  cells: Record<string, PosmMatrixCell>;
+  totalActual: number;
+  totalTarget: number;
+  totalPercentage: number;
+}
+
+export interface PosmQuarterlyMatrix {
+  quarter: string;
+  materials: { id: string; name: string }[];
+  rows: PosmMatrixRow[];
+  columnTotals: Record<string, { actual: number; target: number; percentage: number }>;
+  grandTotalActual: number;
+  grandTotalTarget: number;
+  grandTotalPercentage: number;
+}
+
+export interface PosmBranchBreakdown {
+  branchId: string;
+  branchName: string;
+  totalPlacements: number;
+  targetPlacements: number;
+  percentage: number;
+  validGpsCount: number;
+  gpsIntegrityRate: number;
+  topTheme: string;
+}
+
+export interface PosmQuarterlyKpis {
+  totalActual: number;
+  totalTarget: number;
+  completionRate: number;
+  validLocationCount: number;
+  validLocationPercentage: number;
+  averageDeviationMeters: number;
+  activeOutletsCount: number;
+}
+
+export type QuarterlyTargetMap = Record<string, Record<string, number>>; // theme -> materialId -> target
