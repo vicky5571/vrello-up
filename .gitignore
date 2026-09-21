@@ -28,6 +28,7 @@ playwright/.cache/
 # IDE, agent & OS artifacts
 .DS_Store
 .serena/
+.superpowers/
 .idea/
 .vscode/
 *.pem
