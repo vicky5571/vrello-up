@@ -1,13 +1,15 @@
-import type { Prisma, OutletType, OutletTier } from "@prisma/client";
+import type { Prisma, OutletType, OutletTier, OutletStatus } from "@prisma/client";
 
 export const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET"] as const;
 export const VALID_TIERS = ["TIER_1", "TIER_2", "TIER_3"] as const;
+export const VALID_STATUSES = ["DRAFT", "PENDING_APPROVAL", "APPROVED", "REJECTED"] as const;
 
 export interface OutletSearchFilterOptions {
   q?: string | null;
   branchId?: string | null;
   type?: string | OutletType | null;
   tier?: string | OutletTier | null;
+  status?: string | OutletStatus | null;
 }
 
 /**
@@ -52,22 +54,26 @@ export function buildOutletSearchWhere(
   let branchId: string | null | undefined = undefined;
   let type: string | OutletType | null | undefined = undefined;
   let tier: string | OutletTier | null | undefined = undefined;
+  let status: string | OutletStatus | null | undefined = undefined;
 
   if (typeof queryOrOptions === "object" && queryOrOptions !== null) {
     q = queryOrOptions.q;
     branchId = queryOrOptions.branchId;
     type = queryOrOptions.type;
     tier = queryOrOptions.tier;
+    status = queryOrOptions.status;
   } else {
     q = queryOrOptions;
     if (typeof workspaceIdOrOptions === "object" && workspaceIdOrOptions !== null) {
       branchId = workspaceIdOrOptions.branchId;
       type = workspaceIdOrOptions.type;
       tier = workspaceIdOrOptions.tier;
+      status = workspaceIdOrOptions.status;
     } else if (typeof extraOptions === "object" && extraOptions !== null) {
       branchId = extraOptions.branchId;
       type = extraOptions.type;
       tier = extraOptions.tier;
+      status = extraOptions.status;
     }
   }
 
@@ -88,6 +94,14 @@ export function buildOutletSearchWhere(
 
   if (tier && tier !== "ALL" && VALID_TIERS.includes(tier as (typeof VALID_TIERS)[number])) {
     where.tier = tier as OutletTier;
+  }
+
+  if (
+    status &&
+    status !== "ALL" &&
+    VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])
+  ) {
+    where.status = status as OutletStatus;
   }
 
   const trimmedQuery = typeof q === "string" ? q.trim() : "";

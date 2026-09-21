@@ -7,6 +7,7 @@ import {
   parseOutletSearchLimit,
   VALID_TYPES,
   VALID_TIERS,
+  VALID_STATUSES,
 } from "@/app/api/marcom/outlets/outletsSearchFilter";
 
 export async function GET(request: Request) {
@@ -24,6 +25,7 @@ export async function GET(request: Request) {
   const rawType = searchParams.get("type");
   const type = rawType === "OFFICIAL_STORE" ? "EXCLUSIVE" : rawType;
   const tier = searchParams.get("tier");
+  const rawStatus = searchParams.get("status");
   const query = searchParams.get("q");
   const rawLimit = searchParams.get("limit");
 
@@ -33,12 +35,16 @@ export async function GET(request: Request) {
   if (tier && tier !== "ALL" && !VALID_TIERS.includes(tier as (typeof VALID_TIERS)[number])) {
     return Response.json({ error: "Invalid tier" }, { status: 400 });
   }
+  if (rawStatus && rawStatus !== "ALL" && !VALID_STATUSES.includes(rawStatus as (typeof VALID_STATUSES)[number])) {
+    return Response.json({ error: "Invalid status" }, { status: 400 });
+  }
 
   const where = buildOutletSearchWhere({
     q: query,
     branchId,
     type,
     tier,
+    status: rawStatus,
   });
 
   const take = parseOutletSearchLimit(rawLimit, query);

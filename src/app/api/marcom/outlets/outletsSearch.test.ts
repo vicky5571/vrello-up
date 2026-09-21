@@ -71,6 +71,17 @@ describe("Outlet Search Where Builder", () => {
     assert.equal(whereAll.tier, undefined);
   });
 
+  test("applies status filter and ignores ALL", () => {
+    const wherePending = buildOutletSearchWhere({ status: "PENDING_APPROVAL" });
+    assert.equal(wherePending.status, "PENDING_APPROVAL");
+
+    const whereApproved = buildOutletSearchWhere({ status: "APPROVED" });
+    assert.equal(whereApproved.status, "APPROVED");
+
+    const whereAll = buildOutletSearchWhere({ status: "ALL" });
+    assert.equal(whereAll.status, undefined);
+  });
+
   test("combines search query with branchId, type, and tier into a single where clause", () => {
     const where = buildOutletSearchWhere({
       q: "jaya",
