@@ -277,7 +277,7 @@ export interface Placement {
   campaignTheme?: string;
   isLocationValid?: boolean;
   locationDeviation?: number | null;
-  outlet?: { id: string; code: string; name: string; brand?: string };
+  outlet?: { id: string; code: string; name: string; brand?: string; branchId?: string };
   material?: { id: string; type: string; name: string };
 }
 
@@ -305,7 +305,7 @@ export interface MarcomPlacement {
   campaignTheme?: string;
   isLocationValid?: boolean;
   locationDeviation?: number | null;
-  outlet?: { id: string; code: string; name: string; brand?: string };
+  outlet?: { id: string; code: string; name: string; brand?: string; branchId?: string };
   material?: { id: string; type: string; name: string };
   mou?: {
     id: string;
@@ -470,6 +470,8 @@ export interface BranchItem {
   mouCount?: number;
   progress?: number;
 }
+
+export type Branch = BranchItem;
 
 export interface MaterialItem {
   id: string;
