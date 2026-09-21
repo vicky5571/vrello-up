@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
   ClipboardList,
   X,
@@ -24,7 +24,11 @@ import {
   type MouSummaryInfo,
 } from "@/lib/marcom/placementMouBridge";
 import { evaluateGeofenceStatus } from "@/lib/marcom/locationUtils";
-import { OutletSearchCombobox, type OutletSelectionPayload } from "./OutletSearchCombobox";
+import {
+  OutletSearchCombobox,
+  type OutletSelectionPayload,
+  type OutletSearchResult,
+} from "./OutletSearchCombobox";
 import { LocationPicker } from "./LocationPicker";
 import { PlacementPhotoUploader } from "./PlacementPhotoUploader";
 
@@ -39,7 +43,9 @@ export interface PlacementFormModalProps {
   outletsList: {
     id: string;
     name: string;
+    code?: string;
     brand?: string;
+    address?: string;
     picName?: string;
     branchId?: string;
     latitude?: number | null;
@@ -86,18 +92,59 @@ export function PlacementFormModal({
     ? findOutletCoordinates(placement.outletId, placements)
     : null;
 
-  const outletCoordinates = {
-    latitude:
-      (placement.outlet as { latitude?: number | null } | undefined)?.latitude ??
-      selOutlet?.latitude ??
-      inheritedCoords?.latitude ??
-      null,
-    longitude:
-      (placement.outlet as { longitude?: number | null } | undefined)?.longitude ??
-      selOutlet?.longitude ??
-      inheritedCoords?.longitude ??
-      null,
-  };
+  const outletLat =
+    (placement.outlet as { latitude?: number | null } | undefined)?.latitude ??
+    selOutlet?.latitude ??
+    inheritedCoords?.latitude ??
+    null;
+  const outletLng =
+    (placement.outlet as { longitude?: number | null } | undefined)?.longitude ??
+    selOutlet?.longitude ??
+    inheritedCoords?.longitude ??
+    null;
+
+  const outletCoordinates = useMemo(
+    () => ({
+      latitude: outletLat,
+      longitude: outletLng,
+    }),
+    [outletLat, outletLng]
+  );
+
+  const selectedOutletObj = useMemo((): OutletSearchResult | undefined => {
+    if (selOutlet) {
+      return {
+        id: selOutlet.id,
+        name: selOutlet.name,
+        code: selOutlet.code || "",
+        brand: selOutlet.brand,
+        address: selOutlet.address,
+        latitude: selOutlet.latitude,
+        longitude: selOutlet.longitude,
+      };
+    }
+    if (placement.outlet) {
+      const pOutlet = placement.outlet as {
+        id: string;
+        name: string;
+        code?: string;
+        brand?: string;
+        address?: string;
+        latitude?: number | null;
+        longitude?: number | null;
+      };
+      return {
+        id: pOutlet.id,
+        name: pOutlet.name,
+        code: pOutlet.code || "",
+        brand: pOutlet.brand,
+        address: pOutlet.address,
+        latitude: pOutlet.latitude,
+        longitude: pOutlet.longitude,
+      };
+    }
+    return undefined;
+  }, [selOutlet, placement.outlet]);
 
   const handleSelectOutlet = (outlet: OutletSelectionPayload) => {
     if (outlet) {
@@ -107,22 +154,22 @@ export function PlacementFormModal({
         (outlet.brand.toUpperCase() === "3" || outlet.brand.toUpperCase() === "TRI")
           ? "3"
           : "IM3";
-      const inherited = findOutletCoordinates(selId, placements);
       const matchingMous = findAvailableMousForOutlet(mousList, outlet);
       const defaultMou =
         matchingMous.find((m) => m.status === "APPROVED") || matchingMous[0];
 
-      const outletLat = outlet.latitude ?? null;
-      const outletLng = outlet.longitude ?? null;
-      const finalLat = placement.latitude ?? inherited?.latitude ?? outletLat;
-      const finalLng = placement.longitude ?? inherited?.longitude ?? outletLng;
+      const outLat = outlet.latitude ?? null;
+      const outLng = outlet.longitude ?? null;
+      // Sales coordinates must remain sales' own GPS (or null); never default to outlet coordinates
+      const currentSalesLat = placement.latitude ?? null;
+      const currentSalesLng = placement.longitude ?? null;
 
       const geo = evaluateGeofenceStatus(
-        outletLat != null && outletLng != null
-          ? { latitude: outletLat, longitude: outletLng }
+        outLat != null && outLng != null
+          ? { latitude: outLat, longitude: outLng }
           : null,
-        finalLat != null && finalLng != null
-          ? { latitude: finalLat, longitude: finalLng }
+        currentSalesLat != null && currentSalesLng != null
+          ? { latitude: currentSalesLat, longitude: currentSalesLng }
           : null
       );
 
@@ -134,10 +181,10 @@ export function PlacementFormModal({
               mouId: defaultMou?.id || "",
               brand: prev.brand || brandSuggestion,
               picName: prev.picName || outlet.picName || "",
-              latitude: finalLat,
-              longitude: finalLng,
-              shareLocationUrl: prev.shareLocationUrl || inherited?.shareLocationUrl || "",
-              locationNotes: prev.locationNotes || inherited?.locationNotes || "",
+              latitude: currentSalesLat,
+              longitude: currentSalesLng,
+              shareLocationUrl: prev.shareLocationUrl || "",
+              locationNotes: prev.locationNotes || "",
               isLocationValid: geo.isValid,
               locationDeviation: geo.deviationMeters,
               quarter: prev.quarter || "Q3 2026",
@@ -303,6 +350,7 @@ export function PlacementFormModal({
               <OutletSearchCombobox
                 id="placement-outlet-combobox"
                 selectedOutletId={placement.outletId}
+                selectedOutlet={selectedOutletObj}
                 onSelectOutlet={handleSelectOutlet}
                 workspaceId={placement.workspaceId || "ws-main"}
                 placeholder="Ketik ID Toko atau Nama Outlet..."

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import "leaflet/dist/leaflet.css";
 import {
   MapPin,
   Crosshair,
@@ -90,6 +91,8 @@ export function LocationPicker({
   const outletMarkerRef = useRef<L.Marker | null>(null);
   const geofenceCircleRef = useRef<L.Circle | null>(null);
   const leafletRef = useRef<typeof L | null>(null);
+  const isDraggingRef = useRef(false);
+  const lastFittedKeyRef = useRef("");
 
   const [inputUrl, setInputUrl] = useState(shareLocationUrl || "");
   const [notes, setNotes] = useState(locationNotes || "");
@@ -98,6 +101,12 @@ export function LocationPicker({
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isResolving, setIsResolving] = useState(false);
   const [showInteractiveMap, setShowInteractiveMap] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+
+  const inputUrlRef = useRef(inputUrl);
+  inputUrlRef.current = inputUrl;
+  const notesRef = useRef(notes);
+  notesRef.current = notes;
 
   useEffect(() => {
     setInputUrl(shareLocationUrl || "");
@@ -132,9 +141,14 @@ export function LocationPicker({
     [outletCoordinates, onChange],
   );
 
+  const notifyChangeRef = useRef(notifyChange);
+  notifyChangeRef.current = notifyChange;
+
   // Initialize Leaflet mini-map on-demand (only when showInteractiveMap is true)
   useEffect(() => {
     if (!showInteractiveMap) {
+      setMapReady(false);
+      lastFittedKeyRef.current = "";
       if (outletMarkerRef.current) {
         outletMarkerRef.current.remove();
         outletMarkerRef.current = null;
@@ -165,15 +179,9 @@ export function LocationPicker({
 
       leafletRef.current = L;
 
-      const initialCenter: [number, number] = hasCoords
-        ? [latitude as number, longitude as number]
-        : hasOutletCoords
-        ? [outletCoordinates!.latitude as number, outletCoordinates!.longitude as number]
-        : DEFAULT_CENTER;
-
       const map = L.map(mapContainerRef.current, {
-        center: initialCenter,
-        zoom: hasCoords || hasOutletCoords ? 15 : DEFAULT_ZOOM,
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
         minZoom: MIN_ZOOM,
         maxZoom: MAX_ZOOM,
         zoomControl: true,
@@ -211,91 +219,16 @@ export function LocationPicker({
         maxZoom: 19,
       }).addTo(map);
 
-      mapInstanceRef.current = map;
-
-      const pinIcon = createPinIcon(L);
-
-      // Render registered outlet pin & 100m geofence tolerance circle
-      if (hasOutletCoords) {
-        const oLat = outletCoordinates!.latitude as number;
-        const oLng = outletCoordinates!.longitude as number;
-
-        const oMarker = L.marker([oLat, oLng], {
-          icon: createOutletPinIcon(L),
-          interactive: true,
-        })
-          .bindTooltip("Titik Outlet Terdaftar", { direction: "top" })
-          .addTo(map);
-        outletMarkerRef.current = oMarker;
-
-        const currentGeo = evaluateGeofenceStatus(outletCoordinates, {
-          latitude: hasCoords ? (latitude as number) : null,
-          longitude: hasCoords ? (longitude as number) : null,
-        });
-        const circleColor = currentGeo.isValid ? "#10B981" : "#F59E0B";
-
-        const circle = L.circle([oLat, oLng], {
-          radius: GEOFENCE_TOLERANCE_METERS,
-          color: circleColor,
-          fillColor: circleColor,
-          fillOpacity: 0.15,
-          weight: 2,
-          dashArray: "4, 4",
-        }).addTo(map);
-        geofenceCircleRef.current = circle;
-      }
-
-      if (hasCoords) {
-        const marker = L.marker([latitude as number, longitude as number], {
-          icon: pinIcon,
-          draggable: true,
-        }).addTo(map);
-
-        marker.on("dragend", () => {
-          const pos = marker.getLatLng();
-          if (isValidCoordinate(pos.lat, pos.lng)) {
-            notifyChange(pos.lat, pos.lng, inputUrl, notes);
-          }
-        });
-
-        markerRef.current = marker;
-      }
-
-      if (hasCoords && hasOutletCoords) {
-        const bounds = L.latLngBounds([
-          [outletCoordinates!.latitude as number, outletCoordinates!.longitude as number],
-          [latitude as number, longitude as number],
-        ]);
-        map.fitBounds(bounds, { padding: [35, 35], maxZoom: 17 });
-      }
-
       // Map click handler to place or move sales marker
       map.on("click", (e: L.LeafletMouseEvent) => {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
         if (!isValidCoordinate(lat, lng)) return;
-
-        if (markerRef.current) {
-          markerRef.current.setLatLng([lat, lng]);
-        } else {
-          const marker = L.marker([lat, lng], {
-            icon: pinIcon,
-            draggable: true,
-          }).addTo(map);
-
-          marker.on("dragend", () => {
-            const pos = marker.getLatLng();
-            if (isValidCoordinate(pos.lat, pos.lng)) {
-              notifyChange(pos.lat, pos.lng, inputUrl, notes);
-            }
-          });
-
-          markerRef.current = marker;
-        }
-
         map.panTo([lat, lng]);
-        notifyChange(lat, lng, inputUrl, notes);
+        notifyChangeRef.current(lat, lng, inputUrlRef.current, notesRef.current);
       });
+
+      mapInstanceRef.current = map;
 
       // In case container had 0 height before render
       setTimeout(() => {
@@ -303,12 +236,18 @@ export function LocationPicker({
           mapInstanceRef.current.invalidateSize();
         }
       }, 200);
+
+      if (!isCancelled) {
+        setMapReady(true);
+      }
     }
 
     initMap();
 
     return () => {
       isCancelled = true;
+      setMapReady(false);
+      lastFittedKeyRef.current = "";
       if (pinchCleanup) {
         pinchCleanup();
       }
@@ -329,15 +268,15 @@ export function LocationPicker({
         mapInstanceRef.current = null;
       }
     };
-  }, [showInteractiveMap, hasCoords, hasOutletCoords, latitude, longitude, outletCoordinates, inputUrl, notes, notifyChange]);
+  }, [showInteractiveMap]);
 
-  // Sync external coordinate & outlet changes to map markers
+  // Sync external coordinate & outlet changes to map markers without tearing down the map
   useEffect(() => {
-    if (!showInteractiveMap || !mapInstanceRef.current || !leafletRef.current) return;
+    if (!showInteractiveMap || !mapReady || !mapInstanceRef.current || !leafletRef.current) return;
     const L = leafletRef.current;
     const map = mapInstanceRef.current;
 
-    // Sync outlet marker and circle
+    // 1. Sync outlet marker and circle
     if (hasOutletCoords) {
       const oLat = outletCoordinates!.latitude as number;
       const oLng = outletCoordinates!.longitude as number;
@@ -361,6 +300,7 @@ export function LocationPicker({
 
       if (geofenceCircleRef.current) {
         geofenceCircleRef.current.setLatLng([oLat, oLng]);
+        geofenceCircleRef.current.setRadius(GEOFENCE_TOLERANCE_METERS);
         geofenceCircleRef.current.setStyle({
           color: circleColor,
           fillColor: circleColor,
@@ -387,23 +327,30 @@ export function LocationPicker({
       }
     }
 
-    // Sync sales GPS location marker
+    // 2. Sync sales GPS location marker
     if (hasCoords) {
       const lat = latitude as number;
       const lng = longitude as number;
 
       if (markerRef.current) {
-        markerRef.current.setLatLng([lat, lng]);
+        if (!isDraggingRef.current) {
+          markerRef.current.setLatLng([lat, lng]);
+        }
       } else {
         const marker = L.marker([lat, lng], {
           icon: createPinIcon(L),
           draggable: true,
         }).addTo(map);
 
+        marker.on("dragstart", () => {
+          isDraggingRef.current = true;
+        });
+
         marker.on("dragend", () => {
+          isDraggingRef.current = false;
           const pos = marker.getLatLng();
           if (isValidCoordinate(pos.lat, pos.lng)) {
-            notifyChange(pos.lat, pos.lng, inputUrl, notes);
+            notifyChangeRef.current(pos.lat, pos.lng, inputUrlRef.current, notesRef.current);
           }
         });
 
@@ -413,7 +360,30 @@ export function LocationPicker({
       markerRef.current.remove();
       markerRef.current = null;
     }
-  }, [latitude, longitude, outletCoordinates, hasCoords, hasOutletCoords, showInteractiveMap, notifyChange, inputUrl, notes]);
+
+    // 3. Pan or fit bounds on coordinate changes without resetting during drag
+    const fitKey = `${hasCoords ? `${latitude},${longitude}` : ""}_${
+      hasOutletCoords ? `${outletCoordinates!.latitude},${outletCoordinates!.longitude}` : ""
+    }`;
+
+    if (!isDraggingRef.current && fitKey && fitKey !== lastFittedKeyRef.current) {
+      lastFittedKeyRef.current = fitKey;
+      if (hasCoords && hasOutletCoords) {
+        const bounds = L.latLngBounds([
+          [outletCoordinates!.latitude as number, outletCoordinates!.longitude as number],
+          [latitude as number, longitude as number],
+        ]);
+        map.fitBounds(bounds, { padding: [35, 35], maxZoom: 17 });
+      } else if (hasCoords) {
+        map.setView([latitude as number, longitude as number], 15);
+      } else if (hasOutletCoords) {
+        map.setView(
+          [outletCoordinates!.latitude as number, outletCoordinates!.longitude as number],
+          15
+        );
+      }
+    }
+  }, [mapReady, hasCoords, hasOutletCoords, latitude, longitude, outletCoordinates, showInteractiveMap]);
 
   // Handle URL paste / text change with auto-parse
   const handleUrlChange = useCallback(
