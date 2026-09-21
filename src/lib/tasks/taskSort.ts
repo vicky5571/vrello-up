@@ -1,7 +1,7 @@
-import type { Priority, Task, Status } from "@/types";
+import type { Priority, Task, Status, TaskSortField, TaskSortDirection } from "@/types";
 
-export type SortField = "title" | "dueDate" | "priority" | "status" | "assignee" | null;
-export type SortDirection = "asc" | "desc";
+export type SortField = TaskSortField | null;
+export type SortDirection = TaskSortDirection;
 
 export const PRIORITY_WEIGHTS: Record<Priority, number> = {
   urgent: 4,

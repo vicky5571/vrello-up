@@ -5,7 +5,7 @@ import { useWorkspaceStore, getSpaceListIds } from "@/lib/store/useWorkspaceStor
 import { ListGroup } from "./ListGroup";
 import { CreateStatusModal } from "@/components/spaces/CreateStatusModal";
 import { BulkActionBar } from "@/components/tasks/BulkActionBar";
-import { Priority, Status, User } from "@/types";
+import { Priority, Status, TaskSortField, User } from "@/types";
 import {
   Plus,
   Flame,
@@ -23,7 +23,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useDropdown } from "@/components/ui/useDropdown";
 import { cn } from "@/lib/utils";
 import { matchesFilters } from "@/lib/tasks/filterTasks";
-import { sortTasks, type SortField, type SortDirection } from "@/lib/tasks/taskSort";
+import { sortTasks } from "@/lib/tasks/taskSort";
 
 export function ListView() {
   const {
@@ -43,8 +43,10 @@ export function ListView() {
     clearTaskSelection,
   } = useWorkspaceStore();
   const [isCreateStatusOpen, setIsCreateStatusOpen] = useState(false);
-  const [sortField, setSortField] = useState<SortField>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  // Sort lives in viewPreferences (session scope, same as column visibility):
+  // survives view switching, resets on reload.
+  const sortField = viewPreferences.taskSortField;
+  const sortDirection = viewPreferences.taskSortDirection;
   const [showColumnsMenu, setShowColumnsMenu] = useState(false);
   const columnsMenuRef = useDropdown<HTMLDivElement>({
     isOpen: showColumnsMenu,
@@ -92,20 +94,18 @@ export function ListView() {
   };
 
   const handleHeaderSort = useCallback(
-    (field: SortField) => {
+    (field: TaskSortField) => {
       if (sortField === field) {
         if (sortDirection === "asc") {
-          setSortDirection("desc");
+          setViewPreferences({ taskSortDirection: "desc" });
         } else {
-          setSortField(null);
-          setSortDirection("asc");
+          setViewPreferences({ taskSortField: null, taskSortDirection: "asc" });
         }
       } else {
-        setSortField(field);
-        setSortDirection("asc");
+        setViewPreferences({ taskSortField: field, taskSortDirection: "asc" });
       }
     },
-    [sortField, sortDirection],
+    [sortField, sortDirection, setViewPreferences],
   );
 
   // Memoized group buckets to prevent re-filtering on every render
@@ -220,7 +220,7 @@ export function ListView() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setSortField(null)}
+                  onClick={() => setViewPreferences({ taskSortField: null })}
                   title="Clear sort"
                   className="hover:text-indigo-900 dark:hover:text-white p-0.5 rounded-full cursor-pointer"
                 >

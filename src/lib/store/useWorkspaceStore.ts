@@ -565,6 +565,8 @@ interface WorkspaceState {
   setViewPreferences: (prefs: {
     density?: ViewPreferences["density"];
     visibleFields?: Partial<ViewPreferences["visibleFields"]>;
+    taskSortField?: ViewPreferences["taskSortField"];
+    taskSortDirection?: ViewPreferences["taskSortDirection"];
   }) => void;
   resetViewPreferences: () => void;
   fetchServerTasks: (workspaceId?: string) => Promise<void>;

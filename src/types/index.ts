@@ -427,7 +427,18 @@ export interface VisibleFields {
 export interface ViewPreferences {
   density: ViewDensity;
   visibleFields: VisibleFields;
+  taskSortField: TaskSortField | null;
+  taskSortDirection: TaskSortDirection;
 }
+
+export type TaskSortField =
+  | "title"
+  | "dueDate"
+  | "priority"
+  | "status"
+  | "assignee";
+
+export type TaskSortDirection = "asc" | "desc";
 
 export type AutomationTrigger =
   | "mou:approved"

@@ -9,10 +9,14 @@ export const DEFAULT_VIEW_PREFERENCES: ViewPreferences = {
     tags: true,
     subtasks: true,
   },
+  taskSortField: null,
+  taskSortDirection: "asc",
 };
 
 export type ViewPreferencesUpdate = {
   density?: ViewPreferences["density"];
+  taskSortField?: ViewPreferences["taskSortField"];
+  taskSortDirection?: ViewPreferences["taskSortDirection"];
   visibleFields?: Partial<VisibleFields>;
 };
 
