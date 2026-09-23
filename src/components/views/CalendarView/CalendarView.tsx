@@ -20,11 +20,14 @@ import {
   Calendar as CalendarIcon,
   Megaphone,
   FileText,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { matchesFilters } from "@/lib/tasks/filterTasks";
 import { PlatformIcon } from "@/components/ui/BrandIcons";
 import { PostPlatform } from "@/types";
+import { normalizeIsoDateStr } from "@/lib/tasks/dateUtils";
+import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 
 export function CalendarView() {
   const {
@@ -50,31 +53,40 @@ export function CalendarView() {
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showMarketing, setShowMarketing] = useState(true);
+  const [createTaskDate, setCreateTaskDate] = useState<string | null>(null);
   const [marketingItems, setMarketingItems] = useState<
     { id: string; title: string; date: string; postPlatform?: string; view: "events" | "mous" }[]
   >([]);
 
   useEffect(() => {
+    const wsParam = activeWorkspaceId
+      ? `?workspaceId=${encodeURIComponent(activeWorkspaceId)}`
+      : "";
+
     Promise.all([
-      fetch("/api/marcom/events").then((r) => (r.ok ? r.json() : { data: [] })),
-      fetch("/api/marcom/mous").then((r) => (r.ok ? r.json() : { data: [] })),
+      fetch(`/api/marcom/events${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })),
+      fetch(`/api/marcom/mous${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })),
     ])
       .then(([eventsRes, mousRes]) => {
         const items: { id: string; title: string; date: string; postPlatform?: string; view: "events" | "mous" }[] = [];
-        (eventsRes.data || []).forEach((e: { id: string; name: string; date?: string; endDate?: string; postPlatform?: string }) => {
-          const d = e.date ? format(new Date(e.date), "yyyy-MM-dd") : null;
-          const endD = e.endDate ? format(new Date(e.endDate), "yyyy-MM-dd") : null;
-          if (d) items.push({ id: e.id, title: e.name, date: d, postPlatform: e.postPlatform, view: "events" });
-          if (endD && endD !== d) items.push({ id: `${e.id}-end`, title: `End: ${e.name}`, date: endD, postPlatform: e.postPlatform, view: "events" });
-        });
+        (eventsRes.data || []).forEach(
+          (e: { id: string; name: string; date?: string; endDate?: string; postPlatform?: string }) => {
+            const d = normalizeIsoDateStr(e.date);
+            const endD = normalizeIsoDateStr(e.endDate);
+            if (d) items.push({ id: e.id, title: e.name, date: d, postPlatform: e.postPlatform, view: "events" });
+            if (endD && endD !== d) {
+              items.push({ id: `${e.id}-end`, title: `End: ${e.name}`, date: endD, postPlatform: e.postPlatform, view: "events" });
+            }
+          },
+        );
         (mousRes.data || []).forEach((m: { id: string; partnerName: string; endDate?: string }) => {
-          const d = m.endDate ? format(new Date(m.endDate), "yyyy-MM-dd") : null;
+          const d = normalizeIsoDateStr(m.endDate);
           if (d) items.push({ id: m.id, title: `MOU: ${m.partnerName}`, date: d, view: "mous" });
         });
         setMarketingItems(items);
       })
       .catch(() => {});
-  }, []);
+  }, [activeWorkspaceId]);
 
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -121,7 +133,7 @@ export function CalendarView() {
               "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer flex items-center gap-1.5 border",
               showMarketing
                 ? "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/30 hover:bg-pink-500/20"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-transparent hover:text-slate-600 dark:hover:text-slate-300"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-400 border-transparent hover:text-slate-600 dark:hover:text-slate-300",
             )}
             title="Toggle marketing campaigns, events & MOU deadlines"
           >
@@ -174,10 +186,7 @@ export function CalendarView() {
 
           const dayTasks = filteredTasks.filter((task) => {
             if (!task.dueDate) return false;
-            const taskDateStr = task.dueDate.includes("T")
-              ? format(new Date(task.dueDate), "yyyy-MM-dd")
-              : task.dueDate;
-            return taskDateStr === dayDateStr;
+            return normalizeIsoDateStr(task.dueDate) === dayDateStr;
           });
 
           const dayMarketing = showMarketing
@@ -188,23 +197,37 @@ export function CalendarView() {
           return (
             <div
               key={idx}
+              onDoubleClick={() => setCreateTaskDate(dayDateStr)}
               className={cn(
-                "bg-white dark:bg-slate-900 p-2 flex flex-col justify-between overflow-hidden transition-colors min-h-0",
+                "group relative bg-white dark:bg-slate-900 p-2 flex flex-col justify-between overflow-hidden transition-colors min-h-0",
                 !isCurrentMonth &&
                   "bg-slate-50/50 dark:bg-slate-950/40 text-slate-400",
               )}
             >
               <div className="flex items-center justify-between">
-                <span
-                  className={cn(
-                    "text-xs font-semibold inline-flex items-center justify-center w-6 h-6 rounded-full",
-                    isCurrentDay
-                      ? "bg-[#0073ea] text-white font-bold"
-                      : "text-slate-700 dark:text-slate-300",
-                  )}
-                >
-                  {format(day, "d")}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={cn(
+                      "text-xs font-semibold inline-flex items-center justify-center w-6 h-6 rounded-full",
+                      isCurrentDay
+                        ? "bg-[#0073ea] text-white font-bold"
+                        : "text-slate-700 dark:text-slate-300",
+                    )}
+                  >
+                    {format(day, "d")}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCreateTaskDate(dayDateStr);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                    title={`Add task for ${dayDateStr}`}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
                 {totalItems > 0 && (
                   <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                     {totalItems} {totalItems === 1 ? "item" : "items"}
@@ -265,6 +288,14 @@ export function CalendarView() {
           );
         })}
       </div>
+
+      {createTaskDate && (
+        <CreateTaskModal
+          isOpen={!!createTaskDate}
+          onClose={() => setCreateTaskDate(null)}
+          defaultDueDate={createTaskDate}
+        />
+      )}
     </div>
   );
 }

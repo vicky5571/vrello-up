@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
 import { Priority, PostPlatform, PostFormat } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,6 +13,7 @@ interface CreateTaskModalProps {
   onClose: () => void;
   defaultStatusId?: string;
   initialPostOptions?: boolean;
+  defaultDueDate?: string;
 }
 
 export function CreateTaskModal({
@@ -20,6 +21,7 @@ export function CreateTaskModal({
   onClose,
   defaultStatusId,
   initialPostOptions = false,
+  defaultDueDate,
 }: CreateTaskModalProps) {
   const {
     activeListId,
@@ -61,7 +63,18 @@ export function CreateTaskModal({
   const [statusId, setStatusId] = useState(
     defaultStatusId || statuses[0]?.id || "status-todo",
   );
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState(defaultDueDate || "");
+
+  useEffect(() => {
+    if (isOpen) {
+      if (defaultDueDate !== undefined) {
+        setDueDate(defaultDueDate);
+      }
+      if (defaultStatusId) {
+        setStatusId(defaultStatusId);
+      }
+    }
+  }, [isOpen, defaultDueDate, defaultStatusId]);
   const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<string[]>([
     members[0]?.id ?? SEED_USERS[0].id,
   ]);
