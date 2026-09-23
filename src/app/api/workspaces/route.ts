@@ -6,6 +6,7 @@ import {
   getAuthenticatedUser,
   requireWorkspaceAccess,
 } from "@/lib/server/workspaceAuth";
+import { cascadeOrphanedTasksOnStatusRemoval } from "@/lib/tasks/taskStatusValidator";
 
 export async function GET(request: Request) {
   try {
@@ -158,9 +159,15 @@ export async function PUT(request: Request) {
       // 2. Manage Spaces
       const existingSpaces = await prisma.spaceItem.findMany({
         where: { workspaceId: ws.id },
-        select: { id: true },
+        select: {
+          id: true,
+          statuses: true,
+          lists: { select: { id: true } },
+          folders: { select: { lists: { select: { id: true } } } },
+        },
       });
       const existingSpaceIds = new Set(existingSpaces.map((s) => s.id));
+      const existingSpaceMap = new Map(existingSpaces.map((s) => [s.id, s]));
       const currentSpaceIds = new Set((ws.spaces || []).map((s) => s.id));
 
       const spacesToDelete = [...existingSpaceIds].filter((id) => !currentSpaceIds.has(id));
@@ -171,6 +178,40 @@ export async function PUT(request: Request) {
       }
 
       for (const space of ws.spaces || []) {
+        const existingSpace = existingSpaceMap.get(space.id);
+        const newStatuses = space.statuses || DEFAULT_STATUSES;
+
+        // Cascade orphaned tasks if any status was removed from an existing space
+        if (
+          existingSpace &&
+          Array.isArray(existingSpace.statuses) &&
+          Array.isArray(newStatuses) &&
+          newStatuses.length > 0
+        ) {
+          const oldStatuses = existingSpace.statuses as { id: string }[];
+          const newStatusIdSet = new Set(newStatuses.map((s: { id: string }) => s.id));
+          const removedStatusIds = oldStatuses
+            .map((s) => s.id)
+            .filter((id) => !newStatusIdSet.has(id));
+
+          if (removedStatusIds.length > 0) {
+            const fallbackStatusId = newStatuses[0]?.id || "status-todo";
+            const spaceListIds = [
+              ...existingSpace.lists.map((l) => l.id),
+              ...existingSpace.folders.flatMap((f) => f.lists.map((l) => l.id)),
+            ];
+
+            if (spaceListIds.length > 0) {
+              await cascadeOrphanedTasksOnStatusRemoval(
+                prisma,
+                spaceListIds,
+                removedStatusIds,
+                fallbackStatusId,
+              );
+            }
+          }
+        }
+
         await prisma.spaceItem.upsert({
           where: { id: space.id },
           create: {
@@ -179,13 +220,13 @@ export async function PUT(request: Request) {
             name: space.name,
             icon: space.icon || "folder",
             color: space.color || "#64748B",
-            statuses: JSON.parse(JSON.stringify(space.statuses || DEFAULT_STATUSES)),
+            statuses: JSON.parse(JSON.stringify(newStatuses)),
           },
           update: {
             name: space.name,
             icon: space.icon || "folder",
             color: space.color || "#64748B",
-            statuses: JSON.parse(JSON.stringify(space.statuses || DEFAULT_STATUSES)),
+            statuses: JSON.parse(JSON.stringify(newStatuses)),
           },
         });
 

@@ -398,6 +398,8 @@ model TaskItem {
   @@index([listId, orderIndex])
   @@index([relatedMarcomId])
   @@index([dueDate])
+  @@index([tags(ops: JsonbOps)], type: Gin)
+  @@index([assignees(ops: JsonbOps)], type: Gin)
 }
 
 model TaskCommentItem {

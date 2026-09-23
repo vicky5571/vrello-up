@@ -13,6 +13,10 @@ import {
   type TaskAttachment,
   type TaskCommentAttachment,
 } from "@/types";
+import {
+  validateTaskStatus,
+  resolveSpaceStatusesForList,
+} from "@/lib/tasks/taskStatusValidator";
 
 export async function PATCH(
   request: Request,
@@ -36,6 +40,31 @@ export async function PATCH(
     if (authError) return authError;
 
     const body = await request.json();
+
+    const targetListId = body.listId || existingTask.listId;
+    const targetStatusId = body.statusId || (body.listId ? existingTask.statusId : undefined);
+
+    if (targetStatusId !== undefined) {
+      let spaceStatuses = existingTask.list?.space?.statuses;
+      if (body.listId && body.listId !== existingTask.listId) {
+        const resolved = await resolveSpaceStatusesForList(prisma, body.listId);
+        if (resolved) {
+          spaceStatuses = resolved.statuses;
+        }
+      }
+
+      if (!validateTaskStatus(spaceStatuses, targetStatusId)) {
+        const allowed = Array.isArray(spaceStatuses)
+          ? (spaceStatuses as { id: string }[]).map((s) => s.id).join(", ")
+          : "";
+        return NextResponse.json(
+          {
+            error: `Invalid statusId "${targetStatusId}". Allowed statuses for space: ${allowed}`,
+          },
+          { status: 400 },
+        );
+      }
+    }
 
     const updateData: Record<string, unknown> = {};
 

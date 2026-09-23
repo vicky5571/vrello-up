@@ -20,6 +20,10 @@ import {
   getAuthenticatedUser,
   requireWorkspaceAccess,
 } from "@/lib/server/workspaceAuth";
+import {
+  validateTaskStatus,
+  resolveSpaceStatusesForList,
+} from "@/lib/tasks/taskStatusValidator";
 
 // Auto-seed initial workspace, spaces, lists, and tasks if PostgreSQL task tables are empty
 async function ensureSeedData() {
@@ -368,6 +372,20 @@ export async function POST(request: Request) {
         } else {
           return NextResponse.json({ error: "No target list found" }, { status: 400 });
         }
+      }
+    }
+
+    // Validate that statusId is configured in the target space's statuses
+    const resolvedSpace = await resolveSpaceStatusesForList(prisma, targetListId);
+    if (resolvedSpace && resolvedSpace.statuses.length > 0) {
+      const isStatusValid = validateTaskStatus(resolvedSpace.statuses, statusId);
+      if (!isStatusValid) {
+        return NextResponse.json(
+          {
+            error: `Invalid statusId "${statusId}". Allowed statuses for space: ${resolvedSpace.statuses.map((s) => s.id).join(", ")}`,
+          },
+          { status: 400 },
+        );
       }
     }
 
