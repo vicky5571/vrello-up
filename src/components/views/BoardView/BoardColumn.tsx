@@ -11,6 +11,34 @@ import { Plus, Check } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useState, memo } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { cn } from "@/lib/utils";
+
+export interface BoardDropIndicator {
+  taskId?: string | null;
+  position?: "before" | "after" | "bottom";
+}
+
+export function DropLineIndicator({
+  position = "before",
+}: {
+  position?: "before" | "after" | "center";
+}) {
+  return (
+    <div
+      className={cn(
+        "absolute left-0 right-0 h-0 z-30 pointer-events-none flex items-center animate-in fade-in duration-100",
+        position === "before" && "-top-1 -translate-y-1/2",
+        position === "after" && "-bottom-1 translate-y-1/2",
+        position === "center" && "top-1/2 -translate-y-1/2"
+      )}
+    >
+      <div className="w-2.5 h-2.5 -ml-1 rounded-full border-2 border-blue-600 bg-white dark:bg-slate-900 flex items-center justify-center shadow-xs shrink-0 z-10">
+        <div className="w-0.5 h-0.5 rounded-full bg-blue-600" />
+      </div>
+      <div className="h-0.5 w-full bg-blue-600 -ml-0.5 rounded-full shadow-xs" />
+    </div>
+  );
+}
 
 interface BoardColumnProps {
   status: Status;
@@ -21,6 +49,7 @@ interface BoardColumnProps {
   selectedIds: string[];
   onToggleSelect: (taskId: string) => void;
   onToggleSelectAll: (taskIds: string[]) => void;
+  dropIndicator?: BoardDropIndicator | null;
 }
 
 export const BoardColumn = memo(function BoardColumn({
@@ -32,8 +61,9 @@ export const BoardColumn = memo(function BoardColumn({
   selectedIds,
   onToggleSelect,
   onToggleSelectAll,
+  dropIndicator,
 }: BoardColumnProps) {
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: status.id,
     data: {
       type: "Column",
@@ -74,7 +104,12 @@ export const BoardColumn = memo(function BoardColumn({
   return (
     <div
       ref={setNodeRef}
-      className="w-72 sm:w-80 shrink-0 flex flex-col max-h-full rounded-lg bg-slate-100/60 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 overflow-hidden"
+      className={cn(
+        "w-72 sm:w-80 shrink-0 flex flex-col max-h-full rounded-xl border overflow-hidden transition-[background-color,border-color,box-shadow] duration-150 ease-out contain-paint",
+        isOver
+          ? "bg-slate-200/90 dark:bg-slate-800/90 border-blue-400/80 dark:border-blue-500/80 shadow-md ring-2 ring-blue-500/20 dark:ring-blue-400/20"
+          : "bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/80 dark:border-slate-800/80 shadow-2xs"
+      )}
     >
       {/* Column Header */}
       <div className="p-3 flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/60">
@@ -146,22 +181,47 @@ export const BoardColumn = memo(function BoardColumn({
         )}
 
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-          {tasks.map((task) => (
-            <BoardCard
-              key={task.id}
-              task={task}
-              statuses={allStatuses}
-              onSelect={onSelectTask}
-              onMoveStatus={onMoveStatus}
-              selected={selectedSet.has(task.id)}
-              onToggleSelect={onToggleSelect}
-            />
-          ))}
+          {tasks.map((task, index) => {
+            const isTarget = dropIndicator?.taskId === task.id;
+            const isLastTask = index === tasks.length - 1;
+            const showBefore = isTarget && dropIndicator?.position === "before";
+            const showAfter =
+              (isTarget && dropIndicator?.position === "after") ||
+              (isLastTask && dropIndicator?.position === "bottom");
+
+            return (
+              <div key={task.id} className="relative">
+                {showBefore && <DropLineIndicator position="before" />}
+                <BoardCard
+                  task={task}
+                  statuses={allStatuses}
+                  onSelect={onSelectTask}
+                  onMoveStatus={onMoveStatus}
+                  selected={selectedSet.has(task.id)}
+                  onToggleSelect={onToggleSelect}
+                />
+                {showAfter && <DropLineIndicator position="after" />}
+              </div>
+            );
+          })}
         </SortableContext>
 
         {tasks.length === 0 && !isAddingQuickTask && (
-          <div className="h-24 flex items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl text-slate-600 dark:text-slate-400 text-xs font-medium">
-            No tasks yet
+          <div
+            className={cn(
+              "relative h-20 flex flex-col items-center justify-center border-2 border-dashed rounded-xl text-xs font-medium transition-colors duration-150 p-2",
+              isOver
+                ? "border-blue-400/80 bg-blue-50/40 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 font-semibold"
+                : "border-slate-200 dark:border-slate-800/80 text-slate-500 dark:text-slate-400"
+            )}
+          >
+            {isOver ? (
+              <div className="relative w-full px-2 h-full flex items-center">
+                <DropLineIndicator position="center" />
+              </div>
+            ) : (
+              "No tasks yet"
+            )}
           </div>
         )}
       </div>

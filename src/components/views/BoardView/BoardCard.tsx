@@ -3,7 +3,6 @@
 import { Task, Status } from "@/types";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { PriorityBadge } from "@/components/ui/PriorityBadge";
 import { TagBadge } from "@/components/ui/TagBadge";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
@@ -20,6 +19,7 @@ interface BoardCardProps {
   onMoveStatus: (taskId: string, statusId: string) => void;
   selected?: boolean;
   onToggleSelect?: (taskId: string) => void;
+  isOverlay?: boolean;
 }
 
 export const BoardCard = memo(function BoardCard({
@@ -29,23 +29,19 @@ export const BoardCard = memo(function BoardCard({
   onMoveStatus,
   selected = false,
   onToggleSelect,
+  isOverlay = false,
 }: BoardCardProps) {
   const {
     attributes,
     listeners,
     setNodeRef,
-    transform,
-    transition,
     isDragging,
   } = useSortable({
     id: task.id,
+    disabled: isOverlay,
     data: {
       type: "Task",
       task,
-    },
-    transition: {
-      duration: 200,
-      easing: "cubic-bezier(0.2, 0, 0, 1)",
     },
   });
 
@@ -63,11 +59,6 @@ export const BoardCard = memo(function BoardCard({
     closeOnEscape: true,
   });
 
-  const style = {
-    transform: CSS.Translate.toString(transform),
-    transition: transition || undefined,
-  };
-
   const completedSubtasks = task.subtasks.filter((st) => st.completed).length;
   const overdue = isOverdue(task.dueDate);
   const currentStatusName =
@@ -76,23 +67,27 @@ export const BoardCard = memo(function BoardCard({
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...attributes}
       {...listeners}
       onClick={() => onSelect(task.id)}
       className={cn(
-        "group relative rounded-lg bg-white dark:bg-[#18191B] border border-slate-200/90 dark:border-slate-800 shadow-2xs hover:shadow-xs hover:border-slate-300 dark:hover:border-slate-700 cursor-grab active:cursor-grabbing select-none transition-all duration-150",
+        "group relative rounded-lg border select-none",
         viewPreferences.density === "compact"
           ? "p-2"
           : viewPreferences.density === "relaxed"
             ? "p-4"
             : "p-3",
-        isDragging && "opacity-30 border-blue-500 shadow-lg",
-        selected && "border-indigo-400 dark:border-indigo-500 ring-1 ring-indigo-400/60"
+        isOverlay
+          ? "bg-white dark:bg-[#18191B] border-blue-500/80 dark:border-blue-400/80 shadow-2xl ring-2 ring-blue-500/20 cursor-grabbing rotate-1 scale-[1.02]"
+          : isDragging
+            ? "bg-slate-100/70 dark:bg-slate-800/40 border-2 border-dashed border-blue-400/50 dark:border-blue-500/40 opacity-40 shadow-none pointer-events-none"
+            : "bg-white dark:bg-[#18191B] border-slate-200/90 dark:border-slate-800 shadow-2xs hover:shadow-xs hover:border-slate-300 dark:hover:border-slate-700 cursor-grab active:cursor-grabbing transition-[border-color,box-shadow,background-color] duration-150",
+        selected && !isDragging && "border-indigo-400 dark:border-indigo-500 ring-1 ring-indigo-400/60"
       )}
     >
-      {/* Top Meta: Priority, Platform & Move Menu */}
-      <div className="flex items-center justify-between gap-2 mb-2">
+      <div className={cn(isDragging && "invisible pointer-events-none")}>
+        {/* Top Meta: Priority, Platform & Move Menu */}
+        <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-1.5 flex-wrap">
           {onToggleSelect && (
             <button
@@ -294,6 +289,7 @@ export const BoardCard = memo(function BoardCard({
         {visibleFields.assignees && (
           <AvatarGroup users={task.assignees} max={2} size="xs" />
         )}
+      </div>
       </div>
     </div>
   );
