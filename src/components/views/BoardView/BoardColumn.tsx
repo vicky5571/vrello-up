@@ -35,7 +35,7 @@ export function DropLineIndicator({
       <div className="w-2.5 h-2.5 -ml-1 rounded-full border-2 border-blue-600 bg-white dark:bg-slate-900 flex items-center justify-center shadow-xs shrink-0 z-10">
         <div className="w-0.5 h-0.5 rounded-full bg-blue-600" />
       </div>
-      <div className="h-0.5 w-full bg-blue-600 -ml-0.5 rounded-full shadow-xs" />
+      <div className="h-0.5 w-full bg-blue-600 -ml-0.5 rounded-full" />
     </div>
   );
 }
