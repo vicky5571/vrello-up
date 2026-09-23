@@ -9,10 +9,9 @@ import {
   Settings,
   HelpCircle,
   Trash2,
-  Megaphone,
-  Kanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AppModeSegmentedControl } from "@/components/layout/AppModeSegmentedControl";
 import { WORK_ITEM_VIEWS, MASTER_DATA_VIEWS } from "@/components/layout/ViewSwitcher";
 import { CreateSpaceModal } from "@/components/spaces/CreateSpaceModal";
 import { EditSpaceModal } from "@/components/spaces/EditSpaceModal";
@@ -42,7 +41,6 @@ import { SortableSpaceItem } from "@/components/spaces/SortableSpaceItem";
 export function Sidebar() {
   const {
     appMode,
-    setAppMode,
     workspaces,
     activeWorkspaceId,
     activeSpaceId,
@@ -169,36 +167,7 @@ export function Sidebar() {
         {/* Navigation Tree */}
         <div className="flex flex-col h-full overflow-hidden">
           {/* Dual-Context Segmented Mode Switcher */}
-          <div className="px-2.5 pt-2.5 pb-1.5 shrink-0">
-            <div className="p-0.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 flex items-center gap-0.5">
-              <button
-                type="button"
-                onClick={() => setAppMode("tasks")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                  appMode === "tasks"
-                    ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white/40 dark:hover:bg-white/5"
-                )}
-              >
-                <Kanban className="w-3.5 h-3.5 text-blue-500" />
-                <span>Projects</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setAppMode("marcom")}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                  appMode === "marcom"
-                    ? "bg-white dark:bg-slate-800 text-pink-600 dark:text-pink-400 shadow-xs"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white/40 dark:hover:bg-white/5"
-                )}
-              >
-                <Megaphone className="w-3.5 h-3.5 text-pink-500" />
-                <span>Marcom Hub</span>
-              </button>
-            </div>
-          </div>
+          <AppModeSegmentedControl />
 
           {/* Spaces Header in Tasks Mode */}
           {appMode === "tasks" && (
