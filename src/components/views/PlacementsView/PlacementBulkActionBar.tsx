@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { PlacementStatus, MarcomPlacement } from "./PlacementsView";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { syncTaskOnPlacementStatusChange } from "@/lib/tasks/placementTaskSync";
 
 interface PlacementBulkActionBarProps {
@@ -29,7 +30,10 @@ export function PlacementBulkActionBar({
   canManage,
 }: PlacementBulkActionBarProps) {
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
-  const { tasks, workspaces, updateTask } = useWorkspaceStore();
+  const { tasks, workspaces } = useWorkspaceStore(
+    useShallow((s) => ({ tasks: s.tasks, workspaces: s.workspaces })),
+  );
+  const updateTask = useWorkspaceStore((s) => s.updateTask);
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPicModal, setShowPicModal] = useState(false);

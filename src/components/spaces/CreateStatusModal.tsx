@@ -19,7 +19,7 @@ export function CreateStatusModal({
   spaceId,
   onClose,
 }: CreateStatusModalProps) {
-  const { addStatusToSpace } = useWorkspaceStore();
+  const addStatusToSpace = useWorkspaceStore((s) => s.addStatusToSpace);
   const [name, setName] = useState("");
   const [color, setColor] = useState(DEFAULT_STATUS_COLOR);
 

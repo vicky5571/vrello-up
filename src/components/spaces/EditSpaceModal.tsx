@@ -56,7 +56,8 @@ const SPACE_ICON_MAP: Record<string, LucideIcon> = {
 const SPACE_ICONS = Object.keys(SPACE_ICON_MAP);
 
 export function EditSpaceModal({ isOpen, space, onClose }: EditSpaceModalProps) {
-  const { updateSpace, deleteSpace } = useWorkspaceStore();
+  const updateSpace = useWorkspaceStore((s) => s.updateSpace);
+  const deleteSpace = useWorkspaceStore((s) => s.deleteSpace);
   const [name, setName] = useState("");
   const [selectedColor, setSelectedColor] = useState(SPACE_COLORS[0]);
   const [selectedIcon, setSelectedIcon] = useState(SPACE_ICONS[0]);

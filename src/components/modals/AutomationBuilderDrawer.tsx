@@ -132,7 +132,7 @@ export function AutomationBuilderDrawer({
   isOpen,
   onClose,
 }: AutomationBuilderDrawerProps) {
-  const { addCustomAutomation } = useWorkspaceStore();
+  const addCustomAutomation = useWorkspaceStore((s) => s.addCustomAutomation);
 
   const [selectedTrigger, setSelectedTrigger] = useState<AutomationTrigger>("mou:approved");
   const [selectedAction, setSelectedAction] = useState<AutomationAction>("create_field_ops_task");

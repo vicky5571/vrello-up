@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { useTheme } from "next-themes";
 import {
   Search,
@@ -62,22 +63,30 @@ interface PaletteItem {
 export function CommandPalette() {
   const {
     isCommandPaletteOpen,
-    closeCommandPalette,
-    openCommandPalette,
     tasks,
     workspaces,
     activeWorkspaceId,
-    setActiveSpace,
-    setActiveList,
-    setActiveView,
-    setSelectedTaskId,
-    setSelectedBranchId,
-    navigateToMarcom,
-    toggleSidebar,
-    setCreateTaskModalOpen,
-    setExportCenterOpen,
-    setTrashOpen,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      isCommandPaletteOpen: s.isCommandPaletteOpen,
+      tasks: s.tasks,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+    })),
+  );
+
+  const closeCommandPalette = useWorkspaceStore((s) => s.closeCommandPalette);
+  const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
+  const setActiveSpace = useWorkspaceStore((s) => s.setActiveSpace);
+  const setActiveList = useWorkspaceStore((s) => s.setActiveList);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
+  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
+  const setSelectedBranchId = useWorkspaceStore((s) => s.setSelectedBranchId);
+  const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);
+  const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
+  const setCreateTaskModalOpen = useWorkspaceStore((s) => s.setCreateTaskModalOpen);
+  const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
+  const setTrashOpen = useWorkspaceStore((s) => s.setTrashOpen);
 
   const { theme, setTheme } = useTheme();
   const [query, setQuery] = useState("");

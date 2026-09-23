@@ -23,7 +23,7 @@ export function RenameListModal({
   initialName = "",
   onClose,
 }: RenameListModalProps) {
-  const { updateList } = useWorkspaceStore();
+  const updateList = useWorkspaceStore((s) => s.updateList);
   const [name, setName] = useState(initialName);
 
   useEffect(() => {

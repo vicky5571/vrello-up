@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { Priority, GroupByOption } from "@/types";
 import {
   Search,
@@ -33,18 +34,29 @@ import { isFilterBarSupported } from "@/lib/tasks/filterTasks";
 export function FilterBar() {
   const {
     filters,
-    setFilters,
-    resetFilters,
     viewPreferences,
-    setViewPreferences,
-    resetViewPreferences,
     workspaces,
     activeWorkspaceId,
     appMode,
     activeView,
     tags,
-    setCreatePostModalOpen,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      filters: s.filters,
+      viewPreferences: s.viewPreferences,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      appMode: s.appMode,
+      activeView: s.activeView,
+      tags: s.tags,
+    })),
+  );
+
+  const setFilters = useWorkspaceStore((s) => s.setFilters);
+  const resetFilters = useWorkspaceStore((s) => s.resetFilters);
+  const setViewPreferences = useWorkspaceStore((s) => s.setViewPreferences);
+  const resetViewPreferences = useWorkspaceStore((s) => s.resetViewPreferences);
+  const setCreatePostModalOpen = useWorkspaceStore((s) => s.setCreatePostModalOpen);
 
   const [searchValue, setSearchValue] = useState(filters.search);
   const [isSearchOpen, setIsSearchOpen] = useState(false);

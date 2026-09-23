@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Users, Mail, Shield, Trash2, UserPlus } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
@@ -16,14 +17,18 @@ interface TeamsModalProps {
 
 export function TeamsModal({ isOpen, onClose, onOpenInvite }: TeamsModalProps) {
   const { data: session } = useSession();
-  const {
-    workspaces,
-    activeWorkspaceId,
-    tasks,
-    currentUserId,
-    setCurrentUserId,
-    removeWorkspaceMember,
-  } = useWorkspaceStore();
+  const { workspaces, activeWorkspaceId, tasks, currentUserId } =
+    useWorkspaceStore(
+      useShallow((s) => ({
+        workspaces: s.workspaces,
+        activeWorkspaceId: s.activeWorkspaceId,
+        tasks: s.tasks,
+        currentUserId: s.currentUserId,
+      })),
+    );
+
+  const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
+  const removeWorkspaceMember = useWorkspaceStore((s) => s.removeWorkspaceMember);
 
   const [searchQuery, setSearchQuery] = useState("");
 

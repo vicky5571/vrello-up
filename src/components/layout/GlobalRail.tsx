@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { TeamsModal } from "@/components/modals/TeamsModal";
 import { InviteModal } from "@/components/modals/InviteModal";
 
@@ -23,14 +24,22 @@ import { MoreAppsMenu } from "@/components/modals/MoreAppsMenu";
 export function GlobalRail() {
   const {
     appMode,
-    setAppMode,
     isSidebarOpen,
-    toggleSidebar,
     isAiDrawerOpen,
-    setAiDrawerOpen,
     activeView,
-    setActiveView,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      appMode: s.appMode,
+      isSidebarOpen: s.isSidebarOpen,
+      isAiDrawerOpen: s.isAiDrawerOpen,
+      activeView: s.activeView,
+    })),
+  );
+
+  const setAppMode = useWorkspaceStore((s) => s.setAppMode);
+  const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
+  const setAiDrawerOpen = useWorkspaceStore((s) => s.setAiDrawerOpen);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
   const [isTeamsOpen, setIsTeamsOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);

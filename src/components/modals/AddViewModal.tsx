@@ -72,7 +72,8 @@ const AVAILABLE_VIEWS = [
 ];
 
 export function AddViewModal({ isOpen, onClose }: AddViewModalProps) {
-  const { activeView, setActiveView } = useWorkspaceStore();
+  const activeView = useWorkspaceStore((s) => s.activeView);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
   const handleSelectView = (viewId: ViewMode, viewLabel: string) => {
     setActiveView(viewId);

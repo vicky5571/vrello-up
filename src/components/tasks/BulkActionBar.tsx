@@ -18,7 +18,9 @@ interface BulkActionBarProps {
  * assignee, due date, and priority — plus bulk delete and clear.
  */
 export function BulkActionBar({ selectedIds, statuses, members }: BulkActionBarProps) {
-  const { bulkUpdateTasks, clearTaskSelection, deleteTask } = useWorkspaceStore();
+  const bulkUpdateTasks = useWorkspaceStore((s) => s.bulkUpdateTasks);
+  const clearTaskSelection = useWorkspaceStore((s) => s.clearTaskSelection);
+  const deleteTask = useWorkspaceStore((s) => s.deleteTask);
 
   if (selectedIds.length === 0) return null;
   const count = selectedIds.length;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useWorkspaceStore, getSpaceListIds } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import {
   DndContext,
   DragOverlay,
@@ -32,13 +33,24 @@ export function BoardView() {
     workspaces,
     activeWorkspaceId,
     filters,
-    setSelectedTaskId,
-    moveTaskStatus,
-    reorderTasksInStatus,
     selectedTaskIds,
-    toggleTaskSelection,
-    setTaskSelection,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      tasks: s.tasks,
+      activeListId: s.activeListId,
+      activeSpaceId: s.activeSpaceId,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      filters: s.filters,
+      selectedTaskIds: s.selectedTaskIds,
+    })),
+  );
+
+  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
+  const moveTaskStatus = useWorkspaceStore((s) => s.moveTaskStatus);
+  const reorderTasksInStatus = useWorkspaceStore((s) => s.reorderTasksInStatus);
+  const toggleTaskSelection = useWorkspaceStore((s) => s.toggleTaskSelection);
+  const setTaskSelection = useWorkspaceStore((s) => s.setTaskSelection);
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const currentSpace = currentWorkspace?.spaces.find(

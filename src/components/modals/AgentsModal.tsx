@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Bot, Play, Cpu } from "lucide-react";
 import { toast } from "sonner";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import {
   formatBlockers,
   formatSprintSummary,
@@ -70,7 +71,14 @@ const INITIAL_AGENTS: AgentItem[] = [
 export function AgentsModal({ isOpen, onClose }: AgentsModalProps) {
   const [agents, setAgents] = useState<AgentItem[]>(INITIAL_AGENTS);
   const { tasks, workspaces, activeWorkspaceId, activeSpaceId } =
-    useWorkspaceStore();
+    useWorkspaceStore(
+      useShallow((s) => ({
+        tasks: s.tasks,
+        workspaces: s.workspaces,
+        activeWorkspaceId: s.activeWorkspaceId,
+        activeSpaceId: s.activeSpaceId,
+      })),
+    );
 
   const statuses =
     workspaces

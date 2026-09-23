@@ -31,7 +31,7 @@ interface QuarterlyPosmReportTabProps {
 }
 
 export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosmReportTabProps) {
-  const { activeWorkspaceId } = useWorkspaceStore();
+  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
   const {
     getCachedPlacements,
     setCachedPlacements,

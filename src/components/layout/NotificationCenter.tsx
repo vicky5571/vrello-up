@@ -11,6 +11,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import {
   countUnread,
   deriveMouNotifications,
@@ -79,10 +80,20 @@ export function NotificationCenter() {
     activeSpaceId,
     currentUserId,
     lastSeenNotificationsAt,
-    setLastSeenNotificationsAt,
-    setSelectedTaskId,
-    setActiveView,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      tasks: s.tasks,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      activeSpaceId: s.activeSpaceId,
+      currentUserId: s.currentUserId,
+      lastSeenNotificationsAt: s.lastSeenNotificationsAt,
+    })),
+  );
+
+  const setLastSeenNotificationsAt = useWorkspaceStore((s) => s.setLastSeenNotificationsAt);
+  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
   const [isOpen, setIsOpen] = useState(false);
   const [mouRows, setMouRows] = useState<{ id: string; partnerName: string; status: string }[]>([]);

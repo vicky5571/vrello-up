@@ -24,6 +24,7 @@ import {
   Film,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import {
@@ -65,21 +66,31 @@ export function ContentPlannerView() {
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const {
     tasks,
-    createTask,
-    updateTask,
-    setSelectedTaskId,
-    setAppMode,
-    setActiveSpace,
-    setActiveList,
-    setActiveView,
     workspaces,
     activeSpaceId,
     activeListId,
     isCreatePostModalOpen,
-    setCreatePostModalOpen,
     marcomFilters,
-    setMarcomFilter,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      tasks: s.tasks,
+      workspaces: s.workspaces,
+      activeSpaceId: s.activeSpaceId,
+      activeListId: s.activeListId,
+      isCreatePostModalOpen: s.isCreatePostModalOpen,
+      marcomFilters: s.marcomFilters,
+    })),
+  );
+
+  const createTask = useWorkspaceStore((s) => s.createTask);
+  const updateTask = useWorkspaceStore((s) => s.updateTask);
+  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
+  const setAppMode = useWorkspaceStore((s) => s.setAppMode);
+  const setActiveSpace = useWorkspaceStore((s) => s.setActiveSpace);
+  const setActiveList = useWorkspaceStore((s) => s.setActiveList);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
+  const setCreatePostModalOpen = useWorkspaceStore((s) => s.setCreatePostModalOpen);
+  const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
 
   const currentWorkspace =
     workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];

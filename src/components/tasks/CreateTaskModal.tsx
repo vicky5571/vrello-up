@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { Priority, PostPlatform, PostFormat } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Calendar, Flame, Layers, Share2 } from "lucide-react";
@@ -28,9 +29,18 @@ export function CreateTaskModal({
     activeSpaceId,
     workspaces,
     activeWorkspaceId,
-    createTask,
     tags,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      activeListId: s.activeListId,
+      activeSpaceId: s.activeSpaceId,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      tags: s.tags,
+    })),
+  );
+
+  const createTask = useWorkspaceStore((s) => s.createTask);
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const rawSpaces = currentWorkspace?.spaces || [];

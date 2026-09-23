@@ -114,7 +114,8 @@ function ReportSection({ title, items }: { title: string; items: unknown[] }) {
 export function ReportsView() {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
-  const { setExportCenterOpen, navigateToMarcom } = useWorkspaceStore();
+  const setExportCenterOpen = useWorkspaceStore((state) => state.setExportCenterOpen);
+  const navigateToMarcom = useWorkspaceStore((state) => state.navigateToMarcom);
   const [reportTab, setReportTab] = useState<"monthly" | "posm_quarterly">("monthly");
   const {
     getCachedReports,

@@ -26,6 +26,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn, formatIDR } from "@/lib/utils";
@@ -124,16 +125,19 @@ const STATUS_STYLES: Record<PlacementStatus, string> = {
 export function PlacementsView() {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
-  const {
-    tasks,
-    createTask,
-    setSelectedTaskId,
-    workspaces,
-    setExportCenterOpen,
-    marcomFilters,
-    setMarcomFilter,
-    navigateToMarcom,
-  } = useWorkspaceStore();
+  const { tasks, workspaces, marcomFilters } = useWorkspaceStore(
+    useShallow((s) => ({
+      tasks: s.tasks,
+      workspaces: s.workspaces,
+      marcomFilters: s.marcomFilters,
+    })),
+  );
+
+  const createTask = useWorkspaceStore((s) => s.createTask);
+  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
+  const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
+  const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
+  const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);
 
   const {
     fetchOutlets,

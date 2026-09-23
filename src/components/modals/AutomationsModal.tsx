@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Zap, Plus, ArrowRight, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { AutomationBuilderDrawer } from "./AutomationBuilderDrawer";
 
 interface AutomationsModalProps {
@@ -70,14 +71,18 @@ const ACTION_LABELS: Record<string, string> = {
 export function AutomationsModal({ isOpen, onClose }: AutomationsModalProps) {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
 
-  const {
-    automationEnabled,
-    automationRuns,
-    setAutomationEnabled,
-    customAutomations,
-    toggleCustomAutomation,
-    removeCustomAutomation,
-  } = useWorkspaceStore();
+  const { automationEnabled, automationRuns, customAutomations } =
+    useWorkspaceStore(
+      useShallow((s) => ({
+        automationEnabled: s.automationEnabled,
+        automationRuns: s.automationRuns,
+        customAutomations: s.customAutomations,
+      })),
+    );
+
+  const setAutomationEnabled = useWorkspaceStore((s) => s.setAutomationEnabled);
+  const toggleCustomAutomation = useWorkspaceStore((s) => s.toggleCustomAutomation);
+  const removeCustomAutomation = useWorkspaceStore((s) => s.removeCustomAutomation);
 
   const toggleInitialRule = (id: string) => {
     const rule = INITIAL_RULES.find((r) => r.id === id);

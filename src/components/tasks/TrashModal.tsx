@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { RotateCcw, Trash2, X } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 
 function deletedAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
@@ -24,16 +25,19 @@ function deletedAgo(iso: string): string {
  * expired-Undo toast path.
  */
 export function TrashModal() {
-  const {
-    isTrashOpen,
-    setTrashOpen,
-    trash,
-    workspaces,
-    restoreTasks,
-    permanentlyDeleteTask,
-    emptyTrash,
-    purgeExpiredTrash,
-  } = useWorkspaceStore();
+  const { isTrashOpen, trash, workspaces } = useWorkspaceStore(
+    useShallow((s) => ({
+      isTrashOpen: s.isTrashOpen,
+      trash: s.trash,
+      workspaces: s.workspaces,
+    })),
+  );
+
+  const setTrashOpen = useWorkspaceStore((s) => s.setTrashOpen);
+  const restoreTasks = useWorkspaceStore((s) => s.restoreTasks);
+  const permanentlyDeleteTask = useWorkspaceStore((s) => s.permanentlyDeleteTask);
+  const emptyTrash = useWorkspaceStore((s) => s.emptyTrash);
+  const purgeExpiredTrash = useWorkspaceStore((s) => s.purgeExpiredTrash);
 
   // Drop retention-expired entries whenever the bin is opened.
   useEffect(() => {

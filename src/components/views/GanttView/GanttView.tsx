@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useWorkspaceStore, getSpaceListIds } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import {
   format,
   addDays,
@@ -73,12 +74,22 @@ export function GanttView() {
     workspaces,
     activeWorkspaceId,
     filters,
-    setSelectedTaskId,
-    updateTask,
-    createTask,
-    addDependency,
-    removeDependency,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      tasks: s.tasks,
+      activeListId: s.activeListId,
+      activeSpaceId: s.activeSpaceId,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      filters: s.filters,
+    })),
+  );
+
+  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
+  const updateTask = useWorkspaceStore((s) => s.updateTask);
+  const createTask = useWorkspaceStore((s) => s.createTask);
+  const addDependency = useWorkspaceStore((s) => s.addDependency);
+  const removeDependency = useWorkspaceStore((s) => s.removeDependency);
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const currentSpace = currentWorkspace?.spaces.find(

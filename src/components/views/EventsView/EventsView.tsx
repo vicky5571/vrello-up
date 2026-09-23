@@ -16,6 +16,7 @@ import {
   Building2,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn, formatIDR } from "@/lib/utils";
@@ -57,20 +58,29 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const {
     tasks,
-    createTask,
-    updateTask,
-    setSelectedTaskId,
-    setAppMode,
-    setActiveSpace,
-    setActiveList,
-    setActiveView,
     workspaces,
     activeSpaceId,
     activeListId,
     marcomFilters,
-    setMarcomFilter,
-    setNavigatedFromMarcom,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      tasks: s.tasks,
+      workspaces: s.workspaces,
+      activeSpaceId: s.activeSpaceId,
+      activeListId: s.activeListId,
+      marcomFilters: s.marcomFilters,
+    })),
+  );
+
+  const createTask = useWorkspaceStore((s) => s.createTask);
+  const updateTask = useWorkspaceStore((s) => s.updateTask);
+  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
+  const setAppMode = useWorkspaceStore((s) => s.setAppMode);
+  const setActiveSpace = useWorkspaceStore((s) => s.setActiveSpace);
+  const setActiveList = useWorkspaceStore((s) => s.setActiveList);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
+  const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
+  const setNavigatedFromMarcom = useWorkspaceStore((s) => s.setNavigatedFromMarcom);
 
   const currentWorkspace =
     workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];

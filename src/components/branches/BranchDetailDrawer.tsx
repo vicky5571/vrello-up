@@ -34,7 +34,9 @@ interface BranchDetail {
 }
 
 export function BranchDetailDrawer() {
-  const { selectedBranchId, setSelectedBranchId, navigateToMarcom } = useWorkspaceStore();
+  const selectedBranchId = useWorkspaceStore((s) => s.selectedBranchId);
+  const setSelectedBranchId = useWorkspaceStore((s) => s.setSelectedBranchId);
+  const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);
   const [branch, setBranch] = useState<BranchDetail | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

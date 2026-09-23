@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import {
   Hash,
@@ -25,9 +26,20 @@ export function ChannelView() {
     activeWorkspaceId,
     currentUserId,
     channelMessages,
-    addChannelMessage,
     tasks,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      activeListId: s.activeListId,
+      activeSpaceId: s.activeSpaceId,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      currentUserId: s.currentUserId,
+      channelMessages: s.channelMessages,
+      tasks: s.tasks,
+    })),
+  );
+
+  const addChannelMessage = useWorkspaceStore((s) => s.addChannelMessage);
 
   const [inputContent, setInputContent] = useState("");
   const [searchQuery, setSearchQuery] = useState("");

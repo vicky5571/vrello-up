@@ -21,7 +21,8 @@ export function CreateFolderModal({
   initialName = "",
   onClose,
 }: CreateFolderModalProps) {
-  const { createFolder, updateFolder } = useWorkspaceStore();
+  const createFolder = useWorkspaceStore((s) => s.createFolder);
+  const updateFolder = useWorkspaceStore((s) => s.updateFolder);
   const [name, setName] = useState(initialName);
 
   const isEditing = !!folderId;

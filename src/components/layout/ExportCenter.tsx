@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import {
   buildMousCsv,
   buildMousPrint,
@@ -86,8 +87,14 @@ function DatasetCard({ icon: Icon, title, description, count, onCsv, onPdf }: Da
  * monthly reports, placements, MOUs — plus the current batch selection.
  */
 export function ExportCenter() {
-  const { isExportCenterOpen, setExportCenterOpen, tasks, selectedTaskIds } =
-    useWorkspaceStore();
+  const { isExportCenterOpen, tasks, selectedTaskIds } = useWorkspaceStore(
+    useShallow((s) => ({
+      isExportCenterOpen: s.isExportCenterOpen,
+      tasks: s.tasks,
+      selectedTaskIds: s.selectedTaskIds,
+    })),
+  );
+  const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
 
   const [reports, setReports] = useState<ReportLike[]>([]);
   const [placements, setPlacements] = useState<PlacementLike[]>([]);

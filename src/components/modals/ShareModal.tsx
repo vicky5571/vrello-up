@@ -13,7 +13,8 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ isOpen, onClose }: ShareModalProps) {
-  const { workspaces, activeWorkspaceId } = useWorkspaceStore();
+  const workspaces = useWorkspaceStore((s) => s.workspaces);
+  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
   const [isPublicLinkEnabled, setIsPublicLinkEnabled] = useState(false);
   const [copied, setCopied] = useState(false);
 

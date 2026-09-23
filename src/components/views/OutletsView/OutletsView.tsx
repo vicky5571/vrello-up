@@ -61,7 +61,10 @@ const TYPE_STYLES: Record<OutletType, string> = {
 export function OutletsView() {
   const { can, role } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
-  const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId } = useWorkspaceStore();
+  const marcomFilters = useWorkspaceStore((s) => s.marcomFilters);
+  const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
+  const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);
+  const setSelectedBranchId = useWorkspaceStore((s) => s.setSelectedBranchId);
   const {
     fetchBranches,
     setOutlets: setStoreOutlets,

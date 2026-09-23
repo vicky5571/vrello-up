@@ -19,7 +19,7 @@ export function CreateListModal({
   spaceId,
   folderId,
 }: CreateListModalProps) {
-  const { createList } = useWorkspaceStore();
+  const createList = useWorkspaceStore((s) => s.createList);
   const [name, setName] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {

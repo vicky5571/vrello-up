@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useWorkspaceStore, getSpaceListIds } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import {
   format,
   addMonths,
@@ -37,9 +38,19 @@ export function CalendarView() {
     workspaces,
     activeWorkspaceId,
     filters,
-    setSelectedTaskId,
-    setActiveView,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      tasks: s.tasks,
+      activeListId: s.activeListId,
+      activeSpaceId: s.activeSpaceId,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      filters: s.filters,
+    })),
+  );
+
+  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
   const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const currentSpace = currentWorkspace?.spaces.find(

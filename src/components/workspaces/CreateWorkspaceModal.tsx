@@ -23,7 +23,7 @@ const AVATAR_COLORS = [
 ];
 
 export function CreateWorkspaceModal({ isOpen, onClose }: CreateWorkspaceModalProps) {
-  const { createWorkspace } = useWorkspaceStore();
+  const createWorkspace = useWorkspaceStore((s) => s.createWorkspace);
   const [name, setName] = useState("");
   const [selectedColor, setSelectedColor] = useState(AVATAR_COLORS[0]);
 

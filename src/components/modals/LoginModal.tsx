@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -21,8 +22,15 @@ interface LoginModalProps {
 
 export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { data: session } = useSession();
-  const { currentUserId, setCurrentUserId, workspaces, activeWorkspaceId } =
-    useWorkspaceStore();
+  const { currentUserId, workspaces, activeWorkspaceId } =
+    useWorkspaceStore(
+      useShallow((s) => ({
+        currentUserId: s.currentUserId,
+        workspaces: s.workspaces,
+        activeWorkspaceId: s.activeWorkspaceId,
+      })),
+    );
+  const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
   const [isLoading, setIsLoading] = useState(false);
 
   const currentWorkspace =

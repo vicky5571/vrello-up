@@ -3,16 +3,19 @@
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { type User } from "@/types";
 
 export function AuthSync() {
   const { data: session } = useSession();
-  const {
-    currentUserId,
-    setCurrentUserId,
-    workspaces,
-    activeWorkspaceId,
-  } = useWorkspaceStore();
+  const { currentUserId, workspaces, activeWorkspaceId } = useWorkspaceStore(
+    useShallow((s) => ({
+      currentUserId: s.currentUserId,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+    })),
+  );
+  const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
 
   useEffect(() => {
     if (session?.user) {

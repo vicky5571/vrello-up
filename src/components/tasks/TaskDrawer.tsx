@@ -1,6 +1,7 @@
 "use client";
 
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { Task, Priority, PostPlatform, PostFormat, TaskAttachment, Folder as FolderModel, List as ListModel, ViewMode } from "@/types";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
 import { motion, AnimatePresence } from "framer-motion";
@@ -66,34 +67,50 @@ export function TaskDrawer() {
   const {
     tasks,
     selectedTaskId,
-    setSelectedTaskId,
-    updateTask,
-    deleteTask,
-    addSubtask,
-    toggleSubtask,
-    deleteSubtask,
-    addDependency,
-    removeDependency,
     workspaces,
     activeWorkspaceId,
     activeSpaceId,
-    setActiveSpace,
-    setActiveList,
     appMode,
-    setAppMode,
     activeView,
-    setActiveView,
     lastTaskView,
     tags,
-    createTag,
-    renameTag,
-    deleteTag,
-    toggleTaskTag,
     presenceByTaskId,
     currentUserId,
     navigatedFromMarcom,
-    setNavigatedFromMarcom,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      tasks: s.tasks,
+      selectedTaskId: s.selectedTaskId,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      activeSpaceId: s.activeSpaceId,
+      appMode: s.appMode,
+      activeView: s.activeView,
+      lastTaskView: s.lastTaskView,
+      tags: s.tags,
+      presenceByTaskId: s.presenceByTaskId,
+      currentUserId: s.currentUserId,
+      navigatedFromMarcom: s.navigatedFromMarcom,
+    })),
+  );
+
+  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
+  const updateTask = useWorkspaceStore((s) => s.updateTask);
+  const deleteTask = useWorkspaceStore((s) => s.deleteTask);
+  const addSubtask = useWorkspaceStore((s) => s.addSubtask);
+  const toggleSubtask = useWorkspaceStore((s) => s.toggleSubtask);
+  const deleteSubtask = useWorkspaceStore((s) => s.deleteSubtask);
+  const addDependency = useWorkspaceStore((s) => s.addDependency);
+  const removeDependency = useWorkspaceStore((s) => s.removeDependency);
+  const setActiveSpace = useWorkspaceStore((s) => s.setActiveSpace);
+  const setActiveList = useWorkspaceStore((s) => s.setActiveList);
+  const setAppMode = useWorkspaceStore((s) => s.setAppMode);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
+  const createTag = useWorkspaceStore((s) => s.createTag);
+  const renameTag = useWorkspaceStore((s) => s.renameTag);
+  const deleteTag = useWorkspaceStore((s) => s.deleteTag);
+  const toggleTaskTag = useWorkspaceStore((s) => s.toggleTaskTag);
+  const setNavigatedFromMarcom = useWorkspaceStore((s) => s.setNavigatedFromMarcom);
 
   const liveTask = tasks.find((t) => t.id === selectedTaskId);
   const [displayedTask, setDisplayedTask] = useState(liveTask);

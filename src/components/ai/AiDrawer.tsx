@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Sparkles, Send, Check } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { answerQuery, type BrainAction } from "@/lib/ai/brain";
 import { generateId } from "@/lib/utils";
 import { toast } from "sonner";
@@ -33,10 +34,20 @@ export function AiDrawer() {
     activeSpaceId,
     selectedTaskId,
     isAiDrawerOpen,
-    setAiDrawerOpen,
-    addSubtask,
-    updateTask,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      tasks: s.tasks,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      activeSpaceId: s.activeSpaceId,
+      selectedTaskId: s.selectedTaskId,
+      isAiDrawerOpen: s.isAiDrawerOpen,
+    })),
+  );
+
+  const setAiDrawerOpen = useWorkspaceStore((s) => s.setAiDrawerOpen);
+  const addSubtask = useWorkspaceStore((s) => s.addSubtask);
+  const updateTask = useWorkspaceStore((s) => s.updateTask);
 
   const statuses =
     workspaces

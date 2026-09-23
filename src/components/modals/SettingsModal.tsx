@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,11 +33,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     workspaces,
     activeWorkspaceId,
     currentUserId,
-    setCurrentUserId,
     tasks,
     tags,
-    importBackup,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      currentUserId: s.currentUserId,
+      tasks: s.tasks,
+      tags: s.tags,
+    })),
+  );
+
+  const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
+  const importBackup = useWorkspaceStore((s) => s.importBackup);
 
   const { theme, setTheme } = useTheme();
   const { data: session } = useSession();

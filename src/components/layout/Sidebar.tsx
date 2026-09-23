@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useDropdown } from "@/components/ui/useDropdown";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { type Space } from "@/types";
 import {
   Plus,
@@ -46,22 +47,36 @@ export function Sidebar() {
     activeSpaceId,
     activeListId,
     activeView,
-    setActiveSpace,
-    setActiveList,
-    setActiveView,
     tasks,
     isSidebarOpen,
-    toggleSidebar,
     isHelpDocsOpen,
-    setHelpDocsOpen,
     trash,
-    setTrashOpen,
-    deleteSpace,
-    deleteFolder,
-    deleteList,
-    reorderSpaces,
-    moveSpace,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      appMode: s.appMode,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      activeSpaceId: s.activeSpaceId,
+      activeListId: s.activeListId,
+      activeView: s.activeView,
+      tasks: s.tasks,
+      isSidebarOpen: s.isSidebarOpen,
+      isHelpDocsOpen: s.isHelpDocsOpen,
+      trash: s.trash,
+    })),
+  );
+
+  const setActiveSpace = useWorkspaceStore((s) => s.setActiveSpace);
+  const setActiveList = useWorkspaceStore((s) => s.setActiveList);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
+  const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
+  const setHelpDocsOpen = useWorkspaceStore((s) => s.setHelpDocsOpen);
+  const setTrashOpen = useWorkspaceStore((s) => s.setTrashOpen);
+  const deleteSpace = useWorkspaceStore((s) => s.deleteSpace);
+  const deleteFolder = useWorkspaceStore((s) => s.deleteFolder);
+  const deleteList = useWorkspaceStore((s) => s.deleteList);
+  const reorderSpaces = useWorkspaceStore((s) => s.reorderSpaces);
+  const moveSpace = useWorkspaceStore((s) => s.moveSpace);
 
   const currentWorkspace =
     workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];

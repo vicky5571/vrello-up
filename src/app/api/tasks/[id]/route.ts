@@ -45,7 +45,7 @@ export async function PATCH(
     const targetStatusId = body.statusId || (body.listId ? existingTask.statusId : undefined);
 
     if (targetStatusId !== undefined) {
-      let spaceStatuses = existingTask.list?.space?.statuses;
+      let spaceStatuses: unknown = existingTask.list?.space?.statuses;
       if (body.listId && body.listId !== existingTask.listId) {
         const resolved = await resolveSpaceStatusesForList(prisma, body.listId);
         if (resolved) {

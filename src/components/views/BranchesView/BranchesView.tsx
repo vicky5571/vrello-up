@@ -31,7 +31,10 @@ const columnHelper = createMarcomColumnHelper<MarcomBranch>();
 
 export function BranchesView() {
   const { can, role } = useMarcomPermissions();
-  const { marcomFilters, setMarcomFilter, navigateToMarcom, setSelectedBranchId } = useWorkspaceStore();
+  const marcomFilters = useWorkspaceStore((s) => s.marcomFilters);
+  const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
+  const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);
+  const setSelectedBranchId = useWorkspaceStore((s) => s.setSelectedBranchId);
 
   const [branches, setBranches] = useState<MarcomBranch[]>([]);
   const [isLoading, setIsLoading] = useState(true);

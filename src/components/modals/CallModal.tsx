@@ -25,7 +25,8 @@ interface CallModalProps {
 }
 
 export function CallModal({ isOpen, mode, onClose }: CallModalProps) {
-  const { workspaces, activeWorkspaceId } = useWorkspaceStore();
+  const workspaces = useWorkspaceStore((s) => s.workspaces);
+  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(mode === "audio");
   const [copied, setCopied] = useState(false);

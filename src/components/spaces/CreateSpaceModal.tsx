@@ -52,7 +52,7 @@ const SPACE_ICON_MAP: Record<string, LucideIcon> = {
 const SPACE_ICONS = Object.keys(SPACE_ICON_MAP);
 
 export function CreateSpaceModal({ isOpen, onClose }: CreateSpaceModalProps) {
-  const { createSpace } = useWorkspaceStore();
+  const createSpace = useWorkspaceStore((s) => s.createSpace);
   const [name, setName] = useState("");
   const [selectedColor, setSelectedColor] = useState(SPACE_COLORS[0]);
   const [selectedIcon, setSelectedIcon] = useState(SPACE_ICONS[0]);

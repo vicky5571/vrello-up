@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useDropdown } from "@/components/ui/useDropdown";
 import { Task, TaskComment, ActivityLog, TaskCommentAttachment } from "@/types";
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import {
   MessageSquare,
@@ -29,13 +30,16 @@ interface TaskActivityFeedProps {
 type FeedFilter = "all" | "comments" | "activity";
 
 export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
-  const {
-    addComment,
-    deleteComment,
-    currentUserId,
-    workspaces,
-    activeWorkspaceId,
-  } = useWorkspaceStore();
+  const { currentUserId, workspaces, activeWorkspaceId } = useWorkspaceStore(
+    useShallow((s) => ({
+      currentUserId: s.currentUserId,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+    })),
+  );
+
+  const addComment = useWorkspaceStore((s) => s.addComment);
+  const deleteComment = useWorkspaceStore((s) => s.deleteComment);
 
   const [commentText, setCommentText] = useState("");
   const [filter, setFilter] = useState<FeedFilter>("all");

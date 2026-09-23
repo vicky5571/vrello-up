@@ -18,7 +18,9 @@ export function EditWorkspaceModal({
   onClose,
   workspace,
 }: EditWorkspaceModalProps) {
-  const { workspaces, updateWorkspace, deleteWorkspace } = useWorkspaceStore();
+  const workspaces = useWorkspaceStore((s) => s.workspaces);
+  const updateWorkspace = useWorkspaceStore((s) => s.updateWorkspace);
+  const deleteWorkspace = useWorkspaceStore((s) => s.deleteWorkspace);
   const [name, setName] = useState("");
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 

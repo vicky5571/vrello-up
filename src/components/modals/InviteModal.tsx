@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, UserPlus, Mail, User, Shield, Copy, Check, Send } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { type User as WorkspaceUser } from "@/types";
 import { toast } from "sonner";
 
@@ -13,8 +14,13 @@ interface InviteModalProps {
 }
 
 export function InviteModal({ isOpen, onClose }: InviteModalProps) {
-  const { addWorkspaceMember, activeWorkspaceId, workspaces } =
-    useWorkspaceStore();
+  const { activeWorkspaceId, workspaces } = useWorkspaceStore(
+    useShallow((s) => ({
+      activeWorkspaceId: s.activeWorkspaceId,
+      workspaces: s.workspaces,
+    })),
+  );
+  const addWorkspaceMember = useWorkspaceStore((s) => s.addWorkspaceMember);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

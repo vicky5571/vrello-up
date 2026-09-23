@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { useWorkspaceStore, getSpaceListIds } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { ListGroup } from "./ListGroup";
 import { CreateStatusModal } from "@/components/spaces/CreateStatusModal";
 import { BulkActionBar } from "@/components/tasks/BulkActionBar";
@@ -35,14 +36,26 @@ export function ListView() {
     activeListId,
     filters,
     viewPreferences,
-    setViewPreferences,
-    setSelectedTaskId,
-    moveTaskStatus,
     selectedTaskIds,
-    toggleTaskSelection,
-    setTaskSelection,
-    clearTaskSelection,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      tasks: s.tasks,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      activeSpaceId: s.activeSpaceId,
+      activeListId: s.activeListId,
+      filters: s.filters,
+      viewPreferences: s.viewPreferences,
+      selectedTaskIds: s.selectedTaskIds,
+    })),
+  );
+
+  const setViewPreferences = useWorkspaceStore((s) => s.setViewPreferences);
+  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
+  const moveTaskStatus = useWorkspaceStore((s) => s.moveTaskStatus);
+  const toggleTaskSelection = useWorkspaceStore((s) => s.toggleTaskSelection);
+  const setTaskSelection = useWorkspaceStore((s) => s.setTaskSelection);
+  const clearTaskSelection = useWorkspaceStore((s) => s.clearTaskSelection);
   const [isCreateStatusOpen, setIsCreateStatusOpen] = useState(false);
   // Sort lives in viewPreferences (session scope, same as column visibility):
   // survives view switching, resets on reload.

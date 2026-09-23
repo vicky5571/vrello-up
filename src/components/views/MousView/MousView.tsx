@@ -70,13 +70,11 @@ const STATUS_STYLES: Record<MouStatus, string> = {
 export function MousView() {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
-  const {
-    marcomFilters,
-    setMarcomFilter,
-    navigateToMarcom,
-    setSelectedBranchId,
-    setExportCenterOpen,
-  } = useWorkspaceStore();
+  const marcomFilters = useWorkspaceStore((s) => s.marcomFilters);
+  const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
+  const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);
+  const setSelectedBranchId = useWorkspaceStore((s) => s.setSelectedBranchId);
+  const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
   const {
     fetchBranches,
     fetchOutlets,

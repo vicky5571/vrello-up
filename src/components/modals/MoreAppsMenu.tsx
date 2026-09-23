@@ -35,12 +35,10 @@ export function MoreAppsMenu({
   onOpenTeams,
   onOpenInvite,
 }: MoreAppsMenuProps) {
-  const {
-    openCommandPalette,
-    setAiDrawerOpen,
-    setActiveView,
-    setCreateTaskModalOpen,
-  } = useWorkspaceStore();
+  const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
+  const setAiDrawerOpen = useWorkspaceStore((s) => s.setAiDrawerOpen);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
+  const setCreateTaskModalOpen = useWorkspaceStore((s) => s.setCreateTaskModalOpen);
   const { theme, setTheme } = useTheme();
   const menuRef = useRef<HTMLDivElement>(null);
 

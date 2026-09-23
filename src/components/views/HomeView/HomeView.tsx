@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import {
   getAssignedTo,
   getBlockers,
@@ -62,9 +63,18 @@ export function HomeView() {
     activeWorkspaceId,
     activeSpaceId,
     currentUserId,
-    setSelectedTaskId,
-    setActiveView,
-  } = useWorkspaceStore();
+  } = useWorkspaceStore(
+    useShallow((s) => ({
+      tasks: s.tasks,
+      workspaces: s.workspaces,
+      activeWorkspaceId: s.activeWorkspaceId,
+      activeSpaceId: s.activeSpaceId,
+      currentUserId: s.currentUserId,
+    })),
+  );
+
+  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
   const currentWorkspace =
     workspaces.find((w) => w.id === activeWorkspaceId) ?? workspaces[0];
