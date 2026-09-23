@@ -75,6 +75,8 @@ export interface MarcomDataState {
   getCachedEvents: (workspaceId: string) => FieldEventItem[] | undefined;
   setCachedEvents: (workspaceId: string, events: FieldEventItem[]) => void;
   invalidateEvents: (workspaceId?: string) => void;
+  fetchEvents: (workspaceId: string, force?: boolean) => Promise<FieldEventItem[]>;
+  fetchMous: (workspaceId: string, force?: boolean) => Promise<MarcomMou[]>;
 }
 
 export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
@@ -354,6 +356,50 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
       }
       return { eventsByWorkspace: {} };
     });
+  },
+
+  fetchEvents: async (workspaceId: string, force = false) => {
+    if (!workspaceId) return [];
+    const state = get();
+    const cached = state.eventsByWorkspace[workspaceId];
+    if (cached && !force) {
+      return cached;
+    }
+    try {
+      const res = await fetch(`/api/marcom/events?workspaceId=${encodeURIComponent(workspaceId)}`);
+      if (!res.ok) throw new Error(`Failed to fetch events (${res.status})`);
+      const json = await res.json();
+      const list: FieldEventItem[] = Array.isArray(json.data) ? json.data : [];
+      set((s) => ({
+        eventsByWorkspace: { ...s.eventsByWorkspace, [workspaceId]: list },
+      }));
+      return list;
+    } catch (err) {
+      console.error("[marcomDataStore] fetchEvents error:", err);
+      return cached || [];
+    }
+  },
+
+  fetchMous: async (workspaceId: string, force = false) => {
+    if (!workspaceId) return [];
+    const state = get();
+    const cached = state.mousByWorkspace[workspaceId];
+    if (cached && !force) {
+      return cached;
+    }
+    try {
+      const res = await fetch(`/api/marcom/mous?workspaceId=${encodeURIComponent(workspaceId)}`);
+      if (!res.ok) throw new Error(`Failed to fetch mous (${res.status})`);
+      const json = await res.json();
+      const list: MarcomMou[] = Array.isArray(json.data) ? json.data : [];
+      set((s) => ({
+        mousByWorkspace: { ...s.mousByWorkspace, [workspaceId]: list },
+      }));
+      return list;
+    } catch (err) {
+      console.error("[marcomDataStore] fetchMous error:", err);
+      return cached || [];
+    }
   },
 }));
 

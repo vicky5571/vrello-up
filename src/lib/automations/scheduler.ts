@@ -73,9 +73,13 @@ export async function checkUpcomingEvents(): Promise<number> {
   );
 
   try {
-    const res = await fetch("/api/marcom/events?status=UPCOMING");
+    const activeWorkspaceId = state.activeWorkspaceId || "ws-main";
+    const res = await fetch(
+      `/api/marcom/events?workspaceId=${encodeURIComponent(activeWorkspaceId)}&status=UPCOMING`,
+    );
     if (!res.ok) return 0;
-    const events: EventSlaCandidate[] = await res.json();
+    const json = await res.json();
+    const events: EventSlaCandidate[] = Array.isArray(json) ? json : (json.data || []);
     if (!Array.isArray(events)) return 0;
 
     // Build existing task lookup for idempotency

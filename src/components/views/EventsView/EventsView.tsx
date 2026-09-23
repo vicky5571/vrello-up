@@ -98,10 +98,12 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   );
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
 
-  const { fetchBranches, getCachedEvents, setCachedEvents, invalidateEvents } = useMarcomDataStore();
+  const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
+  const storeFetchEvents = useMarcomDataStore((s) => s.fetchEvents);
+  const invalidateEvents = useMarcomDataStore((s) => s.invalidateEvents);
 
   // Server state
-  const cachedEvents = getCachedEvents(activeWorkspaceId);
+  const cachedEvents = useMarcomDataStore.getState().getCachedEvents(activeWorkspaceId);
   const [events, setEvents] = useState<FieldEventItem[]>(() => cachedEvents || []);
   const [branches, setBranches] = useState<{ id: string; name: string }[]>(() =>
     useMarcomDataStore.getState().branches.length > 0
@@ -136,20 +138,16 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
 
   // Fetch field events and branches
   const fetchEvents = useCallback(async () => {
-    if (!getCachedEvents(activeWorkspaceId)) {
+    if (!useMarcomDataStore.getState().getCachedEvents(activeWorkspaceId)) {
       setIsLoading(true);
     }
     setError(null);
     try {
-      const [resEvents, branchList] = await Promise.all([
-        fetch(`/api/marcom/events?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
+      const [eventsData, branchList] = await Promise.all([
+        storeFetchEvents(activeWorkspaceId, true),
         fetchBranches(),
       ]);
-      if (!resEvents.ok) throw new Error(`Request failed (${resEvents.status})`);
-      const jsonEvents = await resEvents.json();
-      const eventsData = Array.isArray(jsonEvents.data) ? jsonEvents.data : [];
       setEvents(eventsData);
-      setCachedEvents(activeWorkspaceId, eventsData);
       if (Array.isArray(branchList)) {
         setBranches(branchList);
       }
@@ -158,7 +156,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     } finally {
       setIsLoading(false);
     }
-  }, [activeWorkspaceId, fetchBranches, getCachedEvents, setCachedEvents]);
+  }, [activeWorkspaceId, fetchBranches, storeFetchEvents]);
 
   useEffect(() => {
     fetchEvents();

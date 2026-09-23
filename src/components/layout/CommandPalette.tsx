@@ -157,12 +157,13 @@ export function CommandPalette() {
           return { id: `${prefix}${rawId}`, rawId, name, detail };
         })
         .filter((h) => !!h.name);
+    const wsParam = activeWorkspaceId ? `?workspaceId=${encodeURIComponent(activeWorkspaceId)}` : "";
     Promise.all([
       fetch("/api/marcom/branches").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
-      fetch("/api/marcom/outlets").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
-      fetch("/api/marcom/mous").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
-      fetch("/api/marcom/content").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
-      fetch("/api/marcom/events").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+      fetch(`/api/marcom/outlets${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+      fetch(`/api/marcom/mous${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+      fetch(`/api/marcom/content${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+      fetch(`/api/marcom/events${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
     ]).then(([b, o, m, c, e]) => {
       if (cancelled) return;
       setBranches(pick("branch:", b.data));
@@ -174,7 +175,7 @@ export function CommandPalette() {
     return () => {
       cancelled = true;
     };
-  }, [isCommandPaletteOpen]);
+  }, [isCommandPaletteOpen, activeWorkspaceId]);
 
   // Build searchable items list
   const allItems = useMemo<PaletteItem[]>(() => {

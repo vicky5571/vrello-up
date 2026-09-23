@@ -124,7 +124,8 @@ export function EventFormModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/marcom/outlets")
+    const wsParam = activeWorkspaceId ? `?workspaceId=${encodeURIComponent(activeWorkspaceId)}` : "";
+    fetch(`/api/marcom/outlets${wsParam}`)
       .then((res) => (res.ok ? res.json() : []))
       .then((json) => {
         if (Array.isArray(json)) {
@@ -134,7 +135,7 @@ export function EventFormModal({
         }
       })
       .catch(() => {});
-  }, [isOpen]);
+  }, [isOpen, activeWorkspaceId]);
 
   // Destination Space & List
   const flatSpaces = useMemo(() => getWorkspaceSpacesAndLists(rawSpaces), [rawSpaces]);

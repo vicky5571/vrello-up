@@ -12,7 +12,10 @@ const eventInclude = {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get("workspaceId") || "ws-main";
+  const workspaceId = searchParams.get("workspaceId");
+  if (!workspaceId) {
+    return NextResponse.json({ error: "workspaceId query parameter is required" }, { status: 400 });
+  }
   const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
   if (authError) return authError;
 
@@ -62,7 +65,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const workspaceId = body?.workspaceId || "ws-main";
+  const workspaceId = body?.workspaceId;
+  if (!workspaceId) {
+    return NextResponse.json({ error: "workspaceId is required in request body" }, { status: 400 });
+  }
   const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
   if (authError) return authError;
 

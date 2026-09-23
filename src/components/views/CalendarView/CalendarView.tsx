@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useWorkspaceStore, getSpaceListIds } from "@/lib/store/useWorkspaceStore";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { useShallow } from "zustand/react/shallow";
 import {
   format,
@@ -65,39 +66,36 @@ export function CalendarView() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showMarketing, setShowMarketing] = useState(true);
   const [createTaskDate, setCreateTaskDate] = useState<string | null>(null);
-  const [marketingItems, setMarketingItems] = useState<
-    { id: string; title: string; date: string; postPlatform?: string; view: "events" | "mous" }[]
-  >([]);
+
+  // Centralized Marketing Data Store subscription (workspace-scoped & cached)
+  const events = useMarcomDataStore((s) => s.eventsByWorkspace[activeWorkspaceId]);
+  const mous = useMarcomDataStore((s) => s.mousByWorkspace[activeWorkspaceId]);
+  const fetchEvents = useMarcomDataStore((s) => s.fetchEvents);
+  const fetchMous = useMarcomDataStore((s) => s.fetchMous);
 
   useEffect(() => {
-    const wsParam = activeWorkspaceId
-      ? `?workspaceId=${encodeURIComponent(activeWorkspaceId)}`
-      : "";
+    if (!activeWorkspaceId) return;
+    fetchEvents(activeWorkspaceId);
+    fetchMous(activeWorkspaceId);
+  }, [activeWorkspaceId, fetchEvents, fetchMous]);
 
-    Promise.all([
-      fetch(`/api/marcom/events${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })),
-      fetch(`/api/marcom/mous${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })),
-    ])
-      .then(([eventsRes, mousRes]) => {
-        const items: { id: string; title: string; date: string; postPlatform?: string; view: "events" | "mous" }[] = [];
-        (eventsRes.data || []).forEach(
-          (e: { id: string; name: string; date?: string; endDate?: string; postPlatform?: string }) => {
-            const d = normalizeIsoDateStr(e.date);
-            const endD = normalizeIsoDateStr(e.endDate);
-            if (d) items.push({ id: e.id, title: e.name, date: d, postPlatform: e.postPlatform, view: "events" });
-            if (endD && endD !== d) {
-              items.push({ id: `${e.id}-end`, title: `End: ${e.name}`, date: endD, postPlatform: e.postPlatform, view: "events" });
-            }
-          },
-        );
-        (mousRes.data || []).forEach((m: { id: string; partnerName: string; endDate?: string }) => {
-          const d = normalizeIsoDateStr(m.endDate);
-          if (d) items.push({ id: m.id, title: `MOU: ${m.partnerName}`, date: d, view: "mous" });
-        });
-        setMarketingItems(items);
-      })
-      .catch(() => {});
-  }, [activeWorkspaceId]);
+  const marketingItems = useMemo(() => {
+    const items: { id: string; title: string; date: string; postPlatform?: string; view: "events" | "mous" }[] = [];
+    (events || []).forEach((e) => {
+      const d = normalizeIsoDateStr(e.date || e.startDate);
+      const endD = normalizeIsoDateStr(e.endDate);
+      const postPlatform = (e as unknown as { postPlatform?: string }).postPlatform;
+      if (d) items.push({ id: e.id, title: e.name, date: d, postPlatform, view: "events" });
+      if (endD && endD !== d) {
+        items.push({ id: `${e.id}-end`, title: `End: ${e.name}`, date: endD, postPlatform, view: "events" });
+      }
+    });
+    (mous || []).forEach((m) => {
+      const d = normalizeIsoDateStr(m.endDate);
+      if (d) items.push({ id: m.id, title: `MOU: ${m.partnerName}`, date: d, view: "mous" });
+    });
+    return items;
+  }, [events, mous]);
 
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));

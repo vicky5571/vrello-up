@@ -352,5 +352,55 @@ describe("useMarcomDataStore", () => {
       assert.equal(store.getCachedEvents("ws-event-2"), undefined);
     });
   });
+
+  describe("Scoped Async Fetch Actions (fetchEvents & fetchMous)", () => {
+    it("fetchEvents returns empty array immediately if workspaceId is empty without calling fetch", async () => {
+      const store = useMarcomDataStore.getState();
+      const res = await store.fetchEvents("");
+      assert.deepEqual(res, []);
+    });
+
+    it("fetchMous returns empty array immediately if workspaceId is empty without calling fetch", async () => {
+      const store = useMarcomDataStore.getState();
+      const res = await store.fetchMous("");
+      assert.deepEqual(res, []);
+    });
+
+    it("fetchEvents returns cached events when available without refetching", async () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-cached-events";
+      const dummyEvents = [
+        {
+          id: "e-1",
+          workspaceId: wsId,
+          name: "Cached Event",
+          eventType: "PROMO",
+          status: "UPCOMING" as const,
+        },
+      ];
+      store.setCachedEvents(wsId, dummyEvents as any);
+
+      const res = await store.fetchEvents(wsId);
+      assert.deepEqual(res, dummyEvents);
+    });
+
+    it("fetchMous returns cached mous when available without refetching", async () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-cached-mous";
+      const dummyMous = [
+        {
+          id: "m-1",
+          workspaceId: wsId,
+          partnerName: "Cached Partner",
+          mouType: "Sponsorship",
+          status: "DRAFT" as const,
+        },
+      ];
+      store.setCachedMous(wsId, dummyMous as any);
+
+      const res = await store.fetchMous(wsId);
+      assert.deepEqual(res, dummyMous);
+    });
+  });
 });
 
