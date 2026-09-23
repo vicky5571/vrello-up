@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { SEED_USERS } from "@/lib/constants/seeds";
 import { useShallow } from "zustand/react/shallow";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import {

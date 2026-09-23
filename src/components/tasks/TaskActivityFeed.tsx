@@ -3,7 +3,8 @@
 import { useState, useRef } from "react";
 import { useDropdown } from "@/components/ui/useDropdown";
 import { Task, TaskComment, ActivityLog, TaskCommentAttachment } from "@/types";
-import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { SEED_USERS } from "@/lib/constants/seeds";
 import { useShallow } from "zustand/react/shallow";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import {

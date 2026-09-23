@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { SEED_USERS } from "@/lib/constants/seeds";
 import { useShallow } from "zustand/react/shallow";
 import { motion, AnimatePresence } from "framer-motion";
 import {

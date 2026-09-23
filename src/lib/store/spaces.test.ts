@@ -1,7 +1,8 @@
 import test, { beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { useWorkspaceStore, DEFAULT_STATUSES, getSpaceListIds, reconcileWorkspaces } from "./useWorkspaceStore.ts";
+import { useWorkspaceStore, getSpaceListIds, reconcileWorkspaces } from "./useWorkspaceStore.ts";
+import { DEFAULT_STATUSES } from "@/lib/constants/seeds";
 
 const api = () => useWorkspaceStore.getState();
 

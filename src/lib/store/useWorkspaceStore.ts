@@ -73,15 +73,6 @@ import {
   INITIAL_CHANNEL_MESSAGES,
   INITIAL_WORKSPACE,
 } from "@/lib/constants/seeds";
-export {
-  SEED_USERS,
-  DEFAULT_STATUSES,
-  SEED_TAGS,
-  INITIAL_SPACES,
-  INITIAL_TASKS,
-  INITIAL_CHANNEL_MESSAGES,
-  INITIAL_WORKSPACE,
-};
 
 const MARCOM_VIEW_SET = new Set<ViewMode>([
   "pipeline",

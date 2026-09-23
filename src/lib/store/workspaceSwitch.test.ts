@@ -4,7 +4,8 @@ import { type Workspace } from "@/types";
 // @ts-expect-error Node's strip-types runner requires explicit TypeScript extension
 import { switchWorkspace } from "./workspaceSwitch.ts";
 // @ts-expect-error Node's strip-types runner requires explicit TypeScript extension
-import { useWorkspaceStore, DEFAULT_STATUSES } from "./useWorkspaceStore.ts";
+import { useWorkspaceStore } from "./useWorkspaceStore.ts";
+import { DEFAULT_STATUSES } from "@/lib/constants/seeds";
 
 const MOCK_WORKSPACES: Workspace[] = [
   {

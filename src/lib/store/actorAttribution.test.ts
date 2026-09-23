@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { useWorkspaceStore, SEED_USERS } from "./useWorkspaceStore.ts";
+import { useWorkspaceStore } from "./useWorkspaceStore.ts";
+import { SEED_USERS } from "@/lib/constants/seeds";
 
 const api = () => useWorkspaceStore.getState();
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useWorkspaceStore, SEED_USERS } from "@/lib/store/useWorkspaceStore";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { SEED_USERS } from "@/lib/constants/seeds";
 import { useShallow } from "zustand/react/shallow";
 import { Task, Priority, PostPlatform, PostFormat, TaskAttachment, Folder as FolderModel, List as ListModel, ViewMode } from "@/types";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";

@@ -4,7 +4,8 @@ import { type Workspace, type Task } from "@/types";
 // @ts-expect-error Node's strip-types runner requires explicit TypeScript extension
 import { buildInitialWorkspace, removeWorkspaceAndCascadeTasks } from "./workspaceCrud.ts";
 // @ts-expect-error Node's strip-types runner requires explicit TypeScript extension
-import { useWorkspaceStore, DEFAULT_STATUSES } from "./useWorkspaceStore.ts";
+import { useWorkspaceStore } from "./useWorkspaceStore.ts";
+import { DEFAULT_STATUSES } from "@/lib/constants/seeds";
 
 test("buildInitialWorkspace creates a complete valid workspace with a default space and task list", () => {
   const ws = buildInitialWorkspace({
