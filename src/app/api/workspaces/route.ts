@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/marcom/db";
 import { type Workspace, type User, type Status } from "@/types";
-import { DEFAULT_STATUSES } from "@/lib/store/useWorkspaceStore";
+import { DEFAULT_STATUSES } from "@/lib/constants/seeds";
 import {
   getAuthenticatedUser,
   requireWorkspaceAccess,

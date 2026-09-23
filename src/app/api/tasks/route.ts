@@ -13,7 +13,7 @@ import {
   type TaskAttachment,
   type TaskCommentAttachment,
 } from "@/types";
-import { SEED_USERS, DEFAULT_STATUSES } from "@/lib/store/useWorkspaceStore";
+import { SEED_USERS, DEFAULT_STATUSES } from "@/lib/constants/seeds";
 import { realtimeHub } from "@/lib/server/realtimeHub";
 import { fetchTasksForWorkspace } from "@/lib/tasks/taskQuery";
 import {
