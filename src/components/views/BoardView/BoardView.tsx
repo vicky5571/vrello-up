@@ -17,7 +17,7 @@ import {
   type CollisionDetection,
   defaultDropAnimationSideEffects,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { BoardColumn } from "./BoardColumn";
 import { BoardCard } from "./BoardCard";
 import { BulkActionBar } from "@/components/tasks/BulkActionBar";

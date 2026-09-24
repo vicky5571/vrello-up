@@ -22,7 +22,9 @@ describe("Outlet Approval Transition Helpers", () => {
     });
 
     it("rejects when action is missing or unrecognized", () => {
-      const invalidAction = validateApprovalActionPayload({ action: "CANCEL" as any });
+      const invalidAction = validateApprovalActionPayload({
+        action: "CANCEL" as unknown as Parameters<typeof validateApprovalActionPayload>[0]["action"],
+      });
       assert.equal(invalidAction.isValid, false);
       assert.ok(invalidAction.errors.some((e) => e.includes("action")));
     });

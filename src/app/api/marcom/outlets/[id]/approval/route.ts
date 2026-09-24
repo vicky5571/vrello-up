@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireMember } from "@/lib/marcom/auth";
-import { hasScopedPermission, resolveMarcomRole } from "@/lib/marcom/guards";
+import { hasScopedPermission } from "@/lib/marcom/guards";
 import {
   validateApprovalActionPayload,
   buildApprovalTransitionData,

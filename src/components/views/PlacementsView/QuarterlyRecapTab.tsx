@@ -6,12 +6,9 @@ import {
   Sparkles,
   Layers,
   ShieldCheck,
-  Building2,
   Settings,
   Plus,
-  ArrowRight,
   TrendingUp,
-  AlertCircle,
   X,
   Check,
 } from "lucide-react";
@@ -20,7 +17,6 @@ import {
   getAvailableQuarters,
   calculateQuarterKpis,
   buildQuarterlyMatrix,
-  DEFAULT_THEME_FALLBACK,
 } from "@/lib/marcom/posmQuarterlyAnalytics";
 import {
   getProgressBarColorClass,

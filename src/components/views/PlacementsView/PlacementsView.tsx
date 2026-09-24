@@ -329,7 +329,7 @@ export function PlacementsView() {
         setIsLoading(false);
       }
     },
-    [selectedStatus, selectedBrand, activeWorkspaceId, getCachedPlacements, setCachedPlacements, fetchOutlets, fetchMaterials],
+    [selectedStatus, selectedBrand, activeWorkspaceId, getCachedPlacements, setCachedPlacements, fetchOutlets, fetchMaterials, fetchBranches],
   );
 
   useEffect(() => {

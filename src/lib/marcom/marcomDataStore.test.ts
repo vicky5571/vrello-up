@@ -378,7 +378,7 @@ describe("useMarcomDataStore", () => {
           status: "UPCOMING" as const,
         },
       ];
-      store.setCachedEvents(wsId, dummyEvents as any);
+      store.setCachedEvents(wsId, dummyEvents as unknown as FieldEventItem[]);
 
       const res = await store.fetchEvents(wsId);
       assert.deepEqual(res, dummyEvents);
@@ -396,7 +396,7 @@ describe("useMarcomDataStore", () => {
           status: "DRAFT" as const,
         },
       ];
-      store.setCachedMous(wsId, dummyMous as any);
+      store.setCachedMous(wsId, dummyMous as unknown as MarcomMou[]);
 
       const res = await store.fetchMous(wsId);
       assert.deepEqual(res, dummyMous);

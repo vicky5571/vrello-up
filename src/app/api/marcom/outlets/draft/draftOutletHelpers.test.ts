@@ -44,7 +44,7 @@ describe("Draft Outlet Submission Helpers", () => {
     it("rejects invalid outlet type", () => {
       const result = validateDraftOutletPayload({
         ...validPayload,
-        type: "SUPERMARKET" as any,
+        type: "SUPERMARKET" as unknown as RawDraftOutletInput["type"],
       });
       assert.equal(result.isValid, false);
       assert.ok(result.errors.some((e) => e.includes("type")));
@@ -53,7 +53,7 @@ describe("Draft Outlet Submission Helpers", () => {
     it("validates numeric coordinates safely", () => {
       const invalidLat = validateDraftOutletPayload({
         ...validPayload,
-        latitude: "not-a-num" as any,
+        latitude: "not-a-num" as unknown as number,
       });
       assert.equal(invalidLat.isValid, false);
     });

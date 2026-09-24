@@ -9,16 +9,13 @@ import {
   X,
   Loader2,
   Navigation,
-  AlertCircle,
-  Building2,
   Phone,
   User,
-  Image as ImageIcon,
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
-import type { OutletType, OutletTier } from "@/types";
+import type { OutletType, OutletItem } from "@/types";
 import {
   validateDraftForm,
   formatCoordinatesPreview,
@@ -32,7 +29,7 @@ export interface SubmitDraftOutletModalProps {
   onClose: () => void;
   initialName?: string;
   branches: { id: string; name: string; code: string }[];
-  onSuccess?: (newOutlet: any) => void;
+  onSuccess?: (newOutlet: OutletItem) => void;
   workspaceId?: string;
 }
 

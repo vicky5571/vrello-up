@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from "react";
 import { toast } from "sonner";
 import {
-  Store,
   CheckCircle2,
   XCircle,
   Clock,
@@ -11,7 +10,6 @@ import {
   Camera,
   ExternalLink,
   Search,
-  Filter,
   AlertTriangle,
   Loader2,
   User,
@@ -44,7 +42,7 @@ export function OutletApprovalQueueTab({
   workspaceId = "ws-main",
   onRefresh,
 }: OutletApprovalQueueTabProps) {
-  const { can, role, assignedBranchIds } = useMarcomPermissions();
+  const { can, assignedBranchIds } = useMarcomPermissions();
   const { invalidateOutlets, invalidatePlacements } = useMarcomDataStore();
 
   const [searchQuery, setSearchQuery] = useState("");

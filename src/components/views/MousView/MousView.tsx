@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDropdown } from "@/components/ui/useDropdown";
-import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins, X, Layers, AlertTriangle, ShieldAlert, Eye, ExternalLink } from "lucide-react";
+import { FileText, Download, Plus, Edit2, CheckCircle, Upload, RefreshCw, Search, ChevronDown, Check, Store, Building2, Clock, Coins, X, Layers, AlertTriangle, ShieldAlert, Eye } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
@@ -473,7 +473,7 @@ export function MousView() {
           cell: () => <div className="flex justify-end"><span className="w-4 h-4 text-slate-400 flex items-center justify-center">›</span></div>,
         }),
       ]),
-    [navigateToMarcom, setMarcomFilter, setSelectedBranchId],
+    [navigateToMarcom, setMarcomFilter, setSelectedBranchId, can],
   );
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

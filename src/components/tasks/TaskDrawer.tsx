@@ -316,7 +316,7 @@ export function TaskDrawer() {
       setIsAssigneeOpen(false);
       setAssigneeSearch("");
     }
-  }, [task?.id]);
+  }, [task]);
 
   // Handle ESC key to close drawer
   useEffect(() => {

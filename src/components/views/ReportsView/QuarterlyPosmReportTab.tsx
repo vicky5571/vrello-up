@@ -1,15 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Printer,
   Download,
   Building2,
   Sparkles,
-  ShieldCheck,
-  Layers,
-  Target,
-  TrendingUp,
   RefreshCw,
   ExternalLink,
 } from "lucide-react";
@@ -46,10 +42,10 @@ export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosm
   );
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchReportData = async () => {
+  const fetchReportData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [resPlacements, brList, matList] = await Promise.all([
+      const [resPlacements] = await Promise.all([
         fetch(`/api/marcom/placements?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
         fetchBranches(),
         fetchMaterials(),
@@ -66,16 +62,18 @@ export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosm
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [activeWorkspaceId, fetchBranches, fetchMaterials, setCachedPlacements]);
 
   useEffect(() => {
-    if (!getCachedPlacements(activeWorkspaceId) || placements.length === 0) {
+    const cached = getCachedPlacements(activeWorkspaceId);
+    if (!cached || cached.length === 0) {
       fetchReportData();
     } else {
+      setPlacements(cached);
       fetchBranches();
       fetchMaterials();
     }
-  }, [activeWorkspaceId]);
+  }, [activeWorkspaceId, fetchReportData, fetchBranches, fetchMaterials, getCachedPlacements]);
 
   const availableQuarters = useMemo(
     () => getAvailableQuarters(placements, "Q3 2026"),

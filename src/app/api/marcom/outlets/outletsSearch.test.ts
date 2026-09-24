@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {
   buildOutletSearchWhere,
   parseOutletSearchLimit,
-  type OutletSearchFilterOptions,
 } from "@/app/api/marcom/outlets/outletsSearchFilter";
 
 describe("Outlet Search Where Builder", () => {

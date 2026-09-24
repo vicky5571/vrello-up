@@ -126,7 +126,7 @@ export function OutletsView() {
         setIsLoading(false);
       }
     },
-    [selectedBranch, selectedType],
+    [selectedBranch, selectedType, fetchBranches, setStoreOutlets],
   );
 
   useEffect(() => {

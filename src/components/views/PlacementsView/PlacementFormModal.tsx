@@ -77,7 +77,12 @@ const CAMPAIGN_THEMES = [
   "Taktis Merdeka",
 ] as const;
 
-export function PlacementFormModal({
+export function PlacementFormModal(props: PlacementFormModalProps) {
+  if (!props.placement) return null;
+  return <PlacementFormModalContent {...props} placement={props.placement} />;
+}
+
+function PlacementFormModalContent({
   placement,
   onClose,
   onSave,
@@ -87,10 +92,8 @@ export function PlacementFormModal({
   materialsList,
   mousList,
   placements,
-}: PlacementFormModalProps) {
+}: PlacementFormModalProps & { placement: Partial<MarcomPlacement> }) {
   const [viewingDocMou, setViewingDocMou] = React.useState<MouSummaryInfo | null>(null);
-
-  if (!placement) return null;
 
   const selOutlet = outletsList.find((o) => o.id === placement.outletId);
   const inheritedCoords = placement.outletId

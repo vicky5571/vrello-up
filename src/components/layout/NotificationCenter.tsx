@@ -138,7 +138,7 @@ export function NotificationCenter() {
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, activeWorkspaceId]);
 
   // Close on outside click / Escape.
   useEffect(() => {

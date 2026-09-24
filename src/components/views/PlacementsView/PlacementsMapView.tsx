@@ -442,6 +442,7 @@ export function PlacementsMapView({
         markersLayerRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update Markers when mapped placements change or when map becomes ready

@@ -6,7 +6,6 @@ import { requireMember } from "@/lib/marcom/auth";
 import { hasPermission } from "@/lib/marcom/guards";
 import {
   MAX_UPLOAD_BYTES,
-  UPLOAD_ROOT_DIRNAME,
   getUploadRootDir,
   resolveUploadPath,
   sanitizeFilename,

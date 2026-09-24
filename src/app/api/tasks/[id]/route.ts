@@ -41,7 +41,6 @@ export async function PATCH(
 
     const body = await request.json();
 
-    const targetListId = body.listId || existingTask.listId;
     const targetStatusId = body.statusId || (body.listId ? existingTask.statusId : undefined);
 
     if (targetStatusId !== undefined) {
