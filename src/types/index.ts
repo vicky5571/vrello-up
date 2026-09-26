@@ -100,6 +100,8 @@ export type PostPlatform =
 
 export type PostFormat = "reel" | "carousel" | "image" | "story" | "article" | "thread";
 
+export type RelatedMarcomType = "PLACEMENT" | "FIELD_EVENT" | "MOU" | "CONTENT";
+
 export interface Task {
   id: string;
   listId: string;
@@ -122,6 +124,7 @@ export interface Task {
   mediaUrl?: string;
   attachments?: TaskAttachment[];
   relatedMarcomId?: string;
+  relatedMarcomType?: RelatedMarcomType;
   orderIndex: number;
   createdAt: string;
   updatedAt: string;

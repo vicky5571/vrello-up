@@ -382,26 +382,28 @@ model TaskItem {
   dueDate         String?
   startDate       String?
   estimatedHours  Float?
-  orderIndex      Int               @default(0)
-  relatedMarcomId String?
-  postPlatform    String?
-  postFormat      String?
-  mediaUrl        String?
-  progress        Float?
-  assignees       Json              @default("[]")
-  tags            Json              @default("[]")
-  subtasks        Json              @default("[]")
-  dependencies    Json              @default("[]")
-  attachments     Json              @default("[]")
-  comments        TaskCommentItem[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  orderIndex        Int               @default(0)
+  relatedMarcomId   String?
+  relatedMarcomType String?
+  postPlatform      String?
+  postFormat        String?
+  mediaUrl          String?
+  progress          Float?
+  assignees         Json              @default("[]")
+  tags              Json              @default("[]")
+  subtasks          Json              @default("[]")
+  dependencies      Json              @default("[]")
+  attachments       Json              @default("[]")
+  comments          TaskCommentItem[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@index([listId])
   @@index([statusId])
   @@index([listId, statusId])
   @@index([listId, orderIndex])
   @@index([relatedMarcomId])
+  @@index([relatedMarcomType])
   @@index([dueDate])
   @@index([tags(ops: JsonbOps)], type: Gin)
   @@index([assignees(ops: JsonbOps)], type: Gin)
