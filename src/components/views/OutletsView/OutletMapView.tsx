@@ -135,7 +135,7 @@ export function OutletMapView({
     const unmapped: MarcomOutlet[] = [];
 
     for (const o of outlets) {
-      const coords = resolveOutletCoordinates(o);
+      const coords = resolveOutletCoordinates(o, o.placements?.[0]);
       if (
         coords.latitude !== null &&
         coords.longitude !== null &&
@@ -317,28 +317,49 @@ export function OutletMapView({
         };
       }
 
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        maxZoom: MAX_ZOOM,
-        subdomains: "abcd",
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
       }).addTo(map);
+
+      L.control
+        .attribution({ position: "bottomright", prefix: false })
+        .addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>')
+        .addTo(map);
 
       const markersGroup = L.layerGroup().addTo(map);
       markersLayerRef.current = markersGroup;
       mapInstanceRef.current = map;
       setIsMapReady(true);
+
+      // Render initial markers immediately so they are never missed
+      renderMarkers(mappedOutlets);
+
+      // Invalidate size after layout mounts to ensure proper tile calculation
+      setTimeout(() => {
+        if (!isCancelled && mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 200);
     }
 
     initMap();
 
     return () => {
       isCancelled = true;
+      setIsMapReady(false);
       if (pinchCleanup) pinchCleanup();
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        markersLayerRef.current = null;
       }
     };
-  }, [userCoords]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Update markers when filtered outlets change
   useEffect(() => {

@@ -835,10 +835,82 @@ async function main() {
     });
   }
 
+  const CITY_COORDS: Record<string, [number, number]> = {
+    Jakarta: [-6.2088, 106.8456],
+    Tangerang: [-6.1783, 106.6319],
+    Depok: [-6.4025, 106.7942],
+    Bekasi: [-6.2383, 106.9756],
+    Bogor: [-6.5971, 106.806],
+    Bandung: [-6.9175, 107.6191],
+    Cimahi: [-6.8723, 107.5427],
+    Cirebon: [-6.732, 108.5523],
+    Sukabumi: [-6.9277, 106.93],
+    Tasikmalaya: [-7.3274, 108.2207],
+    Serang: [-6.1104, 106.164],
+    Cilegon: [-6.0174, 106.0538],
+    Semarang: [-6.9667, 110.4167],
+    Solo: [-7.5755, 110.8243],
+    Yogyakarta: [-7.7956, 110.3695],
+    Sleman: [-7.7156, 110.3556],
+    Bantul: [-7.8906, 110.3347],
+    Gunungkidul: [-7.9609, 110.6014],
+    "Kulon Progo": [-7.7766, 110.1583],
+    Purwokerto: [-7.4243, 109.2391],
+    Banyumas: [-7.5167, 109.2975],
+    Cilacap: [-7.7279, 109.0059],
+    Magelang: [-7.4706, 110.2178],
+    Klaten: [-7.7058, 110.6017],
+    Pekalongan: [-6.8886, 109.6753],
+    Batang: [-6.9103, 109.7303],
+    Tegal: [-6.8694, 109.1402],
+    Brebes: [-6.8703, 109.0425],
+    Pemalang: [-6.8919, 109.3812],
+    Kudus: [-6.8048, 110.8405],
+    Jepara: [-6.5932, 110.6778],
+    Pati: [-6.7561, 111.0379],
+    Rembang: [-6.7063, 111.3444],
+    Blora: [-6.9698, 111.4184],
+    Kendal: [-6.9249, 110.2038],
+    Boyolali: [-7.5361, 110.5947],
+    Sukoharjo: [-7.6833, 110.8333],
+    Karanganyar: [-7.5961, 110.9514],
+    Sragen: [-7.4264, 111.0219],
+    Wonogiri: [-7.8139, 110.9256],
+    Temanggung: [-7.3167, 110.1778],
+    Wonosobo: [-7.3639, 109.9],
+    Purbalingga: [-7.3892, 109.3639],
+    Banjarnegara: [-7.3975, 109.6975],
+    Kebumen: [-7.6686, 109.6522],
+    Demak: [-6.8944, 110.6389],
+    Grobogan: [-7.1136, 110.9167],
+    Salatiga: [-7.3306, 110.5083],
+    Surabaya: [-7.2575, 112.7521],
+    Sidoarjo: [-7.4478, 112.7183],
+    Malang: [-7.9797, 112.6304],
+    Batu: [-7.8711, 112.527],
+    Kediri: [-7.848, 112.0178],
+    Blitar: [-8.0983, 112.1681],
+    Madiun: [-7.6298, 111.5239],
+    Jember: [-8.1724, 113.6995],
+    Banyuwangi: [-8.2192, 114.3691],
+    Pasuruan: [-7.6453, 112.9075],
+    Probolinggo: [-7.7543, 113.2159],
+    Tuban: [-6.8976, 112.0649],
+    Lamongan: [-7.1282, 112.4131],
+    Gresik: [-7.1566, 112.6555],
+    Denpasar: [-8.6705, 115.2126],
+    Badung: [-8.5819, 115.1771],
+  };
+
   const outlets = Array.from({ length: 225 }).map((_, index) => {
     const outletNum = index + 1;
     const branch = branches[index % branches.length];
     const prefix = outletNamePrefixes[index % outletNamePrefixes.length];
+    const base = CITY_COORDS[branch.city] || [-6.2088, 106.8456];
+    const latOffset = (((index * 17) % 50) - 25) * 0.0012;
+    const lngOffset = (((index * 31) % 50) - 25) * 0.0012;
+    const latitude = Number((base[0] + latOffset).toFixed(6));
+    const longitude = Number((base[1] + lngOffset).toFixed(6));
     return {
       id: `outlet-${outletNum}`,
       code: `OUT-${branch.code.replace("BR-", "")}-${String((index % 30) + 1).padStart(3, "0")}`,
@@ -847,6 +919,8 @@ async function main() {
       tier: outletTiers[(index + 1) % outletTiers.length],
       address: `${branch.address.split("No.")[0]}No. ${10 + ((index * 3) % 200)}, ${branch.city}`,
       city: branch.city,
+      latitude,
+      longitude,
       picName: `PIC ${branch.picName.split(" ")[0]} - ${outletNum}`,
       picPhone: `+62 821-${String(3000 + outletNum).padStart(4, "0")}-${String(100 + (outletNum % 900)).padStart(4, "0")}`,
       active: index % 18 !== 0,

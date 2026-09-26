@@ -508,11 +508,8 @@ export function OutletsView() {
               <Store className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                <span>Store Command Center</span>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800">
-                  Profil 360° & Peta GPS
-                </span>
+              <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                Store Command Center
               </h1>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Pusat data jaringan outlet, integrasi MoU, riwayat branding fisik, dan geolokasi.

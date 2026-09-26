@@ -512,6 +512,7 @@ export interface OutletItem {
   mouCount?: number;
   latitude?: number | null;
   longitude?: number | null;
+  placements?: { id?: string; latitude?: number | null; longitude?: number | null }[];
 
   // Lifecycle & Approval fields (Fase 2B)
   status?: OutletStatus;
