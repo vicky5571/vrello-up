@@ -705,7 +705,7 @@ export function PlacementsView() {
         setMarcomFilter("placements", filter.materialName);
       }
       toast.info(
-        `Menampilkan toko dengan materi: ${filter.campaignTheme || filter.materialName || "Semua"} (${filter.quarter})`
+        `Menampilkan outlet dengan materi: ${filter.campaignTheme || filter.materialName || "Semua"} (${filter.quarter})`
       );
     },
     [setMarcomFilter],

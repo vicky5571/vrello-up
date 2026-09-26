@@ -128,18 +128,18 @@ export function OutletApprovalQueueTab({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Gagal menyetujui toko (${res.status})`);
+        throw new Error(data.error || `Gagal menyetujui outlet (${res.status})`);
       }
 
       toast.success(
-        `Toko "${approvingOutlet.name}" berhasil di-ACC dan aktif dengan kode ${officialCodeInput.trim()}!`
+        `Outlet "${approvingOutlet.name}" berhasil di-ACC dan aktif dengan kode ${officialCodeInput.trim()}!`
       );
       invalidateOutlets();
       invalidatePlacements(workspaceId);
       setApprovingOutlet(null);
       await onRefresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan saat ACC toko.");
+      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan saat ACC outlet.");
     } finally {
       setIsProcessing(false);
     }
@@ -168,16 +168,16 @@ export function OutletApprovalQueueTab({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Gagal menolak toko (${res.status})`);
+        throw new Error(data.error || `Gagal menolak outlet (${res.status})`);
       }
 
-      toast.success(`Pengajuan toko "${rejectingOutlet.name}" telah ditolak.`);
+      toast.success(`Pengajuan outlet "${rejectingOutlet.name}" telah ditolak.`);
       invalidateOutlets();
       setRejectingOutlet(null);
       setRejectionReason("");
       await onRefresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan saat menolak toko.");
+      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan saat menolak outlet.");
     } finally {
       setIsProcessing(false);
     }
@@ -194,7 +194,7 @@ export function OutletApprovalQueueTab({
               Menunggu Persetujuan (ACC)
             </p>
             <h4 className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1">
-              {totalPending} <span className="text-xs font-normal text-slate-500">toko</span>
+              {totalPending} <span className="text-xs font-normal text-slate-500">outlet</span>
             </h4>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 flex items-center justify-center">
@@ -240,7 +240,7 @@ export function OutletApprovalQueueTab({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari nama toko, kode draft, atau PIC..."
+              placeholder="Cari nama outlet, kode draft, atau PIC..."
               className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-orange-500"
             />
           </div>
@@ -274,7 +274,7 @@ export function OutletApprovalQueueTab({
             Tidak Ada Antrean Persetujuan
           </h4>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-            Semua pengajuan toko baru dari sales lapangan telah ditinjau atau belum ada pengajuan baru.
+            Semua pengajuan outlet baru dari sales lapangan telah ditinjau atau belum ada pengajuan baru.
           </p>
         </div>
       ) : (
@@ -349,9 +349,9 @@ export function OutletApprovalQueueTab({
                     <div className="p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200 text-xs flex items-start gap-2.5">
                       <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-bold">Potensi Toko Duplikat Terdeteksi!</p>
+                        <p className="font-bold">Potensi Outlet Duplikat Terdeteksi!</p>
                         <p className="text-[11px] text-amber-700 dark:text-amber-300">
-                          Ditemukan {duplicates.length} toko aktif dengan nama serupa di cabang ini:{" "}
+                          Ditemukan {duplicates.length} outlet aktif dengan nama serupa di cabang ini:{" "}
                           <span className="font-semibold">
                             {duplicates.map((d) => `${d.name} (${d.code})`).join(", ")}
                           </span>
@@ -484,14 +484,14 @@ export function OutletApprovalQueueTab({
                   Konfirmasi Persetujuan (ACC)
                 </h4>
                 <p className="text-xs text-slate-500">
-                  Toko akan diaktifkan dan terdaftar di master data 25.000 outlet.
+                  Outlet akan diaktifkan dan terdaftar di master data 25.000 outlet.
                 </p>
               </div>
             </div>
 
             <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-1 text-xs">
               <p>
-                Nama Toko: <strong className="text-slate-900 dark:text-slate-100">{approvingOutlet.name}</strong>
+                Nama Outlet: <strong className="text-slate-900 dark:text-slate-100">{approvingOutlet.name}</strong>
               </p>
               <p>
                 Cabang:{" "}
@@ -513,7 +513,7 @@ export function OutletApprovalQueueTab({
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
               />
               <p className="text-[11px] text-slate-400 mt-1">
-                Kode resmi disarankan otomatis berdasarkan urutan toko di cabang ini.
+                Kode resmi disarankan otomatis berdasarkan urutan outlet di cabang ini.
               </p>
             </div>
 
@@ -533,7 +533,7 @@ export function OutletApprovalQueueTab({
                 className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 inline-flex items-center gap-1.5 disabled:opacity-50"
               >
                 {isProcessing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                <span>Konfirmasi ACC Toko</span>
+                <span>Konfirmasi ACC Outlet</span>
               </button>
             </div>
           </div>
@@ -550,7 +550,7 @@ export function OutletApprovalQueueTab({
               </div>
               <div>
                 <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  Tolak Pengajuan Toko
+                  Tolak Pengajuan Outlet
                 </h4>
                 <p className="text-xs text-slate-500">
                   Berikan alasan penolakan agar sales lapangan dapat memperbaiki data.
@@ -567,7 +567,7 @@ export function OutletApprovalQueueTab({
                 rows={3}
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Contoh: Toko duplikat dengan O-SMG-012, atau foto tampak depan buram."
+                placeholder="Contoh: Outlet duplikat dengan O-SMG-012, atau foto tampak depan buram."
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-rose-500"
               />
             </div>
@@ -611,7 +611,7 @@ export function OutletApprovalQueueTab({
             </button>
             <img
               src={enlargedPhotoUrl}
-              alt="Foto Toko Penuh"
+              alt="Foto Outlet Penuh"
               className="max-h-[85vh] w-auto object-contain"
             />
           </div>

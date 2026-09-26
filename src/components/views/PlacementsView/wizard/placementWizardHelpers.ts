@@ -10,7 +10,7 @@ export interface WizardStepInfo {
 }
 
 export const WIZARD_STEPS: WizardStepInfo[] = [
-  { step: 1, label: "Pilih Outlet", shortLabel: "Toko", description: "Pencarian ID & Brand Toko" },
+  { step: 1, label: "Pilih Outlet", shortLabel: "Outlet", description: "Pencarian ID & Brand Outlet" },
   { step: 2, label: "Material & Tema", shortLabel: "Materi", description: "Klasifikasi POSM & Kuartal" },
   { step: 3, label: "Foto Bukti Fisik", shortLabel: "Foto", description: "Unggah Dokumentasi Lapangan" },
   { step: 4, label: "Validasi Lokasi", shortLabel: "Lokasi", description: "Verifikasi GPS & OpenStreetMap" },
@@ -121,4 +121,63 @@ export function getStepCompletionStatus(
     3: step3,
     4: step4,
   };
+}
+
+/**
+ * Common POSM physical placement location presets for fast 1-tap mobile entry.
+ */
+export const LOCATION_NOTE_PRESETS = [
+  "Etalase Depan",
+  "Dinding Kasir",
+  "Tiang Luar",
+  "Pintu Masuk",
+  "Meja Pelayanan",
+] as const;
+
+/**
+ * Checks if a placement has an associated financial cost (> Rp 0).
+ */
+export function isPaidPlacement(cost: number | null | undefined): boolean {
+  return typeof cost === "number" && !Number.isNaN(cost) && cost > 0;
+}
+
+/**
+ * Toggles a placement between free routine POSM (Rp 0) and paid store leasing.
+ */
+export function togglePaidPlacement(
+  currentPlacement: Partial<MarcomPlacement>,
+  isPaid: boolean
+): Partial<MarcomPlacement> {
+  if (!isPaid) {
+    return { ...currentPlacement, cost: 0 };
+  }
+  const existingCost = currentPlacement.cost;
+  return {
+    ...currentPlacement,
+    cost: isPaidPlacement(existingCost) ? existingCost : undefined,
+  };
+}
+
+/**
+ * Toggles a bracketed preset tag (e.g. "[Etalase Depan]") inside field notes cleanly.
+ */
+export function applyLocationNotePreset(
+  currentNotes: string | undefined,
+  presetTag: string
+): string {
+  const tag = `[${presetTag}]`;
+  const raw = currentNotes || "";
+
+  if (raw.includes(tag)) {
+    return raw
+      .replace(tag, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return tag;
+  }
+  return `${tag} ${trimmed}`;
 }

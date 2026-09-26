@@ -252,7 +252,7 @@ export function QuarterlyRecapTab({
             <span className="text-xs font-normal text-slate-500 ml-1.5">Valid</span>
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {kpis.validLocationCount} dari {kpis.totalActual} foto diambil di toko (avg {kpis.averageDeviationMeters}m)
+            {kpis.validLocationCount} dari {kpis.totalActual} foto diambil di outlet (avg {kpis.averageDeviationMeters}m)
           </div>
         </div>
       </div>
@@ -266,7 +266,7 @@ export function QuarterlyRecapTab({
               Matriks Distribusi POSM ({selectedQuarter})
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Klik pada angka di dalam kotak untuk langsung melihat daftar toko yang terpasang material tersebut.
+              Klik pada angka di dalam kotak untuk langsung melihat daftar outlet yang terpasang material tersebut.
             </p>
           </div>
           <div className="text-xs text-slate-400 hidden sm:block">
@@ -307,7 +307,7 @@ export function QuarterlyRecapTab({
                         key={mat.id}
                         onClick={() => handleCellClick(row.theme, mat.id, mat.name)}
                         className="py-3.5 px-4 text-center cursor-pointer group hover:bg-blue-50/60 dark:hover:bg-blue-900/20 transition-colors rounded-lg"
-                        title={`Klik untuk melihat toko dengan tema ${row.theme} & ${mat.name}`}
+                        title={`Klik untuk melihat outlet dengan tema ${row.theme} & ${mat.name}`}
                       >
                         <div className="flex flex-col items-center justify-center">
                           <div className="flex items-baseline gap-1">

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { LocationPicker } from "../LocationPicker";
 import { evaluateGeofenceStatus } from "@/lib/marcom/locationUtils";
 import { MapPin, CheckCircle2, AlertTriangle, ShieldCheck, Store, Layers } from "lucide-react";
@@ -22,6 +22,7 @@ export function Step4LocationVerification({
   materialName,
   outletName,
 }: Step4LocationVerificationProps) {
+  const [isMapUnlocked, setIsMapUnlocked] = useState(false);
   const geoStatus = evaluateGeofenceStatus(
     outletCoordinates,
     placement.latitude != null && placement.longitude != null
@@ -49,23 +50,48 @@ export function Step4LocationVerification({
           <p className="font-bold">{geoStatus.message}</p>
           {geoStatus.deviationMeters != null && (
             <p className="text-[11px] opacity-80">
-              Jarak terhitung: <strong>{geoStatus.deviationMeters} meter</strong> dari koordinat toko resmi (toleransi maksimal 100m).
+              Jarak terhitung: <strong>{geoStatus.deviationMeters} meter</strong> dari koordinat outlet resmi (toleransi maksimal 100m).
             </p>
           )}
         </div>
       </div>
 
-      {/* Embedded LocationPicker / Leaflet Map */}
-      <LocationPicker
-        latitude={placement.latitude}
-        longitude={placement.longitude}
-        shareLocationUrl={placement.shareLocationUrl}
-        locationNotes={placement.locationNotes}
-        outletCoordinates={outletCoordinates}
-        onChange={(loc) =>
-          setPlacement((prev) => (prev ? { ...prev, ...loc } : prev))
-        }
-      />
+      {/* Embedded LocationPicker / Leaflet Map with Mobile Scroll Guard */}
+      <div className="relative rounded-2xl overflow-hidden">
+        {!isMapUnlocked && (
+          <div
+            onClick={() => setIsMapUnlocked(true)}
+            className="sm:hidden absolute inset-0 z-10 bg-slate-900/10 backdrop-blur-[1px] flex items-center justify-center p-4 cursor-pointer transition-all hover:bg-slate-900/15"
+          >
+            <div className="px-3 py-1.5 rounded-full bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-[11px] font-bold shadow-md border border-slate-200 dark:border-slate-700 flex items-center gap-1.5">
+              <span>👆 Ketuk untuk geser pin peta</span>
+            </div>
+          </div>
+        )}
+
+        {isMapUnlocked && (
+          <div className="sm:hidden absolute top-2 right-2 z-20">
+            <button
+              type="button"
+              onClick={() => setIsMapUnlocked(false)}
+              className="px-2.5 py-1 rounded-full bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 text-[10px] font-bold shadow-xs border border-slate-200 dark:border-slate-700 backdrop-blur-xs flex items-center gap-1 cursor-pointer"
+            >
+              <span>🔒 Kunci Scroll Modal</span>
+            </button>
+          </div>
+        )}
+
+        <LocationPicker
+          latitude={placement.latitude}
+          longitude={placement.longitude}
+          shareLocationUrl={placement.shareLocationUrl}
+          locationNotes={placement.locationNotes}
+          outletCoordinates={outletCoordinates}
+          onChange={(loc) =>
+            setPlacement((prev) => (prev ? { ...prev, ...loc } : prev))
+          }
+        />
+      </div>
 
       {/* Final Verification Recap Pill */}
       <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs space-y-1.5">
@@ -77,7 +103,7 @@ export function Step4LocationVerification({
         <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400">
           <div className="flex items-center gap-1.5 truncate">
             <Store className="w-3 h-3 text-slate-400 shrink-0" />
-            <span className="truncate">Toko: <strong>{outletName || "Belum dipilih"}</strong></span>
+            <span className="truncate">Outlet: <strong>{outletName || "Belum dipilih"}</strong></span>
           </div>
 
           <div className="flex items-center gap-1.5 truncate">

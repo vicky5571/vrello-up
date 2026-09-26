@@ -4,6 +4,10 @@ import React from "react";
 import { Camera, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlacementPhotoUploader } from "../PlacementPhotoUploader";
+import {
+  LOCATION_NOTE_PRESETS,
+  applyLocationNotePreset,
+} from "./placementWizardHelpers";
 import type { MarcomPlacement, PlacementStatus } from "@/types";
 
 interface Step3PhotoNotesProps {
@@ -109,14 +113,51 @@ export function Step3PhotoNotes({
         </div>
       )}
 
-      {/* Catatan Lapangan */}
+      {/* Catatan Lapangan & Quick Position Chips */}
       <div>
-        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-          Catatan Lapangan (Notes)
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Catatan Lapangan & Posisi Material
+          </label>
+          <span className="text-[10px] text-slate-400">
+            Pilih cepat posisi atau ketik catatan
+          </span>
+        </div>
+
+        {/* Quick Position Pills */}
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {LOCATION_NOTE_PRESETS.map((preset) => {
+            const isSelected = (placement.notes || "").includes(`[${preset}]`);
+            return (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => {
+                  setPlacement((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          notes: applyLocationNotePreset(prev.notes, preset),
+                        }
+                      : prev
+                  );
+                }}
+                className={cn(
+                  "px-2.5 py-1 text-[11px] font-semibold rounded-lg border transition-all cursor-pointer",
+                  isSelected
+                    ? "bg-lime-500/20 text-lime-900 dark:text-lime-200 border-lime-500 shadow-2xs ring-1 ring-lime-500/40"
+                    : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                )}
+              >
+                <span>{preset}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <textarea
           rows={2}
-          placeholder="Catatan kondisi toko, posisi material (mis: etalase depan), atau kendala..."
+          placeholder="Catatan kondisi outlet, posisi material, atau kendala lapangan..."
           value={placement.notes || ""}
           onChange={(e) =>
             setPlacement((prev) => (prev ? { ...prev, notes: e.target.value } : prev))

@@ -13,7 +13,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isPermanentMaterial, type MouSummaryInfo, type MouValidationResult } from "@/lib/marcom/placementMouBridge";
-import { shouldShowMouSection } from "./placementWizardHelpers";
+import {
+  shouldShowMouSection,
+  isPaidPlacement,
+  togglePaidPlacement,
+} from "./placementWizardHelpers";
 import type { MarcomPlacement } from "@/types";
 
 export const POSM_MATERIALS = [
@@ -230,6 +234,75 @@ export function Step2MaterialTheme({
         </div>
       </div>
 
+      {/* Dimensi Biaya: Bebas Biaya vs Pemasangan Berbayar */}
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+          Skema Biaya & Legalitas *
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setPlacement((prev) => (prev ? togglePaidPlacement(prev, false) : prev));
+            }}
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+              !isPaidPlacement(placement.cost)
+                ? "bg-lime-500/15 text-lime-900 dark:text-lime-200 border-lime-500/60 shadow-2xs ring-1 ring-lime-500/40"
+                : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+            )}
+          >
+            <span>🏷️ Bebas Biaya (Rp 0)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setPlacement((prev) => (prev ? togglePaidPlacement(prev, true) : prev));
+              setIsMouManuallyExpanded(true);
+            }}
+            className={cn(
+              "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+              isPaidPlacement(placement.cost)
+                ? "bg-amber-500/15 text-amber-900 dark:text-amber-200 border-amber-500/60 shadow-2xs ring-1 ring-amber-500/40"
+                : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+            )}
+          >
+            <span>💰 Pemasangan Berbayar</span>
+          </button>
+        </div>
+
+        {/* Input Biaya if Paid */}
+        {isPaidPlacement(placement.cost) && (
+          <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300/80 dark:border-amber-800/80 space-y-1.5 animate-in fade-in-50 duration-150">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                Nominal Sewa / Kompensasi Outlet (Rp) *
+              </label>
+              <span className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold">
+                Wajib MoU
+              </span>
+            </div>
+            <input
+              type="number"
+              placeholder="e.g. 500000"
+              value={placement.cost != null && placement.cost > 0 ? String(placement.cost) : ""}
+              onChange={(e) =>
+                setPlacement((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        cost: e.target.value ? Number(e.target.value) : undefined,
+                      }
+                    : prev
+                )
+              }
+              className="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg bg-white dark:bg-slate-900 border border-amber-400 dark:border-amber-600 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
+        )}
+      </div>
+
       {/* Progressive Disclosure: MOU Linking Section */}
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
         {!showMou ? (
@@ -336,7 +409,7 @@ export function Step2MaterialTheme({
         >
           <span className="flex items-center gap-1.5">
             <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
-            Detail Tambahan (Biaya, Dimensi, Tanggal)
+            Detail Tambahan (Dimensi, PIC, Tanggal)
           </span>
           {isAuxFieldsExpanded ? (
             <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
@@ -347,45 +420,21 @@ export function Step2MaterialTheme({
 
         {isAuxFieldsExpanded && (
           <div className="p-3 space-y-3 bg-white dark:bg-slate-900 border-t border-slate-200/60 dark:border-slate-800 animate-in fade-in-50 duration-150">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  Biaya Sewa / Pasang (Rp)
-                </label>
-                <input
-                  type="number"
-                  placeholder="e.g. 250000"
-                  value={placement.cost != null ? String(placement.cost) : ""}
-                  onChange={(e) =>
-                    setPlacement((prev) =>
-                      prev
-                        ? {
-                            ...prev,
-                            cost: e.target.value ? Number(e.target.value) : undefined,
-                          }
-                        : prev
-                    )
-                  }
-                  className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  Dimensi Fisik
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 2x1 meter"
-                  value={placement.dimensions || ""}
-                  onChange={(e) =>
-                    setPlacement((prev) =>
-                      prev ? { ...prev, dimensions: e.target.value } : prev
-                    )
-                  }
-                  className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500"
-                />
-              </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                Dimensi Fisik Material
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 2x1 meter, Lebar 80cm"
+                value={placement.dimensions || ""}
+                onChange={(e) =>
+                  setPlacement((prev) =>
+                    prev ? { ...prev, dimensions: e.target.value } : prev
+                  )
+                }
+                className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">

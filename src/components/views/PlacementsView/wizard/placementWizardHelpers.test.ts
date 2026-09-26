@@ -5,6 +5,9 @@ import {
   applySmartDefaultsOnOutletSelect,
   shouldShowMouSection,
   getStepCompletionStatus,
+  isPaidPlacement,
+  togglePaidPlacement,
+  applyLocationNotePreset,
 } from "@/components/views/PlacementsView/wizard/placementWizardHelpers";
 import type { MarcomPlacement } from "@/types";
 
@@ -148,6 +151,63 @@ describe("placementWizardHelpers", () => {
       assert.equal(status[2], true);
       assert.equal(status[3], true);
       assert.equal(status[4], true);
+    });
+  });
+
+  describe("isPaidPlacement", () => {
+    it("returns false for 0, undefined, null, or negative cost", () => {
+      assert.equal(isPaidPlacement(0), false);
+      assert.equal(isPaidPlacement(undefined), false);
+      assert.equal(isPaidPlacement(null), false);
+      assert.equal(isPaidPlacement(-5000), false);
+    });
+
+    it("returns true for positive cost", () => {
+      assert.equal(isPaidPlacement(50000), true);
+      assert.equal(isPaidPlacement(1), true);
+    });
+  });
+
+  describe("togglePaidPlacement", () => {
+    it("sets cost to 0 when toggled to free", () => {
+      const result = togglePaidPlacement({ cost: 150000, materialId: "m1" }, false);
+      assert.equal(result.cost, 0);
+      assert.equal(result.materialId, "m1");
+    });
+
+    it("preserves positive cost or leaves cost undefined when toggling to paid", () => {
+      const resultExisting = togglePaidPlacement({ cost: 200000 }, true);
+      assert.equal(resultExisting.cost, 200000);
+
+      const resultZero = togglePaidPlacement({ cost: 0 }, true);
+      assert.equal(resultZero.cost, undefined);
+    });
+  });
+
+  describe("applyLocationNotePreset", () => {
+    it("appends bracketed preset tag to empty notes", () => {
+      const res = applyLocationNotePreset("", "Etalase Depan");
+      assert.equal(res, "[Etalase Depan]");
+    });
+
+    it("prepends preset tag without corrupting existing text", () => {
+      const res = applyLocationNotePreset("Kios sebelah apotek", "Dinding Kasir");
+      assert.equal(res, "[Dinding Kasir] Kios sebelah apotek");
+    });
+
+    it("removes preset tag when already present (toggle behavior)", () => {
+      const initial = "[Etalase Depan] Kios sebelah apotek";
+      const toggledOff = applyLocationNotePreset(initial, "Etalase Depan");
+      assert.equal(toggledOff, "Kios sebelah apotek");
+    });
+
+    it("handles multiple tags cleanly", () => {
+      let notes = applyLocationNotePreset("", "Etalase Depan");
+      notes = applyLocationNotePreset(notes, "Tiang Luar");
+      assert.equal(notes, "[Tiang Luar] [Etalase Depan]");
+
+      notes = applyLocationNotePreset(notes, "Etalase Depan");
+      assert.equal(notes, "[Tiang Luar]");
     });
   });
 });

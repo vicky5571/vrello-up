@@ -550,7 +550,7 @@ export function OutletSearchCombobox({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30 text-xs font-semibold transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Toko belum terdaftar? Ajukan Toko Baru</span>
+                    <span>Outlet belum terdaftar? Ajukan Outlet Baru</span>
                   </button>
                 </div>
               )}
@@ -665,7 +665,7 @@ export function OutletSearchCombobox({
                       className="w-full flex items-center justify-center gap-1.5 py-1 text-center text-xs font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Toko tidak ditemukan? Ajukan Toko Baru</span>
+                      <span>Outlet tidak ditemukan? Ajukan Outlet Baru</span>
                     </button>
                   </div>
                 </>

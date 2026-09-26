@@ -128,7 +128,7 @@ export function SubmitDraftOutletModal({
     const validation = validateDraftForm(formData);
     if (!validation.isValid) {
       setErrors(validation.errors);
-      toast.error("Mohon lengkapi seluruh data wajib pengajuan toko baru.");
+      toast.error("Mohon lengkapi seluruh data wajib pengajuan outlet baru.");
       return;
     }
 
@@ -143,12 +143,12 @@ export function SubmitDraftOutletModal({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Gagal mengajukan toko baru (${res.status})`);
+        throw new Error(data.error || `Gagal mengajukan outlet baru (${res.status})`);
       }
 
       const createdOutlet = await res.json();
       toast.success(
-        "Pengajuan toko baru berhasil dikirim dan menunggu persetujuan (ACC) Atasan / Admin Regional.",
+        "Pengajuan outlet baru berhasil dikirim dan menunggu persetujuan (ACC) Atasan / Admin Regional.",
         { duration: 5000 }
       );
 
@@ -158,7 +158,7 @@ export function SubmitDraftOutletModal({
       }
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan saat pengajuan toko.");
+      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan saat pengajuan outlet.");
     } finally {
       setIsSubmitting(false);
     }
@@ -178,10 +178,10 @@ export function SubmitDraftOutletModal({
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Pengajuan Toko Baru (Draft Outlet)
+                Pengajuan Outlet Baru (Draft Outlet)
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Toko akan masuk antrean review untuk persetujuan (ACC) Atasan / Admin Regional.
+                Outlet akan masuk antrean review untuk persetujuan (ACC) Atasan / Admin Regional.
               </p>
             </div>
           </div>
@@ -199,7 +199,7 @@ export function SubmitDraftOutletModal({
           {/* Outlet Name */}
           <div>
             <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Nama Toko / Kios <span className="text-rose-500">*</span>
+              Nama Outlet / Kios <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -224,7 +224,7 @@ export function SubmitDraftOutletModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Jenis Toko
+                Jenis Outlet
               </label>
               <select
                 value={formData.type}
@@ -303,7 +303,7 @@ export function SubmitDraftOutletModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Nama Pemilik / PIC Toko
+                Nama Pemilik / PIC Outlet
               </label>
               <div className="relative">
                 <User className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
@@ -372,7 +372,7 @@ export function SubmitDraftOutletModal({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
                 <Camera className="w-4 h-4 text-orange-500" />
-                <span>Foto Fasad / Tampak Depan Toko</span>
+                <span>Foto Fasad / Tampak Depan Outlet</span>
                 <span className="text-rose-500">*</span>
               </div>
               <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-medium text-[11px] text-slate-700 dark:text-slate-200 transition-colors">
@@ -405,7 +405,7 @@ export function SubmitDraftOutletModal({
               <div className="relative mt-2 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-40 bg-slate-950 flex items-center justify-center">
                 <img
                   src={formData.photoUrl}
-                  alt="Pratinjau Toko"
+                  alt="Pratinjau Outlet"
                   className="max-h-40 w-auto object-contain"
                 />
                 <button
@@ -448,7 +448,7 @@ export function SubmitDraftOutletModal({
             ) : (
               <>
                 <Check className="w-3.5 h-3.5" />
-                <span>Kirim Pengajuan Toko</span>
+                <span>Kirim Pengajuan Outlet</span>
               </>
             )}
           </button>
