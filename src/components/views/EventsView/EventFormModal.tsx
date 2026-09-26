@@ -428,6 +428,7 @@ export function EventFormModal({
           tags: [],
           subtasks: formattedSubtasks,
           relatedMarcomId: savedId,
+          relatedMarcomType: "FIELD_EVENT",
         });
       } else if (existingTask) {
         const updates: Partial<Task> = {

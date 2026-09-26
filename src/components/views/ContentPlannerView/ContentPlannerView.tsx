@@ -394,6 +394,7 @@ export function ContentPlannerView() {
         postFormat: format,
         mediaUrl: mediaUrl.trim() || undefined,
         relatedMarcomId: savedItem.id,
+        relatedMarcomType: "CONTENT",
         tags: [],
         subtasks: postSubtasks.map((s, i) => ({
           id: `sub-${Date.now()}-${i}`,
@@ -521,6 +522,7 @@ export function ContentPlannerView() {
           postFormat: item.format,
           mediaUrl: item.mediaUrl || undefined,
           relatedMarcomId: item.id,
+          relatedMarcomType: "CONTENT",
           tags: [],
           subtasks: Array.isArray(item.subtasks)
             ? item.subtasks.map((s, i) => ({

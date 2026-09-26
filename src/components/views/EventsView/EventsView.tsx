@@ -248,6 +248,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
             createdAt: new Date().toISOString(),
           })),
           relatedMarcomId: event.id,
+          relatedMarcomType: "FIELD_EVENT",
         });
       }
 

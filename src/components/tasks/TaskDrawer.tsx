@@ -400,7 +400,7 @@ export function TaskDrawer() {
             className="relative z-10 w-full max-w-2xl sm:max-w-3xl h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col justify-between overflow-hidden"
           >
             {/* Return to Marcom / Field Events Banner */}
-            {(navigatedFromMarcom || (task?.relatedMarcomId && task?.title?.startsWith("[Field Event]"))) && (
+            {(navigatedFromMarcom || (task?.relatedMarcomId && (task?.relatedMarcomType === "FIELD_EVENT" || task?.title?.startsWith("[Field Event]")))) && (
               <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-transparent border-b border-blue-200/80 dark:border-blue-900/60 px-4 py-2 flex items-center justify-between text-xs shrink-0">
                 <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 min-w-0 pr-2">
                   <Flag className="w-3.5 h-3.5 text-blue-500 shrink-0" />

@@ -55,6 +55,7 @@ test("Custom Automations Store & Engine", async (t) => {
     const createdTask = api().tasks[0];
     assert.ok(createdTask.title.includes("Grand Hyatt"), "Task title should reference partner");
     assert.equal(createdTask.relatedMarcomId, "mou-test-123");
+    assert.equal(createdTask.relatedMarcomType, "MOU");
     assert.equal(createdTask.priority, "high");
 
     const updatedRule = api().customAutomations.find((r) => r.id === rule.id);

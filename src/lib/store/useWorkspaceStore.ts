@@ -672,6 +672,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
                 priority: "high",
                 orderIndex: 0,
                 relatedMarcomId: mouId || undefined,
+                relatedMarcomType: "MOU",
                 assignees: [actor],
                 subtasks: [
                   {
@@ -1020,8 +1021,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         syncUpdateTask(id, updates);
         if (updates.statusId && prev?.relatedMarcomId) {
           const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
-          syncFieldEventOnTaskStatusChange(prev, updates.statusId, currentWs?.spaces || []);
-          syncPlacementOnTaskStatusChange(prev, updates.statusId, currentWs?.spaces || []);
+          const spaces = currentWs?.spaces || [];
+          if (!prev.relatedMarcomType || prev.relatedMarcomType === "FIELD_EVENT") {
+            syncFieldEventOnTaskStatusChange(prev, updates.statusId, spaces);
+          }
+          if (!prev.relatedMarcomType || prev.relatedMarcomType === "PLACEMENT") {
+            syncPlacementOnTaskStatusChange(prev, updates.statusId, spaces);
+          }
         }
         // rule-1 "Auto-assign Urgent Tasks": assign the lead and ensure a
         // due date of today. Nested updateTask can't refire (no priority key).
@@ -1130,8 +1136,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         });
         if (prev?.relatedMarcomId) {
           const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
-          syncFieldEventOnTaskStatusChange(prev, newStatusId, currentWs?.spaces || []);
-          syncPlacementOnTaskStatusChange(prev, newStatusId, currentWs?.spaces || []);
+          const spaces = currentWs?.spaces || [];
+          if (!prev.relatedMarcomType || prev.relatedMarcomType === "FIELD_EVENT") {
+            syncFieldEventOnTaskStatusChange(prev, newStatusId, spaces);
+          }
+          if (!prev.relatedMarcomType || prev.relatedMarcomType === "PLACEMENT") {
+            syncPlacementOnTaskStatusChange(prev, newStatusId, spaces);
+          }
         }
         // rule-2 "Completion Notification": log completion with assignee count.
         if (!prev || prev.statusId === newStatusId) return;
