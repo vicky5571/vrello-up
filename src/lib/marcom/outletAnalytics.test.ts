@@ -14,7 +14,7 @@ test("calculateEnhancedOutletKPIs handles empty outlets list", () => {
 test("calculateEnhancedOutletKPIs calculates correct totals, brand ratios, and tiers", () => {
   const outlets: OutletSummaryInfo[] = [
     { id: "o1", code: "OUT-1", name: "Outlet 1", type: "TRADITIONAL", tier: "TIER_1", brand: "IM3", active: true, branchId: "b1", mouCount: 1, placementCount: 2 },
-    { id: "o2", code: "OUT-2", name: "Outlet 2", type: "MODERN_RETAIL", tier: "TIER_2", brand: "3", active: true, branchId: "b1", mouCount: 0, placementCount: 1 },
+    { id: "o2", code: "OUT-2", name: "Outlet 2", type: "MODERN_RETAIL", tier: "TIER_2", brand: "TRI", active: true, branchId: "b1", mouCount: 0, placementCount: 1 },
     { id: "o3", code: "OUT-3", name: "Outlet 3", type: "EXCLUSIVE", tier: "TIER_1", brand: "TRI", active: false, branchId: "b2", mouCount: 1, placementCount: 0 },
     { id: "o4", code: "OUT-4", name: "Outlet 4", type: "CAMPUS_OUTLET", tier: "TIER_3", brand: "IM3", active: true, branchId: "b3", mouCount: 0, placementCount: 0 },
   ];

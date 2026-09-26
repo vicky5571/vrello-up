@@ -1,10 +1,12 @@
+import type { Brand } from "@/types";
+
 export interface OutletSummaryInfo {
   id: string;
   code: string;
   name: string;
   type: string;
   tier?: string;
-  brand?: string;
+  brand?: Brand;
   active: boolean;
   branchId: string;
   city?: string;
@@ -63,8 +65,8 @@ export function calculateEnhancedOutletKPIs(outlets: OutletSummaryInfo[]): Outle
     if (o.active) activeCount++;
     if (o.branchId) branchIds.add(o.branchId);
 
-    const brand = (o.brand || "IM3").toUpperCase();
-    if (brand === "3" || brand === "TRI") {
+    const isTri = o.brand === "TRI" || (o.brand as string) === "3";
+    if (isTri) {
       triCount++;
     } else {
       im3Count++;
@@ -151,12 +153,11 @@ export interface OutletMarkerMeta {
  * Returns consistent visual presentation styles for an outlet marker.
  */
 export function getOutletMarkerMeta(outlet: {
-  brand?: string;
+  brand?: Brand | string;
   type?: string;
   tier?: string;
 }): OutletMarkerMeta {
-  const brand = (outlet.brand || "IM3").toUpperCase();
-  const isTri = brand === "3" || brand === "TRI";
+  const isTri = outlet.brand === "TRI" || outlet.brand === "3";
 
   const tier = (outlet.tier || "TIER_1").toUpperCase();
   const tierLabel = tier === "TIER_1" ? "Tier 1" : tier === "TIER_2" ? "Tier 2" : "Tier 3";

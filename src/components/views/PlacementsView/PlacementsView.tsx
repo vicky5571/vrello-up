@@ -46,12 +46,15 @@ import { PlacementFormModal } from "./PlacementFormModal";
 import { parsePlacementPhotos } from "@/lib/marcom/photoUtils";
 import { findOutletCoordinates } from "@/lib/marcom/outletInherit";
 import { buildGoogleMapsUrl, isValidCoordinate } from "@/lib/marcom/locationUtils";
-import { getBrandMeta } from "@/lib/marcom/brandUtils";
+import { getBrandMeta, normalizeBrand } from "@/lib/marcom/brandUtils";
 import {
   buildPlacementTaskPayload,
   syncTaskOnPlacementStatusChange,
 } from "@/lib/tasks/placementTaskSync";
 import { QuarterlyRecapTab } from "./QuarterlyRecapTab";
+import type { PlacementStatus, MarcomPlacement, Brand } from "@/types";
+
+export type { PlacementStatus, MarcomPlacement };
 
 const PlacementsMapView = dynamic(
   () => import("./PlacementsMapView").then((mod) => mod.PlacementsMapView),
@@ -68,44 +71,12 @@ const PlacementsMapView = dynamic(
   },
 );
 
-export type PlacementStatus = "NOT_STARTED" | "ON_PROGRESS" | "DONE" | "ISSUE";
-
-export interface MarcomPlacement {
-  id: string;
-  outletId: string;
-  materialId: string;
-  mouId?: string | null;
-  status: PlacementStatus;
-  brand?: "IM3" | "3" | string;
-  date: string | null;
-  picName: string;
-  photoUrl: string;
-  dimensions: string;
-  cost: number;
-  notes: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  shareLocationUrl?: string;
-  locationNotes?: string;
-  outlet?: { id: string; code: string; name: string; brand?: string };
-  material?: { id: string; type: string; name: string };
-  mou?: {
-    id: string;
-    partnerName: string;
-    status: string;
-    mouType: string;
-    startDate?: string | null;
-    endDate?: string | null;
-    compensationValue?: number;
-  } | null;
-}
-
 const columnHelper = createMarcomColumnHelper<MarcomPlacement>();
 
 const BRAND_CHIPS: { label: string; value: string; color?: string }[] = [
   { label: "All Brands", value: "ALL" },
   { label: "IM3", value: "IM3", color: "#EAB308" },
-  { label: "3 (Tri)", value: "3", color: "#EC4899" },
+  { label: "3 (Tri)", value: "TRI", color: "#EC4899" },
 ];
 
 const PLACEMENT_STATUS_CHIPS: { label: string; value: string }[] = [
@@ -181,7 +152,7 @@ export function PlacementsView() {
       if (selectedBrand !== "ALL") {
         const pBrand = (p.brand || "IM3").toUpperCase();
         const target = selectedBrand.toUpperCase();
-        if (target === "3" && pBrand !== "3" && pBrand !== "TRI") return false;
+        if ((target === "TRI" || target === "3") && pBrand !== "3" && pBrand !== "TRI") return false;
         if (target === "IM3" && pBrand !== "IM3") return false;
       }
       if (!query) return true;
@@ -355,12 +326,7 @@ export function PlacementsView() {
     const matchingMous = findAvailableMousForOutlet(mousList, firstOutlet || firstOutletId);
     const defaultMou = matchingMous.find((m) => m.status === "APPROVED") || matchingMous[0];
 
-    const brandSuggestion =
-      firstOutlet?.brand &&
-      (firstOutlet.brand.toUpperCase() === "3" ||
-        firstOutlet.brand.toUpperCase() === "TRI")
-        ? "3"
-        : "IM3";
+    const brandSuggestion: Brand = normalizeBrand(firstOutlet?.brand);
 
     setModalPlacement({
       outletId: firstOutletId,

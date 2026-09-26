@@ -252,6 +252,8 @@ export interface FieldEventItem {
 export type FieldEvent = FieldEventItem;
 export type MarcomEvent = FieldEventItem;
 
+export type Brand = "IM3" | "TRI";
+
 export type PlacementStatus = "NOT_STARTED" | "ON_PROGRESS" | "DONE" | "ISSUE";
 
 export interface Placement {
@@ -260,7 +262,7 @@ export interface Placement {
   outletId: string;
   materialId: string;
   status: PlacementStatus;
-  brand?: "IM3" | "3" | string;
+  brand?: Brand;
   date?: string | null;
   picName?: string;
   photoUrl?: string;
@@ -276,7 +278,7 @@ export interface Placement {
   campaignTheme?: string;
   isLocationValid?: boolean;
   locationDeviation?: number | null;
-  outlet?: { id: string; code: string; name: string; brand?: string; branchId?: string };
+  outlet?: { id: string; code: string; name: string; brand?: Brand; branchId?: string };
   material?: { id: string; type: string; name: string };
 }
 
@@ -289,7 +291,7 @@ export interface MarcomPlacement {
   materialId: string;
   mouId?: string | null;
   status: PlacementStatus;
-  brand?: "IM3" | "3" | string;
+  brand?: Brand;
   date: string | null;
   picName: string;
   photoUrl: string;
@@ -304,7 +306,7 @@ export interface MarcomPlacement {
   campaignTheme?: string;
   isLocationValid?: boolean;
   locationDeviation?: number | null;
-  outlet?: { id: string; code: string; name: string; brand?: string; branchId?: string };
+  outlet?: { id: string; code: string; name: string; brand?: Brand; branchId?: string };
   material?: { id: string; type: string; name: string };
   mou?: {
     id: string;
@@ -500,7 +502,7 @@ export interface OutletItem {
   name: string;
   type: OutletType;
   tier?: OutletTier;
-  brand?: string;
+  brand?: Brand;
   address: string;
   city: string;
   picName: string;

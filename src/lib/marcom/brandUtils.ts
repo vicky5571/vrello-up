@@ -1,7 +1,10 @@
-export type BrandType = "IM3" | "3";
+import type { Brand } from "@/types";
+
+export type { Brand };
+export type BrandType = Brand;
 
 export interface BrandMeta {
-  brand: BrandType;
+  brand: Brand;
   label: string;
   shortLabel: string;
   color: string; // primary pin color
@@ -14,7 +17,7 @@ export interface BrandMeta {
   badgeClass: string;
 }
 
-export const BRAND_CONFIG: Record<BrandType, BrandMeta> = {
+export const BRAND_CONFIG: Record<Brand, BrandMeta> = {
   IM3: {
     brand: "IM3",
     label: "IM3",
@@ -28,8 +31,8 @@ export const BRAND_CONFIG: Record<BrandType, BrandMeta> = {
     badgeBorder: "border-yellow-400/30",
     badgeClass: "bg-yellow-400/15 text-yellow-800 dark:text-yellow-300 border border-yellow-400/30 font-bold",
   },
-  "3": {
-    brand: "3",
+  TRI: {
+    brand: "TRI",
     label: "3 (Tri)",
     shortLabel: "3",
     color: "#EC4899", // Vibrant Pink / Magenta
@@ -45,13 +48,13 @@ export const BRAND_CONFIG: Record<BrandType, BrandMeta> = {
 
 /**
  * Normalizes any raw brand string input (e.g. "3", "tri", "TRI", "IM3", "im3")
- * into canonical "IM3" | "3". Defaults to "IM3" if unknown or unspecified.
+ * into canonical Brand enum ("IM3" | "TRI"). Defaults to "IM3" if unknown or unspecified.
  */
-export function normalizeBrand(raw?: string | null): BrandType {
+export function normalizeBrand(raw?: string | null): Brand {
   if (!raw) return "IM3";
   const trimmed = raw.trim().toUpperCase();
   if (trimmed === "3" || trimmed === "TRI" || trimmed === "THREE") {
-    return "3";
+    return "TRI";
   }
   return "IM3";
 }

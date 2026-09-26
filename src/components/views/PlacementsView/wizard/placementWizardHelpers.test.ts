@@ -55,7 +55,7 @@ describe("placementWizardHelpers", () => {
     it("auto-detects provider brand from outlet data", () => {
       const result = applySmartDefaultsOnOutletSelect(mockOutlet, {}, "budi@indosat.com");
       assert.equal(result.outletId, "out-101");
-      assert.equal(result.brand, "3");
+      assert.equal(result.brand, "TRI");
     });
 
     it("falls back to IM3 for standard or empty brands", () => {

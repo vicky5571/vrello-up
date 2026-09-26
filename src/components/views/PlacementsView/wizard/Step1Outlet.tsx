@@ -8,13 +8,13 @@ import {
   type OutletSelectionPayload,
   type OutletSearchResult,
 } from "../OutletSearchCombobox";
-import type { MarcomPlacement } from "@/types";
+import type { MarcomPlacement, Brand } from "@/types";
 
 interface Step1OutletProps {
   placement: Partial<MarcomPlacement>;
   selectedOutletObj?: OutletSearchResult;
   onSelectOutlet: (outlet: OutletSelectionPayload) => void;
-  onSetBrand: (brand: "IM3" | "3") => void;
+  onSetBrand: (brand: Brand) => void;
   workspaceId: string;
 }
 
@@ -25,7 +25,8 @@ export function Step1Outlet({
   onSetBrand,
   workspaceId,
 }: Step1OutletProps) {
-  const currentBrand = (placement.brand || "IM3") === "3" ? "3" : "IM3";
+  const currentBrand: Brand =
+    placement.brand === "TRI" || (placement.brand as string) === "3" ? "TRI" : "IM3";
   const selectedOutlet = selectedOutletObj || placement.outlet;
   const isDraftOutlet = Boolean(
     selectedOutlet?.code?.startsWith("DRAFT-") ||
@@ -51,20 +52,20 @@ export function Step1Outlet({
             )}
           >
             <span className="w-2.5 h-2.5 rounded-full bg-[#EAB308]" />
-            <span>IM3 (Kuning)</span>
+            <span>IM3 (Yellow)</span>
           </button>
           <button
             type="button"
-            onClick={() => onSetBrand("3")}
+            onClick={() => onSetBrand("TRI")}
             className={cn(
               "flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer",
-              currentBrand === "3"
+              currentBrand === "TRI"
                 ? "bg-pink-500/20 text-pink-900 dark:text-pink-200 border-pink-500 shadow-xs ring-2 ring-pink-500/30"
                 : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-pink-50/50"
             )}
           >
             <span className="w-2.5 h-2.5 rounded-full bg-[#EC4899]" />
-            <span>3 (Pink)</span>
+            <span>3 / Tri (Pink)</span>
           </button>
         </div>
       </div>

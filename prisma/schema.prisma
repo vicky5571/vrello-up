@@ -70,6 +70,11 @@ enum MaterialType {
   OTHER_MATERIALS
 }
 
+enum Brand {
+  IM3
+  TRI
+}
+
 enum DocFileType {
   PDF
   XLSX
@@ -114,7 +119,7 @@ model Outlet {
   picName    String      @default("")
   picPhone   String      @default("")
   active     Boolean     @default(true)
-  brand      String      @default("")
+  brand      Brand       @default(IM3)
   latitude   Float?
   longitude  Float?
   branchId   String
@@ -155,7 +160,7 @@ model Placement {
   mouId       String?
   mou         Mou?            @relation(fields: [mouId], references: [id], onDelete: SetNull)
   status      PlacementStatus @default(NOT_STARTED)
-  brand       String          @default("IM3")
+  brand       Brand           @default(IM3)
   date        DateTime?
   picName     String          @default("")
   photoUrl    String          @default("")

@@ -52,7 +52,7 @@ export async function GET(request: Request) {
       where.status = status as (typeof VALID_STATUSES)[number];
     }
     if (brand && brand !== "ALL") {
-      const normalizedBrand = brand.toUpperCase() === "3" || brand.toUpperCase() === "TRI" ? "3" : "IM3";
+      const normalizedBrand = brand.toUpperCase() === "3" || brand.toUpperCase() === "TRI" ? "TRI" : "IM3";
       where.brand = normalizedBrand;
     }
     if (query) {
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const normalizedBrand = typeof brand === "string" && (brand.toUpperCase() === "3" || brand.toUpperCase() === "TRI") ? "3" : "IM3";
+  const normalizedBrand = typeof brand === "string" && (brand.toUpperCase() === "3" || brand.toUpperCase() === "TRI") ? "TRI" : "IM3";
   const targetMouId = typeof mouId === "string" && mouId.trim() && mouId !== "NONE" ? mouId.trim() : null;
 
   try {

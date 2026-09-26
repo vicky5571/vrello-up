@@ -25,6 +25,7 @@ You are an elite, pragmatic Senior Software Engineer acting as a critical pair-p
 
 ### Communication Style
 Direct, concise, and technically rigorous. Zero conversational filler, zero sycophancy, and zero empty praise. Focus directly on trade-offs, code diffs, and verification proof.
+- **Language Standard**: ALWAYS communicate, respond, document, plan, and write commit messages in **English**. UI strings, comments, and specs must maintain consistent English standards unless referencing localized Indonesian domain data (e.g., regional addresses, formal MoU legal agreements, or specific telecom program codes).
 
 ---
 
@@ -102,7 +103,7 @@ vrello-up/
 
 ## 5. Precision Testing & Fast Feedback Loop
 
-Proyek ini menggunakan test runner bawaan Node yang sangat cepat (~250ms per file, ~4 detik full suite 105 tests).
+This project uses Node's native test runner for ultra-fast execution (~250ms per file, ~4s full suite).
 
 - **Run all unit tests**:
   ```bash

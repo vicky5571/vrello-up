@@ -47,9 +47,8 @@ function createOutletPinIcon(
   outlet: MarcomOutlet,
 ) {
   const meta = getOutletMarkerMeta(outlet);
-  const pinColor = meta.brandColor; // Yellow for IM3, Pink for 3
-  const outletBrand = (outlet as unknown as { brand?: string }).brand;
-  const isTri = outletBrand === "3" || outletBrand === "TRI";
+  const pinColor = meta.brandColor;
+  const isTri = outlet.brand === "TRI" || (outlet.brand as string) === "3";
   const brandCode = isTri ? "3" : "IM3";
   const contrastColor = isTri ? "#EC4899" : "#B45309";
   const activePipColor = outlet.active ? "#10B981" : "#94A3B8";
@@ -169,10 +168,10 @@ export function OutletMapView({
 
       // Brand filter
       if (selectedBrand !== "ALL") {
-        const outletBrand = (o as unknown as { brand?: string }).brand || "IM3";
-        const brand = outletBrand.toUpperCase();
-        if (selectedBrand === "TRI" && brand !== "3" && brand !== "TRI") return false;
-        if (selectedBrand === "IM3" && (brand === "3" || brand === "TRI")) return false;
+        const outletBrand = o.brand || "IM3";
+        const isTri = outletBrand === "TRI" || (outletBrand as string) === "3";
+        if (selectedBrand === "TRI" && !isTri) return false;
+        if (selectedBrand === "IM3" && isTri) return false;
       }
 
       // Type filter

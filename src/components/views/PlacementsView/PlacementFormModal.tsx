@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { ClipboardList, X } from "lucide-react";
 import { MouDocumentViewerModal } from "@/components/views/MousView/MouDocumentViewerModal";
-import type { MarcomPlacement } from "@/types";
+import type { MarcomPlacement, Brand } from "@/types";
 import { findOutletCoordinates } from "@/lib/marcom/outletInherit";
 import {
   findAvailableMousForOutlet,
@@ -197,7 +197,7 @@ function PlacementFormModalContent({
     }
   };
 
-  const handleSetBrand = (brand: "IM3" | "3") => {
+  const handleSetBrand = (brand: Brand) => {
     setPlacement((prev) => (prev ? { ...prev, brand } : prev));
   };
 

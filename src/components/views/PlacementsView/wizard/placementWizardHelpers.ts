@@ -1,4 +1,5 @@
-import type { MarcomPlacement } from "@/types";
+import type { MarcomPlacement, Brand } from "@/types";
+import { normalizeBrand } from "@/lib/marcom/brandUtils";
 
 export type WizardStepId = 1 | 2 | 3 | 4;
 
@@ -54,7 +55,7 @@ export function applySmartDefaultsOnOutletSelect(
     id: string;
     code?: string;
     name: string;
-    brand?: string;
+    brand?: Brand | string;
     picName?: string;
     latitude?: number | null;
     longitude?: number | null;
@@ -63,8 +64,7 @@ export function applySmartDefaultsOnOutletSelect(
   prevPlacement: Partial<MarcomPlacement>,
   currentUserName?: string
 ): Partial<MarcomPlacement> {
-  const rawBrand = (outlet.brand || "").toUpperCase();
-  const detectedBrand = rawBrand === "3" || rawBrand === "TRI" ? "3" : "IM3";
+  const detectedBrand: Brand = normalizeBrand(outlet.brand);
   const today = new Date().toISOString().slice(0, 10);
 
   return {
@@ -79,7 +79,7 @@ export function applySmartDefaultsOnOutletSelect(
       id: outlet.id,
       code: outlet.code || "",
       name: outlet.name,
-      brand: outlet.brand,
+      brand: detectedBrand,
     },
   };
 }

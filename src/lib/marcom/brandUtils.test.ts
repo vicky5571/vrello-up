@@ -10,12 +10,12 @@ describe("brandUtils", () => {
     assert.equal(normalizeBrand(" Im3 "), "IM3");
   });
 
-  it("normalizes 3 and Tri variations to 3", () => {
-    assert.equal(normalizeBrand("3"), "3");
-    assert.equal(normalizeBrand("tri"), "3");
-    assert.equal(normalizeBrand("TRI"), "3");
-    assert.equal(normalizeBrand("Tri"), "3");
-    assert.equal(normalizeBrand("three"), "3");
+  it("normalizes 3 and Tri variations to TRI", () => {
+    assert.equal(normalizeBrand("3"), "TRI");
+    assert.equal(normalizeBrand("tri"), "TRI");
+    assert.equal(normalizeBrand("TRI"), "TRI");
+    assert.equal(normalizeBrand("Tri"), "TRI");
+    assert.equal(normalizeBrand("three"), "TRI");
   });
 
   it("defaults null, undefined, or empty string to IM3", () => {
@@ -34,7 +34,7 @@ describe("brandUtils", () => {
 
   it("returns correct metadata for 3 with pink color", () => {
     const meta = getBrandMeta("3");
-    assert.equal(meta.brand, "3");
+    assert.equal(meta.brand, "TRI");
     assert.equal(meta.color, "#EC4899"); // Pink / Magenta
     assert.ok(meta.badgeClass.includes("pink"));
   });
