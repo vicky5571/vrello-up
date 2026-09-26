@@ -9,6 +9,7 @@ export type UnifiedPlacementStatus = "NOT_STARTED" | "ON_PROGRESS" | "DONE";
  */
 export function isPlacementTask(task: Task | undefined | null): boolean {
   if (!task || !task.relatedMarcomId) return false;
+  if (task.relatedMarcomType === "PLACEMENT") return true;
   return Boolean(task.title?.startsWith("[Placement]"));
 }
 
@@ -110,6 +111,7 @@ export function buildPlacementTaskPayload(
   statusId: string;
   priority: "urgent" | "normal";
   relatedMarcomId: string;
+  relatedMarcomType: "PLACEMENT";
   mediaUrl?: string;
   subtasks: { id: string; title: string; completed: boolean; createdAt: string }[];
 } {
@@ -123,6 +125,7 @@ export function buildPlacementTaskPayload(
     statusId: targetStatusId,
     priority: "normal",
     relatedMarcomId: placement.id,
+    relatedMarcomType: "PLACEMENT",
     mediaUrl: placement.photoUrl || undefined,
     subtasks: [
       {

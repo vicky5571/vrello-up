@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node strip-types requires explicit .ts extension
-import { getEventChecklistTemplate, findMemberForPic, buildEventTaskPayload, buildEventDescription, mapEventStatusToTaskStatusId, mapTaskCategoryToEventStatus, formatEventDateRange, detectEventConflicts, calculateFieldEventsKPI, calculateTimelineBarMetrics } from "./eventTaskSync.ts";
+import { getEventChecklistTemplate, findMemberForPic, buildEventTaskPayload, buildEventDescription, mapEventStatusToTaskStatusId, mapTaskCategoryToEventStatus, formatEventDateRange, detectEventConflicts, calculateFieldEventsKPI, calculateTimelineBarMetrics, isFieldEventTask } from "./eventTaskSync.ts";
 import type { User, Subtask, Status } from "@/types";
 
 const mockMembers: User[] = [
@@ -115,6 +115,7 @@ test("buildEventTaskPayload correctly constructs Task creation payload with PIC 
   assert.equal(payload.listId, "list-field-ops");
   assert.equal(payload.statusId, "status-todo");
   assert.equal(payload.relatedMarcomId, "event-123");
+  assert.equal(payload.relatedMarcomType, "FIELD_EVENT");
   assert.equal(payload.priority, "high");
   assert.equal(payload.dueDate, "2026-10-01");
   assert.equal(payload.assignees.length, 1);
@@ -122,6 +123,67 @@ test("buildEventTaskPayload correctly constructs Task creation payload with PIC 
   assert.equal(payload.subtasks.length, 2);
   assert.equal(payload.subtasks[0].title, "Sewa sound system");
 });
+
+test("isFieldEventTask recognizes tasks with relatedMarcomType='FIELD_EVENT' even if title prefix is deleted", () => {
+  const renamedTask = {
+    id: "task-event-custom",
+    listId: "l1",
+    title: "Aktivasi Pelajar & Kampus Bersama Telkomsel", // User removed "[Field Event]"
+    description: "",
+    statusId: "s1",
+    priority: "high" as const,
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 0,
+    relatedMarcomId: "fe-101",
+    relatedMarcomType: "FIELD_EVENT" as const,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  assert.equal(isFieldEventTask(renamedTask), true);
+});
+
+test("isFieldEventTask retains fallback for legacy tasks without relatedMarcomType", () => {
+  const legacyTask = {
+    id: "task-event-legacy",
+    listId: "l1",
+    title: "[Field Event] Roadshow Mall Kelapa Gading",
+    description: "",
+    statusId: "s1",
+    priority: "normal" as const,
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 0,
+    relatedMarcomId: "fe-102",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  assert.equal(isFieldEventTask(legacyTask), true);
+});
+
+test("isFieldEventTask correctly rejects non-event tasks and missing marcom id", () => {
+  const nonEventTask = {
+    id: "task-non-event",
+    listId: "l1",
+    title: "[Placement] Banner Store",
+    relatedMarcomId: "place-103",
+    relatedMarcomType: "PLACEMENT" as const,
+  } as any;
+  assert.equal(isFieldEventTask(nonEventTask), false);
+
+  const missingIdTask = {
+    id: "task-no-id",
+    listId: "l1",
+    title: "[Field Event] Some Event",
+  } as any;
+  assert.equal(isFieldEventTask(missingIdTask), false);
+
+  assert.equal(isFieldEventTask(undefined), false);
+  assert.equal(isFieldEventTask(null), false);
+});
+
 
 test("buildEventTaskPayload seamlessly handles FieldEventItem with startDate", () => {
   const payload = buildEventTaskPayload({

@@ -194,6 +194,7 @@ export function buildEventTaskPayload({
     tags: [],
     subtasks,
     relatedMarcomId: event.id,
+    relatedMarcomType: "FIELD_EVENT",
   };
 }
 
@@ -469,6 +470,15 @@ export function detectEventConflicts(
 }
 
 /**
+ * Checks if a task represents a Marcom Field Event.
+ */
+export function isFieldEventTask(task: Task | undefined | null): boolean {
+  if (!task || !task.relatedMarcomId) return false;
+  if (task.relatedMarcomType === "FIELD_EVENT") return true;
+  return Boolean(task.title?.startsWith("[Field Event]"));
+}
+
+/**
  * Fires an async background PATCH to update the linked Field Event status
  * when a Task's status is changed in Kanban board or Task modal.
  */
@@ -477,17 +487,17 @@ export function syncFieldEventOnTaskStatusChange(
   newStatusId: string,
   spaces: Space[]
 ): void {
-  if (!task || !task.relatedMarcomId || !task.title?.startsWith("[Field Event]")) {
+  if (!isFieldEventTask(task)) {
     return;
   }
-  const space = findSpaceByListId(spaces, task.listId);
+  const space = findSpaceByListId(spaces, task!.listId);
   const nextStatus = space?.statuses.find((s) => s.id === newStatusId);
   const mappedEventStatus = mapTaskCategoryToEventStatus(
     nextStatus?.category,
     nextStatus?.name
   );
   if (typeof window !== "undefined" && typeof fetch === "function") {
-    fetch(`/api/marcom/events/${task.relatedMarcomId}`, {
+    fetch(`/api/marcom/events/${task!.relatedMarcomId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: mappedEventStatus }),

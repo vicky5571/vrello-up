@@ -90,6 +90,46 @@ test("isPlacementTask correctly identifies linked placement tasks", () => {
   assert.equal(isPlacementTask(missingMarcomId), false);
 });
 
+test("isPlacementTask recognizes tasks with relatedMarcomType='PLACEMENT' even if title prefix is deleted", () => {
+  const renamedTask = {
+    id: "task-custom",
+    listId: "l1",
+    title: "Pasang Baliho Baru di Toko Berkah", // User removed "[Placement]"
+    description: "",
+    statusId: "s1",
+    priority: "normal" as const,
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 0,
+    relatedMarcomId: "place-101",
+    relatedMarcomType: "PLACEMENT" as const,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  assert.equal(isPlacementTask(renamedTask), true);
+});
+
+test("isPlacementTask retains fallback for legacy tasks without relatedMarcomType", () => {
+  const legacyTask = {
+    id: "task-legacy",
+    listId: "l1",
+    title: "[Placement] Shop Sign Toko Berkah",
+    description: "",
+    statusId: "s1",
+    priority: "normal" as const,
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 0,
+    relatedMarcomId: "place-102",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  assert.equal(isPlacementTask(legacyTask), true);
+});
+
+
 test("buildPlacementTaskPayload constructs status-aligned task payload", () => {
   const placementData = {
     id: "placement-999",
@@ -109,6 +149,7 @@ test("buildPlacementTaskPayload constructs status-aligned task payload", () => {
 
   assert.equal(todoPayload.statusId, "st-todo");
   assert.equal(todoPayload.relatedMarcomId, "placement-999");
+  assert.equal(todoPayload.relatedMarcomType, "PLACEMENT");
   assert.equal(todoPayload.title, "[Placement] Shopblind - Mitra Ponsel");
 
   // 2. When placement is ON_PROGRESS -> Task starts at status-in-progress
