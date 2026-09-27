@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowDown,
@@ -141,15 +141,19 @@ export function MarcomTableShell<T extends object & { id: string }>({
   // Pre-compute stable key hash to prevent unnecessary re-indexing if searchKeys is passed as an inline array
   const searchKeysHash = searchKeys ? (searchKeys as string[]).join(",") : "";
 
+  const getSearchableTextRef = useRef(getSearchableText);
+  getSearchableTextRef.current = getSearchableText;
+
   // Pre-compute searchable string per row only when data or search configuration changes
   const searchIndex = useMemo(() => {
+    const customExtractor = getSearchableTextRef.current;
     return data.map((row) => {
-      const text = getSearchableText
-        ? getSearchableText(row).toLowerCase()
+      const text = customExtractor
+        ? customExtractor(row).toLowerCase()
         : extractSearchableText(row, { keys: searchKeys as string[] }).toLowerCase();
       return { row, text };
     });
-  }, [data, searchKeysHash, getSearchableText]);
+  }, [data, searchKeysHash]);
 
   // High-performance filter: matches against pre-computed text with zero string allocations or object traversal per keystroke
   const filteredData = useMemo(() => {
