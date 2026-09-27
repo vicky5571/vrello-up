@@ -40,6 +40,7 @@ export function PlacementBulkActionBar({
   const updateCachedPlacement = useMarcomDataStore((s) => s.updateCachedPlacement);
   const removeCachedPlacement = useMarcomDataStore((s) => s.removeCachedPlacement);
   const invalidateMous = useMarcomDataStore((s) => s.invalidateMous);
+  const invalidateOutlets = useMarcomDataStore((s) => s.invalidateOutlets);
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPicModal, setShowPicModal] = useState(false);
@@ -90,6 +91,10 @@ export function PlacementBulkActionBar({
           : status === "DONE"
           ? "Done"
           : status;
+
+      if (status === "DONE") {
+        invalidateOutlets();
+      }
 
       toast.success(`Status ${count} placement berhasil diubah menjadi "${label}"!`);
       onClearSelection();

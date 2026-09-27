@@ -92,3 +92,17 @@ test("autoBackfillOutletGps skips update when outlet already has coordinates", a
   assert.equal(result.backfilled, false);
   assert.equal(updateCalled, false);
 });
+
+test("equator coordinates (latitude: 0) are extracted as valid and do not trigger backfill if outlet already has them", () => {
+  const pontianakCoords = { latitude: 0, longitude: 109.3333 };
+  const extracted = extractValidCoordinates(pontianakCoords);
+  assert.deepEqual(extracted, { latitude: 0, longitude: 109.3333 });
+
+  const shouldBackfill = shouldBackfillOutlet(
+    { latitude: 0, longitude: 109.3333 },
+    "DONE",
+    extracted
+  );
+  assert.equal(shouldBackfill, false);
+});
+

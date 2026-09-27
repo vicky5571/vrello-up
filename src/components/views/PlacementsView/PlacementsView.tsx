@@ -275,7 +275,7 @@ export function PlacementsView() {
       try {
         const [, outletsData, materialsData, , mousData] = await Promise.all([
           fetchPlacements(activeWorkspaceId, force),
-          fetchOutlets(),
+          fetchOutlets(force),
           fetchMaterials(),
           fetchBranches(),
           useMarcomDataStore.getState().fetchMous(activeWorkspaceId),
@@ -584,7 +584,7 @@ export function PlacementsView() {
       if (backfilledOutlet) {
         updateCachedOutlet(backfilledOutlet);
         invalidateOutlets();
-      } else if (status === "DONE" && (latitude || longitude)) {
+      } else if (status === "DONE" && (latitude != null || longitude != null || Boolean(shareLocationUrl))) {
         invalidateOutlets();
       }
 
