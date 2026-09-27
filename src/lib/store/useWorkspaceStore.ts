@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
-import { toast } from "sonner";
 import {
   type Workspace,
   type Space,
@@ -107,6 +106,18 @@ import {
 
 export { DEFAULT_VIEW_PREFERENCES } from "@/lib/store/viewPreferencesOperations";
 export { wouldCreateCycle } from "@/lib/store/dependencyOperations";
+export { STORAGE_WARN_BYTES, quotaAwareStorage } from "@/lib/store/storeStorage";
+export {
+  findSpaceForListId,
+  findWorkspaceForListId,
+  reconcileWorkspaces,
+} from "@/lib/store/workspaceSync";
+import { STORAGE_WARN_BYTES, quotaAwareStorage } from "@/lib/store/storeStorage";
+import {
+  findSpaceForListId,
+  findWorkspaceForListId,
+  reconcileWorkspaces,
+} from "@/lib/store/workspaceSync";
 import {
   SEED_USERS,
   DEFAULT_STATUSES,
@@ -348,120 +359,6 @@ function getActor(state: WorkspaceState, provided?: User): User {
     provided,
   );
 }
-/**
- * Finds the space containing the given list (top-level or inside a folder).
- */
-export function findSpaceForListId(
-  workspaces: Workspace[],
-  listId: string,
-): Space | undefined {
-  if (!listId) return undefined;
-  for (const w of workspaces) {
-    for (const s of w.spaces) {
-      if (s.lists.some((l) => l.id === listId)) return s;
-      if (s.folders.some((f) => f.lists.some((l) => l.id === listId)))
-        return s;
-    }
-  }
-  return undefined;
-}
-
-/**
- * Finds the workspace containing the given list.
- */
-export function findWorkspaceForListId(
-  workspaces: Workspace[],
-  listId: string,
-): Workspace | undefined {
-  if (!listId) return undefined;
-  return workspaces.find((w) =>
-    w.spaces.some(
-      (s) =>
-        s.lists.some((l) => l.id === listId) ||
-        s.folders.some((f) => f.lists.some((l) => l.id === listId)),
-    ),
-  );
-}
-
-/**
- * Returns all list IDs contained in a space (both top-level and inside folders).
- */
-export { getSpaceListIds } from "@/lib/store/spacesOperations";
-
-/**
- * Reconciles client workspaces (from localStorage) with server workspaces (from database)
- * to avoid data loss on page load. Preserves custom spaces, folders, and lists created
- * locally while syncing any missing items to the server.
- */
-export function reconcileWorkspaces(
-  clientWorkspaces: Workspace[],
-  serverWorkspaces: Workspace[],
-): { workspaces: Workspace[]; shouldSyncToServer: boolean } {
-  if (!Array.isArray(serverWorkspaces) || serverWorkspaces.length === 0) {
-    return { workspaces: clientWorkspaces, shouldSyncToServer: true };
-  }
-  if (!Array.isArray(clientWorkspaces) || clientWorkspaces.length === 0) {
-    return { workspaces: serverWorkspaces, shouldSyncToServer: false };
-  }
-
-  let shouldSyncToServer = false;
-
-  const mergedWorkspaces = clientWorkspaces.map((clientWs) => {
-    const serverWs = serverWorkspaces.find((w) => w.id === clientWs.id);
-    if (!serverWs) {
-      shouldSyncToServer = true;
-      return clientWs;
-    }
-
-    const serverSpaceMap = new Map(serverWs.spaces.map((s) => [s.id, s]));
-    const mergedSpaces = clientWs.spaces.map((clientSpace) => {
-      const serverSpace = serverSpaceMap.get(clientSpace.id);
-      if (!serverSpace) {
-        shouldSyncToServer = true;
-        return clientSpace;
-      }
-
-      const serverFolderIds = new Set(serverSpace.folders.map((f) => f.id));
-      const serverListIds = new Set([
-        ...serverSpace.lists.map((l) => l.id),
-        ...serverSpace.folders.flatMap((f) => f.lists.map((l) => l.id)),
-      ]);
-
-      const clientListIds = [
-        ...clientSpace.lists.map((l) => l.id),
-        ...clientSpace.folders.flatMap((f) => f.lists.map((l) => l.id)),
-      ];
-
-      if (
-        clientSpace.folders.some((f) => !serverFolderIds.has(f.id)) ||
-        clientListIds.some((id) => !serverListIds.has(id))
-      ) {
-        shouldSyncToServer = true;
-      }
-
-      return clientSpace;
-    });
-
-    const clientSpaceIds = new Set(clientWs.spaces.map((s) => s.id));
-    for (const s of serverWs.spaces) {
-      if (!clientSpaceIds.has(s.id)) {
-        const isDefaultSpace =
-          s.id === "space-product" ||
-          s.id === "space-marcom";
-        if (!isDefaultSpace) {
-          mergedSpaces.push(s);
-        }
-      }
-    }
-
-    return {
-      ...clientWs,
-      spaces: mergedSpaces,
-    };
-  });
-
-  return { workspaces: mergedWorkspaces, shouldSyncToServer };
-}
 
 /**
  * Bumps the execution counter for an automation rule.
@@ -471,67 +368,6 @@ function countAutomationRun(id: string) {
     automationRuns: applyIncrementAutomationRun(s.automationRuns, id),
   }));
 }
-
-/**
- * Warns before this size so users can export a backup before writes fail.
- * localStorage quotas are typically ~5MB; serialized workspace JSON included.
- */
-export const STORAGE_WARN_BYTES = 4 * 1024 * 1024;
-
-let storageWarned = false;
-
-function getBrowserStorage(): Storage | undefined {
-  try {
-    const ls = (globalThis as { localStorage?: Storage }).localStorage;
-    return typeof ls === "undefined" ? undefined : ls;
-  } catch {
-    return undefined;
-  }
-}
-
-function notifyStorage(message: string, level: "error" | "warning") {
-  console.warn(`[vrello-up storage] ${message}`);
-  try {
-    if (typeof document !== "undefined") toast[level](message);
-  } catch {
-    // Headless environment (tests/SSR) — the console warning suffices.
-  }
-}
-
-/**
- * localStorage wrapper: quota failures no longer throw out of persist,
- * and payloads near the ~5MB browser limit trigger a one-time warning.
- */
-export const quotaAwareStorage: StateStorage = {
-  getItem: (name) => getBrowserStorage()?.getItem(name) ?? null,
-  setItem: (name, value) => {
-    const storage = getBrowserStorage();
-    if (!storage) return;
-    try {
-      storage.setItem(name, value);
-    } catch {
-      notifyStorage(
-        "Workspace is too large to save — export a JSON backup, then delete old tasks.",
-        "error",
-      );
-      return;
-    }
-    if (value.length > STORAGE_WARN_BYTES && !storageWarned) {
-      storageWarned = true;
-      notifyStorage(
-        "Workspace is approaching the browser storage limit — export a backup soon.",
-        "warning",
-      );
-    }
-  },
-  removeItem: (name) => {
-    try {
-      getBrowserStorage()?.removeItem(name);
-    } catch {
-      // Ignore cleanup failures; worst case a stale key remains.
-    }
-  },
-};
 
 function syncCreateTask(task: Task, spaceId?: string, listName?: string) {
   if (typeof window === "undefined") return;
