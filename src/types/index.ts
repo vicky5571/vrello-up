@@ -490,6 +490,11 @@ export type Branch = BranchItem;
 
 export type MarcomBranch = BranchItem;
 
+export interface BranchDetail extends BranchItem {
+  outlets?: { id: string; code: string; name: string; type: string; city: string; active: boolean }[];
+  mous?: { id: string; partnerName: string; mouType: string; status: string; compensationValue: number }[];
+}
+
 export interface MaterialItem {
   id: string;
   name: string;

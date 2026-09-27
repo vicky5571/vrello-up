@@ -17,21 +17,7 @@ import {
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { cn } from "@/lib/utils";
 
-interface BranchDetail {
-  id: string;
-  code: string;
-  name: string;
-  region: string;
-  city: string;
-  status: string;
-  picName: string;
-  picPhone: string;
-  address: string;
-  outletCount: number;
-  mouCount: number;
-  outlets?: { id: string; code: string; name: string; type: string; city: string; active: boolean }[];
-  mous?: { id: string; partnerName: string; mouType: string; status: string; compensationValue: number }[];
-}
+import type { BranchDetail } from "@/types";
 
 export function BranchDetailDrawer() {
   const selectedBranchId = useWorkspaceStore((s) => s.selectedBranchId);
