@@ -22,58 +22,49 @@ import { formatQuarterlyPosmCsv, downloadCsvFile } from "./quarterlyPosmReportHe
 import { toast } from "sonner";
 import type { MarcomPlacement } from "@/types";
 
+const EMPTY_PLACEMENTS: MarcomPlacement[] = [];
+
 interface QuarterlyPosmReportTabProps {
   onNavigateToPlacements?: () => void;
 }
 
 export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosmReportTabProps) {
   const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
-  const {
-    getCachedPlacements,
-    setCachedPlacements,
-    branches: storeBranches,
-    fetchBranches,
-    materials: storeMaterials,
-    fetchMaterials,
-  } = useMarcomDataStore();
-
-  const [placements, setPlacements] = useState<MarcomPlacement[]>(
-    () => getCachedPlacements(activeWorkspaceId) || []
+  const placements = useMarcomDataStore(
+    (s) => s.placementsByWorkspace[activeWorkspaceId] ?? EMPTY_PLACEMENTS
   );
+  const fetchPlacements = useMarcomDataStore((s) => s.fetchPlacements);
+  const storeBranches = useMarcomDataStore((s) => s.branches);
+  const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
+  const storeMaterials = useMarcomDataStore((s) => s.materials);
+  const fetchMaterials = useMarcomDataStore((s) => s.fetchMaterials);
+
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchReportData = useCallback(async () => {
+  const fetchReportData = useCallback(async (force = false) => {
     setIsLoading(true);
     try {
-      const [resPlacements] = await Promise.all([
-        fetch(`/api/marcom/placements?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
-        fetchBranches(),
-        fetchMaterials(),
+      await Promise.all([
+        fetchPlacements(activeWorkspaceId, force),
+        fetchBranches(force),
+        fetchMaterials(force),
       ]);
-
-      if (resPlacements.ok) {
-        const json = await resPlacements.json();
-        const data = Array.isArray(json.data) ? json.data : [];
-        setPlacements(data);
-        setCachedPlacements(activeWorkspaceId, data);
-      }
     } catch {
       toast.error("Gagal memuat data laporan POSM");
     } finally {
       setIsLoading(false);
     }
-  }, [activeWorkspaceId, fetchBranches, fetchMaterials, setCachedPlacements]);
+  }, [activeWorkspaceId, fetchPlacements, fetchBranches, fetchMaterials]);
 
   useEffect(() => {
-    const cached = getCachedPlacements(activeWorkspaceId);
+    const cached = useMarcomDataStore.getState().placementsByWorkspace[activeWorkspaceId];
     if (!cached || cached.length === 0) {
       fetchReportData();
     } else {
-      setPlacements(cached);
       fetchBranches();
       fetchMaterials();
     }
-  }, [activeWorkspaceId, fetchReportData, fetchBranches, fetchMaterials, getCachedPlacements]);
+  }, [activeWorkspaceId, fetchReportData, fetchBranches, fetchMaterials]);
 
   const availableQuarters = useMemo(
     () => getAvailableQuarters(placements, "Q3 2026"),
@@ -157,7 +148,7 @@ export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosm
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={fetchReportData}
+            onClick={() => fetchReportData(true)}
             disabled={isLoading}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >

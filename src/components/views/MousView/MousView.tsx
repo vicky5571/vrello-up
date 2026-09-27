@@ -18,35 +18,10 @@ import { parseMouDocumentSource } from "./mouDocumentHelpers";
 import { MouDocumentViewerModal } from "./MouDocumentViewerModal";
 import { compressImageFile } from "@/lib/marcom/imageCompression";
 
-export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE";
+import type { MarcomMou, MouStatus } from "@/types";
+export type { MarcomMou, MouStatus };
 
-export interface MarcomMou {
-  id: string;
-  branchId: string;
-  outletId?: string | null;
-  outletName: string;
-  partnerName: string;
-  mouType: string;
-  submissionDate: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  status: MouStatus;
-  picName: string;
-  picPhone: string;
-  docPath: string;
-  compensationValue: number;
-  notes: string;
-  branch?: { id: string; code: string; name: string };
-  outlet?: { id: string; code: string; name: string };
-  placements?: Array<{
-    id: string;
-    mouId?: string | null;
-    status: string;
-    cost: number;
-    photoUrl?: string;
-    material?: { id: string; name: string; type: string };
-  }>;
-}
+const EMPTY_MOUS: MarcomMou[] = [];
 
 const columnHelper = createMarcomColumnHelper<MarcomMou>();
 
@@ -75,20 +50,22 @@ export function MousView() {
   const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);
   const setSelectedBranchId = useWorkspaceStore((s) => s.setSelectedBranchId);
   const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
-  const {
-    fetchBranches,
-    fetchOutlets,
-    branches: storeBranches,
-    outlets: storeOutlets,
-    getCachedMous,
-    setCachedMous,
-    invalidateMous,
-    invalidatePlacements,
-  } = useMarcomDataStore();
+  const mous = useMarcomDataStore(
+    (s) => s.mousByWorkspace[activeWorkspaceId] ?? EMPTY_MOUS
+  );
+  const fetchMous = useMarcomDataStore((s) => s.fetchMous);
+  const addCachedMou = useMarcomDataStore((s) => s.addCachedMou);
+  const updateCachedMou = useMarcomDataStore((s) => s.updateCachedMou);
+  const removeCachedMou = useMarcomDataStore((s) => s.removeCachedMou);
+  const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
+  const fetchOutlets = useMarcomDataStore((s) => s.fetchOutlets);
+  const storeBranches = useMarcomDataStore((s) => s.branches);
+  const storeOutlets = useMarcomDataStore((s) => s.outlets);
+  const invalidatePlacements = useMarcomDataStore((s) => s.invalidatePlacements);
 
-  const cachedMous = getCachedMous(activeWorkspaceId);
-  const [mous, setMous] = useState<MarcomMou[]>(() => cachedMous || []);
-  const [isLoading, setIsLoading] = useState(!cachedMous);
+  const [isLoading, setIsLoading] = useState(
+    () => !useMarcomDataStore.getState().mousByWorkspace[activeWorkspaceId]
+  );
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>(() =>
@@ -123,12 +100,57 @@ export function MousView() {
   const canCreate = can("CREATE_MOU");
 
   useEffect(() => {
+    if (storeBranches.length > 0) {
+      setBranches(storeBranches.map((b) => ({ id: b.id, name: b.name, code: b.code })));
+    }
+  }, [storeBranches]);
+
+  useEffect(() => {
+    if (storeOutlets.length > 0) {
+      setOutletsList(storeOutlets.map((o) => ({ id: o.id, name: o.name, code: o.code, branchId: o.branchId })));
+    }
+  }, [storeOutlets]);
+
+  useEffect(() => {
     if (isBranchDropdownOpen) {
       setTimeout(() => {
         branchSearchInputRef.current?.focus();
       }, 50);
     }
   }, [isBranchDropdownOpen]);
+
+  const filteredMous = useMemo(() => {
+    if (selectedStatus === "ALL") return mous;
+    return mous.filter((m) => m.status === selectedStatus);
+  }, [mous, selectedStatus]);
+
+  const loadMous = useCallback(async (force = false) => {
+    if (!activeWorkspaceId) return;
+    const hasCache = Boolean(useMarcomDataStore.getState().mousByWorkspace[activeWorkspaceId]);
+    if (!hasCache) setIsLoading(true);
+    setError(null);
+    try {
+      const [, branchList, outletList] = await Promise.all([
+        fetchMous(activeWorkspaceId, force),
+        fetchBranches(),
+        fetchOutlets(),
+      ]);
+      if (Array.isArray(branchList)) {
+        setBranches(branchList.map((b) => ({ id: b.id, name: b.name, code: b.code })));
+      }
+      if (Array.isArray(outletList)) {
+        setOutletsList(outletList.map((o) => ({ id: o.id, name: o.name, code: o.code, branchId: o.branchId })));
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load MOUs");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeWorkspaceId, fetchMous, fetchBranches, fetchOutlets]);
+
+  useEffect(() => {
+    loadMous();
+  }, [loadMous]);
 
   const handleStatusTransition = async (mou: MarcomMou, nextStatus: MouStatus) => {
     try {
@@ -142,7 +164,7 @@ export function MousView() {
         throw new Error(data.error || `Failed to transition MOU to ${nextStatus}`);
       }
       toast.success(`MOU status updated to ${nextStatus}`);
-      invalidateMous(activeWorkspaceId);
+      updateCachedMou(activeWorkspaceId, { id: mou.id, status: nextStatus });
       invalidatePlacements(activeWorkspaceId);
       if (nextStatus === "APPROVED") {
         const triggered = await useWorkspaceStore.getState().runAutomationsForTrigger("mou:approved", {
@@ -152,60 +174,15 @@ export function MousView() {
         });
         if (triggered > 0) toast.info(`Automations triggered: created setup task for ${mou.partnerName}`);
       }
-      await fetchMous();
+      fetchMous(activeWorkspaceId, true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update status");
     }
   };
 
-  const fetchMous = useCallback(
-    async (statusFilter = selectedStatus) => {
-      if (!getCachedMous(activeWorkspaceId)) {
-        setIsLoading(true);
-      }
-      setError(null);
-      try {
-        const params = new URLSearchParams();
-        params.set("workspaceId", activeWorkspaceId);
-        if (statusFilter && statusFilter !== "ALL") {
-          params.set("status", statusFilter);
-        }
-        const mousUrl = `/api/marcom/mous?${params.toString()}`;
-        const [resMous, branchList, outletList] = await Promise.all([
-          fetch(mousUrl),
-          fetchBranches(),
-          fetchOutlets(),
-        ]);
-        if (!resMous.ok) throw new Error(`Request failed (${resMous.status})`);
-        const jsonMous = await resMous.json();
-        const mousData = Array.isArray(jsonMous.data) ? jsonMous.data : [];
-        setMous(mousData);
-        if (statusFilter === "ALL") {
-          setCachedMous(activeWorkspaceId, mousData);
-        }
-        if (Array.isArray(branchList) && branchList.length > 0) {
-          setBranches(branchList.map((b) => ({ id: b.id, name: b.name, code: b.code })));
-        }
-        if (Array.isArray(outletList) && outletList.length > 0) {
-          setOutletsList(outletList.map((o) => ({ id: o.id, name: o.name, code: o.code, branchId: o.branchId })));
-        }
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load MOUs");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [selectedStatus, activeWorkspaceId, getCachedMous, setCachedMous, fetchBranches, fetchOutlets],
-  );
-
-  useEffect(() => {
-    fetchMous(selectedStatus);
-  }, [fetchMous, selectedStatus, activeWorkspaceId]);
-
   const handleStatusFilter = (status: string) => {
     const next = selectedStatus === status && status !== "ALL" ? "ALL" : status;
     setSelectedStatus(next);
-    fetchMous(next);
   };
 
   const filteredBranches = useMemo(() => {
@@ -542,13 +519,19 @@ export function MousView() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || `Failed to save MOU (${res.status})`);
       }
+      const resJson = await res.json().catch(() => ({}));
+      const savedMou: MarcomMou = (resJson.data ?? resJson) as MarcomMou;
       toast.success(`MOU ${isEdit ? "updated" : "created"} successfully`);
-      invalidateMous(activeWorkspaceId);
+      if (isEdit && id) {
+        updateCachedMou(activeWorkspaceId, savedMou);
+      } else {
+        addCachedMou(activeWorkspaceId, savedMou);
+      }
       invalidatePlacements(activeWorkspaceId);
       setModalMou(null);
       setIsBranchDropdownOpen(false);
       setBranchSearch("");
-      await fetchMous();
+      fetchMous(activeWorkspaceId, true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save MOU");
     } finally {
@@ -560,12 +543,12 @@ export function MousView() {
     async (id: string) => {
       const res = await fetch(`/api/marcom/mous/${id}`, { method: "DELETE" });
       if (res.ok) {
-        invalidateMous(activeWorkspaceId);
+        removeCachedMou(activeWorkspaceId, id);
         invalidatePlacements(activeWorkspaceId);
       }
       return res.ok;
     },
-    [activeWorkspaceId, invalidateMous, invalidatePlacements],
+    [activeWorkspaceId, removeCachedMou, invalidatePlacements],
   );
 
   const kpiItems = useMemo(() => {
@@ -601,7 +584,7 @@ export function MousView() {
   return (
     <>
       <MarcomTableShell
-        data={mous}
+        data={filteredMous}
         columns={columns}
         getRowId={(row) => row.id}
         initialSorting={[{ id: "partner", desc: false }]}
@@ -612,7 +595,7 @@ export function MousView() {
         entityPlural="MOUs"
         isLoading={isLoading}
         error={error}
-        onRefresh={() => fetchMous(selectedStatus)}
+        onRefresh={() => loadMous(true)}
         canDelete={canManage}
         deleteRequiresMessage="Delete requires admin role"
         onDeleteOne={deleteOne}
