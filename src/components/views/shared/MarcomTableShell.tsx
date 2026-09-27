@@ -33,6 +33,7 @@ import {
 } from "@tanstack/react-table";
 import { sortFns } from "@tanstack/table-core";
 import { cn } from "@/lib/utils";
+import { extractSearchableText } from "./searchUtils";
 
 // Shared TanStack features for all marcom tables —
 // keep columnVisibility for getVisibleCells typing, columnSizing for size/getSize.
@@ -81,6 +82,8 @@ interface MarcomTableShellProps<T extends object & { id: string }> {
   // search/filter control
   searchTerm?: string;
   onSearchChange?: (term: string) => void;
+  searchKeys?: (keyof T)[];
+  getSearchableText?: (row: T) => string;
   // bulk custom actions
   renderFloatingBulkBar?: (selectedIds: string[], clearSelection: () => void) => React.ReactNode;
   // empty
@@ -118,6 +121,8 @@ export function MarcomTableShell<T extends object & { id: string }>({
   renderExpanded,
   searchTerm,
   onSearchChange,
+  searchKeys,
+  getSearchableText,
   renderFloatingBulkBar,
   emptyLabel = `No ${entityPlural} found.`,
   hideHeader = false,
@@ -133,11 +138,27 @@ export function MarcomTableShell<T extends object & { id: string }>({
   const globalFilter = searchTerm !== undefined ? searchTerm : internalFilter;
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
 
+  // Pre-compute stable key hash to prevent unnecessary re-indexing if searchKeys is passed as an inline array
+  const searchKeysHash = searchKeys ? (searchKeys as string[]).join(",") : "";
+
+  // Pre-compute searchable string per row only when data or search configuration changes
+  const searchIndex = useMemo(() => {
+    return data.map((row) => {
+      const text = getSearchableText
+        ? getSearchableText(row).toLowerCase()
+        : extractSearchableText(row, { keys: searchKeys as string[] }).toLowerCase();
+      return { row, text };
+    });
+  }, [data, searchKeysHash, getSearchableText]);
+
+  // High-performance filter: matches against pre-computed text with zero string allocations or object traversal per keystroke
   const filteredData = useMemo(() => {
     const q = globalFilter.trim().toLowerCase();
     if (!q) return data;
-    return data.filter((row) => JSON.stringify(row).toLowerCase().includes(q));
-  }, [data, globalFilter]);
+    return searchIndex
+      .filter((item) => item.text.includes(q))
+      .map((item) => item.row);
+  }, [searchIndex, globalFilter, data]);
 
   const table = useTable({
     features: marcomFeatures,
