@@ -1,6 +1,6 @@
 # Decompose MousView.tsx God Component — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Break the 1,319-line `MousView.tsx` god component into focused, single-responsibility modules. Zero visual/behavioral regression — the rendered output must be pixel-identical.
 
@@ -135,9 +135,9 @@ export async function uploadMouDocument(
 }
 ```
 
-- [ ] **Step 1: Create `mouApi.ts` with the 4 functions above**
+- [x] **Step 1: Create `mouApi.ts` with the 4 functions above**
 
-- [ ] **Step 2: Write unit tests for `mouApi.ts`**
+- [x] **Step 2: Write unit tests for `mouApi.ts`**
 
 Create `src/components/views/MousView/mouApi.test.ts` — test the payload shape construction. Since these functions call `fetch` (browser-only), test the pure pre-fetch logic:
 - `MouSavePayload` interface is importable and constructable.
@@ -161,7 +161,7 @@ test("mouApi exports all 4 functions", () => {
 });
 ```
 
-- [ ] **Step 3: Replace inline fetch calls in `MousView.tsx` with imports from `mouApi.ts`**
+- [x] **Step 3: Replace inline fetch calls in `MousView.tsx` with imports from `mouApi.ts`**
 
 In `handleStatusTransition` (L135–161), replace the inline fetch with:
 ```ts
@@ -194,9 +194,9 @@ if (ok) { removeCachedMou(...); invalidatePlacements(...); }
 return ok;
 ```
 
-- [ ] **Step 4: Run `npm test` — expect 544+ tests, 0 failures**
+- [x] **Step 4: Run `npm test` — expect 544+ tests, 0 failures**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add src/components/views/MousView/mouApi.ts src/components/views/MousView/mouApi.test.ts src/components/views/MousView/MousView.tsx
 git commit -m "refactor(mous): extract API helpers to mouApi.ts
@@ -217,7 +217,7 @@ and calls these functions instead of inlining fetch logic."
 - Create: `src/components/views/MousView/mouKpi.test.ts`
 - Modify: `src/components/views/MousView/MousView.tsx` (lines 534–562)
 
-- [ ] **Step 1: Create `mouKpi.ts`**
+- [x] **Step 1: Create `mouKpi.ts`**
 
 ```ts
 // src/components/views/MousView/mouKpi.ts
@@ -271,7 +271,7 @@ export function buildMouKpiItems(mous: MarcomMou[]): KpiItem[] {
 }
 ```
 
-- [ ] **Step 2: Write unit tests**
+- [x] **Step 2: Write unit tests**
 
 ```ts
 import test from "node:test";
@@ -298,7 +298,7 @@ test("buildMouKpiItems handles empty array", () => {
 });
 ```
 
-- [ ] **Step 3: Replace inline KPI in MousView.tsx with import**
+- [x] **Step 3: Replace inline KPI in MousView.tsx with import**
 
 Replace lines 534–562 with:
 ```ts
@@ -307,9 +307,9 @@ import { buildMouKpiItems } from "./mouKpi";
 const kpiItems = useMemo(() => buildMouKpiItems(mous), [mous]);
 ```
 
-- [ ] **Step 4: Run `npm test` — expect 546+ tests, 0 failures**
+- [x] **Step 4: Run `npm test` — expect 546+ tests, 0 failures**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git commit -m "refactor(mous): extract KPI aggregation to mouKpi.ts"
 ```
@@ -326,7 +326,7 @@ git commit -m "refactor(mous): extract KPI aggregation to mouKpi.ts"
 
 **Why this is one file:** Column definitions are a single `useMemo` block. They're JSX (`.tsx`) because cells render React elements, but they have zero state or effects — they're a pure function of `(navigateToMarcom, setMarcomFilter, setSelectedBranchId, can)`.
 
-- [ ] **Step 1: Create `mouColumns.tsx`**
+- [x] **Step 1: Create `mouColumns.tsx`**
 
 Extract the entire `columnHelper.columns([...])` array into:
 
@@ -367,7 +367,7 @@ export function buildMouColumns(deps: MouColumnDeps) {
 }
 ```
 
-- [ ] **Step 2: Replace in MousView.tsx**
+- [x] **Step 2: Replace in MousView.tsx**
 
 ```tsx
 import { buildMouColumns } from "./mouColumns";
@@ -384,11 +384,11 @@ const columns = useMemo(
 );
 ```
 
-- [ ] **Step 3: Remove `STATUS_STYLES`, `columnHelper`, and related icon imports from MousView.tsx**
+- [x] **Step 3: Remove `STATUS_STYLES`, `columnHelper`, and related icon imports from MousView.tsx**
 
-- [ ] **Step 4: Run `npm test` — expect 546+ tests, 0 failures**
+- [x] **Step 4: Run `npm test` — expect 546+ tests, 0 failures**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git commit -m "refactor(mous): extract column definitions to mouColumns.tsx
 
@@ -409,7 +409,7 @@ module. MousView passes deps via a typed interface."
 
 **The `renderExpanded` callback** receives a `MarcomMou` and renders 286 lines of JSX: expiry banner, PIC metadata grid, realization breakdown, document actions, RBAC workflow buttons, and renewal prefill. This is a natural component boundary.
 
-- [ ] **Step 1: Create `MouExpandedRow.tsx`**
+- [x] **Step 1: Create `MouExpandedRow.tsx`**
 
 ```tsx
 // src/components/views/MousView/MouExpandedRow.tsx
@@ -436,7 +436,7 @@ export function MouExpandedRow({ mou, can, onStatusTransition, onEdit, onRenew, 
 }
 ```
 
-- [ ] **Step 2: Replace `renderExpanded` in MousView.tsx**
+- [x] **Step 2: Replace `renderExpanded` in MousView.tsx**
 
 ```tsx
 import { MouExpandedRow } from "./MouExpandedRow";
@@ -473,9 +473,9 @@ renderExpanded={(mou) => (
 )}
 ```
 
-- [ ] **Step 3: Run `npm test` — expect 546+ tests, 0 failures**
+- [x] **Step 3: Run `npm test` — expect 546+ tests, 0 failures**
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 ```bash
 git commit -m "refactor(mous): extract expanded row to MouExpandedRow.tsx
 
@@ -496,7 +496,7 @@ moved to a dedicated component with a typed props interface."
 
 **This is the largest extraction** (393 lines). The modal owns its own local state for branch search, dropdown open, file upload progress. Following the sibling pattern `EventFormModal.tsx`.
 
-- [ ] **Step 1: Create `MouFormModal.tsx`**
+- [x] **Step 1: Create `MouFormModal.tsx`**
 
 ```tsx
 // src/components/views/MousView/MouFormModal.tsx
@@ -542,7 +542,7 @@ export function MouFormModal({
 
 The key insight: the modal owns `branchSearch`, `isBranchDropdownOpen`, `isSaving`, `isUploading` state internally. MousView only needs to pass in `initialMou` and receive `onSaved` / `onClose` callbacks.
 
-- [ ] **Step 2: Replace modal section in MousView.tsx**
+- [x] **Step 2: Replace modal section in MousView.tsx**
 
 ```tsx
 import { MouFormModal } from "./MouFormModal";
@@ -569,15 +569,15 @@ import { MouFormModal } from "./MouFormModal";
 )}
 ```
 
-- [ ] **Step 3: Remove modal-only state from MousView.tsx**
+- [x] **Step 3: Remove modal-only state from MousView.tsx**
 
 Remove from MousView: `branchSearch`, `setBranchSearch`, `isBranchDropdownOpen`, `setIsBranchDropdownOpen`, `isSaving`, `setIsSaving`, `isUploading`, `setIsUploading`, `branchTriggerRef`, `branchDropdownRef`, `branchSearchInputRef`, `handleFileUpload`, `handleSaveMou`, the dropdown focus `useEffect` (L100–106), `selectedBranch` memo (L174–176), `availableOutlets` memo (L178–182), and `MOU_TYPES` constant (L95).
 
-- [ ] **Step 4: Run `npm test` — expect 546+ tests, 0 failures**
+- [x] **Step 4: Run `npm test` — expect 546+ tests, 0 failures**
 
-- [ ] **Step 5: Run `npx tsc --noEmit` — expect 0 errors**
+- [x] **Step 5: Run `npx tsc --noEmit` — expect 0 errors**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 ```bash
 git commit -m "refactor(mous): extract create/edit modal to MouFormModal.tsx
 
@@ -596,32 +596,32 @@ data via props and receives callbacks."
 **Files:**
 - Modify: `src/components/views/MousView/MousView.tsx` — clean dead imports
 
-- [ ] **Step 1: Remove all unused imports from MousView.tsx**
+- [x] **Step 1: Remove all unused imports from MousView.tsx**
 
 After Tasks 1–5, icons like `Upload`, `RefreshCw`, `Search`, `ChevronDown`, `Check`, `X`, `Layers`, `AlertTriangle`, `ShieldAlert`, `Eye` should no longer be needed in MousView. Clean `compressImageFile` import, `parseMouDocumentSource` import, `calculateMouPlacementRealization` import.
 
-- [ ] **Step 2: Verify final line count**
+- [x] **Step 2: Verify final line count**
 
 ```bash
 wc -l src/components/views/MousView/MousView.tsx
 # Expected: ~300–350 lines (orchestrator only)
 ```
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 ```bash
 npm test
 # Expected: 546+ tests, 0 failures
 ```
 
-- [ ] **Step 4: Run TypeScript check**
+- [x] **Step 4: Run TypeScript check**
 
 ```bash
 npx tsc --noEmit
 # Expected: 0 errors
 ```
 
-- [ ] **Step 5: Verify file inventory**
+- [x] **Step 5: Verify file inventory**
 
 ```bash
 ls -la src/components/views/MousView/
@@ -639,7 +639,7 @@ ls -la src/components/views/MousView/
 # mouDocumentHelpers.test.ts  (existing, unchanged)
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 ```bash
 git commit -m "refactor(mous): final cleanup — remove dead imports from MousView
 
