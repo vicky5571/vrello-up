@@ -15,6 +15,13 @@ import {
   type TaskCommentAttachment,
 } from "@/types";
 import { SEED_USERS, DEFAULT_STATUSES } from "@/lib/constants/seeds";
+import {
+  MARCOM_SPACE_ID,
+  PRODUCT_SPACE_ID,
+  CONTENT_PLANNER_LIST_ID,
+  FIELD_OPS_LIST_ID,
+  DESIGN_SYSTEM_LIST_ID,
+} from "@/lib/marcom/marcomIds";
 import { realtimeHub } from "@/lib/server/realtimeHub";
 import { fetchTasksForWorkspace } from "@/lib/tasks/taskQuery";
 import {
@@ -40,7 +47,7 @@ async function ensureSeedData() {
       spaces: {
         create: [
           {
-            id: "space-product",
+            id: PRODUCT_SPACE_ID,
             name: "Design & Product",
             icon: "Palette",
             color: "#8B5CF6",
@@ -48,7 +55,7 @@ async function ensureSeedData() {
             lists: {
               create: [
                 {
-                  id: "list-design-system",
+                  id: DESIGN_SYSTEM_LIST_ID,
                   name: "Design Tokens & UI Specs",
                   icon: "Layers",
                 },
@@ -61,7 +68,7 @@ async function ensureSeedData() {
             },
           },
           {
-            id: "space-marcom",
+            id: MARCOM_SPACE_ID,
             name: "Marketing & Campaigns",
             icon: "Sparkles",
             color: "#EC4899",
@@ -69,12 +76,12 @@ async function ensureSeedData() {
             lists: {
               create: [
                 {
-                  id: "list-content-planner",
+                  id: CONTENT_PLANNER_LIST_ID,
                   name: "Social & Content Calendar",
                   icon: "Calendar",
                 },
                 {
-                  id: "list-field-ops",
+                  id: FIELD_OPS_LIST_ID,
                   name: "Field Operations & Setup",
                   icon: "Layers",
                 },
@@ -91,7 +98,7 @@ async function ensureSeedData() {
     data: [
       {
         id: "task-1",
-        listId: "list-design-system",
+        listId: DESIGN_SYSTEM_LIST_ID,
         title: "Implement Framer Motion view transition animations",
         description:
           "<h3>Overview</h3><p>Integrate <code>layoutId</code> morphing for view indicator tabs and spring physics for the task slide-over drawer.</p>",
@@ -117,7 +124,7 @@ async function ensureSeedData() {
       },
       {
         id: "task-content-1",
-        listId: "list-content-planner",
+        listId: CONTENT_PLANNER_LIST_ID,
         title: "Teaser Clip: Behind the Scenes of Vrello Launch",
         description: "<p>Short video highlighting engineering velocity and sleek keyboard shortcuts.</p>",
         statusId: "status-in-progress",
@@ -140,7 +147,7 @@ async function ensureSeedData() {
       },
       {
         id: "task-field-1",
-        listId: "list-field-ops",
+        listId: FIELD_OPS_LIST_ID,
         title: "HQ Main Entrance Signboard Installation",
         description: "<p>Mount the acrylic 3D back-lit logo signage at the primary reception area.</p>",
         statusId: "status-todo",

@@ -7,6 +7,13 @@ import type {
   ChannelMessage,
   Workspace,
 } from "@/types";
+import {
+  MARCOM_SPACE_ID,
+  PRODUCT_SPACE_ID,
+  CONTENT_PLANNER_LIST_ID,
+  FIELD_OPS_LIST_ID,
+  DESIGN_SYSTEM_LIST_ID,
+} from "@/lib/marcom/marcomIds";
 
 // Default Seed Users
 export const SEED_USERS: User[] = [
@@ -77,7 +84,7 @@ export const SEED_TAGS: Tag[] = [
 
 export const INITIAL_SPACES: Space[] = [
   {
-    id: "space-product",
+    id: PRODUCT_SPACE_ID,
     workspaceId: "ws-main",
     name: "Design & Product",
     icon: "Palette",
@@ -86,21 +93,21 @@ export const INITIAL_SPACES: Space[] = [
     folders: [],
     lists: [
       {
-        id: "list-design-system",
-        spaceId: "space-product",
+        id: DESIGN_SYSTEM_LIST_ID,
+        spaceId: PRODUCT_SPACE_ID,
         name: "Design Tokens & UI Specs",
         icon: "Layers",
       },
       {
         id: "list-user-research",
-        spaceId: "space-product",
+        spaceId: PRODUCT_SPACE_ID,
         name: "Customer Interviews",
         icon: "Users",
       },
     ],
   },
   {
-    id: "space-marcom",
+    id: MARCOM_SPACE_ID,
     workspaceId: "ws-main",
     name: "Marketing & Campaigns",
     icon: "Sparkles",
@@ -109,14 +116,14 @@ export const INITIAL_SPACES: Space[] = [
     folders: [],
     lists: [
       {
-        id: "list-content-planner",
-        spaceId: "space-marcom",
+        id: CONTENT_PLANNER_LIST_ID,
+        spaceId: MARCOM_SPACE_ID,
         name: "Social & Content Calendar",
         icon: "Calendar",
       },
       {
-        id: "list-field-ops",
-        spaceId: "space-marcom",
+        id: FIELD_OPS_LIST_ID,
+        spaceId: MARCOM_SPACE_ID,
         name: "Field Operations & Setup",
         icon: "Layers",
       },
@@ -127,7 +134,7 @@ export const INITIAL_SPACES: Space[] = [
 export const INITIAL_TASKS: Task[] = [
   {
     id: "task-1",
-    listId: "list-design-system",
+    listId: DESIGN_SYSTEM_LIST_ID,
     title: "Implement Framer Motion view transition animations",
     description:
       "<h3>Overview</h3><p>Integrate <code>layoutId</code> morphing for view indicator tabs and spring physics for the task slide-over drawer.</p><ul><li>Fluid spring curves</li><li>Accessible reduced-motion fallback</li><li>Hardware accelerated transforms</li></ul>",
@@ -164,7 +171,7 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: "task-2",
-    listId: "list-design-system",
+    listId: DESIGN_SYSTEM_LIST_ID,
     title: "Build ClickUp-style interactive Table View with TanStack Table",
     description:
       "<p>Implement column sorting, status selector badges, inline title editing, and priority dropdown directly inside the tabular row grid.</p>",
@@ -193,7 +200,7 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: "task-3",
-    listId: "list-design-system",
+    listId: DESIGN_SYSTEM_LIST_ID,
     title: "Configure Security rules and environment secret boundaries",
     description:
       "<p>Enforce <code>SECURITY.md</code> rules: strict separation of public keys vs server-only secrets, DOMPurify HTML sanitization for Tiptap editor, and RLS checks.</p>",
@@ -222,7 +229,7 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: "task-4",
-    listId: "list-design-system",
+    listId: DESIGN_SYSTEM_LIST_ID,
     title: "Review UI/UX Pro Max Dark Mode & Contrast Tokens",
     description:
       "<p>Ensure all text surfaces meet WCAG 2.2 AA >= 4.5:1 contrast standards, especially on deep OLED slate dark mode.</p>",
@@ -238,7 +245,7 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: "post-1",
-    listId: "list-content-planner",
+    listId: CONTENT_PLANNER_LIST_ID,
     title: "Launch Teaser Reel: VrelloUp 2.0 Feature Drop",
     description:
       "<p>Highlight fluid animations, ClickUp/Trello hybrid views, and real-time sprint blocker analytics. #Productivity #TechLaunch</p>",
@@ -278,7 +285,7 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: "post-2",
-    listId: "list-content-planner",
+    listId: CONTENT_PLANNER_LIST_ID,
     title: "TikTok Behind-the-Scenes: Field Officer Solo Roadshow",
     description:
       "<p>Day in the life of field marketing officers inspecting outlet branding signboards in Solo Central Java. #FieldOps #BehindTheScenes</p>",
@@ -311,7 +318,7 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: "post-3",
-    listId: "list-content-planner",
+    listId: CONTENT_PLANNER_LIST_ID,
     title: "YouTube Deep Dive: ClickUp & Trello Hybrid Workflow",
     description:
       "<p>Walkthrough comparing multi-view capabilities (List, Board, Calendar, Gantt, Table) in VrelloUp. #Tutorial #Productivity</p>",
@@ -344,7 +351,7 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: "post-4",
-    listId: "list-content-planner",
+    listId: CONTENT_PLANNER_LIST_ID,
     title: "LinkedIn Product Update: VrelloUp Q3 Release Notes",
     description:
       "<p>Official announcement detailing sprint planning, task dependencies, and marketing integration. #SaaS #ProductUpdate</p>",
@@ -380,7 +387,7 @@ export const INITIAL_TASKS: Task[] = [
 export const INITIAL_CHANNEL_MESSAGES: ChannelMessage[] = [
   {
     id: "msg-1",
-    channelId: "list-design-system",
+    channelId: DESIGN_SYSTEM_LIST_ID,
     userId: "user-1",
     user: SEED_USERS[0],
     content:
@@ -389,7 +396,7 @@ export const INITIAL_CHANNEL_MESSAGES: ChannelMessage[] = [
   },
   {
     id: "msg-2",
-    channelId: "list-design-system",
+    channelId: DESIGN_SYSTEM_LIST_ID,
     userId: "user-2",
     user: SEED_USERS[1],
     content:
@@ -398,7 +405,7 @@ export const INITIAL_CHANNEL_MESSAGES: ChannelMessage[] = [
   },
   {
     id: "msg-3",
-    channelId: "list-design-system",
+    channelId: DESIGN_SYSTEM_LIST_ID,
     userId: "user-3",
     user: SEED_USERS[2],
     content:
