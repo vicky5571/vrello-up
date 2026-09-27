@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { validatePlacementUpdate, type PlacementStatus } from "@/lib/marcom/placementMachine";
+import { autoBackfillOutletGps } from "@/lib/marcom/outletBackfill";
 
 const VALID_STATUSES = ["NOT_STARTED", "ON_PROGRESS", "DONE", "ISSUE"] as const;
 const PATCHABLE_FIELDS = [
@@ -73,7 +74,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   try {
     const placement = await prisma.placement.update({ where: { id }, data });
-    return NextResponse.json(placement);
+
+    let backfilledOutlet: { id: string; latitude: number; longitude: number } | undefined;
+    if (placement.status === "DONE") {
+      const backfill = await autoBackfillOutletGps(prisma, placement);
+      if (backfill.backfilled && backfill.outletId && backfill.latitude && backfill.longitude) {
+        backfilledOutlet = {
+          id: backfill.outletId,
+          latitude: backfill.latitude,
+          longitude: backfill.longitude,
+        };
+      }
+    }
+
+    return NextResponse.json({
+      ...placement,
+      backfilledOutlet,
+    });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
       return NextResponse.json({ error: "Outlet or material not found" }, { status: 400 });

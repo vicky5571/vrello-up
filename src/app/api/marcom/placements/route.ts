@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/marcom/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { validatePlacementUpdate, type PlacementStatus } from "@/lib/marcom/placementMachine";
+import { autoBackfillOutletGps } from "@/lib/marcom/outletBackfill";
 
 const VALID_STATUSES = ["NOT_STARTED", "ON_PROGRESS", "DONE", "ISSUE"] as const;
 
@@ -138,7 +139,26 @@ export async function POST(request: Request) {
       },
       include: placementInclude,
     });
-    return NextResponse.json(placement, { status: 201 });
+
+    let backfilledOutlet: { id: string; latitude: number; longitude: number } | undefined;
+    if (placement.status === "DONE") {
+      const backfill = await autoBackfillOutletGps(prisma, placement);
+      if (backfill.backfilled && backfill.outletId && backfill.latitude && backfill.longitude) {
+        backfilledOutlet = {
+          id: backfill.outletId,
+          latitude: backfill.latitude,
+          longitude: backfill.longitude,
+        };
+      }
+    }
+
+    return NextResponse.json(
+      {
+        ...placement,
+        backfilledOutlet,
+      },
+      { status: 201 }
+    );
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
       return NextResponse.json({ error: "Outlet or material not found" }, { status: 400 });
