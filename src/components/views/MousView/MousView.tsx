@@ -68,15 +68,13 @@ export function MousView() {
   );
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
-  const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>(() =>
-    storeBranches.length > 0
-      ? storeBranches.map((b) => ({ id: b.id, name: b.name, code: b.code }))
-      : []
+  const branches = useMemo(
+    () => storeBranches.map((b) => ({ id: b.id, name: b.name, code: b.code })),
+    [storeBranches]
   );
-  const [outletsList, setOutletsList] = useState<{ id: string; name: string; code?: string; branchId: string }[]>(() =>
-    storeOutlets.length > 0
-      ? storeOutlets.map((o) => ({ id: o.id, name: o.name, code: o.code, branchId: o.branchId }))
-      : []
+  const outletsList = useMemo(
+    () => storeOutlets.map((o) => ({ id: o.id, name: o.name, code: o.code, branchId: o.branchId })),
+    [storeOutlets]
   );
   const [branchSearch, setBranchSearch] = useState("");
   const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
@@ -100,18 +98,6 @@ export function MousView() {
   const canCreate = can("CREATE_MOU");
 
   useEffect(() => {
-    if (storeBranches.length > 0) {
-      setBranches(storeBranches.map((b) => ({ id: b.id, name: b.name, code: b.code })));
-    }
-  }, [storeBranches]);
-
-  useEffect(() => {
-    if (storeOutlets.length > 0) {
-      setOutletsList(storeOutlets.map((o) => ({ id: o.id, name: o.name, code: o.code, branchId: o.branchId })));
-    }
-  }, [storeOutlets]);
-
-  useEffect(() => {
     if (isBranchDropdownOpen) {
       setTimeout(() => {
         branchSearchInputRef.current?.focus();
@@ -130,17 +116,11 @@ export function MousView() {
     if (!hasCache) setIsLoading(true);
     setError(null);
     try {
-      const [, branchList, outletList] = await Promise.all([
+      await Promise.all([
         fetchMous(activeWorkspaceId, force),
         fetchBranches(),
         fetchOutlets(),
       ]);
-      if (Array.isArray(branchList)) {
-        setBranches(branchList.map((b) => ({ id: b.id, name: b.name, code: b.code })));
-      }
-      if (Array.isArray(outletList)) {
-        setOutletsList(outletList.map((o) => ({ id: o.id, name: o.name, code: o.code, branchId: o.branchId })));
-      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load MOUs");
     } finally {

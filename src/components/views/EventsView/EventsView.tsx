@@ -101,6 +101,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
 
   const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
+  const storeBranches = useMarcomDataStore((s) => s.branches);
   const events = useMarcomDataStore(
     (s) => s.eventsByWorkspace[activeWorkspaceId] ?? EMPTY_EVENTS
   );
@@ -109,11 +110,9 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   const updateCachedEvent = useMarcomDataStore((s) => s.updateCachedEvent);
   const removeCachedEvent = useMarcomDataStore((s) => s.removeCachedEvent);
 
-  // Server state
-  const [branches, setBranches] = useState<{ id: string; name: string }[]>(() =>
-    useMarcomDataStore.getState().branches.length > 0
-      ? useMarcomDataStore.getState().branches
-      : []
+  const branches = useMemo(
+    () => storeBranches.map((b) => ({ id: b.id, name: b.name })),
+    [storeBranches]
   );
   const [isLoading, setIsLoading] = useState(
     () => !useMarcomDataStore.getState().eventsByWorkspace[activeWorkspaceId]
@@ -150,13 +149,10 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     if (!hasCache) setIsLoading(true);
     setError(null);
     try {
-      const [, branchList] = await Promise.all([
+      await Promise.all([
         storeFetchEvents(activeWorkspaceId, force),
         fetchBranches(),
       ]);
-      if (Array.isArray(branchList)) {
-        setBranches(branchList);
-      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load field events");
     } finally {

@@ -52,7 +52,7 @@ import {
   syncTaskOnPlacementStatusChange,
 } from "@/lib/tasks/placementTaskSync";
 import { QuarterlyRecapTab } from "./QuarterlyRecapTab";
-import type { PlacementStatus, MarcomPlacement, Brand } from "@/types";
+import type { PlacementStatus, MarcomPlacement, MarcomMou, Brand } from "@/types";
 
 export type { PlacementStatus, MarcomPlacement };
 
@@ -94,6 +94,7 @@ const STATUS_STYLES: Record<PlacementStatus, string> = {
 };
 
 const EMPTY_PLACEMENTS: MarcomPlacement[] = [];
+const EMPTY_MOUS: MarcomMou[] = [];
 
 export function PlacementsView() {
   const { can } = useMarcomPermissions();
@@ -139,17 +140,18 @@ export function PlacementsView() {
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedBrand, setSelectedBrand] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<"table" | "map" | "recap">("table");
-  const [outletsList, setOutletsList] = useState<{ id: string; name: string; brand?: string; picName?: string; branchId?: string }[]>(() =>
-    storeOutlets.length > 0
-      ? storeOutlets.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName, branchId: o.branchId }))
-      : []
+  const storeMous = useMarcomDataStore(
+    (s) => s.mousByWorkspace[activeWorkspaceId] ?? EMPTY_MOUS,
   );
-  const [materialsList, setMaterialsList] = useState<{ id: string; name: string; type?: string; requiresMou?: boolean }[]>(() =>
-    storeMaterials.length > 0
-      ? storeMaterials.map((m) => ({ id: m.id, name: m.name, type: m.type, requiresMou: m.requiresMou }))
-      : []
+  const outletsList = useMemo(
+    () => storeOutlets.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName, branchId: o.branchId })),
+    [storeOutlets]
   );
-  const [mousList, setMousList] = useState<MouSummaryInfo[]>([]);
+  const materialsList = useMemo(
+    () => storeMaterials.map((m) => ({ id: m.id, name: m.name, type: m.type, requiresMou: m.requiresMou })),
+    [storeMaterials]
+  );
+  const mousList: MouSummaryInfo[] = storeMous;
   const [modalPlacement, setModalPlacement] = useState<Partial<MarcomPlacement> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -273,22 +275,13 @@ export function PlacementsView() {
       if (!hasCache) setIsLoading(true);
       setError(null);
       try {
-        const [, outletsData, materialsData, , mousData] = await Promise.all([
+        await Promise.all([
           fetchPlacements(activeWorkspaceId, force),
           fetchOutlets(force),
           fetchMaterials(),
           fetchBranches(),
           useMarcomDataStore.getState().fetchMous(activeWorkspaceId),
         ]);
-        if (Array.isArray(outletsData) && outletsData.length > 0) {
-          setOutletsList(outletsData.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName, branchId: o.branchId })));
-        }
-        if (Array.isArray(materialsData) && materialsData.length > 0) {
-          setMaterialsList(materialsData.map((m) => ({ id: m.id, name: m.name, type: m.type, requiresMou: m.requiresMou })));
-        }
-        if (Array.isArray(mousData) && mousData.length > 0) {
-          setMousList(mousData);
-        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load placements");
       } finally {
