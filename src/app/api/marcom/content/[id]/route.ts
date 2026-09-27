@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
+import {
+  VALID_FORMATS,
+  VALID_PLATFORMS,
+  VALID_POST_STATUSES,
+  isValidFormat,
+  isValidPlatform,
+} from "@/lib/marcom/contentTaxonomy";
 
 export async function GET(
   request: Request,
@@ -45,12 +52,42 @@ export async function PATCH(
 
   const data: Record<string, unknown> = {};
   if (body.title !== undefined) data.title = String(body.title).trim();
-  if (body.platform !== undefined) data.platform = String(body.platform).toLowerCase();
-  if (body.format !== undefined) data.format = String(body.format).toLowerCase();
+
+  if (body.platform !== undefined) {
+    const normalized = String(body.platform).trim().toLowerCase();
+    if (!isValidPlatform(normalized)) {
+      return NextResponse.json(
+        { error: `Invalid platform: '${body.platform}'. Must be one of: ${VALID_PLATFORMS.join(", ")}` },
+        { status: 400 },
+      );
+    }
+    data.platform = normalized;
+  }
+
+  if (body.format !== undefined) {
+    const normalized = String(body.format).trim().toLowerCase();
+    if (!isValidFormat(normalized)) {
+      return NextResponse.json(
+        { error: `Invalid format: '${body.format}'. Must be one of: ${VALID_FORMATS.join(", ")}` },
+        { status: 400 },
+      );
+    }
+    data.format = normalized;
+  }
+
   if (body.publishDate !== undefined) {
     data.publishDate = body.publishDate ? new Date(body.publishDate) : null;
   }
-  if (body.status !== undefined) data.status = body.status;
+
+  if (body.status !== undefined) {
+    if (!(VALID_POST_STATUSES as readonly string[]).includes(String(body.status))) {
+      return NextResponse.json(
+        { error: `Invalid status: '${body.status}'. Must be one of: ${VALID_POST_STATUSES.join(", ")}` },
+        { status: 400 },
+      );
+    }
+    data.status = body.status;
+  }
   if (body.caption !== undefined) data.caption = String(body.caption).trim();
   if (body.mediaUrl !== undefined) data.mediaUrl = String(body.mediaUrl).trim();
   if (body.branchName !== undefined) data.branchName = String(body.branchName).trim();

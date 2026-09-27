@@ -2,16 +2,13 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
-
-const VALID_POST_STATUSES = [
-  "DRAFT",
-  "IN_REVIEW",
-  "REVISION",
-  "APPROVED",
-  "SCHEDULED",
-  "PUBLISHED",
-  "ARCHIVED",
-] as const;
+import {
+  VALID_FORMATS,
+  VALID_PLATFORMS,
+  VALID_POST_STATUSES,
+  isValidFormat,
+  isValidPlatform,
+} from "@/lib/marcom/contentTaxonomy";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -114,6 +111,22 @@ export async function POST(request: Request) {
     );
   }
 
+  const normalizedPlatform = String(platform).trim().toLowerCase();
+  if (!isValidPlatform(normalizedPlatform)) {
+    return NextResponse.json(
+      { error: `Invalid platform: '${platform}'. Must be one of: ${VALID_PLATFORMS.join(", ")}` },
+      { status: 400 },
+    );
+  }
+
+  const normalizedFormat = String(format || "reel").trim().toLowerCase();
+  if (!isValidFormat(normalizedFormat)) {
+    return NextResponse.json(
+      { error: `Invalid format: '${format}'. Must be one of: ${VALID_FORMATS.join(", ")}` },
+      { status: 400 },
+    );
+  }
+
   if (status && !VALID_POST_STATUSES.includes(status)) {
     return NextResponse.json({ error: "Invalid post status" }, { status: 400 });
   }
@@ -123,8 +136,8 @@ export async function POST(request: Request) {
       data: {
         workspaceId,
         title: title.trim(),
-        platform: String(platform).toLowerCase(),
-        format: String(format || "reel").toLowerCase(),
+        platform: normalizedPlatform,
+        format: normalizedFormat,
         publishDate: publishDate ? new Date(publishDate) : undefined,
         status,
         caption: String(caption || "").trim(),
