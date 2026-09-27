@@ -78,7 +78,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     let backfilledOutlet: { id: string; latitude: number; longitude: number } | undefined;
     if (placement.status === "DONE") {
       const backfill = await autoBackfillOutletGps(prisma, placement);
-      if (backfill.backfilled && backfill.outletId && backfill.latitude && backfill.longitude) {
+      if (backfill.backfilled && backfill.outletId && backfill.latitude != null && backfill.longitude != null) {
         backfilledOutlet = {
           id: backfill.outletId,
           latitude: backfill.latitude,
