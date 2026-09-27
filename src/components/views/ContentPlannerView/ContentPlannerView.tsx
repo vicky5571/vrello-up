@@ -61,6 +61,8 @@ import { PLATFORM_CONFIG, DEFAULT_POST_SUBTASKS } from "./contentConstants";
 
 const columnHelper = createMarcomColumnHelper<ContentPostItem>();
 
+const EMPTY_POSTS: ContentPostItem[] = [];
+
 export function ContentPlannerView() {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
@@ -117,20 +119,24 @@ export function ContentPlannerView() {
   const {
     fetchBranches,
     branches: storeBranches,
-    getCachedPosts,
-    setCachedPosts,
     updateCachedPost,
     removeCachedPost,
+    addCachedPost,
   } = useMarcomDataStore();
 
-  const cachedPosts = getCachedPosts(activeWorkspaceId);
-  const [posts, setPosts] = useState<ContentPostItem[]>(() => cachedPosts || []);
-  const [branches, setBranches] = useState<{ id: string; name: string }[]>(() =>
-    storeBranches.length > 0
-      ? storeBranches.map((b) => ({ id: b.id, name: b.name }))
-      : []
+  const posts = useMarcomDataStore(
+    (s) => s.postsByWorkspace[activeWorkspaceId] ?? EMPTY_POSTS,
   );
-  const [isLoading, setIsLoading] = useState(!cachedPosts);
+  const storeFetchPosts = useMarcomDataStore((s) => s.fetchPosts);
+
+  const branches = useMemo(
+    () => storeBranches.map((b) => ({ id: b.id, name: b.name })),
+    [storeBranches]
+  );
+
+  const [isLoading, setIsLoading] = useState(
+    () => !Boolean(useMarcomDataStore.getState().postsByWorkspace[activeWorkspaceId])
+  );
   const [error, setError] = useState<string | null>(null);
 
   // View state: Cards vs Table
@@ -221,33 +227,23 @@ export function ContentPlannerView() {
       if (!isSilent) setIsLoading(true);
       setError(null);
       try {
-        const [resPosts, branchList] = await Promise.all([
-          fetch(`/api/marcom/content?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
+        await Promise.all([
+          storeFetchPosts(activeWorkspaceId, !isSilent),
           fetchBranches(),
         ]);
-
-        if (resPosts.ok) {
-          const json = await resPosts.json();
-          const postList = Array.isArray(json.data) ? json.data : [];
-          setPosts(postList);
-          setCachedPosts(activeWorkspaceId, postList);
-        }
-        if (Array.isArray(branchList) && branchList.length > 0) {
-          setBranches(branchList.map((b) => ({ id: b.id, name: b.name })));
-        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load content posts");
       } finally {
         setIsLoading(false);
       }
     },
-    [activeWorkspaceId, fetchBranches, setCachedPosts]
+    [activeWorkspaceId, storeFetchPosts, fetchBranches]
   );
 
   useEffect(() => {
-    const hasCache = Boolean(getCachedPosts(activeWorkspaceId));
+    const hasCache = Boolean(useMarcomDataStore.getState().postsByWorkspace[activeWorkspaceId]);
     fetchPosts({ silent: hasCache });
-  }, [fetchPosts, activeWorkspaceId, getCachedPosts]);
+  }, [fetchPosts, activeWorkspaceId]);
 
   const handleQuickTransition = async (
     post: ContentPostItem,
@@ -285,7 +281,6 @@ export function ContentPlannerView() {
         status: targetStatus,
         revisionNotes: notes !== undefined ? notes : post.revisionNotes || "",
       });
-      await fetchPosts({ silent: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal memperbarui status");
     }
@@ -420,7 +415,7 @@ export function ContentPlannerView() {
         },
       });
       closeModal();
-      await fetchPosts();
+      addCachedPost(activeWorkspaceId, savedItem);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to save content post"
@@ -456,7 +451,6 @@ export function ContentPlannerView() {
       }
 
       const savedItem: ContentPostItem = await res.json();
-      setPosts((prev) => prev.map((p) => (p.id === savedItem.id ? savedItem : p)));
       updateCachedPost(activeWorkspaceId, savedItem);
       setSelectedDrawerPost(savedItem);
 
@@ -472,8 +466,6 @@ export function ContentPlannerView() {
           mediaUrl: savedItem.mediaUrl || undefined,
         });
       }
-
-      await fetchPosts({ silent: true });
     } catch (err) {
       console.error("Failed to update post from drawer:", err);
       throw err;
@@ -488,10 +480,8 @@ export function ContentPlannerView() {
       if (!res.ok) {
         throw new Error("Failed to delete post");
       }
-      setPosts((prev) => prev.filter((p) => p.id !== id));
       removeCachedPost(activeWorkspaceId, id);
       setSelectedDrawerPost(null);
-      await fetchPosts({ silent: true });
     } catch (err) {
       console.error("Failed to delete post from drawer:", err);
       throw err;
@@ -1222,7 +1212,6 @@ export function ContentPlannerView() {
             const res = await fetch(`/api/marcom/content/${id}`, { method: "DELETE" });
             if (res.ok) {
               removeCachedPost(activeWorkspaceId, id);
-              await fetchPosts({ silent: true });
             }
             return res.ok;
           }}
