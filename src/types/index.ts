@@ -261,6 +261,12 @@ export type Brand = "IM3" | "TRI";
 
 export type PlacementStatus = "NOT_STARTED" | "ON_PROGRESS" | "DONE" | "ISSUE";
 
+/**
+ * The 3 placement statuses supported by standard Kanban bidirectional task synchronization.
+ * "ISSUE" is excluded from standard task category mapping and is handled via manual Marcom inspection.
+ */
+export type UnifiedPlacementStatus = Exclude<PlacementStatus, "ISSUE">;
+
 export interface Placement {
   id: string;
   workspaceId?: string;
