@@ -471,6 +471,8 @@ export interface CustomAutomationRule {
   createdAt: string;
 }
 
+export type AutomationRule = CustomAutomationRule;
+
 export type BranchStatus = "DONE" | "ON_PROGRESS" | "PENDING";
 
 export interface BranchItem {

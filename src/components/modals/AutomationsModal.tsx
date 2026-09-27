@@ -13,7 +13,7 @@ interface AutomationsModalProps {
   onClose: () => void;
 }
 
-interface AutomationRule {
+interface PresetAutomationRecipe {
   id: string;
   name: string;
   trigger: string;
@@ -21,7 +21,7 @@ interface AutomationRule {
   live: boolean;
 }
 
-const INITIAL_RULES: AutomationRule[] = [
+const INITIAL_RULES: PresetAutomationRecipe[] = [
   {
     id: "rule-1",
     name: "Auto-assign Urgent Tasks",
