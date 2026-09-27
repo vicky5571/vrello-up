@@ -53,6 +53,8 @@ interface EventsViewProps {
   initialView?: ActivityViewMode;
 }
 
+const EMPTY_EVENTS: FieldEventItem[] = [];
+
 export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
@@ -99,18 +101,23 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
 
   const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
+  const events = useMarcomDataStore(
+    (s) => s.eventsByWorkspace[activeWorkspaceId] ?? EMPTY_EVENTS
+  );
   const storeFetchEvents = useMarcomDataStore((s) => s.fetchEvents);
-  const invalidateEvents = useMarcomDataStore((s) => s.invalidateEvents);
+  const addCachedEvent = useMarcomDataStore((s) => s.addCachedEvent);
+  const updateCachedEvent = useMarcomDataStore((s) => s.updateCachedEvent);
+  const removeCachedEvent = useMarcomDataStore((s) => s.removeCachedEvent);
 
   // Server state
-  const cachedEvents = useMarcomDataStore.getState().getCachedEvents(activeWorkspaceId);
-  const [events, setEvents] = useState<FieldEventItem[]>(() => cachedEvents || []);
   const [branches, setBranches] = useState<{ id: string; name: string }[]>(() =>
     useMarcomDataStore.getState().branches.length > 0
       ? useMarcomDataStore.getState().branches
       : []
   );
-  const [isLoading, setIsLoading] = useState(!cachedEvents);
+  const [isLoading, setIsLoading] = useState(
+    () => !useMarcomDataStore.getState().eventsByWorkspace[activeWorkspaceId]
+  );
   const [error, setError] = useState<string | null>(null);
 
   // View mode and filters
@@ -137,17 +144,16 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   }, []);
 
   // Fetch field events and branches
-  const fetchEvents = useCallback(async () => {
-    if (!useMarcomDataStore.getState().getCachedEvents(activeWorkspaceId)) {
-      setIsLoading(true);
-    }
+  const fetchEvents = useCallback(async (force = false) => {
+    if (!activeWorkspaceId) return;
+    const hasCache = Boolean(useMarcomDataStore.getState().eventsByWorkspace[activeWorkspaceId]);
+    if (!hasCache) setIsLoading(true);
     setError(null);
     try {
-      const [eventsData, branchList] = await Promise.all([
-        storeFetchEvents(activeWorkspaceId, true),
+      const [, branchList] = await Promise.all([
+        storeFetchEvents(activeWorkspaceId, force),
         fetchBranches(),
       ]);
-      setEvents(eventsData);
       if (Array.isArray(branchList)) {
         setBranches(branchList);
       }
@@ -201,15 +207,14 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
       const res = await fetch(`/api/marcom/events/${id}`, { method: "DELETE" });
       if (!res.ok) return false;
       toast.success("Field event deleted");
-      invalidateEvents(activeWorkspaceId);
+      removeCachedEvent(activeWorkspaceId, id);
       if (editingEvent?.id === id) closeFormModal();
-      await fetchEvents();
       return true;
     } catch {
       toast.error("Failed to delete event");
       return false;
     }
-  }, [activeWorkspaceId, editingEvent, closeFormModal, fetchEvents, invalidateEvents]);
+  }, [activeWorkspaceId, editingEvent, closeFormModal, removeCachedEvent]);
 
   // Navigate to linked Board Task
   const navigateToTask = useCallback(
@@ -292,10 +297,21 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           },
         }
       );
-      invalidateEvents(activeWorkspaceId);
-      fetchEvents();
+      if (editingEvent) {
+        updateCachedEvent(activeWorkspaceId, savedItem);
+      } else {
+        addCachedEvent(activeWorkspaceId, savedItem);
+      }
+      storeFetchEvents(activeWorkspaceId, true);
     },
-    [activeWorkspaceId, editingEvent, navigateToTask, fetchEvents, invalidateEvents]
+    [
+      activeWorkspaceId,
+      editingEvent,
+      navigateToTask,
+      addCachedEvent,
+      updateCachedEvent,
+      storeFetchEvents,
+    ]
   );
 
   // Filtered Events
@@ -451,7 +467,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
 
           <button
             type="button"
-            onClick={fetchEvents}
+            onClick={() => fetchEvents(true)}
             className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
             title="Refresh Field Events"
           >
@@ -545,7 +561,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           <p className="text-sm mt-1">{error}</p>
           <button
             type="button"
-            onClick={fetchEvents}
+            onClick={() => fetchEvents(true)}
             className="mt-3 px-3 py-1.5 rounded-md bg-rose-600 text-white text-xs font-semibold hover:bg-rose-700 cursor-pointer"
           >
             Try Again
@@ -608,7 +624,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           isLoading={isLoading}
           error={error}
           canDelete={can("CREATE_EVENT")}
-          onRefresh={fetchEvents}
+          onRefresh={() => fetchEvents(true)}
           onSelectEvent={openEditModal}
           onNavigateToTask={navigateToTask}
           onDeleteEvent={handleDeleteEvent}
