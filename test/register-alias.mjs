@@ -25,6 +25,11 @@ registerHooks({
       const url = probe(path.join(srcDir, specifier.slice(2)));
       if (url) return { url, shortCircuit: true };
     }
+    if ((specifier.startsWith("./") || specifier.startsWith("../")) && context.parentURL && context.parentURL.startsWith("file:")) {
+      const parentDir = path.dirname(fileURLToPath(context.parentURL));
+      const url = probe(path.resolve(parentDir, specifier));
+      if (url) return { url, shortCircuit: true };
+    }
     return next(specifier, context);
   },
 });
