@@ -67,6 +67,7 @@ interface MarcomTableShellProps<T extends object & { id: string }> {
   entityName: string; // e.g. "branch"
   entityPlural: string; // e.g. "branches"
   onDeleteOne: (id: string) => Promise<boolean>;
+  onDeleteBatch?: (ids: string[]) => Promise<boolean>;
   // add
   canAdd?: boolean;
   onAdd?: () => void;
@@ -110,6 +111,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
   entityName,
   entityPlural,
   onDeleteOne,
+  onDeleteBatch,
   canAdd,
   onAdd,
   addLabel,
@@ -202,15 +204,37 @@ export function MarcomTableShell<T extends object & { id: string }>({
       return;
     setIsDeleting(true);
     try {
+      if (onDeleteBatch) {
+        const ok = await onDeleteBatch(selectedRowIds);
+        if (ok) {
+          toast.success(
+            `${selectedRowIds.length} ${selectedRowIds.length === 1 ? entityName : entityPlural} deleted`,
+          );
+          if (expandedId && selectedRowIds.includes(expandedId)) setExpandedId(null);
+          setRowSelection({});
+          await onRefresh();
+        } else {
+          toast.error(`Failed to delete selected ${entityPlural}`);
+        }
+        return;
+      }
+
+      // Fallback for views that have not yet implemented batch deletion
       const results = await Promise.all(selectedRowIds.map((id) => onDeleteOne(id)));
       const succeeded = selectedRowIds.filter((_, i) => results[i]);
       const failed = selectedRowIds.filter((_, i) => !results[i]);
       if (failed.length === 0) {
-        toast.success(`${succeeded.length} ${succeeded.length === 1 ? entityName : entityPlural} deleted`);
+        toast.success(
+          `${succeeded.length} ${succeeded.length === 1 ? entityName : entityPlural} deleted`,
+        );
       } else if (succeeded.length === 0) {
-        toast.error(`Failed to delete ${failed.length} ${failed.length === 1 ? entityName : entityPlural}`);
+        toast.error(
+          `Failed to delete ${failed.length} ${failed.length === 1 ? entityName : entityPlural}`,
+        );
       } else {
-        toast.error(`${succeeded.length}/${selectedRowIds.length} ${entityPlural} deleted — ${failed.length} failed`);
+        toast.error(
+          `${succeeded.length}/${selectedRowIds.length} ${entityPlural} deleted — ${failed.length} failed`,
+        );
       }
       if (expandedId && succeeded.includes(expandedId)) setExpandedId(null);
       setRowSelection(failed.length ? Object.fromEntries(failed.map((id) => [id, true])) : {});
@@ -218,7 +242,18 @@ export function MarcomTableShell<T extends object & { id: string }>({
     } finally {
       setIsDeleting(false);
     }
-  }, [selectedRowIds, isDeleting, canDelete, deleteRequiresMessage, entityName, entityPlural, onDeleteOne, expandedId, onRefresh]);
+  }, [
+    selectedRowIds,
+    isDeleting,
+    canDelete,
+    deleteRequiresMessage,
+    entityName,
+    entityPlural,
+    onDeleteOne,
+    onDeleteBatch,
+    expandedId,
+    onRefresh,
+  ]);
 
   const allRows = table.getRowModel().rows;
 

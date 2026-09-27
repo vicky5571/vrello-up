@@ -620,6 +620,24 @@ export function PlacementsView() {
     [activeWorkspaceId, removeCachedPlacement, invalidateMous],
   );
 
+  const deleteBatch = useCallback(
+    async (ids: string[]) => {
+      const res = await fetch("/api/marcom/placements", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, workspaceId: activeWorkspaceId }),
+      });
+      if (res.ok) {
+        for (const id of ids) {
+          removeCachedPlacement(activeWorkspaceId, id);
+        }
+        invalidateMous(activeWorkspaceId);
+      }
+      return res.ok;
+    },
+    [activeWorkspaceId, removeCachedPlacement, invalidateMous],
+  );
+
   const viewSwitcherControls = (
     <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
       <button
@@ -698,6 +716,7 @@ export function PlacementsView() {
           canDelete={canManage}
           deleteRequiresMessage="Delete requires staff or admin role"
           onDeleteOne={deleteOne}
+          onDeleteBatch={deleteBatch}
           canAdd={canManage}
           onAdd={handleOpenAddPlacement}
           renderFloatingBulkBar={(selectedIds, clearSelection) => (

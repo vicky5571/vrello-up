@@ -456,6 +456,23 @@ export function OutletsView() {
     [activeWorkspaceId, invalidateOutlets, invalidatePlacements, invalidateMous],
   );
 
+  const deleteBatch = useCallback(
+    async (ids: string[]) => {
+      const res = await fetch("/api/marcom/outlets", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      if (res.ok) {
+        invalidateOutlets();
+        invalidatePlacements(activeWorkspaceId);
+        invalidateMous(activeWorkspaceId);
+      }
+      return res.ok;
+    },
+    [activeWorkspaceId, invalidateOutlets, invalidatePlacements, invalidateMous],
+  );
+
   const kpiItems = useMemo(() => {
     const kpis = calculateEnhancedOutletKPIs(outlets);
 
@@ -598,6 +615,7 @@ export function OutletsView() {
             canDelete={canManage}
             deleteRequiresMessage="Delete requires admin role"
             onDeleteOne={deleteOne}
+            onDeleteBatch={deleteBatch}
             canAdd={canAddOutlet}
             onAdd={() => {
               if (canManage) {

@@ -145,6 +145,24 @@ export function MousView() {
     [activeWorkspaceId, removeCachedMou, invalidatePlacements],
   );
 
+  const deleteBatch = useCallback(
+    async (ids: string[]) => {
+      const res = await fetch("/api/marcom/mous", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, workspaceId: activeWorkspaceId }),
+      });
+      if (res.ok) {
+        for (const id of ids) {
+          removeCachedMou(activeWorkspaceId, id);
+        }
+        invalidatePlacements(activeWorkspaceId);
+      }
+      return res.ok;
+    },
+    [activeWorkspaceId, removeCachedMou, invalidatePlacements],
+  );
+
   const kpiItems = useMemo(() => buildMouKpiItems(mous), [mous]);
 
   return (
@@ -165,6 +183,7 @@ export function MousView() {
         canDelete={canManage}
         deleteRequiresMessage="Delete requires admin role"
         onDeleteOne={deleteOne}
+        onDeleteBatch={deleteBatch}
         canAdd={canCreate}
         onAdd={() => {
           setModalMou({ branchId: branches[0]?.id || "", partnerName: "", mouType: "Compensation", outletName: "", startDate: new Date().toISOString().slice(0, 10), endDate: "", picName: "", picPhone: "", docPath: "", compensationValue: undefined, notes: "", status: "DRAFT" });
