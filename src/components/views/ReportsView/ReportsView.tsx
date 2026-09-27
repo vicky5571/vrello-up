@@ -111,25 +111,35 @@ function ReportSection({ title, items }: { title: string; items: unknown[] }) {
   );
 }
 
+const EMPTY_REPORTS: MarcomReport[] = [];
+const EMPTY_DOCS: MarcomDocument[] = [];
+
 export function ReportsView() {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const setExportCenterOpen = useWorkspaceStore((state) => state.setExportCenterOpen);
   const navigateToMarcom = useWorkspaceStore((state) => state.navigateToMarcom);
   const [reportTab, setReportTab] = useState<"monthly" | "posm_quarterly">("monthly");
-  const {
-    getCachedReports,
-    setCachedReports,
-    getCachedDocuments,
-    setCachedDocuments,
-  } = useMarcomDataStore();
+  
+  const rawReports = useMarcomDataStore(
+    (s) => s.reportsByWorkspace[activeWorkspaceId] ?? EMPTY_REPORTS,
+  );
+  const reports = rawReports as unknown as MarcomReport[];
 
-  const cachedReports = getCachedReports(activeWorkspaceId);
-  const cachedDocs = getCachedDocuments(activeWorkspaceId);
+  const rawDocs = useMarcomDataStore(
+    (s) => s.documentsByWorkspace[activeWorkspaceId] ?? EMPTY_DOCS,
+  );
+  const documents = rawDocs as unknown as MarcomDocument[];
 
-  const [reports, setReports] = useState<MarcomReport[]>(() => (cachedReports as unknown as MarcomReport[]) || []);
-  const [documents, setDocuments] = useState<MarcomDocument[]>(() => (cachedDocs as unknown as MarcomDocument[]) || []);
-  const [isLoading, setIsLoading] = useState(() => !cachedReports && !cachedDocs);
+  const storeFetchReports = useMarcomDataStore((s) => s.fetchReports);
+  const storeFetchDocuments = useMarcomDataStore((s) => s.fetchDocuments);
+  const addCachedReport = useMarcomDataStore((s) => s.addCachedReport);
+
+  const [isLoading, setIsLoading] = useState(
+    () =>
+      !Boolean(useMarcomDataStore.getState().reportsByWorkspace[activeWorkspaceId]) &&
+      !Boolean(useMarcomDataStore.getState().documentsByWorkspace[activeWorkspaceId])
+  );
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -159,43 +169,26 @@ export function ReportsView() {
       if (!isSilent) setIsLoading(true);
       setError(null);
       try {
-        const [reportsRes, docsRes] = await Promise.all([
-          fetch(`/api/marcom/reports?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
-          fetch(`/api/marcom/documents?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
+        await Promise.all([
+          storeFetchReports(activeWorkspaceId, !isSilent),
+          storeFetchDocuments(activeWorkspaceId, !isSilent),
         ]);
-        if (!reportsRes.ok) throw new Error(`Request failed (${reportsRes.status})`);
-        const json = await reportsRes.json();
-        const reportList = Array.isArray(json.data) ? json.data : [];
-        setReports(reportList);
-        setCachedReports(
-          activeWorkspaceId,
-          reportList as unknown as Parameters<typeof setCachedReports>[1],
-        );
-
-        if (docsRes.ok) {
-          const docsJson = await docsRes.json();
-          const docList = Array.isArray(docsJson.data) ? docsJson.data : [];
-          setDocuments(docList);
-          setCachedDocuments(
-            activeWorkspaceId,
-            docList as unknown as Parameters<typeof setCachedDocuments>[1],
-          );
-        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load reports");
       } finally {
         setIsLoading(false);
       }
     },
-    [activeWorkspaceId, setCachedReports, setCachedDocuments]
+    [activeWorkspaceId, storeFetchReports, storeFetchDocuments]
   );
 
   useEffect(() => {
     const hasCache = Boolean(
-      getCachedReports(activeWorkspaceId) || getCachedDocuments(activeWorkspaceId)
+      useMarcomDataStore.getState().reportsByWorkspace[activeWorkspaceId] ||
+      useMarcomDataStore.getState().documentsByWorkspace[activeWorkspaceId]
     );
     fetchReports({ silent: hasCache });
-  }, [fetchReports, activeWorkspaceId, getCachedReports, getCachedDocuments]);
+  }, [fetchReports, activeWorkspaceId]);
 
   // Reports are not tasks: row click toggles a local expandable detail row.
   // TaskDrawer (setSelectedTaskId) is deliberately not wired here.
@@ -333,6 +326,8 @@ export function ReportsView() {
         const errJson = await res.json().catch(() => ({}));
         throw new Error(errJson.error || `Request failed (${res.status})`);
       }
+      const savedReport = await res.json();
+      addCachedReport(activeWorkspaceId, savedReport);
       toast.success("Laporan bulanan berhasil dibuat dan disimpan!");
       setTotalActivities("");
       setCompletionRate("");
@@ -342,7 +337,6 @@ export function ReportsView() {
       setActivitiesList([]);
       setDraftData(null);
       setShowCreateForm(false);
-      await fetchReports();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal membuat laporan");
     } finally {
