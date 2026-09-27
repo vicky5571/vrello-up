@@ -1,4 +1,6 @@
-export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE";
+import type { MouStatus } from "@/types";
+
+export type { MouStatus };
 
 // The only statuses the API accepts. Deliberately excludes the Prisma
 // MouStatus.ON_PROGRESS value: the machine has no edges to/from it, so a

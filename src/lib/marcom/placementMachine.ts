@@ -1,7 +1,9 @@
 // @ts-expect-error Node strip-types requires explicit .ts extension
 import { isValidCoordinate } from "./locationUtils.ts";
 
-export type PlacementStatus = "NOT_STARTED" | "ON_PROGRESS" | "DONE" | "ISSUE";
+import type { PlacementStatus } from "@/types";
+
+export type { PlacementStatus };
 
 // Reconciled rule: ISSUE is reachable from any non-terminal state; DONE is terminal.
 const ALLOWED_TRANSITIONS: Record<PlacementStatus, readonly PlacementStatus[]> = {
