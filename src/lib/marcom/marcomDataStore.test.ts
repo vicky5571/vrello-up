@@ -143,7 +143,7 @@ describe("useMarcomDataStore", () => {
       assert.equal(useMarcomDataStore.getState().isOutletsLoaded, false);
     });
 
-    it("updates cached outlet master data immutably", () => {
+    it("updates cached outlet master data immutably while preserving other outlets", () => {
       const store = useMarcomDataStore.getState();
       store.setOutlets([
         {
@@ -160,6 +160,20 @@ describe("useMarcomDataStore", () => {
           latitude: null,
           longitude: null,
         },
+        {
+          id: "out-gps-2",
+          code: "OUT-02",
+          name: "Toko Sebelah",
+          type: "TRADITIONAL",
+          address: "Jl. Thamrin",
+          city: "Jakarta",
+          picName: "Siti",
+          picPhone: "0898765432",
+          active: true,
+          branchId: "b1",
+          latitude: -6.19,
+          longitude: 106.82,
+        },
       ]);
 
       store.updateCachedOutlet({
@@ -171,6 +185,10 @@ describe("useMarcomDataStore", () => {
       const updated = useMarcomDataStore.getState().outlets.find((o) => o.id === "out-gps-1");
       assert.equal(updated?.latitude, -6.2088);
       assert.equal(updated?.longitude, 106.8456);
+
+      const untouched = useMarcomDataStore.getState().outlets.find((o) => o.id === "out-gps-2");
+      assert.equal(untouched?.latitude, -6.19);
+      assert.equal(untouched?.longitude, 106.82);
     });
   });
 
