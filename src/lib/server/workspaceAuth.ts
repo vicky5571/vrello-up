@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/marcom/db";
+import { prisma } from "@/lib/db";
 
 async function getNextAuthSession(): Promise<{ user?: { email?: string | null } } | null> {
   try {

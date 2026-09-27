@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/marcom/db";
+import { prisma } from "@/lib/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { generateReportDraft, getMonthDateRange } from "@/lib/marcom/reportDraftEngine";
 

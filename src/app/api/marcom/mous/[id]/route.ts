@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/marcom/db";
+import { prisma } from "@/lib/db";
 import { requireWorkspaceAccess, validateWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { canTransitionMou, MOU_STATUSES, type MouStatus } from "@/lib/marcom/mouMachine";
 

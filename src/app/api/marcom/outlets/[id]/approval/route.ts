@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/marcom/db";
+import { prisma } from "@/lib/db";
 import { requireMember } from "@/lib/marcom/auth";
 import { hasScopedPermission } from "@/lib/marcom/guards";
 import {

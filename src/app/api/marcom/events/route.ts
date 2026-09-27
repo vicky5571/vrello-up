@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/marcom/db";
+import { prisma } from "@/lib/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 
 const VALID_STATUSES = ["UPCOMING", "ON_PROGRESS", "COMPLETED", "CANCELLED"] as const;

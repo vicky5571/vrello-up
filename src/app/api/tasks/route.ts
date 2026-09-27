@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/marcom/db";
+import { prisma } from "@/lib/db";
 import {
   type Task,
   type Workspace,

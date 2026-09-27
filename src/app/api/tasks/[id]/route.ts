@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/marcom/db";
+import { prisma } from "@/lib/db";
 import { realtimeHub } from "@/lib/server/realtimeHub";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import {

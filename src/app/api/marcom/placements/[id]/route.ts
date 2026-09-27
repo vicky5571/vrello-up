@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/marcom/db";
+import { prisma } from "@/lib/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { validatePlacementUpdate, type PlacementStatus } from "@/lib/marcom/placementMachine";
 import { autoBackfillOutletGps } from "@/lib/marcom/outletBackfill";
