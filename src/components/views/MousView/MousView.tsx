@@ -16,7 +16,7 @@ import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
 import { calculateMouPlacementRealization } from "@/lib/marcom/placementMouBridge";
 import { parseMouDocumentSource } from "./mouDocumentHelpers";
 import { MouDocumentViewerModal } from "./MouDocumentViewerModal";
-import { compressImageFile } from "@/lib/marcom/imageCompression";
+import { saveMou, transitionMouStatus, deleteMou, uploadMouDocument } from "./mouApi";
 
 import type { MarcomMou, MouStatus } from "@/types";
 export type { MarcomMou, MouStatus };
@@ -134,15 +134,7 @@ export function MousView() {
 
   const handleStatusTransition = async (mou: MarcomMou, nextStatus: MouStatus) => {
     try {
-      const res = await fetch(`/api/marcom/mous/${mou.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: nextStatus }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Failed to transition MOU to ${nextStatus}`);
-      }
+      await transitionMouStatus(mou.id, nextStatus);
       toast.success(`MOU status updated to ${nextStatus}`);
       updateCachedMou(activeWorkspaceId, { id: mou.id, status: nextStatus });
       invalidatePlacements(activeWorkspaceId);
@@ -438,19 +430,8 @@ export function MousView() {
     if (!rawFile || !modalMou) return;
     setIsUploading(true);
     try {
-      const file = await compressImageFile(rawFile);
-      const uploadId = modalMou.id || "new";
-      const fd = new FormData();
-      fd.append("kind", "documents");
-      fd.append("id", uploadId);
-      fd.append("file", file);
-      const res = await fetch("/api/marcom/uploads", { method: "POST", body: fd });
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || "Failed to upload file");
-      }
-      const data = await res.json();
-      setModalMou((prev) => (prev ? { ...prev, docPath: data.filePath } : null));
+      const filePath = await uploadMouDocument(rawFile, modalMou.id || "new");
+      setModalMou((prev) => (prev ? { ...prev, docPath: filePath } : null));
       toast.success("Document uploaded successfully");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
@@ -474,12 +455,8 @@ export function MousView() {
     setIsSaving(true);
     try {
       const isEdit = Boolean(id);
-      const url = isEdit ? `/api/marcom/mous/${id}` : "/api/marcom/mous";
-      const method = isEdit ? "PATCH" : "POST";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const savedMou = await saveMou(
+        {
           branchId,
           outletId: modalMou.outletId || undefined,
           partnerName,
@@ -493,14 +470,9 @@ export function MousView() {
           compensationValue: compensationValue != null ? Math.max(0, Number(compensationValue)) : 0,
           notes: notes || "",
           workspaceId: activeWorkspaceId,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Failed to save MOU (${res.status})`);
-      }
-      const resJson = await res.json().catch(() => ({}));
-      const savedMou: MarcomMou = (resJson.data ?? resJson) as MarcomMou;
+        },
+        isEdit ? id : undefined,
+      );
       toast.success(`MOU ${isEdit ? "updated" : "created"} successfully`);
       if (isEdit && id) {
         updateCachedMou(activeWorkspaceId, savedMou);
@@ -521,12 +493,12 @@ export function MousView() {
 
   const deleteOne = useCallback(
     async (id: string) => {
-      const res = await fetch(`/api/marcom/mous/${id}`, { method: "DELETE" });
-      if (res.ok) {
+      const ok = await deleteMou(id);
+      if (ok) {
         removeCachedMou(activeWorkspaceId, id);
         invalidatePlacements(activeWorkspaceId);
       }
-      return res.ok;
+      return ok;
     },
     [activeWorkspaceId, removeCachedMou, invalidatePlacements],
   );
