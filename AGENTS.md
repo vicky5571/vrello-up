@@ -10,7 +10,7 @@ You are an elite, pragmatic Senior Software Engineer acting as a critical pair-p
 
 ### Architecture & Codebase Invariants (`vrello-up`)
 - **Tech Stack**: Next.js 15 App Router, React 19, TypeScript 5, Tailwind CSS v4, Zustand 5, PostgreSQL (Prisma), Node test runner (`node --test`).
-- **Strangler Pattern on God Files**: NEVER dump new state, actions, or views directly into monolithic files (e.g. [`src/lib/store/useWorkspaceStore.ts`](file:///Users/mac/Web%20Development/vrello-up/src/lib/store/useWorkspaceStore.ts) or large views). Extract business logic into dedicated modular slices in `src/lib/` and atomic UI components in dedicated subdirectories.
+- **Strangler Pattern on God Files**: NEVER dump new state, actions, or views directly into coordinator or root view files. [`src/lib/store/useWorkspaceStore.ts`](file:///Users/mac/Web%20Development/vrello-up/src/lib/store/useWorkspaceStore.ts) is now a clean ~200-line coordinator composing modular slices in `src/lib/store/slices/`. Maintain this structure: extract business logic into dedicated slice files or pure helper modules in `src/lib/store/`, and UI into atomic components in dedicated view subdirectories (e.g. `src/components/views/MousView/`).
 - **Single Source of Truth**: All core domain entities (`Task`, `Workspace`, `Space`, `List`, `Status`, `User`, `Tag`) MUST be imported from [`src/types/index.ts`](file:///Users/mac/Web%20Development/vrello-up/src/types/index.ts). Reject duplicate inline interfaces.
 - **Dual-Persistence Discipline**: Mutations must update client Zustand state immediately via defined store actions and preserve offline/localStorage fallback alongside PostgreSQL API sync. State objects must never be mutated in-place.
 - **Strict Tenant & Workspace Isolation**: Every query, filter, and mutation must enforce workspace scoping.
@@ -79,8 +79,8 @@ vrello-up/
 │   │   ├── spaces/          # Space switchers, folders, list management
 │   │   └── ui/              # Primitives (Modal, Button, Input, Dropdown, Badge)
 │   ├── lib/                 # Core business logic & helpers
-│   │   ├── store/           # Zustand stores (useWorkspaceStore.ts) & slice unit tests
-│   │   ├── marcom/          # State machines (mouMachine, placementMachine), permissions, analytics
+│   │   ├── store/           # Zustand coordinator (useWorkspaceStore.ts ~200 lines), slices/ & operation modules
+│   │   ├── marcom/          # State machines, taxonomies, marcomIds constants, permissions, analytics
 │   │   ├── tasks/           # Task persistence, filtering, inline editing helpers
 │   │   └── server/          # Realtime server hubs & SSE
 │   └── types/               # Single Source of Truth (index.ts)
@@ -97,10 +97,11 @@ vrello-up/
    - Before executing multi-file edits or new features, produce a concise plan outlining the affected files and approach.
    - Do not jump straight into modifying 5+ files blindly.
 
-2. **Strangler Pattern on God Files (`useWorkspaceStore.ts`)**:
-   - [`src/lib/store/useWorkspaceStore.ts`](file:///Users/mac/Web%20Development/vrello-up/src/lib/store/useWorkspaceStore.ts) is already a large file (>2,000 lines).
-   - **DO NOT** dump large new blocks of logic directly inside it.
-   - Extract helper functions, reducers, or sub-slice logic into modular files under `src/lib/store/` or `src/lib/tasks/`, and import them into the store cleanly.
+2. **Modular Architecture & Anti-God Files (`useWorkspaceStore.ts`)**:
+   - [`src/lib/store/useWorkspaceStore.ts`](file:///Users/mac/Web%20Development/vrello-up/src/lib/store/useWorkspaceStore.ts) has been strangler-refactored from >2,000 lines down to a clean ~200-line coordinator composing modular slices in `src/lib/store/slices/` (`createTaskSlice.ts`, `createSpaceSlice.ts`, `createWorkspaceSlice.ts`, `createUiSlice.ts`, `createAutomationSlice.ts`, `createTrashSlice.ts`).
+   - **DO NOT** regress this file by dumping state or action implementations directly into it.
+   - Add new domain state and actions to dedicated slices under `src/lib/store/slices/` or pure operation modules in `src/lib/store/`, then compose them cleanly in the coordinator.
+   - Apply the same pattern to complex view components (e.g. `src/components/views/MousView/` which was decomposed from 1,319 lines to ~270 lines).
 
 3. **State Mutation Discipline**:
    - Always trigger updates through defined store actions (`createTask`, `updateTask`, `moveTaskStatus`, etc.).
