@@ -200,7 +200,23 @@ export async function PATCH(request: Request) {
       },
       data: dataToUpdate,
     });
-    return NextResponse.json({ updatedCount: result.count });
+
+    let backfilledCount = 0;
+    if (updates.status === "DONE") {
+      const completedPlacements = await prisma.placement.findMany({
+        where: { id: { in: ids }, workspaceId, status: "DONE" },
+        select: { outletId: true, status: true, latitude: true, longitude: true, shareLocationUrl: true },
+      });
+
+      for (const p of completedPlacements) {
+        const backfill = await autoBackfillOutletGps(prisma, p);
+        if (backfill.backfilled) {
+          backfilledCount++;
+        }
+      }
+    }
+
+    return NextResponse.json({ updatedCount: result.count, backfilledOutletsCount: backfilledCount });
   } catch (err) {
     console.error("PATCH /api/marcom/placements error:", err);
     return NextResponse.json(
