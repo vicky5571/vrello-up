@@ -488,6 +488,8 @@ export interface BranchItem {
 
 export type Branch = BranchItem;
 
+export type MarcomBranch = BranchItem;
+
 export interface MaterialItem {
   id: string;
   name: string;

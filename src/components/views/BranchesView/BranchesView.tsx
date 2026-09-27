@@ -10,22 +10,9 @@ import {
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
 
-export type BranchStatus = "DONE" | "ON_PROGRESS" | "PENDING";
+import type { BranchStatus, MarcomBranch } from "@/types";
 
-export interface MarcomBranch {
-  id: string;
-  code: string;
-  name: string;
-  region: string;
-  city: string;
-  status?: BranchStatus;
-  picName: string;
-  picPhone: string;
-  address: string;
-  outletCount?: number;
-  mouCount?: number;
-  progress?: number;
-}
+export type { BranchStatus, MarcomBranch };
 
 const columnHelper = createMarcomColumnHelper<MarcomBranch>();
 
