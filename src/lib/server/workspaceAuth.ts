@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import type { WorkspaceRole } from "@/types";
 
 async function getNextAuthSession(): Promise<{ user?: { email?: string | null } } | null> {
   try {
@@ -12,7 +13,7 @@ async function getNextAuthSession(): Promise<{ user?: { email?: string | null } 
   return null;
 }
 
-export type WorkspaceRole = "admin" | "staff" | "viewer";
+export type { WorkspaceRole };
 
 const ROLE_RANKS: Record<WorkspaceRole, number> = {
   admin: 3,

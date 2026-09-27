@@ -15,12 +15,14 @@ export interface Status {
   order: number;
 }
 
+export type WorkspaceRole = "admin" | "staff" | "viewer";
+
 export interface User {
   id: string;
   name: string;
   email: string;
   avatar: string;
-  role?: "admin" | "staff" | "viewer";
+  role?: WorkspaceRole;
   assignedBranchIds?: string[];
 }
 
