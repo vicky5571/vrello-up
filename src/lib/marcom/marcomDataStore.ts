@@ -42,6 +42,7 @@ export interface MarcomDataState {
   setBranches: (branches: BranchItem[]) => void;
   setMaterials: (materials: MaterialItem[]) => void;
   setOutlets: (outlets: OutletItem[]) => void;
+  updateCachedOutlet: (outlet: Partial<OutletItem> & { id: string }) => void;
   invalidateBranches: () => void;
   invalidateMaterials: () => void;
   invalidateOutlets: () => void;
@@ -209,6 +210,14 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
 
   setOutlets: (outlets: OutletItem[]) => {
     set({ outlets, isOutletsLoaded: true });
+  },
+
+  updateCachedOutlet: (outlet: Partial<OutletItem> & { id: string }) => {
+    set((s) => ({
+      outlets: s.outlets.map((o) =>
+        o.id === outlet.id ? ({ ...o, ...outlet } as OutletItem) : o
+      ),
+    }));
   },
 
   invalidateBranches: () => {

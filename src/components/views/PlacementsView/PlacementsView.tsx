@@ -129,6 +129,8 @@ export function PlacementsView() {
   const addCachedPlacement = useMarcomDataStore((s) => s.addCachedPlacement);
   const updateCachedPlacement = useMarcomDataStore((s) => s.updateCachedPlacement);
   const removeCachedPlacement = useMarcomDataStore((s) => s.removeCachedPlacement);
+  const invalidateOutlets = useMarcomDataStore((s) => s.invalidateOutlets);
+  const updateCachedOutlet = useMarcomDataStore((s) => s.updateCachedOutlet);
 
   const [isLoading, setIsLoading] = useState(
     () => !Boolean(useMarcomDataStore.getState().placementsByWorkspace[activeWorkspaceId]),
@@ -577,6 +579,15 @@ export function PlacementsView() {
       }
       const jsonRes = await res.json().catch(() => ({}));
       const savedPlacement: MarcomPlacement = jsonRes.data || jsonRes;
+      const backfilledOutlet = jsonRes.backfilledOutlet;
+
+      if (backfilledOutlet) {
+        updateCachedOutlet(backfilledOutlet);
+        invalidateOutlets();
+      } else if (status === "DONE" && (latitude || longitude)) {
+        invalidateOutlets();
+      }
+
       if (isEdit && id) {
         updateCachedPlacement(activeWorkspaceId, savedPlacement);
       } else {

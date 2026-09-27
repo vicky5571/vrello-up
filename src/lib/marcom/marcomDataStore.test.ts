@@ -142,6 +142,36 @@ describe("useMarcomDataStore", () => {
       store.invalidateOutlets();
       assert.equal(useMarcomDataStore.getState().isOutletsLoaded, false);
     });
+
+    it("updates cached outlet master data immutably", () => {
+      const store = useMarcomDataStore.getState();
+      store.setOutlets([
+        {
+          id: "out-gps-1",
+          code: "OUT-01",
+          name: "Warung Berkah",
+          type: "TRADITIONAL",
+          address: "Jl. Sudirman",
+          city: "Jakarta",
+          picName: "Budi",
+          picPhone: "0812345678",
+          active: true,
+          branchId: "b1",
+          latitude: null,
+          longitude: null,
+        },
+      ]);
+
+      store.updateCachedOutlet({
+        id: "out-gps-1",
+        latitude: -6.2088,
+        longitude: 106.8456,
+      });
+
+      const updated = useMarcomDataStore.getState().outlets.find((o) => o.id === "out-gps-1");
+      assert.equal(updated?.latitude, -6.2088);
+      assert.equal(updated?.longitude, 106.8456);
+    });
   });
 
   describe("SWR Content Posts Cache", () => {
