@@ -114,3 +114,44 @@ test("updateTask with statusId change invokes sync hooks for placement tasks", (
   store.deleteTask(created.id);
 });
 
+test("bulkUpdateTasks fires marcom sync hooks when statusId is in updates", () => {
+  const store = api();
+  const created1 = store.createTask({
+    listId: "list-field-ops",
+    title: "[Placement] Bulk 1",
+    description: "",
+    statusId: "status-todo",
+    priority: "normal",
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 0,
+    relatedMarcomId: "place-bulk-1",
+    relatedMarcomType: "PLACEMENT",
+  });
+  const created2 = store.createTask({
+    listId: "list-field-ops",
+    title: "[Field Event] Bulk 2",
+    description: "",
+    statusId: "status-todo",
+    priority: "normal",
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 1,
+    relatedMarcomId: "event-bulk-1",
+    relatedMarcomType: "FIELD_EVENT",
+  });
+
+  store.bulkUpdateTasks([created1.id, created2.id], { statusId: "status-done" });
+
+  const u1 = api().tasks.find((t) => t.id === created1.id);
+  const u2 = api().tasks.find((t) => t.id === created2.id);
+  assert.equal(u1?.statusId, "status-done");
+  assert.equal(u2?.statusId, "status-done");
+
+  store.deleteTask(created1.id);
+  store.deleteTask(created2.id);
+});
+
+

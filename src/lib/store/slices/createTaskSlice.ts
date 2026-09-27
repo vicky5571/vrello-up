@@ -171,14 +171,47 @@ export const createTaskSlice: StateCreator<
 
   bulkUpdateTasks: (ids, updates) => {
     if (ids.length === 0) return;
+    const prevTasks = get().tasks;
     const { nextTasks, effectiveUpdatesMap } = applyBulkUpdateTasks(
-      get().tasks,
+      prevTasks,
       ids,
       updates,
     );
     set({ tasks: nextTasks });
     for (const [id, effective] of effectiveUpdatesMap.entries()) {
       syncUpdateTask(id, effective);
+    }
+
+    // Fire Marcom sync hooks for tasks with statusId changes
+    if (updates.statusId) {
+      const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
+      const spaces = currentWs?.spaces || [];
+
+      for (const id of ids) {
+        const prev = prevTasks.find((t) => t.id === id);
+        if (!prev?.relatedMarcomId) continue;
+        if (prev.statusId === updates.statusId) continue; // No actual change
+
+        const revertOnFailure = (result: MarcomSyncResult) => {
+          if (!result.synced && !result.skipped && result.error) {
+            const { nextTasks: reverted } = applyUpdateTask(
+              get().tasks,
+              id,
+              { statusId: prev.statusId },
+            );
+            set({ tasks: reverted });
+            syncUpdateTask(id, { statusId: prev.statusId });
+            toast.error(`${prev.title}: ${result.error}`, { duration: 6000 });
+          }
+        };
+
+        if (!prev.relatedMarcomType || prev.relatedMarcomType === "FIELD_EVENT") {
+          syncFieldEventOnTaskStatusChange(prev, updates.statusId, spaces).then(revertOnFailure);
+        }
+        if (!prev.relatedMarcomType || prev.relatedMarcomType === "PLACEMENT") {
+          syncPlacementOnTaskStatusChange(prev, updates.statusId, spaces).then(revertOnFailure);
+        }
+      }
     }
   },
 
