@@ -3,10 +3,9 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { isValidDocumentFilePath } from "@/lib/marcom/upload";
+import { VALID_DOCUMENT_STATUSES, isValidDocumentStatus } from "@/lib/marcom/documentTaxonomy";
 
 const VALID_FILE_TYPES = ["PDF", "XLSX", "DOCX", "ZIP", "CSV", "MP4", "PNG", "JPG"] as const;
-const VALID_DOCUMENT_STATUSES = ["DRAFT", "ACTIVE", "ARCHIVED"] as const;
-type ValidDocumentStatus = (typeof VALID_DOCUMENT_STATUSES)[number];
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -58,7 +57,7 @@ export async function POST(request: Request) {
   }
 
   const rawStatus = typeof status === "string" && status.trim() !== "" ? status.trim().toUpperCase() : "DRAFT";
-  if (!VALID_DOCUMENT_STATUSES.includes(rawStatus as ValidDocumentStatus)) {
+  if (!isValidDocumentStatus(rawStatus)) {
     return NextResponse.json(
       { error: `Invalid status: '${status}'. Must be one of: ${VALID_DOCUMENT_STATUSES.join(", ")}` },
       { status: 400 },
