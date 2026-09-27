@@ -25,7 +25,11 @@ import {
 import { applyIncrementAutomationRun } from "@/lib/store/automationOperations";
 import { findSpaceForListId, findWorkspaceForListId } from "@/lib/store/workspaceSync";
 import { syncFieldEventOnTaskStatusChange } from "@/lib/tasks/eventTaskSync";
-import { syncPlacementOnTaskStatusChange } from "@/lib/tasks/placementTaskSync";
+import {
+  syncPlacementOnTaskStatusChange,
+  type MarcomSyncResult,
+} from "@/lib/tasks/placementTaskSync";
+import { toast } from "sonner";
 import { SEED_USERS, SEED_TAGS, INITIAL_TASKS } from "@/lib/constants/seeds";
 import {
   syncCreateTask,
@@ -111,11 +115,23 @@ export const createTaskSlice: StateCreator<
     if (updates.statusId && prev?.relatedMarcomId) {
       const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
       const spaces = currentWs?.spaces || [];
+      const revertOnFailure = (result: MarcomSyncResult) => {
+        if (!result.synced && !result.skipped && result.error) {
+          const { nextTasks: reverted } = applyUpdateTask(
+            get().tasks,
+            id,
+            { statusId: prev.statusId },
+          );
+          set({ tasks: reverted });
+          syncUpdateTask(id, { statusId: prev.statusId });
+          toast.error(result.error, { duration: 6000 });
+        }
+      };
       if (!prev.relatedMarcomType || prev.relatedMarcomType === "FIELD_EVENT") {
-        syncFieldEventOnTaskStatusChange(prev, updates.statusId, spaces);
+        syncFieldEventOnTaskStatusChange(prev, updates.statusId, spaces).then(revertOnFailure);
       }
       if (!prev.relatedMarcomType || prev.relatedMarcomType === "PLACEMENT") {
-        syncPlacementOnTaskStatusChange(prev, updates.statusId, spaces);
+        syncPlacementOnTaskStatusChange(prev, updates.statusId, spaces).then(revertOnFailure);
       }
     }
     // rule-1 "Auto-assign Urgent Tasks": assign the lead and ensure a
@@ -183,11 +199,24 @@ export const createTaskSlice: StateCreator<
     if (prev?.relatedMarcomId) {
       const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
       const spaces = currentWs?.spaces || [];
+      const revertOnFailure = (result: MarcomSyncResult) => {
+        if (!result.synced && !result.skipped && result.error) {
+          const { nextTasks: reverted } = applyMoveTaskStatus(
+            get().tasks,
+            taskId,
+            prev.statusId,
+            prev.orderIndex,
+          );
+          set({ tasks: reverted });
+          syncUpdateTask(taskId, { statusId: prev.statusId, orderIndex: prev.orderIndex });
+          toast.error(result.error, { duration: 6000 });
+        }
+      };
       if (!prev.relatedMarcomType || prev.relatedMarcomType === "FIELD_EVENT") {
-        syncFieldEventOnTaskStatusChange(prev, newStatusId, spaces);
+        syncFieldEventOnTaskStatusChange(prev, newStatusId, spaces).then(revertOnFailure);
       }
       if (!prev.relatedMarcomType || prev.relatedMarcomType === "PLACEMENT") {
-        syncPlacementOnTaskStatusChange(prev, newStatusId, spaces);
+        syncPlacementOnTaskStatusChange(prev, newStatusId, spaces).then(revertOnFailure);
       }
     }
     // rule-2 "Completion Notification": log completion with assignee count.

@@ -91,3 +91,26 @@ test("deleteTask clears selection and dependency references", () => {
   assert.deepEqual(api().tasks.find((t) => t.id === b.id)?.dependencies ?? [], []);
   api().deleteTask(b.id);
 });
+
+test("updateTask with statusId change invokes sync hooks for placement tasks", () => {
+  const store = api();
+  const created = store.createTask({
+    listId: "list-field-ops",
+    title: "[Placement] Banner Test",
+    description: "",
+    statusId: "status-todo",
+    priority: "normal",
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 0,
+    relatedMarcomId: "place-test-1",
+    relatedMarcomType: "PLACEMENT",
+  });
+
+  store.updateTask(created.id, { statusId: "status-done" });
+  const updated = api().tasks.find((t) => t.id === created.id);
+  assert.equal(updated?.statusId, "status-done");
+  store.deleteTask(created.id);
+});
+
