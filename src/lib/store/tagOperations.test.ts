@@ -1,12 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import {
-  applyCreateTag,
-  applyRenameTag,
-  applyDeleteTag,
-  applyToggleTaskTag,
-} from "./tagOperations.ts";
+import { applyCreateTag, applyRenameTag, applyDeleteTag, applyToggleTaskTag } from "./tagOperations.ts";
 import type { Tag, Task } from "../../types/index.ts";
 
 const initialTask: Task = {

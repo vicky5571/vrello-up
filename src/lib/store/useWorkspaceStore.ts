@@ -106,6 +106,7 @@ import {
 
 export { DEFAULT_VIEW_PREFERENCES } from "@/lib/store/viewPreferencesOperations";
 export { wouldCreateCycle } from "@/lib/store/dependencyOperations";
+export { getSpaceListIds } from "@/lib/store/spacesOperations";
 export { STORAGE_WARN_BYTES, quotaAwareStorage } from "@/lib/store/storeStorage";
 export {
   findSpaceForListId,
