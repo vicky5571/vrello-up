@@ -1,4 +1,5 @@
 import { type Workspace, type Space } from "@/types";
+import { DEFAULT_SEED_SPACE_IDS } from "@/lib/marcom/marcomIds";
 
 /**
  * Finds the space containing the given list (top-level or inside a folder).
@@ -92,9 +93,7 @@ export function reconcileWorkspaces(
     const clientSpaceIds = new Set(clientWs.spaces.map((s) => s.id));
     for (const s of serverWs.spaces) {
       if (!clientSpaceIds.has(s.id)) {
-        const isDefaultSpace =
-          s.id === "space-product" ||
-          s.id === "space-marcom";
+        const isDefaultSpace = (DEFAULT_SEED_SPACE_IDS as readonly string[]).includes(s.id);
         if (!isDefaultSpace) {
           mergedSpaces.push(s);
         }

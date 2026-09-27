@@ -6,6 +6,11 @@ import {
   type Workspace,
 } from "@/types";
 import { generateId } from "@/lib/utils";
+import {
+  DESIGN_SYSTEM_LIST_ID,
+  OPS_TAG,
+  ALERT_TAG,
+} from "@/lib/marcom/marcomIds";
 
 export interface AutomationExecutionContext {
   createTask: (data: any) => Task;
@@ -102,7 +107,7 @@ export async function executeAutomationsForTrigger(
     context.workspaces[0];
   const defaultSpace = currentWorkspace?.spaces[0];
   const defaultListId =
-    defaultSpace?.lists[0]?.id || context.activeListId || "list-design-system";
+    defaultSpace?.lists[0]?.id || context.activeListId || DESIGN_SYSTEM_LIST_ID;
   const defaultStatusId = defaultSpace?.statuses[0]?.id || "status-todo";
   const actor = context.actor;
 
@@ -138,7 +143,7 @@ export async function executeAutomationsForTrigger(
               createdAt: new Date().toISOString(),
             },
           ],
-          tags: [{ id: "tag-ops", name: "Operations", color: "#059669" }],
+          tags: [{ ...OPS_TAG }],
         });
         context.logActivity(
           newTask.id,
@@ -171,9 +176,7 @@ export async function executeAutomationsForTrigger(
             orderIndex: 0,
             assignees: [actor],
             subtasks: [],
-            tags: [
-              { id: "tag-alert", name: "Urgent Alert", color: "#DC2626" },
-            ],
+            tags: [{ ...ALERT_TAG }],
           });
           context.logActivity(
             alertTask.id,

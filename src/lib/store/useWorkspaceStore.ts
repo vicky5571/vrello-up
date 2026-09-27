@@ -3,6 +3,10 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { Workspace, Task, ViewMode } from "@/types";
 import { DEFAULT_STATUSES, INITIAL_SPACES, INITIAL_TASKS, INITIAL_WORKSPACE, SEED_USERS } from "@/lib/constants/seeds";
 import { quotaAwareStorage, STORAGE_WARN_BYTES } from "@/lib/store/storeStorage";
+import {
+  PRODUCT_SPACE_ID,
+  DESIGN_SYSTEM_LIST_ID,
+} from "@/lib/marcom/marcomIds";
 import { TRASH_LIMIT, TRASH_RETENTION_MS } from "@/lib/store/trashOperations";
 import { DEFAULT_VIEW_PREFERENCES } from "@/lib/store/viewPreferencesOperations";
 import { wouldCreateCycle } from "@/lib/store/dependencyOperations";
@@ -149,8 +153,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             workspaces: rawWorkspaces,
             tasks: rawTasks,
             activeWorkspaceId: (typeof state.activeWorkspaceId === "string" && state.activeWorkspaceId) || activeWs?.id || "ws-main",
-            activeSpaceId: (typeof state.activeSpaceId === "string" && state.activeSpaceId !== "space-eng" && state.activeSpaceId) || activeSpace?.id || "space-product",
-            activeListId: state.activeListId === null ? null : ((typeof state.activeListId === "string" && !engListIds.has(state.activeListId) && state.activeListId) || activeList || "list-design-system"),
+            activeSpaceId: (typeof state.activeSpaceId === "string" && state.activeSpaceId !== "space-eng" && state.activeSpaceId) || activeSpace?.id || PRODUCT_SPACE_ID,
+            activeListId: state.activeListId === null ? null : ((typeof state.activeListId === "string" && !engListIds.has(state.activeListId) && state.activeListId) || activeList || DESIGN_SYSTEM_LIST_ID),
             activeView: normalizeViewMode((state.activeView as ViewMode) || "list"),
           };
         }

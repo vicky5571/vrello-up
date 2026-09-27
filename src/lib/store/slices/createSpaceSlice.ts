@@ -17,6 +17,10 @@ import {
   applyDeleteSpaceStatus,
 } from "@/lib/store/spacesOperations";
 import { DEFAULT_STATUSES } from "@/lib/constants/seeds";
+import {
+  PRODUCT_SPACE_ID,
+  DESIGN_SYSTEM_LIST_ID,
+} from "@/lib/marcom/marcomIds";
 import { syncWorkspaces, syncDeleteTask } from "./syncHelpers";
 
 export const createSpaceSlice: StateCreator<
@@ -25,8 +29,8 @@ export const createSpaceSlice: StateCreator<
   [],
   SpaceSlice
 > = (set, get) => ({
-  activeSpaceId: "space-product",
-  activeListId: "list-design-system",
+  activeSpaceId: PRODUCT_SPACE_ID,
+  activeListId: DESIGN_SYSTEM_LIST_ID,
 
   setActiveSpace: (id) => {
     set({ activeSpaceId: id, activeListId: null });

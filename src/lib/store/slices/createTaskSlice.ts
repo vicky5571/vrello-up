@@ -31,6 +31,7 @@ import {
 } from "@/lib/tasks/placementTaskSync";
 import { toast } from "sonner";
 import { SEED_USERS, SEED_TAGS, INITIAL_TASKS } from "@/lib/constants/seeds";
+import { DESIGN_SYSTEM_LIST_ID } from "@/lib/marcom/marcomIds";
 import {
   syncCreateTask,
   syncUpdateTask,
@@ -96,7 +97,7 @@ export const createTaskSlice: StateCreator<
       state.activeListId ||
       currentSpace?.lists[0]?.id ||
       currentSpace?.folders[0]?.lists[0]?.id ||
-      "list-design-system";
+      DESIGN_SYSTEM_LIST_ID;
     const { nextTasks, newTask } = applyCreateTask(
       state.tasks,
       newTaskData,
