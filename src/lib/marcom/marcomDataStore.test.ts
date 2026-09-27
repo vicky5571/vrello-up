@@ -76,7 +76,7 @@ describe("useMarcomDataStore", () => {
       ]);
 
       store.setMaterials([
-        { id: "mat-1", name: "Neon Box", type: "PERMANENT" },
+        { id: "mat-1", name: "Neon Box", type: "BRANDING_SIGNBOARD" },
       ]);
 
       const state = useMarcomDataStore.getState();
@@ -113,7 +113,7 @@ describe("useMarcomDataStore", () => {
           address: "A1",
         },
       ]);
-      store.setMaterials([{ id: "m1", name: "Mat 1", type: "PERMANENT" }]);
+      store.setMaterials([{ id: "m1", name: "Mat 1", type: "BRANDING_SIGNBOARD" }]);
       store.setOutlets([
         {
           id: "o1",

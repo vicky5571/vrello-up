@@ -1,3 +1,5 @@
+import type { MaterialType } from "@/types";
+
 export interface MouSummaryInfo {
   id: string;
   partnerName?: string;
@@ -54,6 +56,19 @@ export interface MaterialIdentifier {
   requiresMou?: boolean | null;
 }
 
+/** MaterialType members that permanently brand an outlet and require an MoU. */
+const PERMANENT_MATERIAL_TYPES = [
+  "BRANDING_SIGNBOARD",
+  "SHOPBLIND",
+] as const satisfies readonly MaterialType[];
+
+/** MaterialType members that are temporary by nature. */
+const TEMPORARY_MATERIAL_TYPES = ["POSTER", "BANNER"] as const satisfies readonly MaterialType[];
+
+/** Legacy freeform tokens accepted from unclassified callers. */
+const LEGACY_PERMANENT_TOKENS = ["PERMANENT"] as const;
+const LEGACY_TEMPORARY_TOKENS = ["TEMPORARY"] as const;
+
 /**
  * Checks if a promotional material is considered permanent / rental branding
  * that requires an active legal MoU agreement.
@@ -90,19 +105,17 @@ export function isPermanentMaterial(
     return requiresMou;
   }
 
-  // Tier 2: Domain Taxonomy mapping (Prisma MaterialType enum + legacy PERMANENT/TEMPORARY tokens)
+  // Tier 2: Domain Taxonomy mapping (Prisma MaterialType enum + legacy tokens)
   if (explicitType) {
     if (
-      explicitType === "BRANDING_SIGNBOARD" ||
-      explicitType === "SHOPBLIND" ||
-      explicitType === "PERMANENT"
+      PERMANENT_MATERIAL_TYPES.some((t) => t === explicitType) ||
+      LEGACY_PERMANENT_TOKENS.some((t) => t === explicitType)
     ) {
       return true;
     }
     if (
-      explicitType === "POSTER" ||
-      explicitType === "BANNER" ||
-      explicitType === "TEMPORARY"
+      TEMPORARY_MATERIAL_TYPES.some((t) => t === explicitType) ||
+      LEGACY_TEMPORARY_TOKENS.some((t) => t === explicitType)
     ) {
       return false;
     }

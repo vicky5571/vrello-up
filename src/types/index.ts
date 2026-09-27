@@ -289,7 +289,7 @@ export interface Placement {
   isLocationValid?: boolean;
   locationDeviation?: number | null;
   outlet?: { id: string; code: string; name: string; brand?: Brand; branchId?: string };
-  material?: { id: string; type: string; name: string };
+  material?: { id: string; type: MaterialType; name: string };
 }
 
 export type PlacementItem = Placement;
@@ -317,7 +317,7 @@ export interface MarcomPlacement {
   isLocationValid?: boolean;
   locationDeviation?: number | null;
   outlet?: { id: string; code: string; name: string; brand?: Brand; branchId?: string };
-  material?: { id: string; type: string; name: string };
+  material?: { id: string; type: MaterialType; name: string };
   mou?: {
     id: string;
     partnerName: string;
@@ -379,7 +379,7 @@ export interface MarcomMou {
     status: string;
     cost: number;
     photoUrl?: string;
-    material?: { id: string; name: string; type: string };
+    material?: { id: string; type: MaterialType; name: string };
   }>;
 }
 
@@ -506,10 +506,17 @@ export interface BranchDetail extends BranchItem {
   mous?: { id: string; partnerName: string; mouType: string; status: string; compensationValue: number }[];
 }
 
+export type MaterialType =
+  | "POSTER"
+  | "SHOPBLIND"
+  | "BANNER"
+  | "BRANDING_SIGNBOARD"
+  | "OTHER_MATERIALS";
+
 export interface MaterialItem {
   id: string;
   name: string;
-  type: string;
+  type: MaterialType;
   requiresMou?: boolean;
 }
 
