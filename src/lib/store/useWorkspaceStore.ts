@@ -74,6 +74,13 @@ import {
   applyAddChannelMessage,
   applyLogActivity,
 } from "@/lib/store/commentOperations";
+import {
+  applyAddCustomAutomation,
+  applyRemoveCustomAutomation,
+  applyToggleCustomAutomation,
+  applyIncrementAutomationRun,
+  executeAutomationsForTrigger,
+} from "@/lib/store/automationOperations";
 
 export { DEFAULT_VIEW_PREFERENCES } from "@/lib/store/viewPreferencesOperations";
 export { wouldCreateCycle } from "@/lib/store/dependencyOperations";
@@ -438,10 +445,7 @@ export function reconcileWorkspaces(
  */
 function countAutomationRun(id: string) {
   useWorkspaceStore.setState((s) => ({
-    automationRuns: {
-      ...s.automationRuns,
-      [id]: (s.automationRuns[id] || 0) + 1,
-    },
+    automationRuns: applyIncrementAutomationRun(s.automationRuns, id),
   }));
 }
 
@@ -600,171 +604,50 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         })),
       customAutomations: [],
       addCustomAutomation: (ruleData) => {
-        const id = generateId("rule");
-        const newRule: CustomAutomationRule = {
-          ...ruleData,
-          id,
-          runCount: 0,
-          createdAt: new Date().toISOString(),
-        };
-        set((state) => ({
-          customAutomations: [...state.customAutomations, newRule],
-        }));
+        const { nextRules, newRule } = applyAddCustomAutomation(
+          get().customAutomations,
+          ruleData,
+        );
+        set({ customAutomations: nextRules });
         return newRule;
       },
       removeCustomAutomation: (id) =>
         set((state) => ({
-          customAutomations: state.customAutomations.filter((r) => r.id !== id),
+          customAutomations: applyRemoveCustomAutomation(
+            state.customAutomations,
+            id,
+          ).nextRules,
         })),
       toggleCustomAutomation: (id, enabled) =>
         set((state) => ({
-          customAutomations: state.customAutomations.map((r) =>
-            r.id === id ? { ...r, enabled: enabled ?? !r.enabled } : r,
-          ),
+          customAutomations: applyToggleCustomAutomation(
+            state.customAutomations,
+            id,
+            enabled,
+          ).nextRules,
         })),
       runAutomationsForTrigger: async (trigger, payload = {}) => {
         const state = get();
-        const activeRules = state.customAutomations.filter(
-          (r) => r.enabled && r.trigger === trigger,
-        );
-        if (activeRules.length === 0) return 0;
-
-        let executedCount = 0;
-        const currentWorkspace =
-          state.workspaces.find((w) => w.id === state.activeWorkspaceId) ||
-          state.workspaces[0];
-        const defaultSpace = currentWorkspace?.spaces[0];
-        const defaultListId =
-          defaultSpace?.lists[0]?.id || state.activeListId || "list-design-system";
-        const defaultStatusId = defaultSpace?.statuses[0]?.id || "status-todo";
-        const actor = getActor(state);
-
-        for (const rule of activeRules) {
-          switch (rule.action) {
-            case "create_field_ops_task": {
-              const partner = (payload.partnerName as string) || "Partner";
-              const mouId = (payload.mouId as string) || "";
-              const taskTitle = `Setup & Execution: MOU ${partner}`;
-              const newTask = state.createTask({
-                listId: defaultListId,
-                title: taskTitle,
-                description: `Automated setup task generated from approved MOU #${mouId || "N/A"}. Automatically assigned to Field Operations PIC.`,
-                statusId: defaultStatusId,
-                priority: "high",
-                orderIndex: 0,
-                relatedMarcomId: mouId || undefined,
-                relatedMarcomType: "MOU",
-                assignees: [actor],
-                subtasks: [
-                  {
-                    id: generateId("st"),
-                    title: "Branch outreach & venue confirmation",
-                    completed: false,
-                    createdAt: new Date().toISOString(),
-                  },
-                  {
-                    id: generateId("st"),
-                    title: "Field operations equipment verification",
-                    completed: false,
-                    createdAt: new Date().toISOString(),
-                  },
-                ],
-                tags: [{ id: "tag-ops", name: "Operations", color: "#059669" }],
-              });
-              state.logActivity(
-                newTask.id,
-                "Automation created setup task in Field Operations assigned to branch PIC",
-              );
-              executedCount++;
-              break;
-            }
-
-            case "notify_marcom_lead_high": {
-              const taskId = payload.taskId as string | undefined;
-              const eventTitle =
-                (payload.eventTitle as string) ||
-                (payload.title as string) ||
-                "Upcoming Event";
-              if (taskId) {
-                state.updateTask(taskId, { priority: "urgent" });
-                state.logActivity(
-                  taskId,
-                  "Automation notified Marcom Lead & flagged priority to High",
-                );
-              } else {
-                const alertTask = state.createTask({
-                  listId: defaultListId,
-                  title: `URGENT: Event in 3 Days - ${eventTitle}`,
-                  description: `Automated notice: Event date is within 3 days. Marcom Lead notified and flagged to High/Urgent priority.`,
-                  statusId: defaultStatusId,
-                  priority: "urgent",
-                  orderIndex: 0,
-                  assignees: [actor],
-                  subtasks: [],
-                  tags: [
-                    { id: "tag-alert", name: "Urgent Alert", color: "#DC2626" },
-                  ],
-                });
-                state.logActivity(
-                  alertTask.id,
-                  "Automation notified Marcom Lead & flagged priority to High",
-                );
-              }
-              executedCount++;
-              break;
-            }
-
-            case "assign_lead_architect_today": {
-              const taskId = payload.taskId as string | undefined;
-              if (taskId) {
-                const today = new Date().toISOString().slice(0, 10);
-                state.updateTask(taskId, {
-                  assignees: [actor],
-                  dueDate: today,
-                });
-                state.logActivity(
-                  taskId,
-                  "Automation assigned Lead Architect & set due date to today",
-                );
-                executedCount++;
-              }
-              break;
-            }
-
-            case "advance_status_review": {
-              const taskId = payload.taskId as string | undefined;
-              if (taskId) {
-                const targetTask = state.tasks.find((t) => t.id === taskId);
-                const space = targetTask
-                  ? findSpaceForListId(state.workspaces, targetTask.listId)
-                  : defaultSpace;
-                const reviewStatus =
-                  space?.statuses.find(
-                    (s) =>
-                      s.category === "review" ||
-                      s.name.toLowerCase().includes("review"),
-                  ) || space?.statuses[0];
-                if (reviewStatus) {
-                  state.updateTask(taskId, { statusId: reviewStatus.id });
-                  state.logActivity(
-                    taskId,
-                    `Automation advanced status to ${reviewStatus.name}`,
-                  );
-                  executedCount++;
-                }
-              }
-              break;
-            }
-          }
-
-          // Bump rule execution count
-          set((s) => ({
-            customAutomations: s.customAutomations.map((r) =>
-              r.id === rule.id ? { ...r, runCount: (r.runCount || 0) + 1 } : r,
-            ),
-          }));
+        const { executedCount, nextAutomations } =
+          await executeAutomationsForTrigger(
+            state.customAutomations,
+            trigger,
+            payload,
+            {
+              createTask: state.createTask,
+              updateTask: state.updateTask,
+              logActivity: state.logActivity,
+              tasks: state.tasks,
+              workspaces: state.workspaces,
+              activeWorkspaceId: state.activeWorkspaceId,
+              activeListId: state.activeListId,
+              actor: getActor(state),
+              findSpaceForListId,
+            },
+          );
+        if (executedCount > 0) {
+          set({ customAutomations: nextAutomations });
         }
-
         return executedCount;
       },
       filters: {
