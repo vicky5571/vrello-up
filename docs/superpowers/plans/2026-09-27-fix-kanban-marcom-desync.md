@@ -1,6 +1,6 @@
 # Fix Kanban ↔ Marcom Silent Desync Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Fix two desync bugs: (1) `syncPlacementOnTaskStatusChange` silently ignores API 400 errors when placement validation fails, leaving Kanban showing "Done" while Placement stays `ON_PROGRESS`; (2) `bulkUpdateTasks` skips Marcom sync hooks entirely.
 
@@ -43,7 +43,7 @@
   ): Promise<MarcomSyncResult>
   ```
 
-- [ ] **Step 1: Write failing tests for the new return type**
+- [x] **Step 1: Write failing tests for the new return type**
 
 Add to `src/lib/tasks/placementTaskSync.test.ts`:
 
@@ -80,12 +80,12 @@ test("syncPlacementOnTaskStatusChange returns synced:false and error on API 400"
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- src/lib/tasks/placementTaskSync.test.ts`
 Expected: FAIL — `syncPlacementOnTaskStatusChange` currently returns `void`, not `Promise<MarcomSyncResult>`
 
-- [ ] **Step 3: Implement `MarcomSyncResult` type and update `syncPlacementOnTaskStatusChange`**
+- [x] **Step 3: Implement `MarcomSyncResult` type and update `syncPlacementOnTaskStatusChange`**
 
 In `src/lib/tasks/placementTaskSync.ts`, add the type and rewrite the function:
 
@@ -152,12 +152,12 @@ export async function syncPlacementOnTaskStatusChange(
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- src/lib/tasks/placementTaskSync.test.ts`
 Expected: All tests PASS
 
-- [ ] **Step 5: Apply the same pattern to `syncFieldEventOnTaskStatusChange`**
+- [x] **Step 5: Apply the same pattern to `syncFieldEventOnTaskStatusChange`**
 
 In `src/lib/tasks/eventTaskSync.ts`, change the function signature from `void` to `Promise<MarcomSyncResult>`. Import `MarcomSyncResult` from `placementTaskSync.ts`:
 
@@ -210,12 +210,12 @@ export async function syncFieldEventOnTaskStatusChange(
 }
 ```
 
-- [ ] **Step 6: Run full test suite**
+- [x] **Step 6: Run full test suite**
 
 Run: `npm test`
 Expected: 539+ tests, 0 failures
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/lib/tasks/placementTaskSync.ts src/lib/tasks/placementTaskSync.test.ts src/lib/tasks/eventTaskSync.ts
@@ -238,7 +238,7 @@ instead of silently swallowing failures."
 - Consumes: `MarcomSyncResult` from Task 1, `toast` from `sonner`
 - Produces: When sync fails, task status is reverted to `prevTask.statusId` and an error toast is shown with the API error message. No signature changes to `updateTask` or `moveTaskStatus` — they remain synchronous for the Zustand contract, but fire-and-forget the async revert internally.
 
-- [ ] **Step 1: Write failing test for revert-on-sync-failure**
+- [x] **Step 1: Write failing test for revert-on-sync-failure**
 
 In `src/lib/store/taskCrud.test.ts`, add:
 
@@ -260,7 +260,7 @@ test("updateTask with statusId change calls sync hooks for placement tasks", () 
 });
 ```
 
-- [ ] **Step 2: Implement revert logic in `updateTask`**
+- [x] **Step 2: Implement revert logic in `updateTask`**
 
 In `src/lib/store/slices/createTaskSlice.ts`, modify the Marcom sync block inside `updateTask` (lines 111-119):
 
@@ -309,7 +309,7 @@ import type { MarcomSyncResult } from "@/lib/tasks/placementTaskSync";
 import { toast } from "sonner";
 ```
 
-- [ ] **Step 3: Fix the revert — `applyUpdateTask` returns an object, destructure correctly**
+- [x] **Step 3: Fix the revert — `applyUpdateTask` returns an object, destructure correctly**
 
 The revert call above uses `applyUpdateTask` which returns `{ nextTasks, prevTask, effectiveUpdates, escalatesToUrgent }`. Fix destructuring:
 
@@ -326,7 +326,7 @@ The revert call above uses `applyUpdateTask` which returns `{ nextTasks, prevTas
       };
 ```
 
-- [ ] **Step 4: Apply the same revert pattern to `moveTaskStatus`**
+- [x] **Step 4: Apply the same revert pattern to `moveTaskStatus`**
 
 In `moveTaskStatus` (lines 183-192), replace the sync block:
 
@@ -368,12 +368,12 @@ With:
     }
 ```
 
-- [ ] **Step 5: Run full test suite**
+- [x] **Step 5: Run full test suite**
 
 Run: `npm test`
 Expected: 539+ tests, 0 failures
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/store/slices/createTaskSlice.ts src/lib/store/taskCrud.test.ts
@@ -397,7 +397,7 @@ shows the validation message from the API."
 - Consumes: `syncPlacementOnTaskStatusChange`, `syncFieldEventOnTaskStatusChange` from Tasks 1-2, `isPlacementTask`, `isFieldEventTask`
 - Produces: `bulkUpdateTasks` now fires Marcom sync hooks for each task that has `relatedMarcomId` when `statusId` is in the updates. Individual failures revert individual tasks (not the whole batch).
 
-- [ ] **Step 1: Write failing test for bulk sync**
+- [x] **Step 1: Write failing test for bulk sync**
 
 Add to `src/lib/store/taskCrud.test.ts`:
 
@@ -419,7 +419,7 @@ test("bulkUpdateTasks fires marcom sync hooks when statusId is in updates", () =
 });
 ```
 
-- [ ] **Step 2: Implement sync hooks in `bulkUpdateTasks`**
+- [x] **Step 2: Implement sync hooks in `bulkUpdateTasks`**
 
 Replace `bulkUpdateTasks` (lines 156-167):
 
@@ -476,12 +476,12 @@ import { syncFieldEventOnTaskStatusChange, isFieldEventTask } from "@/lib/tasks/
 
 Note: `isFieldEventTask` is not needed in the rewritten code above (we check `relatedMarcomType` directly), but the import for `syncFieldEventOnTaskStatusChange` is already present at line 27.
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run: `npm test`
 Expected: 539+ tests, 0 failures
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/lib/store/slices/createTaskSlice.ts src/lib/store/taskCrud.test.ts
