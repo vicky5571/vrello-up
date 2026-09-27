@@ -77,6 +77,28 @@ export interface MarcomDataState {
   invalidateEvents: (workspaceId?: string) => void;
   fetchEvents: (workspaceId: string, force?: boolean) => Promise<FieldEventItem[]>;
   fetchMous: (workspaceId: string, force?: boolean) => Promise<MarcomMou[]>;
+  fetchPlacements: (workspaceId: string, force?: boolean) => Promise<MarcomPlacement[]>;
+
+  addCachedPlacement: (workspaceId: string, placement: MarcomPlacement) => void;
+  updateCachedPlacement: (
+    workspaceId: string,
+    placement: Partial<MarcomPlacement> & { id: string }
+  ) => void;
+  removeCachedPlacement: (workspaceId: string, placementId: string) => void;
+
+  addCachedMou: (workspaceId: string, mou: MarcomMou) => void;
+  updateCachedMou: (
+    workspaceId: string,
+    mou: Partial<MarcomMou> & { id: string }
+  ) => void;
+  removeCachedMou: (workspaceId: string, mouId: string) => void;
+
+  addCachedEvent: (workspaceId: string, event: FieldEventItem) => void;
+  updateCachedEvent: (
+    workspaceId: string,
+    event: Partial<FieldEventItem> & { id: string }
+  ) => void;
+  removeCachedEvent: (workspaceId: string, eventId: string) => void;
 }
 
 export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
@@ -400,6 +422,157 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
       console.error("[marcomDataStore] fetchMous error:", err);
       return cached || [];
     }
+  },
+
+  fetchPlacements: async (workspaceId: string, force = false) => {
+    if (!workspaceId) return [];
+    const state = get();
+    const cached = state.placementsByWorkspace[workspaceId];
+    if (cached && !force) {
+      return cached;
+    }
+    try {
+      const res = await fetch(`/api/marcom/placements?workspaceId=${encodeURIComponent(workspaceId)}`);
+      if (!res.ok) throw new Error(`Failed to fetch placements (${res.status})`);
+      const json = await res.json();
+      const list: MarcomPlacement[] = Array.isArray(json.data) ? json.data : [];
+      set((s) => ({
+        placementsByWorkspace: { ...s.placementsByWorkspace, [workspaceId]: list },
+      }));
+      return list;
+    } catch (err) {
+      console.error("[marcomDataStore] fetchPlacements error:", err);
+      return cached || [];
+    }
+  },
+
+  addCachedPlacement: (workspaceId: string, placement: MarcomPlacement) => {
+    set((s) => {
+      const existing = s.placementsByWorkspace[workspaceId] || [];
+      return {
+        placementsByWorkspace: {
+          ...s.placementsByWorkspace,
+          [workspaceId]: [placement, ...existing.filter((p) => p.id !== placement.id)],
+        },
+      };
+    });
+  },
+
+  updateCachedPlacement: (
+    workspaceId: string,
+    placement: Partial<MarcomPlacement> & { id: string }
+  ) => {
+    set((s) => {
+      const existing = s.placementsByWorkspace[workspaceId];
+      if (!existing) return s;
+      return {
+        placementsByWorkspace: {
+          ...s.placementsByWorkspace,
+          [workspaceId]: existing.map((p) =>
+            p.id === placement.id ? ({ ...p, ...placement } as MarcomPlacement) : p
+          ),
+        },
+      };
+    });
+  },
+
+  removeCachedPlacement: (workspaceId: string, placementId: string) => {
+    set((s) => {
+      const existing = s.placementsByWorkspace[workspaceId];
+      if (!existing) return s;
+      return {
+        placementsByWorkspace: {
+          ...s.placementsByWorkspace,
+          [workspaceId]: existing.filter((p) => p.id !== placementId),
+        },
+      };
+    });
+  },
+
+  addCachedMou: (workspaceId: string, mou: MarcomMou) => {
+    set((s) => {
+      const existing = s.mousByWorkspace[workspaceId] || [];
+      return {
+        mousByWorkspace: {
+          ...s.mousByWorkspace,
+          [workspaceId]: [mou, ...existing.filter((m) => m.id !== mou.id)],
+        },
+      };
+    });
+  },
+
+  updateCachedMou: (
+    workspaceId: string,
+    mou: Partial<MarcomMou> & { id: string }
+  ) => {
+    set((s) => {
+      const existing = s.mousByWorkspace[workspaceId];
+      if (!existing) return s;
+      return {
+        mousByWorkspace: {
+          ...s.mousByWorkspace,
+          [workspaceId]: existing.map((p) =>
+            p.id === mou.id ? ({ ...p, ...mou } as MarcomMou) : p
+          ),
+        },
+      };
+    });
+  },
+
+  removeCachedMou: (workspaceId: string, mouId: string) => {
+    set((s) => {
+      const existing = s.mousByWorkspace[workspaceId];
+      if (!existing) return s;
+      return {
+        mousByWorkspace: {
+          ...s.mousByWorkspace,
+          [workspaceId]: existing.filter((m) => m.id !== mouId),
+        },
+      };
+    });
+  },
+
+  addCachedEvent: (workspaceId: string, event: FieldEventItem) => {
+    set((s) => {
+      const existing = s.eventsByWorkspace[workspaceId] || [];
+      return {
+        eventsByWorkspace: {
+          ...s.eventsByWorkspace,
+          [workspaceId]: [event, ...existing.filter((e) => e.id !== event.id)],
+        },
+      };
+    });
+  },
+
+  updateCachedEvent: (
+    workspaceId: string,
+    event: Partial<FieldEventItem> & { id: string }
+  ) => {
+    set((s) => {
+      const existing = s.eventsByWorkspace[workspaceId];
+      if (!existing) return s;
+      return {
+        eventsByWorkspace: {
+          ...s.eventsByWorkspace,
+          [workspaceId]: existing.map((e) =>
+            e.id === event.id ? ({ ...e, ...event } as FieldEventItem) : e
+          ),
+        },
+      };
+    });
+  },
+
+  removeCachedEvent: (workspaceId: string, eventId: string) => {
+    set((s) => {
+      const existing = s.eventsByWorkspace[workspaceId];
+      if (!existing) return s;
+      return {
+        eventsByWorkspace: {
+          ...s.eventsByWorkspace,
+          [workspaceId]: existing.filter((e) => e.id !== eventId),
+        },
+      };
+    });
   },
 }));
 

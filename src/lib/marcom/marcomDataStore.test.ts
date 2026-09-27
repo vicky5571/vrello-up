@@ -402,5 +402,88 @@ describe("useMarcomDataStore", () => {
       assert.deepEqual(res, dummyMous);
     });
   });
+
+  describe("Reactive Mutation Actions", () => {
+    it("adds, updates, and removes cached placements immutably", () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-test-place";
+      const initial: MarcomPlacement = {
+        id: "p-1",
+        workspaceId: wsId,
+        outletId: "out-1",
+        materialId: "mat-1",
+        status: "NOT_STARTED",
+      } as unknown as MarcomPlacement;
+
+      store.addCachedPlacement(wsId, initial);
+      assert.equal(useMarcomDataStore.getState().placementsByWorkspace[wsId]?.length, 1);
+      assert.equal(useMarcomDataStore.getState().placementsByWorkspace[wsId]?.[0].status, "NOT_STARTED");
+
+      store.updateCachedPlacement(wsId, { id: "p-1", status: "DONE" });
+      assert.equal(useMarcomDataStore.getState().placementsByWorkspace[wsId]?.[0].status, "DONE");
+
+      store.removeCachedPlacement(wsId, "p-1");
+      assert.equal(useMarcomDataStore.getState().placementsByWorkspace[wsId]?.length, 0);
+    });
+
+    it("adds, updates, and removes cached MOUs immutably", () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-test-mou";
+      const initial: MarcomMou = {
+        id: "m-1",
+        workspaceId: wsId,
+        partnerName: "Partner A",
+        status: "DRAFT",
+      } as unknown as MarcomMou;
+
+      store.addCachedMou(wsId, initial);
+      assert.equal(useMarcomDataStore.getState().mousByWorkspace[wsId]?.length, 1);
+
+      store.updateCachedMou(wsId, { id: "m-1", status: "APPROVED" });
+      assert.equal(useMarcomDataStore.getState().mousByWorkspace[wsId]?.[0].status, "APPROVED");
+
+      store.removeCachedMou(wsId, "m-1");
+      assert.equal(useMarcomDataStore.getState().mousByWorkspace[wsId]?.length, 0);
+    });
+
+    it("adds, updates, and removes cached Field Events immutably", () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-test-evt";
+      const initial: FieldEventItem = {
+        id: "e-1",
+        workspaceId: wsId,
+        name: "Initial Event",
+        status: "UPCOMING",
+      } as unknown as FieldEventItem;
+
+      store.addCachedEvent(wsId, initial);
+      assert.equal(useMarcomDataStore.getState().eventsByWorkspace[wsId]?.length, 1);
+
+      store.updateCachedEvent(wsId, { id: "e-1", name: "Updated Event" });
+      assert.equal(useMarcomDataStore.getState().eventsByWorkspace[wsId]?.[0].name, "Updated Event");
+
+      store.removeCachedEvent(wsId, "e-1");
+      assert.equal(useMarcomDataStore.getState().eventsByWorkspace[wsId]?.length, 0);
+    });
+
+    it("fetchPlacements returns empty array if workspaceId is empty", async () => {
+      const store = useMarcomDataStore.getState();
+      const res = await store.fetchPlacements("");
+      assert.deepEqual(res, []);
+    });
+
+    it("fetchPlacements returns cached placements when available without refetching", async () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-cached-place";
+      const dummy: MarcomPlacement[] = [
+        { id: "pl-1", workspaceId: wsId, outletId: "o1", materialId: "m1", status: "ON_PROGRESS" } as unknown as MarcomPlacement,
+      ];
+      store.setCachedPlacements(wsId, dummy);
+
+      const res = await store.fetchPlacements(wsId);
+      assert.deepEqual(res, dummy);
+    });
+  });
 });
+
 
