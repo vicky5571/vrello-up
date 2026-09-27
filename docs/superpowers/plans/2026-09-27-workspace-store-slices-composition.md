@@ -40,7 +40,7 @@
   - `WorkspaceStore`
   - `TrashedTask`
 
-- [ ] **Step 1: Create `src/lib/store/slices/types.ts`**
+- [x] **Step 1: Create `src/lib/store/slices/types.ts`**
 Define interfaces for each slice and the unified `WorkspaceStore` type representing their intersection:
 
 ```typescript
@@ -256,11 +256,11 @@ export type WorkspaceStore = WorkspaceSlice &
   UiSlice;
 ```
 
-- [ ] **Step 2: Type check types.ts**
+- [x] **Step 2: Type check types.ts**
 Run: `npx tsc --noEmit`
 Expected: 0 errors.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 ```bash
 git add src/lib/store/slices/types.ts
 git commit -m "feat(store): define slice interfaces and composite WorkspaceStore type"
@@ -278,14 +278,14 @@ git commit -m "feat(store): define slice interfaces and composite WorkspaceStore
 - Consumes: `WorkspaceStore`, `WorkspaceSlice` from `./types`
 - Produces: `createWorkspaceSlice: StateCreator<WorkspaceStore, [], [], WorkspaceSlice>`
 
-- [ ] **Step 1: Implement `createWorkspaceSlice.ts`**
+- [x] **Step 1: Implement `createWorkspaceSlice.ts`**
 Extract workspace CRUD, member operations, backup import, and server tasks synchronization.
 
-- [ ] **Step 2: Verify with targeted tests**
+- [x] **Step 2: Verify with targeted tests**
 Run: `npm test -- src/lib/store/workspaceCrud.test.ts src/lib/store/workspaceSwitch.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 ```bash
 git add src/lib/store/slices/createWorkspaceSlice.ts
 git commit -m "feat(store): implement createWorkspaceSlice"
@@ -303,14 +303,14 @@ git commit -m "feat(store): implement createWorkspaceSlice"
 - Consumes: `WorkspaceStore`, `SpaceSlice` from `./types`
 - Produces: `createSpaceSlice: StateCreator<WorkspaceStore, [], [], SpaceSlice>`
 
-- [ ] **Step 1: Implement `createSpaceSlice.ts`**
+- [x] **Step 1: Implement `createSpaceSlice.ts`**
 Extract space, folder, list, and status management.
 
-- [ ] **Step 2: Verify with targeted tests**
+- [x] **Step 2: Verify with targeted tests**
 Run: `npm test -- src/lib/store/spaces.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 ```bash
 git add src/lib/store/slices/createSpaceSlice.ts
 git commit -m "feat(store): implement createSpaceSlice"
@@ -328,14 +328,14 @@ git commit -m "feat(store): implement createSpaceSlice"
 - Consumes: `WorkspaceStore`, `TrashSlice` from `./types`
 - Produces: `createTrashSlice: StateCreator<WorkspaceStore, [], [], TrashSlice>`
 
-- [ ] **Step 1: Implement `createTrashSlice.ts`**
+- [x] **Step 1: Implement `createTrashSlice.ts`**
 Extract `trash` array state, `restoreTasks`, `permanentlyDeleteTask`, `emptyTrash`, and `purgeExpiredTrash`.
 
-- [ ] **Step 2: Verify with targeted tests**
+- [x] **Step 2: Verify with targeted tests**
 Run: `npm test -- src/lib/store/trash.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 ```bash
 git add src/lib/store/slices/createTrashSlice.ts
 git commit -m "feat(store): implement createTrashSlice"
@@ -353,14 +353,14 @@ git commit -m "feat(store): implement createTrashSlice"
 - Consumes: `WorkspaceStore`, `AutomationSlice` from `./types`
 - Produces: `createAutomationSlice: StateCreator<WorkspaceStore, [], [], AutomationSlice>`
 
-- [ ] **Step 1: Implement `createAutomationSlice.ts`**
+- [x] **Step 1: Implement `createAutomationSlice.ts`**
 Extract comment, channel message, activity logging, and automation triggers/runs.
 
-- [ ] **Step 2: Verify with targeted tests**
+- [x] **Step 2: Verify with targeted tests**
 Run: `npm test -- src/lib/store/automationRules.test.ts src/lib/store/actorAttribution.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 ```bash
 git add src/lib/store/slices/createAutomationSlice.ts
 git commit -m "feat(store): implement createAutomationSlice"
@@ -378,14 +378,14 @@ git commit -m "feat(store): implement createAutomationSlice"
 - Consumes: `WorkspaceStore`, `TaskSlice` from `./types`
 - Produces: `createTaskSlice: StateCreator<WorkspaceStore, [], [], TaskSlice>`
 
-- [ ] **Step 1: Implement `createTaskSlice.ts`**
+- [x] **Step 1: Implement `createTaskSlice.ts`**
 Extract task CRUD, bulk updates, subtasks, task selection, tags, dependencies, status transitions with automations & marcom sync, and realtime presence.
 
-- [ ] **Step 2: Verify with targeted tests**
+- [x] **Step 2: Verify with targeted tests**
 Run: `npm test -- src/lib/store/taskCrud.test.ts src/lib/store/dependencies.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 ```bash
 git add src/lib/store/slices/createTaskSlice.ts
 git commit -m "feat(store): implement createTaskSlice"
@@ -403,14 +403,14 @@ git commit -m "feat(store): implement createTaskSlice"
 - Consumes: `WorkspaceStore`, `UiSlice` from `./types`
 - Produces: `createUiSlice: StateCreator<WorkspaceStore, [], [], UiSlice>`
 
-- [ ] **Step 1: Implement `createUiSlice.ts`**
+- [x] **Step 1: Implement `createUiSlice.ts`**
 Extract view modes, app mode switching, modals and drawers, filter bar, view preferences, and marcom routing.
 
-- [ ] **Step 2: Verify with targeted tests**
+- [x] **Step 2: Verify with targeted tests**
 Run: `npm test -- src/lib/store/marcomViews.test.ts src/lib/store/viewPreferences.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 ```bash
 git add src/lib/store/slices/createUiSlice.ts
 git commit -m "feat(store): implement createUiSlice"
@@ -428,7 +428,7 @@ git commit -m "feat(store): implement createUiSlice"
 - Consumes: All 6 slice creators from `src/lib/store/slices/`
 - Produces: Lean `useWorkspaceStore` (~160 lines) with identical public API and type signature.
 
-- [ ] **Step 1: Refactor `useWorkspaceStore.ts` to aggregate slices**
+- [x] **Step 1: Refactor `useWorkspaceStore.ts` to aggregate slices**
 Replace monolithic state & actions with:
 ```typescript
 export const useWorkspaceStore = create<WorkspaceState>()(
@@ -454,15 +454,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 ```
 Ensure all exports remain identical (`TRASH_LIMIT`, `TRASH_RETENTION_MS`, `wouldCreateCycle`, `normalizeViewMode`, `reconcileWorkspaces`, `getSpaceListIds`, `STORAGE_WARN_BYTES`, `quotaAwareStorage`, `findSpaceForListId`, `findWorkspaceForListId`, `DEFAULT_VIEW_PREFERENCES`, `type TrashedTask`, `type WorkspaceState`).
 
-- [ ] **Step 2: Verify line count reduction**
+- [x] **Step 2: Verify line count reduction**
 Run: `wc -l src/lib/store/useWorkspaceStore.ts`
 Expected: <= 200 lines (down from 1,476 lines).
 
-- [ ] **Step 3: Run full test suite & TypeScript compiler**
+- [x] **Step 3: Run full test suite & TypeScript compiler**
 Run: `npx tsc --noEmit && npm test`
 Expected: 0 TypeScript errors and all 539 unit tests pass.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 ```bash
 git add src/lib/store/useWorkspaceStore.ts
 git commit -m "refactor(store): aggregate modular slices into useWorkspaceStore"
