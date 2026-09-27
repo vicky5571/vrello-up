@@ -188,12 +188,12 @@ export function MousView() {
           id: "select",
           header: ({ table }) => (
             <div className="flex items-center justify-center">
-              <input type="checkbox" aria-label="Select all MOUs" checked={table.getIsAllRowsSelected()} ref={(el) => { if (el) el.indeterminate = table.getIsSomeRowsSelected(); }} onChange={table.getToggleAllRowsSelectedHandler()} className="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-700 text-teal-600 focus:ring-teal-500 cursor-pointer accent-teal-600" />
+              <input type="checkbox" aria-label="Select all MOUs" checked={table.getIsAllRowsSelected()} ref={(el) => { if (el) el.indeterminate = table.getIsSomeRowsSelected(); }} onChange={table.getToggleAllRowsSelectedHandler()} className="table-row-select" />
             </div>
           ),
           cell: ({ row }) => (
             <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-              <input type="checkbox" aria-label={`Select MOU ${row.original.id}`} checked={row.getIsSelected()} disabled={!row.getCanSelect()} onChange={row.getToggleSelectedHandler()} className="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-700 text-teal-600 focus:ring-teal-500 cursor-pointer accent-teal-600" />
+              <input type="checkbox" aria-label={`Select MOU ${row.original.id}`} checked={row.getIsSelected()} disabled={!row.getCanSelect()} onChange={row.getToggleSelectedHandler()} className="table-row-select" />
             </div>
           ),
           size: 36, minSize: 36, maxSize: 36, enableSorting: false,

@@ -281,7 +281,7 @@ export function DocumentsView() {
                   if (el) el.indeterminate = table.getIsSomeRowsSelected();
                 }}
                 onChange={table.getToggleAllRowsSelectedHandler()}
-                className="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-700 text-teal-600 focus:ring-teal-500 cursor-pointer accent-teal-600"
+                className="table-row-select"
               />
             </div>
           ),
@@ -293,7 +293,7 @@ export function DocumentsView() {
                 checked={row.getIsSelected()}
                 disabled={!row.getCanSelect()}
                 onChange={row.getToggleSelectedHandler()}
-                className="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-700 text-teal-600 focus:ring-teal-500 cursor-pointer accent-teal-600"
+                className="table-row-select"
               />
             </div>
           ),
