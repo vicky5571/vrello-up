@@ -17,6 +17,7 @@ import { calculateMouPlacementRealization } from "@/lib/marcom/placementMouBridg
 import { parseMouDocumentSource } from "./mouDocumentHelpers";
 import { MouDocumentViewerModal } from "./MouDocumentViewerModal";
 import { saveMou, transitionMouStatus, deleteMou, uploadMouDocument } from "./mouApi";
+import { buildMouKpiItems } from "./mouKpi";
 
 import type { MarcomMou, MouStatus } from "@/types";
 export type { MarcomMou, MouStatus };
@@ -503,35 +504,7 @@ export function MousView() {
     [activeWorkspaceId, removeCachedMou, invalidatePlacements],
   );
 
-  const kpiItems = useMemo(() => {
-    const activeCount = mous.filter((m) => m.status === "APPROVED").length;
-    const pendingCount = mous.filter((m) => m.status === "SUBMITTED").length;
-    const totalValue = mous.reduce((acc, m) => acc + (m.compensationValue || 0), 0);
-
-    return [
-      {
-        label: "Active MOUs",
-        value: activeCount,
-        helper: "Approved agreements",
-        icon: CheckCircle,
-        color: "emerald" as const,
-      },
-      {
-        label: "Pending Approval",
-        value: pendingCount,
-        helper: "Submitted for review",
-        icon: Clock,
-        color: "amber" as const,
-      },
-      {
-        label: "Total Compensation Value",
-        value: formatIDR(totalValue),
-        helper: "Across all partnerships",
-        icon: Coins,
-        color: "blue" as const,
-      },
-    ];
-  }, [mous]);
+  const kpiItems = useMemo(() => buildMouKpiItems(mous), [mous]);
 
   return (
     <>
