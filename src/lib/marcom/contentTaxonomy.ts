@@ -48,16 +48,16 @@ const _assertNoMissingPlatform: MissingPlatform extends never ? true : never = t
 const _assertNoMissingFormat: MissingFormat extends never ? true : never = true;
 const _assertNoMissingStatus: MissingStatus extends never ? true : never = true;
 
+/**
+ * Honest predicates: these validate the value exactly as given. Callers that
+ * accept free-form input must normalize (`trim().toLowerCase()`) before calling,
+ * otherwise a truthy return would falsely narrow an un-normalized string to the
+ * strict union.
+ */
 export function isValidPlatform(value: unknown): value is PostPlatform {
-  return (
-    typeof value === "string" &&
-    (VALID_PLATFORMS as readonly string[]).includes(value.trim().toLowerCase())
-  );
+  return typeof value === "string" && (VALID_PLATFORMS as readonly string[]).includes(value);
 }
 
 export function isValidFormat(value: unknown): value is PostFormat {
-  return (
-    typeof value === "string" &&
-    (VALID_FORMATS as readonly string[]).includes(value.trim().toLowerCase())
-  );
+  return typeof value === "string" && (VALID_FORMATS as readonly string[]).includes(value);
 }

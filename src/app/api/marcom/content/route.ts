@@ -127,7 +127,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (status && !VALID_POST_STATUSES.includes(status)) {
+  if (typeof status !== "string" || !(VALID_POST_STATUSES as readonly string[]).includes(status)) {
     return NextResponse.json({ error: "Invalid post status" }, { status: 400 });
   }
 

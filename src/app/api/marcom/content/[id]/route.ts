@@ -80,7 +80,7 @@ export async function PATCH(
   }
 
   if (body.status !== undefined) {
-    if (!(VALID_POST_STATUSES as readonly string[]).includes(String(body.status))) {
+    if (typeof body.status !== "string" || !(VALID_POST_STATUSES as readonly string[]).includes(body.status)) {
       return NextResponse.json(
         { error: `Invalid status: '${body.status}'. Must be one of: ${VALID_POST_STATUSES.join(", ")}` },
         { status: 400 },
