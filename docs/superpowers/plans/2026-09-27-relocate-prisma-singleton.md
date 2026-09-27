@@ -1,6 +1,6 @@
 # Relocate Prisma Singleton Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Move the Prisma client singleton from `src/lib/marcom/db.ts` to `src/lib/db.ts` so generic infrastructure (tasks, workspaces, auth) no longer depends on a domain-specific module.
 
@@ -28,7 +28,7 @@
 - Consumes: `@prisma/client` (already installed)
 - Produces: `export const prisma: PrismaClient` — the canonical import for all server-side code
 
-- [ ] **Step 1: Create `src/lib/db.ts`**
+- [x] **Step 1: Create `src/lib/db.ts`**
 
 ```ts
 import { PrismaClient } from "@prisma/client";
@@ -50,17 +50,17 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 This is an exact copy of the current `src/lib/marcom/db.ts` content. No changes to logic.
 
-- [ ] **Step 2: Verify TypeScript compiles**
+- [x] **Step 2: Verify TypeScript compiles**
 
 Run: `npx tsc --noEmit --pretty 2>&1 | head -20`
 Expected: No new errors related to `src/lib/db.ts`
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run: `npm test`
 Expected: 539 tests, 0 failures (new file has no side effects until imports switch)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/lib/db.ts
@@ -112,7 +112,7 @@ git commit -m "refactor: create canonical Prisma singleton at src/lib/db.ts"
 - Consumes: `export const prisma` from Task 1's `src/lib/db.ts`
 - Produces: No interface change — all files still use `prisma` the same way
 
-- [ ] **Step 1: Replace imports in all 29 files**
+- [x] **Step 1: Replace imports in all 29 files**
 
 The change in every file is identical — replace:
 ```ts
@@ -130,17 +130,17 @@ find src/app/api src/lib/server src/lib/tasks -name '*.ts' \
   | xargs sed -i '' 's|from "@/lib/marcom/db"|from "@/lib/db"|g'
 ```
 
-- [ ] **Step 2: Verify no remaining references (except `marcom/db.ts` itself)**
+- [x] **Step 2: Verify no remaining references (except `marcom/db.ts` itself)**
 
 Run: `grep -rn '@/lib/marcom/db' src/ --include='*.ts' --include='*.tsx' | grep -v 'src/lib/marcom/db.ts'`
 Expected: No output (zero remaining imports)
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run: `npm test`
 Expected: 539 tests, 0 failures
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -161,7 +161,7 @@ depended on a domain-specific marcom module for database access."
 - Consumes: `export const prisma` from `src/lib/db.ts`
 - Produces: Same `export { prisma }` for backward compatibility
 
-- [ ] **Step 1: Replace `src/lib/marcom/db.ts` with re-export shim**
+- [x] **Step 1: Replace `src/lib/marcom/db.ts` with re-export shim**
 
 Replace the entire file content with:
 ```ts
@@ -177,17 +177,17 @@ This ensures:
 - IDE "find usages" on the old path reveals the deprecation notice.
 - Future cleanup: delete this file once confident no references remain.
 
-- [ ] **Step 2: Verify TypeScript compiles**
+- [x] **Step 2: Verify TypeScript compiles**
 
 Run: `npx tsc --noEmit --pretty 2>&1 | head -20`
 Expected: No errors
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run: `npm test`
 Expected: 539 tests, 0 failures
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/lib/marcom/db.ts
