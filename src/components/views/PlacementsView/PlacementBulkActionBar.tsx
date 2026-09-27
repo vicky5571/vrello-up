@@ -14,6 +14,7 @@ import type { PlacementStatus, MarcomPlacement } from "./PlacementsView";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
 import { syncTaskOnPlacementStatusChange } from "@/lib/tasks/placementTaskSync";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 
 interface PlacementBulkActionBarProps {
   selectedIds: string[];
@@ -34,6 +35,11 @@ export function PlacementBulkActionBar({
     useShallow((s) => ({ tasks: s.tasks, workspaces: s.workspaces })),
   );
   const updateTask = useWorkspaceStore((s) => s.updateTask);
+
+  const fetchPlacements = useMarcomDataStore((s) => s.fetchPlacements);
+  const updateCachedPlacement = useMarcomDataStore((s) => s.updateCachedPlacement);
+  const removeCachedPlacement = useMarcomDataStore((s) => s.removeCachedPlacement);
+  const invalidateMous = useMarcomDataStore((s) => s.invalidateMous);
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPicModal, setShowPicModal] = useState(false);
@@ -73,6 +79,7 @@ export function PlacementBulkActionBar({
           currentWorkspace?.spaces || [],
           (taskId, updates) => updateTask(taskId, updates),
         );
+        updateCachedPlacement(activeWorkspaceId, { id, status });
       });
 
       const label =
@@ -86,6 +93,7 @@ export function PlacementBulkActionBar({
 
       toast.success(`Status ${count} placement berhasil diubah menjadi "${label}"!`);
       onClearSelection();
+      await fetchPlacements(activeWorkspaceId, true);
       await onRefresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal memperbarui status masal");
@@ -122,10 +130,15 @@ export function PlacementBulkActionBar({
         throw new Error(data.error || `Gagal menetapkan PIC (${res.status})`);
       }
 
+      selectedIds.forEach((id) => {
+        updateCachedPlacement(activeWorkspaceId, { id, picName: cleanPic });
+      });
+
       toast.success(`PIC "${cleanPic}" berhasil ditetapkan untuk ${count} placement!`);
       setShowPicModal(false);
       setPicInput("");
       onClearSelection();
+      await fetchPlacements(activeWorkspaceId, true);
       await onRefresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal menetapkan PIC masal");
@@ -148,10 +161,15 @@ export function PlacementBulkActionBar({
       let successCount = 0;
       for (const id of selectedIds) {
         const res = await fetch(`/api/marcom/placements/${id}`, { method: "DELETE" });
-        if (res.ok) successCount++;
+        if (res.ok) {
+          successCount++;
+          removeCachedPlacement(activeWorkspaceId, id);
+        }
       }
+      invalidateMous(activeWorkspaceId);
       toast.success(`${successCount} placement berhasil dihapus`);
       onClearSelection();
+      await fetchPlacements(activeWorkspaceId, true);
       await onRefresh();
     } catch {
       toast.error("Gagal menghapus beberapa placement");

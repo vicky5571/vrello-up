@@ -93,6 +93,8 @@ const STATUS_STYLES: Record<PlacementStatus, string> = {
   ISSUE: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
 };
 
+const EMPTY_PLACEMENTS: MarcomPlacement[] = [];
+
 export function PlacementsView() {
   const { can } = useMarcomPermissions();
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
@@ -117,15 +119,20 @@ export function PlacementsView() {
     outlets: storeOutlets,
     materials: storeMaterials,
     branches: storeBranches,
-    getCachedPlacements,
-    setCachedPlacements,
-    invalidatePlacements,
     invalidateMous,
   } = useMarcomDataStore();
 
-  const cachedPlacements = getCachedPlacements(activeWorkspaceId);
-  const [placements, setPlacements] = useState<MarcomPlacement[]>(() => cachedPlacements || []);
-  const [isLoading, setIsLoading] = useState(!cachedPlacements);
+  const placements = useMarcomDataStore(
+    (s) => s.placementsByWorkspace[activeWorkspaceId] ?? EMPTY_PLACEMENTS,
+  );
+  const fetchPlacements = useMarcomDataStore((s) => s.fetchPlacements);
+  const addCachedPlacement = useMarcomDataStore((s) => s.addCachedPlacement);
+  const updateCachedPlacement = useMarcomDataStore((s) => s.updateCachedPlacement);
+  const removeCachedPlacement = useMarcomDataStore((s) => s.removeCachedPlacement);
+
+  const [isLoading, setIsLoading] = useState(
+    () => !Boolean(useMarcomDataStore.getState().placementsByWorkspace[activeWorkspaceId]),
+  );
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedBrand, setSelectedBrand] = useState<string>("ALL");
@@ -149,6 +156,9 @@ export function PlacementsView() {
   const filteredPlacements = useMemo(() => {
     const query = (marcomFilters["placements"] || "").toLowerCase().trim();
     return placements.filter((p) => {
+      if (selectedStatus !== "ALL" && p.status !== selectedStatus) {
+        return false;
+      }
       if (selectedBrand !== "ALL") {
         const pBrand = (p.brand || "IM3").toUpperCase();
         const target = selectedBrand.toUpperCase();
@@ -173,7 +183,7 @@ export function PlacementsView() {
         brand.includes(query)
       );
     });
-  }, [placements, marcomFilters, selectedBrand]);
+  }, [placements, marcomFilters, selectedBrand, selectedStatus]);
 
   const kpiItems: KpiCardItem[] = useMemo(() => {
     const kpis = calculatePlacementKPIs(filteredPlacements);
@@ -254,45 +264,28 @@ export function PlacementsView() {
     setSelectedTaskId(task.id);
   };
 
-  const fetchPlacements = useCallback(
-    async (statusFilter = selectedStatus, brandFilter = selectedBrand) => {
-      if (!getCachedPlacements(activeWorkspaceId)) {
-        setIsLoading(true);
-      }
+  const loadPlacements = useCallback(
+    async (force = false) => {
+      if (!activeWorkspaceId) return;
+      const hasCache = Boolean(useMarcomDataStore.getState().placementsByWorkspace[activeWorkspaceId]);
+      if (!hasCache) setIsLoading(true);
       setError(null);
       try {
-        const params = new URLSearchParams();
-        params.set("workspaceId", activeWorkspaceId);
-        if (statusFilter && statusFilter !== "ALL") {
-          params.set("status", statusFilter);
-        }
-        if (brandFilter && brandFilter !== "ALL") {
-          params.set("brand", brandFilter);
-        }
-        const placementsUrl = `/api/marcom/placements?${params.toString()}`;
-        const [resPlacements, outletsData, materialsData, resMous] = await Promise.all([
-          fetch(placementsUrl),
+        const [, outletsData, materialsData, , mousData] = await Promise.all([
+          fetchPlacements(activeWorkspaceId, force),
           fetchOutlets(),
           fetchMaterials(),
-          fetch(`/api/marcom/mous?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
           fetchBranches(),
+          useMarcomDataStore.getState().fetchMous(activeWorkspaceId),
         ]);
-        if (!resPlacements.ok) throw new Error(`Request failed (${resPlacements.status})`);
-        const jsonPlacements = await resPlacements.json();
-        const placementsData = Array.isArray(jsonPlacements.data) ? jsonPlacements.data : [];
-        setPlacements(placementsData);
-        if (statusFilter === "ALL" && brandFilter === "ALL") {
-          setCachedPlacements(activeWorkspaceId, placementsData);
-        }
         if (Array.isArray(outletsData) && outletsData.length > 0) {
           setOutletsList(outletsData.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName, branchId: o.branchId })));
         }
         if (Array.isArray(materialsData) && materialsData.length > 0) {
           setMaterialsList(materialsData.map((m) => ({ id: m.id, name: m.name, type: m.type, requiresMou: m.requiresMou })));
         }
-        if (resMous.ok) {
-          const jsonMous = await resMous.json();
-          setMousList(Array.isArray(jsonMous.data) ? jsonMous.data : []);
+        if (Array.isArray(mousData) && mousData.length > 0) {
+          setMousList(mousData);
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load placements");
@@ -300,23 +293,21 @@ export function PlacementsView() {
         setIsLoading(false);
       }
     },
-    [selectedStatus, selectedBrand, activeWorkspaceId, getCachedPlacements, setCachedPlacements, fetchOutlets, fetchMaterials, fetchBranches],
+    [activeWorkspaceId, fetchPlacements, fetchOutlets, fetchMaterials, fetchBranches]
   );
 
   useEffect(() => {
-    fetchPlacements(selectedStatus, selectedBrand);
-  }, [fetchPlacements, selectedStatus, selectedBrand, activeWorkspaceId]);
+    loadPlacements();
+  }, [loadPlacements]);
 
   const handleStatusFilter = (status: string) => {
     const next = selectedStatus === status && status !== "ALL" ? "ALL" : status;
     setSelectedStatus(next);
-    fetchPlacements(next, selectedBrand);
   };
 
   const handleBrandFilter = (brand: string) => {
     const next = selectedBrand === brand && brand !== "ALL" ? "ALL" : brand;
     setSelectedBrand(next);
-    fetchPlacements(selectedStatus, next);
   };
 
   const handleOpenAddPlacement = useCallback(() => {
@@ -584,8 +575,15 @@ export function PlacementsView() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || `Failed to save placement (${res.status})`);
       }
+      const jsonRes = await res.json().catch(() => ({}));
+      const savedPlacement: MarcomPlacement = jsonRes.data || jsonRes;
+      if (isEdit && id) {
+        updateCachedPlacement(activeWorkspaceId, savedPlacement);
+      } else {
+        addCachedPlacement(activeWorkspaceId, savedPlacement);
+      }
+      fetchPlacements(activeWorkspaceId, true);
       toast.success(`Placement ${isEdit ? "updated" : "created"} successfully`);
-      invalidatePlacements(activeWorkspaceId);
       invalidateMous(activeWorkspaceId);
       if (isEdit && id) {
         const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
@@ -598,7 +596,6 @@ export function PlacementsView() {
         );
       }
       setModalPlacement(null);
-      await fetchPlacements();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save placement");
     } finally {
@@ -610,12 +607,12 @@ export function PlacementsView() {
     async (id: string) => {
       const res = await fetch(`/api/marcom/placements/${id}`, { method: "DELETE" });
       if (res.ok) {
-        invalidatePlacements(activeWorkspaceId);
+        removeCachedPlacement(activeWorkspaceId, id);
         invalidateMous(activeWorkspaceId);
       }
       return res.ok;
     },
-    [activeWorkspaceId, invalidatePlacements, invalidateMous],
+    [activeWorkspaceId, removeCachedPlacement, invalidateMous],
   );
 
   const viewSwitcherControls = (
@@ -681,7 +678,7 @@ export function PlacementsView() {
     <>
       {viewMode === "table" ? (
         <MarcomTableShell
-          data={placements}
+          data={filteredPlacements}
           columns={columns}
           getRowId={(row) => row.id}
           initialSorting={[{ id: "outlet", desc: false }]}
@@ -692,7 +689,7 @@ export function PlacementsView() {
           kpiBar={<KpiSummaryCards items={kpiItems} />}
           isLoading={isLoading}
           error={error}
-          onRefresh={fetchPlacements}
+          onRefresh={() => loadPlacements(true)}
           canDelete={canManage}
           deleteRequiresMessage="Delete requires staff or admin role"
           onDeleteOne={deleteOne}
@@ -703,7 +700,7 @@ export function PlacementsView() {
               selectedIds={selectedIds}
               placements={placements}
               onClearSelection={clearSelection}
-              onRefresh={fetchPlacements}
+              onRefresh={() => loadPlacements(true)}
               canManage={canManage}
             />
           )}
@@ -905,7 +902,7 @@ export function PlacementsView() {
 
               <button
                 type="button"
-                onClick={() => fetchPlacements()}
+                onClick={() => loadPlacements(true)}
                 title="Refresh data"
                 className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
@@ -1040,7 +1037,7 @@ export function PlacementsView() {
               {viewSwitcherControls}
               <button
                 type="button"
-                onClick={() => fetchPlacements()}
+                onClick={() => loadPlacements(true)}
                 title="Refresh data"
                 className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
