@@ -36,6 +36,28 @@ test("updateTask patches fields on the existing task", () => {
   api().deleteTask(created.id);
 });
 
+test("updateTask preserves title for placement tasks and disallows title edits", () => {
+  const created = api().createTask({
+    listId: "list-design-system",
+    title: "[Placement] Neonbox - Toko Berkah",
+    description: "",
+    statusId: "status-todo",
+    priority: "normal",
+    assignees: [],
+    tags: [],
+    subtasks: [],
+    orderIndex: 0,
+    relatedMarcomId: "place-123",
+    relatedMarcomType: "PLACEMENT",
+  });
+
+  api().updateTask(created.id, { title: "Attempted Title Edit", priority: "urgent" });
+  const updated = api().tasks.find((t) => t.id === created.id);
+  assert.equal(updated?.priority, "urgent");
+  assert.equal(updated?.title, "[Placement] Neonbox - Toko Berkah");
+  api().deleteTask(created.id);
+});
+
 test("moveTaskStatus transitions status and order index", () => {
   const created = makeTask("crud-move");
   api().moveTaskStatus(created.id, "status-in-progress", 3);

@@ -55,7 +55,7 @@ import {
   applyViewPreferences,
 } from "@/lib/store/viewPreferencesOperations";
 import { syncFieldEventOnTaskStatusChange } from "@/lib/tasks/eventTaskSync";
-import { syncPlacementOnTaskStatusChange } from "@/lib/tasks/placementTaskSync";
+import { syncPlacementOnTaskStatusChange, isPlacementTask } from "@/lib/tasks/placementTaskSync";
 import {
   reconcileTasks,
   syncCreateTaskApi,
@@ -1009,16 +1009,21 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       updateTask: (id, updates) => {
         const prev = get().tasks.find((t) => t.id === id);
+        // Disallow mutating title for placement tasks from project views
+        const effectiveUpdates =
+          updates.title && prev && isPlacementTask(prev)
+            ? { ...updates, title: prev.title }
+            : updates;
         const escalatesToUrgent =
-          !!prev && updates.priority === "urgent" && prev.priority !== "urgent";
+          !!prev && effectiveUpdates.priority === "urgent" && prev.priority !== "urgent";
         set((state) => ({
           tasks: state.tasks.map((task) =>
             task.id === id
-              ? { ...task, ...updates, updatedAt: new Date().toISOString() }
+              ? { ...task, ...effectiveUpdates, updatedAt: new Date().toISOString() }
               : task,
           ),
         }));
-        syncUpdateTask(id, updates);
+        syncUpdateTask(id, effectiveUpdates);
         if (updates.statusId && prev?.relatedMarcomId) {
           const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
           const spaces = currentWs?.spaces || [];
@@ -1093,11 +1098,23 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const targets = new Set(ids);
         const now = new Date().toISOString();
         set((state) => ({
-          tasks: state.tasks.map((task) =>
-            targets.has(task.id) ? { ...task, ...updates, updatedAt: now } : task,
-          ),
+          tasks: state.tasks.map((task) => {
+            if (!targets.has(task.id)) return task;
+            const effective =
+              updates.title && isPlacementTask(task)
+                ? { ...updates, title: task.title }
+                : updates;
+            return { ...task, ...effective, updatedAt: now };
+          }),
         }));
-        for (const id of targets) syncUpdateTask(id, updates);
+        for (const id of targets) {
+          const t = get().tasks.find((x) => x.id === id);
+          const effective =
+            updates.title && t && isPlacementTask(t)
+              ? { ...updates, title: t.title }
+              : updates;
+          syncUpdateTask(id, effective);
+        }
       },
 
       toggleTaskSelection: (id) =>

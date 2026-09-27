@@ -39,6 +39,7 @@ import {
   ChevronRight,
   ArrowLeft,
   Flag,
+  Lock,
 } from "lucide-react";
 import { TiptapEditor } from "./TiptapEditor";
 import { SubtaskManager } from "./SubtaskManager";
@@ -55,6 +56,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useDropdown } from "@/components/ui/useDropdown";
 import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
 import { buildShareableTaskUrl } from "@/lib/router/urlState";
+import { isPlacementTask } from "@/lib/tasks/placementTaskSync";
 
 function formatBytes(bytes: number): string {
   if (!bytes || bytes <= 0) return "0 B";
@@ -329,7 +331,10 @@ export function TaskDrawer() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedTaskId, setSelectedTaskId]);
 
+  const isPlacement = isPlacementTask(task);
+
   const handleTitleBlur = () => {
+    if (isPlacement) return;
     if (task && title.trim() && title !== task.title) {
       updateTask(task.id, { title: title.trim() });
       toast.success("Task title updated");
@@ -578,17 +583,32 @@ export function TaskDrawer() {
                 <TaskActivityFeed task={task} />
               ) : (
                 <>
-                  {/* Editable Title */}
+                  {/* Title Header: Editable or Locked for Placements */}
                   <div>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      onBlur={handleTitleBlur}
-                      onKeyDown={(e) => e.key === "Enter" && handleTitleBlur()}
-                      placeholder="Task title..."
-                      className="w-full text-lg font-bold bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#7B68EE] text-slate-900 dark:text-slate-100 focus:outline-hidden pb-1 transition-all"
-                    />
+                    {isPlacement ? (
+                      <div className="flex items-center justify-between gap-3 pb-1">
+                        <span className="text-lg font-bold text-slate-900 dark:text-slate-100 select-text">
+                          {task.title}
+                        </span>
+                        <span
+                          title="Placement task title is automatically managed by Marcom"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-slate-700/80 select-none shrink-0"
+                        >
+                          <Lock className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                          <span>Placement Title Locked</span>
+                        </span>
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        onBlur={handleTitleBlur}
+                        onKeyDown={(e) => e.key === "Enter" && handleTitleBlur()}
+                        placeholder="Task title..."
+                        className="w-full text-lg font-bold bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-[#7B68EE] text-slate-900 dark:text-slate-100 focus:outline-hidden pb-1 transition-all"
+                      />
+                    )}
                   </div>
 
               {/* Properties Grid */}
