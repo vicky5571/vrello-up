@@ -1,4 +1,9 @@
 import type { Space, List } from "@/types";
+import {
+  resolveMarcomSpace,
+  resolveContentList,
+  resolveFieldOpsList,
+} from "@/lib/marcom/marcomIds";
 
 export interface FlatSpaceOption {
   id: string;
@@ -58,16 +63,13 @@ export function getDefaultDestinationForChannel(
     return { spaceId: "", listId: "" };
   }
 
-  // 1. Pick target space: preferredSpaceId > space-marcom > first space
+  // 1. Pick target space: preferredSpaceId > Marcom space (seed ID, then name) > first space
   let targetSpace = preferredSpaceId
     ? flat.find((s) => s.id === preferredSpaceId)
     : undefined;
 
   if (!targetSpace) {
-    targetSpace =
-      flat.find((s) => s.id === "space-marcom") ||
-      flat.find((s) => s.name.toLowerCase().includes("marketing")) ||
-      flat[0];
+    targetSpace = resolveMarcomSpace(flat) || flat[0];
   }
 
   if (!targetSpace || targetSpace.lists.length === 0) {
@@ -76,25 +78,13 @@ export function getDefaultDestinationForChannel(
 
   // 2. Pick list according to channel within chosen space
   if (channel === "social") {
-    const socialList =
-      targetSpace.lists.find((l) => l.id === "list-content-planner") ||
-      targetSpace.lists.find((l) => {
-        const n = l.name.toLowerCase();
-        return n.includes("content") || n.includes("social") || n.includes("planner");
-      }) ||
-      targetSpace.lists[0];
+    const socialList = resolveContentList(targetSpace.lists) || targetSpace.lists[0];
 
     return { spaceId: targetSpace.id, listId: socialList.id };
   }
 
   // On-ground activation
-  const opsList =
-    targetSpace.lists.find((l) => l.id === "list-field-ops") ||
-    targetSpace.lists.find((l) => {
-      const n = l.name.toLowerCase();
-      return n.includes("field") || n.includes("ops") || n.includes("event");
-    }) ||
-    targetSpace.lists[0];
+  const opsList = resolveFieldOpsList(targetSpace.lists) || targetSpace.lists[0];
 
   return { spaceId: targetSpace.id, listId: opsList.id };
 }

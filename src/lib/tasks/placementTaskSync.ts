@@ -1,5 +1,6 @@
 import type { Space, Task, UnifiedPlacementStatus } from "@/types";
 import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
+import { FIELD_OPS_LIST_ID } from "@/lib/marcom/marcomIds";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 
 export type { UnifiedPlacementStatus };
@@ -119,7 +120,7 @@ export function buildPlacementTaskPayload(
   const now = Date.now();
 
   return {
-    listId: "list-field-ops",
+    listId: FIELD_OPS_LIST_ID,
     title: `[Placement] ${placement.materialName || "Branding"} - ${placement.outletName || "Outlet"}`,
     description: `<p><strong>Material:</strong> ${placement.materialName || "N/A"}</p><p><strong>Dimensions:</strong> ${placement.dimensions || "To be measured"}</p><p><strong>PIC:</strong> ${placement.picName || "Unassigned"}</p><p>${placement.notes || ""}</p>`,
     statusId: targetStatusId,
