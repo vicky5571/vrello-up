@@ -22,7 +22,6 @@ enum BranchStatus {
 enum MouStatus {
   DRAFT
   SUBMITTED
-  ON_PROGRESS
   DONE
   REJECTED
   APPROVED
