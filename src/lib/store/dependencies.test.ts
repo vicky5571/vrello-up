@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
 import { useWorkspaceStore, wouldCreateCycle } from "./useWorkspaceStore.ts";
+// @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
+import { applyAddDependency, applyRemoveDependency } from "./dependencyOperations.ts";
 import type { Task } from "../../types/index.ts";
 
 const api = () => useWorkspaceStore.getState();
@@ -63,3 +65,21 @@ test("addDependency blocks A → B → A while allowing the first link", () => {
   api().deleteTask(a.id);
   api().deleteTask(b.id);
 });
+
+test("applyAddDependency blocks cycle and appends valid dependency", () => {
+  const a = stubTask("a");
+  const b = stubTask("b");
+  const result1 = applyAddDependency([a, b], "b", "a");
+  assert.equal(result1.success, true);
+  assert.deepEqual(result1.nextTasks.find((t: Task) => t.id === "b")?.dependencies, ["a"]);
+
+  const result2 = applyAddDependency(result1.nextTasks, "a", "b");
+  assert.equal(result2.success, false);
+});
+
+test("applyRemoveDependency filters out target dependency", () => {
+  const a = stubTask("a", ["b", "c"]);
+  const result = applyRemoveDependency([a], "a", "b");
+  assert.deepEqual(result.nextTasks.find((t: Task) => t.id === "a")?.dependencies, ["c"]);
+});
+

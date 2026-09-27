@@ -62,8 +62,14 @@ import {
   syncUpdateTaskApi,
   syncDeleteTaskApi,
 } from "@/lib/tasks/taskSync";
+import {
+  wouldCreateCycle,
+  applyAddDependency,
+  applyRemoveDependency,
+} from "@/lib/store/dependencyOperations";
 
 export { DEFAULT_VIEW_PREFERENCES } from "@/lib/store/viewPreferencesOperations";
+export { wouldCreateCycle } from "@/lib/store/dependencyOperations";
 import {
   SEED_USERS,
   DEFAULT_STATUSES,
@@ -428,40 +434,6 @@ function countAutomationRun(id: string) {
       [id]: (s.automationRuns[id] || 0) + 1,
     },
   }));
-}
-/**
- * Checks if making `taskId` depend on `dependsOnTaskId` would introduce a dependency cycle.
- */
-export function wouldCreateCycle(
-  taskId: string,
-  dependsOnTaskId: string,
-  tasks: Task[],
-): boolean {
-  if (taskId === dependsOnTaskId) return true;
-
-  const taskMap = new Map<string, Task>(tasks.map((t) => [t.id, t]));
-  const visited = new Set<string>();
-  const queue: string[] = [dependsOnTaskId];
-
-  while (queue.length > 0) {
-    const currentId = queue.shift()!;
-    if (currentId === taskId) {
-      return true; // Cycle detected: dependsOnTaskId already reaches taskId
-    }
-    if (!visited.has(currentId)) {
-      visited.add(currentId);
-      const currentTask = taskMap.get(currentId);
-      if (currentTask?.dependencies) {
-        for (const depId of currentTask.dependencies) {
-          if (!visited.has(depId)) {
-            queue.push(depId);
-          }
-        }
-      }
-    }
-  }
-
-  return false;
 }
 
 /**
@@ -1387,46 +1359,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       addDependency: (taskId, dependsOnTaskId) => {
-        if (taskId === dependsOnTaskId) return false;
-
         const { tasks } = get();
-        if (wouldCreateCycle(taskId, dependsOnTaskId, tasks)) {
-          return false;
-        }
-
-        set((state) => ({
-          tasks: state.tasks.map((t) => {
-            if (t.id === taskId) {
-              const currentDeps = t.dependencies || [];
-              if (!currentDeps.includes(dependsOnTaskId)) {
-                return {
-                  ...t,
-                  dependencies: [...currentDeps, dependsOnTaskId],
-                  updatedAt: new Date().toISOString(),
-                };
-              }
-            }
-            return t;
-          }),
-        }));
+        const { nextTasks, success } = applyAddDependency(tasks, taskId, dependsOnTaskId);
+        if (!success) return false;
+        set({ tasks: nextTasks });
         return true;
       },
 
       removeDependency: (taskId, dependsOnTaskId) => {
-        set((state) => ({
-          tasks: state.tasks.map((t) => {
-            if (t.id === taskId && t.dependencies) {
-              return {
-                ...t,
-                dependencies: t.dependencies.filter(
-                  (d) => d !== dependsOnTaskId,
-                ),
-                updatedAt: new Date().toISOString(),
-              };
-            }
-            return t;
-          }),
-        }));
+        const { tasks } = get();
+        const { nextTasks } = applyRemoveDependency(tasks, taskId, dependsOnTaskId);
+        set({ tasks: nextTasks });
       },
 
       createWorkspace: (name, avatar) => {
