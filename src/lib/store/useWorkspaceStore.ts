@@ -93,6 +93,17 @@ import {
   applyDeleteTag,
   applyToggleTaskTag,
 } from "@/lib/store/tagOperations";
+import {
+  applyCreateTask,
+  applyUpdateTask,
+  applyBulkUpdateTasks,
+  applyMoveTaskStatus,
+  applyReorderTasksInStatus,
+  applyAddSubtask,
+  applyToggleSubtask,
+  applyDeleteSubtask,
+  applyToggleTaskSelection,
+} from "@/lib/store/taskOperations";
 
 export { DEFAULT_VIEW_PREFERENCES } from "@/lib/store/viewPreferencesOperations";
 export { wouldCreateCycle } from "@/lib/store/dependencyOperations";
@@ -857,48 +868,29 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         })),
 
       createTask: (newTaskData) => {
-        const id = generateId("task");
-        const now = new Date().toISOString();
         const state = get();
-        let targetListId = newTaskData.listId;
-        if (!targetListId) {
-          const currentSpace = state.workspaces
-            .flatMap((w) => w.spaces)
-            .find((s) => s.id === state.activeSpaceId);
-          targetListId =
-            state.activeListId ||
-            currentSpace?.lists[0]?.id ||
-            currentSpace?.folders[0]?.lists[0]?.id ||
-            "list-design-system";
-        }
-        const newTask: Task = {
-          ...newTaskData,
-          listId: targetListId,
-          id,
-          createdAt: now,
-          updatedAt: now,
-        };
-        set((s) => ({ tasks: [newTask, ...s.tasks] }));
+        const currentSpace = state.workspaces
+          .flatMap((w) => w.spaces)
+          .find((s) => s.id === state.activeSpaceId);
+        const defaultListId =
+          state.activeListId ||
+          currentSpace?.lists[0]?.id ||
+          currentSpace?.folders[0]?.lists[0]?.id ||
+          "list-design-system";
+        const { nextTasks, newTask } = applyCreateTask(
+          state.tasks,
+          newTaskData,
+          defaultListId,
+        );
+        set({ tasks: nextTasks });
         syncCreateTask(newTask, state.activeSpaceId);
         return newTask;
       },
 
       updateTask: (id, updates) => {
-        const prev = get().tasks.find((t) => t.id === id);
-        // Disallow mutating title for placement tasks from project views
-        const effectiveUpdates =
-          updates.title && prev && isPlacementTask(prev)
-            ? { ...updates, title: prev.title }
-            : updates;
-        const escalatesToUrgent =
-          !!prev && effectiveUpdates.priority === "urgent" && prev.priority !== "urgent";
-        set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === id
-              ? { ...task, ...effectiveUpdates, updatedAt: new Date().toISOString() }
-              : task,
-          ),
-        }));
+        const { nextTasks, prevTask: prev, effectiveUpdates, escalatesToUrgent } =
+          applyUpdateTask(get().tasks, id, updates);
+        set({ tasks: nextTasks });
         syncUpdateTask(id, effectiveUpdates);
         if (updates.statusId && prev?.relatedMarcomId) {
           const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
@@ -971,58 +963,35 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       bulkUpdateTasks: (ids, updates) => {
         if (ids.length === 0) return;
-        const targets = new Set(ids);
-        const now = new Date().toISOString();
-        set((state) => ({
-          tasks: state.tasks.map((task) => {
-            if (!targets.has(task.id)) return task;
-            const effective =
-              updates.title && isPlacementTask(task)
-                ? { ...updates, title: task.title }
-                : updates;
-            return { ...task, ...effective, updatedAt: now };
-          }),
-        }));
-        for (const id of targets) {
-          const t = get().tasks.find((x) => x.id === id);
-          const effective =
-            updates.title && t && isPlacementTask(t)
-              ? { ...updates, title: t.title }
-              : updates;
+        const { nextTasks, effectiveUpdatesMap } = applyBulkUpdateTasks(
+          get().tasks,
+          ids,
+          updates,
+        );
+        set({ tasks: nextTasks });
+        for (const [id, effective] of effectiveUpdatesMap.entries()) {
           syncUpdateTask(id, effective);
         }
       },
 
       toggleTaskSelection: (id) =>
         set((state) => ({
-          selectedTaskIds: state.selectedTaskIds.includes(id)
-            ? state.selectedTaskIds.filter((t) => t !== id)
-            : [...state.selectedTaskIds, id],
+          selectedTaskIds: applyToggleTaskSelection(state.selectedTaskIds, id)
+            .nextSelectedIds,
         })),
       setTaskSelection: (ids) => set({ selectedTaskIds: [...new Set(ids)] }),
       clearTaskSelection: () => set({ selectedTaskIds: [] }),
 
       moveTaskStatus: (taskId, newStatusId, newOrderIndex) => {
-        const prev = get().tasks.find((t) => t.id === taskId);
-        set((state) => {
-          const task = state.tasks.find((t) => t.id === taskId);
-          if (!task) return state;
+        const { nextTasks, prevTask: prev, isMoved } = applyMoveTaskStatus(
+          get().tasks,
+          taskId,
+          newStatusId,
+          newOrderIndex,
+        );
+        if (!isMoved) return;
+        set({ tasks: nextTasks });
 
-          const updatedTasks = state.tasks.map((t) => {
-            if (t.id === taskId) {
-              return {
-                ...t,
-                statusId: newStatusId,
-                orderIndex:
-                  newOrderIndex !== undefined ? newOrderIndex : t.orderIndex,
-                updatedAt: new Date().toISOString(),
-              };
-            }
-            return t;
-          });
-
-          return { tasks: updatedTasks };
-        });
         syncUpdateTask(taskId, {
           statusId: newStatusId,
           orderIndex: newOrderIndex,
@@ -1062,70 +1031,33 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       reorderTasksInStatus: (statusId, orderedTaskIds) => {
-        set((state) => {
-          const idToIndex = new Map(
-            orderedTaskIds.map((id, index) => [id, index]),
-          );
-          const updatedTasks = state.tasks.map((task) => {
-            if (task.statusId === statusId && idToIndex.has(task.id)) {
-              return { ...task, orderIndex: idToIndex.get(task.id)! };
-            }
-            return task;
-          });
-          return { tasks: updatedTasks };
-        });
+        const { nextTasks } = applyReorderTasksInStatus(
+          get().tasks,
+          statusId,
+          orderedTaskIds,
+        );
+        set({ tasks: nextTasks });
       },
 
       addSubtask: (taskId, title) => {
-        const newSubtask = {
-          id: generateId("sub"),
+        const { nextTasks, updatedTask } = applyAddSubtask(
+          get().tasks,
+          taskId,
           title,
-          completed: false,
-          createdAt: new Date().toISOString(),
-        };
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === taskId
-              ? {
-                  ...t,
-                  subtasks: [...t.subtasks, newSubtask],
-                  updatedAt: new Date().toISOString(),
-                }
-              : t,
-          ),
-        }));
-        const t = get().tasks.find((task) => task.id === taskId);
-        if (t) syncUpdateTask(taskId, { subtasks: t.subtasks });
+        );
+        set({ tasks: nextTasks });
+        if (updatedTask) syncUpdateTask(taskId, { subtasks: updatedTask.subtasks });
       },
 
       toggleSubtask: (taskId, subtaskId) => {
-        const task = get().tasks.find((t) => t.id === taskId);
-        const target = task?.subtasks.find((st) => st.id === subtaskId);
-        const completesAll =
-          !!task &&
-          !!target &&
-          !target.completed &&
-          task.subtasks.length > 0 &&
-          task.subtasks.every(
-            (st) => st.id === subtaskId || st.completed,
-          );
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === taskId
-              ? {
-                  ...t,
-                  subtasks: t.subtasks.map((st) =>
-                    st.id === subtaskId
-                      ? { ...st, completed: !st.completed }
-                      : st,
-                  ),
-                  updatedAt: new Date().toISOString(),
-                }
-              : t,
-          ),
-        }));
-        const tAfter = get().tasks.find((task) => task.id === taskId);
-        if (tAfter) syncUpdateTask(taskId, { subtasks: tAfter.subtasks });
+        const { nextTasks, completesAll, updatedTask } = applyToggleSubtask(
+          get().tasks,
+          taskId,
+          subtaskId,
+        );
+        set({ tasks: nextTasks });
+        if (updatedTask) syncUpdateTask(taskId, { subtasks: updatedTask.subtasks });
+
         // rule-3 "Subtask Progress Sync": all subtasks done on an
         // in-progress task advances it to the space's review status.
         if (!completesAll) return;
@@ -1152,19 +1084,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       deleteSubtask: (taskId, subtaskId) => {
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === taskId
-              ? {
-                  ...t,
-                  subtasks: t.subtasks.filter((st) => st.id !== subtaskId),
-                  updatedAt: new Date().toISOString(),
-                }
-              : t,
-          ),
-        }));
-        const t = get().tasks.find((task) => task.id === taskId);
-        if (t) syncUpdateTask(taskId, { subtasks: t.subtasks });
+        const { nextTasks, updatedTask } = applyDeleteSubtask(
+          get().tasks,
+          taskId,
+          subtaskId,
+        );
+        set({ tasks: nextTasks });
+        if (updatedTask) syncUpdateTask(taskId, { subtasks: updatedTask.subtasks });
       },
 
       addComment: (taskId, content, user, attachments) => {
