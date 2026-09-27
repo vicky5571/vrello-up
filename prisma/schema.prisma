@@ -94,6 +94,15 @@ model WorkspaceMember {
   @@id([workspaceId, email])
 }
 
+// ============================================================================
+// GLOBAL MASTER DATA (ORGANIZATION-WIDE)
+// Entities in this section (Branch, Outlet, Material) represent physical,
+// persistent organizational infrastructure and material catalogs.
+// INVARIANT: DO NOT ADD `workspaceId` to these models. They must be shared
+// universally across all workspaces without partitioning. Switching active
+// workspace in the UI never filters or changes these records.
+// ============================================================================
+
 model Branch {
   id       String       @id @default(cuid())
   code     String       @unique
@@ -148,6 +157,15 @@ model Material {
   requiresMou Boolean      @default(false)
   placements  Placement[]
 }
+
+// ============================================================================
+// WORKSPACE-SCOPED OPERATIONAL WORK ITEMS (TRANSACTIONAL)
+// Entities in this section (Placement, Mou, ContentPost, FieldEvent, etc.)
+// represent time-bounded marketing campaigns, contracts, and tasks.
+// INVARIANT: ALL models here MUST contain `workspaceId` referencing
+// `WorkspaceItem` with `onDelete: Cascade`. Switching workspace in the UI
+// isolates these records strictly by tenant.
+// ============================================================================
 
 model Placement {
   id          String          @id @default(cuid())

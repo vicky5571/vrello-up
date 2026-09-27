@@ -52,6 +52,16 @@ Direct, concise, and technically rigorous. Zero conversational filler, zero syco
   👉 [`prisma/schema.prisma`](file:///Users/mac/Web%20Development/vrello-up/prisma/schema.prisma)
   Contains PostgreSQL schema for `WorkspaceItem`, `SpaceItem`, `ListItem`, `TaskItem`, and Marcom models (`Branch`, `Outlet`, `Placement`, `Mou`, `FieldEvent`, `ContentPost`, `DocumentItem`, `MonthlyReport`).
 
+- **Data Scoping Architecture (Master Data vs. Operational Workspace Data)**:
+  👉 Blueprint Reference: [`docs/architecture-data-scoping.md`](file:///Users/mac/Web%20Development/vrello-up/docs/architecture-data-scoping.md)
+  The database strictly separates entities into two architectural tiers:
+  1. **Global Master Data (`Branch`, `Outlet`, `Material`)**:
+     - *Boundary*: Organizational physical assets (~25,000 retail outlets, regional branches, POSM material catalog) shared organization-wide.
+     - *Rule*: **NO `workspaceId` column**. These entities must NEVER be scoped or duplicated per workspace. Switching workspaces in the Navbar preserves identical Master Data.
+  2. **Transactional Operational Work Items (`Placement`, `Mou`, `FieldEvent`, `ContentPost`, `MonthlyReport`, `DocumentItem`, `TaskItem`)**:
+     - *Boundary*: Campaign execution, partner contracts, events, and task activities.
+     - *Rule*: **MUST contain `workspaceId`** (linked to `WorkspaceItem` with `onDelete: Cascade`). `TaskItem` is scoped via `listId -> spaceId -> workspaceId`. All API queries and UI stores MUST enforce `workspaceId` tenant filtering. Deleting a workspace cascades and cleans up all associated operational data without affecting Master Data.
+
 ---
 
 ## 3. Directory Map
