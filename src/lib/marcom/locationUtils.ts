@@ -20,6 +20,25 @@ export function isValidCoordinate(lat: number, lng: number): boolean {
   );
 }
 
+export const INDONESIA_BOUNDS = {
+  minLat: -11.0,
+  maxLat: 6.0,
+  minLng: 95.0,
+  maxLng: 141.0,
+} as const;
+
+export function isWithinIndonesiaBounds(lat: number, lng: number): boolean {
+  if (!isValidCoordinate(lat, lng)) {
+    return false;
+  }
+  return (
+    lat >= INDONESIA_BOUNDS.minLat &&
+    lat <= INDONESIA_BOUNDS.maxLat &&
+    lng >= INDONESIA_BOUNDS.minLng &&
+    lng <= INDONESIA_BOUNDS.maxLng
+  );
+}
+
 export function parseCoordinatesFromText(text: string): Coordinates | null {
   if (!text || typeof text !== "string") return null;
   const trimmed = text.trim();
