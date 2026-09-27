@@ -81,6 +81,10 @@ import {
   applyIncrementAutomationRun,
   executeAutomationsForTrigger,
 } from "@/lib/store/automationOperations";
+import {
+  validateAndParseBackup,
+  applyImportBackup,
+} from "@/lib/store/backupOperations";
 
 export { DEFAULT_VIEW_PREFERENCES } from "@/lib/store/viewPreferencesOperations";
 export { wouldCreateCycle } from "@/lib/store/dependencyOperations";
@@ -1560,47 +1564,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }));
       },
       importBackup: (data) => {
-        if (!data || typeof data !== "object") return false;
-        const backup = data as {
-          workspace?: Workspace;
-          tasks?: Task[];
-          tags?: Tag[];
-        };
-        const workspace = backup.workspace;
-        if (
-          !workspace ||
-          typeof workspace.id !== "string" ||
-          !Array.isArray(workspace.spaces)
-        ) {
-          return false;
-        }
-        const tasks = Array.isArray(backup.tasks) ? backup.tasks : [];
-        const tags = Array.isArray(backup.tags) ? backup.tags : [];
-        const normalized: Workspace = {
-          ...workspace,
-          members: Array.isArray(workspace.members)
-            ? workspace.members
-            : SEED_USERS,
-        };
-        set((state) => {
-          const exists = state.workspaces.some((w) => w.id === normalized.id);
-          const space = normalized.spaces[0];
-          return {
-            workspaces: exists
-              ? state.workspaces.map((w) =>
-                  w.id === normalized.id ? normalized : w,
-                )
-              : [...state.workspaces, normalized],
-            tasks,
-            tags,
-            activeWorkspaceId: normalized.id,
-            activeSpaceId: space?.id || "",
-            activeListId:
-              space?.lists[0]?.id || space?.folders[0]?.lists[0]?.id || "",
-            selectedTaskId: null,
-            lastSelectedTaskId: null,
-          };
-        });
+        const parsed = validateAndParseBackup(data, SEED_USERS);
+        if (!parsed.isValid) return false;
+        const nextState = applyImportBackup(get().workspaces, parsed);
+        if (!nextState) return false;
+        set(nextState);
         return true;
       },
     }),
