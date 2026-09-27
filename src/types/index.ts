@@ -336,6 +336,7 @@ export interface Mou {
   id: string;
   workspaceId?: string;
   branchId: string;
+  outletId?: string | null;
   outletName?: string;
   partnerName: string;
   mouType: string;
@@ -349,6 +350,7 @@ export interface Mou {
   compensationValue?: number;
   notes?: string;
   branch?: { id: string; code: string; name: string };
+  outlet?: { id: string; code: string; name: string } | null;
 }
 
 export type MouItem = Mou;
