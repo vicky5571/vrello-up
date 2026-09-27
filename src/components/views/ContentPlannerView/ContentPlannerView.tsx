@@ -40,6 +40,7 @@ import {
   findSpaceByListId,
   getDefaultDestinationForChannel,
 } from "@/lib/tasks/targetSpaceList";
+import { CONTENT_PLANNER_LIST_ID } from "@/lib/marcom/marcomIds";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
@@ -364,7 +365,7 @@ export function ContentPlannerView() {
 
       // Create linked task
       const chosenListId =
-        targetListId || activeListId || "list-content-planner";
+        targetListId || activeListId || CONTENT_PLANNER_LIST_ID;
       const targetSpace = rawSpaces.find((s) => s.id === targetSpaceId);
       const targetStatus =
         targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
@@ -494,7 +495,7 @@ export function ContentPlannerView() {
 
       if (!existing) {
         const dest = getDefaultDestinationForChannel(rawSpaces, "social", targetSpaceId);
-        const chosenListId = dest.listId || activeListId || "list-content-planner";
+        const chosenListId = dest.listId || activeListId || CONTENT_PLANNER_LIST_ID;
         const targetSpace = rawSpaces.find((s) => s.id === dest.spaceId) || rawSpaces[0];
         const targetStatus = targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
 

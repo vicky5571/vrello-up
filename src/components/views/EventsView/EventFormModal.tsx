@@ -31,6 +31,7 @@ import {
   findSpaceByListId,
   getDefaultDestinationForChannel,
 } from "@/lib/tasks/targetSpaceList";
+import { FIELD_OPS_LIST_ID } from "@/lib/marcom/marcomIds";
 import {
   getEventChecklistTemplate,
   findMemberForPic,
@@ -390,7 +391,7 @@ export function EventFormModal({
         findMemberForPic(members, eventPicName);
 
       const targetSpace = rawSpaces.find((s) => s.id === targetSpaceId);
-      const chosenListId = targetListId || targetSpace?.lists[0]?.id || "list-field-ops";
+      const chosenListId = targetListId || targetSpace?.lists[0]?.id || FIELD_OPS_LIST_ID;
       const targetStatus = mapEventStatusToTaskStatusId(
         eventStatus,
         targetSpace?.statuses || []

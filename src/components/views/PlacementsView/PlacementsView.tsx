@@ -51,6 +51,7 @@ import {
   buildPlacementTaskPayload,
   syncTaskOnPlacementStatusChange,
 } from "@/lib/tasks/placementTaskSync";
+import { FIELD_OPS_LIST_ID } from "@/lib/marcom/marcomIds";
 import { QuarterlyRecapTab } from "./QuarterlyRecapTab";
 import type { PlacementStatus, MarcomPlacement, MarcomMou, Brand } from "@/types";
 
@@ -235,7 +236,7 @@ export function PlacementsView() {
     }
     const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
     const targetSpace =
-      currentWorkspace?.spaces.find((s) => s.lists.some((l) => l.id === "list-field-ops")) ||
+      currentWorkspace?.spaces.find((s) => s.lists.some((l) => l.id === FIELD_OPS_LIST_ID)) ||
       currentWorkspace?.spaces[0];
     const members = currentWorkspace?.members || [];
     const taskPayload = buildPlacementTaskPayload(

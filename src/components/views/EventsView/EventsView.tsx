@@ -25,6 +25,7 @@ import {
   findSpaceByListId,
   getDefaultDestinationForChannel,
 } from "@/lib/tasks/targetSpaceList";
+import { FIELD_OPS_LIST_ID } from "@/lib/marcom/marcomIds";
 import {
   getEventChecklistTemplate,
   findMemberForPic,
@@ -219,7 +220,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
 
       if (!existing) {
         const dest = getDefaultDestinationForChannel(rawSpaces, "on_ground");
-        const chosenListId = dest.listId || activeListId || "list-field-ops";
+        const chosenListId = dest.listId || activeListId || FIELD_OPS_LIST_ID;
         const targetSpace = rawSpaces.find((s) => s.id === dest.spaceId) || rawSpaces[0];
         const targetStatus = targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
         const picMember = findMemberForPic(members, event.picName) || members[0];

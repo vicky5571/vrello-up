@@ -12,6 +12,10 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  MARCOM_SPACE_ID,
+  PRODUCT_SPACE_ID,
+} from "@/lib/marcom/marcomIds";
 import { AppModeSegmentedControl } from "@/components/layout/AppModeSegmentedControl";
 import { WORK_ITEM_VIEWS, MASTER_DATA_VIEWS } from "@/components/layout/ViewSwitcher";
 import { CreateSpaceModal } from "@/components/spaces/CreateSpaceModal";
@@ -108,8 +112,8 @@ export function Sidebar() {
   };
 
   const [expandedSpaces, setExpandedSpaces] = useState<Record<string, boolean>>({
-    "space-product": true,
-    "space-marcom": true,
+    [PRODUCT_SPACE_ID]: true,
+    [MARCOM_SPACE_ID]: true,
   });
 
   useEffect(() => {
