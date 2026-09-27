@@ -55,14 +55,19 @@ export interface MarcomDataState {
     post: Partial<ContentPostItem> & { id: string }
   ) => void;
   removeCachedPost: (workspaceId: string, postId: string) => void;
+  addCachedPost: (workspaceId: string, post: ContentPostItem) => void;
+  fetchPosts: (workspaceId: string, force?: boolean) => Promise<ContentPostItem[]>;
   invalidatePosts: (workspaceId?: string) => void;
 
   getCachedReports: (workspaceId: string) => MonthlyReport[] | undefined;
   setCachedReports: (workspaceId: string, reports: MonthlyReport[]) => void;
+  addCachedReport: (workspaceId: string, report: MonthlyReport) => void;
+  fetchReports: (workspaceId: string, force?: boolean) => Promise<MonthlyReport[]>;
   invalidateReports: (workspaceId?: string) => void;
 
   getCachedDocuments: (workspaceId: string) => DocumentItem[] | undefined;
   setCachedDocuments: (workspaceId: string, documents: DocumentItem[]) => void;
+  fetchDocuments: (workspaceId: string, force?: boolean) => Promise<DocumentItem[]>;
   invalidateDocuments: (workspaceId?: string) => void;
 
   getCachedMous: (workspaceId: string) => MarcomMou[] | undefined;
@@ -273,6 +278,40 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
     });
   },
 
+  addCachedPost: (workspaceId: string, post: ContentPostItem) => {
+    set((s) => {
+      const existing = s.postsByWorkspace[workspaceId] || [];
+      return {
+        postsByWorkspace: {
+          ...s.postsByWorkspace,
+          [workspaceId]: [post, ...existing.filter((p) => p.id !== post.id)],
+        },
+      };
+    });
+  },
+
+  fetchPosts: async (workspaceId: string, force = false) => {
+    if (!workspaceId) return [];
+    const state = get();
+    const cached = state.postsByWorkspace[workspaceId];
+    if (cached && !force) {
+      return cached;
+    }
+    try {
+      const res = await fetch(`/api/marcom/content?workspaceId=${encodeURIComponent(workspaceId)}`);
+      if (!res.ok) throw new Error(`Failed to fetch content posts (${res.status})`);
+      const json = await res.json();
+      const list: ContentPostItem[] = Array.isArray(json.data) ? json.data : [];
+      set((s) => ({
+        postsByWorkspace: { ...s.postsByWorkspace, [workspaceId]: list },
+      }));
+      return list;
+    } catch (err) {
+      console.error("[marcomDataStore] fetchPosts error:", err);
+      return cached || [];
+    }
+  },
+
   invalidatePosts: (workspaceId?: string) => {
     set((s) => {
       if (workspaceId) {
@@ -294,6 +333,40 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
     }));
   },
 
+  addCachedReport: (workspaceId: string, report: MonthlyReport) => {
+    set((s) => {
+      const existing = s.reportsByWorkspace[workspaceId] || [];
+      return {
+        reportsByWorkspace: {
+          ...s.reportsByWorkspace,
+          [workspaceId]: [report, ...existing.filter((r) => r.id !== report.id)],
+        },
+      };
+    });
+  },
+
+  fetchReports: async (workspaceId: string, force = false) => {
+    if (!workspaceId) return [];
+    const state = get();
+    const cached = state.reportsByWorkspace[workspaceId];
+    if (cached && !force) {
+      return cached;
+    }
+    try {
+      const res = await fetch(`/api/marcom/reports?workspaceId=${encodeURIComponent(workspaceId)}`);
+      if (!res.ok) throw new Error(`Failed to fetch reports (${res.status})`);
+      const json = await res.json();
+      const list: MonthlyReport[] = Array.isArray(json.data) ? json.data : [];
+      set((s) => ({
+        reportsByWorkspace: { ...s.reportsByWorkspace, [workspaceId]: list },
+      }));
+      return list;
+    } catch (err) {
+      console.error("[marcomDataStore] fetchReports error:", err);
+      return cached || [];
+    }
+  },
+
   invalidateReports: (workspaceId?: string) => {
     set((s) => {
       if (workspaceId) {
@@ -313,6 +386,28 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
     set((s) => ({
       documentsByWorkspace: { ...s.documentsByWorkspace, [workspaceId]: documents },
     }));
+  },
+
+  fetchDocuments: async (workspaceId: string, force = false) => {
+    if (!workspaceId) return [];
+    const state = get();
+    const cached = state.documentsByWorkspace[workspaceId];
+    if (cached && !force) {
+      return cached;
+    }
+    try {
+      const res = await fetch(`/api/marcom/documents?workspaceId=${encodeURIComponent(workspaceId)}`);
+      if (!res.ok) throw new Error(`Failed to fetch documents (${res.status})`);
+      const json = await res.json();
+      const list: DocumentItem[] = Array.isArray(json.data) ? json.data : [];
+      set((s) => ({
+        documentsByWorkspace: { ...s.documentsByWorkspace, [workspaceId]: list },
+      }));
+      return list;
+    } catch (err) {
+      console.error("[marcomDataStore] fetchDocuments error:", err);
+      return cached || [];
+    }
   },
 
   invalidateDocuments: (workspaceId?: string) => {

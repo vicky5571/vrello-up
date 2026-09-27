@@ -531,6 +531,113 @@ describe("useMarcomDataStore", () => {
       const res = await store.fetchPlacements(wsId);
       assert.deepEqual(res, dummy);
     });
+
+    it("fetchPosts returns empty array immediately if workspaceId is empty without calling fetch", async () => {
+      const store = useMarcomDataStore.getState();
+      const res = await (store as any).fetchPosts("");
+      assert.deepEqual(res, []);
+    });
+
+    it("fetchPosts returns cached posts when available without refetching", async () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-cached-posts";
+      const dummyPosts = [
+        {
+          id: "post-1",
+          workspaceId: wsId,
+          title: "Cached Post",
+          platform: "INSTAGRAM" as const,
+          format: "FEED" as const,
+          status: "DRAFT" as const,
+        },
+      ];
+      store.setCachedPosts(wsId, dummyPosts as unknown as ContentPostItem[]);
+
+      const res = await (store as any).fetchPosts(wsId);
+      assert.deepEqual(res, dummyPosts);
+    });
+
+    it("adds cached posts immutably without duplicates", () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-test-post";
+      const initial: ContentPostItem = {
+        id: "post-1",
+        workspaceId: wsId,
+        title: "Test Post",
+        platform: "TIKTOK" as const,
+        format: "REEL" as const,
+        status: "IDEA" as const,
+      } as unknown as ContentPostItem;
+
+      (store as any).addCachedPost(wsId, initial);
+      assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.length, 1);
+      assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.[0].title, "Test Post");
+
+      // Adding duplicate ID replaces or keeps single entry
+      (store as any).addCachedPost(wsId, { ...initial, title: "Test Post Updated" });
+      assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.length, 1);
+      assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.[0].title, "Test Post Updated");
+    });
+
+    it("fetchReports and fetchDocuments return empty array if workspaceId is empty", async () => {
+      const store = useMarcomDataStore.getState();
+      assert.deepEqual(await (store as any).fetchReports(""), []);
+      assert.deepEqual(await (store as any).fetchDocuments(""), []);
+    });
+
+    it("adds cached reports immutably", () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-test-rep";
+      const initial: MonthlyReport = {
+        id: "rep-1",
+        workspaceId: wsId,
+        month: "October",
+        year: 2026,
+        summary: {},
+        activities: [],
+        achievements: [],
+        keyIssues: [],
+        actionPlans: [],
+      } as unknown as MonthlyReport;
+
+      (store as any).addCachedReport(wsId, initial);
+      assert.equal(useMarcomDataStore.getState().reportsByWorkspace[wsId]?.length, 1);
+      assert.equal(useMarcomDataStore.getState().reportsByWorkspace[wsId]?.[0].month, "October");
+    });
+
+    it("fetchReports returns cached reports when available without refetching", async () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-cached-rep";
+      const dummyReports = [
+        {
+          id: "rep-1",
+          workspaceId: wsId,
+          month: "September",
+          year: 2026,
+          summary: {},
+        },
+      ];
+      store.setCachedReports(wsId, dummyReports as unknown as MonthlyReport[]);
+
+      const res = await (store as any).fetchReports(wsId);
+      assert.deepEqual(res, dummyReports);
+    });
+
+    it("fetchDocuments returns cached documents when available without refetching", async () => {
+      const store = useMarcomDataStore.getState();
+      const wsId = "ws-cached-doc";
+      const dummyDocs = [
+        {
+          id: "doc-1",
+          workspaceId: wsId,
+          name: "Doc A",
+        },
+      ];
+      store.setCachedDocuments(wsId, dummyDocs as unknown as DocumentItem[]);
+
+      const res = await (store as any).fetchDocuments(wsId);
+      assert.deepEqual(res, dummyDocs);
+    });
   });
 });
 
