@@ -42,6 +42,8 @@ import { switchWorkspace, extractSpaceListIds } from "@/lib/store/workspaceSwitc
 import {
   buildInitialWorkspace,
   removeWorkspaceAndCascadeTasks,
+  applyAddWorkspaceMember,
+  applyRemoveWorkspaceMember,
 } from "@/lib/store/workspaceCrud";
 import {
   applyDeleteTaskWithTrash,
@@ -85,6 +87,12 @@ import {
   validateAndParseBackup,
   applyImportBackup,
 } from "@/lib/store/backupOperations";
+import {
+  applyCreateTag,
+  applyRenameTag,
+  applyDeleteTag,
+  applyToggleTaskTag,
+} from "@/lib/store/tagOperations";
 
 export { DEFAULT_VIEW_PREFERENCES } from "@/lib/store/viewPreferencesOperations";
 export { wouldCreateCycle } from "@/lib/store/dependencyOperations";
@@ -1498,70 +1506,54 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       createTag: (name, color) => {
-        const tag: Tag = { id: generateId("tag"), name: name.trim(), color };
-        set((state) => ({ tags: [...state.tags, tag] }));
-        return tag;
+        const { nextTags, newTag } = applyCreateTag(get().tags, name, color);
+        set({ tags: nextTags });
+        return newTag;
       },
       renameTag: (id, name) => {
-        const trimmed = name.trim();
-        if (!trimmed) return;
-        set((state) => ({
-          tags: state.tags.map((t) => (t.id === id ? { ...t, name: trimmed } : t)),
-          tasks: state.tasks.map((t) => ({
-            ...t,
-            tags: t.tags.map((tt) => (tt.id === id ? { ...tt, name: trimmed } : tt)),
-          })),
-        }));
+        const { nextTags, nextTasks } = applyRenameTag(
+          get().tags,
+          get().tasks,
+          id,
+          name,
+        );
+        set({ tags: nextTags, tasks: nextTasks });
       },
       deleteTag: (id) => {
-        set((state) => ({
-          tags: state.tags.filter((t) => t.id !== id),
-          tasks: state.tasks.map((t) => ({
-            ...t,
-            tags: t.tags.filter((tt) => tt.id !== id),
-          })),
-        }));
+        const { nextTags, nextTasks } = applyDeleteTag(
+          get().tags,
+          get().tasks,
+          id,
+        );
+        set({ tags: nextTags, tasks: nextTasks });
       },
       toggleTaskTag: (taskId, tagId) => {
-        const tag = get().tags.find((t) => t.id === tagId);
-        if (!tag) return;
-        set((state) => ({
-          tasks: state.tasks.map((t) => {
-            if (t.id !== taskId) return t;
-            const has = t.tags.some((tt) => tt.id === tagId);
-            return {
-              ...t,
-              tags: has ? t.tags.filter((tt) => tt.id !== tagId) : [...t.tags, tag],
-            };
-          }),
-        }));
+        const { nextTasks } = applyToggleTaskTag(
+          get().tasks,
+          get().tags,
+          taskId,
+          tagId,
+        );
+        set({ tasks: nextTasks });
       },
       addWorkspaceMember: (name, email, role = "staff") => {
-        const id = generateId("user");
-        const newMember: User = {
-          id,
-          name: name.trim(),
-          email: email.trim(),
+        const { nextWorkspaces, newMember } = applyAddWorkspaceMember(
+          get().workspaces,
+          get().activeWorkspaceId,
+          name,
+          email,
           role,
-          avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80`,
-        };
-        set((state) => ({
-          workspaces: state.workspaces.map((w) =>
-            w.id === state.activeWorkspaceId
-              ? { ...w, members: [...w.members, newMember] }
-              : w,
-          ),
-        }));
+        );
+        set({ workspaces: nextWorkspaces });
         return newMember;
       },
       removeWorkspaceMember: (userId) => {
-        set((state) => ({
-          workspaces: state.workspaces.map((w) =>
-            w.id === state.activeWorkspaceId
-              ? { ...w, members: w.members.filter((m) => m.id !== userId) }
-              : w,
-          ),
-        }));
+        const { nextWorkspaces } = applyRemoveWorkspaceMember(
+          get().workspaces,
+          get().activeWorkspaceId,
+          userId,
+        );
+        set({ workspaces: nextWorkspaces });
       },
       importBackup: (data) => {
         const parsed = validateAndParseBackup(data, SEED_USERS);

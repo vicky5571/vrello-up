@@ -125,3 +125,47 @@ export function removeWorkspaceAndCascadeTasks(
     success: true,
   };
 }
+
+/**
+ * Pure function to add a new member to the active workspace.
+ */
+export function applyAddWorkspaceMember(
+  workspaces: Workspace[],
+  activeWorkspaceId: string,
+  name: string,
+  email: string,
+  role: User["role"] = "staff",
+): { nextWorkspaces: Workspace[]; newMember: User } {
+  const id = generateId("user");
+  const newMember: User = {
+    id,
+    name: name.trim(),
+    email: email.trim(),
+    role,
+    avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80`,
+  };
+
+  const nextWorkspaces = workspaces.map((w) =>
+    w.id === activeWorkspaceId
+      ? { ...w, members: [...w.members, newMember] }
+      : w,
+  );
+
+  return { nextWorkspaces, newMember };
+}
+
+/**
+ * Pure function to remove a member from the active workspace.
+ */
+export function applyRemoveWorkspaceMember(
+  workspaces: Workspace[],
+  activeWorkspaceId: string,
+  userId: string,
+): { nextWorkspaces: Workspace[] } {
+  const nextWorkspaces = workspaces.map((w) =>
+    w.id === activeWorkspaceId
+      ? { ...w, members: w.members.filter((m) => m.id !== userId) }
+      : w,
+  );
+  return { nextWorkspaces };
+}
