@@ -1,10 +1,7 @@
 // @ts-expect-error Node strip-types requires explicit .ts extension
-import { isValidCoordinate, parseGoogleMapsUrl } from "./locationUtils.ts";
+import { isValidCoordinate, parseGoogleMapsUrl, type Coordinates } from "./locationUtils.ts";
 
-export interface Coordinates {
-  latitude: number;
-  longitude: number;
-}
+export type { Coordinates };
 
 /**
  * Extracts and validates GPS coordinates from numeric values or Google Maps share URLs.
@@ -75,7 +72,7 @@ export async function autoBackfillOutletGps(
     shareLocationUrl?: string | null;
   }
 ): Promise<BackfillResult> {
-  if (placement.status !== "DONE" || !placement.outletId) {
+  if (!placement || placement.status !== "DONE" || !placement.outletId) {
     return { backfilled: false };
   }
 
