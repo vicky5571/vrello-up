@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireMember } from "@/lib/marcom/auth";
+import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { hasPermission } from "@/lib/marcom/guards";
 import {
   buildOutletSearchWhere,
@@ -127,5 +128,33 @@ export async function POST(request: Request) {
       return Response.json({ error: "Branch not found" }, { status: 400 });
     }
     throw e;
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    // Outlets are global master data; deletion requires admin access
+    const authError = await requireWorkspaceAccess("ws-main", { requiredRole: "admin", request });
+    if (authError) return authError;
+
+    const body = await request.json().catch(() => ({}));
+    const ids: string[] = Array.isArray(body?.ids)
+      ? body.ids.filter((id: unknown) => typeof id === "string" && id.trim() !== "")
+      : [];
+
+    if (ids.length === 0) {
+      return Response.json({ error: "No outlet IDs provided" }, { status: 400 });
+    }
+
+    const result = await prisma.outlet.deleteMany({
+      where: {
+        id: { in: ids },
+      },
+    });
+
+    return Response.json({ ok: true, count: result.count });
+  } catch (error) {
+    console.error("Error batch deleting outlets:", error);
+    return Response.json({ error: "Failed to batch delete outlets" }, { status: 500 });
   }
 }

@@ -118,3 +118,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Internal Server Error" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const workspaceId = body?.workspaceId || new URL(request.url).searchParams.get("workspaceId") || "ws-main";
+    const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
+    if (authError) return authError;
+
+    const ids: string[] = Array.isArray(body?.ids)
+      ? body.ids.filter((id: unknown) => typeof id === "string" && id.trim() !== "")
+      : [];
+
+    if (ids.length === 0) {
+      return NextResponse.json({ error: "No MOU IDs provided" }, { status: 400 });
+    }
+
+    const result = await prisma.mou.deleteMany({
+      where: {
+        id: { in: ids },
+        workspaceId,
+      },
+    });
+
+    return NextResponse.json({ ok: true, count: result.count });
+  } catch (error) {
+    console.error("Error batch deleting MOUs:", error);
+    return NextResponse.json({ error: "Failed to batch delete MOUs" }, { status: 500 });
+  }
+}

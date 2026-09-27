@@ -226,3 +226,32 @@ export async function PATCH(request: Request) {
   }
 }
 
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const workspaceId = body?.workspaceId || new URL(request.url).searchParams.get("workspaceId") || "ws-main";
+    const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
+    if (authError) return authError;
+
+    const ids: string[] = Array.isArray(body?.ids)
+      ? body.ids.filter((id: unknown) => typeof id === "string" && id.trim() !== "")
+      : [];
+
+    if (ids.length === 0) {
+      return NextResponse.json({ error: "No placement IDs provided" }, { status: 400 });
+    }
+
+    const result = await prisma.placement.deleteMany({
+      where: {
+        id: { in: ids },
+        workspaceId,
+      },
+    });
+
+    return NextResponse.json({ ok: true, count: result.count });
+  } catch (error) {
+    console.error("Error batch deleting placements:", error);
+    return NextResponse.json({ error: "Failed to batch delete placements" }, { status: 500 });
+  }
+}
+
