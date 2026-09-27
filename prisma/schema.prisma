@@ -303,7 +303,7 @@ model DocumentItem {
   period      String        @default("")
   branchName  String        @default("")
   ownerPic    String        @default("")
-  status      String        @default("Draft")
+  status      String        @default("DRAFT")
   fileType    DocFileType
   fileSizeMb  Float         @default(0)
   filePath    String

@@ -545,7 +545,7 @@ const docTemplates = [
 ];
 
 const docPeriods = ["Q2 2026", "July 2026", "August 2026", "Q3 2026", "Q1 2026", "June 2026"];
-const docStatuses = ["Done", "Done", "Submitted", "Pending", "Draft"];
+const docStatuses = ["ACTIVE", "ACTIVE", "DRAFT", "ARCHIVED"] as const;
 
 // ---------------------------------------------------------------------------
 // Monthly reports adapted from dashboard src/data/monthlyReports.ts

@@ -395,7 +395,7 @@ export interface DocumentItem {
   period?: string;
   branchName?: string;
   ownerPic?: string;
-  status?: DocumentStatus | string;
+  status?: DocumentStatus;
   fileType: DocFileType | string;
   fileSizeMb?: number;
   filePath: string;

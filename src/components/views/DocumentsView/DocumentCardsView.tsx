@@ -111,7 +111,7 @@ export function DocumentCardsView({
       {documents.map((doc) => {
         const typeMeta = getDocumentTypeMeta(doc.fileType);
         const isCloud = isCloudDocumentUrl(doc.filePath);
-        const statusLower = (doc.status || "active").toLowerCase();
+        const statusLower = (doc.status || "DRAFT").toLowerCase();
 
         return (
           <div
@@ -144,7 +144,7 @@ export function DocumentCardsView({
                         : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                     )}
                   >
-                    {doc.status || "Active"}
+                    {doc.status || "DRAFT"}
                   </span>
                 </div>
               </div>

@@ -5,6 +5,8 @@ import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { isValidDocumentFilePath } from "@/lib/marcom/upload";
 
 const VALID_FILE_TYPES = ["PDF", "XLSX", "DOCX", "ZIP", "CSV", "MP4", "PNG", "JPG"] as const;
+const VALID_DOCUMENT_STATUSES = ["DRAFT", "ACTIVE", "ARCHIVED"] as const;
+type ValidDocumentStatus = (typeof VALID_DOCUMENT_STATUSES)[number];
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -55,8 +57,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid filePath: must be served by /api/marcom/files/ or a valid https:// URL" }, { status: 400 });
   }
 
+  const rawStatus = typeof status === "string" && status.trim() !== "" ? status.trim().toUpperCase() : "DRAFT";
+  if (!VALID_DOCUMENT_STATUSES.includes(rawStatus as ValidDocumentStatus)) {
+    return NextResponse.json(
+      { error: `Invalid status: '${status}'. Must be one of: ${VALID_DOCUMENT_STATUSES.join(", ")}` },
+      { status: 400 },
+    );
+  }
+
   const document = await prisma.documentItem.create({
-    data: { workspaceId, name, category, period, branchName, ownerPic, status, fileType, fileSizeMb, filePath, description },
+    data: { workspaceId, name, category, period, branchName, ownerPic, status: rawStatus, fileType, fileSizeMb, filePath, description },
   });
   return NextResponse.json(document, { status: 201 });
 }

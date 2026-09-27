@@ -51,7 +51,7 @@ export interface MarcomDocument {
   period: string;
   branchName: string;
   ownerPic: string;
-  status: DocumentStatus | string;
+  status: DocumentStatus;
   fileType: DocFileType;
   fileSizeMb: number;
   filePath: string;
@@ -184,7 +184,7 @@ export function DocumentsView() {
           period: period?.trim() || undefined,
           branchName: branchName?.trim() || undefined,
           ownerPic: ownerPic?.trim() || undefined,
-          status: status || "Active",
+          status: status || "ACTIVE",
           fileType,
           filePath: filePath!.trim(),
           fileSizeMb: Number(fileSizeMb) || 0,
@@ -387,7 +387,7 @@ export function DocumentsView() {
           size: 100,
           minSize: 80,
           cell: ({ row }) => {
-            const s = (row.original.status || "active").toLowerCase();
+            const s = (row.original.status || "DRAFT").toLowerCase();
             return (
               <span
                 className={cn(
@@ -399,7 +399,7 @@ export function DocumentsView() {
                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                 )}
               >
-                {row.original.status || "Active"}
+                {row.original.status || "DRAFT"}
               </span>
             );
           },
@@ -483,7 +483,7 @@ export function DocumentsView() {
                   name: "",
                   category: "Brand Guidelines",
                   branchName: branches[0]?.name || "",
-                  status: "Active",
+                  status: "ACTIVE",
                   fileType: "PDF",
                   fileSizeMb: 0,
                   filePath: "",
@@ -774,9 +774,9 @@ export function DocumentsView() {
                     Status
                   </label>
                   <select
-                    value={(modalDocument.status || "ACTIVE").toUpperCase()}
+                    value={modalDocument.status || "ACTIVE"}
                     onChange={(e) =>
-                      setModalDocument({ ...modalDocument, status: e.target.value })
+                      setModalDocument({ ...modalDocument, status: e.target.value as DocumentStatus })
                     }
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
                   >
