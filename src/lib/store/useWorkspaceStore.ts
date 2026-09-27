@@ -67,6 +67,13 @@ import {
   applyAddDependency,
   applyRemoveDependency,
 } from "@/lib/store/dependencyOperations";
+import {
+  resolveActor,
+  applyAddComment,
+  applyDeleteComment,
+  applyAddChannelMessage,
+  applyLogActivity,
+} from "@/lib/store/commentOperations";
 
 export { DEFAULT_VIEW_PREFERENCES } from "@/lib/store/viewPreferencesOperations";
 export { wouldCreateCycle } from "@/lib/store/dependencyOperations";
@@ -302,11 +309,13 @@ interface WorkspaceState {
  * Resolves the acting user: explicit argument wins, otherwise the active
  * workspace member matching currentUserId, falling back to the seed user.
  */
-function resolveActor(state: WorkspaceState, provided?: User): User {
-  if (provided) return provided;
-  const workspace = state.workspaces.find((w) => w.id === state.activeWorkspaceId);
-  return (
-    workspace?.members.find((m) => m.id === state.currentUserId) ?? SEED_USERS[0]
+function getActor(state: WorkspaceState, provided?: User): User {
+  return resolveActor(
+    state.workspaces,
+    state.activeWorkspaceId,
+    state.currentUserId,
+    SEED_USERS,
+    provided,
   );
 }
 /**
@@ -628,7 +637,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const defaultListId =
           defaultSpace?.lists[0]?.id || state.activeListId || "list-design-system";
         const defaultStatusId = defaultSpace?.statuses[0]?.id || "status-todo";
-        const actor = resolveActor(state);
+        const actor = getActor(state);
 
         for (const rule of activeRules) {
           switch (rule.action) {
@@ -1264,98 +1273,40 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       addComment: (taskId, content, user, attachments) => {
-        if (!content.trim() && (!attachments || attachments.length === 0)) return;
-        const actor = resolveActor(get(), user);
-        const now = new Date().toISOString();
-        const newComment: TaskComment = {
-          id: generateId("comment"),
+        const actor = getActor(get(), user);
+        const { nextTasks, newComment } = applyAddComment(
+          get().tasks,
           taskId,
-          userId: actor.id,
-          user: actor,
-          content: content.trim(),
-          createdAt: now,
+          content,
+          actor,
           attachments,
-        };
-
-        const newActivity: ActivityLog = {
-          id: generateId("act"),
-          taskId,
-          userId: actor.id,
-          userName: actor.name,
-          userAvatar: actor.avatar,
-          action: "commented on this task",
-          createdAt: now,
-        };
-
-        set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === taskId
-              ? {
-                  ...task,
-                  comments: [...(task.comments || []), newComment],
-                  activities: [newActivity, ...(task.activities || [])],
-                  updatedAt: now,
-                }
-              : task
-          ),
-        }));
+        );
+        if (!newComment) return;
+        set({ tasks: nextTasks });
         syncAddComment(taskId, newComment);
       },
 
       deleteComment: (taskId, commentId) => {
-        set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === taskId
-              ? {
-                  ...task,
-                  comments: (task.comments || []).filter((c) => c.id !== commentId),
-                  updatedAt: new Date().toISOString(),
-                }
-              : task
-          ),
-        }));
+        const { nextTasks } = applyDeleteComment(get().tasks, taskId, commentId);
+        set({ tasks: nextTasks });
       },
 
       addChannelMessage: (channelId, content, user) => {
-        if (!content.trim()) return;
-        const actor = resolveActor(get(), user);
-        const now = new Date().toISOString();
-        const newMessage: ChannelMessage = {
-          id: generateId("cmsg"),
+        const actor = getActor(get(), user);
+        const { nextMessages, newMessage } = applyAddChannelMessage(
+          get().channelMessages,
           channelId,
-          userId: actor.id,
-          user: actor,
-          content: content.trim(),
-          createdAt: now,
-        };
-        set((state) => ({
-          channelMessages: [...(state.channelMessages || []), newMessage],
-        }));
+          content,
+          actor,
+        );
+        if (!newMessage) return;
+        set({ channelMessages: nextMessages });
       },
 
       logActivity: (taskId, action, user) => {
-        const actor = resolveActor(get(), user);
-        const newActivity: ActivityLog = {
-          id: generateId("act"),
-          taskId,
-          userId: actor.id,
-          userName: actor.name,
-          userAvatar: actor.avatar,
-          action,
-          createdAt: new Date().toISOString(),
-        };
-
-        set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === taskId
-              ? {
-                  ...task,
-                  activities: [newActivity, ...(task.activities || [])],
-                  updatedAt: new Date().toISOString(),
-                }
-              : task
-          ),
-        }));
+        const actor = getActor(get(), user);
+        const { nextTasks } = applyLogActivity(get().tasks, taskId, action, actor);
+        set({ tasks: nextTasks });
       },
 
       addDependency: (taskId, dependsOnTaskId) => {
