@@ -6,6 +6,7 @@ import {
   mapPlacementStatusToTaskStatusId,
   isPlacementTask,
   buildPlacementTaskPayload,
+  syncPlacementOnTaskStatusChange,
 } from "@/lib/tasks/placementTaskSync";
 
 const SAMPLE_SPACE: Space = {
@@ -167,4 +168,32 @@ test("buildPlacementTaskPayload constructs status-aligned task payload", () => {
   }, SAMPLE_SPACE);
 
   assert.equal(donePayload.statusId, "st-done");
+});
+
+test("syncPlacementOnTaskStatusChange returns skipped for non-placement tasks", async () => {
+  const result = await syncPlacementOnTaskStatusChange(
+    { id: "t1", title: "Regular task", relatedMarcomId: "" } as Task,
+    "st-done",
+    []
+  );
+  assert.equal(result.skipped, true);
+  assert.equal(result.synced, false);
+});
+
+test("syncPlacementOnTaskStatusChange returns skipped when window/fetch is unavailable in SSR/test", async () => {
+  const placementTask = {
+    id: "t2",
+    title: "[Placement] Banner",
+    relatedMarcomId: "p-123",
+    relatedMarcomType: "PLACEMENT",
+    listId: "list-field-ops",
+  } as Task;
+
+  const result = await syncPlacementOnTaskStatusChange(
+    placementTask,
+    "st-done",
+    [SAMPLE_SPACE]
+  );
+  assert.equal(result.skipped, true);
+  assert.equal(result.synced, false);
 });

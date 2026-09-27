@@ -3,6 +3,7 @@ import { formatIDR, formatDate } from "@/lib/utils";
 import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { differenceInDays, startOfDay } from "date-fns";
+import type { MarcomSyncResult } from "@/lib/tasks/placementTaskSync";
 
 export const DEFAULT_EVENT_CHECKLISTS: Record<string, string[]> = {
   Roadshow: [
@@ -479,16 +480,19 @@ export function isFieldEventTask(task: Task | undefined | null): boolean {
 }
 
 /**
- * Fires an async background PATCH to update the linked Field Event status
+ * Fires an async PATCH to update the linked Field Event status
  * when a Task's status is changed in Kanban board or Task modal.
+ *
+ * Returns a structured result so the caller can revert the task
+ * status and show an error toast if the API rejects the transition.
  */
-export function syncFieldEventOnTaskStatusChange(
+export async function syncFieldEventOnTaskStatusChange(
   task: Task | undefined,
   newStatusId: string,
   spaces: Space[]
-): void {
+): Promise<MarcomSyncResult> {
   if (!isFieldEventTask(task)) {
-    return;
+    return { synced: false, skipped: true };
   }
   const space = findSpaceByListId(spaces, task!.listId);
   const nextStatus = space?.statuses.find((s) => s.id === newStatusId);
@@ -496,18 +500,34 @@ export function syncFieldEventOnTaskStatusChange(
     nextStatus?.category,
     nextStatus?.name
   );
-  if (typeof window !== "undefined" && typeof fetch === "function") {
-    fetch(`/api/marcom/events/${task!.relatedMarcomId}`, {
+  if (typeof window === "undefined" || typeof fetch !== "function") {
+    return { synced: false, skipped: true };
+  }
+
+  try {
+    const res = await fetch(`/api/marcom/events/${task!.relatedMarcomId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: mappedEventStatus }),
-    })
-      .then((res) => {
-        if (res.ok) {
-          useMarcomDataStore.getState().invalidateEvents();
-        }
-      })
-      .catch(() => {});
+    });
+
+    if (res.ok) {
+      useMarcomDataStore.getState().invalidateEvents();
+      return { synced: true, skipped: false };
+    }
+
+    const body = await res.json().catch(() => ({ error: "Sync gagal" }));
+    return {
+      synced: false,
+      skipped: false,
+      error: body.error || `Event sync failed (HTTP ${res.status})`,
+    };
+  } catch (err) {
+    return {
+      synced: false,
+      skipped: false,
+      error: err instanceof Error ? err.message : "Network error",
+    };
   }
 }
 

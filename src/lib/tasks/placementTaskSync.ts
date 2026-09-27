@@ -156,16 +156,26 @@ export function buildPlacementTaskPayload(
   };
 }
 
+export interface MarcomSyncResult {
+  synced: boolean;
+  skipped: boolean;
+  error?: string;
+}
+
 /**
- * Fires an async background PATCH to update the linked Placement status
+ * Fires an async PATCH to update the linked Placement status
  * when a Task's status is changed in Kanban board or Task modal.
+ *
+ * Returns a structured result so the caller can revert the task
+ * status and show an error toast if the API rejects the transition
+ * (e.g. missing photo or GPS for DONE).
  */
-export function syncPlacementOnTaskStatusChange(
+export async function syncPlacementOnTaskStatusChange(
   task: Task | undefined,
   newStatusId: string,
   spaces: Space[]
-): void {
-  if (!isPlacementTask(task)) return;
+): Promise<MarcomSyncResult> {
+  if (!isPlacementTask(task)) return { synced: false, skipped: true };
 
   const space = findSpaceByListId(spaces, task!.listId);
   const nextStatus = space?.statuses.find((s) => s.id === newStatusId);
@@ -174,21 +184,35 @@ export function syncPlacementOnTaskStatusChange(
     nextStatus?.name
   );
 
-  if (typeof window !== "undefined" && typeof fetch === "function") {
-    fetch(`/api/marcom/placements/${task!.relatedMarcomId}`, {
+  if (typeof window === "undefined" || typeof fetch !== "function") {
+    return { synced: false, skipped: true };
+  }
+
+  try {
+    const res = await fetch(`/api/marcom/placements/${task!.relatedMarcomId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: mappedPlacementStatus }),
-    })
-      .then((res) => {
-        if (res.ok) {
-          useMarcomDataStore.getState().invalidatePlacements();
-          useMarcomDataStore.getState().invalidateMous();
-        }
-      })
-      .catch((err) => {
-        console.warn("Failed to sync placement on task status change:", err);
-      });
+    });
+
+    if (res.ok) {
+      useMarcomDataStore.getState().invalidatePlacements();
+      useMarcomDataStore.getState().invalidateMous();
+      return { synced: true, skipped: false };
+    }
+
+    const body = await res.json().catch(() => ({ error: "Sync gagal" }));
+    return {
+      synced: false,
+      skipped: false,
+      error: body.error || `Placement sync failed (HTTP ${res.status})`,
+    };
+  } catch (err) {
+    return {
+      synced: false,
+      skipped: false,
+      error: err instanceof Error ? err.message : "Network error",
+    };
   }
 }
 
