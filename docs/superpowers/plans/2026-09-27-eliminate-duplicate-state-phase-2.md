@@ -35,7 +35,7 @@
 - Produces: `addCachedReport: (workspaceId: string, report: MonthlyReport) => void`
 - Produces: `fetchDocuments: (workspaceId: string, force?: boolean) => Promise<DocumentItem[]>`
 
-- [ ] **Step 1: Write the failing tests in `marcomDataStore.test.ts`**
+- [x] **Step 1: Write the failing tests in `marcomDataStore.test.ts`**
 
 Add tests for `fetchPosts`, `addCachedPost`, `fetchReports`, `addCachedReport`, and `fetchDocuments`:
 
@@ -114,12 +114,12 @@ Add tests for `fetchPosts`, `addCachedPost`, `fetchReports`, `addCachedReport`, 
     });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- src/lib/marcom/marcomDataStore.test.ts`
 Expected: FAIL with `store.fetchPosts is not a function` or similar.
 
-- [ ] **Step 3: Implement store actions in `marcomDataStore.ts`**
+- [x] **Step 3: Implement store actions in `marcomDataStore.ts`**
 
 Update `MarcomDataState` interface and `useMarcomDataStore` implementation:
 
@@ -223,12 +223,12 @@ Update `MarcomDataState` interface and `useMarcomDataStore` implementation:
   },
 ```
 
-- [ ] **Step 4: Run tests and verify they pass**
+- [x] **Step 4: Run tests and verify they pass**
 
 Run: `npm test -- src/lib/marcom/marcomDataStore.test.ts`
 Expected: PASS (all tests passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/marcom/marcomDataStore.ts src/lib/marcom/marcomDataStore.test.ts
@@ -245,7 +245,7 @@ git commit -m "feat(marcom): add scoped fetch and mutation actions for posts, re
 **Interfaces:**
 - Consumes: `postsByWorkspace`, `fetchPosts`, `addCachedPost`, `updateCachedPost`, `removeCachedPost`, `branches` from `useMarcomDataStore`
 
-- [ ] **Step 1: Replace local `posts` and `branches` `useState` with reactive store selectors and `useMemo`**
+- [x] **Step 1: Replace local `posts` and `branches` `useState` with reactive store selectors and `useMemo`**
 
 In `src/components/views/ContentPlannerView/ContentPlannerView.tsx`:
 
@@ -318,12 +318,12 @@ Delete `setPosts((prev) => prev.filter((p) => p.id !== id));`. Keep `removeCache
 7. In table `onDeleteOne` (line ~1224):
 Delete manual refetch; `removeCachedPost(activeWorkspaceId, id)` reactively removes the post.
 
-- [ ] **Step 2: Run test suite to verify no regressions**
+- [x] **Step 2: Run test suite to verify no regressions**
 
 Run: `npm test`
 Expected: 0 failures.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/views/ContentPlannerView/ContentPlannerView.tsx
@@ -340,7 +340,7 @@ git commit -m "refactor(marcom): eliminate duplicate posts and branches state in
 **Interfaces:**
 - Consumes: `reportsByWorkspace`, `documentsByWorkspace`, `fetchReports`, `fetchDocuments`, `addCachedReport` from `useMarcomDataStore`
 
-- [ ] **Step 1: Replace local `reports` and `documents` `useState` with reactive store selectors**
+- [x] **Step 1: Replace local `reports` and `documents` `useState` with reactive store selectors**
 
 In `src/components/views/ReportsView/ReportsView.tsx`:
 
@@ -402,12 +402,12 @@ const EMPTY_DOCS: MarcomDocument[] = [];
   addCachedReport(activeWorkspaceId, savedReport);
 ```
 
-- [ ] **Step 2: Run test suite to verify no regressions**
+- [x] **Step 2: Run test suite to verify no regressions**
 
 Run: `npm test`
 Expected: 0 failures.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/components/views/ReportsView/ReportsView.tsx
@@ -426,7 +426,7 @@ git commit -m "refactor(marcom): eliminate duplicate reports and documents state
 **Interfaces:**
 - Consumes: `storeOutlets`, `storeMaterials`, `storeBranches`, `storeMous` from `useMarcomDataStore`
 
-- [ ] **Step 1: Clean up `PlacementsView.tsx`**
+- [x] **Step 1: Clean up `PlacementsView.tsx`**
 
 1. Replace `outletsList`, `materialsList`, `mousList` `useState`:
 ```ts
@@ -446,7 +446,7 @@ git commit -m "refactor(marcom): eliminate duplicate reports and documents state
 
 2. In `loadData`: remove `setOutletsList`, `setMaterialsList`, and `setMousList`. The `Promise.all` still triggers the store fetchers (`fetchPlacements`, `fetchOutlets`, `fetchMaterials`, `fetchBranches`, `fetchMous`) which populate store state and automatically recompute memoized projections.
 
-- [ ] **Step 2: Clean up `MousView.tsx`**
+- [x] **Step 2: Clean up `MousView.tsx`**
 
 1. Replace `branches` and `outletsList` `useState`:
 ```ts
@@ -463,7 +463,7 @@ git commit -m "refactor(marcom): eliminate duplicate reports and documents state
 2. Remove the two `useEffect` blocks syncing `storeBranches` -> `setBranches` and `storeOutlets` -> `setOutletsList`.
 3. In `loadMous`: remove `setBranches(...)` and `setOutletsList(...)`.
 
-- [ ] **Step 3: Clean up `EventsView.tsx`**
+- [x] **Step 3: Clean up `EventsView.tsx`**
 
 1. Replace `branches` `useState`:
 ```ts
@@ -475,12 +475,12 @@ git commit -m "refactor(marcom): eliminate duplicate reports and documents state
 ```
 2. In `loadData`: remove `setBranches(branchList)`.
 
-- [ ] **Step 4: Run test suite to verify no regressions**
+- [x] **Step 4: Run test suite to verify no regressions**
 
 Run: `npm test`
 Expected: 0 failures.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/views/PlacementsView/PlacementsView.tsx src/components/views/MousView/MousView.tsx src/components/views/EventsView/EventsView.tsx
@@ -494,17 +494,17 @@ git commit -m "refactor(marcom): replace duplicate master data useState and useE
 **Files:**
 - All touched files
 
-- [ ] **Step 1: Run the fast targeted store tests**
+- [x] **Step 1: Run the fast targeted store tests**
 
 Run: `npm test -- src/lib/marcom/marcomDataStore.test.ts`
 Expected: 0 failures.
 
-- [ ] **Step 2: Run full unit test suite**
+- [x] **Step 2: Run full unit test suite**
 
 Run: `npm test`
 Expected: All 532+ tests passing.
 
-- [ ] **Step 3: Run TypeScript typecheck**
+- [x] **Step 3: Run TypeScript typecheck**
 
 Run: `npx tsc --noEmit`
 Expected: 0 type errors.
