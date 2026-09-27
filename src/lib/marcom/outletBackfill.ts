@@ -1,6 +1,6 @@
 import type { PrismaClient, Prisma } from "@prisma/client";
 // @ts-expect-error Node strip-types requires explicit .ts extension
-import { isValidCoordinate, parseGoogleMapsUrl, type Coordinates } from "./locationUtils.ts";
+import { isValidCoordinate, parseGoogleMapsUrl, isWithinIndonesiaBounds, type Coordinates } from "./locationUtils.ts";
 
 export type { Coordinates };
 
@@ -16,6 +16,7 @@ export type OutletBackfillPrismaClient =
   | Prisma.TransactionClient;
 
 export interface AutoBackfillPlacementInput {
+  id?: string;
   outletId: string;
   status: string;
   latitude?: number | null;
@@ -62,11 +63,19 @@ export function extractValidCoordinates(source: {
  * 3. Outlet latitude or longitude is null
  */
 export function shouldBackfillOutlet(
-  outlet: { latitude?: number | null; longitude?: number | null },
+  outlet: { latitude?: number | null; longitude?: number | null; status?: string | null },
   status: string,
   coords: Coordinates | null
 ): boolean {
   if (status !== "DONE" || !coords) {
+    return false;
+  }
+  // Master data governance: only enrich verified, approved master data
+  if (outlet.status && outlet.status !== "APPROVED") {
+    return false;
+  }
+  // Sanity check: must be inside Indonesian territory
+  if (!isWithinIndonesiaBounds(coords.latitude, coords.longitude)) {
     return false;
   }
   return outlet.latitude == null || outlet.longitude == null;
@@ -98,7 +107,7 @@ export async function autoBackfillOutletGps(
   try {
     const outlet = await prismaClient.outlet.findUnique({
       where: { id: placement.outletId },
-      select: { id: true, latitude: true, longitude: true },
+      select: { id: true, latitude: true, longitude: true, status: true },
     });
 
     if (!outlet || !shouldBackfillOutlet(outlet, placement.status, coords)) {
@@ -112,6 +121,11 @@ export async function autoBackfillOutletGps(
         longitude: coords.longitude,
       },
     });
+
+    console.info(
+      `[outletBackfill] Enriched Outlet GPS: outletId=${outlet.id}, coords=(${coords.latitude}, ${coords.longitude})` +
+        (placement.id ? `, placementId=${placement.id}` : "")
+    );
 
     return {
       backfilled: true,

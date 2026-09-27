@@ -49,7 +49,7 @@ test("autoBackfillOutletGps updates outlet when eligible", async () => {
   // which is the point: autoBackfillOutletGps now type-checks its client argument.
   const mockPrisma: OutletBackfillPrismaClient = {
     outlet: {
-      findUnique: async () => ({ id: "out-123", latitude: null, longitude: null }),
+      findUnique: async () => ({ id: "out-123", latitude: null, longitude: null, status: "APPROVED" }),
       update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
         updatedData = { where, data };
         return { id: where.id, ...data };
@@ -58,6 +58,7 @@ test("autoBackfillOutletGps updates outlet when eligible", async () => {
   };
 
   const result = await autoBackfillOutletGps(mockPrisma, {
+    id: "plc-001",
     outletId: "out-123",
     status: "DONE",
     latitude: -6.2088,
@@ -78,7 +79,7 @@ test("autoBackfillOutletGps skips update when outlet already has coordinates", a
   let updateCalled = false;
   const mockPrisma: OutletBackfillPrismaClient = {
     outlet: {
-      findUnique: async () => ({ id: "out-123", latitude: -6.1, longitude: 106.7 }),
+      findUnique: async () => ({ id: "out-123", latitude: -6.1, longitude: 106.7, status: "APPROVED" }),
       update: async () => {
         updateCalled = true;
       },
@@ -87,6 +88,64 @@ test("autoBackfillOutletGps skips update when outlet already has coordinates", a
 
   const result = await autoBackfillOutletGps(mockPrisma, {
     outletId: "out-123",
+    status: "DONE",
+    latitude: -6.2088,
+    longitude: 106.8456,
+  });
+
+  assert.equal(result.backfilled, false);
+  assert.equal(updateCalled, false);
+});
+
+test("shouldBackfillOutlet accepts only APPROVED outlet status within Indonesia bounds", () => {
+  const indonesiaCoords = { latitude: -6.2088, longitude: 106.8456 };
+  const usaCoords = { latitude: 37.422, longitude: -122.084 };
+  const nullIsland = { latitude: 0, longitude: 0 };
+
+  // APPROVED + inside Indonesia bounds -> true
+  assert.equal(
+    shouldBackfillOutlet({ latitude: null, longitude: null, status: "APPROVED" }, "DONE", indonesiaCoords),
+    true
+  );
+
+  // Non-APPROVED statuses -> false
+  assert.equal(
+    shouldBackfillOutlet({ latitude: null, longitude: null, status: "DRAFT" }, "DONE", indonesiaCoords),
+    false
+  );
+  assert.equal(
+    shouldBackfillOutlet({ latitude: null, longitude: null, status: "PENDING_APPROVAL" }, "DONE", indonesiaCoords),
+    false
+  );
+  assert.equal(
+    shouldBackfillOutlet({ latitude: null, longitude: null, status: "REJECTED" }, "DONE", indonesiaCoords),
+    false
+  );
+
+  // APPROVED but out of bounds coordinates -> false
+  assert.equal(
+    shouldBackfillOutlet({ latitude: null, longitude: null, status: "APPROVED" }, "DONE", usaCoords),
+    false
+  );
+  assert.equal(
+    shouldBackfillOutlet({ latitude: null, longitude: null, status: "APPROVED" }, "DONE", nullIsland),
+    false
+  );
+});
+
+test("autoBackfillOutletGps rejects backfill when outlet status is not APPROVED", async () => {
+  let updateCalled = false;
+  const mockPrisma: OutletBackfillPrismaClient = {
+    outlet: {
+      findUnique: async () => ({ id: "out-draft", latitude: null, longitude: null, status: "DRAFT" }),
+      update: async () => {
+        updateCalled = true;
+      },
+    } as unknown as OutletBackfillPrismaClient["outlet"],
+  };
+
+  const result = await autoBackfillOutletGps(mockPrisma, {
+    outletId: "out-draft",
     status: "DONE",
     latitude: -6.2088,
     longitude: 106.8456,
@@ -108,4 +167,5 @@ test("equator coordinates (latitude: 0) are extracted as valid and do not trigge
   );
   assert.equal(shouldBackfill, false);
 });
+
 
