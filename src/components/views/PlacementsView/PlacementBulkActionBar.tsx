@@ -93,7 +93,6 @@ export function PlacementBulkActionBar({
 
       toast.success(`Status ${count} placement berhasil diubah menjadi "${label}"!`);
       onClearSelection();
-      await fetchPlacements(activeWorkspaceId, true);
       await onRefresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal memperbarui status masal");
@@ -138,7 +137,6 @@ export function PlacementBulkActionBar({
       setShowPicModal(false);
       setPicInput("");
       onClearSelection();
-      await fetchPlacements(activeWorkspaceId, true);
       await onRefresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal menetapkan PIC masal");
@@ -169,7 +167,6 @@ export function PlacementBulkActionBar({
       invalidateMous(activeWorkspaceId);
       toast.success(`${successCount} placement berhasil dihapus`);
       onClearSelection();
-      await fetchPlacements(activeWorkspaceId, true);
       await onRefresh();
     } catch {
       toast.error("Gagal menghapus beberapa placement");
