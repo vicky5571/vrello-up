@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires explicit .ts extension
-import { extractValidCoordinates, shouldBackfillOutlet, autoBackfillOutletGps } from "./outletBackfill.ts";
+import { extractValidCoordinates, shouldBackfillOutlet, autoBackfillOutletGps, type OutletBackfillPrismaClient } from "./outletBackfill.ts";
 
 test("extractValidCoordinates returns coordinates when valid numeric latitude and longitude provided", () => {
   const coords = extractValidCoordinates({ latitude: -6.2088, longitude: 106.8456 });
@@ -43,18 +43,21 @@ test("shouldBackfillOutlet returns true only when status is DONE, coords are val
 });
 
 test("autoBackfillOutletGps updates outlet when eligible", async () => {
-  let updatedData: any = null;
-  const mockPrisma = {
+  let updatedData: unknown = null;
+  // A Prisma delegate cannot be implemented structurally by a test double, so the
+  // mock is bridged with a single `as unknown as`. The call site below is NOT cast,
+  // which is the point: autoBackfillOutletGps now type-checks its client argument.
+  const mockPrisma: OutletBackfillPrismaClient = {
     outlet: {
       findUnique: async () => ({ id: "out-123", latitude: null, longitude: null }),
-      update: async ({ where, data }: any) => {
+      update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
         updatedData = { where, data };
         return { id: where.id, ...data };
       },
-    },
+    } as unknown as OutletBackfillPrismaClient["outlet"],
   };
 
-  const result = await autoBackfillOutletGps(mockPrisma as any, {
+  const result = await autoBackfillOutletGps(mockPrisma, {
     outletId: "out-123",
     status: "DONE",
     latitude: -6.2088,
@@ -73,16 +76,16 @@ test("autoBackfillOutletGps updates outlet when eligible", async () => {
 
 test("autoBackfillOutletGps skips update when outlet already has coordinates", async () => {
   let updateCalled = false;
-  const mockPrisma = {
+  const mockPrisma: OutletBackfillPrismaClient = {
     outlet: {
       findUnique: async () => ({ id: "out-123", latitude: -6.1, longitude: 106.7 }),
       update: async () => {
         updateCalled = true;
       },
-    },
+    } as unknown as OutletBackfillPrismaClient["outlet"],
   };
 
-  const result = await autoBackfillOutletGps(mockPrisma as any, {
+  const result = await autoBackfillOutletGps(mockPrisma, {
     outletId: "out-123",
     status: "DONE",
     latitude: -6.2088,

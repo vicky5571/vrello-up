@@ -1,7 +1,27 @@
+import type { PrismaClient, Prisma } from "@prisma/client";
 // @ts-expect-error Node strip-types requires explicit .ts extension
 import { isValidCoordinate, parseGoogleMapsUrl, type Coordinates } from "./locationUtils.ts";
 
 export type { Coordinates };
+
+/**
+ * Supported Prisma client types for outlet backfill.
+ *
+ * Accepts either the standard singleton `PrismaClient` (or any object exposing
+ * just the `outlet` delegate) or an interactive `$transaction` client, so the
+ * backfill can run standalone or inside a caller-managed transaction.
+ */
+export type OutletBackfillPrismaClient =
+  | Pick<PrismaClient, "outlet">
+  | Prisma.TransactionClient;
+
+export interface AutoBackfillPlacementInput {
+  outletId: string;
+  status: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  shareLocationUrl?: string | null;
+}
 
 /**
  * Extracts and validates GPS coordinates from numeric values or Google Maps share URLs.
@@ -63,14 +83,8 @@ export interface BackfillResult {
  * Automatically backfills outlet master coordinates from a completed placement if the outlet lacks GPS.
  */
 export async function autoBackfillOutletGps(
-  prismaClient: any,
-  placement: {
-    outletId: string;
-    status: string;
-    latitude?: number | null;
-    longitude?: number | null;
-    shareLocationUrl?: string | null;
-  }
+  prismaClient: OutletBackfillPrismaClient,
+  placement: AutoBackfillPlacementInput
 ): Promise<BackfillResult> {
   if (!placement || placement.status !== "DONE" || !placement.outletId) {
     return { backfilled: false };
