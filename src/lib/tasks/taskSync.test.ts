@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { type Task } from "@/types";
-import { reconcileTasks } from "@/lib/tasks/taskSync";
+import { reconcileTasks, syncDeleteTasksApi } from "@/lib/tasks/taskSync";
 
 function makeTask(overrides: Partial<Task>): Task {
   return {
@@ -119,3 +119,56 @@ test("reconcileTasks retains tasks belonging to other workspace lists untouched"
   assert.ok(retainedOther);
   assert.equal(retainedOther.title, "Untouched Other Task");
 });
+
+test("syncDeleteTasksApi handles empty array without error", async () => {
+  const result = await syncDeleteTasksApi([]);
+  assert.equal(result, true);
+});
+
+test("syncDeleteTasksApi delegates to /api/tasks/:id for single task", async () => {
+  const originalWindow = (globalThis as unknown as { window?: unknown }).window;
+  const originalFetch = globalThis.fetch;
+  try {
+    let calledUrl = "";
+    let calledInit: RequestInit | undefined;
+    (globalThis as unknown as { window: unknown }).window = {};
+    globalThis.fetch = (async (url: string | URL | Request, init?: RequestInit) => {
+      calledUrl = String(url);
+      calledInit = init;
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    }) as typeof fetch;
+
+    const result = await syncDeleteTasksApi(["task-single"]);
+    assert.equal(result, true);
+    assert.equal(calledUrl, "/api/tasks/task-single");
+    assert.equal(calledInit?.method, "DELETE");
+  } finally {
+    (globalThis as unknown as { window?: unknown }).window = originalWindow;
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("syncDeleteTasksApi calls DELETE /api/tasks with ids payload for multiple tasks", async () => {
+  const originalWindow = (globalThis as unknown as { window?: unknown }).window;
+  const originalFetch = globalThis.fetch;
+  try {
+    let calledUrl = "";
+    let calledInit: RequestInit | undefined;
+    (globalThis as unknown as { window: unknown }).window = {};
+    globalThis.fetch = (async (url: string | URL | Request, init?: RequestInit) => {
+      calledUrl = String(url);
+      calledInit = init;
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    }) as typeof fetch;
+
+    const result = await syncDeleteTasksApi(["task-1", "task-2"]);
+    assert.equal(result, true);
+    assert.equal(calledUrl, "/api/tasks");
+    assert.equal(calledInit?.method, "DELETE");
+    assert.equal(calledInit?.body, JSON.stringify({ ids: ["task-1", "task-2"] }));
+  } finally {
+    (globalThis as unknown as { window?: unknown }).window = originalWindow;
+    globalThis.fetch = originalFetch;
+  }
+});
+

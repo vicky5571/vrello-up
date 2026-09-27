@@ -3,6 +3,7 @@ import {
   syncCreateTaskApi,
   syncUpdateTaskApi,
   syncDeleteTaskApi,
+  syncDeleteTasksApi,
 } from "@/lib/tasks/taskSync";
 
 export function syncWorkspaces(workspaces: Workspace[]) {
@@ -39,6 +40,12 @@ export function syncDeleteTask(id: string) {
   if (typeof window === "undefined") return;
   syncDeleteTaskApi(id);
 }
+
+export function syncDeleteTasks(ids: string[]) {
+  if (typeof window === "undefined" || ids.length === 0) return;
+  syncDeleteTasksApi(ids);
+}
+
 
 export function syncAddComment(taskId: string, comment: TaskComment) {
   if (typeof window === "undefined") return;

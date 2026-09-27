@@ -134,3 +134,19 @@ export function syncDeleteTaskApi(id: string): Promise<boolean> {
     `delete task (${id})`,
   );
 }
+
+export function syncDeleteTasksApi(ids: string[]): Promise<boolean> {
+  if (ids.length === 0) return Promise.resolve(true);
+  if (ids.length === 1) return syncDeleteTaskApi(ids[0]);
+
+  return safeTaskSync(
+    "/api/tasks",
+    {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    },
+    `batch delete tasks (${ids.length} items)`,
+  );
+}
+

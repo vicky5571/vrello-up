@@ -21,7 +21,7 @@ import {
   PRODUCT_SPACE_ID,
   DESIGN_SYSTEM_LIST_ID,
 } from "@/lib/marcom/marcomIds";
-import { syncWorkspaces, syncDeleteTask } from "./syncHelpers";
+import { syncWorkspaces, syncDeleteTask, syncDeleteTasks } from "./syncHelpers";
 
 export const createSpaceSlice: StateCreator<
   WorkspaceStore,
@@ -86,7 +86,8 @@ export const createSpaceSlice: StateCreator<
       lastSelectedTaskId: res.lastSelectedTaskId,
       selectedTaskIds: res.selectedTaskIds,
     });
-    res.tasksToDelete.forEach((t) => syncDeleteTask(t.id));
+    // Replace N+1 syncDeleteTask calls with a single atomic batch delete
+    syncDeleteTasks(res.tasksToDelete.map((t) => t.id));
     syncWorkspaces(get().workspaces);
   },
 
@@ -159,7 +160,7 @@ export const createSpaceSlice: StateCreator<
       lastSelectedTaskId: res.lastSelectedTaskId,
       selectedTaskIds: res.selectedTaskIds,
     });
-    res.tasksToDelete.forEach((t) => syncDeleteTask(t.id));
+    syncDeleteTasks(res.tasksToDelete.map((t) => t.id));
     syncWorkspaces(get().workspaces);
   },
 
@@ -212,7 +213,7 @@ export const createSpaceSlice: StateCreator<
       lastSelectedTaskId: res.lastSelectedTaskId,
       selectedTaskIds: res.selectedTaskIds,
     });
-    res.tasksToDelete.forEach((t) => syncDeleteTask(t.id));
+    syncDeleteTasks(res.tasksToDelete.map((t) => t.id));
     syncWorkspaces(get().workspaces);
   },
 

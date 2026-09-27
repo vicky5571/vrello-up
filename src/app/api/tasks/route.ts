@@ -474,3 +474,59 @@ export async function POST(request: Request) {
   }
 }
 
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const ids: string[] = Array.isArray(body?.ids)
+      ? body.ids.filter((id: unknown) => typeof id === "string" && id.trim() !== "")
+      : [];
+
+    if (ids.length === 0) {
+      return NextResponse.json({ error: "No task IDs provided" }, { status: 400 });
+    }
+
+    // Query tasks to verify workspace authorization and prepare realtime broadcast targets
+    const tasks = await prisma.taskItem.findMany({
+      where: { id: { in: ids } },
+      include: { list: { include: { space: true } } },
+    });
+
+    if (tasks.length === 0) {
+      return NextResponse.json({ ok: true, count: 0 });
+    }
+
+    // Verify user has staff access to all workspaces represented in the batch
+    const workspaceIds = [...new Set(tasks.map((t) => t.list.space.workspaceId))];
+    for (const wsId of workspaceIds) {
+      const authError = await requireWorkspaceAccess(wsId, {
+        requiredRole: "staff",
+        request,
+      });
+      if (authError) return authError;
+    }
+
+    const deleteResult = await prisma.taskItem.deleteMany({
+      where: { id: { in: ids } },
+    });
+
+    // Broadcast deletions per workspace
+    for (const wsId of workspaceIds) {
+      const wsTaskIds = tasks
+        .filter((t) => t.list.space.workspaceId === wsId)
+        .map((t) => t.id);
+      for (const taskId of wsTaskIds) {
+        realtimeHub.broadcastTaskDelete(taskId, wsId);
+      }
+    }
+
+    return NextResponse.json({ ok: true, count: deleteResult.count });
+  } catch (error) {
+    console.error("Error batch deleting tasks in database:", error);
+    return NextResponse.json(
+      { error: "Failed to batch delete tasks in database" },
+      { status: 500 },
+    );
+  }
+}
+
+
