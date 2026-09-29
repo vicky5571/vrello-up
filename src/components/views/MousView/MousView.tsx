@@ -13,6 +13,7 @@ import { MouDocumentViewerModal } from "./MouDocumentViewerModal";
 import { transitionMouStatus, deleteMou } from "./mouApi";
 import { buildMouKpiItems } from "./mouKpi";
 import { buildMouColumns } from "./mouColumns";
+import { MOU_SEARCH_KEYS } from "./mouSortingHelpers";
 import { MouExpandedRow } from "./MouExpandedRow";
 import { MouFormModal } from "./MouFormModal";
 
@@ -168,6 +169,8 @@ export function MousView() {
   return (
     <>
       <MarcomTableShell
+        fixedViewport
+        searchKeys={MOU_SEARCH_KEYS}
         data={filteredMous}
         columns={columns}
         getRowId={(row) => row.id}

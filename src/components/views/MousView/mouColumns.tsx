@@ -7,6 +7,7 @@ import {
 } from "@/components/views/shared/MarcomTableShell";
 import { calculateMouPlacementRealization } from "@/lib/marcom/placementMouBridge";
 import { parseMouDocumentSource } from "./mouDocumentHelpers";
+import { compareMouStatus } from "./mouSortingHelpers";
 import type { MarcomMou, MouStatus, ViewMode } from "@/types";
 import type { PermissionAction } from "@/lib/marcom/guards";
 
@@ -69,7 +70,7 @@ export function buildMouColumns({
       maxSize: 36,
       enableSorting: false,
     }),
-    columnHelper.display({
+    columnHelper.accessor("partnerName", {
       id: "partner",
       header: "Partner",
       size: 190,
@@ -143,6 +144,7 @@ export function buildMouColumns({
       header: "Status",
       size: 140,
       minSize: 110,
+      sortFn: (rowA: any, rowB: any) => compareMouStatus(rowA.original.status, rowB.original.status),
       cell: ({ row }) => {
         const isExpired = Boolean(
           row.original.endDate &&
