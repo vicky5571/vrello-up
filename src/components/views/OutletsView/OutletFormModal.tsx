@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Store, X, MapPin, Navigation, ExternalLink } from "lucide-react";
+import { Store, X, MapPin, Navigation, ExternalLink, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
@@ -11,6 +11,7 @@ import {
   handleSaveOutletApi,
   getCurrentGpsLocation,
   parseCoordinateString,
+  resetOutletFormForNextEntry,
 } from "./outletFormHelpers";
 
 export interface OutletFormModalProps {
@@ -83,8 +84,12 @@ function OutletFormModalContent({
     }
   };
 
-  const handleSaveOutlet = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveOutlet = async (eOrAddAnother?: React.FormEvent | boolean) => {
+    if (isSaving) return;
+    const isAddAnother = typeof eOrAddAnother === "boolean" ? eOrAddAnother : false;
+    if (eOrAddAnother && typeof eOrAddAnother === "object" && "preventDefault" in eOrAddAnother) {
+      eOrAddAnother.preventDefault();
+    }
 
     const validation = validateOutletForm(formOutlet);
     if (!validation.isValid) {
@@ -95,13 +100,26 @@ function OutletFormModalContent({
     setIsSaving(true);
     try {
       const isEdit = Boolean(formOutlet.id);
-      await handleSaveOutletApi(formOutlet, isEdit);
-      toast.success(`Outlet ${isEdit ? "updated" : "created"} successfully`);
+      await handleSaveOutletApi(formOutlet, isAddAnother ? false : isEdit);
       invalidateOutlets();
       invalidatePlacements(activeWorkspaceId);
       invalidateMous(activeWorkspaceId);
-      onClose();
       onSuccess();
+
+      if (isAddAnother) {
+        toast.success("Outlet created. Ready for next outlet.");
+        setFormOutlet((prev) => resetOutletFormForNextEntry(prev));
+        setQuickPasteCoord("");
+        setErrors({});
+        if (typeof document !== "undefined") {
+          setTimeout(() => {
+            document.getElementById("outlet-code")?.focus();
+          }, 50);
+        }
+      } else {
+        toast.success(`Outlet ${isEdit ? "updated" : "created"} successfully`);
+        onClose();
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save outlet");
     } finally {
@@ -125,7 +143,17 @@ function OutletFormModalContent({
             <X className="w-4 h-4" />
           </button>
         </div>
-        <form noValidate onSubmit={handleSaveOutlet} className="space-y-4">
+        <form
+          noValidate
+          onSubmit={handleSaveOutlet}
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+              e.preventDefault();
+              handleSaveOutlet(false);
+            }
+          }}
+          className="space-y-4"
+        >
           {/* Section 1: Identitas Outlet */}
           <div className="space-y-3">
             <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pb-1 border-b border-slate-100 dark:border-slate-800">
@@ -489,16 +517,28 @@ function OutletFormModalContent({
               type="button"
               onClick={onClose}
               disabled={isSaving}
-              className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
+            {!formOutlet.id && (
+              <button
+                type="button"
+                onClick={() => handleSaveOutlet(true)}
+                disabled={isSaving}
+                className="px-3.5 py-1.5 text-xs rounded-xl font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                {isSaving && <Loader2 className="w-3 h-3 animate-spin shrink-0" />}
+                <span>Save & Add Another</span>
+              </button>
+            )}
             <button
               type="submit"
               disabled={isSaving}
-              className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+              className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
             >
-              {isSaving ? "Saving..." : formOutlet.id ? "Update Outlet" : "Create Outlet"}
+              {isSaving && <Loader2 className="w-3 h-3 animate-spin shrink-0" />}
+              <span>{formOutlet.id ? "Update Outlet" : "Create Outlet"}</span>
             </button>
           </div>
         </form>

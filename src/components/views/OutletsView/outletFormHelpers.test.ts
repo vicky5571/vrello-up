@@ -6,6 +6,7 @@ import {
   handleSaveOutletApi,
   getCurrentGpsLocation,
   parseCoordinateString,
+  resetOutletFormForNextEntry,
 } from "./outletFormHelpers";
 import type { OutletItem as MarcomOutlet } from "@/types";
 
@@ -420,6 +421,165 @@ describe("Outlet Form Helpers", () => {
       assert.ok(!modalContent.includes("Tier *"));
     });
   });
+
+  describe("resetOutletFormForNextEntry", () => {
+    it("preserves branchId, brand, and city while resetting all other fields", () => {
+      const current: Partial<MarcomOutlet> = {
+        id: "out-123",
+        code: "OUT-001",
+        name: "Toko Rezeki",
+        type: "MODERN_RETAIL",
+        tier: "TIER_2",
+        brand: "TRI",
+        branchId: "branch-smg",
+        city: "Semarang",
+        address: "Jl. Pandanaran No. 5",
+        picName: "Siti",
+        picPhone: "081299999",
+        latitude: -6.9932,
+        longitude: 110.4203,
+      };
+
+      const reset = resetOutletFormForNextEntry(current);
+
+      assert.equal(reset.branchId, "branch-smg");
+      assert.equal(reset.brand, "TRI");
+      assert.equal(reset.city, "Semarang");
+      assert.equal(reset.code, "");
+      assert.equal(reset.name, "");
+      assert.equal(reset.type, undefined);
+      assert.equal(reset.tier, undefined);
+      assert.equal(reset.address, "");
+      assert.equal(reset.picName, "");
+      assert.equal(reset.picPhone, "");
+      assert.equal(reset.latitude, undefined);
+      assert.equal(reset.longitude, undefined);
+      assert.equal("id" in reset, false);
+    });
+
+    it("defaults brand to IM3 and city to empty string if not present", () => {
+      const reset = resetOutletFormForNextEntry({
+        branchId: "branch-slo",
+      });
+
+      assert.equal(reset.branchId, "branch-slo");
+      assert.equal(reset.brand, "IM3");
+      assert.equal(reset.city, "");
+      assert.equal(reset.code, "");
+      assert.equal(reset.name, "");
+    });
+  });
+
+  describe("Save & Add Another, Keyboard Shortcuts & Button Width Stability", () => {
+    it("imports Loader2 from lucide-react in modal", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      assert.ok(
+        modalContent.includes("Loader2") && modalContent.includes('from "lucide-react"'),
+        "Expected Loader2 to be imported from lucide-react"
+      );
+    });
+
+    it("gates Save & Add Another button with !formOutlet.id", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      assert.ok(
+        modalContent.includes("!formOutlet.id") && modalContent.includes("Save & Add Another"),
+        "Expected Save & Add Another button to be conditionally rendered only when !formOutlet.id"
+      );
+    });
+
+    it("renders secondary styling on Save & Add Another button", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      assert.ok(
+        modalContent.includes("bg-orange-50") &&
+          modalContent.includes("text-orange-600") &&
+          modalContent.includes("border-orange-200"),
+        "Expected secondary styling classes on Save & Add Another button"
+      );
+    });
+
+    it("wires Cmd+Enter / Ctrl+Enter onKeyDown handler on form", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      assert.ok(
+        modalContent.includes('(e.metaKey || e.ctrlKey) && e.key === "Enter"'),
+        "Expected form onKeyDown to listen for Cmd+Enter and Ctrl+Enter"
+      );
+      assert.ok(
+        modalContent.includes("handleSaveOutlet(false)"),
+        "Expected Cmd+Enter to trigger handleSaveOutlet(false)"
+      );
+    });
+
+    it("renders inline Loader2 spinner and eliminates text-swapping 'Saving...'", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      assert.ok(
+        modalContent.includes('isSaving && <Loader2 className="w-3 h-3 animate-spin shrink-0" />'),
+        "Expected inline Loader2 spinner in buttons"
+      );
+      assert.ok(
+        !modalContent.includes('"Saving..."'),
+        "Expected 'Saving...' text-swap to be removed to prevent button width jump"
+      );
+    });
+
+    it("toasts 'Outlet created. Ready for next outlet.' and resets form on addAnother", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      assert.ok(
+        modalContent.includes("Outlet created. Ready for next outlet."),
+        "Expected toast message for Add Another flow"
+      );
+      assert.ok(
+        modalContent.includes("resetOutletFormForNextEntry"),
+        "Expected resetOutletFormForNextEntry to be called in Add Another flow"
+      );
+      assert.ok(
+        modalContent.includes('document.getElementById("outlet-code")?.focus()'),
+        "Expected focus on outlet-code after reset"
+      );
+    });
+  });
 });
+
 
 

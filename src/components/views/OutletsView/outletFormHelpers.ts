@@ -135,3 +135,23 @@ export function parseCoordinateString(input: string): { latitude: number; longit
   return { latitude: Number(lat.toFixed(6)), longitude: Number(lng.toFixed(6)) };
 }
 
+export function resetOutletFormForNextEntry(
+  current: Partial<MarcomOutlet>
+): Partial<MarcomOutlet> {
+  return {
+    branchId: current.branchId,
+    brand: current.brand ?? "IM3",
+    city: current.city ?? "",
+    code: "",
+    name: "",
+    type: undefined,
+    tier: undefined,
+    address: "",
+    picName: "",
+    picPhone: "",
+    latitude: undefined,
+    longitude: undefined,
+  };
+}
+
+
