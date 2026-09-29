@@ -7,15 +7,11 @@ import {
   ClipboardList,
   Download,
   Plus,
-  Edit2,
-  CheckSquare,
   X,
   MapPin,
-  ExternalLink,
   TableProperties,
   Search,
   RefreshCw,
-  Camera,
   Wallet,
   CheckCircle2,
   Radio,
@@ -36,9 +32,9 @@ import {
 } from "@/lib/marcom/placementMouBridge";
 import { PlacementBulkActionBar } from "./PlacementBulkActionBar";
 import { PlacementFormModal } from "./PlacementFormModal";
-import { parsePlacementPhotos } from "@/lib/marcom/photoUtils";
+import { PlacementDetailDrawer } from "./PlacementDetailDrawer";
 import { findOutletCoordinates } from "@/lib/marcom/outletInherit";
-import { buildGoogleMapsUrl, isValidCoordinate } from "@/lib/marcom/locationUtils";
+import { isValidCoordinate } from "@/lib/marcom/locationUtils";
 import { normalizeBrand } from "@/lib/marcom/brandUtils";
 import {
   buildPlacementTaskPayload,
@@ -139,6 +135,7 @@ export function PlacementsView() {
   );
   const mousList: MouSummaryInfo[] = storeMous;
   const [modalPlacement, setModalPlacement] = useState<Partial<MarcomPlacement> | null>(null);
+  const [selectedPlacement, setSelectedPlacement] = useState<MarcomPlacement | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const canManage = can("CREATE_PLACEMENT");
@@ -417,6 +414,7 @@ export function PlacementsView() {
 
       if (isEdit && id) {
         updateCachedPlacement(activeWorkspaceId, savedPlacement);
+        setSelectedPlacement((prev) => (prev?.id === id ? savedPlacement : prev));
       } else {
         addCachedPlacement(activeWorkspaceId, savedPlacement);
       }
@@ -447,6 +445,7 @@ export function PlacementsView() {
       if (res.ok) {
         removeCachedPlacement(activeWorkspaceId, id);
         invalidateMous(activeWorkspaceId);
+        setSelectedPlacement((prev) => (prev?.id === id ? null : prev));
       }
       return res.ok;
     },
@@ -465,6 +464,7 @@ export function PlacementsView() {
           removeCachedPlacement(activeWorkspaceId, id);
         }
         invalidateMous(activeWorkspaceId);
+        setSelectedPlacement((prev) => (prev && ids.includes(prev.id) ? null : prev));
       }
       return res.ok;
     },
@@ -603,109 +603,7 @@ export function PlacementsView() {
               </button>
             </div>
           }
-          renderExpanded={(placement: MarcomPlacement) => {
-            const hasCoords = isValidCoordinate(
-              placement.latitude ?? Number.NaN,
-              placement.longitude ?? Number.NaN,
-            );
-            return (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Dimensions</div>
-                    <div className="text-slate-700 dark:text-slate-300">{placement.dimensions || "—"}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC</div>
-                    <div className="text-slate-700 dark:text-slate-300">{placement.picName || "—"}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Lokasi & GPS</div>
-                    <div className="text-slate-700 dark:text-slate-300">
-                      {hasCoords ? (
-                        <div className="space-y-0.5">
-                          <a
-                            href={buildGoogleMapsUrl(placement.latitude as number, placement.longitude as number)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
-                          >
-                            <MapPin className="w-3 h-3 text-emerald-500" />
-                            <span>Lihat di Maps</span>
-                            <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
-                          {placement.locationNotes && (
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 italic">
-                              {placement.locationNotes}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 italic">Belum ada titik GPS</span>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Notes</div>
-                    <div className="text-slate-700 dark:text-slate-300">{placement.notes || "—"}</div>
-                  </div>
-                </div>
-
-                {/* Photo Proof Gallery in Expanded Row */}
-                {(() => {
-                  const proofPhotos = parsePlacementPhotos(placement.photoUrl);
-                  if (proofPhotos.length === 0) return null;
-                  return (
-                    <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800">
-                      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
-                        <Camera className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Foto Bukti Pemasangan ({proofPhotos.length})</span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {proofPhotos.map((url, i) => (
-                          <a
-                            key={`${url}-${i}`}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            title={`Lihat Foto #${i + 1}`}
-                            className="group relative w-14 h-14 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:scale-105 active:scale-95 transition-all shadow-2xs cursor-pointer"
-                          >
-                            <img
-                              src={url}
-                              alt={`Bukti #${i + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                            <span className="absolute bottom-0.5 right-0.5 px-1 rounded text-[8px] font-mono font-bold bg-black/60 text-white">
-                              #{i + 1}
-                            </span>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Track installation checklist & operations in workspace:</span>
-                  <div className="flex items-center gap-2">
-                    {canManage && (
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setModalPlacement(placement); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer">
-                        <Edit2 className="w-3.5 h-3.5 text-lime-600" />
-                        <span>Edit Placement</span>
-                      </button>
-                    )}
-                    <button type="button" onClick={(e) => { e.stopPropagation(); handleTrackAsTask(placement); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer">
-                      <CheckSquare className="w-3.5 h-3.5" />
-                      <span>Track as Task Progress</span>
-                    </button>
-                  </div>
-                </div>
-              </>
-            );
-          }}
+          onRowClick={(p) => setSelectedPlacement(p)}
           filterBar={
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
@@ -915,6 +813,14 @@ export function PlacementsView() {
           />
         </div>
       )}
+
+      <PlacementDetailDrawer
+        placement={selectedPlacement}
+        onClose={() => setSelectedPlacement(null)}
+        onEdit={(p) => setModalPlacement(p)}
+        onTrackAsTask={handleTrackAsTask}
+        canManage={canManage}
+      />
 
       <PlacementFormModal
         placement={modalPlacement}
