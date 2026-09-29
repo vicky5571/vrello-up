@@ -272,3 +272,36 @@ After the P0 changes, confirm in DevTools:
 4. Pagination and the filter bar remain visible without scrolling.
 5. The horizontal scrollbar is visible without scrolling the card.
 6. Open `Outlet360Drawer`, scroll to its bottom: the table behind it does **not** move.
+
+---
+
+## 6. Implementation status
+
+Applied (P0 + P1):
+
+| Item | Change | File |
+|---|---|---|
+| P0-1 | `div.space-y-4` → `div.flex.h-full.min-h-0.flex-col.gap-4.p-4.md:p-6`; switcher header gains `shrink-0 flex-wrap min-w-0` | `OutletsView.tsx` |
+| P0-2 | New opt-in `fixedViewport` prop: shell root becomes `flex min-h-0 flex-col`, chrome gets `shrink-0`, table card becomes the single `min-h-0 flex-1 overflow-auto overscroll-contain [scrollbar-gutter:stable]` dual-axis scrollport | `MarcomTableShell.tsx` |
+| P0-3 | Header row `sticky top-0 z-20` with an **opaque** background; new `stickyColumnIds` prop pins a contiguous column prefix from `md` up (cumulative `left` offsets, `md:bg-inherit` on body cells) | `MarcomTableShell.tsx` |
+| P1-4 | `overscroll-contain` on the table card, drawer scroll area, and drawer backdrop | both |
+| P1-5 | `min-w` floors on the filter selects; `truncate` on the subtitle; approval/map branches wrapped in `min-h-0 flex-1 overflow-y-auto overscroll-contain` | `OutletsView.tsx` |
+| P2-8 | `columnResizeMode: "onEnd"`; render-phase `setTimeout` page clamp replaced with `useEffect`; dead `toast` import removed | both |
+
+**Why `fixedViewport` is opt-in, not the default:** `EventsView` (root `h-full overflow-y-auto`, auto content
+height), `ContentPlannerView` and `DocumentsView` all render `MarcomTableShell` with `noPadding` inside
+auto-height scroll regions. Forcing `flex-1 min-h-0` on the table card there would collapse it to zero
+height. The fixed-viewport contract requires a definite-height ancestor, so it is explicit. Those three
+views keep the previous behaviour untouched; `BranchesView`, `MousView` and `PlacementsView` are also
+unchanged apart from the row-background treatment, which stays translucent for them.
+
+Deliberately deferred:
+
+- **Row-expansion detail panel** (§2 P2) still renders inside the `minWidth: 1316px` wrapper and pans
+  horizontally. Fixing it properly needs the scrollport's measured client width (a `ResizeObserver`
+  writing a CSS var); the cheaper and better answer is to drop `renderExpanded` in `OutletsView`
+  entirely, since `Outlet360Drawer` already renders address, PIC, GPS, MoU status and edit. Needs a
+  product decision.
+- **Server-side pagination** (§4 P2-7) — the `take: 100` cap and the resulting incorrect counts are
+  untouched. This is a data-layer change, not a layout one.
+- **Search debounce / `useDeferredValue`** (§4 P2-8).
