@@ -43,6 +43,13 @@ test("parseUrlNavState normalizes legacy 'content' view to 'content-planner'", (
   assert.equal(state.appMode, "marcom");
 });
 
+test("parseUrlNavState normalizes singular aliases like 'mou', 'branch', 'outlet'", () => {
+  assert.equal(parseUrlNavState("?view=mou").view, "mous");
+  assert.equal(parseUrlNavState("?view=branch").view, "branches");
+  assert.equal(parseUrlNavState("?view=outlet").view, "outlets");
+  assert.equal(parseUrlNavState("?view=placement").view, "placements");
+});
+
 test("parseUrlNavState sanitizes and drops invalid/unknown view modes", () => {
   const query = "?view=malicious_eval&mode=invalid_mode";
   const state = parseUrlNavState(query);

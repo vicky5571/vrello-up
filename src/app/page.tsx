@@ -331,7 +331,7 @@ export default function WorkspacePage() {
               </motion.div>
             )}
 
-            {activeView === "mous" && (
+            {(activeView === "mous" || (activeView as string) === "mou") && (
               <motion.div
                 key="mous-view"
                 initial={{ opacity: 0 }}

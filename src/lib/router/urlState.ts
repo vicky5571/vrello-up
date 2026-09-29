@@ -86,6 +86,20 @@ export function parseUrlNavState(
       state.view = "content-planner";
     } else if (trimmedView === "table") {
       state.view = "list";
+    } else if (trimmedView === "mou") {
+      state.view = "mous";
+    } else if (trimmedView === "branch") {
+      state.view = "branches";
+    } else if (trimmedView === "outlet") {
+      state.view = "outlets";
+    } else if (trimmedView === "placement") {
+      state.view = "placements";
+    } else if (trimmedView === "event") {
+      state.view = "events";
+    } else if (trimmedView === "document") {
+      state.view = "documents";
+    } else if (trimmedView === "report") {
+      state.view = "reports";
     } else if (VALID_VIEW_MODES.has(trimmedView as ViewMode)) {
       state.view = trimmedView as ViewMode;
     }
