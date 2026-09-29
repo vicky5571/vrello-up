@@ -5,6 +5,7 @@ import {
   buildOutletPayload,
   handleSaveOutletApi,
   getCurrentGpsLocation,
+  parseCoordinateString,
 } from "./outletFormHelpers";
 import type { OutletItem as MarcomOutlet } from "@/types";
 
@@ -286,4 +287,77 @@ describe("Outlet Form Helpers", () => {
       }
     });
   });
+
+  describe("parseCoordinateString", () => {
+    it("parses standard comma-separated coordinate string", () => {
+      const result = parseCoordinateString("-6.9932, 110.4203");
+      assert.deepEqual(result, { latitude: -6.9932, longitude: 110.4203 });
+    });
+
+    it("parses comma-separated coordinate string without space", () => {
+      const result = parseCoordinateString("-6.9932,110.4203");
+      assert.deepEqual(result, { latitude: -6.9932, longitude: 110.4203 });
+    });
+
+    it("parses space-separated coordinate string", () => {
+      const result = parseCoordinateString("-6.9932 110.4203");
+      assert.deepEqual(result, { latitude: -6.9932, longitude: 110.4203 });
+    });
+
+    it("parses coordinates with extra whitespace and tabs", () => {
+      const result = parseCoordinateString(" \t -6.9932 ,  \t 110.4203 \t ");
+      assert.deepEqual(result, { latitude: -6.9932, longitude: 110.4203 });
+    });
+
+    it("rounds coordinates to 6 decimal places", () => {
+      const result = parseCoordinateString("-6.99321456, 110.42031456");
+      assert.deepEqual(result, { latitude: -6.993215, longitude: 110.420315 });
+    });
+
+    it("accepts valid boundary coordinate values", () => {
+      const northPole = parseCoordinateString("90, 0");
+      assert.deepEqual(northPole, { latitude: 90, longitude: 0 });
+
+      const southPole = parseCoordinateString("-90, 0");
+      assert.deepEqual(southPole, { latitude: -90, longitude: 0 });
+
+      const dateLineEast = parseCoordinateString("0, 180");
+      assert.deepEqual(dateLineEast, { latitude: 0, longitude: 180 });
+
+      const dateLineWest = parseCoordinateString("0, -180");
+      assert.deepEqual(dateLineWest, { latitude: 0, longitude: -180 });
+    });
+
+    it("returns null for empty or non-string inputs", () => {
+      assert.equal(parseCoordinateString(""), null);
+      assert.equal(parseCoordinateString("   "), null);
+      // @ts-expect-error invalid type testing
+      assert.equal(parseCoordinateString(null), null);
+      // @ts-expect-error invalid type testing
+      assert.equal(parseCoordinateString(undefined), null);
+      // @ts-expect-error invalid type testing
+      assert.equal(parseCoordinateString(123), null);
+    });
+
+    it("returns null for single coordinate or more than 2 parts", () => {
+      assert.equal(parseCoordinateString("-6.9932"), null);
+      assert.equal(parseCoordinateString("-6.9932, 110.4203, 50.123"), null);
+    });
+
+    it("returns null for non-numeric values", () => {
+      assert.equal(parseCoordinateString("abc, def"), null);
+      assert.equal(parseCoordinateString("latitude, longitude"), null);
+      assert.equal(parseCoordinateString("-6.9932, abc"), null);
+    });
+
+    it("returns null for out-of-range coordinates", () => {
+      // Latitude out of range (> 90 or < -90)
+      assert.equal(parseCoordinateString("90.0001, 110.4203"), null);
+      assert.equal(parseCoordinateString("-90.0001, 110.4203"), null);
+      // Longitude out of range (> 180 or < -180)
+      assert.equal(parseCoordinateString("-6.9932, 180.0001"), null);
+      assert.equal(parseCoordinateString("-6.9932, -180.0001"), null);
+    });
+  });
 });
+

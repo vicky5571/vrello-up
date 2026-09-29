@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Store, X, MapPin, Navigation } from "lucide-react";
+import { Store, X, MapPin, Navigation, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
@@ -10,6 +10,7 @@ import {
   validateOutletForm,
   handleSaveOutletApi,
   getCurrentGpsLocation,
+  parseCoordinateString,
 } from "./outletFormHelpers";
 
 export interface OutletFormModalProps {
@@ -46,6 +47,28 @@ function OutletFormModalContent({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLocatingInModal, setIsLocatingInModal] = useState(false);
+  const [quickPasteCoord, setQuickPasteCoord] = useState("");
+
+  const handleQuickPasteCoord = (value: string) => {
+    const parsed = parseCoordinateString(value);
+    if (parsed) {
+      setFormOutlet((prev) => ({
+        ...prev,
+        latitude: parsed.latitude,
+        longitude: parsed.longitude,
+      }));
+      toast.success("Coordinates parsed from paste!");
+      setQuickPasteCoord("");
+      return;
+    }
+    setQuickPasteCoord(value);
+  };
+
+  const hasValidCoordinates =
+    typeof formOutlet.latitude === "number" &&
+    !Number.isNaN(formOutlet.latitude) &&
+    typeof formOutlet.longitude === "number" &&
+    !Number.isNaN(formOutlet.longitude);
 
   const handleGetLocationInModal = async () => {
     setIsLocatingInModal(true);
@@ -326,15 +349,44 @@ function OutletFormModalContent({
                   <MapPin className="w-3.5 h-3.5 text-orange-500" />
                   <span>GPS Coordinates</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleGetLocationInModal}
-                  disabled={isLocatingInModal}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/20 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  <Navigation className={cn("w-3 h-3", isLocatingInModal && "animate-spin")} />
-                  <span>{isLocatingInModal ? "Detecting..." : "Detect Current GPS"}</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  {hasValidCoordinates && (
+                    <a
+                      href={`https://www.google.com/maps?q=${formOutlet.latitude},${formOutlet.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400"
+                    >
+                      <span>View on Maps</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleGetLocationInModal}
+                    disabled={isLocatingInModal}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/20 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <Navigation className={cn("w-3 h-3", isLocatingInModal && "animate-spin")} />
+                    <span>{isLocatingInModal ? "Detecting..." : "Use Device Location"}</span>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={quickPasteCoord}
+                  onChange={(e) => handleQuickPasteCoord(e.target.value)}
+                  onPaste={(e) => {
+                    const text = e.clipboardData.getData("text");
+                    if (text && parseCoordinateString(text)) {
+                      e.preventDefault();
+                      handleQuickPasteCoord(text);
+                    }
+                  }}
+                  placeholder='Quick paste: "-6.9932, 110.4203"'
+                  className="w-full px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-hidden text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 font-mono text-[11px]"
+                />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -370,6 +422,9 @@ function OutletFormModalContent({
                   />
                 </div>
               </div>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                <span>⚠️ Only use &quot;Use Device Location&quot; when physically at the outlet location.</span>
+              </p>
             </div>
           </div>
 

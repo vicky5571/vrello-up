@@ -121,3 +121,17 @@ export function getCurrentGpsLocation(): Promise<GpsCoordinates> {
     );
   });
 }
+
+export function parseCoordinateString(input: string): { latitude: number; longitude: number } | null {
+  if (!input || typeof input !== "string") return null;
+  const trimmed = input.trim();
+  // match comma or whitespace separated coordinates: e.g. "-6.9932, 110.4203" or "-6.9932 110.4203"
+  const parts = trimmed.split(/[\s,]+/).filter(Boolean);
+  if (parts.length !== 2) return null;
+  const lat = Number(parts[0]);
+  const lng = Number(parts[1]);
+  if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return { latitude: Number(lat.toFixed(6)), longitude: Number(lng.toFixed(6)) };
+}
+
