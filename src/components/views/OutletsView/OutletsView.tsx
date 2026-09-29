@@ -34,6 +34,7 @@ import { OutletApprovalQueueTab } from "./OutletApprovalQueueTab";
 import { SubmitDraftOutletModal } from "./SubmitDraftOutletModal";
 import { OutletFormModal } from "./OutletFormModal";
 import { filterPendingOutlets } from "./outletApprovalQueueHelpers";
+import { OutletExpandedRow } from "./OutletExpandedRow";
 
 const OutletMapView = dynamic(
   () => import("./OutletMapView").then((mod) => mod.OutletMapView),
@@ -256,10 +257,18 @@ export function OutletsView() {
             const mouCount = row.original.mouCount ?? 0;
             if (mouCount > 0) {
               return (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateToMarcom("mous", row.original.name);
+                  }}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                  title={`Lihat ${mouCount} MoU untuk ${row.original.name}`}
+                >
                   <FileText className="w-3 h-3 text-amber-500" />
                   <span>{mouCount} MoU Aktif</span>
-                </span>
+                </button>
               );
             }
             return (
@@ -611,97 +620,14 @@ export function OutletsView() {
               </div>
             }
             renderExpanded={(outlet) => (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
-                      Address
-                    </div>
-                    <div className="text-slate-700 dark:text-slate-300">{outlet.address || "—"}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
-                      PIC & Telepon
-                    </div>
-                    <div className="text-slate-700 dark:text-slate-300">
-                      {outlet.picName || "—"} {outlet.picPhone ? `(${outlet.picPhone})` : ""}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
-                      Koordinat GPS
-                    </div>
-                    <div className="text-slate-700 dark:text-slate-300 font-mono text-[11px]">
-                      {outlet.latitude && outlet.longitude
-                        ? `${outlet.latitude.toFixed(5)}, ${outlet.longitude.toFixed(5)}`
-                        : "Belum disetel"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
-                      Status MoU
-                    </div>
-                    <div className="text-slate-700 dark:text-slate-300">
-                      {outlet.mouCount && outlet.mouCount > 0
-                        ? `${outlet.mouCount} Kontrak Aktif`
-                        : "Tidak ada MoU"}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedOutletIdForDrawer(outlet.id);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
-                    >
-                      <Store className="w-3.5 h-3.5" />
-                      <span>Buka Profil 360°</span>
-                    </button>
-
-                    {outlet.branch && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedBranchId(outlet.branchId);
-                        }}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 transition-colors shadow-2xs cursor-pointer"
-                      >
-                        <Building2 className="w-3.5 h-3.5 text-cyan-500" />
-                        <span>Branch ({outlet.branch.name})</span>
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigateToMarcom("placements", outlet.name);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-lime-700 dark:text-lime-300 bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 hover:bg-lime-100 dark:hover:bg-lime-900/40 transition-colors shadow-2xs cursor-pointer"
-                    >
-                      <ClipboardList className="w-3.5 h-3.5 text-lime-500" />
-                      <span>Placements ({outlet.placementCount ?? 0})</span>
-                    </button>
-                  </div>
-                  {canAddOutlet && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setModalOutlet(outlet);
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer"
-                    >
-                      <Edit2 className="w-3.5 h-3.5 text-orange-600" />
-                      <span>Edit Outlet</span>
-                    </button>
-                  )}
-                </div>
-              </>
+              <OutletExpandedRow
+                outlet={outlet}
+                canAddOutlet={canAddOutlet}
+                onOpenDrawer={(id) => setSelectedOutletIdForDrawer(id)}
+                onSelectBranch={(branchId) => setSelectedBranchId(branchId)}
+                onEditOutlet={(o) => setModalOutlet(o)}
+                navigateToMarcom={navigateToMarcom}
+              />
             )}
             searchTerm={marcomFilters["outlets"] || ""}
             onSearchChange={(q) => setMarcomFilter("outlets", q)}

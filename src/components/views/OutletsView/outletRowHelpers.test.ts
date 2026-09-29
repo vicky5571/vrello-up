@@ -65,3 +65,26 @@ describe("OutletExpandedRow structural contracts", () => {
     assert.ok(content.includes("MoUs ("), "Must display MoU count in button label");
   });
 });
+
+describe("OutletsView integration contracts", () => {
+  const outletsViewPath = path.resolve(
+    process.cwd(),
+    "src/components/views/OutletsView/OutletsView.tsx",
+  );
+
+  it("wires interactive button in MoU Status column", () => {
+    const content = fs.readFileSync(outletsViewPath, "utf-8");
+    assert.ok(
+      content.includes('navigateToMarcom("mous", row.original.name)'),
+      "MoU Status table cell must navigate to mous on click",
+    );
+  });
+
+  it("uses OutletExpandedRow component in renderExpanded", () => {
+    const content = fs.readFileSync(outletsViewPath, "utf-8");
+    assert.ok(
+      content.includes("<OutletExpandedRow"),
+      "OutletsView must delegate renderExpanded to OutletExpandedRow",
+    );
+  });
+});
