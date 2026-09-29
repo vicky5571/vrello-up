@@ -5,24 +5,38 @@ export interface GpsCoordinates {
   longitude: number;
 }
 
-export function validateOutletForm(outlet: Partial<MarcomOutlet>): {
+export interface OutletFormValidationResult {
   isValid: boolean;
-  error?: string;
-} {
-  const code = outlet.code?.trim();
-  const name = outlet.name?.trim();
-  const type = outlet.type;
-  const tier = outlet.tier || "TIER_1";
-  const branchId = outlet.branchId?.trim();
+  errors: Record<string, string>;
+  error?: string; // keep for backward compatibility
+}
 
-  if (!code || !name || !type || !tier || !branchId) {
-    return {
-      isValid: false,
-      error: "Code, name, type, tier, and branch are required",
-    };
+export function validateOutletForm(outlet: Partial<MarcomOutlet>): OutletFormValidationResult {
+  const errors: Record<string, string> = {};
+
+  if (!outlet.code || !outlet.code.trim()) {
+    errors.code = "Outlet code is required";
+  }
+  if (!outlet.name || !outlet.name.trim()) {
+    errors.name = "Outlet name is required";
+  }
+  if (!outlet.type || !String(outlet.type).trim()) {
+    errors.type = "Outlet type is required";
+  }
+  if (!outlet.tier || !String(outlet.tier).trim()) {
+    errors.tier = "Outlet tier is required";
+  }
+  if (!outlet.branchId || !outlet.branchId.trim()) {
+    errors.branchId = "Parent branch is required";
   }
 
-  return { isValid: true };
+  const isValid = Object.keys(errors).length === 0;
+
+  return {
+    isValid,
+    errors,
+    error: isValid ? undefined : "Code, name, type, tier, and branch are required",
+  };
 }
 
 export function buildOutletPayload(outlet: Partial<MarcomOutlet>): Record<string, unknown> {

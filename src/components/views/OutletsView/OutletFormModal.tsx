@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import type { OutletItem as MarcomOutlet, OutletType, OutletTier } from "@/types";
 import {
+  validateOutletForm,
   handleSaveOutletApi,
   getCurrentGpsLocation,
 } from "./outletFormHelpers";
@@ -39,11 +40,9 @@ function OutletFormModalContent({
   const { invalidateOutlets, invalidatePlacements, invalidateMous } = useMarcomDataStore();
 
   const [formOutlet, setFormOutlet] = useState<Partial<MarcomOutlet>>(() => ({
-    type: "TRADITIONAL",
-    tier: "TIER_1",
-    branchId: branches[0]?.id || "",
     ...outlet,
   }));
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLocatingInModal, setIsLocatingInModal] = useState(false);
 
@@ -62,6 +61,13 @@ function OutletFormModalContent({
 
   const handleSaveOutlet = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const validation = validateOutletForm(formOutlet);
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      return;
+    }
+
     setIsSaving(true);
     try {
       const isEdit = Boolean(formOutlet.id);
@@ -95,7 +101,7 @@ function OutletFormModalContent({
             <X className="w-4 h-4" />
           </button>
         </div>
-        <form onSubmit={handleSaveOutlet} className="space-y-4">
+        <form noValidate onSubmit={handleSaveOutlet} className="space-y-4">
           {/* Section 1: Identitas Outlet */}
           <div className="space-y-3">
             <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pb-1 border-b border-slate-100 dark:border-slate-800">
@@ -107,10 +113,17 @@ function OutletFormModalContent({
                   Parent Branch *
                 </label>
                 <select
-                  required
                   value={formOutlet.branchId || ""}
-                  onChange={(e) => setFormOutlet({ ...formOutlet, branchId: e.target.value })}
-                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                  onChange={(e) => {
+                    setFormOutlet({ ...formOutlet, branchId: e.target.value });
+                    if (errors.branchId) setErrors((prev) => ({ ...prev, branchId: "" }));
+                  }}
+                  className={cn(
+                    "w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 cursor-pointer",
+                    errors.branchId
+                      ? "border-rose-500 focus:ring-rose-500/20"
+                      : "border-slate-200 dark:border-slate-700 focus:ring-orange-500"
+                  )}
                 >
                   <option value="">Select Branch...</option>
                   {branches.map((b) => (
@@ -119,6 +132,9 @@ function OutletFormModalContent({
                     </option>
                   ))}
                 </select>
+                {errors.branchId && (
+                  <p className="mt-1 text-[11px] text-rose-500">{errors.branchId}</p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -126,12 +142,22 @@ function OutletFormModalContent({
                 </label>
                 <input
                   type="text"
-                  required
                   placeholder="e.g. OUT-001"
                   value={formOutlet.code || ""}
-                  onChange={(e) => setFormOutlet({ ...formOutlet, code: e.target.value })}
-                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                  onChange={(e) => {
+                    setFormOutlet({ ...formOutlet, code: e.target.value });
+                    if (errors.code) setErrors((prev) => ({ ...prev, code: "" }));
+                  }}
+                  className={cn(
+                    "w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2",
+                    errors.code
+                      ? "border-rose-500 focus:ring-rose-500/20"
+                      : "border-slate-200 dark:border-slate-700 focus:ring-orange-500"
+                  )}
                 />
+                {errors.code && (
+                  <p className="mt-1 text-[11px] text-rose-500">{errors.code}</p>
+                )}
               </div>
             </div>
             <div>
@@ -140,12 +166,22 @@ function OutletFormModalContent({
               </label>
               <input
                 type="text"
-                required
                 placeholder="e.g. Toko Berkah Mandiri"
                 value={formOutlet.name || ""}
-                onChange={(e) => setFormOutlet({ ...formOutlet, name: e.target.value })}
-                className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                onChange={(e) => {
+                  setFormOutlet({ ...formOutlet, name: e.target.value });
+                  if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
+                }}
+                className={cn(
+                  "w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2",
+                  errors.name
+                    ? "border-rose-500 focus:ring-rose-500/20"
+                    : "border-slate-200 dark:border-slate-700 focus:ring-orange-500"
+                )}
               />
+              {errors.name && (
+                <p className="mt-1 text-[11px] text-rose-500">{errors.name}</p>
+              )}
             </div>
           </div>
 
@@ -160,33 +196,53 @@ function OutletFormModalContent({
                   Type *
                 </label>
                 <select
-                  value={formOutlet.type ?? "TRADITIONAL"}
-                  onChange={(e) =>
-                    setFormOutlet({ ...formOutlet, type: e.target.value as OutletType })
-                  }
-                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                  value={formOutlet.type || ""}
+                  onChange={(e) => {
+                    setFormOutlet({ ...formOutlet, type: e.target.value as OutletType });
+                    if (errors.type) setErrors((prev) => ({ ...prev, type: "" }));
+                  }}
+                  className={cn(
+                    "w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 cursor-pointer",
+                    errors.type
+                      ? "border-rose-500 focus:ring-rose-500/20"
+                      : "border-slate-200 dark:border-slate-700 focus:ring-orange-500"
+                  )}
                 >
+                  <option value="">Select Type...</option>
                   <option value="TRADITIONAL">Traditional</option>
                   <option value="MODERN_RETAIL">Modern Retail</option>
                   <option value="EXCLUSIVE">Exclusive</option>
                   <option value="CAMPUS_OUTLET">Campus Outlet</option>
                 </select>
+                {errors.type && (
+                  <p className="mt-1 text-[11px] text-rose-500">{errors.type}</p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Tier *
                 </label>
                 <select
-                  value={formOutlet.tier ?? "TIER_1"}
-                  onChange={(e) =>
-                    setFormOutlet({ ...formOutlet, tier: e.target.value as OutletTier })
-                  }
-                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                  value={formOutlet.tier || ""}
+                  onChange={(e) => {
+                    setFormOutlet({ ...formOutlet, tier: e.target.value as OutletTier });
+                    if (errors.tier) setErrors((prev) => ({ ...prev, tier: "" }));
+                  }}
+                  className={cn(
+                    "w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 cursor-pointer",
+                    errors.tier
+                      ? "border-rose-500 focus:ring-rose-500/20"
+                      : "border-slate-200 dark:border-slate-700 focus:ring-orange-500"
+                  )}
                 >
+                  <option value="">Select Tier...</option>
                   <option value="TIER_1">Tier 1</option>
                   <option value="TIER_2">Tier 2</option>
                   <option value="TIER_3">Tier 3</option>
                 </select>
+                {errors.tier && (
+                  <p className="mt-1 text-[11px] text-rose-500">{errors.tier}</p>
+                )}
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

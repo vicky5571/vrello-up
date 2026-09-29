@@ -28,35 +28,54 @@ describe("Outlet Form Helpers", () => {
       const result = validateOutletForm(sampleOutlet);
       assert.equal(result.isValid, true);
       assert.equal(result.error, undefined);
+      assert.deepEqual(result.errors, {});
     });
 
     it("requires outlet code", () => {
       const result = validateOutletForm({ ...sampleOutlet, code: "   " });
       assert.equal(result.isValid, false);
+      assert.equal(result.errors.code, "Outlet code is required");
       assert.equal(result.error, "Code, name, type, tier, and branch are required");
     });
 
     it("requires outlet name", () => {
       const result = validateOutletForm({ ...sampleOutlet, name: "" });
       assert.equal(result.isValid, false);
+      assert.equal(result.errors.name, "Outlet name is required");
       assert.equal(result.error, "Code, name, type, tier, and branch are required");
     });
 
     it("requires outlet type", () => {
       const result = validateOutletForm({ ...sampleOutlet, type: undefined });
       assert.equal(result.isValid, false);
+      assert.equal(result.errors.type, "Outlet type is required");
+      assert.equal(result.error, "Code, name, type, tier, and branch are required");
+    });
+
+    it("requires outlet tier", () => {
+      const result = validateOutletForm({ ...sampleOutlet, tier: undefined });
+      assert.equal(result.isValid, false);
+      assert.equal(result.errors.tier, "Outlet tier is required");
       assert.equal(result.error, "Code, name, type, tier, and branch are required");
     });
 
     it("requires branch selection", () => {
       const result = validateOutletForm({ ...sampleOutlet, branchId: "" });
       assert.equal(result.isValid, false);
+      assert.equal(result.errors.branchId, "Parent branch is required");
       assert.equal(result.error, "Code, name, type, tier, and branch are required");
     });
 
-    it("defaults tier to TIER_1 when tier is not explicitly set", () => {
-      const result = validateOutletForm({ ...sampleOutlet, tier: undefined });
-      assert.equal(result.isValid, true);
+    it("returns errors for all required fields when submitting an empty form", () => {
+      const result = validateOutletForm({});
+      assert.equal(result.isValid, false);
+      assert.equal(result.errors.code, "Outlet code is required");
+      assert.equal(result.errors.name, "Outlet name is required");
+      assert.equal(result.errors.type, "Outlet type is required");
+      assert.equal(result.errors.tier, "Outlet tier is required");
+      assert.equal(result.errors.branchId, "Parent branch is required");
+      assert.equal(Object.keys(result.errors).length, 5);
+      assert.equal(result.error, "Code, name, type, tier, and branch are required");
     });
   });
 
