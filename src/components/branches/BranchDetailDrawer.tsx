@@ -128,7 +128,7 @@ export function BranchDetailDrawer() {
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-5 space-y-5">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400 text-xs">
                   <Loader2 className="w-6 h-6 animate-spin text-cyan-600" />

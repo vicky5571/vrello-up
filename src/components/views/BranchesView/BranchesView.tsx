@@ -396,55 +396,148 @@ export function BranchesView() {
       />
 
       {modalBranch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setModalBranch(null);
+          }}
+        >
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-cyan-600" />
                 {modalBranch.id ? "Edit Branch" : "Add New Branch"}
               </h2>
-              <button type="button" onClick={() => setModalBranch(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setModalBranch(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg"
+                aria-label="Close modal"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleSaveBranch} className="space-y-3">
+            <form
+              onSubmit={handleSaveBranch}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  handleSaveBranch(e);
+                }
+              }}
+              className="space-y-3"
+            >
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Branch Code *</label>
-                  <input type="text" required placeholder="e.g. BR-JKT-01" value={modalBranch.code || ""} onChange={(e) => setModalBranch({ ...modalBranch, code: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. BR-JKT-01"
+                    value={modalBranch.code || ""}
+                    onChange={(e) => setModalBranch({ ...modalBranch, code: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Branch Name *</label>
-                  <input type="text" required placeholder="e.g. Jakarta Pusat Hub" value={modalBranch.name || ""} onChange={(e) => setModalBranch({ ...modalBranch, name: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Jakarta Pusat Hub"
+                    value={modalBranch.name || ""}
+                    onChange={(e) => setModalBranch({ ...modalBranch, name: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2.5">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Region *</label>
-                  <input type="text" required placeholder="e.g. DKI Jakarta" value={modalBranch.region || ""} onChange={(e) => setModalBranch({ ...modalBranch, region: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. DKI Jakarta"
+                    value={modalBranch.region || ""}
+                    onChange={(e) => setModalBranch({ ...modalBranch, region: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">City *</label>
-                  <input type="text" required placeholder="e.g. Jakarta" value={modalBranch.city || ""} onChange={(e) => setModalBranch({ ...modalBranch, city: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Jakarta"
+                    value={modalBranch.city || ""}
+                    onChange={(e) => setModalBranch({ ...modalBranch, city: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                  <select
+                    value={modalBranch.status || "PENDING"}
+                    onChange={(e) => setModalBranch({ ...modalBranch, status: e.target.value as BranchStatus })}
+                    className="w-full px-2 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="ON_PROGRESS">In Progress</option>
+                    <option value="DONE">Done</option>
+                  </select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">PIC Name</label>
-                  <input type="text" placeholder="e.g. Budi Santoso" value={modalBranch.picName || ""} onChange={(e) => setModalBranch({ ...modalBranch, picName: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500" />
+                  <input
+                    type="text"
+                    placeholder="e.g. Budi Santoso"
+                    value={modalBranch.picName || ""}
+                    onChange={(e) => setModalBranch({ ...modalBranch, picName: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">PIC Phone</label>
-                  <input type="text" placeholder="e.g. +62 812 3456 7890" value={modalBranch.picPhone || ""} onChange={(e) => setModalBranch({ ...modalBranch, picPhone: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500" />
+                  <input
+                    type="text"
+                    placeholder="e.g. +62 812 3456 7890"
+                    value={modalBranch.picPhone || ""}
+                    onChange={(e) => setModalBranch({ ...modalBranch, picPhone: e.target.value })}
+                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Address</label>
-                <textarea rows={2} placeholder="e.g. Jl. Sudirman No. 12" value={modalBranch.address || ""} onChange={(e) => setModalBranch({ ...modalBranch, address: e.target.value })} className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500" />
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Jl. Sudirman No. 12"
+                  value={modalBranch.address || ""}
+                  onChange={(e) => setModalBranch({ ...modalBranch, address: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                />
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button type="button" onClick={() => setModalBranch(null)} disabled={isSaving} className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
-                <button type="submit" disabled={isSaving} className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50">{isSaving ? "Saving..." : modalBranch.id ? "Update Branch" : "Create Branch"}</button>
+              <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
+                <span>Press <kbd className="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">⌘+Enter</kbd> to save</span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalBranch(null)}
+                    disabled={isSaving}
+                    className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+                  >
+                    {isSaving ? "Saving..." : modalBranch.id ? "Update Branch" : "Create Branch"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
