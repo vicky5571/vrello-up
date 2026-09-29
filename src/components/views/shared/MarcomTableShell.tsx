@@ -80,6 +80,7 @@ interface MarcomTableShellProps<T extends object & { id: string }> {
   // expansion
   renderExpanded?: (row: T) => React.ReactNode;
   getIsExpanded?: (row: T) => boolean;
+  onRowClick?: (row: T) => void;
   // search/filter control
   searchTerm?: string;
   onSearchChange?: (term: string) => void;
@@ -123,6 +124,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
   filterBar,
   kpiBar,
   renderExpanded,
+  onRowClick,
   searchTerm,
   onSearchChange,
   searchKeys,
@@ -492,23 +494,35 @@ export function MarcomTableShell<T extends object & { id: string }>({
             <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {paginatedRows.map((row) => {
                 const isExpanded = (expandedId as string) === (row as any).original.id;
+                const hasRowAction = Boolean(onRowClick || renderExpanded);
                 return (
                   <div key={(row as any).id}>
                     <div
-                      onClick={() => toggleExpand((row as any).original.id)}
+                      onClick={() => {
+                        if (onRowClick) {
+                          onRowClick((row as any).original);
+                        } else if (renderExpanded) {
+                          toggleExpand((row as any).original.id);
+                        }
+                      }}
                       onKeyDown={(e) => {
                         if (e.target !== e.currentTarget) return;
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
-                          toggleExpand((row as any).original.id);
+                          if (onRowClick) {
+                            onRowClick((row as any).original);
+                          } else if (renderExpanded) {
+                            toggleExpand((row as any).original.id);
+                          }
                         }
                       }}
                       role="row"
-                      tabIndex={0}
-                      aria-expanded={isExpanded}
-                      aria-controls={`${entityName}-detail-${(row as any).original.id}`}
+                      tabIndex={hasRowAction ? 0 : undefined}
+                      aria-expanded={renderExpanded ? isExpanded : undefined}
+                      aria-controls={renderExpanded ? `${entityName}-detail-${(row as any).original.id}` : undefined}
                       className={cn(
-                        "flex items-center px-4 py-2.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer text-xs focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500",
+                        "flex items-center px-4 py-2.5 transition-colors text-xs",
+                        hasRowAction && "hover:bg-slate-50/80 dark:hover:bg-slate-800/40 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500",
                         (row as any).getIsSelected() && "bg-teal-50/40 dark:bg-teal-950/20",
                       )}
                     >
