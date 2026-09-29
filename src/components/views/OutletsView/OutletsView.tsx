@@ -10,12 +10,10 @@ import {
   Building2,
   ClipboardList,
   Layers,
-  X,
   MapPin,
   Table as TableIcon,
   Compass,
   FileText,
-  Navigation,
   Eye,
   Clock,
 } from "lucide-react";
@@ -34,6 +32,7 @@ import { calculateEnhancedOutletKPIs } from "@/lib/marcom/outletAnalytics";
 import { Outlet360Drawer } from "./Outlet360Drawer";
 import { OutletApprovalQueueTab } from "./OutletApprovalQueueTab";
 import { SubmitDraftOutletModal } from "./SubmitDraftOutletModal";
+import { OutletFormModal } from "./OutletFormModal";
 import { filterPendingOutlets } from "./outletApprovalQueueHelpers";
 
 const OutletMapView = dynamic(
@@ -88,8 +87,6 @@ export function OutletsView() {
   );
   const [modalOutlet, setModalOutlet] = useState<Partial<MarcomOutlet> | null>(null);
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLocatingInModal, setIsLocatingInModal] = useState(false);
 
   const pendingCount = useMemo(() => filterPendingOutlets(outlets).length, [outlets]);
 
@@ -366,82 +363,6 @@ export function OutletsView() {
       ]),
     [navigateToMarcom, setSelectedBranchId, canManage],
   );
-
-  const handleGetLocationInModal = () => {
-    if (typeof window === "undefined" || !("geolocation" in navigator)) {
-      toast.error("Geolocation tidak didukung oleh browser Anda");
-      return;
-    }
-    setIsLocatingInModal(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setIsLocatingInModal(false);
-        const lat = Number(pos.coords.latitude.toFixed(6));
-        const lng = Number(pos.coords.longitude.toFixed(6));
-        setModalOutlet((prev) => (prev ? { ...prev, latitude: lat, longitude: lng } : null));
-        toast.success(`Koordinat GPS terdeteksi: ${lat}, ${lng}`);
-      },
-      (err) => {
-        setIsLocatingInModal(false);
-        toast.error(`Gagal mendeteksi lokasi GPS: ${err.message}`);
-      },
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
-  };
-
-  const handleSaveOutlet = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!modalOutlet) return;
-    const { id, code, name, type, tier, branchId, city, address, picName, picPhone, latitude, longitude } = modalOutlet;
-    if (!code || !name || !type || !tier || !branchId) {
-      toast.error("Code, name, type, tier, and branch are required");
-      return;
-    }
-    setIsSaving(true);
-    try {
-      const isEdit = Boolean(id);
-      const url = isEdit ? `/api/marcom/outlets/${id}` : "/api/marcom/outlets";
-      const method = isEdit ? "PATCH" : "POST";
-      const payload: Record<string, unknown> = {
-        code,
-        name,
-        type,
-        tier: modalOutlet.tier || "TIER_1",
-        branchId,
-        city: city || "",
-        address: address || "",
-        picName: picName || "",
-        picPhone: picPhone || "",
-      };
-
-      if (latitude !== undefined && latitude !== null && !Number.isNaN(Number(latitude))) {
-        payload.latitude = Number(latitude);
-      }
-      if (longitude !== undefined && longitude !== null && !Number.isNaN(Number(longitude))) {
-        payload.longitude = Number(longitude);
-      }
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `Failed to save outlet (${res.status})`);
-      }
-      toast.success(`Outlet ${isEdit ? "updated" : "created"} successfully`);
-      invalidateOutlets();
-      invalidatePlacements(activeWorkspaceId);
-      invalidateMous(activeWorkspaceId);
-      setModalOutlet(null);
-      await fetchOutlets();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save outlet");
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const deleteOne = useCallback(
     async (id: string) => {
@@ -796,235 +717,13 @@ export function OutletsView() {
       />
 
       {/* Modal Add / Edit Outlet */}
-      {modalOutlet && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Store className="w-4 h-4 text-orange-600" />
-                {modalOutlet.id ? "Edit Outlet" : "Add New Outlet"}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setModalOutlet(null)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <form onSubmit={handleSaveOutlet} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Outlet Code *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. OUT-001"
-                    value={modalOutlet.code || ""}
-                    onChange={(e) => setModalOutlet({ ...modalOutlet, code: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Parent Branch *
-                  </label>
-                  <select
-                    required
-                    value={modalOutlet.branchId || ""}
-                    onChange={(e) => setModalOutlet({ ...modalOutlet, branchId: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
-                  >
-                    <option value="">Select Branch...</option>
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name} ({b.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Outlet Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Toko Berkah Mandiri"
-                    value={modalOutlet.name || ""}
-                    onChange={(e) => setModalOutlet({ ...modalOutlet, name: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Type <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={modalOutlet.type ?? "TRADITIONAL"}
-                      onChange={(e) =>
-                        setModalOutlet({ ...modalOutlet, type: e.target.value as OutletType })
-                      }
-                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
-                    >
-                      <option value="TRADITIONAL">Traditional</option>
-                      <option value="MODERN_RETAIL">Modern Retail</option>
-                      <option value="EXCLUSIVE">Exclusive</option>
-                      <option value="CAMPUS_OUTLET">Campus Outlet</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      value={modalOutlet.city ?? ""}
-                      onChange={(e) => setModalOutlet({ ...modalOutlet, city: e.target.value })}
-                      placeholder="e.g. Semarang"
-                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Tier
-                  </label>
-                  <select
-                    value={modalOutlet.tier ?? "TIER_1"}
-                    onChange={(e) =>
-                      setModalOutlet({ ...modalOutlet, tier: e.target.value as OutletTier })
-                    }
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
-                  >
-                    <option value="TIER_1">Tier 1</option>
-                    <option value="TIER_2">Tier 2</option>
-                    <option value="TIER_3">Tier 3</option>
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      PIC Name
-                    </label>
-                    <input
-                      type="text"
-                      value={modalOutlet.picName ?? ""}
-                      onChange={(e) => setModalOutlet({ ...modalOutlet, picName: e.target.value })}
-                      placeholder="e.g. Budi"
-                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      PIC Phone
-                    </label>
-                    <input
-                      type="text"
-                      value={modalOutlet.picPhone ?? ""}
-                      onChange={(e) => setModalOutlet({ ...modalOutlet, picPhone: e.target.value })}
-                      placeholder="e.g. 08123456789"
-                      className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Address
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={modalOutlet.address ?? ""}
-                    onChange={(e) => setModalOutlet({ ...modalOutlet, address: e.target.value })}
-                    placeholder="Full physical street address..."
-                    className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
-                  />
-                </div>
-
-                {/* GPS Coordinates Picker Block */}
-                <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
-                      <MapPin className="w-3.5 h-3.5 text-orange-500" />
-                      <span>GPS Coordinates</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleGetLocationInModal}
-                      disabled={isLocatingInModal}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/20 transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      <Navigation className={cn("w-3 h-3", isLocatingInModal && "animate-spin")} />
-                      <span>{isLocatingInModal ? "Detecting..." : "Detect Current GPS"}</span>
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <span className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">Latitude</span>
-                      <input
-                        type="number"
-                        step="any"
-                        value={modalOutlet.latitude ?? ""}
-                        onChange={(e) =>
-                          setModalOutlet({
-                            ...modalOutlet,
-                            latitude: e.target.value === "" ? null : Number(e.target.value),
-                          })
-                        }
-                        placeholder="-6.9932"
-                        className="w-full px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-hidden text-slate-900 dark:text-slate-100 font-mono"
-                      />
-                    </div>
-                    <div>
-                      <span className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">Longitude</span>
-                      <input
-                        type="number"
-                        step="any"
-                        value={modalOutlet.longitude ?? ""}
-                        onChange={(e) =>
-                          setModalOutlet({
-                            ...modalOutlet,
-                            longitude: e.target.value === "" ? null : Number(e.target.value),
-                          })
-                        }
-                        placeholder="110.4203"
-                        className="w-full px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-hidden text-slate-900 dark:text-slate-100 font-mono"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setModalOutlet(null)}
-                  disabled={isSaving}
-                  className="px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
-                >
-                  {isSaving ? "Saving..." : modalOutlet.id ? "Update Outlet" : "Create Outlet"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <OutletFormModal
+        outlet={modalOutlet}
+        onClose={() => setModalOutlet(null)}
+        branches={branches}
+        onSuccess={fetchOutlets}
+        activeWorkspaceId={activeWorkspaceId}
+      />
 
       <SubmitDraftOutletModal
         isOpen={isDraftModalOpen}
