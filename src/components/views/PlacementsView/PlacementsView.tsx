@@ -701,6 +701,7 @@ export function PlacementsView() {
     <>
       {viewMode === "table" ? (
         <MarcomTableShell
+          fixedViewport
           data={filteredPlacements}
           columns={columns}
           getRowId={(row) => row.id}
@@ -725,6 +726,7 @@ export function PlacementsView() {
               placements={placements}
               onClearSelection={clearSelection}
               onRefresh={() => loadPlacements(true)}
+              onDeleteBatch={deleteBatch}
               canManage={canManage}
             />
           )}

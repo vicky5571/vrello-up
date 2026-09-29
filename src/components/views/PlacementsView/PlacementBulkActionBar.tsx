@@ -21,13 +21,16 @@ interface PlacementBulkActionBarProps {
   placements: MarcomPlacement[];
   onClearSelection: () => void;
   onRefresh: () => Promise<void> | void;
+  onDeleteBatch?: (ids: string[]) => Promise<boolean>;
   canManage: boolean;
 }
 
 export function PlacementBulkActionBar({
   selectedIds,
+  placements,
   onClearSelection,
   onRefresh,
+  onDeleteBatch,
   canManage,
 }: PlacementBulkActionBarProps) {
   const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
@@ -54,6 +57,20 @@ export function PlacementBulkActionBar({
       toast.error("Hanya staf atau admin yang dapat mengubah status placement");
       return;
     }
+
+    if (status === "DONE") {
+      const selectedItems = placements.filter((p) => selectedIds.includes(p.id));
+      const unverified = selectedItems.filter(
+        (p) => !p.photoUrl?.trim() || ((p.latitude == null || p.longitude == null) && !p.shareLocationUrl?.trim())
+      );
+      if (unverified.length > 0) {
+        toast.error(
+          `Gagal: ${unverified.length} placement terpilih belum memiliki foto bukti atau verifikasi GPS!`
+        );
+        return;
+      }
+    }
+
     setIsUpdating(true);
     try {
       const res = await fetch("/api/marcom/placements", {
@@ -163,16 +180,29 @@ export function PlacementBulkActionBar({
 
     setIsUpdating(true);
     try {
-      let successCount = 0;
-      for (const id of selectedIds) {
-        const res = await fetch(`/api/marcom/placements/${id}`, { method: "DELETE" });
-        if (res.ok) {
-          successCount++;
-          removeCachedPlacement(activeWorkspaceId, id);
+      if (onDeleteBatch) {
+        const ok = await onDeleteBatch(selectedIds);
+        if (ok) {
+          toast.success(`${count} placement berhasil dihapus`);
+          onClearSelection();
+          await fetchPlacements(activeWorkspaceId, true);
+          await onRefresh();
+        } else {
+          toast.error("Gagal menghapus placement masal");
         }
+        return;
       }
+
+      // Fallback
+      const res = await fetch("/api/marcom/placements", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds, workspaceId: activeWorkspaceId }),
+      });
+      if (!res.ok) throw new Error("Batch delete failed");
+      selectedIds.forEach((id) => removeCachedPlacement(activeWorkspaceId, id));
       invalidateMous(activeWorkspaceId);
-      toast.success(`${successCount} placement berhasil dihapus`);
+      toast.success(`${count} placement berhasil dihapus`);
       onClearSelection();
       await fetchPlacements(activeWorkspaceId, true);
       await onRefresh();

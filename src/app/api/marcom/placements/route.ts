@@ -193,6 +193,32 @@ export async function PATCH(request: Request) {
   }
 
   try {
+    if (updates.status === "DONE") {
+      const candidates = await prisma.placement.findMany({
+        where: { id: { in: ids }, workspaceId },
+        select: { id: true, status: true, photoUrl: true, latitude: true, longitude: true, shareLocationUrl: true },
+      });
+
+      const unverified = candidates.filter((p) => {
+        const check = validatePlacementUpdate(p.status as PlacementStatus, "DONE", {
+          photoUrl: p.photoUrl,
+          latitude: p.latitude,
+          longitude: p.longitude,
+          shareLocationUrl: p.shareLocationUrl,
+        });
+        return !check.valid;
+      });
+
+      if (unverified.length > 0) {
+        return NextResponse.json(
+          {
+            error: `Gagal memperbarui: ${unverified.length} dari ${ids.length} placement belum memiliki bukti foto atau verifikasi lokasi GPS`,
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     const result = await prisma.placement.updateMany({
       where: {
         id: { in: ids },
