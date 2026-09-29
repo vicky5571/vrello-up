@@ -2,13 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Building2, Plus, Edit2, Store, FileText, X } from "lucide-react";
+import { Building2, Plus, Edit2, Store, FileText, X, Eye } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
+import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
+import { cn } from "@/lib/utils";
+import {
+  calculateBranchKpis,
+  getBranchProgressColor,
+  getBranchStatusBadge,
+} from "./branchesHelpers";
 
 import type { BranchStatus, MarcomBranch } from "@/types";
 
@@ -27,6 +34,7 @@ export function BranchesView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string>("ALL");
+  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [availableRegions, setAvailableRegions] = useState<string[]>([
     "Banten",
     "Central Java",
@@ -41,13 +49,16 @@ export function BranchesView() {
   const canManage = can("MANAGE_MASTER_DATA");
   const canAddBranch = canManage || role !== "viewer";
 
-  const fetchBranches = useCallback(async (regionFilter = selectedRegion) => {
+  const fetchBranches = useCallback(async (regionFilter = selectedRegion, statusFilter = selectedStatus) => {
     setIsLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
       if (regionFilter && regionFilter !== "ALL") {
         params.set("region", regionFilter);
+      }
+      if (statusFilter && statusFilter !== "ALL") {
+        params.set("status", statusFilter);
       }
       const url = `/api/marcom/branches${params.toString() ? `?${params.toString()}` : ""}`;
       const res = await fetch(url);
@@ -66,16 +77,23 @@ export function BranchesView() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedRegion]);
+  }, [selectedRegion, selectedStatus]);
 
   useEffect(() => {
-    fetchBranches(selectedRegion);
-  }, [fetchBranches, selectedRegion]);
+    fetchBranches(selectedRegion, selectedStatus);
+  }, [fetchBranches, selectedRegion, selectedStatus]);
 
   const handleRegionChange = (newRegion: string) => {
     setSelectedRegion(newRegion);
-    fetchBranches(newRegion);
+    fetchBranches(newRegion, selectedStatus);
   };
+
+  const handleStatusChange = (newStatus: string) => {
+    setSelectedStatus(newStatus);
+    fetchBranches(selectedRegion, newStatus);
+  };
+
+  const kpiItems = useMemo(() => calculateBranchKpis(branches), [branches]);
 
   const columns = useMemo(
     () =>
@@ -116,101 +134,96 @@ export function BranchesView() {
         columnHelper.accessor("code", {
           id: "code",
           header: "Code",
-          size: 100,
+          size: 95,
           minSize: 80,
           cell: ({ row }) => (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedBranchId(row.original.id);
-              }}
-              className="font-semibold text-slate-900 dark:text-slate-100 hover:text-cyan-600 dark:hover:text-cyan-400 hover:underline cursor-pointer text-left"
-              title="View branch drawer"
-            >
+            <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
               {row.original.code}
-            </button>
+            </span>
           ),
         }),
         columnHelper.accessor("name", {
           id: "name",
           header: "Branch Name",
-          size: 220,
+          size: 200,
           minSize: 140,
           cell: ({ row }) => (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedBranchId(row.original.id);
-              }}
-              className="truncate text-slate-700 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 font-medium hover:underline cursor-pointer text-left"
-              title="View branch drawer"
-            >
-              {row.original.name}
-            </button>
+            <span className="group font-medium text-slate-900 dark:text-slate-100 flex items-center gap-1.5 truncate">
+              <span className="truncate">{row.original.name}</span>
+              <Eye className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-cyan-600 transition-opacity shrink-0" />
+            </span>
           ),
         }),
-        columnHelper.accessor("region", { id: "region", header: "Region", size: 140, minSize: 100 }),
-        columnHelper.accessor("city", { id: "city", header: "City", size: 140, minSize: 100 }),
-        columnHelper.display({
-          id: "outlets",
+        columnHelper.accessor("status", {
+          id: "status",
+          header: "Status",
+          size: 110,
+          minSize: 90,
+          cell: ({ row }) => {
+            const { label, badgeClass } = getBranchStatusBadge(row.original.status);
+            return (
+              <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold", badgeClass)}>
+                {label}
+              </span>
+            );
+          },
+        }),
+        columnHelper.accessor("region", { id: "region", header: "Region", size: 120, minSize: 100 }),
+        columnHelper.accessor("city", { id: "city", header: "City", size: 120, minSize: 90 }),
+        columnHelper.accessor("outletCount", {
+          id: "outletCount",
           header: "Outlets",
-          size: 95,
-          minSize: 75,
-          enableSorting: false,
+          size: 105,
+          minSize: 85,
           cell: ({ row }) => {
             const count = row.original.outletCount ?? 0;
             return (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateToMarcom("outlets", row.original.name);
-                }}
-                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-xs text-orange-600 dark:text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 transition-colors cursor-pointer"
-                title={`Jump to Outlets view filtered to ${row.original.name}`}
-              >
-                <Store className="w-3 h-3" />
-                <span>{count}</span>
-              </button>
+              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() => navigateToMarcom("outlets", row.original.name)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold text-xs text-orange-600 dark:text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 transition-colors cursor-pointer"
+                  title={`Jump to Outlets view filtered to ${row.original.name}`}
+                >
+                  <Store className="w-3 h-3" />
+                  <span>{count}</span>
+                </button>
+              </div>
             );
           },
         }),
-        columnHelper.display({
-          id: "mous",
+        columnHelper.accessor("mouCount", {
+          id: "mouCount",
           header: "MOUs",
-          size: 90,
-          minSize: 70,
-          enableSorting: false,
+          size: 95,
+          minSize: 75,
           cell: ({ row }) => {
             const count = row.original.mouCount ?? 0;
             return (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigateToMarcom("mous", row.original.name);
-                }}
-                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-xs text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors cursor-pointer"
-                title={`Jump to MOUs view filtered to ${row.original.name}`}
-              >
-                <FileText className="w-3 h-3" />
-                <span>{count}</span>
-              </button>
+              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() => navigateToMarcom("mous", row.original.name)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-semibold text-xs text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 transition-colors cursor-pointer"
+                  title={`Jump to MOUs view filtered to ${row.original.name}`}
+                >
+                  <FileText className="w-3 h-3" />
+                  <span>{count}</span>
+                </button>
+              </div>
             );
           },
         }),
-        columnHelper.display({
+        columnHelper.accessor("progress", {
           id: "progress",
           header: "Progress",
-          size: 150,
-          minSize: 120,
-          enableSorting: false,
+          size: 130,
+          minSize: 110,
           cell: ({ row }) => {
             const progress = row.original.progress;
             if (progress == null) return <span className="text-slate-400">—</span>;
             const pct = Math.round(Math.min(100, Math.max(0, progress)));
+            const { barClass, textClass } = getBranchProgressColor(pct);
             return (
               <div className="flex items-center gap-2">
                 <div
@@ -221,28 +234,45 @@ export function BranchesView() {
                   aria-label={`Progress ${pct}%`}
                   className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden"
                 >
-                  <div className="h-full rounded-full bg-teal-500" style={{ width: `${pct}%` }} />
+                  <div className={cn("h-full rounded-full transition-all", barClass)} style={{ width: `${pct}%` }} />
                 </div>
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">{pct}%</span>
+                <span className={cn("text-[11px] font-semibold shrink-0", textClass)}>{pct}%</span>
               </div>
             );
           },
         }),
         columnHelper.display({
-          id: "expander",
+          id: "actions",
           header: () => null,
-          size: 40,
-          minSize: 40,
-          maxSize: 40,
+          size: 75,
+          minSize: 65,
+          maxSize: 85,
           enableSorting: false,
-          cell: () => (
-            <div className="flex justify-end">
-              <span className="w-4 h-4 text-slate-400 flex items-center justify-center">›</span>
+          cell: ({ row }) => (
+            <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setSelectedBranchId(row.original.id)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 transition-colors cursor-pointer"
+                title="Open Branch Details Drawer"
+              >
+                <Eye className="w-3.5 h-3.5" />
+              </button>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => setModalBranch(row.original)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  title="Edit Branch"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           ),
         }),
       ]),
-    [navigateToMarcom, setSelectedBranchId],
+    [navigateToMarcom, setSelectedBranchId, canManage]
   );
 
   const handleSaveBranch = async (e: React.FormEvent) => {
@@ -291,6 +321,8 @@ export function BranchesView() {
   return (
     <>
       <MarcomTableShell
+        fixedViewport
+        kpiBar={<KpiSummaryCards items={kpiItems} mobileStrip />}
         data={branches}
         columns={columns}
         getRowId={(row) => row.id}
@@ -302,16 +334,17 @@ export function BranchesView() {
         isLoading={isLoading}
         error={error}
         onRefresh={fetchBranches}
+        onRowClick={(branch) => setSelectedBranchId(branch.id)}
         canDelete={canManage}
         deleteRequiresMessage="Delete requires admin role"
         onDeleteOne={deleteOne}
         canAdd={canAddBranch}
-        onAdd={() => setModalBranch({ code: "", name: "", region: "", city: "", picName: "", picPhone: "", address: "" })}
+        onAdd={() => setModalBranch({ code: "", name: "", region: "", city: "", status: "PENDING", picName: "", picPhone: "", address: "" })}
         addLabel="Add Branch"
         addIcon={Plus}
         addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-2xs cursor-pointer"
         filterBar={
-          <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2.5 text-xs">
             <div className="flex items-center gap-1.5">
               <span className="font-semibold text-slate-500 dark:text-slate-400">Region:</span>
               <select
@@ -328,85 +361,35 @@ export function BranchesView() {
                 ))}
               </select>
             </div>
-            {selectedRegion !== "ALL" && (
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-slate-500 dark:text-slate-400">Status:</span>
+              <select
+                value={selectedStatus}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                aria-label="Filter by status"
+                className="px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="DONE">Done</option>
+                <option value="ON_PROGRESS">In Progress</option>
+                <option value="PENDING">Pending</option>
+              </select>
+            </div>
+            {(selectedRegion !== "ALL" || selectedStatus !== "ALL") && (
               <button
                 type="button"
-                onClick={() => handleRegionChange("ALL")}
+                onClick={() => {
+                  setSelectedRegion("ALL");
+                  setSelectedStatus("ALL");
+                  fetchBranches("ALL", "ALL");
+                }}
                 className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 underline font-medium cursor-pointer"
               >
-                Reset Region
+                Reset Filters
               </button>
             )}
           </div>
         }
-        renderExpanded={(branch) => (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">Address</div>
-                <div className="text-slate-700 dark:text-slate-300">{branch.address || "—"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC</div>
-                <div className="text-slate-700 dark:text-slate-300">{branch.picName || "—"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">PIC Phone</div>
-                <div className="text-slate-700 dark:text-slate-300">{branch.picPhone || "—"}</div>
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigateToMarcom("outlets", branch.name);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors shadow-2xs cursor-pointer"
-                >
-                  <Store className="w-3.5 h-3.5 text-orange-500" />
-                  <span>View Outlets ({branch.outletCount ?? 0})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigateToMarcom("mous", branch.name);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-fuchsia-700 dark:text-fuchsia-300 bg-fuchsia-50 dark:bg-fuchsia-950/40 border border-fuchsia-200 dark:border-fuchsia-800 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/40 transition-colors shadow-2xs cursor-pointer"
-                >
-                  <FileText className="w-3.5 h-3.5 text-fuchsia-500" />
-                  <span>View MOUs ({branch.mouCount ?? 0})</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedBranchId(branch.id);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 transition-colors shadow-2xs cursor-pointer"
-                >
-                  <Building2 className="w-3.5 h-3.5 text-cyan-500" />
-                  <span>Branch Details Drawer</span>
-                </button>
-              </div>
-              {canAddBranch && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setModalBranch(branch);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer"
-                >
-                  <Edit2 className="w-3.5 h-3.5 text-cyan-600" />
-                  <span>Edit Branch</span>
-                </button>
-              )}
-            </div>
-          </>
-        )}
         searchTerm={marcomFilters["branches"] || ""}
         onSearchChange={(q) => setMarcomFilter("branches", q)}
         emptyLabel="No branches found."
