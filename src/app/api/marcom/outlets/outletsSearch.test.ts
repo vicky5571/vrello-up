@@ -1,4 +1,4 @@
-import { test, describe } from "node:test";
+import { test, describe, before, after } from "node:test";
 import assert from "node:assert/strict";
 import {
   buildOutletSearchWhere,
@@ -182,4 +182,143 @@ describe("GET /api/marcom/outlets integration", () => {
     assert.ok(json.data.length <= 100);
   });
 });
+
+describe("POST /api/marcom/outlets brand validation & creation", () => {
+  const testCodes: string[] = [];
+
+  after(async () => {
+    const { prisma } = await import("@/lib/db");
+    if (testCodes.length > 0) {
+      await prisma.outlet.deleteMany({
+        where: { code: { in: testCodes } },
+      });
+    }
+  });
+
+  test("rejects invalid brand with 400", async () => {
+    // @ts-expect-error Node strip-types runner requires explicit extension
+    const { POST } = await import("./route.ts");
+    const req = new Request("http://localhost:3000/api/marcom/outlets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: "TEST-BRAND-INV",
+        name: "Test Invalid Brand",
+        type: "TRADITIONAL",
+        tier: "TIER_1",
+        branchId: "branch-4",
+        brand: "TELKOMSEL",
+      }),
+    });
+    const res = await POST(req);
+    assert.equal(res.status, 400);
+    const json = await res.json();
+    assert.equal(json.error, "Invalid brand");
+  });
+
+  test("creates outlet with brand TRI when specified", async () => {
+    // @ts-expect-error Node strip-types runner requires explicit extension
+    const { POST } = await import("./route.ts");
+    const testCode = `TEST-TRI-${Date.now()}`;
+    testCodes.push(testCode);
+
+    const req = new Request("http://localhost:3000/api/marcom/outlets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: testCode,
+        name: "Test Tri Outlet",
+        type: "TRADITIONAL",
+        tier: "TIER_2",
+        branchId: "branch-4",
+        brand: "TRI",
+      }),
+    });
+    const res = await POST(req);
+    assert.equal(res.status, 201);
+    const json = await res.json();
+    assert.equal(json.brand, "TRI");
+  });
+
+  test("defaults brand to IM3 when omitted", async () => {
+    // @ts-expect-error Node strip-types runner requires explicit extension
+    const { POST } = await import("./route.ts");
+    const testCode = `TEST-DEF-${Date.now()}`;
+    testCodes.push(testCode);
+
+    const req = new Request("http://localhost:3000/api/marcom/outlets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: testCode,
+        name: "Test Default Outlet",
+        type: "TRADITIONAL",
+        tier: "TIER_1",
+        branchId: "branch-4",
+      }),
+    });
+    const res = await POST(req);
+    assert.equal(res.status, 201);
+    const json = await res.json();
+    assert.equal(json.brand, "IM3");
+  });
+});
+
+describe("PATCH /api/marcom/outlets/[id] brand update", () => {
+  let createdOutletId: string;
+  const testCode = `TEST-PATCH-BRAND-${Date.now()}`;
+
+  before(async () => {
+    const { prisma } = await import("@/lib/db");
+    const outlet = await prisma.outlet.create({
+      data: {
+        code: testCode,
+        name: "Test Patch Brand Outlet",
+        type: "TRADITIONAL",
+        tier: "TIER_1",
+        brand: "IM3",
+        branchId: "branch-4",
+      },
+    });
+    createdOutletId = outlet.id;
+  });
+
+  after(async () => {
+    const { prisma } = await import("@/lib/db");
+    if (createdOutletId) {
+      await prisma.outlet.deleteMany({
+        where: { id: createdOutletId },
+      });
+    }
+  });
+
+  test("rejects invalid brand in PATCH with 400", async () => {
+    // @ts-expect-error Node strip-types runner requires explicit extension
+    const { PATCH } = await import("./[id]/route.ts");
+    const req = new Request(`http://localhost:3000/api/marcom/outlets/${createdOutletId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ brand: "XL" }),
+    });
+    const res = await PATCH(req, { params: Promise.resolve({ id: createdOutletId }) });
+    assert.equal(res.status, 400);
+    const json = await res.json();
+    assert.equal(json.error, "Invalid brand");
+  });
+
+  test("updates brand to TRI in PATCH", async () => {
+    // @ts-expect-error Node strip-types runner requires explicit extension
+    const { PATCH } = await import("./[id]/route.ts");
+    const req = new Request(`http://localhost:3000/api/marcom/outlets/${createdOutletId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ brand: "TRI" }),
+    });
+    const res = await PATCH(req, { params: Promise.resolve({ id: createdOutletId }) });
+    assert.equal(res.status, 200);
+    const json = await res.json();
+    assert.equal(json.brand, "TRI");
+  });
+});
+
 

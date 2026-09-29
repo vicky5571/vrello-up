@@ -45,6 +45,7 @@ export function buildOutletPayload(outlet: Partial<MarcomOutlet>): Record<string
     name: outlet.name?.trim(),
     type: outlet.type,
     tier: outlet.tier || "TIER_1",
+    brand: outlet.brand || "IM3",
     branchId: outlet.branchId,
     city: outlet.city?.trim() || "",
     address: outlet.address?.trim() || "",

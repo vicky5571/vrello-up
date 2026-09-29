@@ -88,7 +88,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { code, name, type, tier, branchId, address, city, picName, picPhone, active, latitude, longitude } = body ?? {};
+  const { code, name, type, tier, brand, branchId, address, city, picName, picPhone, active, latitude, longitude } = body ?? {};
   if (!code || !name || !type || !tier || !branchId) {
     return Response.json({ error: "Missing required fields: code, name, type, tier, branchId" }, { status: 400 });
   }
@@ -97,6 +97,9 @@ export async function POST(request: Request) {
   }
   if (!VALID_TIERS.includes(tier)) {
     return Response.json({ error: "Invalid tier" }, { status: 400 });
+  }
+  if (brand !== undefined && brand !== null && brand !== "IM3" && brand !== "TRI") {
+    return Response.json({ error: "Invalid brand" }, { status: 400 });
   }
 
   const parsedLat = typeof latitude === "number" && !Number.isNaN(latitude) ? latitude : null;
@@ -109,6 +112,7 @@ export async function POST(request: Request) {
         name,
         type,
         tier,
+        brand: (brand === "TRI" ? "TRI" : "IM3"),
         branchId,
         address,
         city,

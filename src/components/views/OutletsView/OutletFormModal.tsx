@@ -5,7 +5,7 @@ import { Store, X, MapPin, Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
-import type { OutletItem as MarcomOutlet, OutletType, OutletTier } from "@/types";
+import type { OutletItem as MarcomOutlet, OutletType, OutletTier, Brand } from "@/types";
 import {
   validateOutletForm,
   handleSaveOutletApi,
@@ -41,6 +41,7 @@ function OutletFormModalContent({
 
   const [formOutlet, setFormOutlet] = useState<Partial<MarcomOutlet>>(() => ({
     ...outlet,
+    brand: outlet.brand ?? "IM3",
   }));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -190,7 +191,7 @@ function OutletFormModalContent({
             <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pb-1 border-b border-slate-100 dark:border-slate-800">
               Klasifikasi & PIC / Classification & Contact
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Type *
@@ -243,6 +244,21 @@ function OutletFormModalContent({
                 {errors.tier && (
                   <p className="mt-1 text-[11px] text-rose-500">{errors.tier}</p>
                 )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Brand
+                </label>
+                <select
+                  value={formOutlet.brand ?? "IM3"}
+                  onChange={(e) => {
+                    setFormOutlet({ ...formOutlet, brand: e.target.value as Brand });
+                  }}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                >
+                  <option value="IM3">IM3</option>
+                  <option value="TRI">Tri (3)</option>
+                </select>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

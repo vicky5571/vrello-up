@@ -120,6 +120,17 @@ describe("Outlet Form Helpers", () => {
       assert.equal("latitude" in payloadEmptyStr, false);
       assert.equal("longitude" in payloadEmptyStr, false);
     });
+
+    it("sets brand to IM3 by default and preserves TRI when set", () => {
+      const defaultPayload = buildOutletPayload(sampleOutlet);
+      assert.equal(defaultPayload.brand, "IM3");
+
+      const triPayload = buildOutletPayload({ ...sampleOutlet, brand: "TRI" });
+      assert.equal(triPayload.brand, "TRI");
+
+      const im3Payload = buildOutletPayload({ ...sampleOutlet, brand: "IM3" });
+      assert.equal(im3Payload.brand, "IM3");
+    });
   });
 
   describe("handleSaveOutletApi", () => {

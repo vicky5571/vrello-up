@@ -544,6 +544,7 @@ export function OutletsView() {
                   code: "",
                   name: "",
                   type: "TRADITIONAL",
+                  brand: "IM3",
                   branchId: branches[0]?.id || "",
                   city: "",
                   address: "",

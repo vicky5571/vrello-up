@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireMember } from "@/lib/marcom/auth";
@@ -7,7 +6,8 @@ import { buildOutletEventWhere, buildOutletContentWhere } from "@/lib/marcom/out
 
 const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET"] as const;
 const VALID_TIERS = ["TIER_1", "TIER_2", "TIER_3"] as const;
-const PATCHABLE_FIELDS = ["code", "name", "type", "tier", "branchId", "address", "city", "picName", "picPhone", "active", "latitude", "longitude"] as const;
+const VALID_BRANDS = ["IM3", "TRI"] as const;
+const PATCHABLE_FIELDS = ["code", "name", "type", "tier", "brand", "branchId", "address", "city", "picName", "picPhone", "active", "latitude", "longitude"] as const;
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { searchParams } = new URL(request.url);
@@ -44,7 +44,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   });
 
   if (!outlet) {
-    return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
+    return Response.json({ error: "Outlet not found" }, { status: 404 });
   }
 
   const [events, contents] = await Promise.all([
@@ -61,7 +61,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }),
   ]);
 
-  return NextResponse.json({
+  return Response.json({
     ...outlet,
     events,
     contents,
@@ -96,27 +96,30 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (body?.[field] !== undefined) data[field] = body[field];
   }
   if (data.type !== undefined && !VALID_TYPES.includes(data.type as (typeof VALID_TYPES)[number])) {
-    return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+    return Response.json({ error: "Invalid type" }, { status: 400 });
   }
   if (data.tier !== undefined && !VALID_TIERS.includes(data.tier as (typeof VALID_TIERS)[number])) {
-    return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
+    return Response.json({ error: "Invalid tier" }, { status: 400 });
+  }
+  if (data.brand !== undefined && !VALID_BRANDS.includes(data.brand as (typeof VALID_BRANDS)[number])) {
+    return Response.json({ error: "Invalid brand" }, { status: 400 });
   }
   if (Object.keys(data).length === 0) {
-    return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
+    return Response.json({ error: "No updatable fields provided" }, { status: 400 });
   }
 
   try {
     const outlet = await prisma.outlet.update({ where: { id }, data });
-    return NextResponse.json(outlet);
+    return Response.json(outlet);
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
-      return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
+      return Response.json({ error: "Outlet not found" }, { status: 404 });
     }
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      return NextResponse.json({ error: "Outlet code already exists" }, { status: 409 });
+      return Response.json({ error: "Outlet code already exists" }, { status: 409 });
     }
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
-      return NextResponse.json({ error: "Branch not found" }, { status: 400 });
+      return Response.json({ error: "Branch not found" }, { status: 400 });
     }
     throw e;
   }
@@ -133,10 +136,10 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   const { id } = await params;
   try {
     await prisma.outlet.delete({ where: { id } });
-    return NextResponse.json({ ok: true });
+    return Response.json({ ok: true });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
-      return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
+      return Response.json({ error: "Outlet not found" }, { status: 404 });
     }
     throw e;
   }
