@@ -18,28 +18,31 @@ import { usePlacementMutations } from "./usePlacementMutations";
 import { buildPlacementColumns } from "./placementColumns";
 import { extractPlacementSearchText, PLACEMENT_SEARCH_KEYS } from "./placementSearchHelpers";
 import { PlacementBrandChips, PlacementStatusChips, PlacementViewSwitcher } from "./PlacementFilterControls";
-import type { PlacementStatus, MarcomPlacement } from "@/types";
+import type { PlacementStatus, MarcomPlacement, MarcomMou } from "@/types";
 
 export type { PlacementStatus, MarcomPlacement };
 
 const EMPTY_PLACEMENTS: MarcomPlacement[] = [];
+const EMPTY_MOUS: MarcomMou[] = [];
 
 export function PlacementsView() {
   const { can } = useMarcomPermissions();
   const canManage = can("CREATE_PLACEMENT");
   const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId) || "ws-main";
-  const marcomFilters = useWorkspaceStore((s) => s.marcomFilters);
+  const searchTerm = useWorkspaceStore((s) => s.marcomFilters["placements"] || "");
   const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
   const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
   const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);
 
-  const {
-    fetchOutlets, fetchMaterials, fetchBranches,
-    outlets: storeOutlets, materials: storeMaterials, branches: storeBranches,
-  } = useMarcomDataStore();
+  const storeOutlets = useMarcomDataStore((s) => s.outlets);
+  const storeMaterials = useMarcomDataStore((s) => s.materials);
+  const storeBranches = useMarcomDataStore((s) => s.branches);
+  const fetchOutlets = useMarcomDataStore((s) => s.fetchOutlets);
+  const fetchMaterials = useMarcomDataStore((s) => s.fetchMaterials);
+  const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
   const placements = useMarcomDataStore((s) => s.placementsByWorkspace[activeWorkspaceId] ?? EMPTY_PLACEMENTS);
   const fetchPlacements = useMarcomDataStore((s) => s.fetchPlacements);
-  const storeMous = useMarcomDataStore((s) => s.mousByWorkspace[activeWorkspaceId] ?? []);
+  const storeMous = useMarcomDataStore((s) => s.mousByWorkspace[activeWorkspaceId] ?? EMPTY_MOUS);
 
   const [isLoading, setIsLoading] = useState(() => !Boolean(useMarcomDataStore.getState().placementsByWorkspace[activeWorkspaceId]));
   const [error, setError] = useState<string | null>(null);
@@ -69,9 +72,9 @@ export function PlacementsView() {
   }, [placements, selectedBrand, selectedStatus]);
 
   const mapPlacements = useMemo(() => {
-    const q = (marcomFilters["placements"] || "").trim().toLowerCase();
+    const q = searchTerm.trim().toLowerCase();
     return q ? filteredPlacements.filter((p) => extractPlacementSearchText(p).includes(q)) : filteredPlacements;
-  }, [filteredPlacements, marcomFilters]);
+  }, [filteredPlacements, searchTerm]);
 
   const kpiItems = useMemo(() => buildPlacementKpiItems(filteredPlacements), [filteredPlacements]);
   const columns = useMemo(() => buildPlacementColumns({ navigateToMarcom }), [navigateToMarcom]);
@@ -170,7 +173,7 @@ export function PlacementsView() {
           filterBar={statusFilterChips}
           searchKeys={PLACEMENT_SEARCH_KEYS}
           getSearchableText={extractPlacementSearchText}
-          searchTerm={marcomFilters["placements"] || ""}
+          searchTerm={searchTerm}
           onSearchChange={(q) => setMarcomFilter("placements", q)}
           emptyLabel="No placements found."
         />
@@ -181,7 +184,7 @@ export function PlacementsView() {
           viewSwitcherControls={viewSwitcher}
           brandChips={brandChips}
           statusFilterChips={statusFilterChips}
-          searchTerm={marcomFilters["placements"] || ""}
+          searchTerm={searchTerm}
           onSearchChange={(q) => setMarcomFilter("placements", q)}
           isLoading={isLoading}
           onRefresh={() => loadPlacements(true)}

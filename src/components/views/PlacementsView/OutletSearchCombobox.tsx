@@ -87,7 +87,8 @@ export function OutletSearchCombobox({
   required = false,
   id = "outlet-search-combobox",
 }: OutletSearchComboboxProps) {
-  const { branches, fetchBranches } = useMarcomDataStore();
+  const branches = useMarcomDataStore((s) => s.branches);
+  const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
 
   useEffect(() => {
