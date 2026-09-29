@@ -17,10 +17,20 @@ import { MOU_SEARCH_KEYS } from "./mouSortingHelpers";
 import { MouExpandedRow } from "./MouExpandedRow";
 import { MouFormModal } from "./MouFormModal";
 
+import { calculateMouValidity } from "./mouDateHelpers";
+
 import type { MarcomMou, MouStatus } from "@/types";
 export type { MarcomMou, MouStatus };
 
 const EMPTY_MOUS: MarcomMou[] = [];
+
+const MOU_TYPES = [
+  "Compensation",
+  "Exclusive Branding",
+  "Event Sponsorship",
+  "Space Rental",
+  "Joint Promotion",
+] as const;
 
 const MOU_STATUS_CHIPS: { label: string; value: string }[] = [
   { label: "All", value: "ALL" },
@@ -57,6 +67,10 @@ export function MousView() {
   );
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [filterBranchId, setFilterBranchId] = useState<string>("ALL");
+  const [selectedType, setSelectedType] = useState<string>("ALL");
+  const [urgencyFilter, setUrgencyFilter] = useState<"ALL" | "EXPIRING" | "EXPIRED">("ALL");
+
   const branches = useMemo(
     () => storeBranches.map((b) => ({ id: b.id, name: b.name, code: b.code })),
     [storeBranches]
@@ -72,9 +86,31 @@ export function MousView() {
   const canCreate = can("CREATE_MOU");
 
   const filteredMous = useMemo(() => {
-    if (selectedStatus === "ALL") return mous;
-    return mous.filter((m) => m.status === selectedStatus);
-  }, [mous, selectedStatus]);
+    return mous.filter((m) => {
+      if (selectedStatus !== "ALL" && m.status !== selectedStatus) return false;
+      if (filterBranchId !== "ALL" && m.branchId !== filterBranchId) return false;
+      if (selectedType !== "ALL" && m.mouType !== selectedType) return false;
+      if (urgencyFilter !== "ALL") {
+        const validity = calculateMouValidity(m.startDate, m.endDate);
+        if (urgencyFilter === "EXPIRING" && !validity.isExpiringSoon) return false;
+        if (urgencyFilter === "EXPIRED" && !validity.isExpired) return false;
+      }
+      return true;
+    });
+  }, [mous, selectedStatus, filterBranchId, selectedType, urgencyFilter]);
+
+  const isFiltered =
+    selectedStatus !== "ALL" ||
+    filterBranchId !== "ALL" ||
+    selectedType !== "ALL" ||
+    urgencyFilter !== "ALL";
+
+  const handleResetFilters = () => {
+    setSelectedStatus("ALL");
+    setFilterBranchId("ALL");
+    setSelectedType("ALL");
+    setUrgencyFilter("ALL");
+  };
 
   const loadMous = useCallback(async (force = false) => {
     if (!activeWorkspaceId) return;
@@ -200,7 +236,7 @@ export function MousView() {
             <span>Export</span>
           </button>
         }
-        kpiBar={<KpiSummaryCards items={kpiItems} />}
+        kpiBar={<KpiSummaryCards items={kpiItems} mobileStrip />}
         renderExpanded={(mou) => (
           <MouExpandedRow
             mou={mou}
@@ -229,26 +265,105 @@ export function MousView() {
           />
         )}
         filterBar={
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
-            {MOU_STATUS_CHIPS.map((chip) => {
-              const isActive = selectedStatus === chip.value;
-              return (
-                <button
-                  key={chip.value}
-                  type="button"
-                  onClick={() => handleStatusFilter(chip.value)}
-                  className={cn(
-                    "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
-                    isActive
-                      ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
-                  )}
-                >
-                  {chip.label}
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap items-center gap-2.5 text-xs">
+            <div className="flex items-center gap-1">
+              <span className="font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
+              {MOU_STATUS_CHIPS.map((chip) => {
+                const isActive = selectedStatus === chip.value;
+                return (
+                  <button
+                    key={chip.value}
+                    type="button"
+                    onClick={() => handleStatusFilter(chip.value)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
+                      isActive
+                        ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
+                    )}
+                  >
+                    {chip.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-slate-500 dark:text-slate-400">Branch:</span>
+              <select
+                value={filterBranchId}
+                onChange={(e) => setFilterBranchId(e.target.value)}
+                aria-label="Filter by branch"
+                className="px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer"
+              >
+                <option value="ALL">All Branches</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.code} - {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-slate-500 dark:text-slate-400">Type:</span>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                aria-label="Filter by MOU type"
+                className="px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer"
+              >
+                <option value="ALL">All Types</option>
+                {MOU_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setUrgencyFilter(urgencyFilter === "EXPIRING" ? "ALL" : "EXPIRING")}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1",
+                  urgencyFilter === "EXPIRING"
+                    ? "bg-amber-500 text-white shadow-xs ring-1 ring-amber-600/30"
+                    : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40 hover:bg-amber-100 dark:hover:bg-amber-900/50",
+                )}
+              >
+                <span>⚠️</span>
+                <span>Expiring Soon</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setUrgencyFilter(urgencyFilter === "EXPIRED" ? "ALL" : "EXPIRED")}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1",
+                  urgencyFilter === "EXPIRED"
+                    ? "bg-rose-500 text-white shadow-xs ring-1 ring-rose-600/30"
+                    : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40 hover:bg-rose-100 dark:hover:bg-rose-900/50",
+                )}
+              >
+                <span>🔴</span>
+                <span>Expired</span>
+              </button>
+            </div>
+
+            {isFiltered && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="text-xs text-fuchsia-600 hover:text-fuchsia-700 dark:text-fuchsia-400 underline font-medium cursor-pointer ml-1"
+              >
+                Reset Filters
+              </button>
+            )}
           </div>
         }
         searchTerm={marcomFilters["mous"] || ""}
