@@ -64,14 +64,19 @@ const COLOR_MAP: Record<
 export function KpiSummaryCardsSkeleton({
   count = 4,
   className,
+  mobileStrip = false,
 }: {
   count?: number;
   className?: string;
+  mobileStrip?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-3",
+        "gap-3",
+        mobileStrip
+          ? "flex overflow-x-auto pb-1.5 overscroll-x-contain sm:grid sm:overflow-visible sm:pb-0"
+          : "grid grid-cols-1",
         count === 2 && "sm:grid-cols-2",
         count === 3 && "sm:grid-cols-3",
         count >= 4 && "sm:grid-cols-2 lg:grid-cols-4",
@@ -81,7 +86,10 @@ export function KpiSummaryCardsSkeleton({
       {Array.from({ length: count }).map((_, idx) => (
         <div
           key={idx}
-          className="flex items-center gap-3.5 p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs animate-pulse"
+          className={cn(
+            "flex items-center gap-3.5 p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs animate-pulse",
+            mobileStrip && "shrink-0 min-w-[170px] sm:min-w-0 sm:shrink",
+          )}
         >
           <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-800 shrink-0" />
           <div className="min-w-0 flex-1 space-y-2">
@@ -100,6 +108,7 @@ export interface KpiSummaryCardsProps {
   isLoading?: boolean;
   skeletonCount?: number;
   className?: string;
+  mobileStrip?: boolean;
 }
 
 export function KpiSummaryCards({
@@ -107,9 +116,16 @@ export function KpiSummaryCards({
   isLoading = false,
   skeletonCount = 4,
   className,
+  mobileStrip = false,
 }: KpiSummaryCardsProps) {
   if (isLoading) {
-    return <KpiSummaryCardsSkeleton count={skeletonCount} className={className} />;
+    return (
+      <KpiSummaryCardsSkeleton
+        count={skeletonCount}
+        className={className}
+        mobileStrip={mobileStrip}
+      />
+    );
   }
 
   if (!items || items.length === 0) return null;
@@ -117,7 +133,10 @@ export function KpiSummaryCards({
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-3",
+        "gap-3",
+        mobileStrip
+          ? "flex overflow-x-auto pb-1.5 overscroll-x-contain sm:grid sm:overflow-visible sm:pb-0"
+          : "grid grid-cols-1",
         items.length === 2 && "sm:grid-cols-2",
         items.length === 3 && "sm:grid-cols-3",
         items.length >= 4 && "sm:grid-cols-2 lg:grid-cols-4",
@@ -147,6 +166,7 @@ export function KpiSummaryCards({
             }
             className={cn(
               "flex items-center gap-3.5 p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs transition-all text-left",
+              mobileStrip && "shrink-0 min-w-[170px] sm:min-w-0 sm:shrink",
               isClickable &&
                 "cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs active:scale-[0.99] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
               item.active &&

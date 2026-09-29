@@ -499,7 +499,7 @@ export function Outlet360Drawer({
       {/* Slide-over Drawer */}
       <div className="fixed inset-y-0 right-0 z-50 w-full sm:max-w-xl md:max-w-2xl bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col transform transition-transform animate-in slide-in-from-right duration-250">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+        <div className="shrink-0 p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
               <div
@@ -681,7 +681,7 @@ export function Outlet360Drawer({
         )}
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 overflow-x-auto no-scrollbar gap-1">
+        <div className="shrink-0 flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 overflow-x-auto no-scrollbar gap-1">
           <button
             type="button"
             onClick={() => setActiveTab("overview")}
@@ -750,7 +750,7 @@ export function Outlet360Drawer({
         </div>
 
         {/* Tab Content Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4">
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-2">
               <RefreshCw className="w-6 h-6 animate-spin text-lime-600" />

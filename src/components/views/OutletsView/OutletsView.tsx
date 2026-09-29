@@ -438,127 +438,134 @@ export function OutletsView() {
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="flex h-full w-full min-h-0 flex-col overflow-hidden">
         {/* View Mode Switcher Header */}
-        <div className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold">
-              <Store className="w-4 h-4" />
+        <div className="shrink-0 p-4 pb-0 md:p-6 md:pb-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold">
+                <Store className="w-4 h-4" />
+              </div>
+              <div>
+                <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  Store Command Center
+                </h1>
+                <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                  Pusat data jaringan outlet, integrasi MoU, riwayat branding fisik, dan geolokasi.
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                Store Command Center
-              </h1>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Pusat data jaringan outlet, integrasi MoU, riwayat branding fisik, dan geolokasi.
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
-            <button
-              type="button"
-              onClick={() => setViewMode("table")}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
-                viewMode === "table"
-                  ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-              )}
-            >
-              <TableIcon className="w-3.5 h-3.5" />
-              <span>Tabel Data</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("map")}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
-                viewMode === "map"
-                  ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-              )}
-            >
-              <MapPin className="w-3.5 h-3.5 text-orange-500" />
-              <span>Peta Sebaran</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("approval")}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
-                viewMode === "approval"
-                  ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-              )}
-            >
-              <Clock className="w-3.5 h-3.5 text-amber-500" />
-              <span>Antrean Approval</span>
-              {pendingCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white">
-                  {pendingCount}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
+                  viewMode === "table"
+                    ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+                )}
+              >
+                <TableIcon className="w-3.5 h-3.5" />
+                <span>Tabel Data</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("map")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
+                  viewMode === "map"
+                    ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+                )}
+              >
+                <MapPin className="w-3.5 h-3.5 text-orange-500" />
+                <span>Peta Sebaran</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("approval")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
+                  viewMode === "approval"
+                    ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+                )}
+              >
+                <Clock className="w-3.5 h-3.5 text-amber-500" />
+                <span>Antrean Approval</span>
+                {pendingCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white">
+                    {pendingCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        {viewMode === "approval" ? (
-          <OutletApprovalQueueTab
-            outlets={outlets}
-            branches={branches}
-            workspaceId={activeWorkspaceId}
-            onRefresh={fetchOutlets}
-          />
-        ) : viewMode === "map" ? (
-          <div className="space-y-4">
-            <KpiSummaryCards items={kpiItems} />
-            <OutletMapView
-              outlets={outlets}
-              onSelectOutlet={(id) => setSelectedOutletIdForDrawer(id)}
-              onEditOutlet={(o) => setModalOutlet(o)}
-              canManage={canManage}
-            />
-          </div>
-        ) : (
-          <MarcomTableShell
-            data={outlets}
-            columns={columns}
-            getRowId={(row) => row.id}
-            initialSorting={[{ id: "code", desc: false }]}
-            title="Outlets"
-            titleIcon={Store}
-            entityName="outlet"
-            entityPlural="outlets"
-            isLoading={isLoading}
-            error={error}
-            onRefresh={fetchOutlets}
-            canDelete={canManage}
-            deleteRequiresMessage="Delete requires admin role"
-            onDeleteOne={deleteOne}
-            onDeleteBatch={deleteBatch}
-            canAdd={canAddOutlet}
-            onAdd={() => {
-              if (canManage) {
-                setModalOutlet({
-                  code: "",
-                  name: "",
-                  type: "TRADITIONAL",
-                  brand: "IM3",
-                  branchId: branches[0]?.id || "",
-                  city: "",
-                  address: "",
-                  picName: "",
-                  picPhone: "",
-                });
-              } else {
-                setIsDraftModalOpen(true);
-              }
-            }}
-            addLabel={canManage ? "Add Outlet" : "Ajukan Toko Baru"}
-            addIcon={Plus}
-            addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
-            kpiBar={<KpiSummaryCards items={kpiItems} />}
+        {/* View Content Stage */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {viewMode === "approval" ? (
+            <div className="h-full overflow-y-auto p-4 pt-3 md:p-6 md:pt-4 overscroll-contain">
+              <OutletApprovalQueueTab
+                outlets={outlets}
+                branches={branches}
+                workspaceId={activeWorkspaceId}
+                onRefresh={fetchOutlets}
+              />
+            </div>
+          ) : viewMode === "map" ? (
+            <div className="h-full overflow-y-auto p-4 pt-3 md:p-6 md:pt-4 space-y-4 overscroll-contain">
+              <KpiSummaryCards items={kpiItems} mobileStrip />
+              <OutletMapView
+                outlets={outlets}
+                onSelectOutlet={(id) => setSelectedOutletIdForDrawer(id)}
+                onEditOutlet={(o) => setModalOutlet(o)}
+                canManage={canManage}
+              />
+            </div>
+          ) : (
+            <MarcomTableShell
+              fixedViewport
+              kpiBar={<KpiSummaryCards items={kpiItems} mobileStrip />}
+              data={outlets}
+              columns={columns}
+              getRowId={(row) => row.id}
+              initialSorting={[{ id: "code", desc: false }]}
+              title="Outlets"
+              titleIcon={Store}
+              entityName="outlet"
+              entityPlural="outlets"
+              isLoading={isLoading}
+              error={error}
+              onRefresh={fetchOutlets}
+              canDelete={canManage}
+              deleteRequiresMessage="Delete requires admin role"
+              onDeleteOne={deleteOne}
+              onDeleteBatch={deleteBatch}
+              canAdd={canAddOutlet}
+              onAdd={() => {
+                if (canManage) {
+                  setModalOutlet({
+                    code: "",
+                    name: "",
+                    type: "TRADITIONAL",
+                    brand: "IM3",
+                    branchId: branches[0]?.id || "",
+                    city: "",
+                    address: "",
+                    picName: "",
+                    picPhone: "",
+                  });
+                } else {
+                  setIsDraftModalOpen(true);
+                }
+              }}
+              addLabel={canManage ? "Add Outlet" : "Ajukan Toko Baru"}
+              addIcon={Plus}
+              addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
             filterBar={
               <div className="flex flex-wrap items-center gap-2.5 text-xs">
                 <div className="flex items-center gap-1.5">
@@ -701,6 +708,7 @@ export function OutletsView() {
             emptyLabel="No outlets found."
           />
         )}
+        </div>
       </div>
 
       {/* Outlet 360 Degree Profile Drawer */}

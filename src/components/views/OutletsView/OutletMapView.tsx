@@ -461,7 +461,7 @@ export function OutletMapView({
     <div
       className={cn(
         "relative flex flex-col w-full bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl transition-all duration-300",
-        isFullscreen ? "fixed inset-0 z-50 rounded-none border-0 h-screen" : "h-[750px] min-h-[600px]",
+        isFullscreen ? "fixed inset-0 z-50 rounded-none border-0 h-dvh" : "h-[750px] min-h-[600px]",
       )}
     >
       {/* Top Filter & Control Header */}
@@ -831,7 +831,7 @@ export function OutletMapView({
               Klik salah satu outlet untuk melengkapi titik koordinat latitude & longitude di form profil toko.
             </p>
 
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            <div className="flex-1 overflow-y-auto overscroll-contain space-y-2 pr-1">
               {unmappedOutlets.map((outlet) => (
                 <div
                   key={outlet.id}

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowDown,
@@ -93,6 +93,8 @@ interface MarcomTableShellProps<T extends object & { id: string }> {
   hideHeader?: boolean;
   hideSearch?: boolean;
   noPadding?: boolean;
+  fixedViewport?: boolean;
+  className?: string;
 }
 
 export function MarcomTableShell<T extends object & { id: string }>({
@@ -130,6 +132,8 @@ export function MarcomTableShell<T extends object & { id: string }>({
   hideHeader = false,
   hideSearch = false,
   noPadding = false,
+  fixedViewport = false,
+  className,
 }: MarcomTableShellProps<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -139,6 +143,11 @@ export function MarcomTableShell<T extends object & { id: string }>({
   const [internalFilter, setInternalFilter] = useState("");
   const globalFilter = searchTerm !== undefined ? searchTerm : internalFilter;
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
+
+  const tableCardRef = useRef<HTMLDivElement>(null);
+  const scrollTableToTop = useCallback(() => {
+    tableCardRef.current?.scrollTo({ top: 0 });
+  }, []);
 
   // Pre-compute stable key hash to prevent unnecessary re-indexing if searchKeys is passed as an inline array
   const searchKeysHash = searchKeys ? (searchKeys as string[]).join(",") : "";
@@ -261,10 +270,12 @@ export function MarcomTableShell<T extends object & { id: string }>({
   const filteredCount = filteredData.length;
   const pageCount = Math.max(1, Math.ceil(filteredCount / pagination.pageSize));
   const clampedPageIndex = Math.min(pagination.pageIndex, pageCount - 1);
-  if (clampedPageIndex !== pagination.pageIndex) {
-    // Defer to avoid render-phase setState warning; will correct next render
-    setTimeout(() => setPagination((p) => ({ ...p, pageIndex: clampedPageIndex })), 0);
-  }
+  useEffect(() => {
+    if (clampedPageIndex !== pagination.pageIndex) {
+      setPagination((p) => ({ ...p, pageIndex: clampedPageIndex }));
+    }
+  }, [clampedPageIndex, pagination.pageIndex]);
+
   const start = clampedPageIndex * pagination.pageSize;
   const end = Math.min(start + pagination.pageSize, filteredCount);
   const paginatedRows = allRows.slice(start, end);
@@ -276,16 +287,30 @@ export function MarcomTableShell<T extends object & { id: string }>({
       setInternalFilter(v);
     }
     setPagination((p) => ({ ...p, pageIndex: 0 }));
+    if (fixedViewport) scrollTableToTop();
   };
 
   return (
-    <div className={cn("h-full", noPadding ? "" : "overflow-y-auto p-4 md:p-6")}>
+    <div
+      className={cn(
+        "h-full",
+        fixedViewport && "flex min-h-0 flex-col overflow-hidden",
+        !fixedViewport && !noPadding && "overflow-y-auto p-4 md:p-6",
+        fixedViewport && !noPadding && "p-4 pt-3 md:p-6 md:pt-4",
+        className,
+      )}
+    >
       {/* KPI Summary Cards */}
-      {kpiBar && <div className="mb-4">{kpiBar}</div>}
+      {kpiBar && <div className={cn("mb-4", fixedViewport && "shrink-0 mb-3")}>{kpiBar}</div>}
 
       {/* Header */}
       {!hideHeader && (
-        <div className="flex items-center justify-between mb-3 gap-3">
+        <div
+          className={cn(
+            "flex items-center justify-between mb-3 gap-3",
+            fixedViewport && "shrink-0 flex-wrap",
+          )}
+        >
           <div className="flex items-center gap-2">
             <TitleIcon className="w-4 h-4 text-slate-500" />
             <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</h2>
@@ -335,7 +360,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
       )}
       {/* Mobile search */}
       {!hideHeader && !hideSearch && (
-        <div className="sm:hidden mb-3">
+        <div className={cn("sm:hidden mb-3", fixedViewport && "shrink-0")}>
           <div className="relative flex items-center">
             <Search className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
             <input
@@ -351,14 +376,14 @@ export function MarcomTableShell<T extends object & { id: string }>({
 
       {/* Structured Filter Bar */}
       {filterBar && (
-        <div className="flex flex-wrap items-center gap-2.5 mb-3 p-2 sm:p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60">
+        <div className={cn("flex flex-wrap items-center gap-2.5 mb-3 p-2 sm:p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/60", fixedViewport && "shrink-0")}>
           {filterBar}
         </div>
       )}
 
       {/* Bulk Action Bar */}
       {!renderFloatingBulkBar && selectedRowIds.length > 0 && (
-        <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 px-3 py-1.5 rounded-lg text-xs animate-in fade-in slide-in-from-top-1 duration-150 mb-3">
+        <div className={cn("flex items-center gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 px-3 py-1.5 rounded-lg text-xs animate-in fade-in slide-in-from-top-1 duration-150 mb-3", fixedViewport && "shrink-0")}>
           <span className="font-semibold text-blue-900 dark:text-blue-200">{selectedRowIds.length} selected</span>
           <div className="h-3.5 w-px bg-blue-200 dark:bg-blue-800" />
           {canDelete ? (
@@ -386,13 +411,26 @@ export function MarcomTableShell<T extends object & { id: string }>({
       )}
 
       {/* Table */}
-      <div className="rounded-lg border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#18191B] shadow-2xs overflow-x-auto">
+      <div
+        ref={tableCardRef}
+        className={cn(
+          "rounded-lg border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#18191B] shadow-2xs",
+          fixedViewport
+            ? "min-h-[200px] flex-1 overflow-auto overscroll-contain [scrollbar-gutter:stable]"
+            : "overflow-x-auto",
+        )}
+      >
         <div style={{ minWidth: `${(table as any).getTotalSize()}px` }} role="table" aria-label={title}>
           {table.getHeaderGroups().map((headerGroup) => (
             <div
               key={headerGroup.id}
               role="row"
-              className="flex items-center px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 text-[11px] font-semibold text-slate-500 dark:text-slate-400 select-none"
+              className={cn(
+                "flex items-center px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-800 text-[11px] font-semibold text-slate-500 dark:text-slate-400 select-none",
+                fixedViewport
+                  ? "sticky top-0 z-20 bg-slate-50 dark:bg-[#18191B] shadow-2xs"
+                  : "bg-slate-50/70 dark:bg-slate-800/40",
+              )}
             >
               {headerGroup.headers.map((header) => {
                 const canSort = (header.column as any).getCanSort();
@@ -520,7 +558,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
       </div>
       {/* Pagination */}
       {!isLoading && !error && filteredCount > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 mt-3 px-1 text-xs text-slate-500 dark:text-slate-400">
+        <div className={cn("flex flex-wrap items-center justify-between gap-3 mt-3 px-1 text-xs text-slate-500 dark:text-slate-400", fixedViewport && "shrink-0")}>
           <span>
             Showing {filteredCount === 0 ? 0 : start + 1}–{end} of {filteredCount} {filteredCount === 1 ? entityName : entityPlural}
             {selectedRowIds.length > 0 && ` · ${selectedRowIds.length} selected`}
@@ -530,7 +568,10 @@ export function MarcomTableShell<T extends object & { id: string }>({
               Rows
               <select
                 value={pagination.pageSize}
-                onChange={(e) => setPagination({ pageIndex: 0, pageSize: Number(e.target.value) })}
+                onChange={(e) => {
+                  setPagination({ pageIndex: 0, pageSize: Number(e.target.value) });
+                  if (fixedViewport) scrollTableToTop();
+                }}
                 className="px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 cursor-pointer"
               >
                 {[10, 25, 50, 100].map((n) => (
@@ -539,10 +580,28 @@ export function MarcomTableShell<T extends object & { id: string }>({
               </select>
             </label>
             <span className="tabular-nums">Page {clampedPageIndex + 1} of {pageCount}</span>
-            <button type="button" onClick={() => setPagination((p) => ({ ...p, pageIndex: Math.max(0, p.pageIndex - 1) }))} disabled={clampedPageIndex === 0} className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer" aria-label="Previous page">
+            <button
+              type="button"
+              onClick={() => {
+                setPagination((p) => ({ ...p, pageIndex: Math.max(0, p.pageIndex - 1) }));
+                if (fixedViewport) scrollTableToTop();
+              }}
+              disabled={clampedPageIndex === 0}
+              className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              aria-label="Previous page"
+            >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <button type="button" onClick={() => setPagination((p) => ({ ...p, pageIndex: Math.min(pageCount - 1, p.pageIndex + 1) }))} disabled={clampedPageIndex >= pageCount - 1} className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer" aria-label="Next page">
+            <button
+              type="button"
+              onClick={() => {
+                setPagination((p) => ({ ...p, pageIndex: Math.min(pageCount - 1, p.pageIndex + 1) }));
+                if (fixedViewport) scrollTableToTop();
+              }}
+              disabled={clampedPageIndex >= pageCount - 1}
+              className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              aria-label="Next page"
+            >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
