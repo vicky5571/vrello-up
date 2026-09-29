@@ -43,6 +43,10 @@ import {
 import { FIELD_OPS_LIST_ID } from "@/lib/marcom/marcomIds";
 import { QuarterlyRecapTab } from "./QuarterlyRecapTab";
 import { buildPlacementColumns } from "./placementColumns";
+import {
+  extractPlacementSearchText,
+  PLACEMENT_SEARCH_KEYS,
+} from "./placementSearchHelpers";
 import type { PlacementStatus, MarcomPlacement, MarcomMou, Brand } from "@/types";
 
 export type { PlacementStatus, MarcomPlacement };
@@ -73,6 +77,7 @@ const PLACEMENT_STATUS_CHIPS: { label: string; value: string }[] = [
   { label: "To Do", value: "NOT_STARTED" },
   { label: "In Progress", value: "ON_PROGRESS" },
   { label: "Done", value: "DONE" },
+  { label: "Kendala (Issue)", value: "ISSUE" },
 ];
 
 const EMPTY_PLACEMENTS: MarcomPlacement[] = [];
@@ -141,7 +146,6 @@ export function PlacementsView() {
   const canManage = can("CREATE_PLACEMENT");
 
   const filteredPlacements = useMemo(() => {
-    const query = (marcomFilters["placements"] || "").toLowerCase().trim();
     return placements.filter((p) => {
       if (selectedStatus !== "ALL" && p.status !== selectedStatus) {
         return false;
@@ -152,25 +156,17 @@ export function PlacementsView() {
         if ((target === "TRI" || target === "3") && pBrand !== "3" && pBrand !== "TRI") return false;
         if (target === "IM3" && pBrand !== "IM3") return false;
       }
-      if (!query) return true;
-      const outlet = p.outlet?.name?.toLowerCase() || "";
-      const code = p.outlet?.code?.toLowerCase() || "";
-      const material = p.material?.name?.toLowerCase() || "";
-      const pic = p.picName?.toLowerCase() || "";
-      const notes = p.notes?.toLowerCase() || "";
-      const locNotes = p.locationNotes?.toLowerCase() || "";
-      const brand = (p.brand || "").toLowerCase();
-      return (
-        outlet.includes(query) ||
-        code.includes(query) ||
-        material.includes(query) ||
-        pic.includes(query) ||
-        notes.includes(query) ||
-        locNotes.includes(query) ||
-        brand.includes(query)
-      );
+      return true;
     });
-  }, [placements, marcomFilters, selectedBrand, selectedStatus]);
+  }, [placements, selectedBrand, selectedStatus]);
+
+  const mapPlacements = useMemo(() => {
+    const q = (marcomFilters["placements"] || "").trim().toLowerCase();
+    if (!q) return filteredPlacements;
+    return filteredPlacements.filter((p) =>
+      extractPlacementSearchText(p).includes(q),
+    );
+  }, [filteredPlacements, marcomFilters]);
 
   const kpiItems: KpiCardItem[] = useMemo(() => {
     const kpis = calculatePlacementKPIs(filteredPlacements);
@@ -287,6 +283,13 @@ export function PlacementsView() {
     const next = selectedBrand === brand && brand !== "ALL" ? "ALL" : brand;
     setSelectedBrand(next);
   };
+
+  const handleResetFilters = () => {
+    setSelectedStatus("ALL");
+    setSelectedBrand("ALL");
+  };
+
+  const isFiltered = selectedStatus !== "ALL" || selectedBrand !== "ALL";
 
   const handleOpenAddPlacement = useCallback(() => {
     const firstOutlet = outletsList[0];
@@ -568,7 +571,7 @@ export function PlacementsView() {
           addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer"
           headerExtra={
             <div className="flex items-center gap-2">
-              <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+              <div className="flex items-center overflow-x-auto max-w-full bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shrink-0">
                 {BRAND_CHIPS.map((chip) => {
                   const isActive = selectedBrand === chip.value;
                   return (
@@ -577,14 +580,14 @@ export function PlacementsView() {
                       type="button"
                       onClick={() => handleBrandFilter(chip.value)}
                       className={cn(
-                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer",
                         isActive
                           ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
                           : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
                       )}
                     >
                       {chip.color && (
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: chip.color }} />
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: chip.color }} />
                       )}
                       <span>{chip.label}</span>
                     </button>
@@ -625,8 +628,19 @@ export function PlacementsView() {
                   </button>
                 );
               })}
+              {isFiltered && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="text-xs text-lime-600 hover:text-lime-700 dark:text-lime-400 underline font-medium cursor-pointer ml-2"
+                >
+                  Reset Filters
+                </button>
+              )}
             </div>
           }
+          searchKeys={PLACEMENT_SEARCH_KEYS}
+          getSearchableText={extractPlacementSearchText}
           searchTerm={marcomFilters["placements"] || ""}
           onSearchChange={(q) => setMarcomFilter("placements", q)}
           emptyLabel="No placements found."
@@ -645,7 +659,7 @@ export function PlacementsView() {
                     Placements Map
                   </h1>
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                    {filteredPlacements.length}
+                    {mapPlacements.length}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -743,6 +757,16 @@ export function PlacementsView() {
                   );
                 })}
               </div>
+
+              {isFiltered && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="text-xs text-lime-600 hover:text-lime-700 dark:text-lime-400 underline font-medium cursor-pointer ml-1"
+                >
+                  Reset Filters
+                </button>
+              )}
             </div>
 
             <div className="relative w-full md:w-64">
@@ -768,7 +792,7 @@ export function PlacementsView() {
 
           {/* Interactive Map */}
           <PlacementsMapView
-            placements={filteredPlacements}
+            placements={mapPlacements}
             onEditPlacement={(p) => setModalPlacement(p)}
             onTrackAsTask={handleTrackAsTask}
             canManage={canManage}
