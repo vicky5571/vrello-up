@@ -79,3 +79,15 @@ test("buildShareableTaskUrl constructs clean task deep-link URL", () => {
   const url2 = buildShareableTaskUrl("task-42", "?view=calendar&space=space-1&unknown=ignored");
   assert.equal(url2, "/?view=calendar&space=space-1&task=task-42");
 });
+
+test("parseUrlNavState correctly parses marcom branches deep link with space and list parameters", () => {
+  const query = "?mode=marcom&view=branches&workspace=ws-main&space=space-marcom&list=list-field-ops";
+  const state = parseUrlNavState(query);
+
+  assert.equal(state.appMode, "marcom");
+  assert.equal(state.view, "branches");
+  assert.equal(state.workspaceId, "ws-main");
+  assert.equal(state.spaceId, "space-marcom");
+  assert.equal(state.listId, "list-field-ops");
+});
+

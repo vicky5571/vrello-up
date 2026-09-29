@@ -28,33 +28,46 @@ export function useUrlStateSync() {
   const prevTaskId = useRef<string | null>(selectedTaskId);
   const prevView = useRef<string>(activeView);
 
-  // 1. Initial hydration on mount from URL
+  // 1. Initial hydration on mount from URL and after store rehydration
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const nav = parseUrlNavState(window.location.search);
-    const api = useWorkspaceStore.getState();
+    const applyUrlNavState = () => {
+      const nav = parseUrlNavState(window.location.search);
+      const api = useWorkspaceStore.getState();
 
-    if (nav.appMode && nav.appMode !== api.appMode) {
-      api.setAppMode(nav.appMode);
-    }
-    if (nav.workspaceId && nav.workspaceId !== api.activeWorkspaceId) {
-      api.setActiveWorkspace(nav.workspaceId);
-    }
-    if (nav.spaceId && nav.spaceId !== api.activeSpaceId) {
-      api.setActiveSpace(nav.spaceId);
-    }
-    if (nav.listId !== undefined && nav.listId !== api.activeListId) {
-      api.setActiveList(nav.listId);
-    }
-    if (nav.view && nav.view !== api.activeView) {
-      api.setActiveView(nav.view);
-    }
-    if (nav.taskId) {
-      api.setSelectedTaskId(nav.taskId);
-    }
+      if (nav.appMode && nav.appMode !== api.appMode) {
+        api.setAppMode(nav.appMode);
+      }
+      if (nav.workspaceId && nav.workspaceId !== api.activeWorkspaceId) {
+        api.setActiveWorkspace(nav.workspaceId);
+      }
+      if (nav.spaceId && nav.spaceId !== api.activeSpaceId) {
+        api.setActiveSpace(nav.spaceId);
+      }
+      if (nav.listId !== undefined && nav.listId !== api.activeListId) {
+        api.setActiveList(nav.listId);
+      }
+      if (nav.view && nav.view !== api.activeView) {
+        api.setActiveView(nav.view);
+      }
+      if (nav.taskId) {
+        api.setSelectedTaskId(nav.taskId);
+      }
+    };
+
+    applyUrlNavState();
+
+    // Ensure URL parameters win over localStorage rehydration if hydration completes after mount
+    const unsub = useWorkspaceStore.persist?.onFinishHydration?.(() => {
+      applyUrlNavState();
+    });
 
     isInitialMount.current = false;
+
+    return () => {
+      if (unsub) unsub();
+    };
   }, []);
 
   // 2. Listen to browser Back/Forward (popstate)
@@ -96,7 +109,13 @@ export function useUrlStateSync() {
 
   // 3. Sync state changes to the URL
   useEffect(() => {
-    if (typeof window === "undefined" || isInitialMount.current) return;
+    if (
+      typeof window === "undefined" ||
+      isInitialMount.current ||
+      (useWorkspaceStore.persist?.hasHydrated && !useWorkspaceStore.persist.hasHydrated())
+    ) {
+      return;
+    }
 
     // Skip pushing history if the state change was initiated by browser Back/Forward
     if (isPopstateEvent.current) {
