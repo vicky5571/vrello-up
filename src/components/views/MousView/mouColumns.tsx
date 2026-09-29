@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Building2, Layers, AlertTriangle, Eye, Download, Clock } from "lucide-react";
+import { Store, Building2, Layers, AlertTriangle, Eye, Download, Clock, Check, ChevronRight } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
 import {
   createMarcomColumnHelper,
@@ -27,6 +27,8 @@ export interface MouColumnDeps {
   setMarcomFilter: (view: string, query: string) => void;
   setSelectedBranchId: (id: string | null) => void;
   setViewingDocMou: (mou: MarcomMou) => void;
+  onQuickApprove?: (mou: MarcomMou) => void;
+  onOpenDrawer?: (mou: MarcomMou) => void;
   can: (action: PermissionAction, targetBranchId?: string) => boolean;
 }
 
@@ -35,6 +37,8 @@ export function buildMouColumns({
   setMarcomFilter,
   setSelectedBranchId,
   setViewingDocMou,
+  onQuickApprove,
+  onOpenDrawer,
   can,
 }: MouColumnDeps) {
   return columnHelper.columns([
@@ -344,17 +348,45 @@ export function buildMouColumns({
       },
     }),
     columnHelper.display({
-      id: "expander",
+      id: "actions",
       header: () => null,
-      size: 40,
-      minSize: 40,
-      maxSize: 40,
+      size: 85,
+      minSize: 70,
+      maxSize: 110,
       enableSorting: false,
-      cell: () => (
-        <div className="flex justify-end">
-          <span className="w-4 h-4 text-slate-400 flex items-center justify-center">›</span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const isSubmitted = row.original.status === "SUBMITTED";
+        const canApprove = isSubmitted && can("APPROVE_MOU", row.original.branchId);
+
+        return (
+          <div
+            className="flex items-center justify-end gap-1.5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {canApprove && onQuickApprove && (
+              <button
+                type="button"
+                onClick={() => onQuickApprove(row.original)}
+                aria-label={`Quick Approve MOU ${row.original.partnerName}`}
+                className="inline-flex items-center gap-1 px-2 py-1 min-h-[30px] rounded-md text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-2xs transition-colors cursor-pointer"
+                title="Quick Approve MOU (PIC Cabang / Admin)"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span className="hidden xl:inline">Approve</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onOpenDrawer?.(row.original)}
+              aria-label={`Buka detail MOU ${row.original.partnerName}`}
+              className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-slate-400 hover:text-fuchsia-600 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-950/40 transition-colors cursor-pointer"
+              title="Buka Panel Detail MOU"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        );
+      },
     }),
   ]);
 }

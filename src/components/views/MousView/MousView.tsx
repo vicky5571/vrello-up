@@ -14,7 +14,7 @@ import { transitionMouStatus, deleteMou } from "./mouApi";
 import { buildMouKpiItems } from "./mouKpi";
 import { buildMouColumns } from "./mouColumns";
 import { MOU_SEARCH_KEYS } from "./mouSortingHelpers";
-import { MouExpandedRow } from "./MouExpandedRow";
+import { MouDetailDrawer } from "@/components/mous/MouDetailDrawer";
 import { MouFormModal } from "./MouFormModal";
 
 import { calculateMouValidity } from "./mouDateHelpers";
@@ -81,6 +81,16 @@ export function MousView() {
   );
   const [modalMou, setModalMou] = useState<Partial<MarcomMou> | null>(null);
   const [viewingDocMou, setViewingDocMou] = useState<MarcomMou | null>(null);
+  const [selectedMou, setSelectedMou] = useState<MarcomMou | null>(null);
+
+  useEffect(() => {
+    if (selectedMou) {
+      const fresh = mous.find((m) => m.id === selectedMou.id);
+      if (fresh && fresh !== selectedMou) {
+        setSelectedMou(fresh);
+      }
+    }
+  }, [mous, selectedMou]);
 
   const canManage = can("DELETE_MOU");
   const canCreate = can("CREATE_MOU");
@@ -166,9 +176,11 @@ export function MousView() {
         setMarcomFilter,
         setSelectedBranchId,
         setViewingDocMou,
+        onQuickApprove: (mou) => handleStatusTransition(mou, "APPROVED"),
+        onOpenDrawer: (mou) => setSelectedMou(mou),
         can,
       }),
-    [navigateToMarcom, setMarcomFilter, setSelectedBranchId, setViewingDocMou, can],
+    [navigateToMarcom, setMarcomFilter, setSelectedBranchId, setViewingDocMou, handleStatusTransition, can],
   );
   const deleteOne = useCallback(
     async (id: string) => {
@@ -237,33 +249,7 @@ export function MousView() {
           </button>
         }
         kpiBar={<KpiSummaryCards items={kpiItems} mobileStrip />}
-        renderExpanded={(mou) => (
-          <MouExpandedRow
-            mou={mou}
-            can={can}
-            onStatusTransition={handleStatusTransition}
-            onEdit={(m) => setModalMou(m)}
-            onRenew={(m) => {
-              setModalMou({
-                branchId: m.branchId,
-                outletId: m.outletId,
-                outletName: m.outletName,
-                partnerName: m.partnerName,
-                mouType: m.mouType,
-                startDate: new Date().toISOString().slice(0, 10),
-                endDate: "",
-                picName: m.picName,
-                picPhone: m.picPhone,
-                compensationValue: m.compensationValue,
-                notes: `Perpanjangan (Renewal) dari MOU ${m.partnerName} (berakhir ${m.endDate?.slice(0, 10)})`,
-                status: "DRAFT",
-              });
-            }}
-            onViewDoc={setViewingDocMou}
-            navigateToMarcom={navigateToMarcom}
-            setSelectedBranchId={setSelectedBranchId}
-          />
-        )}
+        onRowClick={(mou) => setSelectedMou(mou)}
         filterBar={
           <div className="flex flex-wrap items-center gap-2.5 text-xs">
             <div className="flex items-center gap-1">
@@ -369,6 +355,38 @@ export function MousView() {
         searchTerm={marcomFilters["mous"] || ""}
         onSearchChange={(q) => setMarcomFilter("mous", q)}
         emptyLabel="No MOUs found."
+      />
+
+      {/* Slide-over Detail Drawer */}
+      <MouDetailDrawer
+        mou={selectedMou}
+        isOpen={Boolean(selectedMou)}
+        onClose={() => setSelectedMou(null)}
+        onStatusTransition={handleStatusTransition}
+        onEdit={(m) => {
+          setSelectedMou(null);
+          setModalMou(m);
+        }}
+        onRenew={(m) => {
+          setSelectedMou(null);
+          setModalMou({
+            branchId: m.branchId,
+            outletId: m.outletId,
+            outletName: m.outletName,
+            partnerName: m.partnerName,
+            mouType: m.mouType,
+            startDate: new Date().toISOString().slice(0, 10),
+            endDate: "",
+            picName: m.picName,
+            picPhone: m.picPhone,
+            compensationValue: m.compensationValue,
+            notes: `Perpanjangan (Renewal) dari MOU ${m.partnerName} (berakhir ${m.endDate?.slice(0, 10)})`,
+            status: "DRAFT",
+          });
+        }}
+        onViewDoc={(m) => setViewingDocMou(m)}
+        navigateToMarcom={navigateToMarcom}
+        setSelectedBranchId={setSelectedBranchId}
       />
 
       {modalMou && (
