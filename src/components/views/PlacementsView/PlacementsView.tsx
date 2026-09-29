@@ -9,7 +9,6 @@ import {
   Plus,
   Edit2,
   CheckSquare,
-  Store,
   X,
   MapPin,
   ExternalLink,
@@ -21,8 +20,6 @@ import {
   CheckCircle2,
   Radio,
   Clock,
-  FileText,
-  AlertTriangle,
   Sparkles,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
@@ -30,14 +27,10 @@ import { useShallow } from "zustand/react/shallow";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn, formatIDR } from "@/lib/utils";
-import {
-  MarcomTableShell,
-  createMarcomColumnHelper,
-} from "@/components/views/shared/MarcomTableShell";
+import { MarcomTableShell } from "@/components/views/shared/MarcomTableShell";
 import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
 import { calculatePlacementKPIs } from "@/lib/marcom/placementAnalytics";
 import {
-  isPermanentMaterial,
   findAvailableMousForOutlet,
   type MouSummaryInfo,
 } from "@/lib/marcom/placementMouBridge";
@@ -46,13 +39,14 @@ import { PlacementFormModal } from "./PlacementFormModal";
 import { parsePlacementPhotos } from "@/lib/marcom/photoUtils";
 import { findOutletCoordinates } from "@/lib/marcom/outletInherit";
 import { buildGoogleMapsUrl, isValidCoordinate } from "@/lib/marcom/locationUtils";
-import { getBrandMeta, normalizeBrand } from "@/lib/marcom/brandUtils";
+import { normalizeBrand } from "@/lib/marcom/brandUtils";
 import {
   buildPlacementTaskPayload,
   syncTaskOnPlacementStatusChange,
 } from "@/lib/tasks/placementTaskSync";
 import { FIELD_OPS_LIST_ID } from "@/lib/marcom/marcomIds";
 import { QuarterlyRecapTab } from "./QuarterlyRecapTab";
+import { buildPlacementColumns } from "./placementColumns";
 import type { PlacementStatus, MarcomPlacement, MarcomMou, Brand } from "@/types";
 
 export type { PlacementStatus, MarcomPlacement };
@@ -72,8 +66,6 @@ const PlacementsMapView = dynamic(
   },
 );
 
-const columnHelper = createMarcomColumnHelper<MarcomPlacement>();
-
 const BRAND_CHIPS: { label: string; value: string; color?: string }[] = [
   { label: "All Brands", value: "ALL" },
   { label: "IM3", value: "IM3", color: "#EAB308" },
@@ -86,13 +78,6 @@ const PLACEMENT_STATUS_CHIPS: { label: string; value: string }[] = [
   { label: "In Progress", value: "ON_PROGRESS" },
   { label: "Done", value: "DONE" },
 ];
-
-const STATUS_STYLES: Record<PlacementStatus, string> = {
-  NOT_STARTED: "bg-slate-500/10 text-slate-500 dark:text-slate-400",
-  ON_PROGRESS: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  DONE: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  ISSUE: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-};
 
 const EMPTY_PLACEMENTS: MarcomPlacement[] = [];
 const EMPTY_MOUS: MarcomMou[] = [];
@@ -341,159 +326,7 @@ export function PlacementsView() {
   }, [outletsList, materialsList, placements, mousList]);
 
   const columns = useMemo(
-    () =>
-      columnHelper.columns([
-        columnHelper.display({
-          id: "select",
-          header: ({ table }) => (
-            <div className="flex items-center justify-center">
-              <input type="checkbox" aria-label="Select all placements" checked={table.getIsAllRowsSelected()} ref={(el) => { if (el) el.indeterminate = table.getIsSomeRowsSelected(); }} onChange={table.getToggleAllRowsSelectedHandler()} className="table-row-select" />
-            </div>
-          ),
-          cell: ({ row }) => (
-            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-              <input type="checkbox" aria-label={`Select placement ${row.original.id}`} checked={row.getIsSelected()} disabled={!row.getCanSelect()} onChange={row.getToggleSelectedHandler()} className="table-row-select" />
-            </div>
-          ),
-          size: 36, minSize: 36, maxSize: 36, enableSorting: false,
-        }),
-        columnHelper.display({
-          id: "outlet",
-          header: "Outlet",
-          size: 220, minSize: 140,
-          cell: ({ row }) => {
-            const outletName = row.original.outlet?.name;
-            return (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (outletName) {
-                    navigateToMarcom("outlets", outletName);
-                  }
-                }}
-                className="truncate font-semibold text-slate-900 dark:text-slate-100 hover:text-orange-600 dark:hover:text-orange-400 hover:underline cursor-pointer flex items-center gap-1.5 text-left"
-                title={outletName ? `Jump to Outlets view for "${outletName}"` : undefined}
-              >
-                <Store className="w-3.5 h-3.5 text-orange-500 shrink-0" />
-                <span className="truncate">{outletName ?? row.original.outletId}</span>
-              </button>
-            );
-          },
-        }),
-        columnHelper.display({
-          id: "brand",
-          header: "Brand",
-          size: 110,
-          minSize: 90,
-          cell: ({ row }) => {
-            const bMeta = getBrandMeta(row.original.brand);
-            return (
-              <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold", bMeta.badgeClass)}>
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: bMeta.color }} />
-                <span>{bMeta.label}</span>
-              </span>
-            );
-          },
-        }),
-        columnHelper.display({
-          id: "material",
-          header: "Material",
-          size: 190, minSize: 130, enableSorting: false,
-          cell: ({ row }) => <span className="truncate text-slate-700 dark:text-slate-300">{row.original.material?.name ?? row.original.materialId}</span>,
-        }),
-        columnHelper.display({
-          id: "mou",
-          header: "MoU / Legal",
-          size: 180, minSize: 130, enableSorting: false,
-          cell: ({ row }) => {
-            const p = row.original;
-            const mou = p.mou;
-            const isPerm = isPermanentMaterial(p.material);
-
-            if (mou) {
-              const isApproved = mou.status === "APPROVED";
-              return (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigateToMarcom("mous", mou.partnerName || mou.id);
-                  }}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold transition-colors cursor-pointer hover:underline",
-                    isApproved
-                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                      : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                  )}
-                  title={`Buka MoU: ${mou.partnerName || mou.id} (${mou.status})`}
-                >
-                  <FileText className="w-3 h-3 shrink-0" />
-                  <span className="truncate max-w-[100px]">{mou.partnerName || `MoU #${mou.id.slice(0, 6)}`}</span>
-                  <span className="text-[9px] uppercase font-bold opacity-80">({mou.status})</span>
-                </button>
-              );
-            }
-
-            if (isPerm) {
-              return (
-                <span
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                  title="Material permanen/sewa ini belum ditautkan ke MoU aktif"
-                >
-                  <AlertTriangle className="w-2.5 h-2.5 shrink-0" />
-                  <span>No MoU</span>
-                </span>
-              );
-            }
-
-            return <span className="text-slate-400 text-xs">—</span>;
-          },
-        }),
-        columnHelper.accessor("status", {
-          id: "status",
-          header: "Status",
-          size: 130, minSize: 110,
-          cell: ({ row }) => {
-            const label =
-              row.original.status === "NOT_STARTED"
-                ? "To Do"
-                : row.original.status === "ON_PROGRESS"
-                ? "In Progress"
-                : row.original.status === "DONE"
-                ? "Done"
-                : row.original.status.replaceAll("_", " ");
-            return (
-              <span
-                className={cn(
-                  "inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold",
-                  STATUS_STYLES[row.original.status] ?? STATUS_STYLES.NOT_STARTED,
-                )}
-              >
-                {label}
-              </span>
-            );
-          },
-        }),
-        columnHelper.display({
-          id: "date",
-          header: "Date",
-          size: 120, minSize: 100, enableSorting: false,
-          cell: ({ row }) => <span className="text-slate-500 dark:text-slate-400">{row.original.date ? new Date(row.original.date).toLocaleDateString() : "—"}</span>,
-        }),
-        columnHelper.accessor("cost", {
-          id: "cost",
-          header: "Cost",
-          size: 140, minSize: 110,
-          cell: ({ row }) => <span className="text-slate-700 dark:text-slate-300">{typeof row.original.cost === "number" ? formatIDR(row.original.cost) : "—"}</span>,
-        }),
-        columnHelper.display({
-          id: "expander",
-          header: () => null,
-          size: 40, minSize: 40, maxSize: 40, enableSorting: false,
-          cell: () => <div className="flex justify-end"><span className="w-4 h-4 text-slate-400 flex items-center justify-center">›</span></div>,
-        }),
-      ]),
+    () => buildPlacementColumns({ navigateToMarcom }),
     [navigateToMarcom],
   );
 
