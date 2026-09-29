@@ -81,7 +81,7 @@ function OutletFormModalContent({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-lg sm:max-w-xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Store className="w-4 h-4 text-orange-600" />
@@ -95,41 +95,45 @@ function OutletFormModalContent({
             <X className="w-4 h-4" />
           </button>
         </div>
-        <form onSubmit={handleSaveOutlet} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Outlet Code *
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. OUT-001"
-                value={formOutlet.code || ""}
-                onChange={(e) => setFormOutlet({ ...formOutlet, code: e.target.value })}
-                className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
-              />
+        <form onSubmit={handleSaveOutlet} className="space-y-4">
+          {/* Section 1: Identitas Outlet */}
+          <div className="space-y-3">
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pb-1 border-b border-slate-100 dark:border-slate-800">
+              Identitas Outlet / Outlet Identity
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Parent Branch *
+                </label>
+                <select
+                  required
+                  value={formOutlet.branchId || ""}
+                  onChange={(e) => setFormOutlet({ ...formOutlet, branchId: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                >
+                  <option value="">Select Branch...</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({b.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Outlet Code *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. OUT-001"
+                  value={formOutlet.code || ""}
+                  onChange={(e) => setFormOutlet({ ...formOutlet, code: e.target.value })}
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Parent Branch *
-              </label>
-              <select
-                required
-                value={formOutlet.branchId || ""}
-                onChange={(e) => setFormOutlet({ ...formOutlet, branchId: e.target.value })}
-                className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
-              >
-                <option value="">Select Branch...</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name} ({b.code})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Outlet Name *
@@ -143,18 +147,24 @@ function OutletFormModalContent({
                 className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
               />
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-3">
+          {/* Section 2: Klasifikasi & PIC */}
+          <div className="space-y-3">
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pb-1 border-b border-slate-100 dark:border-slate-800">
+              Klasifikasi & PIC / Classification & Contact
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Type <span className="text-red-500">*</span>
+                  Type *
                 </label>
                 <select
                   value={formOutlet.type ?? "TRADITIONAL"}
                   onChange={(e) =>
                     setFormOutlet({ ...formOutlet, type: e.target.value as OutletType })
                   }
-                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
                 >
                   <option value="TRADITIONAL">Traditional</option>
                   <option value="MODERN_RETAIL">Modern Retail</option>
@@ -164,36 +174,22 @@ function OutletFormModalContent({
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  City
+                  Tier *
                 </label>
-                <input
-                  type="text"
-                  value={formOutlet.city ?? ""}
-                  onChange={(e) => setFormOutlet({ ...formOutlet, city: e.target.value })}
-                  placeholder="e.g. Semarang"
-                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
-                />
+                <select
+                  value={formOutlet.tier ?? "TIER_1"}
+                  onChange={(e) =>
+                    setFormOutlet({ ...formOutlet, tier: e.target.value as OutletTier })
+                  }
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                >
+                  <option value="TIER_1">Tier 1</option>
+                  <option value="TIER_2">Tier 2</option>
+                  <option value="TIER_3">Tier 3</option>
+                </select>
               </div>
             </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Tier
-              </label>
-              <select
-                value={formOutlet.tier ?? "TIER_1"}
-                onChange={(e) =>
-                  setFormOutlet({ ...formOutlet, tier: e.target.value as OutletTier })
-                }
-                className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
-              >
-                <option value="TIER_1">Tier 1</option>
-                <option value="TIER_2">Tier 2</option>
-                <option value="TIER_3">Tier 3</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   PIC Name
@@ -203,7 +199,7 @@ function OutletFormModalContent({
                   value={formOutlet.picName ?? ""}
                   onChange={(e) => setFormOutlet({ ...formOutlet, picName: e.target.value })}
                   placeholder="e.g. Budi"
-                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                 />
               </div>
               <div>
@@ -211,15 +207,33 @@ function OutletFormModalContent({
                   PIC Phone
                 </label>
                 <input
-                  type="text"
+                  type="tel"
                   value={formOutlet.picPhone ?? ""}
                   onChange={(e) => setFormOutlet({ ...formOutlet, picPhone: e.target.value })}
                   placeholder="e.g. 08123456789"
-                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
                 />
               </div>
             </div>
+          </div>
 
+          {/* Section 3: Lokasi & GPS */}
+          <div className="space-y-3">
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pb-1 border-b border-slate-100 dark:border-slate-800">
+              Lokasi & GPS / Location & Coordinates
+            </h3>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                City
+              </label>
+              <input
+                type="text"
+                value={formOutlet.city ?? ""}
+                onChange={(e) => setFormOutlet({ ...formOutlet, city: e.target.value })}
+                placeholder="e.g. Semarang"
+                className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Address
@@ -229,7 +243,7 @@ function OutletFormModalContent({
                 value={formOutlet.address ?? ""}
                 onChange={(e) => setFormOutlet({ ...formOutlet, address: e.target.value })}
                 placeholder="Full physical street address..."
-                className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
+                className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500"
               />
             </div>
 
