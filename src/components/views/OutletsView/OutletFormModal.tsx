@@ -133,10 +133,14 @@ function OutletFormModalContent({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Parent Branch *
+                <label
+                  htmlFor="outlet-branch"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Parent Branch <span className="text-rose-500 ml-0.5">*</span>
                 </label>
                 <select
+                  id="outlet-branch"
                   value={formOutlet.branchId || ""}
                   onChange={(e) => {
                     setFormOutlet({ ...formOutlet, branchId: e.target.value });
@@ -161,10 +165,14 @@ function OutletFormModalContent({
                 )}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Outlet Code *
+                <label
+                  htmlFor="outlet-code"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Outlet Code <span className="text-rose-500 ml-0.5">*</span>
                 </label>
                 <input
+                  id="outlet-code"
                   type="text"
                   placeholder="e.g. OUT-001"
                   value={formOutlet.code || ""}
@@ -185,10 +193,14 @@ function OutletFormModalContent({
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Outlet Name *
+              <label
+                htmlFor="outlet-name"
+                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+              >
+                Outlet Name <span className="text-rose-500 ml-0.5">*</span>
               </label>
               <input
+                id="outlet-name"
                 type="text"
                 placeholder="e.g. Toko Berkah Mandiri"
                 value={formOutlet.name || ""}
@@ -216,10 +228,14 @@ function OutletFormModalContent({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Type *
+                <label
+                  htmlFor="outlet-type"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Type <span className="text-rose-500 ml-0.5">*</span>
                 </label>
                 <select
+                  id="outlet-type"
                   value={formOutlet.type || ""}
                   onChange={(e) => {
                     setFormOutlet({ ...formOutlet, type: e.target.value as OutletType });
@@ -243,10 +259,14 @@ function OutletFormModalContent({
                 )}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Tier *
+                <label
+                  htmlFor="outlet-tier"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
+                  Tier <span className="text-rose-500 ml-0.5">*</span>
                 </label>
                 <select
+                  id="outlet-tier"
                   value={formOutlet.tier || ""}
                   onChange={(e) => {
                     setFormOutlet({ ...formOutlet, tier: e.target.value as OutletTier });
@@ -269,10 +289,14 @@ function OutletFormModalContent({
                 )}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label
+                  htmlFor="outlet-brand"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   Brand
                 </label>
                 <select
+                  id="outlet-brand"
                   value={formOutlet.brand ?? "IM3"}
                   onChange={(e) => {
                     setFormOutlet({ ...formOutlet, brand: e.target.value as Brand });
@@ -286,10 +310,14 @@ function OutletFormModalContent({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label
+                  htmlFor="outlet-pic-name"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   PIC Name
                 </label>
                 <input
+                  id="outlet-pic-name"
                   type="text"
                   value={formOutlet.picName ?? ""}
                   onChange={(e) => setFormOutlet({ ...formOutlet, picName: e.target.value })}
@@ -298,10 +326,14 @@ function OutletFormModalContent({
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label
+                  htmlFor="outlet-pic-phone"
+                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+                >
                   PIC Phone
                 </label>
                 <input
+                  id="outlet-pic-phone"
                   type="tel"
                   value={formOutlet.picPhone ?? ""}
                   onChange={(e) => setFormOutlet({ ...formOutlet, picPhone: e.target.value })}
@@ -318,10 +350,14 @@ function OutletFormModalContent({
               Lokasi & GPS / Location & Coordinates
             </h3>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                htmlFor="outlet-city"
+                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+              >
                 City
               </label>
               <input
+                id="outlet-city"
                 type="text"
                 value={formOutlet.city ?? ""}
                 onChange={(e) => setFormOutlet({ ...formOutlet, city: e.target.value })}
@@ -330,10 +366,14 @@ function OutletFormModalContent({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label
+                htmlFor="outlet-address"
+                className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
+              >
                 Address
               </label>
               <textarea
+                id="outlet-address"
                 rows={2}
                 value={formOutlet.address ?? ""}
                 onChange={(e) => setFormOutlet({ ...formOutlet, address: e.target.value })}
@@ -373,7 +413,11 @@ function OutletFormModalContent({
                 </div>
               </div>
               <div>
+                <label htmlFor="outlet-quick-paste" className="sr-only">
+                  Quick paste coordinates
+                </label>
                 <input
+                  id="outlet-quick-paste"
                   type="text"
                   value={quickPasteCoord}
                   onChange={(e) => handleQuickPasteCoord(e.target.value)}
@@ -390,8 +434,14 @@ function OutletFormModalContent({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <span className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">Latitude</span>
+                  <label
+                    htmlFor="outlet-latitude"
+                    className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5"
+                  >
+                    Latitude
+                  </label>
                   <input
+                    id="outlet-latitude"
                     type="number"
                     step="any"
                     value={formOutlet.latitude ?? ""}
@@ -406,8 +456,14 @@ function OutletFormModalContent({
                   />
                 </div>
                 <div>
-                  <span className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">Longitude</span>
+                  <label
+                    htmlFor="outlet-longitude"
+                    className="block text-[10px] text-slate-500 dark:text-slate-400 mb-0.5"
+                  >
+                    Longitude
+                  </label>
                   <input
+                    id="outlet-longitude"
                     type="number"
                     step="any"
                     value={formOutlet.longitude ?? ""}

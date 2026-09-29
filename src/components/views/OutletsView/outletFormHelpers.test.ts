@@ -359,5 +359,67 @@ describe("Outlet Form Helpers", () => {
       assert.equal(parseCoordinateString("-6.9932, -180.0001"), null);
     });
   });
+
+  describe("Accessibility — Label/Input Linking & Required Indicators", () => {
+    it("wires htmlFor and id on all 13 form controls", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      const expectedFieldIds = [
+        "outlet-branch",
+        "outlet-code",
+        "outlet-name",
+        "outlet-type",
+        "outlet-tier",
+        "outlet-brand",
+        "outlet-pic-name",
+        "outlet-pic-phone",
+        "outlet-city",
+        "outlet-address",
+        "outlet-quick-paste",
+        "outlet-latitude",
+        "outlet-longitude",
+      ];
+
+      for (const fieldId of expectedFieldIds) {
+        assert.ok(
+          modalContent.includes(`htmlFor="${fieldId}"`),
+          `Expected htmlFor="${fieldId}" to exist on a label`
+        );
+        assert.ok(
+          modalContent.includes(`id="${fieldId}"`),
+          `Expected id="${fieldId}" to exist on an input/select/textarea`
+        );
+      }
+    });
+
+    it("standardizes required indicators with rose-500 asterisk and removes raw asterisks", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      const requiredAsterisk = '<span className="text-rose-500 ml-0.5">*</span>';
+      const occurrences = modalContent.split(requiredAsterisk).length - 1;
+      // Exactly 5 required fields: branch, code, name, type, tier
+      assert.equal(occurrences, 5, "Expected exactly 5 required field asterisks");
+
+      // Verify no raw asterisks in labels
+      assert.ok(!modalContent.includes("Parent Branch *"));
+      assert.ok(!modalContent.includes("Outlet Code *"));
+      assert.ok(!modalContent.includes("Outlet Name *"));
+      assert.ok(!modalContent.includes("Type *"));
+      assert.ok(!modalContent.includes("Tier *"));
+    });
+  });
 });
+
 
