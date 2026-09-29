@@ -1,5 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import { formatTierAndBrand, formatOutletCoordinates } from "./outletRowHelpers";
 
 describe("outletRowHelpers", () => {
@@ -36,5 +38,30 @@ describe("outletRowHelpers", () => {
       assert.equal(formatOutletCoordinates(undefined, undefined), "Belum disetel");
       assert.equal(formatOutletCoordinates(-6.2, null), "Belum disetel");
     });
+  });
+});
+
+describe("OutletExpandedRow structural contracts", () => {
+  const filePath = path.resolve(
+    process.cwd(),
+    "src/components/views/OutletsView/OutletExpandedRow.tsx",
+  );
+
+  it("exports OutletExpandedRow component", () => {
+    assert.ok(fs.existsSync(filePath), "OutletExpandedRow.tsx must exist");
+    const content = fs.readFileSync(filePath, "utf-8");
+    assert.ok(content.includes("export function OutletExpandedRow"), "Must export OutletExpandedRow");
+  });
+
+  it("replaces redundant Status MoU card with Tier & Brand", () => {
+    const content = fs.readFileSync(filePath, "utf-8");
+    assert.ok(content.includes("Tier & Brand"), "Must display Tier & Brand card header");
+    assert.ok(!content.includes("Status MoU"), "Must not display duplicate Status MoU card");
+  });
+
+  it("provides MoUs quick-jump action button with navigateToMarcom", () => {
+    const content = fs.readFileSync(filePath, "utf-8");
+    assert.ok(content.includes('navigateToMarcom("mous", outlet.name)'), "Must trigger MoU navigation");
+    assert.ok(content.includes("MoUs ("), "Must display MoU count in button label");
   });
 });
