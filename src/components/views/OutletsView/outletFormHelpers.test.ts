@@ -7,6 +7,7 @@ import {
   getCurrentGpsLocation,
   parseCoordinateString,
   resetOutletFormForNextEntry,
+  generateSuggestedOutletCode,
 } from "./outletFormHelpers";
 import type { OutletItem as MarcomOutlet } from "@/types";
 
@@ -576,6 +577,131 @@ describe("Outlet Form Helpers", () => {
       assert.ok(
         modalContent.includes('document.getElementById("outlet-code")?.focus()'),
         "Expected focus on outlet-code after reset"
+      );
+    });
+  });
+
+  describe("generateSuggestedOutletCode", () => {
+    it("formats correctly with provided branch code (e.g. BR-001 -> OUT-BR001-####)", () => {
+      const code = generateSuggestedOutletCode("BR-001");
+      assert.match(code, /^OUT-BR001-\d{4}$/);
+    });
+
+    it("strips non-alphanumeric characters and converts to uppercase", () => {
+      const code = generateSuggestedOutletCode("smg_north #01");
+      assert.match(code, /^OUT-SMGNORTH01-\d{4}$/);
+    });
+
+    it("handles empty or missing branch code gracefully by defaulting to GEN (OUT-GEN-####)", () => {
+      const codeFromUndefined = generateSuggestedOutletCode(undefined);
+      assert.match(codeFromUndefined, /^OUT-GEN-\d{4}$/);
+
+      const codeFromEmpty = generateSuggestedOutletCode("");
+      assert.match(codeFromEmpty, /^OUT-GEN-\d{4}$/);
+
+      const codeFromWhitespace = generateSuggestedOutletCode("   ");
+      assert.match(codeFromWhitespace, /^OUT-GEN-\d{4}$/);
+
+      const codeFromSpecialChars = generateSuggestedOutletCode("---!@#$$%^^");
+      assert.match(codeFromSpecialChars, /^OUT-GEN-\d{4}$/);
+    });
+
+    it("generates a random 4-digit numeric suffix between 1000 and 9999", () => {
+      for (let i = 0; i < 50; i++) {
+        const code = generateSuggestedOutletCode("BRANCH");
+        const parts = code.split("-");
+        assert.equal(parts.length, 3);
+        assert.equal(parts[0], "OUT");
+        assert.equal(parts[1], "BRANCH");
+        const suffix = Number(parts[2]);
+        assert.ok(suffix >= 1000 && suffix <= 9999, `Suffix ${suffix} must be in [1000, 9999]`);
+      }
+    });
+  });
+
+  describe("Outlet Code Auto-Generation Hint Modal Integration", () => {
+    it("imports Sparkles from lucide-react and generateSuggestedOutletCode from helpers", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      assert.ok(
+        modalContent.includes("Sparkles") && modalContent.includes('from "lucide-react"'),
+        "Expected Sparkles to be imported from lucide-react"
+      );
+      assert.ok(
+        modalContent.includes("generateSuggestedOutletCode") &&
+          modalContent.includes('from "./outletFormHelpers"'),
+        "Expected generateSuggestedOutletCode to be imported from helpers"
+      );
+    });
+
+    it("determines selected branch and computes suggestedCode when branch is selected and code is empty", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      assert.ok(
+        modalContent.includes("branches.find((b) => b.id === formOutlet.branchId)"),
+        "Expected modal to find selected branch by formOutlet.branchId"
+      );
+      assert.ok(
+        modalContent.includes("generateSuggestedOutletCode(selectedBranch?.code)"),
+        "Expected modal to call generateSuggestedOutletCode with selected branch code"
+      );
+      assert.ok(
+        modalContent.includes("!formOutlet.code?.trim() && suggestedCode"),
+        "Expected modal to conditionally display hint when code is empty and suggestedCode exists"
+      );
+    });
+
+    it("renders hint with Suggested label, monospace code, and click handler applying code", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      assert.ok(
+        modalContent.includes("<span>Suggested:</span>"),
+        "Expected modal to render 'Suggested:' text"
+      );
+      assert.ok(
+        modalContent.includes("setFormOutlet((prev) => ({ ...prev, code: suggestedCode }))"),
+        "Expected clicking suggestion to apply suggestedCode into formOutlet.code"
+      );
+      assert.ok(
+        modalContent.includes("if (errors.code) setErrors((prev) => ({ ...prev, code: \"\" }))"),
+        "Expected clicking suggestion to clear errors.code"
+      );
+      assert.ok(
+        modalContent.includes("<Sparkles className=\"w-2.5 h-2.5\" />"),
+        "Expected Sparkles icon inside suggestion button"
+      );
+    });
+
+    it("increments suggestionSeed in isAddAnother flow to ensure fresh code for next outlet", async () => {
+      const fs = await import("node:fs");
+      const path = await import("node:path");
+      const modalFilePath = path.resolve(
+        process.cwd(),
+        "src/components/views/OutletsView/OutletFormModal.tsx"
+      );
+      const modalContent = fs.readFileSync(modalFilePath, "utf-8");
+
+      assert.ok(
+        modalContent.includes("setSuggestionSeed((prev) => prev + 1)"),
+        "Expected suggestionSeed to be incremented during Save & Add Another"
       );
     });
   });

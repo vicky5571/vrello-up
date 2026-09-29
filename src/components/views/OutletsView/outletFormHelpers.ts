@@ -154,4 +154,11 @@ export function resetOutletFormForNextEntry(
   };
 }
 
+export function generateSuggestedOutletCode(branchCode?: string): string {
+  const cleanBranch = (branchCode || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase() || "GEN";
+  // generates a clean recognizable prefix e.g. OUT-BR001-XXXX or OUT-SMG-XXXX
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  return `OUT-${cleanBranch}-${randomSuffix}`;
+}
+
 

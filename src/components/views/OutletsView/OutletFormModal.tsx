@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Store, X, MapPin, Navigation, ExternalLink, Loader2 } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Store, X, MapPin, Navigation, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
@@ -12,6 +12,7 @@ import {
   getCurrentGpsLocation,
   parseCoordinateString,
   resetOutletFormForNextEntry,
+  generateSuggestedOutletCode,
 } from "./outletFormHelpers";
 
 export interface OutletFormModalProps {
@@ -49,6 +50,13 @@ function OutletFormModalContent({
   const [isSaving, setIsSaving] = useState(false);
   const [isLocatingInModal, setIsLocatingInModal] = useState(false);
   const [quickPasteCoord, setQuickPasteCoord] = useState("");
+  const [suggestionSeed, setSuggestionSeed] = useState(0);
+
+  const selectedBranch = branches.find((b) => b.id === formOutlet.branchId);
+  const suggestedCode = useMemo(() => {
+    if (!formOutlet.branchId || Boolean(formOutlet.code?.trim())) return "";
+    return generateSuggestedOutletCode(selectedBranch?.code);
+  }, [formOutlet.branchId, formOutlet.code, selectedBranch?.code, suggestionSeed]);
 
   const handleQuickPasteCoord = (value: string) => {
     const parsed = parseCoordinateString(value);
@@ -109,6 +117,7 @@ function OutletFormModalContent({
       if (isAddAnother) {
         toast.success("Outlet created. Ready for next outlet.");
         setFormOutlet((prev) => resetOutletFormForNextEntry(prev));
+        setSuggestionSeed((prev) => prev + 1);
         setQuickPasteCoord("");
         setErrors({});
         if (typeof document !== "undefined") {
@@ -215,6 +224,23 @@ function OutletFormModalContent({
                       : "border-slate-200 dark:border-slate-700 focus:ring-orange-500"
                   )}
                 />
+                {!formOutlet.code?.trim() && suggestedCode && (
+                  <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>Suggested:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormOutlet((prev) => ({ ...prev, code: suggestedCode }));
+                        if (errors.code) setErrors((prev) => ({ ...prev, code: "" }));
+                      }}
+                      className="font-mono text-orange-600 dark:text-orange-400 hover:underline cursor-pointer flex items-center gap-0.5"
+                      title="Click to apply suggested code"
+                    >
+                      <span>{suggestedCode}</span>
+                      <Sparkles className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                )}
                 {errors.code && (
                   <p className="mt-1 text-[11px] text-rose-500">{errors.code}</p>
                 )}
