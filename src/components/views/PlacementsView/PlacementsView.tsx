@@ -12,20 +12,16 @@ import {
   TableProperties,
   Search,
   RefreshCw,
-  Wallet,
-  CheckCircle2,
-  Radio,
-  Clock,
   Sparkles,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
-import { cn, formatIDR } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { MarcomTableShell } from "@/components/views/shared/MarcomTableShell";
-import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
-import { calculatePlacementKPIs } from "@/lib/marcom/placementAnalytics";
+import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
+import { buildPlacementKpiItems } from "./placementKpi";
 import {
   findAvailableMousForOutlet,
   type MouSummaryInfo,
@@ -147,9 +143,7 @@ export function PlacementsView() {
 
   const filteredPlacements = useMemo(() => {
     return placements.filter((p) => {
-      if (selectedStatus !== "ALL" && p.status !== selectedStatus) {
-        return false;
-      }
+      if (selectedStatus !== "ALL" && p.status !== selectedStatus) return false;
       if (selectedBrand !== "ALL") {
         const pBrand = (p.brand || "IM3").toUpperCase();
         const target = selectedBrand.toUpperCase();
@@ -168,42 +162,10 @@ export function PlacementsView() {
     );
   }, [filteredPlacements, marcomFilters]);
 
-  const kpiItems: KpiCardItem[] = useMemo(() => {
-    const kpis = calculatePlacementKPIs(filteredPlacements);
-    return [
-      {
-        label: "Total Budget Terpakai",
-        value: formatIDR(kpis.totalCost),
-        helper:
-          kpis.totalCount > 0
-            ? `Rata-rata ${formatIDR(Math.round(kpis.totalCost / kpis.totalCount))} / titik`
-            : "Belum ada pengeluaran",
-        icon: Wallet,
-        color: "emerald",
-      },
-      {
-        label: "Tingkat Penyelesaian",
-        value: `${kpis.completionRate}%`,
-        helper: `${kpis.doneCount} dari ${kpis.totalCount} placement selesai`,
-        icon: CheckCircle2,
-        color: "blue",
-      },
-      {
-        label: "Rasio Pemasangan",
-        value: `${kpis.im3Count} : ${kpis.triCount}`,
-        helper: `${kpis.im3Count} IM3 (Kuning) • ${kpis.triCount} 3 (Pink)`,
-        icon: Radio,
-        color: "amber",
-      },
-      {
-        label: "Menunggu vs Selesai",
-        value: `${kpis.pendingCount} Menunggu / ${kpis.doneCount} Selesai`,
-        helper: `${kpis.notStartedCount} To Do • ${kpis.inProgressCount} In Progress${kpis.issueCount > 0 ? ` • ${kpis.issueCount} Kendala` : ""}`,
-        icon: Clock,
-        color: kpis.issueCount > 0 ? "rose" : "orange",
-      },
-    ];
-  }, [filteredPlacements]);
+  const kpiItems = useMemo(
+    () => buildPlacementKpiItems(filteredPlacements),
+    [filteredPlacements],
+  );
 
   const handleTrackAsTask = (placement: MarcomPlacement) => {
     const existing = tasks.find((t) => t.relatedMarcomId === placement.id);
@@ -275,13 +237,11 @@ export function PlacementsView() {
   }, [loadPlacements]);
 
   const handleStatusFilter = (status: string) => {
-    const next = selectedStatus === status && status !== "ALL" ? "ALL" : status;
-    setSelectedStatus(next);
+    setSelectedStatus((prev) => (prev === status && status !== "ALL" ? "ALL" : status));
   };
 
   const handleBrandFilter = (brand: string) => {
-    const next = selectedBrand === brand && brand !== "ALL" ? "ALL" : brand;
-    setSelectedBrand(next);
+    setSelectedBrand((prev) => (prev === brand && brand !== "ALL" ? "ALL" : brand));
   };
 
   const handleResetFilters = () => {
@@ -337,25 +297,27 @@ export function PlacementsView() {
       id,
       outletId,
       materialId,
-      status,
-      brand,
-      dimensions,
+      status = "NOT_STARTED",
+      brand = "IM3",
+      dimensions = "",
       cost,
-      picName,
-      notes,
-      photoUrl,
-      date,
+      picName = "",
+      notes = "",
+      photoUrl = "",
+      date = new Date().toISOString(),
       latitude,
       longitude,
-      shareLocationUrl,
-      locationNotes,
+      shareLocationUrl = "",
+      locationNotes = "",
+      mouId,
     } = modalPlacement;
+
     if (!outletId || !materialId) {
       toast.error("Outlet and Material are required");
       return;
     }
     if (status === "DONE") {
-      if (!photoUrl || !photoUrl.trim()) {
+      if (!photoUrl?.trim()) {
         toast.error("Bukti foto fisik wajib diunggah sebelum status diselesaikan (DONE)");
         return;
       }
@@ -363,8 +325,7 @@ export function PlacementsView() {
         typeof latitude === "number" &&
         typeof longitude === "number" &&
         isValidCoordinate(latitude, longitude);
-      const hasValidShare =
-        typeof shareLocationUrl === "string" && shareLocationUrl.trim().length > 0;
+      const hasValidShare = Boolean(shareLocationUrl?.trim());
 
       if (!hasValidCoords && !hasValidShare) {
         toast.error(
@@ -373,43 +334,42 @@ export function PlacementsView() {
         return;
       }
     }
+
     setIsSaving(true);
     try {
       const isEdit = Boolean(id);
-      const url = isEdit ? `/api/marcom/placements/${id}` : "/api/marcom/placements";
-      const method = isEdit ? "PATCH" : "POST";
-      const res = await fetch(url, {
-        method,
+      const res = await fetch(isEdit ? `/api/marcom/placements/${id}` : "/api/marcom/placements", {
+        method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           outletId,
           materialId,
-          mouId: modalPlacement.mouId ? modalPlacement.mouId : null,
-          status: status || "NOT_STARTED",
-          brand: brand || "IM3",
-          dimensions: dimensions || "",
+          mouId: mouId || null,
+          status,
+          brand,
+          dimensions,
           cost: cost != null ? Number(cost) : undefined,
-          picName: picName || "",
-          notes: notes || "",
-          photoUrl: photoUrl || "",
-          date: date || new Date().toISOString(),
+          picName,
+          notes,
+          photoUrl,
+          date,
           workspaceId: activeWorkspaceId,
           latitude: typeof latitude === "number" ? latitude : null,
           longitude: typeof longitude === "number" ? longitude : null,
-          shareLocationUrl: shareLocationUrl || "",
-          locationNotes: locationNotes || "",
+          shareLocationUrl,
+          locationNotes,
         }),
       });
+
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || `Failed to save placement (${res.status})`);
       }
       const jsonRes = await res.json().catch(() => ({}));
       const savedPlacement: MarcomPlacement = jsonRes.data || jsonRes;
-      const backfilledOutlet = jsonRes.backfilledOutlet;
 
-      if (backfilledOutlet) {
-        updateCachedOutlet(backfilledOutlet);
+      if (jsonRes.backfilledOutlet) {
+        updateCachedOutlet(jsonRes.backfilledOutlet);
         invalidateOutlets();
       } else if (status === "DONE" && (latitude != null || longitude != null || Boolean(shareLocationUrl))) {
         invalidateOutlets();
@@ -418,22 +378,21 @@ export function PlacementsView() {
       if (isEdit && id) {
         updateCachedPlacement(activeWorkspaceId, savedPlacement);
         setSelectedPlacement((prev) => (prev?.id === id ? savedPlacement : prev));
+        const currentWs = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
+        syncTaskOnPlacementStatusChange(
+          id,
+          status,
+          tasks,
+          currentWs?.spaces || [],
+          (taskId, updates) => useWorkspaceStore.getState().updateTask(taskId, updates),
+        );
       } else {
         addCachedPlacement(activeWorkspaceId, savedPlacement);
       }
+
       fetchPlacements(activeWorkspaceId, true);
       toast.success(`Placement ${isEdit ? "updated" : "created"} successfully`);
       invalidateMous(activeWorkspaceId);
-      if (isEdit && id) {
-        const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
-        syncTaskOnPlacementStatusChange(
-          id,
-          status || "NOT_STARTED",
-          tasks,
-          currentWorkspace?.spaces || [],
-          (taskId, updates) => useWorkspaceStore.getState().updateTask(taskId, updates),
-        );
-      }
       setModalPlacement(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save placement");
@@ -518,6 +477,65 @@ export function PlacementsView() {
     </div>
   );
 
+  const brandChips = (
+    <div className="flex items-center overflow-x-auto max-w-full bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shrink-0">
+      {BRAND_CHIPS.map((chip) => {
+        const isActive = selectedBrand === chip.value;
+        return (
+          <button
+            key={chip.value}
+            type="button"
+            onClick={() => handleBrandFilter(chip.value)}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer",
+              isActive
+                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+            )}
+          >
+            {chip.color && (
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: chip.color }} />
+            )}
+            <span>{chip.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const statusFilterChips = (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
+      {PLACEMENT_STATUS_CHIPS.map((chip) => {
+        const isActive = selectedStatus === chip.value;
+        return (
+          <button
+            key={chip.value}
+            type="button"
+            onClick={() => handleStatusFilter(chip.value)}
+            className={cn(
+              "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
+              isActive
+                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
+            )}
+          >
+            {chip.label}
+          </button>
+        );
+      })}
+      {isFiltered && (
+        <button
+          type="button"
+          onClick={handleResetFilters}
+          className="text-xs text-lime-600 hover:text-lime-700 dark:text-lime-400 underline font-medium cursor-pointer ml-2"
+        >
+          Reset Filters
+        </button>
+      )}
+    </div>
+  );
+
   const handleDrillDown = useCallback(
     (filter: { quarter: string; campaignTheme?: string; materialName?: string }) => {
       setViewMode("table");
@@ -541,7 +559,7 @@ export function PlacementsView() {
           data={filteredPlacements}
           columns={columns}
           getRowId={(row) => row.id}
-          initialSorting={[{ id: "outlet", desc: false }]}
+          initialSorting={[{ id: "date", desc: true }]}
           title="Placements"
           titleIcon={ClipboardList}
           entityName="placement"
@@ -571,29 +589,7 @@ export function PlacementsView() {
           addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer"
           headerExtra={
             <div className="flex items-center gap-2">
-              <div className="flex items-center overflow-x-auto max-w-full bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shrink-0">
-                {BRAND_CHIPS.map((chip) => {
-                  const isActive = selectedBrand === chip.value;
-                  return (
-                    <button
-                      key={chip.value}
-                      type="button"
-                      onClick={() => handleBrandFilter(chip.value)}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer",
-                        isActive
-                          ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
-                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-                      )}
-                    >
-                      {chip.color && (
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: chip.color }} />
-                      )}
-                      <span>{chip.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              {brandChips}
               {viewSwitcherControls}
               <button
                 type="button"
@@ -607,38 +603,7 @@ export function PlacementsView() {
             </div>
           }
           onRowClick={(p) => setSelectedPlacement(p)}
-          filterBar={
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
-              {PLACEMENT_STATUS_CHIPS.map((chip) => {
-                const isActive = selectedStatus === chip.value;
-                return (
-                  <button
-                    key={chip.value}
-                    type="button"
-                    onClick={() => handleStatusFilter(chip.value)}
-                    className={cn(
-                      "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
-                      isActive
-                        ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
-                    )}
-                  >
-                    {chip.label}
-                  </button>
-                );
-              })}
-              {isFiltered && (
-                <button
-                  type="button"
-                  onClick={handleResetFilters}
-                  className="text-xs text-lime-600 hover:text-lime-700 dark:text-lime-400 underline font-medium cursor-pointer ml-2"
-                >
-                  Reset Filters
-                </button>
-              )}
-            </div>
-          }
+          filterBar={statusFilterChips}
           searchKeys={PLACEMENT_SEARCH_KEYS}
           getSearchableText={extractPlacementSearchText}
           searchTerm={marcomFilters["placements"] || ""}
@@ -647,7 +612,6 @@ export function PlacementsView() {
         />
       ) : viewMode === "map" ? (
         <div className="space-y-4">
-          {/* Header Bar in Map Mode */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-lime-500/10 text-lime-600 dark:text-lime-400">
@@ -670,7 +634,6 @@ export function PlacementsView() {
 
             <div className="flex flex-wrap items-center gap-2">
               {viewSwitcherControls}
-
               <button
                 type="button"
                 onClick={() => loadPlacements(true)}
@@ -679,7 +642,6 @@ export function PlacementsView() {
               >
                 <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
               </button>
-
               <button
                 type="button"
                 onClick={() => setExportCenterOpen(true)}
@@ -689,7 +651,6 @@ export function PlacementsView() {
                 <Download className="w-3.5 h-3.5" />
                 <span>Export</span>
               </button>
-
               {canManage && (
                 <button
                   type="button"
@@ -703,70 +664,12 @@ export function PlacementsView() {
             </div>
           </div>
 
-          {/* Mini KPI Bar in Map Mode */}
           <KpiSummaryCards items={kpiItems} />
 
-          {/* Filter Bar in Map Mode */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
             <div className="flex flex-wrap items-center gap-3">
-              {/* Brand Chips */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Brand:</span>
-                {BRAND_CHIPS.map((chip) => {
-                  const isActive = selectedBrand === chip.value;
-                  return (
-                    <button
-                      key={chip.value}
-                      type="button"
-                      onClick={() => handleBrandFilter(chip.value)}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
-                        isActive
-                          ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
-                      )}
-                    >
-                      {chip.color && (
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: chip.color }} />
-                      )}
-                      <span>{chip.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Status Chips */}
-              <div className="flex items-center gap-1.5 border-l border-slate-200 dark:border-slate-800 pl-3">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
-                {PLACEMENT_STATUS_CHIPS.map((chip) => {
-                  const isActive = selectedStatus === chip.value;
-                  return (
-                    <button
-                      key={chip.value}
-                      type="button"
-                      onClick={() => handleStatusFilter(chip.value)}
-                      className={cn(
-                        "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
-                        isActive
-                          ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
-                      )}
-                    >
-                      {chip.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {isFiltered && (
-                <button
-                  type="button"
-                  onClick={handleResetFilters}
-                  className="text-xs text-lime-600 hover:text-lime-700 dark:text-lime-400 underline font-medium cursor-pointer ml-1"
-                >
-                  Reset Filters
-                </button>
-              )}
+              {brandChips}
+              {statusFilterChips}
             </div>
 
             <div className="relative w-full md:w-64">
@@ -790,7 +693,6 @@ export function PlacementsView() {
             </div>
           </div>
 
-          {/* Interactive Map */}
           <PlacementsMapView
             placements={mapPlacements}
             onEditPlacement={(p) => setModalPlacement(p)}

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   extractPlacementSearchText,
   PLACEMENT_SEARCH_KEYS,
-} from "./placementSearchHelpers.ts";
+} from "./placementSearchHelpers";
 import type { MarcomPlacement } from "@/types";
 
 test("extractPlacementSearchText indexes essential operational fields without technical IDs", () => {
@@ -19,7 +19,7 @@ test("extractPlacementSearchText indexes essential operational fields without te
     brand: "IM3",
     status: "ON_PROGRESS",
     outlet: { id: "out-1234", name: "Toko Berkah Cellular", code: "SBY-042", brand: "IM3" },
-    material: { id: "mat-5678", name: "Shopblind Outdoor", type: "TEMPORARY", requiresMou: false },
+    material: { id: "mat-5678", name: "Shopblind Outdoor", type: "SHOPBLIND" },
   };
 
   const text = extractPlacementSearchText(sample as MarcomPlacement);
