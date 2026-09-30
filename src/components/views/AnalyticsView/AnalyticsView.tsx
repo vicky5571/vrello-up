@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   Clock,
   RefreshCw,
-  ShieldCheck,
   Store,
   Users,
 } from "lucide-react";
@@ -101,15 +100,22 @@ function ChartCard({
   title,
   subtitle,
   action,
+  className,
   children,
 }: {
   title: string;
   subtitle: string;
   action?: React.ReactNode;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#18191B] shadow-2xs p-4 flex flex-col">
+    <div
+      className={cn(
+        "rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#18191B] shadow-2xs p-4 flex flex-col",
+        className
+      )}
+    >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
           <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
@@ -171,7 +177,7 @@ export function AnalyticsView() {
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Metrik operasional riil: SLA perizinan, unit economics POSM, reliabilitas konten, efisiensi event & cakupan toko prioritas.
+            Metrik operasional riil: SLA perizinan, unit economics POSM, reliabilitas konten & efisiensi event.
           </p>
         </div>
 
@@ -210,8 +216,8 @@ export function AnalyticsView() {
         </div>
       ) : (
         <>
-          {/* Executive Pulse Row (4 KPI Cards) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {/* Executive Pulse Row (3 KPI Cards) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <KpiCard
               title="Kecepatan Persetujuan MOU"
               value={`${data.kpis.mouSla.avgSlaDays} Hari`}
@@ -249,23 +255,6 @@ export function AnalyticsView() {
               icon={Users}
               badgeText={`${data.kpis.eventEfficiency.totalAttendees.toLocaleString("id-ID")} total pengunjung`}
               badgeVariant="neutral"
-            />
-
-            <KpiCard
-              title="Penetrasi Toko Tier 1"
-              value={`${data.kpis.tier1Penetration.rate}%`}
-              subtitle={`${data.kpis.tier1Penetration.tier1Branded} dari ${data.kpis.tier1Penetration.tier1Total} toko prioritas`}
-              icon={ShieldCheck}
-              badgeText={
-                data.kpis.tier1Penetration.status === "ON_TRACK"
-                  ? "On Track (≥70%)"
-                  : "Perlu Akselerasi (<70%)"
-              }
-              badgeVariant={
-                data.kpis.tier1Penetration.status === "ON_TRACK"
-                  ? "success"
-                  : "warning"
-              }
             />
           </div>
 
@@ -415,91 +404,8 @@ export function AnalyticsView() {
               </div>
             </ChartCard>
 
-            {/* Chart 3: Priority Outlet Tier Penetration */}
-            <ChartCard
-              title="Penetrasi Branding Fisik per Tier Toko"
-              subtitle="Cakupan branding pada outlet prioritas (Tier 1 vs Tier 2 vs Tier 3)"
-              action={
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                  Total {data.outletTierCoverage.totalOutlets} Outlet
-                </span>
-              }
-            >
-              <div className="h-72 mt-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={data.outletTierCoverage.tiers}
-                    margin={{ top: 10, right: 20, left: 0, bottom: 5 }}
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      className="stroke-slate-200 dark:stroke-slate-800"
-                    />
-                    <XAxis dataKey="tierLabel" tick={{ fontSize: 10 }} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const item = payload[0].payload;
-                          return (
-                            <div className="rounded-lg bg-slate-900 text-white text-xs p-3 shadow-lg border border-slate-700">
-                              <div className="font-bold mb-1.5">{item.tierLabel}</div>
-                              <div className="space-y-1 text-slate-300 text-[11px]">
-                                <div className="flex justify-between gap-4">
-                                  <span>Total Toko:</span>
-                                  <span className="font-semibold text-white">{item.totalOutlets}</span>
-                                </div>
-                                <div className="flex justify-between gap-4">
-                                  <span>Terpasang (Branded):</span>
-                                  <span className="font-semibold text-emerald-400">
-                                    {item.brandedOutlets} ({item.penetrationRate}%)
-                                  </span>
-                                </div>
-                                <div className="flex justify-between gap-4">
-                                  <span>Sedang Berjalan:</span>
-                                  <span className="font-semibold text-amber-400">
-                                    {item.inProgressOutlets}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between gap-4">
-                                  <span>Belum Terpasang:</span>
-                                  <span className="font-semibold text-slate-400">
-                                    {item.unbrandedOutlets}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }} />
-                    <Bar
-                      dataKey="brandedOutlets"
-                      name="Branded (Terpasang)"
-                      stackId="tier"
-                      fill="#10b981"
-                    />
-                    <Bar
-                      dataKey="inProgressOutlets"
-                      name="Dalam Proses"
-                      stackId="tier"
-                      fill="#f59e0b"
-                    />
-                    <Bar
-                      dataKey="unbrandedOutlets"
-                      name="Belum Terpasang"
-                      stackId="tier"
-                      fill="#94a3b8"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </ChartCard>
 
-            {/* Chart 4: Field Event Cost per Attendee & Target Realization */}
+            {/* Chart 3: Field Event Cost per Attendee & Target Realization */}
             <ChartCard
               title="Efisiensi Biaya Event & Capaian Audiens"
               subtitle="Cost per attendee (Rp / org) dan total kehadiran audiens per tipe kegiatan"
@@ -580,90 +486,89 @@ export function AnalyticsView() {
               </div>
             </ChartCard>
 
-            {/* Chart 5: Social Media Content Cadence & Reliability (Full width on lg) */}
-            <div className="lg:col-span-2">
-              <ChartCard
-                title="Reliabilitas Publikasi Konten Media Sosial"
-                subtitle="Distribusi postingan tayang (Published) vs terjadwal (Scheduled) per kanal platform"
-                action={
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                    {data.contentMetrics.overallPublishedRate}% Publikasi Berhasil
-                  </span>
-                }
-              >
-                <div className="h-64 mt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={data.contentMetrics.platforms}
-                      margin={{ top: 10, right: 30, left: 10, bottom: 5 }}
-                    >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        className="stroke-slate-200 dark:stroke-slate-800"
-                      />
-                      <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                      <Tooltip
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const item = payload[0].payload;
-                            return (
-                              <div className="rounded-lg bg-slate-900 text-white text-xs p-3 shadow-lg border border-slate-700">
-                                <div className="font-bold mb-1">{item.platform}</div>
-                                <div className="space-y-1 text-slate-300 text-[11px]">
-                                  <div className="flex justify-between gap-4">
-                                    <span>Total Postingan:</span>
-                                    <span className="font-semibold text-white">{item.total}</span>
-                                  </div>
-                                  <div className="flex justify-between gap-4">
-                                    <span>Sudah Tayang (Published):</span>
-                                    <span className="font-semibold text-emerald-400">
-                                      {item.published} ({item.publishedRate}%)
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between gap-4">
-                                    <span>Terjadwal (Scheduled):</span>
-                                    <span className="font-semibold text-sky-400">
-                                      {item.scheduled}
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between gap-4">
-                                    <span>Draft / Lainnya:</span>
-                                    <span className="font-semibold text-slate-400">
-                                      {item.draftOrOther}
-                                    </span>
-                                  </div>
+            {/* Chart 4: Social Media Content Cadence & Reliability (Full width on lg) */}
+            <ChartCard
+              className="lg:col-span-2"
+              title="Reliabilitas Publikasi Konten Media Sosial"
+              subtitle="Distribusi postingan tayang (Published) vs terjadwal (Scheduled) per kanal platform"
+              action={
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  {data.contentMetrics.overallPublishedRate}% Publikasi Berhasil
+                </span>
+              }
+            >
+              <div className="h-64 mt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={data.contentMetrics.platforms}
+                    margin={{ top: 10, right: 30, left: 10, bottom: 5 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-slate-200 dark:stroke-slate-800"
+                    />
+                    <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const item = payload[0].payload;
+                          return (
+                            <div className="rounded-lg bg-slate-900 text-white text-xs p-3 shadow-lg border border-slate-700">
+                              <div className="font-bold mb-1">{item.platform}</div>
+                              <div className="space-y-1 text-slate-300 text-[11px]">
+                                <div className="flex justify-between gap-4">
+                                  <span>Total Postingan:</span>
+                                  <span className="font-semibold text-white">{item.total}</span>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                  <span>Sudah Tayang (Published):</span>
+                                  <span className="font-semibold text-emerald-400">
+                                    {item.published} ({item.publishedRate}%)
+                                  </span>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                  <span>Terjadwal (Scheduled):</span>
+                                  <span className="font-semibold text-sky-400">
+                                    {item.scheduled}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between gap-4">
+                                  <span>Draft / Lainnya:</span>
+                                  <span className="font-semibold text-slate-400">
+                                    {item.draftOrOther}
+                                  </span>
                                 </div>
                               </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }} />
-                      <Bar
-                        dataKey="published"
-                        name="Sudah Tayang (Published)"
-                        fill="#10b981"
-                        radius={[4, 4, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="scheduled"
-                        name="Terjadwal (Scheduled)"
-                        fill="#0284c7"
-                        radius={[4, 4, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="draftOrOther"
-                        name="Draft / Lainnya"
-                        fill="#94a3b8"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </ChartCard>
-            </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }} />
+                    <Bar
+                      dataKey="published"
+                      name="Sudah Tayang (Published)"
+                      fill="#10b981"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="scheduled"
+                      name="Terjadwal (Scheduled)"
+                      fill="#0284c7"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="draftOrOther"
+                      name="Draft / Lainnya"
+                      fill="#94a3b8"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
           </div>
         </>
       )}
