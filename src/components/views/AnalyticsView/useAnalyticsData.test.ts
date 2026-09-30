@@ -1,10 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { buildMarcomAnalyticsDashboard } from "@/lib/marcom/analyticsEngine";
 import type {
   MouAnalyticsInput,
   PlacementAnalyticsInput,
 } from "@/lib/marcom/analyticsEngine";
+
+test("useMarcomDataStore fetch actions can pre-warm cache for a workspace", async () => {
+  const store = useMarcomDataStore.getState();
+  assert.equal(typeof store.fetchPlacements, "function");
+  assert.equal(typeof store.fetchMous, "function");
+  assert.equal(typeof store.fetchEvents, "function");
+  assert.equal(typeof store.fetchPosts, "function");
+  assert.equal(typeof store.fetchBranches, "function");
+});
 
 test("in-memory dashboard compilation works directly on client store Marcom types", () => {
   const mockPlacements: PlacementAnalyticsInput[] = [

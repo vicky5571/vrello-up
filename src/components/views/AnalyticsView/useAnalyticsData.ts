@@ -56,6 +56,41 @@ export function useAnalyticsData(
     (state) => state.postsByWorkspace[activeWorkspaceId]
   );
   const outlets = useMarcomDataStore((state) => state.outlets);
+  const branches = useMarcomDataStore((state) => state.branches);
+
+  // Subscribe to store fetch actions for cache hydration
+  const fetchPlacements = useMarcomDataStore((s) => s.fetchPlacements);
+  const fetchMous = useMarcomDataStore((s) => s.fetchMous);
+  const fetchEvents = useMarcomDataStore((s) => s.fetchEvents);
+  const fetchPosts = useMarcomDataStore((s) => s.fetchPosts);
+  const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
+
+  // Pre-warm local store caches in background so multi-dimensional filters
+  // can slice and dice the data in memory without cold-start starvation
+  useEffect(() => {
+    if (!activeWorkspaceId) return;
+
+    // Fire non-blocking background fetches
+    void fetchBranches(false);
+    void fetchPlacements(activeWorkspaceId, false);
+    void fetchMous(activeWorkspaceId, false);
+    void fetchEvents(activeWorkspaceId, false);
+    void fetchPosts(activeWorkspaceId, false);
+  }, [
+    activeWorkspaceId,
+    fetchBranches,
+    fetchPlacements,
+    fetchMous,
+    fetchEvents,
+    fetchPosts,
+  ]);
+
+  // Resolve branch name from active filter's branchId, since FieldEvent stores
+  // a human-readable `branchName` while the filter carries a branch CUID.
+  const selectedBranchName = useMemo(() => {
+    if (filters.branchId === "ALL") return undefined;
+    return branches.find((b) => b.id === filters.branchId)?.name;
+  }, [branches, filters.branchId]);
 
   const [remoteData, setRemoteData] =
     useState<MarcomAnalyticsDashboardData | null>(null);
@@ -78,11 +113,11 @@ export function useAnalyticsData(
       mous: filterMousByCriteria(mous || [], filters),
       placements: filterPlacementsByCriteria(placements || [], filters),
       contents: filterContentByCriteria(posts || [], filters),
-      events: filterEventsByCriteria(events || [], filters),
+      events: filterEventsByCriteria(events || [], filters, selectedBranchName),
       outlets: outlets || [],
       activeOutletCount: outlets?.filter((o) => o.active !== false).length,
     });
-  }, [placements, mous, events, posts, outlets, filters]);
+  }, [placements, mous, events, posts, outlets, filters, selectedBranchName]);
 
   // Track whether we already hold local data without re-triggering fetches
   const hasLocalDataRef = useRef(false);
