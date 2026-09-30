@@ -572,3 +572,16 @@ To guarantee mathematical correctness and zero regression upon executing this re
   npm test -- "src/lib/marcom/*analytics*.test.ts"
   ```
   *(Must complete with 0 failures and 100% assertions passing).* — Verified: full suite `npm test` passes with 715 tests / 0 failures.
+
+### Phase 3 — Architecture, Accessibility & Drill-Down Verification
+
+- [x] **Modular chart decomposition (§7.2, §8.1)**:
+  - [x] `AnalyticsView.tsx` reduced to a lean coordinator (130 lines) composing atomic components.
+  - [x] Extracted `charts/ChartCard.tsx`, `charts/PosmEconomicsChart.tsx`, `charts/MouAgingChart.tsx`, `charts/EventEfficiencyChart.tsx`, `charts/ContentCadenceChart.tsx`.
+- [x] **Grid safety (§2.2)**: `ChartCard` enforces `min-w-0` on every CSS grid child, eliminating horizontal blowout and Recharts `width(-1)` warnings.
+- [x] **Accessibility (§6.1, §6.3)**:
+  - [x] Theme-aware axis ticks/grid via `charts/useChartTheme.ts` (`#475569` light / `#cbd5e1` dark — both exceed 4.5:1 WCAG AA).
+  - [x] Every chart exposes a semantic `<table className="sr-only">` data fallback with caption & scoped headers.
+  - [x] Colorblind mitigation via text-labelled tooltips, legends and sr-only tables (no hue-only encoding).
+- [x] **Zero layout shift (§2.2)**: `AnalyticsSkeleton.tsx` mirrors the exact KPI/chart grid geometry for 0 CLS loading.
+- [x] **Interactive drill-down triage (§5.2)**: KPI cards and chart bars navigate to pre-filtered entity views (`mous`, `placements`, `events`, `content`) via `navigateToMarcom`.
