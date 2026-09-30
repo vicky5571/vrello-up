@@ -8,7 +8,6 @@ import {
   parseOutletSearchLimit,
   rankOutletsByRelevance,
   VALID_TYPES,
-  VALID_TIERS,
   VALID_STATUSES,
 } from "@/app/api/marcom/outlets/outletsSearchFilter";
 
@@ -27,7 +26,6 @@ export async function GET(request: Request) {
   const branchId = searchParams.get("branchId");
   const rawType = searchParams.get("type");
   const type = rawType === "OFFICIAL_STORE" ? "EXCLUSIVE" : rawType;
-  const tier = searchParams.get("tier");
   const rawStatus = searchParams.get("status");
   const rawBrand = searchParams.get("brand");
   const query = searchParams.get("q");
@@ -35,9 +33,6 @@ export async function GET(request: Request) {
 
   if (type && type !== "ALL" && !VALID_TYPES.includes(type as (typeof VALID_TYPES)[number])) {
     return Response.json({ error: "Invalid type" }, { status: 400 });
-  }
-  if (tier && tier !== "ALL" && !VALID_TIERS.includes(tier as (typeof VALID_TIERS)[number])) {
-    return Response.json({ error: "Invalid tier" }, { status: 400 });
   }
   if (rawStatus && rawStatus !== "ALL" && !VALID_STATUSES.includes(rawStatus as (typeof VALID_STATUSES)[number])) {
     return Response.json({ error: "Invalid status" }, { status: 400 });
@@ -47,7 +42,6 @@ export async function GET(request: Request) {
     q: query,
     branchId,
     type,
-    tier,
     status: rawStatus,
     brand: rawBrand,
   });
@@ -93,15 +87,12 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { code, name, type, tier, brand, branchId, address, city, picName, picPhone, active, latitude, longitude } = body ?? {};
-  if (!code || !name || !type || !tier || !branchId) {
-    return Response.json({ error: "Missing required fields: code, name, type, tier, branchId" }, { status: 400 });
+  const { code, name, type, brand, branchId, address, city, picName, picPhone, active, latitude, longitude } = body ?? {};
+  if (!code || !name || !type || !branchId) {
+    return Response.json({ error: "Missing required fields: code, name, type, branchId" }, { status: 400 });
   }
   if (!VALID_TYPES.includes(type)) {
     return Response.json({ error: "Invalid type" }, { status: 400 });
-  }
-  if (!VALID_TIERS.includes(tier)) {
-    return Response.json({ error: "Invalid tier" }, { status: 400 });
   }
   if (brand !== undefined && brand !== null && brand !== "IM3" && brand !== "TRI") {
     return Response.json({ error: "Invalid brand" }, { status: 400 });
@@ -116,7 +107,6 @@ export async function POST(request: Request) {
         code,
         name,
         type,
-        tier,
         brand: (brand === "TRI" ? "TRI" : "IM3"),
         branchId,
         address,

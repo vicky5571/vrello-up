@@ -10,7 +10,6 @@ describe("Draft Outlet Submission Helpers", () => {
   const validPayload: RawDraftOutletInput = {
     name: "Toko Sinar Rejeki",
     type: "TRADITIONAL",
-    tier: "TIER_1",
     branchId: "branch-smg",
     branchCode: "SMG",
     address: "Jl. Pemuda No. 12",

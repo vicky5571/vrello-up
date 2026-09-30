@@ -5,9 +5,8 @@ import { hasPermission } from "@/lib/marcom/guards";
 import { buildOutletEventWhere, buildOutletContentWhere } from "@/lib/marcom/outletRelations";
 
 const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET"] as const;
-const VALID_TIERS = ["TIER_1", "TIER_2", "TIER_3"] as const;
 const VALID_BRANDS = ["IM3", "TRI"] as const;
-const PATCHABLE_FIELDS = ["code", "name", "type", "tier", "brand", "branchId", "address", "city", "picName", "picPhone", "active", "latitude", "longitude"] as const;
+const PATCHABLE_FIELDS = ["code", "name", "type", "brand", "branchId", "address", "city", "picName", "picPhone", "active", "latitude", "longitude"] as const;
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { searchParams } = new URL(request.url);
@@ -97,9 +96,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if (data.type !== undefined && !VALID_TYPES.includes(data.type as (typeof VALID_TYPES)[number])) {
     return Response.json({ error: "Invalid type" }, { status: 400 });
-  }
-  if (data.tier !== undefined && !VALID_TIERS.includes(data.tier as (typeof VALID_TIERS)[number])) {
-    return Response.json({ error: "Invalid tier" }, { status: 400 });
   }
   if (data.brand !== undefined && !VALID_BRANDS.includes(data.brand as (typeof VALID_BRANDS)[number])) {
     return Response.json({ error: "Invalid brand" }, { status: 400 });

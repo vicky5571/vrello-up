@@ -62,14 +62,6 @@ describe("Outlet Search Where Builder", () => {
     assert.equal(whereAll.type, undefined);
   });
 
-  test("applies outlet tier filter and ignores ALL", () => {
-    const whereTier = buildOutletSearchWhere({ tier: "TIER_1" });
-    assert.equal(whereTier.tier, "TIER_1");
-
-    const whereAll = buildOutletSearchWhere({ tier: "ALL" });
-    assert.equal(whereAll.tier, undefined);
-  });
-
   test("applies status filter and ignores ALL", () => {
     const wherePending = buildOutletSearchWhere({ status: "PENDING_APPROVAL" });
     assert.equal(wherePending.status, "PENDING_APPROVAL");
@@ -81,17 +73,15 @@ describe("Outlet Search Where Builder", () => {
     assert.equal(whereAll.status, undefined);
   });
 
-  test("combines search query with branchId, type, and tier into a single where clause", () => {
+  test("combines search query with branchId and type into a single where clause", () => {
     const where = buildOutletSearchWhere({
       q: "jaya",
       branchId: "branch-yog",
       type: "EXCLUSIVE",
-      tier: "TIER_2",
     });
 
     assert.equal(where.branchId, "branch-yog");
     assert.equal(where.type, "EXCLUSIVE");
-    assert.equal(where.tier, "TIER_2");
     assert.deepEqual(where.OR, [
       { code: { contains: "jaya", mode: "insensitive" } },
       { name: { contains: "jaya", mode: "insensitive" } },
@@ -289,7 +279,6 @@ describe("POST /api/marcom/outlets brand validation & creation", () => {
         code: "TEST-BRAND-INV",
         name: "Test Invalid Brand",
         type: "TRADITIONAL",
-        tier: "TIER_1",
         branchId: "branch-4",
         brand: "TELKOMSEL",
       }),
@@ -313,7 +302,6 @@ describe("POST /api/marcom/outlets brand validation & creation", () => {
         code: testCode,
         name: "Test Tri Outlet",
         type: "TRADITIONAL",
-        tier: "TIER_2",
         branchId: "branch-4",
         brand: "TRI",
       }),
@@ -337,7 +325,6 @@ describe("POST /api/marcom/outlets brand validation & creation", () => {
         code: testCode,
         name: "Test Default Outlet",
         type: "TRADITIONAL",
-        tier: "TIER_1",
         branchId: "branch-4",
       }),
     });
@@ -359,7 +346,6 @@ describe("PATCH /api/marcom/outlets/[id] brand update", () => {
         code: testCode,
         name: "Test Patch Brand Outlet",
         type: "TRADITIONAL",
-        tier: "TIER_1",
         brand: "IM3",
         branchId: "branch-4",
       },

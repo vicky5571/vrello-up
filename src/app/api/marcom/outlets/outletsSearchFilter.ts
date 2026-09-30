@@ -1,7 +1,6 @@
 import type { Prisma, OutletType, OutletStatus, Brand } from "@prisma/client";
 
 export const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET"] as const;
-export const VALID_TIERS = ["TIER_1", "TIER_2", "TIER_3"] as const;
 export const VALID_STATUSES = ["DRAFT", "PENDING_APPROVAL", "APPROVED", "REJECTED"] as const;
 
 export interface OutletSearchFilterOptions {
