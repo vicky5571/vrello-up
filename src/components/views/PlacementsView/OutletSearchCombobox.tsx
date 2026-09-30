@@ -116,7 +116,6 @@ export function OutletSearchCombobox({
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<OutletSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isChanging, setIsChanging] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -167,25 +166,26 @@ export function OutletSearchCombobox({
     };
   }, [selectedOutletId, selectedOutlet, workspaceId, internalSelected?.id]);
 
-  // Debounced search with 300ms timer
+  // Fetch initial recommendations on mount / brand switch, and debounced results on typing
   useEffect(() => {
-    const trimmed = searchQuery.trim();
-    if (!trimmed) {
-      setResults([]);
-      setIsLoading(false);
+    // If an outlet is already selected and we're not actively in changing mode, skip searching
+    if (currentOutlet && !isChanging) {
       return;
     }
 
+    const trimmed = searchQuery.trim();
     setIsLoading(true);
     setFetchError(null);
     const controller = new AbortController();
 
-    const timer = setTimeout(async () => {
+    const fetchOutlets = async () => {
       try {
         const params = new URLSearchParams({
-          q: trimmed,
-          limit: "15",
+          limit: trimmed ? "15" : "10",
         });
+        if (trimmed) {
+          params.set("q", trimmed);
+        }
         if (workspaceId) {
           params.set("workspaceId", workspaceId);
         }
@@ -204,12 +204,6 @@ export function OutletSearchCombobox({
         const json = await res.json();
         if (!controller.signal.aborted) {
           setResults(Array.isArray(json.data) ? json.data : []);
-          if (
-            typeof document !== "undefined" &&
-            document.activeElement === inputRef.current
-          ) {
-            setIsOpen(true);
-          }
           setHighlightedIndex(-1);
         }
       } catch (err: unknown) {
@@ -224,6 +218,7 @@ export function OutletSearchCombobox({
               const targetBrand = brand.toUpperCase() === "3" ? "TRI" : brand.toUpperCase();
               if (oBrand !== targetBrand) return false;
             }
+            if (lowerTokens.length === 0) return true;
             const code = (o.code || "").toLowerCase();
             const name = (o.name || "").toLowerCase();
             const city = (o.city || "").toLowerCase();
@@ -236,14 +231,8 @@ export function OutletSearchCombobox({
                 pic.includes(tok)
             );
           });
-          const ranked = rankOutletsByRelevance(matched, trimmed).slice(0, 15);
+          const ranked = trimmed ? rankOutletsByRelevance(matched, trimmed).slice(0, 15) : matched.slice(0, 10);
           setResults(ranked as unknown as OutletSearchResult[]);
-          if (
-            typeof document !== "undefined" &&
-            document.activeElement === inputRef.current
-          ) {
-            setIsOpen(true);
-          }
           setHighlightedIndex(-1);
           setFetchError(null);
         } else {
@@ -254,30 +243,22 @@ export function OutletSearchCombobox({
           setIsLoading(false);
         }
       }
-    }, 300);
+    };
 
+    if (!trimmed) {
+      // Immediate fetch for recommendations without debounce delay
+      fetchOutlets();
+      return () => {
+        controller.abort();
+      };
+    }
+
+    const timer = setTimeout(fetchOutlets, 300);
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [searchQuery, workspaceId, brand, cachedOutlets]);
-
-  // Click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  }, [searchQuery, workspaceId, brand, cachedOutlets, currentOutlet, isChanging]);
 
   // Scroll active item into view
   useEffect(() => {
@@ -294,7 +275,6 @@ export function OutletSearchCombobox({
   const handleSelect = (outlet: OutletSearchResult) => {
     setInternalSelected(outlet);
     setIsChanging(false);
-    setIsOpen(false);
     setSearchQuery("");
     setHighlightedIndex(-1);
     onSelectOutlet(outlet);
@@ -303,7 +283,6 @@ export function OutletSearchCombobox({
   const handleClear = () => {
     setInternalSelected(null);
     setIsChanging(false);
-    setIsOpen(false);
     setSearchQuery("");
     setHighlightedIndex(-1);
     onSelectOutlet(null);
@@ -314,7 +293,6 @@ export function OutletSearchCombobox({
 
   const handleChangeClick = () => {
     setIsChanging(true);
-    setIsOpen(false);
     setSearchQuery("");
     setTimeout(() => {
       inputRef.current?.focus();
@@ -323,43 +301,33 @@ export function OutletSearchCombobox({
 
   const handleCancelChange = () => {
     setIsChanging(false);
-    setIsOpen(false);
     setSearchQuery("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      if (!isOpen) {
-        if (results.length > 0) setIsOpen(true);
-        return;
-      }
       setHighlightedIndex((prev) =>
         prev < results.length - 1 ? prev + 1 : 0
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      if (!isOpen) {
-        if (results.length > 0) setIsOpen(true);
-        return;
-      }
       setHighlightedIndex((prev) =>
         prev > 0 ? prev - 1 : results.length - 1
       );
     } else if (e.key === "Enter") {
-      if (isOpen) {
-        e.preventDefault();
-        if (highlightedIndex >= 0 && results[highlightedIndex]) {
-          handleSelect(results[highlightedIndex]);
-        } else if (results.length > 0) {
-          handleSelect(results[0]);
-        }
+      e.preventDefault();
+      if (highlightedIndex >= 0 && results[highlightedIndex]) {
+        handleSelect(results[highlightedIndex]);
+      } else if (results.length > 0) {
+        handleSelect(results[0]);
       }
     } else if (e.key === "Escape") {
       e.preventDefault();
-      setIsOpen(false);
       if (isChanging && currentOutlet) {
         setIsChanging(false);
+      } else {
+        setSearchQuery("");
       }
     }
   };
@@ -549,7 +517,7 @@ export function OutletSearchCombobox({
 
       {/* Search Input View */}
       {(!showCard || isChanging) && (
-        <div className="space-y-1.5">
+        <div className="space-y-2.5">
           {isChanging && currentOutlet && (
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
               <span>
@@ -572,7 +540,7 @@ export function OutletSearchCombobox({
               id={id}
               type="text"
               role="combobox"
-              aria-expanded={isOpen}
+              aria-expanded={true}
               aria-autocomplete="list"
               aria-controls={`${id}-listbox`}
               aria-activedescendant={
@@ -582,9 +550,6 @@ export function OutletSearchCombobox({
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => {
-                if (results.length > 0) setIsOpen(true);
-              }}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               disabled={disabled}
@@ -592,7 +557,7 @@ export function OutletSearchCombobox({
               autoFocus={autoFocus || isChanging}
               autoComplete="off"
               className={cn(
-                "w-full pl-9 pr-9 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-lime-500 focus:border-transparent transition-all",
+                "w-full pl-9 pr-9 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-lime-500 focus:border-transparent transition-all shadow-2xs",
                 fetchError && "border-red-400 focus:ring-red-400"
               )}
             />
@@ -607,10 +572,9 @@ export function OutletSearchCombobox({
                   type="button"
                   onClick={() => {
                     setSearchQuery("");
-                    setResults([]);
                     inputRef.current?.focus();
                   }}
-                  className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full cursor-pointer"
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full cursor-pointer"
                   title="Hapus teks pencarian"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -623,27 +587,158 @@ export function OutletSearchCombobox({
             <p className="text-[11px] text-red-500 px-1">{fetchError}</p>
           )}
 
-          {/* Autocomplete Dropdown Listbox */}
-          {isOpen && (
-            <div className="absolute z-50 left-0 right-0 top-full mt-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden max-h-72 flex flex-col">
-              {/* Header result count */}
-              <div className="px-3 py-1.5 bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 shrink-0">
-                <span>
-                  {results.length > 0
-                    ? `Ditemukan ${results.length} outlet`
-                    : "Pencarian Outlet"}
-                </span>
-                <span className="text-[10px] text-slate-400">
-                  Gunakan ↑↓ lalu Enter
-                </span>
-              </div>
+          {/* Inline Results Panel - Always visible, never disappears when search bar loses focus */}
+          <div className="w-full bg-white dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl shadow-xs overflow-hidden flex flex-col">
+            {/* Header result count */}
+            <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/60 text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-between border-b border-slate-100 dark:border-slate-700/80 shrink-0">
+              <span className="flex items-center gap-1.5">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-3 h-3 text-lime-500 animate-spin" />
+                    <span>Mencari outlet...</span>
+                  </>
+                ) : results.length > 0 ? (
+                  searchQuery.trim() ? (
+                    `Ditemukan ${results.length} outlet`
+                  ) : (
+                    `Rekomendasi Outlet (${results.length} toko)`
+                  )
+                ) : (
+                  "Pencarian Outlet"
+                )}
+              </span>
+              <span className="text-[10px] text-slate-400 font-normal">
+                Gunakan ↑↓ lalu Enter atau klik outlet
+              </span>
+            </div>
 
-              {/* Empty state */}
-              {results.length === 0 && !isLoading && (
-                <div className="p-4 text-center space-y-2.5">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Tidak ada outlet yang cocok dengan &quot;{searchQuery}&quot;
-                  </p>
+            {/* Empty state */}
+            {results.length === 0 && !isLoading && (
+              <div className="p-5 text-center space-y-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {searchQuery.trim()
+                    ? `Tidak ada outlet yang cocok dengan "${searchQuery}"`
+                    : "Belum ada outlet terdaftar untuk kategori ini"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onRequestNewOutlet) {
+                      onRequestNewOutlet(searchQuery);
+                    } else {
+                      setIsDraftModalOpen(true);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Outlet belum terdaftar? Ajukan Outlet Baru</span>
+                </button>
+              </div>
+            )}
+
+            {/* Items List */}
+            {results.length > 0 && (
+              <>
+                <ul
+                  ref={listRef}
+                  id={`${id}-listbox`}
+                  role="listbox"
+                  className="overflow-y-auto max-h-60 sm:max-h-72 divide-y divide-slate-100 dark:divide-slate-700/50 p-1.5"
+                >
+                  {results.map((outlet, index) => {
+                    const isHighlighted = highlightedIndex === index;
+                    const outletRecentMaterials =
+                      extractRecentPlacementMaterials(outlet.placements);
+                    const hasCoordinates =
+                      typeof outlet.latitude === "number" &&
+                      typeof outlet.longitude === "number";
+
+                    return (
+                      <li
+                        key={outlet.id}
+                        id={`${id}-opt-${outlet.id}`}
+                        role="option"
+                        aria-selected={isHighlighted}
+                        onClick={() => handleSelect(outlet)}
+                        onMouseEnter={() => setHighlightedIndex(index)}
+                        className={cn(
+                          "flex flex-col gap-1.5 px-3 py-2.5 rounded-xl text-left cursor-pointer transition-all border",
+                          isHighlighted
+                            ? "bg-lime-500/10 dark:bg-lime-500/15 border-lime-500/30 shadow-2xs text-slate-900 dark:text-slate-100"
+                            : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-800 dark:text-slate-200"
+                        )}
+                      >
+                        {/* First line: Code, Name, Brand, Tier */}
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {outlet.code && (
+                            <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 shrink-0">
+                              {outlet.code}
+                            </span>
+                          )}
+                          <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+                            {outlet.name}
+                          </span>
+                          {renderBrandBadge(outlet.brand)}
+                          {outlet.tier && (
+                            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 shrink-0">
+                              • {outlet.tier}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Second line: Address / City / GPS */}
+                        <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                          <div className="flex items-center gap-1 truncate min-w-0">
+                            <MapPin className="w-3 h-3 shrink-0 text-slate-400" />
+                            <span className="truncate">
+                              {[outlet.address, outlet.city]
+                                .filter(Boolean)
+                                .join(", ") || "Alamat belum ada"}
+                              {outlet.branch?.name ? ` (${outlet.branch.name})` : ""}
+                            </span>
+                          </div>
+
+                          {hasCoordinates ? (
+                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 shrink-0 font-semibold flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              <span>GPS Ada</span>
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-amber-600 dark:text-amber-400 shrink-0 font-medium">
+                              Titik GPS Kosong
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Third line: Recent Placement History preview */}
+                        {outletRecentMaterials.length > 0 && (
+                          <div className="flex items-center gap-1 text-[10px] text-slate-400 pt-0.5">
+                            <span>Riwayat:</span>
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {outletRecentMaterials.slice(0, 3).map((mat) => (
+                                <span
+                                  key={mat}
+                                  className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700/80 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 text-[10px]"
+                                >
+                                  {mat}
+                                </span>
+                              ))}
+                              {outletRecentMaterials.length > 3 && (
+                                <span className="text-[10px] text-slate-400">
+                                  +{outletRecentMaterials.length - 3} lainnya
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                {/* Footer action to submit new store */}
+                <div className="p-2 border-t border-slate-100 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-800/50">
                   <button
                     type="button"
                     onClick={() => {
@@ -653,133 +748,15 @@ export function OutletSearchCombobox({
                         setIsDraftModalOpen(true);
                       }
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30 text-xs font-semibold transition-colors"
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 bg-orange-500/10 hover:bg-orange-500/15 border border-orange-500/20 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Outlet belum terdaftar? Ajukan Outlet Baru</span>
+                    <span>Outlet tidak ditemukan? Ajukan Outlet Baru</span>
                   </button>
                 </div>
-              )}
-
-              {/* Items List */}
-              {results.length > 0 && (
-                <>
-                  <ul
-                    ref={listRef}
-                    id={`${id}-listbox`}
-                    role="listbox"
-                    className="overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 p-1"
-                  >
-                    {results.map((outlet, index) => {
-                      const isHighlighted = highlightedIndex === index;
-                      const outletRecentMaterials =
-                        extractRecentPlacementMaterials(outlet.placements);
-                      const hasCoordinates =
-                        typeof outlet.latitude === "number" &&
-                        typeof outlet.longitude === "number";
-
-                      return (
-                        <li
-                          key={outlet.id}
-                          id={`${id}-opt-${outlet.id}`}
-                          role="option"
-                          aria-selected={isHighlighted}
-                          onClick={() => handleSelect(outlet)}
-                          onMouseEnter={() => setHighlightedIndex(index)}
-                          className={cn(
-                            "flex flex-col gap-1.5 px-3 py-2.5 rounded-lg text-left cursor-pointer transition-all border",
-                            isHighlighted
-                              ? "bg-slate-100 dark:bg-slate-800/90 border-slate-300 dark:border-slate-600 shadow-2xs text-slate-900 dark:text-slate-100"
-                              : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-800 dark:text-slate-200"
-                          )}
-                        >
-                          {/* First line: Code, Name, Brand, Tier */}
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            {outlet.code && (
-                              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
-                                {outlet.code}
-                              </span>
-                            )}
-                            <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
-                              {outlet.name}
-                            </span>
-                            {renderBrandBadge(outlet.brand)}
-                            {outlet.tier && (
-                              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 shrink-0">
-                                • {outlet.tier}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Second line: Address / City / GPS */}
-                          <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                            <div className="flex items-center gap-1 truncate min-w-0">
-                              <MapPin className="w-3 h-3 shrink-0 text-slate-400" />
-                              <span className="truncate">
-                                {[outlet.address, outlet.city]
-                                  .filter(Boolean)
-                                  .join(", ") || "Alamat belum ada"}
-                              </span>
-                            </div>
-
-                            {hasCoordinates ? (
-                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 shrink-0 font-semibold">
-                                GPS Ada
-                              </span>
-                            ) : (
-                              <span className="text-[10px] text-amber-600 dark:text-amber-400 shrink-0 font-medium">
-                                GPS Kosong
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Third line: Recent Placement History preview */}
-                          {outletRecentMaterials.length > 0 && (
-                            <div className="flex items-center gap-1 text-[10px] text-slate-400 pt-0.5">
-                              <span>Riwayat:</span>
-                              <div className="flex items-center gap-1 flex-wrap">
-                                {outletRecentMaterials.slice(0, 3).map((mat) => (
-                                  <span
-                                    key={mat}
-                                    className="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px]"
-                                  >
-                                    {mat}
-                                  </span>
-                                ))}
-                                {outletRecentMaterials.length > 3 && (
-                                  <span className="text-[10px] text-slate-400">
-                                    +{outletRecentMaterials.length - 3} lainnya
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-
-                  {/* Dropdown footer action to submit new store */}
-                  <div className="p-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (onRequestNewOutlet) {
-                          onRequestNewOutlet(searchQuery);
-                        } else {
-                          setIsDraftModalOpen(true);
-                        }
-                      }}
-                      className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 bg-orange-500/10 hover:bg-orange-500/15 border border-orange-500/20 transition-colors cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Outlet tidak ditemukan? Ajukan Outlet Baru</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+              </>
+            )}
+          </div>
 
           <SubmitDraftOutletModal
             isOpen={isDraftModalOpen}

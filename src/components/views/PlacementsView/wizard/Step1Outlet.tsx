@@ -137,17 +137,6 @@ export function Step1Outlet({
           onSetBrand={onSetBrand}
           placeholder="Ketik nama toko (mis: Toko Barokah) atau kode (O-SMG-001)..."
         />
-
-        {!selectedOutlet && (
-          <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 px-1">
-            <span>Ketik minimal 2 karakter untuk melihat rekomendasi outlet.</span>
-            {activeBrandFilter !== "ALL" && (
-              <span className="font-medium text-slate-600 dark:text-slate-300">
-                Filter aktif: <strong>{activeBrandFilter}</strong>
-              </span>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
