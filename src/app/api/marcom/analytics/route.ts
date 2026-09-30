@@ -44,7 +44,6 @@ export async function GET(request: Request) {
           outlet: {
             select: {
               id: true,
-              tier: true,
               branchId: true,
               branch: {
                 select: {
@@ -79,7 +78,6 @@ export async function GET(request: Request) {
       prisma.outlet.findMany({
         select: {
           id: true,
-          tier: true,
           name: true,
           code: true,
           active: true,

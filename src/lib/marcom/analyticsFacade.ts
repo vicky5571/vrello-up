@@ -120,7 +120,6 @@ export interface FacadeEventInput {
 export interface FacadeOutletInput {
   id?: string;
   active?: boolean | null;
-  tier?: string | null;
 }
 
 export interface ActionableMarcomInput {

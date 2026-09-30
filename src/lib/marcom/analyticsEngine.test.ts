@@ -5,7 +5,6 @@ import {
   calculatePosmMaterialEconomics,
   calculateContentPlatformMetrics,
   calculateEventEfficiency,
-  calculateOutletTierCoverage,
   buildMarcomAnalyticsDashboard,
   type MouAnalyticsInput,
   type PlacementAnalyticsInput,
@@ -232,42 +231,6 @@ describe("analyticsEngine", () => {
     });
   });
 
-  describe("calculateOutletTierCoverage", () => {
-    it("determines outlet penetration rate accurately across tiers", () => {
-      const outlets: OutletAnalyticsInput[] = [
-        { id: "o1", tier: "TIER_1", name: "Outlet 1" },
-        { id: "o2", tier: "TIER_1", name: "Outlet 2" },
-        { id: "o3", tier: "TIER_2", name: "Outlet 3" },
-        { id: "o4", tier: "TIER_3", name: "Outlet 4" },
-      ];
-
-      const placements: PlacementAnalyticsInput[] = [
-        { id: "p1", outletId: "o1", status: "DONE" },
-        { id: "p2", outletId: "o2", status: "ON_PROGRESS" },
-        { id: "p3", outletId: "o3", status: "DONE" },
-      ];
-
-      const result = calculateOutletTierCoverage(outlets, placements);
-      assert.equal(result.totalOutlets, 4);
-
-      const tier1 = result.tiers.find((t) => t.tier === "TIER_1");
-      assert.ok(tier1);
-      assert.equal(tier1.totalOutlets, 2);
-      assert.equal(tier1.brandedOutlets, 1);
-      assert.equal(tier1.inProgressOutlets, 1);
-      assert.equal(tier1.unbrandedOutlets, 0);
-      assert.equal(tier1.penetrationRate, 50); // 1 of 2 = 50%
-      assert.equal(result.tier1PenetrationRate, 50);
-
-      const tier3 = result.tiers.find((t) => t.tier === "TIER_3");
-      assert.ok(tier3);
-      assert.equal(tier3.totalOutlets, 1);
-      assert.equal(tier3.brandedOutlets, 0);
-      assert.equal(tier3.unbrandedOutlets, 1);
-      assert.equal(tier3.penetrationRate, 0);
-    });
-  });
-
   describe("buildMarcomAnalyticsDashboard", () => {
     it("builds the complete aggregate dashboard structure without error", () => {
       const data = buildMarcomAnalyticsDashboard({
@@ -279,11 +242,15 @@ describe("analyticsEngine", () => {
       });
 
       assert.ok(data.kpis);
+      assert.ok(data.kpis.mouSla);
+      assert.ok(data.kpis.posmDeployment);
+      assert.ok(data.kpis.eventEfficiency);
+      assert.equal((data.kpis as Record<string, unknown>).tier1Penetration, undefined);
       assert.ok(data.mouSlaAndAging);
       assert.ok(data.posmDeployment);
       assert.ok(data.contentMetrics);
       assert.ok(data.eventEfficiency);
-      assert.ok(data.outletTierCoverage);
+      assert.equal((data as Record<string, unknown>).outletTierCoverage, undefined);
       assert.ok(data.actionable);
       assert.equal(typeof data.actionable.costPerOutlet.avgCostPerOutlet, "number");
       assert.equal(typeof data.actionable.eventEfficiency.costPerAttendee, "number");

@@ -5,7 +5,6 @@ export interface OutletSummaryInfo {
   code: string;
   name: string;
   type: string;
-  tier?: string;
   brand?: Brand;
   active: boolean;
   branchId: string;
@@ -23,9 +22,6 @@ export interface OutletKPIs {
   branchCoverage: number;
   im3Count: number;
   triCount: number;
-  tier1Count: number;
-  tier2Count: number;
-  tier3Count: number;
   withMouCount: number;
   withPlacementCount: number;
 }
@@ -42,9 +38,6 @@ export function calculateEnhancedOutletKPIs(outlets: OutletSummaryInfo[]): Outle
       branchCoverage: 0,
       im3Count: 0,
       triCount: 0,
-      tier1Count: 0,
-      tier2Count: 0,
-      tier3Count: 0,
       withMouCount: 0,
       withPlacementCount: 0,
     };
@@ -54,9 +47,6 @@ export function calculateEnhancedOutletKPIs(outlets: OutletSummaryInfo[]): Outle
   let activeCount = 0;
   let im3Count = 0;
   let triCount = 0;
-  let tier1Count = 0;
-  let tier2Count = 0;
-  let tier3Count = 0;
   let withMouCount = 0;
   let withPlacementCount = 0;
   const branchIds = new Set<string>();
@@ -72,11 +62,6 @@ export function calculateEnhancedOutletKPIs(outlets: OutletSummaryInfo[]): Outle
       im3Count++;
     }
 
-    const tier = (o.tier || "TIER_1").toUpperCase();
-    if (tier === "TIER_1") tier1Count++;
-    else if (tier === "TIER_2") tier2Count++;
-    else if (tier === "TIER_3") tier3Count++;
-
     if (typeof o.mouCount === "number" && o.mouCount > 0) withMouCount++;
     if (typeof o.placementCount === "number" && o.placementCount > 0) withPlacementCount++;
   }
@@ -90,9 +75,6 @@ export function calculateEnhancedOutletKPIs(outlets: OutletSummaryInfo[]): Outle
     branchCoverage: branchIds.size,
     im3Count,
     triCount,
-    tier1Count,
-    tier2Count,
-    tier3Count,
     withMouCount,
     withPlacementCount,
   };
@@ -145,7 +127,6 @@ export interface OutletMarkerMeta {
   brandColor: string;
   badgeBg: string;
   badgeText: string;
-  tierLabel: string;
   typeLabel: string;
 }
 
@@ -155,12 +136,8 @@ export interface OutletMarkerMeta {
 export function getOutletMarkerMeta(outlet: {
   brand?: Brand | string;
   type?: string;
-  tier?: string;
 }): OutletMarkerMeta {
   const isTri = outlet.brand === "TRI" || outlet.brand === "3";
-
-  const tier = (outlet.tier || "TIER_1").toUpperCase();
-  const tierLabel = tier === "TIER_1" ? "Tier 1" : tier === "TIER_2" ? "Tier 2" : "Tier 3";
 
   const type = (outlet.type || "TRADITIONAL").toUpperCase();
   const typeLabel = type.replaceAll("_", " ");
@@ -171,7 +148,6 @@ export function getOutletMarkerMeta(outlet: {
       brandColor: "#EC4899",
       badgeBg: "bg-pink-500/10",
       badgeText: "text-pink-600 dark:text-pink-400 border-pink-500/20",
-      tierLabel,
       typeLabel,
     };
   }
@@ -181,7 +157,6 @@ export function getOutletMarkerMeta(outlet: {
     brandColor: "#EAB308",
     badgeBg: "bg-yellow-500/10",
     badgeText: "text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
-    tierLabel,
     typeLabel,
   };
 }

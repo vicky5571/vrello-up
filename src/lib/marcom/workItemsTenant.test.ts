@@ -65,7 +65,6 @@ test("Marcom work items are isolated by workspaceId and deleted on workspace cas
         code: testOutletCode,
         name: "Test Tenant Outlet",
         type: "MODERN_RETAIL",
-        tier: "TIER_1",
         branchId: testBranchId,
       },
     });

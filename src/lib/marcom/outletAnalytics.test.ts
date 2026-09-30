@@ -11,12 +11,12 @@ test("calculateEnhancedOutletKPIs handles empty outlets list", () => {
   assert.equal(kpis.branchCoverage, 0);
 });
 
-test("calculateEnhancedOutletKPIs calculates correct totals, brand ratios, and tiers", () => {
+test("calculateEnhancedOutletKPIs calculates correct totals and brand ratios", () => {
   const outlets: OutletSummaryInfo[] = [
-    { id: "o1", code: "OUT-1", name: "Outlet 1", type: "TRADITIONAL", tier: "TIER_1", brand: "IM3", active: true, branchId: "b1", mouCount: 1, placementCount: 2 },
-    { id: "o2", code: "OUT-2", name: "Outlet 2", type: "MODERN_RETAIL", tier: "TIER_2", brand: "TRI", active: true, branchId: "b1", mouCount: 0, placementCount: 1 },
-    { id: "o3", code: "OUT-3", name: "Outlet 3", type: "EXCLUSIVE", tier: "TIER_1", brand: "TRI", active: false, branchId: "b2", mouCount: 1, placementCount: 0 },
-    { id: "o4", code: "OUT-4", name: "Outlet 4", type: "CAMPUS_OUTLET", tier: "TIER_3", brand: "IM3", active: true, branchId: "b3", mouCount: 0, placementCount: 0 },
+    { id: "o1", code: "OUT-1", name: "Outlet 1", type: "TRADITIONAL", brand: "IM3", active: true, branchId: "b1", mouCount: 1, placementCount: 2 },
+    { id: "o2", code: "OUT-2", name: "Outlet 2", type: "MODERN_RETAIL", brand: "TRI", active: true, branchId: "b1", mouCount: 0, placementCount: 1 },
+    { id: "o3", code: "OUT-3", name: "Outlet 3", type: "EXCLUSIVE", brand: "TRI", active: false, branchId: "b2", mouCount: 1, placementCount: 0 },
+    { id: "o4", code: "OUT-4", name: "Outlet 4", type: "CAMPUS_OUTLET", brand: "IM3", active: true, branchId: "b3", mouCount: 0, placementCount: 0 },
   ];
 
   const kpis = calculateEnhancedOutletKPIs(outlets);
@@ -26,9 +26,6 @@ test("calculateEnhancedOutletKPIs calculates correct totals, brand ratios, and t
   assert.equal(kpis.branchCoverage, 3);
   assert.equal(kpis.im3Count, 2);
   assert.equal(kpis.triCount, 2);
-  assert.equal(kpis.tier1Count, 2);
-  assert.equal(kpis.tier2Count, 1);
-  assert.equal(kpis.tier3Count, 1);
   assert.equal(kpis.withMouCount, 2);
   assert.equal(kpis.withPlacementCount, 2);
 });
@@ -61,15 +58,13 @@ test("resolveOutletCoordinates returns nulls when neither has coords", () => {
 });
 
 test("getOutletMarkerMeta formats brand and styling accurately", () => {
-  const im3 = getOutletMarkerMeta({ brand: "IM3", tier: "TIER_1", type: "MODERN_RETAIL" });
+  const im3 = getOutletMarkerMeta({ brand: "IM3", type: "MODERN_RETAIL" });
   assert.equal(im3.brandLabel, "IM3");
   assert.equal(im3.brandColor, "#EAB308");
-  assert.equal(im3.tierLabel, "Tier 1");
   assert.equal(im3.typeLabel, "MODERN RETAIL");
 
-  const tri = getOutletMarkerMeta({ brand: "3", tier: "TIER_2", type: "CAMPUS_OUTLET" });
+  const tri = getOutletMarkerMeta({ brand: "3", type: "CAMPUS_OUTLET" });
   assert.equal(tri.brandLabel, "3 (Tri)");
   assert.equal(tri.brandColor, "#EC4899");
-  assert.equal(tri.tierLabel, "Tier 2");
   assert.equal(tri.typeLabel, "CAMPUS OUTLET");
 });

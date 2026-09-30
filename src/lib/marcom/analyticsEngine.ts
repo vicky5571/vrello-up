@@ -5,7 +5,6 @@
  * - POSM Deployment Rate & Material Economics
  * - Social Media Content Cadence & Reliability
  * - Field Event Cost per Attendee & Target Realization
- * - Priority Outlet Tier Branding Penetration
  */
 
 import {
@@ -50,7 +49,6 @@ export interface PlacementAnalyticsInput {
   outletId?: string;
   outlet?: {
     id: string;
-    tier?: string;
     branchId?: string;
     branch?: {
       id: string;
@@ -134,26 +132,9 @@ export interface EventEfficiencyResult {
 
 export interface OutletAnalyticsInput {
   id: string;
-  tier: string; // TIER_1, TIER_2, TIER_3
   name?: string;
   code?: string;
   active?: boolean;
-}
-
-export interface TierCoverageMetric {
-  tier: string;
-  tierLabel: string;
-  totalOutlets: number;
-  brandedOutlets: number; // has at least 1 DONE placement
-  inProgressOutlets: number; // has ON_PROGRESS placement and 0 DONE
-  unbrandedOutlets: number; // no DONE or ON_PROGRESS placement
-  penetrationRate: number; // (brandedOutlets / totalOutlets) * 100
-}
-
-export interface OutletTierCoverageResult {
-  totalOutlets: number;
-  tier1PenetrationRate: number;
-  tiers: TierCoverageMetric[];
 }
 
 export interface ExecutiveKpis {
@@ -174,12 +155,6 @@ export interface ExecutiveKpis {
     totalAttendees: number;
     costPerAttendee: number;
   };
-  tier1Penetration: {
-    tier1Total: number;
-    tier1Branded: number;
-    rate: number;
-    status: "ON_TRACK" | "NEEDS_ACCELERATION";
-  };
 }
 
 export interface MarcomAnalyticsDashboardData {
@@ -188,9 +163,10 @@ export interface MarcomAnalyticsDashboardData {
   posmDeployment: PosmDeploymentResult;
   contentMetrics: ContentAnalyticsResult;
   eventEfficiency: EventEfficiencyResult;
-  outletTierCoverage: OutletTierCoverageResult;
   actionable: ActionableMarcomMetrics;
 }
+
+export type AnalyticsDashboardData = MarcomAnalyticsDashboardData;
 
 /**
  * Normalizes a platform string (e.g. "instagram" -> "Instagram")
@@ -503,88 +479,12 @@ export function calculateEventEfficiency(
 }
 
 /**
- * Calculates Physical Branding Penetration by Outlet Priority Tier.
- */
-export function calculateOutletTierCoverage(
-  outlets: OutletAnalyticsInput[],
-  placements: PlacementAnalyticsInput[]
-): OutletTierCoverageResult {
-  // Map outletId -> placement status summary
-  const outletStatusMap = new Map<string, { hasDone: boolean; hasInProgress: boolean }>();
-
-  for (const p of placements) {
-    const outletId = p.outletId || p.outlet?.id;
-    if (!outletId) continue;
-
-    let status = outletStatusMap.get(outletId);
-    if (!status) {
-      status = { hasDone: false, hasInProgress: false };
-      outletStatusMap.set(outletId, status);
-    }
-
-    const pStatus = p.status?.toUpperCase();
-    if (pStatus === "DONE") {
-      status.hasDone = true;
-    } else if (pStatus === "ON_PROGRESS") {
-      status.hasInProgress = true;
-    }
-  }
-
-  const tierMap: Record<
-    string,
-    { label: string; total: number; branded: number; inProgress: number }
-  > = {
-    TIER_1: { label: "Tier 1 (Flagship / Priority)", total: 0, branded: 0, inProgress: 0 },
-    TIER_2: { label: "Tier 2 (Regular High)", total: 0, branded: 0, inProgress: 0 },
-    TIER_3: { label: "Tier 3 (Standard)", total: 0, branded: 0, inProgress: 0 },
-  };
-
-  for (const o of outlets) {
-    const tierKey = o.tier?.toUpperCase() || "TIER_3";
-    const bucket = tierMap[tierKey] || tierMap["TIER_3"];
-    bucket.total++;
-
-    const status = outletStatusMap.get(o.id);
-    if (status?.hasDone) {
-      bucket.branded++;
-    } else if (status?.hasInProgress) {
-      bucket.inProgress++;
-    }
-  }
-
-  const tiers: TierCoverageMetric[] = Object.entries(tierMap).map(([tier, data]) => {
-    const unbranded = Math.max(0, data.total - data.branded - data.inProgress);
-    const penetrationRate =
-      data.total > 0 ? Math.round((data.branded / data.total) * 100) : 0;
-    return {
-      tier,
-      tierLabel: data.label,
-      totalOutlets: data.total,
-      brandedOutlets: data.branded,
-      inProgressOutlets: data.inProgress,
-      unbrandedOutlets: unbranded,
-      penetrationRate,
-    };
-  });
-
-  const tier1Metric = tiers.find((t) => t.tier === "TIER_1");
-  const tier1PenetrationRate = tier1Metric ? tier1Metric.penetrationRate : 0;
-
-  return {
-    totalOutlets: outlets.length,
-    tier1PenetrationRate,
-    tiers,
-  };
-}
-
-/**
- * Generates the 4 Executive KPI Cards for the top row pulse.
+ * Generates the 3 Executive KPI Cards for the top row pulse.
  */
 export function calculateExecutiveKpis(
   mouResult: MouSlaAndAgingResult,
   posmResult: PosmDeploymentResult,
-  eventResult: EventEfficiencyResult,
-  tierResult: OutletTierCoverageResult
+  eventResult: EventEfficiencyResult
 ): ExecutiveKpis {
   let mouHealthStatus: "HEALTHY" | "ATTENTION" | "CRITICAL" = "HEALTHY";
   if (mouResult.stuckCount > 5 || mouResult.avgSlaDays > 14) {
@@ -592,11 +492,6 @@ export function calculateExecutiveKpis(
   } else if (mouResult.stuckCount > 0 || mouResult.avgSlaDays > 7) {
     mouHealthStatus = "ATTENTION";
   }
-
-  const tier1 = tierResult.tiers.find((t) => t.tier === "TIER_1");
-  const tier1Total = tier1?.totalOutlets ?? 0;
-  const tier1Branded = tier1?.brandedOutlets ?? 0;
-  const tier1Rate = tierResult.tier1PenetrationRate;
 
   return {
     mouSla: {
@@ -621,14 +516,10 @@ export function calculateExecutiveKpis(
       totalAttendees: eventResult.totalAttendees,
       costPerAttendee: eventResult.avgCostPerAttendee,
     },
-    tier1Penetration: {
-      tier1Total,
-      tier1Branded,
-      rate: tier1Rate,
-      status: tier1Rate >= 70 ? "ON_TRACK" : "NEEDS_ACCELERATION",
-    },
   };
 }
+
+export { calculateExecutiveKpis as buildExecutiveKpis };
 
 /**
  * Main dashboard data aggregator from raw model lists.
@@ -645,12 +536,10 @@ export function buildMarcomAnalyticsDashboard(params: {
   const posmDeployment = calculatePosmMaterialEconomics(params.placements);
   const contentMetrics = calculateContentPlatformMetrics(params.contents);
   const eventEfficiency = calculateEventEfficiency(params.events);
-  const outletTierCoverage = calculateOutletTierCoverage(params.outlets, params.placements);
   const kpis = calculateExecutiveKpis(
     mouSlaAndAging,
     posmDeployment,
-    eventEfficiency,
-    outletTierCoverage
+    eventEfficiency
   );
   const actionable = calculateActionableMarcomMetrics({
     mous: params.mous,
@@ -667,8 +556,9 @@ export function buildMarcomAnalyticsDashboard(params: {
     posmDeployment,
     contentMetrics,
     eventEfficiency,
-    outletTierCoverage,
     actionable,
   };
 }
+
+export { buildMarcomAnalyticsDashboard as calculateDashboardAnalytics };
 

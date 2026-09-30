@@ -3,7 +3,6 @@ import type {
   PipelineUrgencyLevel,
   Outlet,
   OutletType,
-  OutletTier,
   Mou,
   MouStatus,
   Placement,
@@ -18,12 +17,11 @@ import { isPermanentMaterial } from "@/lib/marcom/placementMouBridge";
 
 export type { OutletPipelineRow, PipelineUrgencyLevel };
 
-export interface PipelineOutletInput extends Omit<Partial<Outlet>, "type" | "tier" | "branch" | "mous" | "placements"> {
+export interface PipelineOutletInput extends Omit<Partial<Outlet>, "type" | "branch" | "mous" | "placements"> {
   id: string;
   code?: string;
   name: string;
   type?: OutletType | string;
-  tier?: OutletTier | string;
   city?: string;
   address?: string;
   picName?: string;
@@ -400,7 +398,6 @@ export function buildOutletPipelineRows(
       code: outlet.code || "",
       name: outlet.name || "",
       type: outlet.type || "",
-      tier: outlet.tier || "",
       city: outlet.city || "",
       address: outlet.address || "",
       picName: outlet.picName || "",
@@ -454,14 +451,13 @@ export interface PipelineFilterParams {
   q?: string | null;
   search?: string | null;
   branchId?: string | null;
-  tier?: string | null;
   bottleneckOnly?: boolean | string | null;
   urgencyLevel?: PipelineUrgencyLevel | "ALL" | null;
 }
 
 /**
  * Pure filter helper for pipeline rows.
- * Supports filtering by branch, tier, search query (name, code, city, picName, address), bottleneck flag, and SLA urgency level.
+ * Supports filtering by branch, search query (name, code, city, picName, address), bottleneck flag, and SLA urgency level.
  */
 export function filterPipelineRows(
   rows: OutletPipelineRow[],
@@ -472,11 +468,6 @@ export function filterPipelineRows(
   const branchId = filters.branchId;
   if (branchId && branchId.toUpperCase() !== "ALL") {
     result = result.filter((row) => row.branch.id === branchId);
-  }
-
-  const tier = filters.tier;
-  if (tier && tier.toUpperCase() !== "ALL") {
-    result = result.filter((row) => row.tier === tier);
   }
 
   const query = (filters.q ?? filters.search)?.trim().toLowerCase();
