@@ -27,6 +27,8 @@ const SEED_MEMBERS = [
 const MATERIAL_ID_BY_NAME: Record<string, string> = {
   Poster: "material-poster",
   Shopblind: "material-shopblind",
+  "Stiker Etalase": "material-sticker",
+  "Bottom Etalase": "material-bottom",
   Banner: "material-banner",
   "Branding / Signboard": "material-signboard",
   "Other Materials": "material-other",
@@ -35,6 +37,8 @@ const MATERIAL_ID_BY_NAME: Record<string, string> = {
 const MATERIAL_DEFS = [
   { id: "material-poster", type: "POSTER", name: "Poster", requiresMou: false },
   { id: "material-shopblind", type: "SHOPBLIND", name: "Shopblind", requiresMou: true },
+  { id: "material-sticker", type: "OTHER_MATERIALS", name: "Stiker Etalase", requiresMou: false },
+  { id: "material-bottom", type: "OTHER_MATERIALS", name: "Bottom Etalase", requiresMou: false },
   { id: "material-banner", type: "BANNER", name: "Banner", requiresMou: false },
   { id: "material-signboard", type: "BRANDING_SIGNBOARD", name: "Branding / Signboard", requiresMou: true },
   { id: "material-other", type: "OTHER_MATERIALS", name: "Other Materials", requiresMou: false },

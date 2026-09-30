@@ -184,3 +184,98 @@ export function applyLocationNotePreset(
   }
   return `${tag} ${trimmed}`;
 }
+
+
+export interface PosmMaterialChip {
+  label: string;
+  matchKeywords: string[];
+}
+
+export const POSM_MATERIALS: PosmMaterialChip[] = [
+  { label: "Poster", matchKeywords: ["poster"] },
+  { label: "Shopblind", matchKeywords: ["shopblind", "shop blind"] },
+  { label: "Stiker Etalase", matchKeywords: ["stiker", "sticker"] },
+  { label: "Bottom Etalase", matchKeywords: ["bottom"] },
+  { label: "Shop Sign / Neonbox", matchKeywords: ["sign", "neonbox", "neon box", "signboard", "branding"] },
+  { label: "Banner", matchKeywords: ["banner"] },
+  { label: "Other", matchKeywords: ["other", "lainnya"] },
+];
+
+export interface CatalogMaterialSummary {
+  id: string;
+  name: string;
+  type?: string;
+  requiresMou?: boolean;
+}
+
+export const DEFAULT_FALLBACK_MATERIALS: CatalogMaterialSummary[] = [
+  { id: "material-poster", name: "Poster", type: "POSTER", requiresMou: false },
+  { id: "material-shopblind", name: "Shopblind", type: "SHOPBLIND", requiresMou: true },
+  { id: "material-sticker", name: "Stiker Etalase", type: "OTHER_MATERIALS", requiresMou: false },
+  { id: "material-bottom", name: "Bottom Etalase", type: "OTHER_MATERIALS", requiresMou: false },
+  { id: "material-signboard", name: "Branding / Signboard", type: "BRANDING_SIGNBOARD", requiresMou: true },
+  { id: "material-banner", name: "Banner", type: "BANNER", requiresMou: false },
+  { id: "material-other", name: "Other Materials", type: "OTHER_MATERIALS", requiresMou: false },
+];
+
+/**
+ * Resolves which catalog material matches a clicked POSM pill.
+ */
+export function resolvePosmChipMaterial(
+  chip: PosmMaterialChip,
+  materials: CatalogMaterialSummary[]
+): CatalogMaterialSummary | null {
+  if (!materials || materials.length === 0) return null;
+
+  for (const kw of chip.matchKeywords) {
+    const match = materials.find(
+      (m) =>
+        m.id.toLowerCase().includes(kw) ||
+        m.name.toLowerCase().includes(kw) ||
+        (m.type && m.type.toLowerCase().includes(kw))
+    );
+    if (match) return match;
+  }
+
+  const fallbackMatch = materials.find(
+    (m) => m.name.toLowerCase() === chip.label.toLowerCase()
+  );
+  if (fallbackMatch) return fallbackMatch;
+
+  const otherMat = materials.find(
+    (m) => m.id.includes("other") || m.name.toLowerCase().includes("other")
+  );
+  return otherMat || materials[0] || null;
+}
+
+/**
+ * Returns which POSM pill is currently active based on materialId or selected material.
+ */
+export function getActivePosmChipLabel(
+  materialId: string | undefined | null,
+  materials: CatalogMaterialSummary[],
+  selectedMat?: CatalogMaterialSummary
+): string | null {
+  if (!materials || materials.length === 0) return null;
+  const currentMat = selectedMat || (materialId ? materials.find((m) => m.id === materialId) : null);
+  if (!currentMat) return null;
+
+  const nameLower = currentMat.name.toLowerCase();
+  const typeLower = (currentMat.type || "").toLowerCase();
+  const idLower = currentMat.id.toLowerCase();
+
+  for (const chip of POSM_MATERIALS) {
+    if (
+      chip.matchKeywords.some(
+        (kw) =>
+          nameLower.includes(kw) ||
+          typeLower.includes(kw) ||
+          idLower.includes(kw)
+      )
+    ) {
+      return chip.label;
+    }
+  }
+  return null;
+}
+

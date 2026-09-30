@@ -8,8 +8,13 @@ import {
   isPaidPlacement,
   togglePaidPlacement,
   applyLocationNotePreset,
+  POSM_MATERIALS,
+  DEFAULT_FALLBACK_MATERIALS,
+  resolvePosmChipMaterial,
+  getActivePosmChipLabel,
 } from "@/components/views/PlacementsView/wizard/placementWizardHelpers";
 import type { MarcomPlacement, Brand } from "@/types";
+
 
 describe("placementWizardHelpers", () => {
   describe("canAdvanceFromStep", () => {
@@ -268,4 +273,63 @@ describe("placementWizardHelpers", () => {
       assert.equal(notes, "[Tiang Luar]");
     });
   });
+
+  describe("Step 2 POSM materials and chips", () => {
+    it("DEFAULT_FALLBACK_MATERIALS contains all 7 standard POSM materials", () => {
+      assert.equal(DEFAULT_FALLBACK_MATERIALS.length, 7);
+      const ids = DEFAULT_FALLBACK_MATERIALS.map((m) => m.id);
+      assert.ok(ids.includes("material-poster"));
+      assert.ok(ids.includes("material-shopblind"));
+      assert.ok(ids.includes("material-sticker"));
+      assert.ok(ids.includes("material-bottom"));
+      assert.ok(ids.includes("material-signboard"));
+      assert.ok(ids.includes("material-banner"));
+      assert.ok(ids.includes("material-other"));
+    });
+
+    it("every POSM chip resolves to a valid material in catalogue via resolvePosmChipMaterial", () => {
+      for (const chip of POSM_MATERIALS) {
+        const match = resolvePosmChipMaterial(chip, DEFAULT_FALLBACK_MATERIALS);
+        assert.ok(
+          match,
+          `POSM chip "${chip.label}" should resolve to a material in catalogue`
+        );
+      }
+    });
+
+    it("Stiker Etalase and Bottom Etalase resolve to distinct materials", () => {
+      const stickerChip = POSM_MATERIALS.find((c) => c.label === "Stiker Etalase");
+      const bottomChip = POSM_MATERIALS.find((c) => c.label === "Bottom Etalase");
+      assert.ok(stickerChip);
+      assert.ok(bottomChip);
+
+      const stickerMatch = resolvePosmChipMaterial(stickerChip, DEFAULT_FALLBACK_MATERIALS);
+      const bottomMatch = resolvePosmChipMaterial(bottomChip, DEFAULT_FALLBACK_MATERIALS);
+
+      assert.equal(stickerMatch?.id, "material-sticker");
+      assert.equal(bottomMatch?.id, "material-bottom");
+      assert.notEqual(stickerMatch?.id, bottomMatch?.id);
+    });
+
+    it("getActivePosmChipLabel correctly identifies the active pill for each material", () => {
+      assert.equal(getActivePosmChipLabel("material-poster", DEFAULT_FALLBACK_MATERIALS), "Poster");
+      assert.equal(getActivePosmChipLabel("material-shopblind", DEFAULT_FALLBACK_MATERIALS), "Shopblind");
+      assert.equal(getActivePosmChipLabel("material-sticker", DEFAULT_FALLBACK_MATERIALS), "Stiker Etalase");
+      assert.equal(getActivePosmChipLabel("material-bottom", DEFAULT_FALLBACK_MATERIALS), "Bottom Etalase");
+      assert.equal(getActivePosmChipLabel("material-signboard", DEFAULT_FALLBACK_MATERIALS), "Shop Sign / Neonbox");
+      assert.equal(getActivePosmChipLabel("material-banner", DEFAULT_FALLBACK_MATERIALS), "Banner");
+      assert.equal(getActivePosmChipLabel("material-other", DEFAULT_FALLBACK_MATERIALS), "Other");
+    });
+
+    it("handles empty or unmatched materials gracefully", () => {
+      assert.equal(getActivePosmChipLabel(undefined, DEFAULT_FALLBACK_MATERIALS), null);
+      assert.equal(getActivePosmChipLabel("", DEFAULT_FALLBACK_MATERIALS), null);
+      assert.equal(getActivePosmChipLabel("unknown-id", DEFAULT_FALLBACK_MATERIALS), null);
+      assert.equal(getActivePosmChipLabel("material-poster", []), null);
+
+      const posterChip = POSM_MATERIALS[0];
+      assert.equal(resolvePosmChipMaterial(posterChip, []), null);
+    });
+  });
 });
+

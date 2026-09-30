@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sparkles,
   FileText,
@@ -13,22 +13,21 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isPermanentMaterial, type MouSummaryInfo, type MouValidationResult } from "@/lib/marcom/placementMouBridge";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import {
   shouldShowMouSection,
   isPaidPlacement,
   togglePaidPlacement,
+  POSM_MATERIALS,
+  DEFAULT_FALLBACK_MATERIALS,
+  resolvePosmChipMaterial,
+  getActivePosmChipLabel,
+  type PosmMaterialChip,
 } from "./placementWizardHelpers";
 import type { MarcomPlacement } from "@/types";
 
-export const POSM_MATERIALS = [
-  { label: "Poster", matchKeywords: ["poster"] },
-  { label: "Shopblind", matchKeywords: ["shopblind", "shop blind"] },
-  { label: "Stiker Etalase", matchKeywords: ["stiker", "etalase", "sticker"] },
-  { label: "Bottom Etalase", matchKeywords: ["bottom", "etalase"] },
-  { label: "Shop Sign / Neonbox", matchKeywords: ["sign", "neonbox", "neon box", "signboard", "branding"] },
-  { label: "Banner", matchKeywords: ["banner"] },
-  { label: "Other", matchKeywords: ["other", "lainnya"] },
-];
+export { POSM_MATERIALS, DEFAULT_FALLBACK_MATERIALS };
+
 
 export const QUARTERS = ["Q1 2026", "Q2 2026", "Q3 2026", "Q4 2026"] as const;
 export const CAMPAIGN_THEMES = [
@@ -60,48 +59,44 @@ export function Step2MaterialTheme({
   mouValidation,
   onViewDocMou,
 }: Step2MaterialThemeProps) {
+  const fetchMaterials = useMarcomDataStore((s) => s.fetchMaterials);
+
+  useEffect(() => {
+    if (materialsList.length === 0) {
+      fetchMaterials().catch(() => {});
+    }
+  }, [materialsList.length, fetchMaterials]);
+
+  const effectiveMaterials =
+    materialsList.length > 0 ? materialsList : DEFAULT_FALLBACK_MATERIALS;
+
   const [isMouManuallyExpanded, setIsMouManuallyExpanded] = useState(false);
   const [isAuxFieldsExpanded, setIsAuxFieldsExpanded] = useState(
     Boolean(placement.cost || placement.dimensions)
   );
 
-  const activeChipLabel = (() => {
-    if (!selectedMat) return null;
-    const nameLower = selectedMat.name.toLowerCase();
-    const typeLower = (selectedMat.type || "").toLowerCase();
-    for (const chip of POSM_MATERIALS) {
-      if (chip.matchKeywords.some((kw) => nameLower.includes(kw) || typeLower.includes(kw))) {
-        return chip.label;
-      }
-    }
-    return null;
-  })();
+  const activeChipLabel = getActivePosmChipLabel(
+    placement.materialId,
+    effectiveMaterials,
+    selectedMat
+  );
 
-  const handleSelectPosmChip = (chip: (typeof POSM_MATERIALS)[number]) => {
-    let matchedId = "";
-    for (const kw of chip.matchKeywords) {
-      const match = materialsList.find(
-        (m) =>
-          m.name.toLowerCase().includes(kw) ||
-          (m.type && m.type.toLowerCase().includes(kw))
-      );
-      if (match) {
-        matchedId = match.id;
-        break;
-      }
-    }
-    if (!matchedId && materialsList.length > 0) {
-      matchedId = materialsList[0].id;
-    }
-    if (matchedId) {
-      setPlacement((prev) => (prev ? { ...prev, materialId: matchedId } : prev));
+  const handleSelectPosmChip = (chip: PosmMaterialChip) => {
+    const matched = resolvePosmChipMaterial(chip, effectiveMaterials);
+    if (matched) {
+      setPlacement((prev) => (prev ? { ...prev, materialId: matched.id } : prev));
     }
   };
 
+
+  const currentEffectiveMat =
+    selectedMat ||
+    effectiveMaterials.find((m) => m.id === placement.materialId);
+
   const isPermanent = isPermanentMaterial({
-    name: selectedMat?.name,
-    type: selectedMat?.type,
-    requiresMou: selectedMat?.requiresMou,
+    name: currentEffectiveMat?.name,
+    type: currentEffectiveMat?.type,
+    requiresMou: currentEffectiveMat?.requiresMou,
   });
 
   const showMou = shouldShowMouSection({
@@ -130,7 +125,7 @@ export function Step2MaterialTheme({
                   "px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer",
                   isActive
                     ? "bg-lime-600 text-white border-lime-700 shadow-2xs ring-2 ring-lime-500/30"
-                    : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                    : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
                 )}
               >
                 {chip.label}
@@ -149,7 +144,7 @@ export function Step2MaterialTheme({
           className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
         >
           <option value="">Pilih Material Katalog Master Data...</option>
-          {materialsList.map((m) => (
+          {effectiveMaterials.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name} {m.requiresMou ? "(Wajib MoU)" : ""}
             </option>
