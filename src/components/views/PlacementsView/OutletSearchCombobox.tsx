@@ -166,7 +166,7 @@ export function OutletSearchCombobox({
     };
   }, [selectedOutletId, selectedOutlet, workspaceId, internalSelected?.id]);
 
-  // Fetch initial recommendations on mount / brand switch, and debounced results on typing
+  // Debounced search on typing; strictly no-op when searchQuery is empty to save resources
   useEffect(() => {
     // If an outlet is already selected and we're not actively in changing mode, skip searching
     if (currentOutlet && !isChanging) {
@@ -174,6 +174,13 @@ export function OutletSearchCombobox({
     }
 
     const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setResults([]);
+      setIsLoading(false);
+      setFetchError(null);
+      return;
+    }
+
     setIsLoading(true);
     setFetchError(null);
     const controller = new AbortController();
@@ -181,11 +188,9 @@ export function OutletSearchCombobox({
     const fetchOutlets = async () => {
       try {
         const params = new URLSearchParams({
-          limit: trimmed ? "15" : "10",
+          q: trimmed,
+          limit: "15",
         });
-        if (trimmed) {
-          params.set("q", trimmed);
-        }
         if (workspaceId) {
           params.set("workspaceId", workspaceId);
         }
@@ -231,7 +236,7 @@ export function OutletSearchCombobox({
                 pic.includes(tok)
             );
           });
-          const ranked = trimmed ? rankOutletsByRelevance(matched, trimmed).slice(0, 15) : matched.slice(0, 10);
+          const ranked = rankOutletsByRelevance(matched, trimmed).slice(0, 15);
           setResults(ranked as unknown as OutletSearchResult[]);
           setHighlightedIndex(-1);
           setFetchError(null);
@@ -244,14 +249,6 @@ export function OutletSearchCombobox({
         }
       }
     };
-
-    if (!trimmed) {
-      // Immediate fetch for recommendations without debounce delay
-      fetchOutlets();
-      return () => {
-        controller.abort();
-      };
-    }
 
     const timer = setTimeout(fetchOutlets, 300);
     return () => {
@@ -587,38 +584,49 @@ export function OutletSearchCombobox({
             <p className="text-[11px] text-red-500 px-1">{fetchError}</p>
           )}
 
-          {/* Inline Results Panel - Always visible, never disappears when search bar loses focus */}
+          {/* Inline Results / Placeholder Panel */}
           <div className="w-full bg-white dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80 rounded-2xl shadow-xs overflow-hidden flex flex-col">
-            {/* Header result count */}
-            <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/60 text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-between border-b border-slate-100 dark:border-slate-700/80 shrink-0">
-              <span className="flex items-center gap-1.5">
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-3 h-3 text-lime-500 animate-spin" />
-                    <span>Mencari outlet...</span>
-                  </>
-                ) : results.length > 0 ? (
-                  searchQuery.trim() ? (
+            {/* Header when searching */}
+            {searchQuery.trim() ? (
+              <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/60 text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-between border-b border-slate-100 dark:border-slate-700/80 shrink-0">
+                <span className="flex items-center gap-1.5">
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-3 h-3 text-lime-500 animate-spin" />
+                      <span>Mencari outlet...</span>
+                    </>
+                  ) : results.length > 0 ? (
                     `Ditemukan ${results.length} outlet`
                   ) : (
-                    `Rekomendasi Outlet (${results.length} toko)`
-                  )
-                ) : (
-                  "Pencarian Outlet"
-                )}
-              </span>
-              <span className="text-[10px] text-slate-400 font-normal">
-                Gunakan ↑↓ lalu Enter atau klik outlet
-              </span>
-            </div>
+                    "Pencarian Outlet"
+                  )}
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">
+                  Gunakan ↑↓ lalu Enter atau klik outlet
+                </span>
+              </div>
+            ) : null}
 
-            {/* Empty state */}
-            {results.length === 0 && !isLoading && (
+            {/* Initial Guide / Placeholder text when no query entered */}
+            {!searchQuery.trim() && (
+              <div className="p-6 text-center space-y-2">
+                <div className="w-10 h-10 mx-auto rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center border border-slate-200/60 dark:border-slate-700/60">
+                  <Search className="w-5 h-5 text-slate-400" />
+                </div>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Ketik nama toko atau kode outlet untuk mencari
+                </p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
+                  Ketik minimal 1 karakter (misal: nama toko, kode O-SMG-001, atau nama jalan/kota) untuk mulai mencari.
+                </p>
+              </div>
+            )}
+
+            {/* Empty state when searching but no matches */}
+            {searchQuery.trim() && results.length === 0 && !isLoading && (
               <div className="p-5 text-center space-y-3">
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {searchQuery.trim()
-                    ? `Tidak ada outlet yang cocok dengan "${searchQuery}"`
-                    : "Belum ada outlet terdaftar untuk kategori ini"}
+                  Tidak ada outlet yang cocok dengan &quot;{searchQuery.trim()}&quot;
                 </p>
                 <button
                   type="button"
