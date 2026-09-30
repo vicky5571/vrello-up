@@ -49,6 +49,7 @@ export interface OutletSearchComboboxProps {
   onRequestNewOutlet?: (searchQuery: string) => void;
   workspaceId?: string;
   brand?: Brand | string;
+  onSetBrand?: (brand: Brand) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -90,6 +91,7 @@ export function OutletSearchCombobox({
   onRequestNewOutlet,
   workspaceId = "ws-main",
   brand,
+  onSetBrand,
   placeholder = "Cari nama outlet atau kode (cth: O-SMG-001)...",
   disabled = false,
   className,
@@ -375,88 +377,83 @@ export function OutletSearchCombobox({
 
   return (
     <div ref={containerRef} className={cn("relative w-full", className)}>
-      {/* Selected State Card */}
+      {/* Selected State Card (Option 2 Design) */}
       {showCard && currentOutlet && (
-        <div className="rounded-xl border border-lime-500/40 bg-lime-50/20 dark:bg-lime-950/10 dark:border-lime-500/30 p-3 shadow-xs">
-          {/* Top Row: Name, Code, Brand, Actions */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-start gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-lime-500/10 dark:bg-lime-500/20 text-lime-600 dark:text-lime-400 flex items-center justify-center shrink-0 mt-0.5">
-                <Store className="w-4 h-4" />
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800/90 p-4 sm:p-5 shadow-xs transition-all space-y-3">
+          {/* Top Row: Store Icon, Name, Code, and Action Buttons */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-lime-500/10 dark:bg-lime-500/20 text-lime-600 dark:text-lime-400 flex items-center justify-center shrink-0 mt-0.5 border border-lime-500/20 shadow-2xs">
+                <Store className="w-5 h-5" />
               </div>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+              <div className="min-w-0 space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
                     {currentOutlet.name}
                   </span>
-                  {isDraft && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 shrink-0">
-                      ⏳ Menunggu ACC Atasan
-                    </span>
-                  )}
                   {formattedCode && (
-                    <span className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
+                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 shrink-0">
                       {formattedCode}
                     </span>
                   )}
-                  {renderBrandBadge(currentOutlet.brand)}
-                  {currentOutlet.tier && (
-                    <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 shrink-0">
-                      {currentOutlet.tier}
+                  {isDraft && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 shrink-0">
+                      ⏳ Menunggu ACC Atasan
                     </span>
                   )}
                 </div>
-                {/* Address & City */}
-                {(currentOutlet.address || currentOutlet.city) && (
-                  <div className="flex items-center gap-1 mt-1 text-[11px] text-slate-600 dark:text-slate-400">
-                    <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                    <span className="truncate">
+
+                {/* Structured Metadata: Tier, Address, PIC */}
+                <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300 pt-0.5">
+                  {currentOutlet.tier && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-400 text-[11px] font-medium">Tier:</span>
+                      <span className="font-semibold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-[11px] border border-slate-200 dark:border-slate-600">
+                        {currentOutlet.tier}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-start gap-1.5">
+                    <span className="text-slate-400 text-[11px] font-medium shrink-0 mt-0.5">Alamat:</span>
+                    <span className="text-slate-700 dark:text-slate-200">
                       {[currentOutlet.address, currentOutlet.city]
                         .filter(Boolean)
-                        .join(", ")}
-                      {currentOutlet.branch?.name
-                        ? ` (${currentOutlet.branch.name})`
-                        : ""}
+                        .join(", ") || "Alamat belum tercatat"}
+                      {currentOutlet.branch?.name ? ` (${currentOutlet.branch.name})` : ""}
                     </span>
                   </div>
-                )}
-                {/* PIC Info */}
-                {currentOutlet.picName && (
-                  <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    PIC:{" "}
-                    <strong className="text-slate-700 dark:text-slate-300">
-                      {currentOutlet.picName}
-                    </strong>
-                    {currentOutlet.picPhone && ` • ${currentOutlet.picPhone}`}
-                  </div>
-                )}
-                {/* Draft Explanation Banner */}
-                {isDraft && (
-                  <div className="mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60 text-[11px] text-amber-800 dark:text-amber-300">
-                    Outlet ini berstatus draf pengajuan baru. Anda dapat melanjutkan pencatatan pemasangan material ini; data akan otomatis terhubung ke kode resmi setelah di-ACC oleh Atasan / Admin.
-                  </div>
-                )}
+
+                  {currentOutlet.picName && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-400 text-[11px] font-medium">PIC:</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300">
+                        {currentOutlet.picName}
+                        {currentOutlet.picPhone ? ` • ${currentOutlet.picPhone}` : ""}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-
-            {/* Clear / Change Buttons */}
-            <div className="flex items-center gap-1 shrink-0">
+            {/* Action Buttons: Ganti Outlet and Remove */}
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={handleChangeClick}
                 disabled={disabled}
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
-                title="Ganti outlet"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer disabled:opacity-50"
+                title="Ganti outlet lain"
               >
-                <RefreshCw className="w-3 h-3 text-slate-500" />
-                <span>Ganti</span>
+                <RefreshCw className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                <span>Ganti Outlet</span>
               </button>
               <button
                 type="button"
                 onClick={handleClear}
                 disabled={disabled}
-                className="p-1 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer disabled:opacity-50"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer disabled:opacity-50"
                 title="Hapus pilihan"
               >
                 <X className="w-4 h-4" />
@@ -464,44 +461,89 @@ export function OutletSearchCombobox({
             </div>
           </div>
 
-          {/* Bottom Section: GPS status and History tags */}
-          <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 space-y-1.5">
-            {/* Coordinates Status */}
-            <div className="flex items-center gap-2">
+          {/* Draft Notice if applicable */}
+          {isDraft && (
+            <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300">
+              Outlet ini berstatus draf pengajuan baru. Anda dapat melanjutkan pencatatan pemasangan material ini; data akan otomatis terhubung ke kode resmi setelah di-ACC oleh Atasan / Admin.
+            </div>
+          )}
+
+          {/* Horizontal Divider */}
+          <div className="border-t border-slate-100 dark:border-slate-700/80 my-2" />
+
+          {/* Bottom Bar: Verified GPS Badge (Left) & Brand Provider with Override (Right) */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+            {/* Left: Verified GPS Pill */}
+            <div>
               {coords.isSet ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                  <MapPin className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>📍 {coords.text}</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>Verified GPS: {coords.text}</span>
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                  <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
-                  <span>⚠️ {coords.text}</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                  <span>Titik GPS Belum Diatur</span>
                 </span>
               )}
             </div>
 
-            {/* Recent Placement History */}
-            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                Riwayat:
+            {/* Right: Brand Provider Confirmation & Override */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Brand:
               </span>
-              {recentTags.length > 0 ? (
-                recentTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+              {onSetBrand ? (
+                <div className="inline-flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
+                  <button
+                    type="button"
+                    onClick={() => onSetBrand("IM3")}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                      (brand === "IM3" || !brand)
+                        ? "bg-yellow-400 text-yellow-950 shadow-xs"
+                        : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                    )}
                   >
-                    {tag}
-                  </span>
-                ))
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-900" />
+                    <span>IM3</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSetBrand("TRI")}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                      brand === "TRI" || brand === "3"
+                        ? "bg-pink-600 text-white shadow-xs"
+                        : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                    )}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                    <span>3 / Tri</span>
+                  </button>
+                </div>
               ) : (
-                <span className="text-[11px] text-slate-400 italic">
-                  Belum ada riwayat pemasangan
-                </span>
+                renderBrandBadge(currentOutlet.brand)
               )}
             </div>
           </div>
+
+          {/* Riwayat Pemasangan Tags (if any) */}
+          {recentTags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 text-xs pt-1 border-t border-slate-100 dark:border-slate-700/60">
+              <span className="text-[11px] font-medium text-slate-400">
+                Riwayat:
+              </span>
+              {recentTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -58,67 +58,71 @@ export function Step1Outlet({
             className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5"
           >
             <Store className="w-3.5 h-3.5 text-lime-600 dark:text-lime-400" />
-            <span>Pilih Outlet Target POSM *</span>
+            <span>{selectedOutlet ? "Outlet Target POSM Terpilih" : "Pilih Outlet Target POSM *"}</span>
           </label>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-            Cari toko berdasarkan nama, ID outlet, atau alamat lapangan
+            {selectedOutlet
+              ? "Outlet terverifikasi untuk pelaksanaan materi promosi lapangan"
+              : "Cari toko berdasarkan nama, ID outlet, atau alamat lapangan"}
           </p>
         </div>
 
-        {/* Compact Segmented Brand Filter */}
-        <div className="inline-flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 shrink-0 self-start sm:self-auto shadow-2xs">
-          <button
-            type="button"
-            onClick={() => handleFilterClick("ALL")}
-            className={cn(
-              "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
-              activeBrandFilter === "ALL"
-                ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-            )}
-            title="Tampilkan seluruh outlet tanpa memfilter brand"
-          >
-            Semua
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFilterClick("IM3")}
-            className={cn(
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
-              activeBrandFilter === "IM3"
-                ? "bg-yellow-400 text-yellow-950 shadow-xs"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-            )}
-            title="Hanya outlet IM3"
-          >
-            <span
+        {/* Compact Segmented Brand Filter (Shown during search) */}
+        {!selectedOutlet && (
+          <div className="inline-flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 shrink-0 self-start sm:self-auto shadow-2xs">
+            <button
+              type="button"
+              onClick={() => handleFilterClick("ALL")}
               className={cn(
-                "w-2 h-2 rounded-full",
-                activeBrandFilter === "IM3" ? "bg-yellow-950" : "bg-yellow-500"
+                "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
+                activeBrandFilter === "ALL"
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               )}
-            />
-            <span>IM3</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFilterClick("TRI")}
-            className={cn(
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
-              activeBrandFilter === "TRI"
-                ? "bg-pink-600 text-white shadow-xs"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-            )}
-            title="Hanya outlet 3 / Tri"
-          >
-            <span
+              title="Tampilkan seluruh outlet tanpa memfilter brand"
+            >
+              Semua
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFilterClick("IM3")}
               className={cn(
-                "w-2 h-2 rounded-full",
-                activeBrandFilter === "TRI" ? "bg-white" : "bg-pink-500"
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
+                activeBrandFilter === "IM3"
+                  ? "bg-yellow-400 text-yellow-950 shadow-xs"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               )}
-            />
-            <span>3 / Tri</span>
-          </button>
-        </div>
+              title="Hanya outlet IM3"
+            >
+              <span
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  activeBrandFilter === "IM3" ? "bg-yellow-950" : "bg-yellow-500"
+                )}
+              />
+              <span>IM3</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFilterClick("TRI")}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
+                activeBrandFilter === "TRI"
+                  ? "bg-pink-600 text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              )}
+              title="Hanya outlet 3 / Tri"
+            >
+              <span
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  activeBrandFilter === "TRI" ? "bg-white" : "bg-pink-500"
+                )}
+              />
+              <span>3 / Tri</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Outlet Combobox */}
@@ -129,7 +133,8 @@ export function Step1Outlet({
           selectedOutlet={selectedOutletObj}
           onSelectOutlet={onSelectOutlet}
           workspaceId={workspaceId}
-          brand={activeBrandFilter === "ALL" ? undefined : activeBrandFilter}
+          brand={selectedOutlet ? currentBrand : (activeBrandFilter === "ALL" ? undefined : activeBrandFilter)}
+          onSetBrand={onSetBrand}
           placeholder="Ketik nama toko (mis: Toko Barokah) atau kode (O-SMG-001)..."
         />
 
