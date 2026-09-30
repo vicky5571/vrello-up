@@ -74,6 +74,7 @@ export interface PosmDeploymentResult {
   donePlacements: number;
   inProgressPlacements: number;
   issuePlacements: number;
+  notStartedPlacements: number;
   deploymentRate: number; // 0 - 100
   totalInvestment: number;
   materials: PosmMaterialMetric[];
@@ -119,6 +120,11 @@ export interface EventTypeMetric {
   totalAttendees: number;
   totalTargetAttendees: number;
   costPerAttendee: number;
+  /**
+   * Projected cost per attendee using the target audience when no real
+   * attendees have been recorded yet (upcoming / unrealized events).
+   */
+  projectedCostPerAttendee: number;
   attendanceRate: number; // 0 - 100%
 }
 
@@ -273,6 +279,7 @@ export function calculatePosmMaterialEconomics(
   let donePlacements = 0;
   let inProgressPlacements = 0;
   let issuePlacements = 0;
+  let notStartedPlacements = 0;
   let totalInvestment = 0;
 
   for (const p of placements) {
@@ -288,6 +295,7 @@ export function calculatePosmMaterialEconomics(
     if (isDone) donePlacements++;
     else if (isInProgress) inProgressPlacements++;
     else if (isIssue) issuePlacements++;
+    else notStartedPlacements++;
 
     const matName = p.material?.name?.trim() || "Materi Lainnya";
     let entry = materialMap.get(matName);
@@ -328,6 +336,7 @@ export function calculatePosmMaterialEconomics(
     donePlacements,
     inProgressPlacements,
     issuePlacements,
+    notStartedPlacements,
     deploymentRate,
     totalInvestment,
     materials,
@@ -457,6 +466,12 @@ export function calculateEventEfficiency(
       totalTargetAttendees: stats.totalTarget,
       costPerAttendee:
         stats.totalAttendees > 0 ? Math.round(stats.totalBudget / stats.totalAttendees) : 0,
+      projectedCostPerAttendee:
+        stats.totalAttendees === 0 && stats.totalTarget > 0
+          ? Math.round(stats.totalBudget / stats.totalTarget)
+          : stats.totalAttendees > 0
+          ? Math.round(stats.totalBudget / stats.totalAttendees)
+          : 0,
       attendanceRate:
         stats.totalTarget > 0
           ? Math.round((stats.totalAttendees / stats.totalTarget) * 100)
@@ -487,10 +502,22 @@ export function calculateExecutiveKpis(
   eventResult: EventEfficiencyResult
 ): ExecutiveKpis {
   let mouHealthStatus: "HEALTHY" | "ATTENTION" | "CRITICAL" = "HEALTHY";
-  if (mouResult.stuckCount > 5 || mouResult.avgSlaDays > 14) {
+  let mouLabel = "SLA Prima (<7 Hari)";
+
+  const hasMouSampleData =
+    mouResult.totalMous > 0 &&
+    (mouResult.submittedCount > 0 || mouResult.approvedOrDoneCount > 0);
+
+  if (!hasMouSampleData) {
+    // Empty / freshly initialized workspace: never falsely congratulate on SLA.
+    mouHealthStatus = "HEALTHY";
+    mouLabel = "Belum Ada Pengajuan";
+  } else if (mouResult.stuckCount > 5 || mouResult.avgSlaDays > 14) {
     mouHealthStatus = "CRITICAL";
+    mouLabel = "Bottleneck Kritis (>14 Hari)";
   } else if (mouResult.stuckCount > 0 || mouResult.avgSlaDays > 7) {
     mouHealthStatus = "ATTENTION";
+    mouLabel = "Ada Keterlambatan Review";
   }
 
   return {
@@ -498,12 +525,7 @@ export function calculateExecutiveKpis(
       avgSlaDays: mouResult.avgSlaDays,
       stuckCount: mouResult.stuckCount,
       healthStatus: mouHealthStatus,
-      label:
-        mouHealthStatus === "HEALTHY"
-          ? "SLA Prima (<7 Hari)"
-          : mouHealthStatus === "ATTENTION"
-          ? "Ada Keterlambatan Review"
-          : "Bottleneck Kritis (>14 Hari)",
+      label: mouLabel,
     },
     posmDeployment: {
       total: posmResult.totalPlacements,
@@ -529,9 +551,16 @@ export function buildMarcomAnalyticsDashboard(params: {
   placements: PlacementAnalyticsInput[];
   contents: ContentPostAnalyticsInput[];
   events: FieldEventAnalyticsInput[];
-  outlets: OutletAnalyticsInput[];
+  outlets?: OutletAnalyticsInput[];
+  activeOutletCount?: number;
   now?: Date;
 }): MarcomAnalyticsDashboardData {
+  const activeOutletCount =
+    typeof params.activeOutletCount === "number" &&
+    Number.isFinite(params.activeOutletCount)
+      ? Math.max(0, Math.round(params.activeOutletCount))
+      : undefined;
+
   const mouSlaAndAging = calculateMouSlaAndAging(params.mous, params.now);
   const posmDeployment = calculatePosmMaterialEconomics(params.placements);
   const contentMetrics = calculateContentPlatformMetrics(params.contents);
@@ -546,7 +575,8 @@ export function buildMarcomAnalyticsDashboard(params: {
     placements: params.placements,
     contents: params.contents,
     events: params.events,
-    outlets: params.outlets,
+    outlets: params.outlets || [],
+    activeOutletCount,
     now: params.now,
   });
 

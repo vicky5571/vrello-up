@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
   Clock,
@@ -20,21 +19,8 @@ import {
   YAxis,
 } from "recharts";
 import { cn } from "@/lib/utils";
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import type { MarcomAnalyticsDashboardData } from "@/lib/marcom/analyticsEngine";
-
-function formatRupiah(val: number): string {
-  if (val >= 1_000_000_000) {
-    return `Rp ${(val / 1_000_000_000).toFixed(1)} M`;
-  }
-  if (val >= 1_000_000) {
-    return `Rp ${(val / 1_000_000).toFixed(1)} Jt`;
-  }
-  if (val >= 1_000) {
-    return `Rp ${(val / 1_000).toFixed(0)} Rb`;
-  }
-  return `Rp ${val.toLocaleString("id-ID")}`;
-}
+import { formatCompactIDR } from "@/lib/marcom/analyticsFormatters";
+import { useAnalyticsData } from "./useAnalyticsData";
 
 function KpiCard({
   title,
@@ -130,38 +116,40 @@ function ChartCard({
   );
 }
 
+function AnalyticsSkeleton() {
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#18191B] p-4 h-32 animate-pulse"
+          >
+            <div className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-800" />
+            <div className="mt-4 h-7 w-20 rounded bg-slate-200 dark:bg-slate-800" />
+            <div className="mt-3 h-3 w-32 rounded bg-slate-100 dark:bg-slate-800/70" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#18191B] p-4 h-80 animate-pulse"
+          >
+            <div className="h-3 w-40 rounded bg-slate-200 dark:bg-slate-800" />
+            <div className="mt-6 h-56 w-full rounded bg-slate-100 dark:bg-slate-800/60" />
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export function AnalyticsView() {
-  const activeWorkspaceId =
-    useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
-  const [data, setData] = useState<MarcomAnalyticsDashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, isRefreshing, error, refresh } = useAnalyticsData();
 
-  const fetchAnalytics = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(
-        `/api/marcom/analytics?workspaceId=${encodeURIComponent(activeWorkspaceId)}`
-      );
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: Gagal memuat data analitik`);
-      }
-      const json = await res.json();
-      if (!json.ok || !json.data) {
-        throw new Error(json.error || "Format respons tidak valid");
-      }
-      setData(json.data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal mengambil data analitik");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeWorkspaceId]);
-
-  useEffect(() => {
-    fetchAnalytics();
-  }, [fetchAnalytics]);
+  const fetchAnalytics = refresh;
 
   return (
     <div className="flex-1 overflow-auto p-6 space-y-6">
@@ -184,22 +172,17 @@ export function AnalyticsView() {
         <button
           type="button"
           onClick={fetchAnalytics}
-          disabled={isLoading}
+          disabled={isRefreshing}
           title="Segarkan data analitik"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-2xs bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50 self-start sm:self-auto"
         >
-          <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+          <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
           <span>Refresh</span>
         </button>
       </div>
 
       {isLoading ? (
-        <div className="p-16 flex flex-col items-center justify-center gap-3">
-          <div className="w-9 h-9 rounded-full border-2 border-slate-300 dark:border-slate-700 border-t-indigo-600 animate-spin" />
-          <span className="text-xs text-slate-500 font-medium">
-            Mengompilasi metrik operasional...
-          </span>
-        </div>
+        <AnalyticsSkeleton />
       ) : error || !data ? (
         <div className="p-12 text-center text-xs flex flex-col items-center gap-3 bg-white dark:bg-[#18191B] rounded-xl border border-slate-200 dark:border-slate-800">
           <AlertTriangle className="w-8 h-8 text-rose-500" />
@@ -218,39 +201,52 @@ export function AnalyticsView() {
         <>
           {/* Executive Pulse Row (3 KPI Cards) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <KpiCard
-              title="Kecepatan Persetujuan MOU"
-              value={`${data.kpis.mouSla.avgSlaDays} Hari`}
-              subtitle="Rata-rata SLA proses submission ke aktif"
-              icon={Clock}
-              badgeText={
-                data.kpis.mouSla.healthStatus === "HEALTHY"
-                  ? "SLA Prima (<7 Hari)"
-                  : data.kpis.mouSla.healthStatus === "ATTENTION"
-                  ? `${data.kpis.mouSla.stuckCount} Tertahan >14 Hari`
-                  : `Bottleneck: ${data.kpis.mouSla.stuckCount} Proposal Stuck`
-              }
-              badgeVariant={
-                data.kpis.mouSla.healthStatus === "HEALTHY"
-                  ? "success"
-                  : data.kpis.mouSla.healthStatus === "ATTENTION"
-                  ? "warning"
-                  : "danger"
-              }
-            />
+            {(() => {
+              const mouSla = data.kpis.mouSla;
+              const hasSampleData =
+                data.mouSlaAndAging.submittedCount > 0 ||
+                data.mouSlaAndAging.approvedOrDoneCount > 0;
+
+              const badgeText = !hasSampleData
+                ? mouSla.label
+                : mouSla.healthStatus === "HEALTHY"
+                ? "SLA Prima (<7 Hari)"
+                : mouSla.healthStatus === "ATTENTION"
+                ? `${mouSla.stuckCount} Tertahan >14 Hari`
+                : `Bottleneck: ${mouSla.stuckCount} Proposal Stuck`;
+
+              const badgeVariant = !hasSampleData
+                ? "neutral"
+                : mouSla.healthStatus === "HEALTHY"
+                ? "success"
+                : mouSla.healthStatus === "ATTENTION"
+                ? "warning"
+                : "danger";
+
+              return (
+                <KpiCard
+                  title="Kecepatan Persetujuan MOU"
+                  value={hasSampleData ? `${mouSla.avgSlaDays} Hari` : "—"}
+                  subtitle="Rata-rata SLA proses submission ke aktif"
+                  icon={Clock}
+                  badgeText={badgeText}
+                  badgeVariant={badgeVariant}
+                />
+              );
+            })()}
 
             <KpiCard
               title="POSM Deployment Rate"
               value={`${data.kpis.posmDeployment.rate}%`}
               subtitle={`${data.kpis.posmDeployment.done} dari ${data.kpis.posmDeployment.total} titik terpasang`}
               icon={Store}
-              badgeText={`Investasi: ${formatRupiah(data.kpis.posmDeployment.totalInvestment)}`}
+              badgeText={`Investasi: ${formatCompactIDR(data.kpis.posmDeployment.totalInvestment)}`}
               badgeVariant="neutral"
             />
 
             <KpiCard
               title="Efisiensi Event Lapangan"
-              value={`${formatRupiah(data.kpis.eventEfficiency.costPerAttendee)} / Org`}
+              value={`${formatCompactIDR(data.kpis.eventEfficiency.costPerAttendee)} / Org`}
               subtitle="Biaya riil per kepala pengunjung"
               icon={Users}
               badgeText={`${data.kpis.eventEfficiency.totalAttendees.toLocaleString("id-ID")} total pengunjung`}
@@ -314,9 +310,13 @@ export function AnalyticsView() {
                                   <span>Kendala / Issue:</span>
                                   <span className="font-semibold text-rose-400">{item.issue}</span>
                                 </div>
+                                <div className="flex justify-between gap-4">
+                                  <span>Belum Mulai:</span>
+                                  <span className="font-semibold text-slate-300">{item.notStarted}</span>
+                                </div>
                                 <div className="border-t border-slate-700 pt-1 mt-1 flex justify-between gap-4">
                                   <span>Biaya Rata-rata / Unit:</span>
-                                  <span className="font-bold text-white">{formatRupiah(item.avgCost)}</span>
+                                  <span className="font-bold text-white">{formatCompactIDR(item.avgCost)}</span>
                                 </div>
                               </div>
                             </div>
@@ -345,6 +345,13 @@ export function AnalyticsView() {
                       name="Kendala (Issue)"
                       stackId="posm"
                       fill="#ef4444"
+                      radius={[0, 0, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="notStarted"
+                      name="Belum Mulai"
+                      stackId="posm"
+                      fill="#94a3b8"
                       radius={[0, 4, 4, 0]}
                     />
                   </BarChart>
@@ -441,7 +448,7 @@ export function AnalyticsView() {
                                 <div className="flex justify-between gap-4">
                                   <span>Total Anggaran:</span>
                                   <span className="font-semibold text-white">
-                                    {formatRupiah(item.totalBudget)}
+                                    {formatCompactIDR(item.totalBudget)}
                                   </span>
                                 </div>
                                 <div className="flex justify-between gap-4">
@@ -465,7 +472,7 @@ export function AnalyticsView() {
                                 <div className="border-t border-slate-700 pt-1 mt-1 flex justify-between gap-4">
                                   <span>Biaya per Kepala:</span>
                                   <span className="font-bold text-amber-400">
-                                    {formatRupiah(item.costPerAttendee)} / org
+                                    {formatCompactIDR(item.costPerAttendee)} / org
                                   </span>
                                 </div>
                               </div>

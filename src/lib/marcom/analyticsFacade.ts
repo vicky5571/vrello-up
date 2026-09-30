@@ -128,6 +128,8 @@ export interface ActionableMarcomInput {
   contents?: FacadeContentInput[] | null;
   events?: FacadeEventInput[] | null;
   outlets?: FacadeOutletInput[] | null;
+  /** Pre-computed active outlet count (e.g. from a SQL COUNT aggregation). */
+  activeOutletCount?: number | null;
   now?: Date;
 }
 
@@ -135,17 +137,19 @@ export interface ActionableMarcomInput {
  * 1. Cost per Outlet realization (aggregates Placement cost + MoU compensation)
  */
 export function calculateCostPerOutlet(
-  outlets: FacadeOutletInput[] = [],
+  activeOutletsCountOrList: FacadeOutletInput[] | number = 0,
   placements: FacadePlacementInput[] = [],
   mous: FacadeMouInput[] = []
 ): ActionableCostPerOutlet {
-  const safeOutlets = Array.isArray(outlets) ? outlets : [];
   const safePlacements = Array.isArray(placements) ? placements : [];
   const safeMous = Array.isArray(mous) ? mous : [];
 
-  const totalActiveOutlets = safeOutlets.filter(
-    (o) => o.active !== false
-  ).length;
+  const totalActiveOutlets =
+    typeof activeOutletsCountOrList === "number"
+      ? Math.max(0, Math.round(activeOutletsCountOrList))
+      : Array.isArray(activeOutletsCountOrList)
+      ? activeOutletsCountOrList.filter((o) => o.active !== false).length
+      : 0;
 
   let totalPlacementCost = 0;
   for (const p of safePlacements) {
@@ -349,9 +353,14 @@ export function calculateActionableMarcomMetrics(
 ): ActionableMarcomMetrics {
   const now = input.now || new Date();
 
+  const outletSource =
+    typeof input.activeOutletCount === "number" && Number.isFinite(input.activeOutletCount)
+      ? Math.max(0, Math.round(input.activeOutletCount))
+      : input.outlets || [];
+
   return {
     costPerOutlet: calculateCostPerOutlet(
-      input.outlets || [],
+      outletSource,
       input.placements || [],
       input.mous || []
     ),

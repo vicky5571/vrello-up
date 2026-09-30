@@ -5,12 +5,12 @@ import {
   calculatePosmMaterialEconomics,
   calculateContentPlatformMetrics,
   calculateEventEfficiency,
+  calculateExecutiveKpis,
   buildMarcomAnalyticsDashboard,
   type MouAnalyticsInput,
   type PlacementAnalyticsInput,
   type ContentPostAnalyticsInput,
   type FieldEventAnalyticsInput,
-  type OutletAnalyticsInput,
 } from "@/lib/marcom/analyticsEngine";
 
 describe("analyticsEngine", () => {
@@ -228,6 +228,83 @@ describe("analyticsEngine", () => {
       assert.equal(campus.totalAttendees, 3000);
       assert.equal(campus.costPerAttendee, 10000);
       assert.equal(campus.attendanceRate, 100); // 3000 / 3000 = 100%
+    });
+  });
+
+  describe("POSM notStarted & Executive KPI invariants", () => {
+    it("calculatePosmMaterialEconomics preserves notStarted count and totals correctly", () => {
+      const placements: PlacementAnalyticsInput[] = [
+        { id: "p1", status: "DONE", cost: 100000, material: { id: "m1", name: "Neon Box" } },
+        { id: "p2", status: "ON_PROGRESS", cost: 100000, material: { id: "m1", name: "Neon Box" } },
+        { id: "p3", status: "ISSUE", cost: 100000, material: { id: "m1", name: "Neon Box" } },
+        { id: "p4", status: "NOT_STARTED", cost: 100000, material: { id: "m1", name: "Neon Box" } },
+        { id: "p5", status: "NOT_STARTED", cost: 100000, material: { id: "m1", name: "Neon Box" } },
+      ];
+
+      const result = calculatePosmMaterialEconomics(placements);
+      assert.equal(result.totalPlacements, 5);
+      assert.equal(result.donePlacements, 1);
+      assert.equal(result.inProgressPlacements, 1);
+      assert.equal(result.issuePlacements, 1);
+      assert.equal(result.notStartedPlacements, 2);
+
+      const mat = result.materials[0];
+      assert.equal(mat.total, 5);
+      assert.equal(mat.notStarted, 2);
+      assert.equal(mat.done + mat.inProgress + mat.issue + mat.notStarted, mat.total);
+    });
+
+    it("calculateExecutiveKpis handles empty datasets with neutral status rather than false-positive SLA Prima", () => {
+      const emptyMou = calculateMouSlaAndAging([]);
+      const emptyPosm = calculatePosmMaterialEconomics([]);
+      const emptyEvent = calculateEventEfficiency([]);
+
+      const kpis = calculateExecutiveKpis(emptyMou, emptyPosm, emptyEvent);
+      assert.equal(kpis.mouSla.avgSlaDays, 0);
+      assert.equal(kpis.mouSla.stuckCount, 0);
+      assert.equal(kpis.mouSla.label, "Belum Ada Pengajuan");
+      assert.equal(kpis.mouSla.healthStatus, "HEALTHY");
+    });
+
+    it("calculateExecutiveKpis still flags real bottlenecks when proposals exist", () => {
+      const now = new Date("2026-09-30T00:00:00Z");
+      const mous: MouAnalyticsInput[] = [
+        { id: "m1", status: "SUBMITTED", submissionDate: "2026-09-01T00:00:00Z" }, // 29d stuck
+        { id: "m2", status: "SUBMITTED", submissionDate: "2026-09-02T00:00:00Z" },
+        { id: "m3", status: "SUBMITTED", submissionDate: "2026-09-03T00:00:00Z" },
+        { id: "m4", status: "SUBMITTED", submissionDate: "2026-09-04T00:00:00Z" },
+        { id: "m5", status: "SUBMITTED", submissionDate: "2026-09-05T00:00:00Z" },
+        { id: "m6", status: "SUBMITTED", submissionDate: "2026-09-06T00:00:00Z" },
+      ];
+
+      const mouResult = calculateMouSlaAndAging(mous, now);
+      const kpis = calculateExecutiveKpis(
+        mouResult,
+        calculatePosmMaterialEconomics([]),
+        calculateEventEfficiency([])
+      );
+      assert.equal(kpis.mouSla.stuckCount, 6);
+      assert.equal(kpis.mouSla.healthStatus, "CRITICAL");
+    });
+
+    it("calculateEventEfficiency returns projected target rates for upcoming events with 0 attendees", () => {
+      const events: FieldEventAnalyticsInput[] = [
+        {
+          id: "e1",
+          eventType: "Youth Festival",
+          status: "PLANNED",
+          budget: 50000000,
+          targetAttendee: 1000,
+          attendeeCount: 0,
+        },
+      ];
+
+      const result = calculateEventEfficiency(events);
+      const metric = result.eventsByType[0];
+      assert.equal(metric.costPerAttendee, 0);
+      assert.equal(metric.attendanceRate, 0);
+      // Projected cost using target audience (fallback for upcoming events)
+      assert.equal(metric.projectedCostPerAttendee, 50000);
     });
   });
 

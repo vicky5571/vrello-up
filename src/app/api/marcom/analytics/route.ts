@@ -14,8 +14,10 @@ export async function GET(request: Request) {
     });
     if (authError) return authError;
 
-    // Run parallel queries across all 5 operational Marcom entities
-    const [mous, placements, contents, events, outlets] = await Promise.all([
+    // Run parallel queries across all operational Marcom entities.
+    // NOTE: `Outlet` is global master data (~25k rows). We NEVER load full
+    // outlet records; we only need a lightweight SQL COUNT aggregation.
+    const [mous, placements, contents, events, activeOutletCount] = await Promise.all([
       prisma.mou.findMany({
         where: { workspaceId },
         select: {
@@ -75,13 +77,8 @@ export async function GET(request: Request) {
           attendeeCount: true,
         },
       }),
-      prisma.outlet.findMany({
-        select: {
-          id: true,
-          name: true,
-          code: true,
-          active: true,
-        },
+      prisma.outlet.count({
+        where: { active: true },
       }),
     ]);
 
@@ -90,7 +87,7 @@ export async function GET(request: Request) {
       placements,
       contents,
       events,
-      outlets,
+      activeOutletCount,
     });
 
     return NextResponse.json({ ok: true, data: dashboard });
