@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  AlertTriangle,
-  Clock,
-  RefreshCw,
-  Store,
-  Users,
-} from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -18,69 +12,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { formatCompactIDR } from "@/lib/marcom/analyticsFormatters";
+import {
+  DEFAULT_ANALYTICS_FILTERS,
+  type AnalyticsFilterState,
+} from "@/lib/marcom/analyticsFilterHelpers";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useAnalyticsData } from "./useAnalyticsData";
-
-function KpiCard({
-  title,
-  value,
-  subtitle,
-  icon: Icon,
-  badgeText,
-  badgeVariant = "neutral",
-}: {
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badgeText?: string;
-  badgeVariant?: "success" | "warning" | "danger" | "neutral";
-}) {
-  const badgeStyles = {
-    success:
-      "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800",
-    warning:
-      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
-    danger:
-      "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800",
-    neutral:
-      "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-700",
-  };
-
-  return (
-    <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#18191B] p-4 shadow-2xs flex flex-col justify-between">
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-          {title}
-        </span>
-        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-          <Icon className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-        </div>
-      </div>
-      <div>
-        <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-          {value}
-        </div>
-        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          {subtitle}
-        </div>
-      </div>
-      {badgeText && (
-        <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/60">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border",
-              badgeStyles[badgeVariant]
-            )}
-          >
-            {badgeText}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
+import { AnalyticsFilterBar } from "./AnalyticsFilterBar";
+import { AnalyticsKpiRow } from "./AnalyticsKpiRow";
 
 function ChartCard({
   title,
@@ -147,9 +89,16 @@ function AnalyticsSkeleton() {
 }
 
 export function AnalyticsView() {
-  const { data, isLoading, isRefreshing, error, refresh } = useAnalyticsData();
+  const [filters, setFilters] = useState<AnalyticsFilterState>(
+    DEFAULT_ANALYTICS_FILTERS
+  );
+  const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);
+  const { data, isLoading, isRefreshing, error, refresh } = useAnalyticsData(filters);
 
   const fetchAnalytics = refresh;
+
+  const resetFilters = () =>
+    setFilters({ ...DEFAULT_ANALYTICS_FILTERS, year: new Date().getFullYear() });
 
   return (
     <div className="flex-1 overflow-auto p-6 space-y-6">
@@ -181,6 +130,13 @@ export function AnalyticsView() {
         </button>
       </div>
 
+      {/* Multi-dimensional operational filters */}
+      <AnalyticsFilterBar
+        filters={filters}
+        onFilterChange={setFilters}
+        onReset={resetFilters}
+      />
+
       {isLoading ? (
         <AnalyticsSkeleton />
       ) : error || !data ? (
@@ -199,60 +155,16 @@ export function AnalyticsView() {
         </div>
       ) : (
         <>
-          {/* Executive Pulse Row (3 KPI Cards) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {(() => {
-              const mouSla = data.kpis.mouSla;
-              const hasSampleData =
-                data.mouSlaAndAging.submittedCount > 0 ||
-                data.mouSlaAndAging.approvedOrDoneCount > 0;
-
-              const badgeText = !hasSampleData
-                ? mouSla.label
-                : mouSla.healthStatus === "HEALTHY"
-                ? "SLA Prima (<7 Hari)"
-                : mouSla.healthStatus === "ATTENTION"
-                ? `${mouSla.stuckCount} Tertahan >14 Hari`
-                : `Bottleneck: ${mouSla.stuckCount} Proposal Stuck`;
-
-              const badgeVariant = !hasSampleData
-                ? "neutral"
-                : mouSla.healthStatus === "HEALTHY"
-                ? "success"
-                : mouSla.healthStatus === "ATTENTION"
-                ? "warning"
-                : "danger";
-
-              return (
-                <KpiCard
-                  title="Kecepatan Persetujuan MOU"
-                  value={hasSampleData ? `${mouSla.avgSlaDays} Hari` : "—"}
-                  subtitle="Rata-rata SLA proses submission ke aktif"
-                  icon={Clock}
-                  badgeText={badgeText}
-                  badgeVariant={badgeVariant}
-                />
-              );
-            })()}
-
-            <KpiCard
-              title="POSM Deployment Rate"
-              value={`${data.kpis.posmDeployment.rate}%`}
-              subtitle={`${data.kpis.posmDeployment.done} dari ${data.kpis.posmDeployment.total} titik terpasang`}
-              icon={Store}
-              badgeText={`Investasi: ${formatCompactIDR(data.kpis.posmDeployment.totalInvestment)}`}
-              badgeVariant="neutral"
-            />
-
-            <KpiCard
-              title="Efisiensi Event Lapangan"
-              value={`${formatCompactIDR(data.kpis.eventEfficiency.costPerAttendee)} / Org`}
-              subtitle="Biaya riil per kepala pengunjung"
-              icon={Users}
-              badgeText={`${data.kpis.eventEfficiency.totalAttendees.toLocaleString("id-ID")} total pengunjung`}
-              badgeVariant="neutral"
-            />
-          </div>
+          {/* Executive Pulse Row + Actionable Telemetry Strip */}
+          <AnalyticsKpiRow
+            kpis={data.kpis}
+            actionable={data.actionable}
+            hasMouSampleData={
+              data.mouSlaAndAging.submittedCount > 0 ||
+              data.mouSlaAndAging.approvedOrDoneCount > 0
+            }
+            onNavigate={(view) => navigateToMarcom(view)}
+          />
 
           {/* Detailed Actionable Visualizations Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

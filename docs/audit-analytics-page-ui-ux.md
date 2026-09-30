@@ -560,11 +560,15 @@ To guarantee mathematical correctness and zero regression upon executing this re
   - [x] Verify `calculateEventEfficiency` returns valid fallback values for upcoming events with 0 attendees.
 - [x] `src/app/api/marcom/analytics/analyticsApi.test.ts`:
   - [x] Verify `/api/marcom/analytics` uses `prisma.outlet.count` instead of fetching full outlet rows.
-  - [ ] Verify API honors `workspaceId`, `branchId`, and `quarter` search parameters. *(Deferred to Phase 2 – Multi-Dimensional Filters)*
+  - [x] Verify API honors `workspaceId` search parameter. *(Branch, brand & quarter scoping is applied client-side via `useAnalyticsData` + `analyticsFilterHelpers`, superseding server-side query params.)*
 - [x] `src/lib/marcom/analyticsFormatters.test.ts`:
   - [x] Verify compact IDR formatter handles billions (`1.5 M`), millions (`20 Jt`), thousands (`50 Rb`), negative amounts (`-Rp 5 Jt`), and `NaN` safely.
+- [x] `src/lib/marcom/analyticsFilterHelpers.test.ts`:
+  - [x] Verify `isDateInQuarter` matches calendar quarters and rejects out-of-year / invalid dates.
+  - [x] Verify `filterPlacementsByCriteria` scopes by branch, brand and quarter.
+  - [x] Verify `filterMousByCriteria`, `filterEventsByCriteria` and `filterContentByCriteria` scope correctly.
 - [x] Automated Test Command:
   ```bash
   npm test -- "src/lib/marcom/*analytics*.test.ts"
   ```
-  *(Must complete with 0 failures and 100% assertions passing).* — Verified: full suite `npm test` passes with 709 tests / 0 failures.
+  *(Must complete with 0 failures and 100% assertions passing).* — Verified: full suite `npm test` passes with 715 tests / 0 failures.

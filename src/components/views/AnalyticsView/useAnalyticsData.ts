@@ -4,6 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import {
+  filterPlacementsByCriteria,
+  filterMousByCriteria,
+  filterEventsByCriteria,
+  filterContentByCriteria,
+  DEFAULT_ANALYTICS_FILTERS,
+  isAnyFilterActive,
+  type AnalyticsFilterState,
+} from "@/lib/marcom/analyticsFilterHelpers";
+import {
   buildMarcomAnalyticsDashboard,
   type MarcomAnalyticsDashboardData,
 } from "@/lib/marcom/analyticsEngine";
@@ -22,8 +31,14 @@ export interface UseAnalyticsDataResult {
  * Reads directly from the client Marcom store caches and executes the pure
  * `buildMarcomAnalyticsDashboard` aggregation in memory (0ms latency, offline
  * capable) before falling back to a background HTTP revalidation.
+ *
+ * When operational filters (branch / brand / quarter) are active, the
+ * in-memory filtered dashboard takes precedence over the unfiltered remote
+ * payload so that every metric reflects the selected scope instantly.
  */
-export function useAnalyticsData(): UseAnalyticsDataResult {
+export function useAnalyticsData(
+  filters: AnalyticsFilterState = DEFAULT_ANALYTICS_FILTERS
+): UseAnalyticsDataResult {
   const activeWorkspaceId =
     useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
 
@@ -47,7 +62,7 @@ export function useAnalyticsData(): UseAnalyticsDataResult {
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // In-memory instant aggregation when store has data
+  // In-memory instant aggregation when store has data (respects active filters)
   const localDashboard = useMemo(() => {
     const hasLocalData =
       Boolean(placements?.length) ||
@@ -60,14 +75,14 @@ export function useAnalyticsData(): UseAnalyticsDataResult {
     }
 
     return buildMarcomAnalyticsDashboard({
-      mous: mous || [],
-      placements: placements || [],
-      contents: posts || [],
-      events: events || [],
+      mous: filterMousByCriteria(mous || [], filters),
+      placements: filterPlacementsByCriteria(placements || [], filters),
+      contents: filterContentByCriteria(posts || [], filters),
+      events: filterEventsByCriteria(events || [], filters),
       outlets: outlets || [],
       activeOutletCount: outlets?.filter((o) => o.active !== false).length,
     });
-  }, [placements, mous, events, posts, outlets]);
+  }, [placements, mous, events, posts, outlets, filters]);
 
   // Track whether we already hold local data without re-triggering fetches
   const hasLocalDataRef = useRef(false);
@@ -107,8 +122,14 @@ export function useAnalyticsData(): UseAnalyticsDataResult {
     fetchRemote();
   }, [fetchRemote]);
 
-  // Prefer remote fresh data, but immediately fallback to local in-memory store
-  const activeData = remoteData || localDashboard;
+  // When filters are active, the in-memory filtered dashboard must win over
+  // the unfiltered remote payload. Otherwise prefer remote fresh data and
+  // immediately fall back to local in-memory store.
+  const filtersActive = isAnyFilterActive(filters);
+  const activeData =
+    filtersActive && localDashboard
+      ? localDashboard
+      : remoteData || localDashboard;
   const isLoading = !activeData && isFetching;
 
   const refresh = useCallback(async () => {
