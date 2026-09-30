@@ -946,8 +946,10 @@ async function main() {
     return {
       id: `mou-${mouNum}`,
       branchId: branch.id,
+      outletId: outlet.id,
       outletName: outlet.name,
       partnerName: partnerNames[index % partnerNames.length],
+
       mouType,
       submissionDate: toDate(`2026-${monthStr}-${dayStr}`),
       startDate: toDate(`2026-${monthStr}-01`),

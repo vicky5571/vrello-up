@@ -135,8 +135,9 @@ function PlacementFormModalContent({
   const selectedMou = mousList.find((m) => m.id === placement.mouId);
   const outletMous = findAvailableMousForOutlet(
     mousList,
-    selOutlet || placement.outletId
+    selectedOutletObj || selOutlet || placement.outletId
   );
+
   const mouValidation = validatePlacementMouRequirement({
     materialName: selectedMat?.name,
     materialType: selectedMat?.type,

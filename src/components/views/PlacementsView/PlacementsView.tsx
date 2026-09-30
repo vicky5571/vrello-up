@@ -89,7 +89,9 @@ export function PlacementsView() {
         fetchOutlets(force),
         fetchMaterials(force),
         fetchBranches(force),
-        useMarcomDataStore.getState().fetchMous(activeWorkspaceId),
+        useMarcomDataStore.getState().fetchMous(activeWorkspaceId, force),
+
+
 
       ]);
     } catch (e) {
