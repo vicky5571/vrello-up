@@ -6,8 +6,6 @@ import {
   filterPipelineRows,
 } from "@/lib/marcom/pipelineEngine";
 
-const VALID_TIERS = ["TIER_1", "TIER_2", "TIER_3"] as const;
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const workspaceId = searchParams.get("workspaceId") || "ws-main";
@@ -20,7 +18,6 @@ export async function GET(request: Request) {
   }
 
   const branchId = searchParams.get("branchId");
-  const tier = searchParams.get("tier");
   const q = searchParams.get("q");
   const bottleneckOnly = searchParams.get("bottleneckOnly");
   const activeOnly = searchParams.get("activeOnly");
@@ -29,13 +26,6 @@ export async function GET(request: Request) {
 
   if (branchId && branchId.trim() !== "" && branchId.trim().toUpperCase() !== "ALL") {
     outletWhere.branchId = branchId.trim();
-  }
-
-  if (tier && tier.trim() !== "" && tier.trim().toUpperCase() !== "ALL") {
-    const upperTier = tier.trim().toUpperCase();
-    if (VALID_TIERS.includes(upperTier as (typeof VALID_TIERS)[number])) {
-      outletWhere.tier = upperTier as (typeof VALID_TIERS)[number];
-    }
   }
 
   if (q && q.trim().length > 0) {
@@ -141,7 +131,6 @@ export async function GET(request: Request) {
   const data = filterPipelineRows(allRows, {
     q,
     branchId,
-    tier,
     bottleneckOnly,
   });
 

@@ -1,12 +1,11 @@
-import { VALID_TYPES, VALID_TIERS } from "@/app/api/marcom/outlets/outletsSearchFilter";
+import { VALID_TYPES } from "@/app/api/marcom/outlets/outletsSearchFilter";
 import { generateDraftOutletCode } from "@/lib/marcom/outletCodeGenerator";
-import type { OutletType, OutletTier, OutletStatus } from "@/types";
+import type { OutletType, OutletStatus } from "@/types";
 
 export interface RawDraftOutletInput {
   name?: string;
   code?: string;
   type?: OutletType;
-  tier?: OutletTier;
   branchId?: string;
   branchCode?: string;
   address?: string;
@@ -38,10 +37,6 @@ export function validateDraftOutletPayload(input: RawDraftOutletInput): Validati
     errors.push(`Tipe outlet tidak valid (type): ${input.type}.`);
   }
 
-  if (input.tier && !VALID_TIERS.includes(input.tier as (typeof VALID_TIERS)[number])) {
-    errors.push(`Tier outlet tidak valid: ${input.tier}.`);
-  }
-
   if (input.latitude !== undefined && input.latitude !== null) {
     if (typeof input.latitude !== "number" || Number.isNaN(input.latitude)) {
       errors.push("Latitude harus berupa angka valid.");
@@ -64,7 +59,6 @@ export interface BuiltDraftOutletData {
   name: string;
   code: string;
   type: OutletType;
-  tier: OutletTier;
   branchId: string;
   address: string;
   city: string;
@@ -101,7 +95,6 @@ export function buildDraftOutletData(
     name: input.name?.trim() || "",
     code,
     type: input.type || "TRADITIONAL",
-    tier: input.tier || "TIER_1",
     branchId: input.branchId || "",
     address: input.address?.trim() || "",
     city: input.city?.trim() || "",

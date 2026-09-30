@@ -11,7 +11,6 @@ const mockRows: OutletPipelineRow[] = [
     code: "OUT-001",
     name: "Toko Sinar Jaya",
     type: "MODERN_RETAIL",
-    tier: "TIER_1",
     city: "Semarang",
     address: "Jl. Pemuda No. 1",
     picName: "Budi Santoso",
@@ -28,7 +27,6 @@ const mockRows: OutletPipelineRow[] = [
     code: "OUT-002",
     name: "Warung Berkah Abadi",
     type: "TRADITIONAL",
-    tier: "TIER_2",
     city: "Solo",
     address: "Jl. Slamet Riyadi No. 50",
     picName: "Agus Prabowo",
@@ -45,7 +43,6 @@ const mockRows: OutletPipelineRow[] = [
     code: "OUT-003",
     name: "Cellular Express",
     type: "EXCLUSIVE",
-    tier: "TIER_1",
     city: "Yogyakarta",
     address: "Jl. Malioboro No. 100",
     picName: "Dewi Lestari",
@@ -62,7 +59,6 @@ const mockRows: OutletPipelineRow[] = [
     code: "OUT-004",
     name: "Kios Pulsa Murah",
     type: "TRADITIONAL",
-    tier: "TIER_3",
     city: "Magelang",
     address: "Jl. Pahlawan No. 12",
     picName: "Siti Rahma",
@@ -89,22 +85,6 @@ test("filterPipelineRows: filters by branchId and ignores 'ALL', lowercase 'all'
 
   const emptyBranch = filterPipelineRows(mockRows, { branchId: "" });
   assert.equal(emptyBranch.length, 4);
-});
-
-test("filterPipelineRows: filters by tier and ignores 'ALL', lowercase 'all', or empty", () => {
-  const tier1 = filterPipelineRows(mockRows, { tier: "TIER_1" });
-  assert.equal(tier1.length, 2);
-  assert.deepEqual(tier1.map((r) => r.id), ["outlet-1", "outlet-3"]);
-
-  const tier2 = filterPipelineRows(mockRows, { tier: "TIER_2" });
-  assert.equal(tier2.length, 1);
-  assert.equal(tier2[0].id, "outlet-2");
-
-  const allTiers = filterPipelineRows(mockRows, { tier: "ALL" });
-  assert.equal(allTiers.length, 4);
-
-  const lowercaseAllTiers = filterPipelineRows(mockRows, { tier: "all" });
-  assert.equal(lowercaseAllTiers.length, 4);
 });
 
 test("filterPipelineRows: search query q matches name, code, city, or picName case-insensitively", () => {
@@ -160,20 +140,18 @@ test("filterPipelineRows: bottleneckOnly flag filters outlets with blocked place
 });
 
 test("filterPipelineRows: combined multi-criteria filters apply conjunction (AND) correctly", () => {
-  // TIER_1 in Yogyakarta with bottleneckOnly = true
+  // Yogyakarta with bottleneckOnly = true
   const filtered = filterPipelineRows(mockRows, {
     branchId: "branch-yog",
-    tier: "TIER_1",
     bottleneckOnly: true,
     q: "Cellular",
   });
   assert.equal(filtered.length, 1);
   assert.equal(filtered[0].id, "outlet-3");
 
-  // TIER_1 in Semarang with bottleneckOnly = true (Semarang has no bottleneck)
+  // Semarang with bottleneckOnly = true (Semarang has no bottleneck)
   const noBottleneckInSmg = filterPipelineRows(mockRows, {
     branchId: "branch-smg",
-    tier: "TIER_1",
     bottleneckOnly: true,
   });
   assert.equal(noBottleneckInSmg.length, 0);
@@ -190,7 +168,6 @@ test("filterPipelineRows: handles edge cases like empty rows, undefined fields g
       code: "",
       name: "Sparse Name",
       type: "TRADITIONAL",
-      tier: "TIER_1",
       city: "",
       address: "",
       picName: "",
@@ -211,7 +188,7 @@ test("filterPipelineRows: handles edge cases like empty rows, undefined fields g
   assert.equal(matchCity.length, 0);
 });
 
-test("pipeline GET route handler: executes with SQL pushdown for branchId, tier, and q", async () => {
+test("pipeline GET route handler: executes with SQL pushdown for branchId and q", async () => {
   // @ts-expect-error Node strip-types runner requires explicit extension
   const { GET } = await import("./route.ts");
 
@@ -235,8 +212,8 @@ test("pipeline GET route handler: executes with SQL pushdown for branchId, tier,
     r.code.toLowerCase().includes("berkah")
   ));
 
-  // Test with 'ALL' branch and 'ALL' tier (returns full dataset without SQL filtering)
-  const reqAll = new Request("http://localhost:3000/api/marcom/pipeline?workspaceId=ws-main&branchId=ALL&tier=ALL");
+  // Test with 'ALL' branch (returns full dataset without SQL filtering)
+  const reqAll = new Request("http://localhost:3000/api/marcom/pipeline?workspaceId=ws-main&branchId=ALL");
   const resAll = await GET(reqAll);
   assert.equal(resAll.status, 200);
   const jsonAll = await resAll.json();

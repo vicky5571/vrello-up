@@ -1,4 +1,4 @@
-import type { Prisma, OutletType, OutletTier, OutletStatus, Brand } from "@prisma/client";
+import type { Prisma, OutletType, OutletStatus, Brand } from "@prisma/client";
 
 export const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET"] as const;
 export const VALID_TIERS = ["TIER_1", "TIER_2", "TIER_3"] as const;
@@ -8,7 +8,6 @@ export interface OutletSearchFilterOptions {
   q?: string | null;
   branchId?: string | null;
   type?: string | OutletType | null;
-  tier?: string | OutletTier | null;
   status?: string | OutletStatus | null;
   brand?: string | Brand | null;
 }
@@ -55,7 +54,6 @@ export function buildOutletSearchWhere(
   let q: string | null | undefined = undefined;
   let branchId: string | null | undefined = undefined;
   let type: string | OutletType | null | undefined = undefined;
-  let tier: string | OutletTier | null | undefined = undefined;
   let status: string | OutletStatus | null | undefined = undefined;
   let brand: string | Brand | null | undefined = undefined;
 
@@ -63,7 +61,6 @@ export function buildOutletSearchWhere(
     q = queryOrOptions.q;
     branchId = queryOrOptions.branchId;
     type = queryOrOptions.type;
-    tier = queryOrOptions.tier;
     status = queryOrOptions.status;
     brand = queryOrOptions.brand;
   } else {
@@ -71,13 +68,11 @@ export function buildOutletSearchWhere(
     if (typeof workspaceIdOrOptions === "object" && workspaceIdOrOptions !== null) {
       branchId = workspaceIdOrOptions.branchId;
       type = workspaceIdOrOptions.type;
-      tier = workspaceIdOrOptions.tier;
       status = workspaceIdOrOptions.status;
       brand = workspaceIdOrOptions.brand;
     } else if (typeof extraOptions === "object" && extraOptions !== null) {
       branchId = extraOptions.branchId;
       type = extraOptions.type;
-      tier = extraOptions.tier;
       status = extraOptions.status;
       brand = extraOptions.brand;
     }
@@ -105,10 +100,6 @@ export function buildOutletSearchWhere(
     VALID_TYPES.includes(normalizedType as (typeof VALID_TYPES)[number])
   ) {
     where.type = normalizedType as OutletType;
-  }
-
-  if (tier && tier !== "ALL" && VALID_TIERS.includes(tier as (typeof VALID_TIERS)[number])) {
-    where.tier = tier as OutletTier;
   }
 
   if (
