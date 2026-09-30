@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { SubmitDraftOutletModal } from "@/components/views/OutletsView/SubmitDraftOutletModal";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
+import { rankOutletsByRelevance } from "@/app/api/marcom/outlets/outletsSearchFilter";
 import {
   formatCoordinates,
   extractRecentPlacementMaterials,
@@ -25,6 +26,7 @@ import {
   type OutletPlacementMaterial,
   type OutletPlacementSummary,
 } from "./outletSearchComboboxHelpers";
+
 
 export {
   formatCoordinates,
@@ -94,7 +96,9 @@ export function OutletSearchCombobox({
 }: OutletSearchComboboxProps) {
   const branches = useMarcomDataStore((s) => s.branches);
   const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
+  const cachedOutlets = useMarcomDataStore((s) => s.outlets);
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
+
 
   useEffect(() => {
     if (branches.length === 0) {
@@ -204,7 +208,34 @@ export function OutletSearchCombobox({
         if (err instanceof DOMException && err.name === "AbortError") {
           return;
         }
-        setFetchError("Gagal mencari outlet. Periksa koneksi.");
+        if (cachedOutlets && cachedOutlets.length > 0) {
+          const lowerTokens = trimmed.toLowerCase().split(/\s+/).filter(Boolean);
+          const matched = cachedOutlets.filter((o) => {
+            const code = (o.code || "").toLowerCase();
+            const name = (o.name || "").toLowerCase();
+            const city = (o.city || "").toLowerCase();
+            const pic = (o.picName || "").toLowerCase();
+            return lowerTokens.every(
+              (tok) =>
+                code.includes(tok) ||
+                name.includes(tok) ||
+                city.includes(tok) ||
+                pic.includes(tok)
+            );
+          });
+          const ranked = rankOutletsByRelevance(matched, trimmed).slice(0, 15);
+          setResults(ranked as unknown as OutletSearchResult[]);
+          if (
+            typeof document !== "undefined" &&
+            document.activeElement === inputRef.current
+          ) {
+            setIsOpen(true);
+          }
+          setHighlightedIndex(-1);
+          setFetchError(null);
+        } else {
+          setFetchError("Gagal mencari outlet. Periksa koneksi.");
+        }
       } finally {
         if (!controller.signal.aborted) {
           setIsLoading(false);

@@ -106,14 +106,82 @@ export function buildOutletSearchWhere(
 
   const trimmedQuery = typeof q === "string" ? q.trim() : "";
   if (trimmedQuery.length > 0) {
-    const contains = { contains: trimmedQuery, mode: "insensitive" as const };
-    where.OR = [
-      { code: contains },
-      { name: contains },
-      { city: contains },
-      { picName: contains },
-    ];
+    const tokens = trimmedQuery.split(/\s+/).filter(Boolean);
+    if (tokens.length === 1) {
+      const contains = { contains: tokens[0], mode: "insensitive" as const };
+      where.OR = [
+        { code: contains },
+        { name: contains },
+        { city: contains },
+        { picName: contains },
+      ];
+    } else if (tokens.length > 1) {
+      where.AND = tokens.map((token) => {
+        const contains = { contains: token, mode: "insensitive" as const };
+        return {
+          OR: [
+            { code: contains },
+            { name: contains },
+            { city: contains },
+            { picName: contains },
+          ],
+        };
+      });
+    }
   }
 
   return where;
 }
+
+export function scoreOutletSearchRelevance(
+  outlet: {
+    code?: string | null;
+    name?: string | null;
+    city?: string | null;
+    picName?: string | null;
+  },
+  query: string
+): number {
+  if (!query || typeof query !== "string") return 0;
+  const q = query.trim().toLowerCase();
+  if (!q) return 0;
+
+  const code = (outlet.code || "").toLowerCase();
+  const name = (outlet.name || "").toLowerCase();
+  const city = (outlet.city || "").toLowerCase();
+  const pic = (outlet.picName || "").toLowerCase();
+
+  let score = 0;
+  // Exact matches
+  if (code === q) score += 100;
+  if (name === q) score += 90;
+
+  // Prefix matches
+  if (code.startsWith(q)) score += 60;
+  if (name.startsWith(q)) score += 50;
+
+  // Substring matches
+  if (name.includes(q)) score += 30;
+  if (code.includes(q)) score += 20;
+  if (city.includes(q)) score += 10;
+  if (pic.includes(q)) score += 5;
+
+  return score;
+}
+
+export function rankOutletsByRelevance<
+  T extends {
+    code?: string | null;
+    name?: string | null;
+    city?: string | null;
+    picName?: string | null;
+  },
+>(outlets: T[], query: string): T[] {
+  if (!query || !query.trim()) return outlets;
+  return [...outlets].sort((a, b) => {
+    const scoreA = scoreOutletSearchRelevance(a, query);
+    const scoreB = scoreOutletSearchRelevance(b, query);
+    return scoreB - scoreA;
+  });
+}
+

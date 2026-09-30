@@ -6,10 +6,12 @@ import { hasPermission } from "@/lib/marcom/guards";
 import {
   buildOutletSearchWhere,
   parseOutletSearchLimit,
+  rankOutletsByRelevance,
   VALID_TYPES,
   VALID_TIERS,
   VALID_STATUSES,
 } from "@/app/api/marcom/outlets/outletsSearchFilter";
+
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -72,7 +74,8 @@ export async function GET(request: Request) {
     placementCount: o._count?.placements ?? 0,
     mouCount: o._count?.mous ?? 0,
   }));
-  return Response.json({ total: data.length, data });
+  const finalData = query ? rankOutletsByRelevance(data, query) : data;
+  return Response.json({ total: finalData.length, data: finalData });
 }
 
 export async function POST(request: Request) {

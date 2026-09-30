@@ -99,7 +99,63 @@ describe("Outlet Search Where Builder", () => {
       { picName: { contains: "jaya", mode: "insensitive" } },
     ]);
   });
+
+  test("builds multi-token AND condition when query contains multiple whitespace-separated words", () => {
+    const where = buildOutletSearchWhere({ q: "Berkah Semarang" });
+    assert.ok(where.AND, "Expected where.AND to be defined for multi-token search");
+    assert.equal(Array.isArray(where.AND), true);
+    assert.equal((where.AND as unknown[]).length, 2);
+
+    const firstTokenClause = (where.AND as any[])[0];
+    assert.ok(firstTokenClause.OR, "Expected each token clause to have OR condition");
+    assert.equal(firstTokenClause.OR[0].code.contains, "Berkah");
+
+    const secondTokenClause = (where.AND as any[])[1];
+    assert.equal(secondTokenClause.OR[2].city.contains, "Semarang");
+  });
 });
+
+describe("Outlet Search Relevance Scorer", () => {
+  test("scoreOutletSearchRelevance prioritizes exact and prefix matches over deep substrings", async () => {
+    const { scoreOutletSearchRelevance } = await import(
+      "@/app/api/marcom/outlets/outletsSearchFilter"
+    );
+    const query = "Berkah";
+    const exact = { name: "Berkah", code: "O-001" };
+    const prefix = { name: "Berkah Cellular", code: "O-002" };
+    const substring = { name: "Toko Berkah Abadi", code: "O-003" };
+    const unrelated = { name: "Mitra Ponsel", code: "O-004", city: "Berkah Raya" };
+
+    assert.ok(
+      scoreOutletSearchRelevance(exact, query) > scoreOutletSearchRelevance(prefix, query),
+      "Exact match should score higher than prefix match"
+    );
+    assert.ok(
+      scoreOutletSearchRelevance(prefix, query) > scoreOutletSearchRelevance(substring, query),
+      "Prefix match should score higher than substring match"
+    );
+    assert.ok(
+      scoreOutletSearchRelevance(substring, query) > scoreOutletSearchRelevance(unrelated, query),
+      "Name substring should score higher than city substring"
+    );
+  });
+
+  test("rankOutletsByRelevance sorts candidates by score descending", async () => {
+    const { rankOutletsByRelevance } = await import(
+      "@/app/api/marcom/outlets/outletsSearchFilter"
+    );
+    const query = "Berkah";
+    const candidates = [
+      { id: "3", name: "Toko Berkah Abadi", code: "O-003" },
+      { id: "1", name: "Berkah", code: "O-001" },
+      { id: "2", name: "Berkah Cellular", code: "O-002" },
+    ];
+
+    const ranked = rankOutletsByRelevance(candidates, query);
+    assert.deepEqual(ranked.map((c) => c.id), ["1", "2", "3"]);
+  });
+});
+
 
 describe("Outlet Search Limit Parser", () => {
   test("defaults to 15 when search query is present but limit is not specified", () => {
