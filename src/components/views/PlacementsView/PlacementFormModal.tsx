@@ -176,11 +176,6 @@ function PlacementFormModalContent({
             }
           : prev
       );
-
-      // Fast auto-advance to step 2 upon selecting store (if on step 1)
-      if (currentStep === 1) {
-        setCurrentStep(2);
-      }
     } else {
       setPlacement((prev) =>
         prev

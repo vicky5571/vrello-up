@@ -16,8 +16,23 @@ describe("placementWizardHelpers", () => {
     it("Step 1 (outlet): requires outletId to advance", () => {
       assert.equal(canAdvanceFromStep(1, {}), false);
       assert.equal(canAdvanceFromStep(1, { outletId: "" }), false);
+      assert.equal(canAdvanceFromStep(1, { outletId: "   " }), false);
       assert.equal(canAdvanceFromStep(1, { outletId: "outlet-1" }), true);
     });
+
+    it("Step 1 (outlet): fresh new placement state cannot advance until user chooses store", () => {
+      const freshNewPlacement: Partial<MarcomPlacement> = {
+        outletId: "",
+        status: "NOT_STARTED",
+        brand: "IM3",
+        date: new Date().toISOString().slice(0, 10),
+      };
+      assert.equal(canAdvanceFromStep(1, freshNewPlacement), false);
+
+      const chosenPlacement = { ...freshNewPlacement, outletId: "out-chosen-001" };
+      assert.equal(canAdvanceFromStep(1, chosenPlacement), true);
+    });
+
 
     it("Step 2 (material): requires materialId to advance", () => {
       assert.equal(canAdvanceFromStep(2, {}), false);

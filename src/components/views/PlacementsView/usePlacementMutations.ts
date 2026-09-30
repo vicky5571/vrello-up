@@ -5,15 +5,14 @@ import { toast } from "sonner";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { isValidCoordinate } from "@/lib/marcom/locationUtils";
-import { findOutletCoordinates } from "@/lib/marcom/outletInherit";
-import { findAvailableMousForOutlet, type MouSummaryInfo } from "@/lib/marcom/placementMouBridge";
-import { normalizeBrand } from "@/lib/marcom/brandUtils";
+import { type MouSummaryInfo } from "@/lib/marcom/placementMouBridge";
 import {
   buildPlacementTaskPayload,
   syncTaskOnPlacementStatusChange,
 } from "@/lib/tasks/placementTaskSync";
 import { FIELD_OPS_LIST_ID } from "@/lib/marcom/marcomIds";
 import type { MarcomPlacement, Brand } from "@/types";
+
 
 interface UsePlacementMutationsProps {
   activeWorkspaceId: string;
@@ -51,38 +50,25 @@ export function usePlacementMutations({
   const invalidateMous = useMarcomDataStore((s) => s.invalidateMous);
 
   const handleOpenAddPlacement = useCallback(() => {
-    const firstOutlet = outletsList[0];
-    const firstOutletId = firstOutlet?.id || "";
-    const inherited = findOutletCoordinates(firstOutletId, placements);
-    const matchingMous = findAvailableMousForOutlet(mousList, firstOutlet || firstOutletId);
-    const defaultMou = matchingMous.find((m) => m.status === "APPROVED") || matchingMous[0];
-
-    const brandSuggestion: Brand = normalizeBrand(firstOutlet?.brand);
-
     setModalPlacement({
-      outletId: firstOutletId,
-      materialId: materialsList[0]?.id || "",
-      mouId: defaultMou?.id || "",
+      outletId: "",
+      materialId: "",
+      mouId: "",
       status: "NOT_STARTED",
-      brand: brandSuggestion,
+      brand: "IM3",
       dimensions: "",
       cost: undefined,
-      picName: firstOutlet?.picName || "",
+      picName: "",
       notes: "",
       photoUrl: "",
       date: new Date().toISOString().slice(0, 10),
-      latitude: inherited?.latitude ?? null,
-      longitude: inherited?.longitude ?? null,
-      shareLocationUrl: inherited?.shareLocationUrl ?? "",
-      locationNotes: inherited?.locationNotes ?? "",
+      latitude: null,
+      longitude: null,
+      shareLocationUrl: "",
+      locationNotes: "",
     });
+  }, [setModalPlacement]);
 
-    if (inherited) {
-      toast.info("Koordinat outlet otomatis diambil dari riwayat pemasangan sebelumnya", {
-        duration: 3000,
-      });
-    }
-  }, [outletsList, materialsList, placements, mousList, setModalPlacement]);
 
   const handleTrackAsTask = useCallback(
     (placement: MarcomPlacement) => {
