@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { ChartCard } from "./ChartCard";
 import { useChartTheme } from "./useChartTheme";
+import { extractBarMaterialName } from "./posmChartHelpers";
 import { formatCompactIDR } from "@/lib/marcom/analyticsFormatters";
 import type { PosmDeploymentResult, PosmMaterialMetric } from "@/lib/marcom/analyticsEngine";
 
@@ -128,7 +129,7 @@ export function PosmEconomicsChart({ data, onDrilldown }: PosmEconomicsChartProp
               stackId="posm"
               fill="#10b981"
               className="cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={(d) => onDrilldown?.((d as PosmMaterialMetric).materialName, "DONE")}
+              onClick={(d) => onDrilldown?.(extractBarMaterialName(d), "DONE")}
             />
             <Bar
               dataKey="inProgress"
@@ -136,9 +137,7 @@ export function PosmEconomicsChart({ data, onDrilldown }: PosmEconomicsChartProp
               stackId="posm"
               fill="#f59e0b"
               className="cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={(d) =>
-                onDrilldown?.((d as PosmMaterialMetric).materialName, "ON_PROGRESS")
-              }
+              onClick={(d) => onDrilldown?.(extractBarMaterialName(d), "ON_PROGRESS")}
             />
             <Bar
               dataKey="issue"
@@ -146,7 +145,7 @@ export function PosmEconomicsChart({ data, onDrilldown }: PosmEconomicsChartProp
               stackId="posm"
               fill="#ef4444"
               className="cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={(d) => onDrilldown?.((d as PosmMaterialMetric).materialName, "ISSUE")}
+              onClick={(d) => onDrilldown?.(extractBarMaterialName(d), "ISSUE")}
             />
             <Bar
               dataKey="notStarted"
@@ -155,9 +154,7 @@ export function PosmEconomicsChart({ data, onDrilldown }: PosmEconomicsChartProp
               fill="#94a3b8"
               radius={[0, 4, 4, 0]}
               className="cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={(d) =>
-                onDrilldown?.((d as PosmMaterialMetric).materialName, "NOT_STARTED")
-              }
+              onClick={(d) => onDrilldown?.(extractBarMaterialName(d), "NOT_STARTED")}
             />
           </BarChart>
         </ResponsiveContainer>
