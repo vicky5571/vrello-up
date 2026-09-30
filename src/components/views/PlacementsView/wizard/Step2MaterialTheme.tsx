@@ -20,6 +20,7 @@ import {
   togglePaidPlacement,
   POSM_MATERIALS,
   DEFAULT_FALLBACK_MATERIALS,
+  getEffectiveMaterials,
   resolvePosmChipMaterial,
   getActivePosmChipLabel,
   type PosmMaterialChip,
@@ -62,13 +63,21 @@ export function Step2MaterialTheme({
   const fetchMaterials = useMarcomDataStore((s) => s.fetchMaterials);
 
   useEffect(() => {
-    if (materialsList.length === 0) {
-      fetchMaterials().catch(() => {});
+    const isMissingStandard = DEFAULT_FALLBACK_MATERIALS.some(
+      (fallback) =>
+        !materialsList.some(
+          (m) =>
+            m.id === fallback.id ||
+            m.name.toLowerCase() === fallback.name.toLowerCase()
+        )
+    );
+    if (materialsList.length === 0 || isMissingStandard) {
+      fetchMaterials(true).catch(() => {});
     }
-  }, [materialsList.length, fetchMaterials]);
+  }, [materialsList, fetchMaterials]);
 
-  const effectiveMaterials =
-    materialsList.length > 0 ? materialsList : DEFAULT_FALLBACK_MATERIALS;
+  const effectiveMaterials = getEffectiveMaterials(materialsList);
+
 
   const [isMouManuallyExpanded, setIsMouManuallyExpanded] = useState(false);
   const [isAuxFieldsExpanded, setIsAuxFieldsExpanded] = useState(

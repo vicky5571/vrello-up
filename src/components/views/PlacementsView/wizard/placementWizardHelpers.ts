@@ -189,15 +189,16 @@ export function applyLocationNotePreset(
 export interface PosmMaterialChip {
   label: string;
   matchKeywords: string[];
+  targetType?: string;
 }
 
 export const POSM_MATERIALS: PosmMaterialChip[] = [
-  { label: "Poster", matchKeywords: ["poster"] },
-  { label: "Shopblind", matchKeywords: ["shopblind", "shop blind"] },
+  { label: "Poster", matchKeywords: ["poster"], targetType: "POSTER" },
+  { label: "Shopblind", matchKeywords: ["shopblind", "shop blind"], targetType: "SHOPBLIND" },
   { label: "Stiker Etalase", matchKeywords: ["stiker", "sticker"] },
   { label: "Bottom Etalase", matchKeywords: ["bottom"] },
-  { label: "Shop Sign / Neonbox", matchKeywords: ["sign", "neonbox", "neon box", "signboard", "branding"] },
-  { label: "Banner", matchKeywords: ["banner"] },
+  { label: "Shop Sign / Neonbox", matchKeywords: ["sign", "neonbox", "neon box", "signboard", "branding"], targetType: "BRANDING_SIGNBOARD" },
+  { label: "Banner", matchKeywords: ["banner"], targetType: "BANNER" },
   { label: "Other", matchKeywords: ["other", "lainnya"] },
 ];
 
@@ -219,33 +220,72 @@ export const DEFAULT_FALLBACK_MATERIALS: CatalogMaterialSummary[] = [
 ];
 
 /**
+ * Merges loaded materials with standard fallback materials so that all standard POSM
+ * materials (including Stiker Etalase and Bottom Etalase) are always available.
+ */
+export function getEffectiveMaterials(
+  materialsList?: CatalogMaterialSummary[] | null
+): CatalogMaterialSummary[] {
+  if (!materialsList || materialsList.length === 0) {
+    return DEFAULT_FALLBACK_MATERIALS;
+  }
+
+  const merged = [...materialsList];
+  for (const fallback of DEFAULT_FALLBACK_MATERIALS) {
+    const exists = merged.some(
+      (m) =>
+        m.id === fallback.id ||
+        m.name.toLowerCase() === fallback.name.toLowerCase()
+    );
+    if (!exists) {
+      merged.push(fallback);
+    }
+  }
+  return merged;
+}
+
+/**
  * Resolves which catalog material matches a clicked POSM pill.
  */
 export function resolvePosmChipMaterial(
   chip: PosmMaterialChip,
-  materials: CatalogMaterialSummary[]
+  materials?: CatalogMaterialSummary[] | null
 ): CatalogMaterialSummary | null {
-  if (!materials || materials.length === 0) return null;
+  const effective = getEffectiveMaterials(materials);
 
+  // 1. Try matching chip keywords against name or id
   for (const kw of chip.matchKeywords) {
-    const match = materials.find(
+    const match = effective.find(
       (m) =>
-        m.id.toLowerCase().includes(kw) ||
         m.name.toLowerCase().includes(kw) ||
-        (m.type && m.type.toLowerCase().includes(kw))
+        m.id.toLowerCase().includes(kw)
     );
     if (match) return match;
   }
 
-  const fallbackMatch = materials.find(
+  // 2. If chip has a specific targetType (e.g. POSTER, SHOPBLIND, BANNER, BRANDING_SIGNBOARD), match by type
+  if (chip.targetType) {
+    const match = effective.find((m) => m.type === chip.targetType);
+    if (match) return match;
+  }
+
+  // 3. Exact name match against chip label
+  const fallbackMatch = effective.find(
     (m) => m.name.toLowerCase() === chip.label.toLowerCase()
   );
   if (fallbackMatch) return fallbackMatch;
 
-  const otherMat = materials.find(
-    (m) => m.id.includes("other") || m.name.toLowerCase().includes("other")
-  );
-  return otherMat || materials[0] || null;
+  // 4. Default fallback item for this chip
+  for (const kw of chip.matchKeywords) {
+    const match = DEFAULT_FALLBACK_MATERIALS.find(
+      (m) =>
+        m.name.toLowerCase().includes(kw) ||
+        m.id.toLowerCase().includes(kw)
+    );
+    if (match) return match;
+  }
+
+  return effective[0] || null;
 }
 
 /**
@@ -253,29 +293,49 @@ export function resolvePosmChipMaterial(
  */
 export function getActivePosmChipLabel(
   materialId: string | undefined | null,
-  materials: CatalogMaterialSummary[],
+  materials?: CatalogMaterialSummary[] | null,
   selectedMat?: CatalogMaterialSummary
 ): string | null {
-  if (!materials || materials.length === 0) return null;
-  const currentMat = selectedMat || (materialId ? materials.find((m) => m.id === materialId) : null);
+  const effective = getEffectiveMaterials(materials);
+  const currentMat = selectedMat || (materialId ? effective.find((m) => m.id === materialId) : null);
   if (!currentMat) return null;
 
   const nameLower = currentMat.name.toLowerCase();
-  const typeLower = (currentMat.type || "").toLowerCase();
   const idLower = currentMat.id.toLowerCase();
+  const type = currentMat.type || "";
 
+  // 1. Check specific chips first (excluding "Other") by name and id
   for (const chip of POSM_MATERIALS) {
+    if (chip.label === "Other") continue;
     if (
       chip.matchKeywords.some(
         (kw) =>
           nameLower.includes(kw) ||
-          typeLower.includes(kw) ||
           idLower.includes(kw)
-      )
+      ) ||
+      (chip.targetType && type === chip.targetType)
     ) {
       return chip.label;
     }
   }
+
+  // 2. Check "Other" chip strictly by name/id or general OTHER_MATERIALS fallback
+  const otherChip = POSM_MATERIALS.find((c) => c.label === "Other");
+  if (otherChip) {
+    if (
+      otherChip.matchKeywords.some(
+        (kw) =>
+          nameLower.includes(kw) ||
+          idLower.includes(kw)
+      ) ||
+      nameLower.includes("lain") ||
+      type === "OTHER_MATERIALS"
+    ) {
+      return otherChip.label;
+    }
+  }
+
   return null;
 }
+
 

@@ -10,10 +10,12 @@ import {
   applyLocationNotePreset,
   POSM_MATERIALS,
   DEFAULT_FALLBACK_MATERIALS,
+  getEffectiveMaterials,
   resolvePosmChipMaterial,
   getActivePosmChipLabel,
 } from "@/components/views/PlacementsView/wizard/placementWizardHelpers";
 import type { MarcomPlacement, Brand } from "@/types";
+
 
 
 describe("placementWizardHelpers", () => {
@@ -321,15 +323,73 @@ describe("placementWizardHelpers", () => {
       assert.equal(getActivePosmChipLabel("material-other", DEFAULT_FALLBACK_MATERIALS), "Other");
     });
 
+    it("getEffectiveMaterials gracefully merges stale cached material lists without losing items", () => {
+      const stale5Items = [
+        { id: "material-shopblind", type: "SHOPBLIND", name: "Shopblind", requiresMou: true },
+        { id: "material-signboard", type: "BRANDING_SIGNBOARD", name: "Branding / Signboard", requiresMou: true },
+        { id: "material-poster", type: "POSTER", name: "Poster", requiresMou: false },
+        { id: "material-banner", type: "BANNER", name: "Banner", requiresMou: false },
+        { id: "material-other", type: "OTHER_MATERIALS", name: "Other Materials", requiresMou: false },
+      ];
+
+      const merged = getEffectiveMaterials(stale5Items);
+      assert.equal(merged.length, 7);
+      const ids = merged.map((m) => m.id);
+      assert.ok(ids.includes("material-sticker"));
+      assert.ok(ids.includes("material-bottom"));
+    });
+
+    it("clicking Stiker Etalase and Bottom Etalase resolves to their respective IDs even with stale 5-item lists (NEVER Other)", () => {
+      const stale5Items = [
+        { id: "material-shopblind", type: "SHOPBLIND", name: "Shopblind", requiresMou: true },
+        { id: "material-signboard", type: "BRANDING_SIGNBOARD", name: "Branding / Signboard", requiresMou: true },
+        { id: "material-poster", type: "POSTER", name: "Poster", requiresMou: false },
+        { id: "material-banner", type: "BANNER", name: "Banner", requiresMou: false },
+        { id: "material-other", type: "OTHER_MATERIALS", name: "Other Materials", requiresMou: false },
+      ];
+
+      const stickerChip = POSM_MATERIALS.find((c) => c.label === "Stiker Etalase")!;
+      const bottomChip = POSM_MATERIALS.find((c) => c.label === "Bottom Etalase")!;
+      const otherChip = POSM_MATERIALS.find((c) => c.label === "Other")!;
+
+      const resolvedSticker = resolvePosmChipMaterial(stickerChip, stale5Items);
+      const resolvedBottom = resolvePosmChipMaterial(bottomChip, stale5Items);
+      const resolvedOther = resolvePosmChipMaterial(otherChip, stale5Items);
+
+      assert.equal(resolvedSticker?.id, "material-sticker");
+      assert.equal(resolvedBottom?.id, "material-bottom");
+      assert.equal(resolvedOther?.id, "material-other");
+
+      // Verify active label
+      assert.equal(getActivePosmChipLabel(resolvedSticker?.id, stale5Items), "Stiker Etalase");
+      assert.equal(getActivePosmChipLabel(resolvedBottom?.id, stale5Items), "Bottom Etalase");
+      assert.equal(getActivePosmChipLabel(resolvedOther?.id, stale5Items), "Other");
+    });
+
+    it("material with type OTHER_MATERIALS does NOT falsely activate Other if named Stiker or Bottom", () => {
+      // In PostgreSQL, Stiker Etalase & Bottom Etalase have type: OTHER_MATERIALS
+      const stickerItem = { id: "material-sticker", name: "Stiker Etalase", type: "OTHER_MATERIALS", requiresMou: false };
+      const bottomItem = { id: "material-bottom", name: "Bottom Etalase", type: "OTHER_MATERIALS", requiresMou: false };
+      const otherItem = { id: "material-other", name: "Other Materials", type: "OTHER_MATERIALS", requiresMou: false };
+
+      const catalog = [stickerItem, bottomItem, otherItem];
+
+      assert.equal(getActivePosmChipLabel(stickerItem.id, catalog), "Stiker Etalase");
+      assert.equal(getActivePosmChipLabel(bottomItem.id, catalog), "Bottom Etalase");
+      assert.equal(getActivePosmChipLabel(otherItem.id, catalog), "Other");
+    });
+
     it("handles empty or unmatched materials gracefully", () => {
       assert.equal(getActivePosmChipLabel(undefined, DEFAULT_FALLBACK_MATERIALS), null);
       assert.equal(getActivePosmChipLabel("", DEFAULT_FALLBACK_MATERIALS), null);
       assert.equal(getActivePosmChipLabel("unknown-id", DEFAULT_FALLBACK_MATERIALS), null);
-      assert.equal(getActivePosmChipLabel("material-poster", []), null);
 
+      // getEffectiveMaterials ensures fallback materials are used even if empty list is passed
       const posterChip = POSM_MATERIALS[0];
-      assert.equal(resolvePosmChipMaterial(posterChip, []), null);
+      const res = resolvePosmChipMaterial(posterChip, []);
+      assert.equal(res?.id, "material-poster");
     });
   });
 });
+
 

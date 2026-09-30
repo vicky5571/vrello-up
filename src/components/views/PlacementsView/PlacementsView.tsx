@@ -87,9 +87,10 @@ export function PlacementsView() {
       await Promise.all([
         fetchPlacements(activeWorkspaceId, force),
         fetchOutlets(force),
-        fetchMaterials(),
-        fetchBranches(),
+        fetchMaterials(force),
+        fetchBranches(force),
         useMarcomDataStore.getState().fetchMous(activeWorkspaceId),
+
       ]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load placements");

@@ -16,12 +16,14 @@ import {
   canAdvanceFromStep,
   applySmartDefaultsOnOutletSelect,
   getStepCompletionStatus,
+  getEffectiveMaterials,
   type WizardStepId,
 } from "./wizard/placementWizardHelpers";
 import { WizardStepperHeader } from "./wizard/WizardStepperHeader";
 import { WizardFooter } from "./wizard/WizardFooter";
 import { Step1Outlet } from "./wizard/Step1Outlet";
-import { Step2MaterialTheme, DEFAULT_FALLBACK_MATERIALS } from "./wizard/Step2MaterialTheme";
+import { Step2MaterialTheme } from "./wizard/Step2MaterialTheme";
+
 import { Step3PhotoNotes } from "./wizard/Step3PhotoNotes";
 import { Step4LocationVerification } from "./wizard/Step4LocationVerification";
 
@@ -127,9 +129,9 @@ function PlacementFormModalContent({
     return undefined;
   }, [selOutlet, placement.outlet]);
 
-  const effectiveMaterials =
-    materialsList.length > 0 ? materialsList : DEFAULT_FALLBACK_MATERIALS;
+  const effectiveMaterials = getEffectiveMaterials(materialsList);
   const selectedMat = effectiveMaterials.find((m) => m.id === placement.materialId);
+
   const selectedMou = mousList.find((m) => m.id === placement.mouId);
   const outletMous = findAvailableMousForOutlet(
     mousList,
