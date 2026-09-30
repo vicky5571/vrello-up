@@ -276,7 +276,7 @@ export function PipelineView({ workspaceId: propWorkspaceId, className }: Pipeli
             Tidak Ada Outlet yang Cocok
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-            Tidak ditemukan outlet yang sesuai dengan kombinasi pencarian, filter branch, tier, atau status bottleneck saat ini.
+            Tidak ditemukan outlet yang sesuai dengan kombinasi pencarian, filter branch, atau status bottleneck saat ini.
           </p>
           <button
             type="button"

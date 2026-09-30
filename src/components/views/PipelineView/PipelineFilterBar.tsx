@@ -5,20 +5,12 @@ import {
   Search,
   X,
   Building2,
-  Layers,
   AlertTriangle,
   RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PipelineFilterBarProps } from "./pipelineTypes";
 import { DEFAULT_PIPELINE_FILTERS } from "./pipelineTypes";
-
-const TIER_OPTIONS = [
-  { value: "ALL", label: "Semua Tier" },
-  { value: "TIER_1", label: "Tier 1 (Prioritas)" },
-  { value: "TIER_2", label: "Tier 2 (Reguler)" },
-  { value: "TIER_3", label: "Tier 3 (Basic)" },
-];
 
 export function PipelineFilterBar({
   filters,
@@ -32,12 +24,10 @@ export function PipelineFilterBar({
 }: PipelineFilterBarProps) {
   const searchId = useId();
   const branchId = useId();
-  const tierId = useId();
 
   const hasActiveFilters =
     Boolean(filters.search.trim()) ||
     filters.branchId !== "ALL" ||
-    filters.tier !== "ALL" ||
     filters.bottleneckOnly;
 
   const handleReset = () => {
@@ -114,36 +104,6 @@ export function PipelineFilterBar({
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name} {b.code ? `(${b.code})` : ""}
-                </option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400 text-[10px]">
-              ▼
-            </div>
-          </div>
-
-          {/* Tier Dropdown */}
-          <div className="relative flex-1 sm:flex-none min-w-[130px]">
-            <label htmlFor={tierId} className="sr-only">
-              Filter Tier
-            </label>
-            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
-              <Layers className="w-3.5 h-3.5" />
-            </div>
-            <select
-              id={tierId}
-              value={filters.tier}
-              onChange={(e) =>
-                onChange({
-                  ...filters,
-                  tier: e.target.value,
-                })
-              }
-              className="w-full pl-8 pr-7 py-2 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-colors appearance-none cursor-pointer"
-            >
-              {TIER_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
                 </option>
               ))}
             </select>

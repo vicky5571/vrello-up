@@ -18,7 +18,6 @@ export interface OutletSearchResult {
   code: string;
   name: string;
   type?: string;
-  tier?: string;
   address?: string;
   city?: string;
   picName?: string;

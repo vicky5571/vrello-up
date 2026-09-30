@@ -38,29 +38,6 @@ function renderSortIcon(
   );
 }
 
-function renderTierBadge(tier?: string) {
-  const upper = (tier || "TIER_1").toUpperCase();
-  if (upper === "TIER_1") {
-    return (
-      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
-        Tier 1
-      </span>
-    );
-  }
-  if (upper === "TIER_2") {
-    return (
-      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
-        Tier 2
-      </span>
-    );
-  }
-  return (
-    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-500/10 text-slate-700 dark:text-slate-400 border border-slate-500/20">
-      Tier 3
-    </span>
-  );
-}
-
 function renderMouBadge(status?: string) {
   const upper = (status || "NONE").toUpperCase();
   switch (upper) {
@@ -305,7 +282,6 @@ export function PipelineMatrixTable({
                             {outlet.code || "NO-CODE"}
                           </span>
                           {outlet.city && <span>• {outlet.city}</span>}
-                          {renderTierBadge(outlet.tier)}
                         </div>
 
                         {outlet.branch?.name && (

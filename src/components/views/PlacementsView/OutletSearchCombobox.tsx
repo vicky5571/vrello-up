@@ -368,17 +368,8 @@ export function OutletSearchCombobox({
                   )}
                 </div>
 
-                {/* Structured Metadata: Tier, Address, PIC */}
+                {/* Structured Metadata: Address, PIC */}
                 <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300 pt-0.5">
-                  {currentOutlet.tier && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-slate-400 text-[11px] font-medium">Tier:</span>
-                      <span className="font-semibold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-[11px] border border-slate-200 dark:border-slate-600">
-                        {currentOutlet.tier}
-                      </span>
-                    </div>
-                  )}
-
                   <div className="flex items-start gap-1.5">
                     <span className="text-slate-400 text-[11px] font-medium shrink-0 mt-0.5">Alamat:</span>
                     <span className="text-slate-700 dark:text-slate-200">
@@ -677,7 +668,7 @@ export function OutletSearchCombobox({
                             : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-800 dark:text-slate-200"
                         )}
                       >
-                        {/* First line: Code, Name, Brand, Tier */}
+                        {/* First line: Code, Name, Brand */}
                         <div className="flex items-center gap-1.5 min-w-0">
                           {outlet.code && (
                             <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 shrink-0">
@@ -688,11 +679,6 @@ export function OutletSearchCombobox({
                             {outlet.name}
                           </span>
                           {renderBrandBadge(outlet.brand)}
-                          {outlet.tier && (
-                            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 shrink-0">
-                              • {outlet.tier}
-                            </span>
-                          )}
                         </div>
 
                         {/* Second line: Address / City / GPS */}

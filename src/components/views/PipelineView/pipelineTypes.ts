@@ -6,7 +6,6 @@ export type { OutletPipelineRow };
 export interface PipelineFilterState {
   search: string;
   branchId: string;
-  tier: string;
   bottleneckOnly: boolean;
   urgencyLevel?: "CRITICAL" | "WARNING" | "ALL";
 }
@@ -14,14 +13,12 @@ export interface PipelineFilterState {
 export const DEFAULT_PIPELINE_FILTERS: PipelineFilterState = {
   search: "",
   branchId: "ALL",
-  tier: "ALL",
   bottleneckOnly: false,
   urgencyLevel: "ALL",
 };
 
 export type PipelineSortField =
   | "name"
-  | "tier"
   | "city"
   | "mou"
   | "placement"
@@ -145,7 +142,6 @@ export function filterPipelineData(
 ): OutletPipelineRow[] {
   return filterPipelineRows(rows, {
     branchId: filters.branchId,
-    tier: filters.tier,
     search: filters.search,
     bottleneckOnly: filters.bottleneckOnly,
     urgencyLevel: filters.urgencyLevel,
@@ -175,8 +171,6 @@ export function sortPipelineData(
       }
       case "name":
         return factor * (a.name || "").localeCompare(b.name || "");
-      case "tier":
-        return factor * (a.tier || "").localeCompare(b.tier || "");
       case "city":
         return factor * (a.city || "").localeCompare(b.city || "");
       case "mou": {

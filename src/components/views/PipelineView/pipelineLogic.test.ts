@@ -14,7 +14,6 @@ const mockRows: OutletPipelineRow[] = [
     code: "JKT-001",
     name: "Outlet Harmoni",
     type: "MODERN_RETAIL",
-    tier: "TIER_1",
     city: "Jakarta Pusat",
     address: "Jl. Hayam Wuruk No. 1",
     picName: "Budi Santoso",
@@ -53,7 +52,6 @@ const mockRows: OutletPipelineRow[] = [
     code: "BDG-002",
     name: "Outlet Dago Corner",
     type: "EXCLUSIVE",
-    tier: "TIER_2",
     city: "Bandung",
     address: "Jl. Ir. H. Juanda No. 10",
     picName: "Asep Sunandar",
@@ -92,7 +90,6 @@ const mockRows: OutletPipelineRow[] = [
     code: "SBY-003",
     name: "Outlet Tunjungan",
     type: "CAMPUS_OUTLET",
-    tier: "TIER_3",
     city: "Surabaya",
     address: "Jl. Tunjungan No. 5",
     picName: "Siti Rahma",
@@ -154,7 +151,7 @@ test("calculatePipelineKPIs handles empty rows safely", () => {
   assert.equal(kpi.bottleneckCount, 0);
 });
 
-test("filterPipelineData filters by search, branch, tier, and bottleneck", () => {
+test("filterPipelineData filters by search, branch, and bottleneck", () => {
   // 1. Search filter
   const searchName = filterPipelineData(mockRows, {
     ...DEFAULT_PIPELINE_FILTERS,
@@ -185,15 +182,7 @@ test("filterPipelineData filters by search, branch, tier, and bottleneck", () =>
   assert.equal(branchFiltered.length, 1);
   assert.equal(branchFiltered[0].id, "out-2");
 
-  // 3. Tier filter
-  const tierFiltered = filterPipelineData(mockRows, {
-    ...DEFAULT_PIPELINE_FILTERS,
-    tier: "TIER_3",
-  });
-  assert.equal(tierFiltered.length, 1);
-  assert.equal(tierFiltered[0].id, "out-3");
-
-  // 4. Bottleneck filter
+  // 3. Bottleneck filter
   const bottleneckFiltered = filterPipelineData(mockRows, {
     ...DEFAULT_PIPELINE_FILTERS,
     bottleneckOnly: true,
