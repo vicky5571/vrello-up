@@ -540,11 +540,6 @@ export function Outlet360Drawer({
                       <span>{markerMeta?.brandLabel}</span>
                     </span>
 
-                    {/* Tier Badge */}
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700">
-                      {markerMeta?.tierLabel}
-                    </span>
-
                     {/* Type Badge */}
                     <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
                       {markerMeta?.typeLabel}

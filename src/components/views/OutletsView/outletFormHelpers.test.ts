@@ -16,7 +16,6 @@ describe("Outlet Form Helpers", () => {
     code: "OUT-001",
     name: "Toko Berkah Mandiri",
     type: "TRADITIONAL",
-    tier: "TIER_1",
     branchId: "branch-smg",
     city: "Semarang",
     address: "Jl. Pemuda No. 10",
@@ -38,35 +37,28 @@ describe("Outlet Form Helpers", () => {
       const result = validateOutletForm({ ...sampleOutlet, code: "   " });
       assert.equal(result.isValid, false);
       assert.equal(result.errors.code, "Outlet code is required");
-      assert.equal(result.error, "Code, name, type, tier, and branch are required");
+      assert.equal(result.error, "Code, name, type, and branch are required");
     });
 
     it("requires outlet name", () => {
       const result = validateOutletForm({ ...sampleOutlet, name: "" });
       assert.equal(result.isValid, false);
       assert.equal(result.errors.name, "Outlet name is required");
-      assert.equal(result.error, "Code, name, type, tier, and branch are required");
+      assert.equal(result.error, "Code, name, type, and branch are required");
     });
 
     it("requires outlet type", () => {
       const result = validateOutletForm({ ...sampleOutlet, type: undefined });
       assert.equal(result.isValid, false);
       assert.equal(result.errors.type, "Outlet type is required");
-      assert.equal(result.error, "Code, name, type, tier, and branch are required");
-    });
-
-    it("requires outlet tier", () => {
-      const result = validateOutletForm({ ...sampleOutlet, tier: undefined });
-      assert.equal(result.isValid, false);
-      assert.equal(result.errors.tier, "Outlet tier is required");
-      assert.equal(result.error, "Code, name, type, tier, and branch are required");
+      assert.equal(result.error, "Code, name, type, and branch are required");
     });
 
     it("requires branch selection", () => {
       const result = validateOutletForm({ ...sampleOutlet, branchId: "" });
       assert.equal(result.isValid, false);
       assert.equal(result.errors.branchId, "Parent branch is required");
-      assert.equal(result.error, "Code, name, type, tier, and branch are required");
+      assert.equal(result.error, "Code, name, type, and branch are required");
     });
 
     it("returns errors for all required fields when submitting an empty form", () => {
@@ -75,10 +67,9 @@ describe("Outlet Form Helpers", () => {
       assert.equal(result.errors.code, "Outlet code is required");
       assert.equal(result.errors.name, "Outlet name is required");
       assert.equal(result.errors.type, "Outlet type is required");
-      assert.equal(result.errors.tier, "Outlet tier is required");
       assert.equal(result.errors.branchId, "Parent branch is required");
-      assert.equal(Object.keys(result.errors).length, 5);
-      assert.equal(result.error, "Code, name, type, tier, and branch are required");
+      assert.equal(Object.keys(result.errors).length, 4);
+      assert.equal(result.error, "Code, name, type, and branch are required");
     });
   });
 
@@ -146,7 +137,7 @@ describe("Outlet Form Helpers", () => {
     it("throws error if validation fails before sending fetch request", async () => {
       await assert.rejects(
         () => handleSaveOutletApi({ ...sampleOutlet, code: "" }),
-        /Code, name, type, tier, and branch are required/
+        /Code, name, type, and branch are required/
       );
     });
 
@@ -363,7 +354,7 @@ describe("Outlet Form Helpers", () => {
   });
 
   describe("Accessibility — Label/Input Linking & Required Indicators", () => {
-    it("wires htmlFor and id on all 13 form controls", async () => {
+    it("wires htmlFor and id on all 12 form controls", async () => {
       const fs = await import("node:fs");
       const path = await import("node:path");
       const modalFilePath = path.resolve(
@@ -377,7 +368,6 @@ describe("Outlet Form Helpers", () => {
         "outlet-code",
         "outlet-name",
         "outlet-type",
-        "outlet-tier",
         "outlet-brand",
         "outlet-pic-name",
         "outlet-pic-phone",
@@ -411,15 +401,14 @@ describe("Outlet Form Helpers", () => {
 
       const requiredAsterisk = '<span className="text-rose-500 ml-0.5">*</span>';
       const occurrences = modalContent.split(requiredAsterisk).length - 1;
-      // Exactly 5 required fields: branch, code, name, type, tier
-      assert.equal(occurrences, 5, "Expected exactly 5 required field asterisks");
+      // Exactly 4 required fields: branch, code, name, type
+      assert.equal(occurrences, 4, "Expected exactly 4 required field asterisks");
 
       // Verify no raw asterisks in labels
       assert.ok(!modalContent.includes("Parent Branch *"));
       assert.ok(!modalContent.includes("Outlet Code *"));
       assert.ok(!modalContent.includes("Outlet Name *"));
       assert.ok(!modalContent.includes("Type *"));
-      assert.ok(!modalContent.includes("Tier *"));
     });
   });
 
@@ -430,7 +419,6 @@ describe("Outlet Form Helpers", () => {
         code: "OUT-001",
         name: "Toko Rezeki",
         type: "MODERN_RETAIL",
-        tier: "TIER_2",
         brand: "TRI",
         branchId: "branch-smg",
         city: "Semarang",
@@ -449,7 +437,6 @@ describe("Outlet Form Helpers", () => {
       assert.equal(reset.code, "");
       assert.equal(reset.name, "");
       assert.equal(reset.type, undefined);
-      assert.equal(reset.tier, undefined);
       assert.equal(reset.address, "");
       assert.equal(reset.picName, "");
       assert.equal(reset.picPhone, "");

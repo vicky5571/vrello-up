@@ -11,7 +11,6 @@ describe("Submit Draft Outlet Modal Helpers", () => {
   const sampleForm: DraftFormData = {
     name: "Kios Berkah Baru",
     type: "TRADITIONAL",
-    tier: "TIER_1",
     branchId: "branch-smg",
     address: "Jl. Pandanaran No. 45",
     city: "Semarang",

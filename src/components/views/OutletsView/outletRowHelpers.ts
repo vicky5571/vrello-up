@@ -1,15 +1,12 @@
-import type { OutletTier, Brand } from "@/types";
+import type { Brand } from "@/types";
 
 /**
- * Formats outlet tier and brand into a clean display label (e.g. "TIER 1 • IM3").
+ * Formats outlet brand into a clean display label (e.g. "IM3").
  */
-export function formatTierAndBrand(
-  tier?: OutletTier | string | null,
+export function formatBrand(
   brand?: Brand | string | null,
 ): string {
-  const cleanTier = (tier || "TIER_1").replaceAll("_", " ");
-  const cleanBrand = brand || "IM3";
-  return `${cleanTier} • ${cleanBrand}`;
+  return brand || "IM3";
 }
 
 /**

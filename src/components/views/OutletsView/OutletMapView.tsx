@@ -113,7 +113,6 @@ export function OutletMapView({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBrand, setSelectedBrand] = useState<string>("ALL");
   const [selectedType, setSelectedType] = useState<string>("ALL");
-  const [selectedTier, setSelectedTier] = useState<string>("ALL");
   const [selectedBranch, setSelectedBranch] = useState<string>("ALL");
   const [selectedMouFilter, setSelectedMouFilter] = useState<string>("ALL");
 
@@ -179,11 +178,6 @@ export function OutletMapView({
         return false;
       }
 
-      // Tier filter
-      if (selectedTier !== "ALL" && (o.tier || "TIER_1") !== selectedTier) {
-        return false;
-      }
-
       // Branch filter
       if (selectedBranch !== "ALL" && o.branchId !== selectedBranch) {
         return false;
@@ -204,7 +198,6 @@ export function OutletMapView({
     searchQuery,
     selectedBrand,
     selectedType,
-    selectedTier,
     selectedBranch,
     selectedMouFilter,
   ]);
@@ -444,7 +437,6 @@ export function OutletMapView({
     setSearchQuery("");
     setSelectedBrand("ALL");
     setSelectedType("ALL");
-    setSelectedTier("ALL");
     setSelectedBranch("ALL");
     setSelectedMouFilter("ALL");
   };
@@ -453,7 +445,6 @@ export function OutletMapView({
     Boolean(searchQuery) ||
     selectedBrand !== "ALL" ||
     selectedType !== "ALL" ||
-    selectedTier !== "ALL" ||
     selectedBranch !== "ALL" ||
     selectedMouFilter !== "ALL";
 
@@ -512,19 +503,6 @@ export function OutletMapView({
             <option value="MODERN_RETAIL">Modern Retail</option>
             <option value="EXCLUSIVE">Exclusive / Official</option>
             <option value="CAMPUS_OUTLET">Campus Outlet</option>
-          </select>
-
-          {/* Tier Filter */}
-          <select
-            value={selectedTier}
-            onChange={(e) => setSelectedTier(e.target.value)}
-            aria-label="Filter Tier"
-            className="px-2.5 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
-          >
-            <option value="ALL">Semua Tier</option>
-            <option value="TIER_1">Tier 1 (Prioritas)</option>
-            <option value="TIER_2">Tier 2 (Reguler)</option>
-            <option value="TIER_3">Tier 3 (Basic)</option>
           </select>
 
           {/* Branch Filter */}

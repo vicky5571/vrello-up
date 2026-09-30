@@ -23,9 +23,6 @@ export function validateOutletForm(outlet: Partial<MarcomOutlet>): OutletFormVal
   if (!outlet.type || !String(outlet.type).trim()) {
     errors.type = "Outlet type is required";
   }
-  if (!outlet.tier || !String(outlet.tier).trim()) {
-    errors.tier = "Outlet tier is required";
-  }
   if (!outlet.branchId || !outlet.branchId.trim()) {
     errors.branchId = "Parent branch is required";
   }
@@ -35,7 +32,7 @@ export function validateOutletForm(outlet: Partial<MarcomOutlet>): OutletFormVal
   return {
     isValid,
     errors,
-    error: isValid ? undefined : "Code, name, type, tier, and branch are required",
+    error: isValid ? undefined : "Code, name, type, and branch are required",
   };
 }
 
@@ -44,7 +41,6 @@ export function buildOutletPayload(outlet: Partial<MarcomOutlet>): Record<string
     code: outlet.code?.trim(),
     name: outlet.name?.trim(),
     type: outlet.type,
-    tier: outlet.tier || "TIER_1",
     brand: outlet.brand || "IM3",
     branchId: outlet.branchId,
     city: outlet.city?.trim() || "",
@@ -80,7 +76,7 @@ export async function handleSaveOutletApi(
 ): Promise<{ success: boolean; data?: unknown }> {
   const validation = validateOutletForm(outlet);
   if (!validation.isValid) {
-    throw new Error(validation.error || "Code, name, type, tier, and branch are required");
+    throw new Error(validation.error || "Code, name, type, and branch are required");
   }
 
   const isEditMode = isEdit !== undefined ? isEdit : Boolean(outlet.id);
@@ -145,7 +141,6 @@ export function resetOutletFormForNextEntry(
     code: "",
     name: "",
     type: undefined,
-    tier: undefined,
     address: "",
     picName: "",
     picPhone: "",

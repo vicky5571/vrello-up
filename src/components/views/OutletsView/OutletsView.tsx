@@ -21,8 +21,8 @@ import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn } from "@/lib/utils";
-import type { OutletItem as MarcomOutlet, OutletType, OutletTier } from "@/types";
-export type { OutletType, OutletTier, MarcomOutlet };
+import type { OutletItem as MarcomOutlet, OutletType } from "@/types";
+export type { OutletType, MarcomOutlet };
 import {
   MarcomTableShell,
   createMarcomColumnHelper,

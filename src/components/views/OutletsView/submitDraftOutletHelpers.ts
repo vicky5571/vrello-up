@@ -1,10 +1,9 @@
-import type { OutletType, OutletTier } from "@/types";
+import type { OutletType } from "@/types";
 import type { RawDraftOutletInput } from "@/app/api/marcom/outlets/draft/draftOutletHelpers";
 
 export interface DraftFormData {
   name: string;
   type: OutletType;
-  tier: OutletTier;
   branchId: string;
   address: string;
   city: string;
@@ -71,7 +70,6 @@ export function buildDraftSubmissionPayload(form: DraftFormData): RawDraftOutlet
   return {
     name: form.name.trim(),
     type: form.type,
-    tier: form.tier,
     branchId: form.branchId,
     address: form.address.trim(),
     city: form.city.trim(),

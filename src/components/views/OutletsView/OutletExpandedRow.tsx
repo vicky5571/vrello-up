@@ -8,7 +8,7 @@ import {
   Edit2,
 } from "lucide-react";
 import type { OutletItem as MarcomOutlet, ViewMode } from "@/types";
-import { formatTierAndBrand, formatOutletCoordinates } from "./outletRowHelpers";
+import { formatBrand, formatOutletCoordinates } from "./outletRowHelpers";
 
 export interface OutletExpandedRowProps {
   outlet: MarcomOutlet;
@@ -57,10 +57,10 @@ export function OutletExpandedRow({
         </div>
         <div>
           <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-0.5">
-            Tier & Brand
+            Brand
           </div>
           <div className="text-slate-700 dark:text-slate-300 font-semibold">
-            {formatTierAndBrand(outlet.tier, outlet.brand)}
+            {formatBrand(outlet.brand)}
           </div>
         </div>
       </div>

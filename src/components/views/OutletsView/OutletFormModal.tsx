@@ -5,7 +5,7 @@ import { Store, X, MapPin, Navigation, ExternalLink, Loader2, Sparkles } from "l
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
-import type { OutletItem as MarcomOutlet, OutletType, OutletTier, Brand } from "@/types";
+import type { OutletItem as MarcomOutlet, OutletType, Brand } from "@/types";
 import {
   validateOutletForm,
   handleSaveOutletApi,
@@ -280,7 +280,7 @@ function OutletFormModalContent({
             <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 pb-1 border-b border-slate-100 dark:border-slate-800">
               Klasifikasi & PIC / Classification & Contact
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label
                   htmlFor="outlet-type"
@@ -310,36 +310,6 @@ function OutletFormModalContent({
                 </select>
                 {errors.type && (
                   <p className="mt-1 text-[11px] text-rose-500">{errors.type}</p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="outlet-tier"
-                  className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
-                >
-                  Tier <span className="text-rose-500 ml-0.5">*</span>
-                </label>
-                <select
-                  id="outlet-tier"
-                  value={formOutlet.tier || ""}
-                  onChange={(e) => {
-                    setFormOutlet({ ...formOutlet, tier: e.target.value as OutletTier });
-                    if (errors.tier) setErrors((prev) => ({ ...prev, tier: "" }));
-                  }}
-                  className={cn(
-                    "w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 cursor-pointer",
-                    errors.tier
-                      ? "border-rose-500 focus:ring-rose-500/20"
-                      : "border-slate-200 dark:border-slate-700 focus:ring-orange-500"
-                  )}
-                >
-                  <option value="">Select Tier...</option>
-                  <option value="TIER_1">Tier 1</option>
-                  <option value="TIER_2">Tier 2</option>
-                  <option value="TIER_3">Tier 3</option>
-                </select>
-                {errors.tier && (
-                  <p className="mt-1 text-[11px] text-rose-500">{errors.tier}</p>
                 )}
               </div>
               <div>

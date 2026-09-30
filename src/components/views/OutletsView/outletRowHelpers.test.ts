@@ -2,28 +2,28 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { formatTierAndBrand, formatOutletCoordinates } from "./outletRowHelpers";
+import { formatBrand, formatOutletCoordinates } from "./outletRowHelpers";
 
 describe("outletRowHelpers", () => {
-  describe("formatTierAndBrand", () => {
-    it("formats TIER_1 and IM3 correctly", () => {
-      const result = formatTierAndBrand("TIER_1", "IM3");
-      assert.equal(result, "TIER 1 • IM3");
+  describe("formatBrand", () => {
+    it("formats IM3 correctly", () => {
+      const result = formatBrand("IM3");
+      assert.equal(result, "IM3");
     });
 
-    it("formats TIER_2 and TRI correctly", () => {
-      const result = formatTierAndBrand("TIER_2", "TRI");
-      assert.equal(result, "TIER 2 • TRI");
+    it("formats TRI correctly", () => {
+      const result = formatBrand("TRI");
+      assert.equal(result, "TRI");
     });
 
-    it("handles missing tier and brand by falling back to defaults", () => {
-      const result = formatTierAndBrand(null, null);
-      assert.equal(result, "TIER 1 • IM3");
+    it("handles missing brand by falling back to IM3", () => {
+      const result = formatBrand(null);
+      assert.equal(result, "IM3");
     });
 
     it("handles undefined inputs gracefully", () => {
-      const result = formatTierAndBrand(undefined, undefined);
-      assert.equal(result, "TIER 1 • IM3");
+      const result = formatBrand(undefined);
+      assert.equal(result, "IM3");
     });
   });
 
@@ -53,9 +53,9 @@ describe("OutletExpandedRow structural contracts", () => {
     assert.ok(content.includes("export function OutletExpandedRow"), "Must export OutletExpandedRow");
   });
 
-  it("replaces redundant Status MoU card with Tier & Brand", () => {
+  it("replaces redundant Status MoU card with Brand", () => {
     const content = fs.readFileSync(filePath, "utf-8");
-    assert.ok(content.includes("Tier & Brand"), "Must display Tier & Brand card header");
+    assert.ok(content.includes("Brand"), "Must display Brand card header");
     assert.ok(!content.includes("Status MoU"), "Must not display duplicate Status MoU card");
   });
 

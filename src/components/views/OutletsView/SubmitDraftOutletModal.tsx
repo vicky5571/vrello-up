@@ -46,7 +46,6 @@ export function SubmitDraftOutletModal({
   const [formData, setFormData] = useState<DraftFormData>({
     name: initialName,
     type: "TRADITIONAL",
-    tier: "TIER_1",
     branchId: branches[0]?.id || "",
     address: "",
     city: "",
