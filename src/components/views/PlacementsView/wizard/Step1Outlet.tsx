@@ -82,6 +82,7 @@ export function Step1Outlet({
           selectedOutlet={selectedOutletObj}
           onSelectOutlet={onSelectOutlet}
           workspaceId={workspaceId}
+          brand={currentBrand}
           placeholder="Ketik ID Outlet (mis: O-SMG-001) atau nama outlet..."
         />
         {!selectedOutlet && (

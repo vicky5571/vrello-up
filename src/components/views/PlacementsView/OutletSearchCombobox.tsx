@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { SubmitDraftOutletModal } from "@/components/views/OutletsView/SubmitDraftOutletModal";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { rankOutletsByRelevance } from "@/app/api/marcom/outlets/outletsSearchFilter";
+import type { Brand } from "@/types";
 import {
   formatCoordinates,
   extractRecentPlacementMaterials,
@@ -47,6 +48,7 @@ export interface OutletSearchComboboxProps {
   onSelectOutlet: (outlet: OutletSelectionPayload) => void;
   onRequestNewOutlet?: (searchQuery: string) => void;
   workspaceId?: string;
+  brand?: Brand | string;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -87,6 +89,7 @@ export function OutletSearchCombobox({
   onSelectOutlet,
   onRequestNewOutlet,
   workspaceId = "ws-main",
+  brand,
   placeholder = "Cari nama outlet atau kode (cth: O-SMG-001)...",
   disabled = false,
   className,
@@ -184,6 +187,9 @@ export function OutletSearchCombobox({
         if (workspaceId) {
           params.set("workspaceId", workspaceId);
         }
+        if (brand && brand !== "ALL") {
+          params.set("brand", brand);
+        }
 
         const res = await fetch(`/api/marcom/outlets?${params.toString()}`, {
           signal: controller.signal,
@@ -211,6 +217,11 @@ export function OutletSearchCombobox({
         if (cachedOutlets && cachedOutlets.length > 0) {
           const lowerTokens = trimmed.toLowerCase().split(/\s+/).filter(Boolean);
           const matched = cachedOutlets.filter((o) => {
+            if (brand && brand !== "ALL") {
+              const oBrand = (o.brand || "").toUpperCase();
+              const targetBrand = brand.toUpperCase() === "3" ? "TRI" : brand.toUpperCase();
+              if (oBrand !== targetBrand) return false;
+            }
             const code = (o.code || "").toLowerCase();
             const name = (o.name || "").toLowerCase();
             const city = (o.city || "").toLowerCase();
@@ -247,7 +258,7 @@ export function OutletSearchCombobox({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [searchQuery, workspaceId]);
+  }, [searchQuery, workspaceId, brand, cachedOutlets]);
 
   // Click outside to close dropdown
   useEffect(() => {

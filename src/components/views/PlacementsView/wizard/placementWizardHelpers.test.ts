@@ -9,7 +9,7 @@ import {
   togglePaidPlacement,
   applyLocationNotePreset,
 } from "@/components/views/PlacementsView/wizard/placementWizardHelpers";
-import type { MarcomPlacement } from "@/types";
+import type { MarcomPlacement, Brand } from "@/types";
 
 describe("placementWizardHelpers", () => {
   describe("canAdvanceFromStep", () => {
@@ -78,9 +78,43 @@ describe("placementWizardHelpers", () => {
       assert.equal(result.brand, "IM3");
     });
 
-    it("preserves existing brand if already explicitly set by user", () => {
-      const result = applySmartDefaultsOnOutletSelect(mockOutlet, { brand: "IM3" }, "budi@indosat.com");
+    it("preserves existing brand when outlet has no brand specified", () => {
+      const result = applySmartDefaultsOnOutletSelect({ ...mockOutlet, brand: undefined }, { brand: "IM3" }, "budi@indosat.com");
       assert.equal(result.brand, "IM3");
+    });
+
+    it("updates placement brand to match outlet's explicit brand when selected", () => {
+      const triOutlet = {
+        id: "out-tri-01",
+        name: "Tri Store Express",
+        brand: "TRI",
+      };
+
+      const initialIM3Placement = {
+        brand: "IM3" as Brand,
+      };
+
+      const result = applySmartDefaultsOnOutletSelect(triOutlet, initialIM3Placement);
+      assert.equal(result.brand, "TRI");
+      assert.equal(result.outlet?.brand, "TRI");
+    });
+
+    it("preserves latitude, longitude, and address in placement.outlet when provided", () => {
+      const draftOutlet = {
+        id: "draft-999",
+        code: "DRAFT-001",
+        name: "Toko Baru Draft",
+        brand: "IM3",
+        address: "Jl. Kaliurang KM 5",
+        latitude: -7.7554,
+        longitude: 110.3781,
+      };
+
+      const result = applySmartDefaultsOnOutletSelect(draftOutlet, {});
+      assert.equal(result.outlet?.id, "draft-999");
+      assert.equal(result.outlet?.address, "Jl. Kaliurang KM 5");
+      assert.equal(result.outlet?.latitude, -7.7554);
+      assert.equal(result.outlet?.longitude, 110.3781);
     });
 
     it("defaults date to today, quarter to Q3 2026, and PIC to user or outlet", () => {

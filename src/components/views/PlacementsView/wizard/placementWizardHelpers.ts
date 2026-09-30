@@ -70,7 +70,7 @@ export function applySmartDefaultsOnOutletSelect(
   return {
     ...prevPlacement,
     outletId: outlet.id,
-    brand: prevPlacement.brand || detectedBrand,
+    brand: outlet.brand ? detectedBrand : prevPlacement.brand || detectedBrand,
     picName: prevPlacement.picName || outlet.picName || currentUserName || "",
     quarter: prevPlacement.quarter || "Q3 2026",
     date: prevPlacement.date || today,
@@ -80,6 +80,9 @@ export function applySmartDefaultsOnOutletSelect(
       code: outlet.code || "",
       name: outlet.name,
       brand: detectedBrand,
+      address: outlet.address || "",
+      latitude: typeof outlet.latitude === "number" ? outlet.latitude : null,
+      longitude: typeof outlet.longitude === "number" ? outlet.longitude : null,
     },
   };
 }

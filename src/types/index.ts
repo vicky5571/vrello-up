@@ -316,7 +316,16 @@ export interface MarcomPlacement {
   campaignTheme?: string;
   isLocationValid?: boolean;
   locationDeviation?: number | null;
-  outlet?: { id: string; code: string; name: string; brand?: Brand; branchId?: string };
+  outlet?: {
+    id: string;
+    code: string;
+    name: string;
+    brand?: Brand;
+    branchId?: string;
+    address?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+  };
   material?: { id: string; type: MaterialType; name: string };
   mou?: {
     id: string;

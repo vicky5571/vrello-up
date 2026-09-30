@@ -113,7 +113,22 @@ describe("Outlet Search Where Builder", () => {
     const secondTokenClause = (where.AND as any[])[1];
     assert.equal(secondTokenClause.OR[2].city.contains, "Semarang");
   });
+
+  test("applies brand filter to where clause when provided", () => {
+    const whereIM3 = buildOutletSearchWhere({ brand: "IM3" });
+    assert.equal(whereIM3.brand, "IM3");
+
+    const whereTRI = buildOutletSearchWhere({ brand: "TRI" });
+    assert.equal(whereTRI.brand, "TRI");
+
+    const where3 = buildOutletSearchWhere({ brand: "3" });
+    assert.equal(where3.brand, "TRI");
+
+    const whereAll = buildOutletSearchWhere({ brand: "ALL" });
+    assert.equal(whereAll.brand, undefined);
+  });
 });
+
 
 describe("Outlet Search Relevance Scorer", () => {
   test("scoreOutletSearchRelevance prioritizes exact and prefix matches over deep substrings", async () => {
@@ -236,6 +251,19 @@ describe("GET /api/marcom/outlets integration", () => {
     const json = await res.json();
     assert.ok(Array.isArray(json.data));
     assert.ok(json.data.length <= 100);
+  });
+
+  test("filters outlets by brand in GET query", async () => {
+    // @ts-expect-error Node strip-types runner requires explicit extension
+    const { GET } = await import("./route.ts");
+    const req = new Request("http://localhost:3000/api/marcom/outlets?workspaceId=ws-main&brand=TRI&limit=10");
+    const res = await GET(req);
+    assert.equal(res.status, 200);
+    const json = await res.json();
+    assert.ok(Array.isArray(json.data));
+    for (const outlet of json.data) {
+      assert.equal(outlet.brand, "TRI");
+    }
   });
 });
 

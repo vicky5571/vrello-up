@@ -1,4 +1,4 @@
-import type { Prisma, OutletType, OutletTier, OutletStatus } from "@prisma/client";
+import type { Prisma, OutletType, OutletTier, OutletStatus, Brand } from "@prisma/client";
 
 export const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET"] as const;
 export const VALID_TIERS = ["TIER_1", "TIER_2", "TIER_3"] as const;
@@ -10,7 +10,9 @@ export interface OutletSearchFilterOptions {
   type?: string | OutletType | null;
   tier?: string | OutletTier | null;
   status?: string | OutletStatus | null;
+  brand?: string | Brand | null;
 }
+
 
 /**
  * Parses and bounds the limit parameter for outlet search queries.
@@ -55,6 +57,7 @@ export function buildOutletSearchWhere(
   let type: string | OutletType | null | undefined = undefined;
   let tier: string | OutletTier | null | undefined = undefined;
   let status: string | OutletStatus | null | undefined = undefined;
+  let brand: string | Brand | null | undefined = undefined;
 
   if (typeof queryOrOptions === "object" && queryOrOptions !== null) {
     q = queryOrOptions.q;
@@ -62,6 +65,7 @@ export function buildOutletSearchWhere(
     type = queryOrOptions.type;
     tier = queryOrOptions.tier;
     status = queryOrOptions.status;
+    brand = queryOrOptions.brand;
   } else {
     q = queryOrOptions;
     if (typeof workspaceIdOrOptions === "object" && workspaceIdOrOptions !== null) {
@@ -69,11 +73,13 @@ export function buildOutletSearchWhere(
       type = workspaceIdOrOptions.type;
       tier = workspaceIdOrOptions.tier;
       status = workspaceIdOrOptions.status;
+      brand = workspaceIdOrOptions.brand;
     } else if (typeof extraOptions === "object" && extraOptions !== null) {
       branchId = extraOptions.branchId;
       type = extraOptions.type;
       tier = extraOptions.tier;
       status = extraOptions.status;
+      brand = extraOptions.brand;
     }
   }
 
@@ -81,6 +87,15 @@ export function buildOutletSearchWhere(
 
   if (branchId && branchId !== "ALL") {
     where.branchId = branchId;
+  }
+
+  if (brand && brand !== "ALL") {
+    const bStr = typeof brand === "string" ? brand.trim().toUpperCase() : "";
+    if (bStr === "3" || bStr === "TRI") {
+      where.brand = "TRI" as Brand;
+    } else if (bStr === "IM3") {
+      where.brand = "IM3" as Brand;
+    }
   }
 
   const normalizedType = type === "OFFICIAL_STORE" ? "EXCLUSIVE" : type;

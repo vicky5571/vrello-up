@@ -29,6 +29,7 @@ export async function GET(request: Request) {
   const type = rawType === "OFFICIAL_STORE" ? "EXCLUSIVE" : rawType;
   const tier = searchParams.get("tier");
   const rawStatus = searchParams.get("status");
+  const rawBrand = searchParams.get("brand");
   const query = searchParams.get("q");
   const rawLimit = searchParams.get("limit");
 
@@ -48,6 +49,7 @@ export async function GET(request: Request) {
     type,
     tier,
     status: rawStatus,
+    brand: rawBrand,
   });
 
   const take = parseOutletSearchLimit(rawLimit, query);
