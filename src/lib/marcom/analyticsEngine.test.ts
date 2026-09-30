@@ -245,12 +245,14 @@ describe("analyticsEngine", () => {
       assert.ok(data.kpis.mouSla);
       assert.ok(data.kpis.posmDeployment);
       assert.ok(data.kpis.eventEfficiency);
-      assert.equal((data.kpis as Record<string, unknown>).tier1Penetration, undefined);
+      assert.equal("tier1Penetration" in data.kpis, false);
+      assert.equal((data.kpis as unknown as Record<string, unknown>).tier1Penetration, undefined);
       assert.ok(data.mouSlaAndAging);
       assert.ok(data.posmDeployment);
       assert.ok(data.contentMetrics);
       assert.ok(data.eventEfficiency);
-      assert.equal((data as Record<string, unknown>).outletTierCoverage, undefined);
+      assert.equal("outletTierCoverage" in data, false);
+      assert.equal((data as unknown as Record<string, unknown>).outletTierCoverage, undefined);
       assert.ok(data.actionable);
       assert.equal(typeof data.actionable.costPerOutlet.avgCostPerOutlet, "number");
       assert.equal(typeof data.actionable.eventEfficiency.costPerAttendee, "number");
