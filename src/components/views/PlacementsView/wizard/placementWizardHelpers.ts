@@ -144,12 +144,15 @@ export function isPaidPlacement(cost: number | null | undefined): boolean {
   return typeof cost === "number" && !Number.isNaN(cost) && cost > 0;
 }
 
+export const DEFAULT_PAID_PLACEMENT_COST = 500000;
+
 /**
  * Toggles a placement between free routine POSM (Rp 0) and paid store leasing.
  */
 export function togglePaidPlacement(
   currentPlacement: Partial<MarcomPlacement>,
-  isPaid: boolean
+  isPaid: boolean,
+  defaultCost: number = DEFAULT_PAID_PLACEMENT_COST
 ): Partial<MarcomPlacement> {
   if (!isPaid) {
     return { ...currentPlacement, cost: 0 };
@@ -157,9 +160,10 @@ export function togglePaidPlacement(
   const existingCost = currentPlacement.cost;
   return {
     ...currentPlacement,
-    cost: isPaidPlacement(existingCost) ? existingCost : undefined,
+    cost: isPaidPlacement(existingCost) ? existingCost : defaultCost,
   };
 }
+
 
 /**
  * Toggles a bracketed preset tag (e.g. "[Etalase Depan]") inside field notes cleanly.

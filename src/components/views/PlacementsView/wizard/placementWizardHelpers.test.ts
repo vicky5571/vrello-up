@@ -7,6 +7,7 @@ import {
   getStepCompletionStatus,
   isPaidPlacement,
   togglePaidPlacement,
+  DEFAULT_PAID_PLACEMENT_COST,
   applyLocationNotePreset,
   POSM_MATERIALS,
   DEFAULT_FALLBACK_MATERIALS,
@@ -240,14 +241,21 @@ describe("placementWizardHelpers", () => {
       assert.equal(result.materialId, "m1");
     });
 
-    it("preserves positive cost or leaves cost undefined when toggling to paid", () => {
+    it("preserves positive cost or defaults to standard cost when toggling to paid", () => {
       const resultExisting = togglePaidPlacement({ cost: 200000 }, true);
       assert.equal(resultExisting.cost, 200000);
 
       const resultZero = togglePaidPlacement({ cost: 0 }, true);
-      assert.equal(resultZero.cost, undefined);
+      assert.equal(resultZero.cost, DEFAULT_PAID_PLACEMENT_COST);
+
+      const resultUndefined = togglePaidPlacement({}, true);
+      assert.equal(resultUndefined.cost, DEFAULT_PAID_PLACEMENT_COST);
+
+      const resultCustom = togglePaidPlacement({ cost: 0 }, true, 1200000);
+      assert.equal(resultCustom.cost, 1200000);
     });
   });
+
 
   describe("applyLocationNotePreset", () => {
     it("appends bracketed preset tag to empty notes", () => {

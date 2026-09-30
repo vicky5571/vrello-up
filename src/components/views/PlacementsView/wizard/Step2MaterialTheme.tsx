@@ -18,6 +18,7 @@ import {
   shouldShowMouSection,
   isPaidPlacement,
   togglePaidPlacement,
+  DEFAULT_PAID_PLACEMENT_COST,
   POSM_MATERIALS,
   DEFAULT_FALLBACK_MATERIALS,
   getEffectiveMaterials,
@@ -25,6 +26,7 @@ import {
   getActivePosmChipLabel,
   type PosmMaterialChip,
 } from "./placementWizardHelpers";
+
 import type { MarcomPlacement } from "@/types";
 
 export { POSM_MATERIALS, DEFAULT_FALLBACK_MATERIALS };
@@ -80,9 +82,19 @@ export function Step2MaterialTheme({
 
 
   const [isMouManuallyExpanded, setIsMouManuallyExpanded] = useState(false);
+  const [isPaidMode, setIsPaidMode] = useState<boolean>(() => isPaidPlacement(placement.cost));
   const [isAuxFieldsExpanded, setIsAuxFieldsExpanded] = useState(
     Boolean(placement.cost || placement.dimensions)
   );
+
+  useEffect(() => {
+    if (isPaidPlacement(placement.cost)) {
+      setIsPaidMode(true);
+    } else if (placement.cost === 0) {
+      setIsPaidMode(false);
+    }
+  }, [placement.cost]);
+
 
   const activeChipLabel = getActivePosmChipLabel(
     placement.materialId,
@@ -247,11 +259,12 @@ export function Step2MaterialTheme({
           <button
             type="button"
             onClick={() => {
+              setIsPaidMode(false);
               setPlacement((prev) => (prev ? togglePaidPlacement(prev, false) : prev));
             }}
             className={cn(
               "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer",
-              !isPaidPlacement(placement.cost)
+              !isPaidMode
                 ? "bg-lime-500/15 text-lime-900 dark:text-lime-200 border-lime-500/60 shadow-2xs ring-1 ring-lime-500/40"
                 : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
             )}
@@ -262,12 +275,17 @@ export function Step2MaterialTheme({
           <button
             type="button"
             onClick={() => {
-              setPlacement((prev) => (prev ? togglePaidPlacement(prev, true) : prev));
+              setIsPaidMode(true);
+              const defaultCost =
+                selectedMou?.compensationValue && selectedMou.compensationValue > 0
+                  ? selectedMou.compensationValue
+                  : DEFAULT_PAID_PLACEMENT_COST;
+              setPlacement((prev) => (prev ? togglePaidPlacement(prev, true, defaultCost) : prev));
               setIsMouManuallyExpanded(true);
             }}
             className={cn(
               "flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer",
-              isPaidPlacement(placement.cost)
+              isPaidMode
                 ? "bg-amber-500/15 text-amber-900 dark:text-amber-200 border-amber-500/60 shadow-2xs ring-1 ring-amber-500/40"
                 : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
             )}
@@ -277,7 +295,7 @@ export function Step2MaterialTheme({
         </div>
 
         {/* Input Biaya if Paid */}
-        {isPaidPlacement(placement.cost) && (
+        {isPaidMode && (
           <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300/80 dark:border-amber-800/80 space-y-1.5 animate-in fade-in-50 duration-150">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-amber-900 dark:text-amber-200">
@@ -291,16 +309,17 @@ export function Step2MaterialTheme({
               type="number"
               placeholder="e.g. 500000"
               value={placement.cost != null && placement.cost > 0 ? String(placement.cost) : ""}
-              onChange={(e) =>
+              onChange={(e) => {
+                const val = e.target.value ? Number(e.target.value) : undefined;
                 setPlacement((prev) =>
                   prev
                     ? {
                         ...prev,
-                        cost: e.target.value ? Number(e.target.value) : undefined,
+                        cost: val,
                       }
                     : prev
-                )
-              }
+                );
+              }}
               className="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg bg-white dark:bg-slate-900 border border-amber-400 dark:border-amber-600 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-amber-500"
             />
           </div>
