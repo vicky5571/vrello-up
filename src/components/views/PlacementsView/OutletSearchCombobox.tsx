@@ -18,6 +18,8 @@ import {
   formatCoordinates,
   extractRecentPlacementMaterials,
   getBrandBadgeMeta,
+  formatOutletCodeDisplay,
+  isDraftOutletRecord,
   type OutletSearchResult,
   type OutletSelectionPayload,
   type OutletPlacementMaterial,
@@ -28,11 +30,14 @@ export {
   formatCoordinates,
   extractRecentPlacementMaterials,
   getBrandBadgeMeta,
+  formatOutletCodeDisplay,
+  isDraftOutletRecord,
   type OutletSearchResult,
   type OutletSelectionPayload,
   type OutletPlacementMaterial,
   type OutletPlacementSummary,
 };
+
 
 export interface OutletSearchComboboxProps {
   selectedOutletId?: string;
@@ -323,6 +328,8 @@ export function OutletSearchCombobox({
   const recentTags = extractRecentPlacementMaterials(
     currentOutlet?.placements
   );
+  const formattedCode = formatOutletCodeDisplay(currentOutlet?.code);
+  const isDraft = isDraftOutletRecord(currentOutlet);
 
   return (
     <div ref={containerRef} className={cn("relative w-full", className)}>
@@ -340,9 +347,16 @@ export function OutletSearchCombobox({
                   <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
                     {currentOutlet.name}
                   </span>
-                  <span className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
-                    [{currentOutlet.code}]
-                  </span>
+                  {isDraft && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 shrink-0">
+                      ⏳ Menunggu ACC Atasan
+                    </span>
+                  )}
+                  {formattedCode && (
+                    <span className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
+                      {formattedCode}
+                    </span>
+                  )}
                   {renderBrandBadge(currentOutlet.brand)}
                   {currentOutlet.tier && (
                     <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 shrink-0">
@@ -374,8 +388,15 @@ export function OutletSearchCombobox({
                     {currentOutlet.picPhone && ` • ${currentOutlet.picPhone}`}
                   </div>
                 )}
+                {/* Draft Explanation Banner */}
+                {isDraft && (
+                  <div className="mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60 text-[11px] text-amber-800 dark:text-amber-300">
+                    Outlet ini berstatus draf pengajuan baru. Anda dapat melanjutkan pencatatan pemasangan material ini; data akan otomatis terhubung ke kode resmi setelah di-ACC oleh Atasan / Admin.
+                  </div>
+                )}
               </div>
             </div>
+
 
             {/* Clear / Change Buttons */}
             <div className="flex items-center gap-1 shrink-0">

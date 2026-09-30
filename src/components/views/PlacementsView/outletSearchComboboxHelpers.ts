@@ -94,3 +94,24 @@ export function getBrandBadgeMeta(brand?: string | null): {
     is3,
   };
 }
+
+export function formatOutletCodeDisplay(code?: string | null): string | null {
+  if (!code || typeof code !== "string" || code.trim() === "") {
+    return null;
+  }
+  return `[${code.trim()}]`;
+}
+
+export function isDraftOutletRecord(
+  outlet?: { code?: string | null; status?: string | null } | null
+): boolean {
+  if (!outlet) return false;
+  const code = typeof outlet.code === "string" ? outlet.code : "";
+  const status = typeof outlet.status === "string" ? outlet.status : "";
+  return (
+    code.startsWith("DRAFT-") ||
+    status === "DRAFT" ||
+    status === "PENDING_APPROVAL"
+  );
+}
+

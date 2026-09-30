@@ -81,3 +81,27 @@ test("getBrandBadgeMeta parses and classifies brands accurately", () => {
   assert.equal(custom?.is3, false);
   assert.equal(custom?.normalizedBrand, "Indosat Ooredoo");
 });
+
+test("formatOutletCodeDisplay returns formatted code when present and null when empty or missing", async () => {
+  const { formatOutletCodeDisplay } = await import(
+    "@/components/views/PlacementsView/outletSearchComboboxHelpers"
+  );
+  assert.equal(formatOutletCodeDisplay("O-SMG-001"), "[O-SMG-001]");
+  assert.equal(formatOutletCodeDisplay(""), null);
+  assert.equal(formatOutletCodeDisplay("   "), null);
+  assert.equal(formatOutletCodeDisplay(null), null);
+  assert.equal(formatOutletCodeDisplay(undefined), null);
+});
+
+test("isDraftOutletRecord accurately identifies draft outlets", async () => {
+  const { isDraftOutletRecord } = await import(
+    "@/components/views/PlacementsView/outletSearchComboboxHelpers"
+  );
+  assert.equal(isDraftOutletRecord({ code: "DRAFT-123", status: "DRAFT" }), true);
+  assert.equal(isDraftOutletRecord({ code: "O-SMG-001", status: "DRAFT" }), true);
+  assert.equal(isDraftOutletRecord({ code: "DRAFT-123", status: "APPROVED" }), true);
+  assert.equal(isDraftOutletRecord({ code: "O-SMG-001", status: "APPROVED" }), false);
+  assert.equal(isDraftOutletRecord(null), false);
+  assert.equal(isDraftOutletRecord(undefined), false);
+});
+
