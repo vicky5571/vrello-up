@@ -210,86 +210,92 @@ function PlacementFormModalContent({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div className="w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-2xl space-y-4">
+      <div className="w-full max-w-xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <ClipboardList className="w-4 h-4 text-lime-600" />
-            <span>
-              {placement.id ? "Edit Eksekusi Placement POSM" : "Eksekusi Baru POSM Lapangan"}
-            </span>
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg"
-          >
-            <X className="w-4 h-4" />
-          </button>
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
+          <div className="flex items-center justify-between pb-3">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-lime-600" />
+              <span>
+                {placement.id ? "Edit Eksekusi Placement POSM" : "Eksekusi Baru POSM Lapangan"}
+              </span>
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer p-1 rounded-lg"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Wizard Stepper Progress Bar */}
+          <WizardStepperHeader
+            currentStep={currentStep}
+            onSelectStep={setCurrentStep}
+            completionStatus={completionStatus}
+          />
         </div>
 
-        {/* Wizard Stepper Progress Bar */}
-        <WizardStepperHeader
-          currentStep={currentStep}
-          onSelectStep={setCurrentStep}
-          completionStatus={completionStatus}
-        />
+        {/* Active Step Content Form with scrollable body & pinned footer */}
+        <form onSubmit={onSave} className="flex flex-col flex-1 min-h-0">
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-[340px] space-y-4">
+            {currentStep === 1 && (
+              <Step1Outlet
+                placement={placement}
+                selectedOutletObj={selectedOutletObj}
+                onSelectOutlet={handleSelectOutlet}
+                onSetBrand={handleSetBrand}
+                workspaceId={placement.workspaceId || "ws-main"}
+              />
+            )}
 
-        {/* Active Step Content Form */}
-        <form onSubmit={onSave} className="space-y-4">
-          {currentStep === 1 && (
-            <Step1Outlet
-              placement={placement}
-              selectedOutletObj={selectedOutletObj}
-              onSelectOutlet={handleSelectOutlet}
-              onSetBrand={handleSetBrand}
-              workspaceId={placement.workspaceId || "ws-main"}
+            {currentStep === 2 && (
+              <Step2MaterialTheme
+                placement={placement}
+                setPlacement={setPlacement}
+                materialsList={materialsList}
+                mousList={mousList}
+                outletMous={outletMous}
+                selectedMat={selectedMat}
+                selectedMou={selectedMou}
+                mouValidation={mouValidation}
+                onViewDocMou={(mou) => setViewingDocMou(mou)}
+              />
+            )}
+
+            {currentStep === 3 && (
+              <Step3PhotoNotes
+                placement={placement}
+                setPlacement={setPlacement}
+                disabled={isSaving}
+              />
+            )}
+
+            {currentStep === 4 && (
+              <Step4LocationVerification
+                placement={placement}
+                setPlacement={setPlacement}
+                outletCoordinates={outletCoordinates}
+                materialName={selectedMat?.name}
+                outletName={selOutlet?.name || placement.outlet?.name}
+              />
+            )}
+          </div>
+
+          {/* Fixed Footer Controls */}
+          <div className="px-4 py-3 sm:px-6 bg-slate-50/80 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 shrink-0">
+            <WizardFooter
+              currentStep={currentStep}
+              onPrevStep={handlePrevStep}
+              onNextStep={handleNextStep}
+              canAdvance={canAdvance}
+              onClose={onClose}
+              isSaving={isSaving}
+              isEditMode={Boolean(placement.id)}
+              canSubmitDirectly={canSubmitDirectly}
             />
-          )}
-
-          {currentStep === 2 && (
-            <Step2MaterialTheme
-              placement={placement}
-              setPlacement={setPlacement}
-              materialsList={materialsList}
-              mousList={mousList}
-              outletMous={outletMous}
-              selectedMat={selectedMat}
-              selectedMou={selectedMou}
-              mouValidation={mouValidation}
-              onViewDocMou={(mou) => setViewingDocMou(mou)}
-            />
-          )}
-
-          {currentStep === 3 && (
-            <Step3PhotoNotes
-              placement={placement}
-              setPlacement={setPlacement}
-              disabled={isSaving}
-            />
-          )}
-
-          {currentStep === 4 && (
-            <Step4LocationVerification
-              placement={placement}
-              setPlacement={setPlacement}
-              outletCoordinates={outletCoordinates}
-              materialName={selectedMat?.name}
-              outletName={selOutlet?.name || placement.outlet?.name}
-            />
-          )}
-
-          {/* Footer Controls */}
-          <WizardFooter
-            currentStep={currentStep}
-            onPrevStep={handlePrevStep}
-            onNextStep={handleNextStep}
-            canAdvance={canAdvance}
-            onClose={onClose}
-            isSaving={isSaving}
-            isEditMode={Boolean(placement.id)}
-            canSubmitDirectly={canSubmitDirectly}
-          />
+          </div>
         </form>
       </div>
 

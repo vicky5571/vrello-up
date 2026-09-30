@@ -114,7 +114,7 @@ export function getStepCompletionStatus(
   const step1 = Boolean(placement.outletId && placement.outletId.trim().length > 0);
   const step2 = Boolean(placement.materialId && placement.materialId.trim().length > 0);
   const hasPhoto = Boolean(placement.photoUrl && placement.photoUrl.trim().length > 0);
-  const step3 = placement.status === "DONE" ? hasPhoto : Boolean(placement.status);
+  const step3 = hasPhoto;
   const hasCoords = placement.latitude != null && placement.longitude != null;
   const step4 = hasCoords || Boolean(placement.shareLocationUrl);
 

@@ -201,6 +201,15 @@ describe("placementWizardHelpers", () => {
       assert.equal(status[3], true);
       assert.equal(status[4], true);
     });
+
+    it("marks Step 3 incomplete if photoUrl is empty or not provided", () => {
+      const partial: Partial<MarcomPlacement> = {
+        outletId: "o1",
+        status: "NOT_STARTED",
+      };
+      const status = getStepCompletionStatus(partial);
+      assert.equal(status[3], false);
+    });
   });
 
   describe("isPaidPlacement", () => {
