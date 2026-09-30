@@ -486,9 +486,8 @@ export function AnalyticsView() {
               </div>
             </ChartCard>
 
-            {/* Chart 4: Social Media Content Cadence & Reliability (Full width on lg) */}
+            {/* Chart 4: Social Media Content Cadence & Reliability */}
             <ChartCard
-              className="lg:col-span-2"
               title="Reliabilitas Publikasi Konten Media Sosial"
               subtitle="Distribusi postingan tayang (Published) vs terjadwal (Scheduled) per kanal platform"
               action={
@@ -497,7 +496,7 @@ export function AnalyticsView() {
                 </span>
               }
             >
-              <div className="h-64 mt-2">
+              <div className="h-72 mt-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={data.contentMetrics.platforms}
