@@ -195,7 +195,6 @@ const outletNamePrefixes = [
 ];
 
 const outletTypes = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET"] as const;
-const outletTiers = ["TIER_1", "TIER_2", "TIER_3"] as const;
 
 const partnerNames = [
   "PT Telekomunikasi Nusantara Mandiri",
@@ -920,7 +919,6 @@ async function main() {
       code: `OUT-${branch.code.replace("BR-", "")}-${String((index % 30) + 1).padStart(3, "0")}`,
       name: `${prefix} - ${branch.city} #${Math.floor(index / outletNamePrefixes.length) + 1}`,
       type: outletTypes[index % outletTypes.length],
-      tier: outletTiers[(index + 1) % outletTiers.length],
       address: `${branch.address.split("No.")[0]}No. ${10 + ((index * 3) % 200)}, ${branch.city}`,
       city: branch.city,
       latitude,

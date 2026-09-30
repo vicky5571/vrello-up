@@ -530,7 +530,6 @@ export interface MaterialItem {
 }
 
 export type OutletType = "TRADITIONAL" | "MODERN_RETAIL" | "EXCLUSIVE" | "CAMPUS_OUTLET";
-export type OutletTier = "TIER_1" | "TIER_2" | "TIER_3";
 export type OutletStatus = "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
 
 export interface OutletItem {
@@ -538,7 +537,6 @@ export interface OutletItem {
   code: string;
   name: string;
   type: OutletType;
-  tier?: OutletTier;
   brand?: Brand;
   address: string;
   city: string;
@@ -571,7 +569,6 @@ export interface OutletPipelineRow {
   code: string;
   name: string;
   type: string;
-  tier: string;
   city: string;
   address: string;
   picName: string;

@@ -48,12 +48,6 @@ enum OutletType {
   CAMPUS_OUTLET
 }
 
-enum OutletTier {
-  TIER_1
-  TIER_2
-  TIER_3
-}
-
 enum OutletStatus {
   DRAFT
   PENDING_APPROVAL
@@ -121,7 +115,6 @@ model Outlet {
   code       String      @unique
   name       String
   type       OutletType
-  tier       OutletTier
   address    String      @default("")
   city       String      @default("")
   picName    String      @default("")
