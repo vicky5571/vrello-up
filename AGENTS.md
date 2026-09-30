@@ -126,3 +126,4 @@ This project uses Node's native test runner for ultra-fast execution (~250ms per
   npm test -- src/lib/marcom/mouMachine.test.ts
   ```
 - **Rule**: Whenever fixing a bug or adding business logic in `src/lib/`, run the specific test file or write a minimal unit test to verify before finalizing.
+
