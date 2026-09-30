@@ -151,6 +151,61 @@ test("filterEventsByCriteria scopes by branch name and event start date", () => 
   assert.equal(q3[0].id, "e2");
 });
 
+test("filterEventsByCriteria matches when branchId is a CUID and branchNameLookup is provided", () => {
+  const mockEvents = [
+    {
+      id: "e1",
+      name: "Semarang Roadshow",
+      eventType: "Roadshow",
+      status: "COMPLETED",
+      budget: 5000000,
+      targetAttendee: 500,
+      attendeeCount: 450,
+      branchName: "Semarang",
+      startDate: "2026-03-01",
+    },
+    {
+      id: "e2",
+      name: "Solo Expo",
+      eventType: "Expo",
+      status: "COMPLETED",
+      budget: 8000000,
+      targetAttendee: 800,
+      attendeeCount: 750,
+      branchName: "Solo",
+      startDate: "2026-08-01",
+    },
+  ] as unknown as FieldEventItem[];
+
+  // Real-world scenario: filters.branchId is a CUID, but event stores "Semarang"
+  const semarangByCuid = filterEventsByCriteria(
+    mockEvents,
+    {
+      branchId: "cuid_semarang_branch_123",
+      brand: "ALL",
+      quarter: "ALL",
+      year: 2026,
+    },
+    "Semarang" // branchNameLookup
+  );
+
+  assert.equal(semarangByCuid.length, 1);
+  assert.equal(semarangByCuid[0].id, "e1");
+
+  // Also verify case-insensitive matching
+  const semarangCaseInsensitive = filterEventsByCriteria(
+    mockEvents,
+    {
+      branchId: "cuid_semarang_branch_123",
+      brand: "ALL",
+      quarter: "ALL",
+      year: 2026,
+    },
+    "semarang"
+  );
+  assert.equal(semarangCaseInsensitive.length, 1);
+});
+
 test("filterContentByCriteria scopes by publish quarter", () => {
   const mockPosts = [
     { id: "c1", platform: "instagram", status: "PUBLISHED", publishDate: "2026-02-01" },

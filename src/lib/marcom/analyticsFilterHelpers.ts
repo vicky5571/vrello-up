@@ -136,14 +136,24 @@ export function filterMousByCriteria(
 
 export function filterEventsByCriteria(
   events: FieldEventItem[],
-  filters: AnalyticsFilterState
+  filters: AnalyticsFilterState,
+  branchNameLookup?: string
 ): FieldEventItem[] {
   const safe = Array.isArray(events) ? events : [];
   return safe.filter((e) => {
-    // 1. Branch filter (events store a human-readable branchName)
+    // 1. Branch filter:
+    // FieldEvent stores a human-readable `branchName` rather than `branchId`.
+    // Match either against filters.branchId directly (fallback for tests/fixtures)
+    // or against the resolved `branchNameLookup`.
     if (filters.branchId !== "ALL") {
-      const branchName = e.branchName || "";
-      if (branchName !== filters.branchId) return false;
+      const eventBranch = (e.branchName || "").trim().toLowerCase();
+      const targetId = filters.branchId.trim().toLowerCase();
+      const targetLookup = (branchNameLookup || "").trim().toLowerCase();
+
+      const matchesDirect = eventBranch === targetId;
+      const matchesLookup = targetLookup !== "" && eventBranch === targetLookup;
+
+      if (!matchesDirect && !matchesLookup) return false;
     }
 
     // 2. Quarter / Year filter
