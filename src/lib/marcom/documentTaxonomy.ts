@@ -18,7 +18,8 @@ export const VALID_DOCUMENT_STATUSES = [
 // not added above, `MissingStatus` resolves to `never` and this assignment fails
 // to typecheck.
 type MissingStatus = Exclude<DocumentStatus, (typeof VALID_DOCUMENT_STATUSES)[number]>;
-const _assertNoMissingStatus: MissingStatus extends never ? true : never = true;
+type AssertNever<T extends never> = T;
+export type _AssertNoMissingStatus = AssertNever<MissingStatus>;
 
 /**
  * Honest predicate: validates the value exactly as given. Callers that accept

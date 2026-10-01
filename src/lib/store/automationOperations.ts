@@ -4,6 +4,8 @@ import {
   type Task,
   type User,
   type Workspace,
+  type Space,
+  type Status,
 } from "@/types";
 import { generateId } from "@/lib/utils";
 import {
@@ -13,7 +15,11 @@ import {
 } from "@/lib/marcom/marcomIds";
 
 export interface AutomationExecutionContext {
-  createTask: (data: any) => Task;
+  createTask: (
+    data: Omit<Task, "id" | "createdAt" | "updatedAt" | "listId"> & {
+      listId?: string | null;
+    },
+  ) => Task;
   updateTask: (id: string, updates: Partial<Task>) => void;
   logActivity: (taskId: string, action: string) => void;
   tasks: Task[];
@@ -21,7 +27,7 @@ export interface AutomationExecutionContext {
   activeWorkspaceId: string;
   activeListId: string | null;
   actor: User;
-  findSpaceForListId: (workspaces: Workspace[], listId: string) => any;
+  findSpaceForListId: (workspaces: Workspace[], listId: string) => Space | undefined;
 }
 
 /**
@@ -215,7 +221,7 @@ export async function executeAutomationsForTrigger(
             : defaultSpace;
           const reviewStatus =
             space?.statuses.find(
-              (s: any) =>
+              (s: Status) =>
                 s.category === "review" ||
                 s.name.toLowerCase().includes("review"),
             ) || space?.statuses[0];

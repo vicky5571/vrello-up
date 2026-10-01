@@ -44,9 +44,10 @@ type MissingPlatform = Exclude<PostPlatform, (typeof VALID_PLATFORMS)[number]>;
 type MissingFormat = Exclude<PostFormat, (typeof VALID_FORMATS)[number]>;
 type MissingStatus = Exclude<PostStatus, (typeof VALID_POST_STATUSES)[number]>;
 
-const _assertNoMissingPlatform: MissingPlatform extends never ? true : never = true;
-const _assertNoMissingFormat: MissingFormat extends never ? true : never = true;
-const _assertNoMissingStatus: MissingStatus extends never ? true : never = true;
+type AssertNever<T extends never> = T;
+export type _AssertNoMissingPlatform = AssertNever<MissingPlatform>;
+export type _AssertNoMissingFormat = AssertNever<MissingFormat>;
+export type _AssertNoMissingStatus = AssertNever<MissingStatus>;
 
 /**
  * Honest predicates: these validate the value exactly as given. Callers that

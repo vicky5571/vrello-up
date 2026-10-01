@@ -149,7 +149,7 @@ export function buildMouColumns({
       header: "Status",
       size: 140,
       minSize: 110,
-      sortFn: (rowA: any, rowB: any) => compareMouStatus(rowA.original.status, rowB.original.status),
+      sortFn: (rowA: { original: MarcomMou }, rowB: { original: MarcomMou }) => compareMouStatus(rowA.original.status, rowB.original.status),
       cell: ({ row }) => {
         const isExpired = Boolean(
           row.original.endDate &&
@@ -187,7 +187,7 @@ export function buildMouColumns({
       header: "Period & Validity",
       size: 195,
       minSize: 150,
-      sortFn: (rowA: any, rowB: any) => {
+      sortFn: (rowA: { original: MarcomMou }, rowB: { original: MarcomMou }) => {
         const timeA = rowA.original.endDate ? new Date(rowA.original.endDate).getTime() : 0;
         const timeB = rowB.original.endDate ? new Date(rowB.original.endDate).getTime() : 0;
         return timeA - timeB;

@@ -96,12 +96,21 @@ describe("Outlet Search Where Builder", () => {
     assert.equal(Array.isArray(where.AND), true);
     assert.equal((where.AND as unknown[]).length, 2);
 
-    const firstTokenClause = (where.AND as any[])[0];
+    type TokenClause = {
+      OR?: Array<{
+        code?: { contains?: string };
+        name?: { contains?: string };
+        city?: { contains?: string };
+        picName?: { contains?: string };
+      }>;
+    };
+    const andClauses = where.AND as TokenClause[];
+    const firstTokenClause = andClauses[0];
     assert.ok(firstTokenClause.OR, "Expected each token clause to have OR condition");
-    assert.equal(firstTokenClause.OR[0].code.contains, "Berkah");
+    assert.equal(firstTokenClause.OR?.[0]?.code?.contains, "Berkah");
 
-    const secondTokenClause = (where.AND as any[])[1];
-    assert.equal(secondTokenClause.OR[2].city.contains, "Semarang");
+    const secondTokenClause = andClauses[1];
+    assert.equal(secondTokenClause.OR?.[2]?.city?.contains, "Semarang");
   });
 
   test("applies brand filter to where clause when provided", () => {

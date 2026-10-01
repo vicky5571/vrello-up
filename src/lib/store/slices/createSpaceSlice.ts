@@ -21,7 +21,7 @@ import {
   PRODUCT_SPACE_ID,
   DESIGN_SYSTEM_LIST_ID,
 } from "@/lib/marcom/marcomIds";
-import { syncWorkspaces, syncDeleteTask, syncDeleteTasks } from "./syncHelpers";
+import { syncWorkspaces, syncDeleteTasks } from "./syncHelpers";
 
 export const createSpaceSlice: StateCreator<
   WorkspaceStore,

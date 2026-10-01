@@ -534,7 +534,7 @@ describe("useMarcomDataStore", () => {
 
     it("fetchPosts returns empty array immediately if workspaceId is empty without calling fetch", async () => {
       const store = useMarcomDataStore.getState();
-      const res = await (store as any).fetchPosts("");
+      const res = await store.fetchPosts("");
       assert.deepEqual(res, []);
     });
 
@@ -553,7 +553,7 @@ describe("useMarcomDataStore", () => {
       ];
       store.setCachedPosts(wsId, dummyPosts as unknown as ContentPostItem[]);
 
-      const res = await (store as any).fetchPosts(wsId);
+      const res = await store.fetchPosts(wsId);
       assert.deepEqual(res, dummyPosts);
     });
 
@@ -569,20 +569,20 @@ describe("useMarcomDataStore", () => {
         status: "IDEA" as const,
       } as unknown as ContentPostItem;
 
-      (store as any).addCachedPost(wsId, initial);
+      store.addCachedPost(wsId, initial);
       assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.length, 1);
       assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.[0].title, "Test Post");
 
       // Adding duplicate ID replaces or keeps single entry
-      (store as any).addCachedPost(wsId, { ...initial, title: "Test Post Updated" });
+      store.addCachedPost(wsId, { ...initial, title: "Test Post Updated" });
       assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.length, 1);
       assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.[0].title, "Test Post Updated");
     });
 
     it("fetchReports and fetchDocuments return empty array if workspaceId is empty", async () => {
       const store = useMarcomDataStore.getState();
-      assert.deepEqual(await (store as any).fetchReports(""), []);
-      assert.deepEqual(await (store as any).fetchDocuments(""), []);
+      assert.deepEqual(await store.fetchReports(""), []);
+      assert.deepEqual(await store.fetchDocuments(""), []);
     });
 
     it("adds cached reports immutably", () => {
@@ -600,7 +600,7 @@ describe("useMarcomDataStore", () => {
         actionPlans: [],
       } as unknown as MonthlyReport;
 
-      (store as any).addCachedReport(wsId, initial);
+      store.addCachedReport(wsId, initial);
       assert.equal(useMarcomDataStore.getState().reportsByWorkspace[wsId]?.length, 1);
       assert.equal(useMarcomDataStore.getState().reportsByWorkspace[wsId]?.[0].month, "October");
     });
@@ -619,7 +619,7 @@ describe("useMarcomDataStore", () => {
       ];
       store.setCachedReports(wsId, dummyReports as unknown as MonthlyReport[]);
 
-      const res = await (store as any).fetchReports(wsId);
+      const res = await store.fetchReports(wsId);
       assert.deepEqual(res, dummyReports);
     });
 
@@ -635,7 +635,7 @@ describe("useMarcomDataStore", () => {
       ];
       store.setCachedDocuments(wsId, dummyDocs as unknown as DocumentItem[]);
 
-      const res = await (store as any).fetchDocuments(wsId);
+      const res = await store.fetchDocuments(wsId);
       assert.deepEqual(res, dummyDocs);
     });
   });

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node strip-types requires explicit .ts extension
 import { getEventChecklistTemplate, findMemberForPic, buildEventTaskPayload, buildEventDescription, mapEventStatusToTaskStatusId, mapTaskCategoryToEventStatus, formatEventDateRange, detectEventConflicts, calculateFieldEventsKPI, calculateTimelineBarMetrics, isFieldEventTask } from "./eventTaskSync.ts";
-import type { User, Subtask, Status } from "@/types";
+import type { User, Subtask, Status, Task } from "@/types";
 
 const mockMembers: User[] = [
   {
@@ -170,14 +170,14 @@ test("isFieldEventTask correctly rejects non-event tasks and missing marcom id",
     title: "[Placement] Banner Store",
     relatedMarcomId: "place-103",
     relatedMarcomType: "PLACEMENT" as const,
-  } as any;
+  } as unknown as Task;
   assert.equal(isFieldEventTask(nonEventTask), false);
 
   const missingIdTask = {
     id: "task-no-id",
     listId: "l1",
     title: "[Field Event] Some Event",
-  } as any;
+  } as unknown as Task;
   assert.equal(isFieldEventTask(missingIdTask), false);
 
   assert.equal(isFieldEventTask(undefined), false);

@@ -35,12 +35,10 @@ export const PLACEMENT_STATUS_LABELS: Record<PlacementStatus, string> = {
 
 export interface PlacementColumnDeps {
   navigateToMarcom: (view: ViewMode, search?: string) => void;
-  branchMap?: Record<string, string>;
 }
 
 export function buildPlacementColumns({
   navigateToMarcom,
-  branchMap = {},
 }: PlacementColumnDeps) {
   return columnHelper.columns([
     // 1. Select
@@ -243,7 +241,7 @@ export function buildPlacementColumns({
       header: "Status",
       size: 120,
       minSize: 100,
-      sortFn: (rowA: any, rowB: any) => comparePlacementStatus(rowA.original.status, rowB.original.status),
+      sortFn: (rowA: { original: MarcomPlacement }, rowB: { original: MarcomPlacement }) => comparePlacementStatus(rowA.original.status, rowB.original.status),
       cell: ({ row }) => (
         <span
           className={cn(
@@ -263,7 +261,7 @@ export function buildPlacementColumns({
       size: 110,
       minSize: 90,
       enableSorting: true,
-      sortFn: (rowA: any, rowB: any) => comparePlacementDates(rowA.original.date, rowB.original.date),
+      sortFn: (rowA: { original: MarcomPlacement }, rowB: { original: MarcomPlacement }) => comparePlacementDates(rowA.original.date, rowB.original.date),
       cell: ({ row }) => (
         <span className="text-slate-600 dark:text-slate-400 tabular-nums">
           {row.original.date ? new Date(row.original.date).toLocaleDateString("id-ID") : "—"}

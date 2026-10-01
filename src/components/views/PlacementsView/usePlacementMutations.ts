@@ -11,7 +11,7 @@ import {
   syncTaskOnPlacementStatusChange,
 } from "@/lib/tasks/placementTaskSync";
 import { FIELD_OPS_LIST_ID } from "@/lib/marcom/marcomIds";
-import type { MarcomPlacement, Brand } from "@/types";
+import type { MarcomPlacement } from "@/types";
 
 
 interface UsePlacementMutationsProps {
@@ -19,10 +19,10 @@ interface UsePlacementMutationsProps {
   modalPlacement: Partial<MarcomPlacement> | null;
   setModalPlacement: React.Dispatch<React.SetStateAction<Partial<MarcomPlacement> | null>>;
   setSelectedPlacement: React.Dispatch<React.SetStateAction<MarcomPlacement | null>>;
-  outletsList: { id: string; name: string; brand?: string; picName?: string; branchId?: string }[];
-  materialsList: { id: string; name: string; type?: string; requiresMou?: boolean }[];
-  placements: MarcomPlacement[];
-  mousList: MouSummaryInfo[];
+  outletsList?: { id: string; name: string; brand?: string; picName?: string; branchId?: string }[];
+  materialsList?: { id: string; name: string; type?: string; requiresMou?: boolean }[];
+  placements?: MarcomPlacement[];
+  mousList?: MouSummaryInfo[];
 }
 
 export function usePlacementMutations({
@@ -30,10 +30,6 @@ export function usePlacementMutations({
   modalPlacement,
   setModalPlacement,
   setSelectedPlacement,
-  outletsList,
-  materialsList,
-  placements,
-  mousList,
 }: UsePlacementMutationsProps) {
   const [isSaving, setIsSaving] = useState(false);
   const tasks = useWorkspaceStore((s) => s.tasks);
