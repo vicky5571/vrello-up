@@ -8,7 +8,7 @@ const VALID_STATUSES = ["DONE", "ON_PROGRESS", "PENDING"] as const;
 
 export async function GET(request: Request) {
   try {
-    await requireMember("ws-main");
+    await requireMember();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   let role;
   try {
-    role = await requireMember("ws-main");
+    role = await requireMember();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;

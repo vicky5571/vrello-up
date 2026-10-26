@@ -19,7 +19,7 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   try {
-    await requireMember("ws-main");
+    await requireMember();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;

@@ -15,11 +15,9 @@ export async function PATCH(
   const params = await props.params;
   const { id } = params;
   const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get("workspaceId") || "ws-main";
-
   let role;
   try {
-    role = await requireMember(workspaceId);
+    role = await requireMember();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;

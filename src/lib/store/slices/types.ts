@@ -1,5 +1,4 @@
 import type {
-  Workspace,
   Space,
   Folder,
   List,
@@ -22,20 +21,14 @@ export interface TrashedTask {
   deletedAt: string;
 }
 
-export interface WorkspaceSlice {
-  workspaces: Workspace[];
-  activeWorkspaceId: string;
-  setActiveWorkspace: (id: string) => void;
-  createWorkspace: (name: string, avatar?: string) => Workspace;
-  updateWorkspace: (
-    id: string,
-    updates: Partial<Pick<Workspace, "name" | "avatar">>,
-  ) => void;
-  deleteWorkspace: (id: string) => boolean;
-  addWorkspaceMember: (name: string, email: string, role?: User["role"]) => User;
-  removeWorkspaceMember: (userId: string) => void;
+export interface DataSlice {
+  spaces: Space[];
+  users: User[];
+  addUser: (name: string, email: string, role: User["role"]) => User;
+  removeUser: (userId: string) => void;
   importBackup: (data: unknown) => boolean;
-  fetchServerTasks: (workspaceId?: string) => Promise<void>;
+  fetchServerData: () => Promise<void>;
+  fetchServerTasks?: () => Promise<void>;
 }
 
 export interface SpaceSlice {
@@ -200,7 +193,7 @@ export interface UiSlice {
   resetViewPreferences: () => void;
 }
 
-export type WorkspaceStore = WorkspaceSlice &
+export type WorkspaceStore = DataSlice &
   SpaceSlice &
   TaskSlice &
   TrashSlice &

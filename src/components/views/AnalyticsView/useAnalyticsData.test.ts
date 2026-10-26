@@ -7,7 +7,7 @@ import type {
   PlacementAnalyticsInput,
 } from "@/lib/marcom/analyticsEngine";
 
-test("useMarcomDataStore fetch actions can pre-warm cache for a workspace", async () => {
+test("useMarcomDataStore fetch actions can pre-warm cache", async () => {
   const store = useMarcomDataStore.getState();
   assert.equal(typeof store.fetchPlacements, "function");
   assert.equal(typeof store.fetchMous, "function");

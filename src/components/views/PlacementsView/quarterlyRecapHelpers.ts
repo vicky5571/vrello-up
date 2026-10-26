@@ -9,10 +9,10 @@ export interface DrillDownFilter {
 }
 
 /**
- * Returns consistent localStorage key for storing targets per workspace and quarter.
+ * Returns consistent localStorage key for storing targets per quarter.
  */
-export function formatTargetKey(workspaceId: string, quarter: string): string {
-  return `vrello_posm_targets_${workspaceId}_${quarter.trim()}`;
+export function formatTargetKey(quarter: string): string {
+  return `vrello_posm_targets_${quarter.trim()}`;
 }
 
 /**
@@ -48,12 +48,11 @@ export function sanitizeDrillDownFilter(input: DrillDownFilter): DrillDownFilter
  * Safely loads targets from localStorage with error catching.
  */
 export function loadQuarterlyTargets(
-  workspaceId: string,
   quarter: string
 ): QuarterlyTargetMap {
   if (typeof window === "undefined") return {};
   try {
-    const key = formatTargetKey(workspaceId, quarter);
+    const key = formatTargetKey(quarter);
     const raw = localStorage.getItem(key);
     if (!raw) return {};
     return JSON.parse(raw) as QuarterlyTargetMap;
@@ -66,13 +65,12 @@ export function loadQuarterlyTargets(
  * Safely saves targets to localStorage with error catching.
  */
 export function saveQuarterlyTargets(
-  workspaceId: string,
   quarter: string,
   targets: QuarterlyTargetMap
 ): boolean {
   if (typeof window === "undefined") return false;
   try {
-    const key = formatTargetKey(workspaceId, quarter);
+    const key = formatTargetKey(quarter);
     localStorage.setItem(key, JSON.stringify(targets));
     return true;
   } catch {

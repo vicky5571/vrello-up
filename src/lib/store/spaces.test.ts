@@ -1,15 +1,14 @@
 import test, { beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { useWorkspaceStore, getSpaceListIds, reconcileWorkspaces } from "./useWorkspaceStore.ts";
+import { useWorkspaceStore, getSpaceListIds, reconcileSpaces } from "./useWorkspaceStore.ts";
 import { DEFAULT_STATUSES } from "@/lib/constants/seeds";
 
 const api = () => useWorkspaceStore.getState();
 
 let snapshot: {
-  workspaces: ReturnType<typeof api>["workspaces"];
+  spaces: ReturnType<typeof api>["spaces"];
   tasks: ReturnType<typeof api>["tasks"];
-  activeWorkspaceId: string;
   activeSpaceId: string;
   activeListId: string | null;
 };
@@ -17,9 +16,8 @@ let snapshot: {
 beforeEach(() => {
   const current = api();
   snapshot = {
-    workspaces: JSON.parse(JSON.stringify(current.workspaces)),
+    spaces: JSON.parse(JSON.stringify(current.spaces)),
     tasks: JSON.parse(JSON.stringify(current.tasks)),
-    activeWorkspaceId: current.activeWorkspaceId,
     activeSpaceId: current.activeSpaceId,
     activeListId: current.activeListId,
   };
@@ -27,9 +25,8 @@ beforeEach(() => {
 
 afterEach(() => {
   useWorkspaceStore.setState({
-    workspaces: snapshot.workspaces,
+    spaces: snapshot.spaces,
     tasks: snapshot.tasks,
-    activeWorkspaceId: snapshot.activeWorkspaceId,
     activeSpaceId: snapshot.activeSpaceId,
     activeListId: snapshot.activeListId,
   });
@@ -47,8 +44,7 @@ test("createSpace creates a new space with general list, default statuses and se
   assert.equal(newSpace.lists[0].name, "General");
   assert.equal(newSpace.statuses.length, DEFAULT_STATUSES.length);
 
-  const currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  assert.ok(currentWs?.spaces.some((s) => s.id === newSpace.id));
+  assert.ok(api().spaces.some((s) => s.id === newSpace.id));
 
   // Active space and list should point to the new space
   assert.equal(api().activeSpaceId, newSpace.id);
@@ -63,8 +59,7 @@ test("updateSpace patches space metadata without disturbing child lists or statu
     icon: "Target",
   });
 
-  const currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  const updated = currentWs?.spaces.find((s) => s.id === space.id);
+  const updated = api().spaces.find((s) => s.id === space.id);
 
   assert.equal(updated?.name, "Updated Space");
   assert.equal(updated?.color, "#EF4444");
@@ -82,14 +77,12 @@ test("createFolder and updateFolder manage folder lifecycle inside a space", () 
   assert.equal(folder.spaceId, space.id);
   assert.deepEqual(folder.lists, []);
 
-  let currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  let currentSpace = currentWs?.spaces.find((s) => s.id === space.id);
+  let currentSpace = api().spaces.find((s) => s.id === space.id);
   assert.equal(currentSpace?.folders.length, 1);
   assert.equal(currentSpace?.folders[0].name, "Sprint Planning");
 
   api().updateFolder(space.id, folder.id, "Sprint 101");
-  currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  currentSpace = currentWs?.spaces.find((s) => s.id === space.id);
+  currentSpace = api().spaces.find((s) => s.id === space.id);
   assert.equal(currentSpace?.folders[0].name, "Sprint 101");
 });
 
@@ -103,8 +96,7 @@ test("createList adds direct space lists and folder-nested lists, switching acti
   const folderList = api().createList(space.id, "Nested Deliverables", folder.id);
   assert.equal(api().activeListId, folderList.id);
 
-  const currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  const currentSpace = currentWs?.spaces.find((s) => s.id === space.id);
+  const currentSpace = api().spaces.find((s) => s.id === space.id);
 
   assert.ok(currentSpace?.lists.some((l) => l.id === directList.id));
   const updatedFolder = currentSpace?.folders.find((f) => f.id === folder.id);
@@ -133,8 +125,7 @@ test("deleteFolder removes folder and purges tasks belonging to folder lists", (
 
   api().deleteFolder(space.id, folder.id);
 
-  const currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  const currentSpace = currentWs?.spaces.find((s) => s.id === space.id);
+  const currentSpace = api().spaces.find((s) => s.id === space.id);
   assert.equal(currentSpace?.folders.some((f) => f.id === folder.id), false);
 
   // Cascading task deletion
@@ -175,7 +166,7 @@ test("cascading list and task cleanup on deleteSpace purges top-level and folder
     orderIndex: 1,
   });
 
-  const survivingSpace = api().workspaces[0].spaces.find((s) => s.id !== space.id);
+  const survivingSpace = api().spaces.find((s) => s.id !== space.id);
   const survivingTask = api().createTask({
     listId: survivingSpace!.lists[0].id,
     title: "Surviving Task",
@@ -199,8 +190,7 @@ test("cascading list and task cleanup on deleteSpace purges top-level and folder
   // Perform cascading space deletion
   api().deleteSpace(space.id);
 
-  const currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  assert.equal(currentWs?.spaces.some((s) => s.id === space.id), false);
+  assert.equal(api().spaces.some((s) => s.id === space.id), false);
 
   // Tasks from both the direct list and the folder list must be purged
   assert.equal(api().tasks.some((t) => t.id === task1.id), false);
@@ -228,8 +218,7 @@ test("addStatusToSpace appends uppercase status with category in_progress and se
 
   api().addStatusToSpace(space.id, "qa review", "#F59E0B");
 
-  const currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  const currentSpace = currentWs?.spaces.find((s) => s.id === space.id);
+  const currentSpace = api().spaces.find((s) => s.id === space.id);
   const addedStatus = currentSpace?.statuses.find((s) => s.name === "QA REVIEW");
 
   assert.ok(addedStatus);
@@ -256,9 +245,7 @@ test("getSpaceListIds collects all direct and folder-nested list IDs", () => {
   const folder = api().createFolder(space.id, "Sprint Folder");
   const folderList = api().createList(space.id, "Folder List 1", folder.id);
 
-  const currentSpace = api().workspaces
-    .flatMap((w) => w.spaces)
-    .find((s) => s.id === space.id);
+  const currentSpace = api().spaces.find((s) => s.id === space.id);
 
   const listIds = getSpaceListIds(currentSpace);
   assert.equal(listIds.length, 3);
@@ -331,9 +318,7 @@ test("space-level aggregation includes tasks across all lists in space and exclu
   api().setActiveSpace(spaceA.id);
   assert.equal(api().activeListId, null);
 
-  const currentSpace = api().workspaces
-    .flatMap((w) => w.spaces)
-    .find((s) => s.id === api().activeSpaceId);
+  const currentSpace = api().spaces.find((s) => s.id === api().activeSpaceId);
   const spaceListIds = new Set(getSpaceListIds(currentSpace));
 
   // Filter tasks using view filter logic
@@ -382,12 +367,11 @@ test("createTask defaults listId to active space's first list when activeListId 
   assert.equal(created.listId, space.lists[0].id);
 });
 
-test("reconcileWorkspaces preserves client custom spaces and lists over static server seeds", () => {
-  const clientWs = JSON.parse(JSON.stringify(api().workspaces));
+test("reconcileSpaces preserves client custom spaces and lists over static server seeds", () => {
+  const clientSpaces = JSON.parse(JSON.stringify(api().spaces));
   // Add a custom space and custom list to client
   const customSpace = {
     id: "space-custom-growth",
-    workspaceId: clientWs[0].id,
     name: "Growth & Retention",
     icon: "Rocket",
     color: "#F59E0B",
@@ -415,72 +399,58 @@ test("reconcileWorkspaces preserves client custom spaces and lists over static s
       },
     ],
   };
-  clientWs[0].spaces.push(customSpace);
+  clientSpaces.push(customSpace);
 
-  // Static server workspaces lacking the custom space
-  const serverWs = [
+  // Static server spaces lacking the custom space
+  const serverSpaces = [
     {
-      id: clientWs[0].id,
-      name: clientWs[0].name,
-      members: clientWs[0].members,
-      spaces: [
-        {
-          id: "space-product",
-          workspaceId: clientWs[0].id,
-          name: "Design & Product",
-          icon: "Palette",
-          color: "#8B5CF6",
-          statuses: DEFAULT_STATUSES,
-          folders: [],
-          lists: [{ id: "list-design-system", spaceId: "space-product", name: "Design Tokens & UI Specs" }],
-        },
-      ],
+      id: "space-product",
+      name: "Design & Product",
+      icon: "Palette",
+      color: "#8B5CF6",
+      statuses: DEFAULT_STATUSES,
+      folders: [],
+      lists: [{ id: "list-design-system", spaceId: "space-product", name: "Design Tokens & UI Specs" }],
     },
   ];
 
-  const result = reconcileWorkspaces(clientWs, serverWs);
+  const result = reconcileSpaces(clientSpaces, serverSpaces);
   assert.equal(result.shouldSyncToServer, true);
+  assert.ok(result.spaces.some((s) => s.id === "space-custom-growth"));
 
-  const reconciledWs = result.workspaces.find((w) => w.id === clientWs[0].id);
-  assert.ok(reconciledWs);
-  assert.ok(reconciledWs?.spaces.some((s) => s.id === "space-custom-growth"));
-
-  const reconciledSpace = reconciledWs?.spaces.find((s) => s.id === "space-custom-growth");
+  const reconciledSpace = result.spaces.find((s) => s.id === "space-custom-growth");
   assert.equal(reconciledSpace?.lists[0].id, "list-funnel-review");
   assert.equal(reconciledSpace?.folders[0].lists[0].id, "list-onboarding-ab");
 });
 
-test("reorderSpaces updates space array ordering in the active workspace", () => {
-  const currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  assert.ok(currentWs && currentWs.spaces.length >= 2);
+test("reorderSpaces updates space array ordering", () => {
+  const currentSpaces = api().spaces;
+  assert.ok(currentSpaces && currentSpaces.length >= 2);
 
-  const initialOrder = currentWs.spaces.map((s) => s.id);
+  const initialOrder = currentSpaces.map((s) => s.id);
   const reversedOrder = [...initialOrder].reverse();
 
   api().reorderSpaces(reversedOrder);
 
-  const updatedWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
   assert.deepEqual(
-    updatedWs?.spaces.map((s) => s.id),
+    api().spaces.map((s) => s.id),
     reversedOrder
   );
 });
 
-test("moveSpace moves a space up and down in the active workspace", () => {
-  const currentWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  assert.ok(currentWs && currentWs.spaces.length >= 2);
+test("moveSpace moves a space up and down", () => {
+  const currentSpaces = api().spaces;
+  assert.ok(currentSpaces && currentSpaces.length >= 2);
 
-  const secondSpaceId = currentWs.spaces[1].id;
-  const firstSpaceId = currentWs.spaces[0].id;
+  const secondSpaceId = currentSpaces[1].id;
+  const firstSpaceId = currentSpaces[0].id;
 
   api().moveSpace(secondSpaceId, "up");
-  let updatedWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  assert.equal(updatedWs?.spaces[0].id, secondSpaceId);
-  assert.equal(updatedWs?.spaces[1].id, firstSpaceId);
+  assert.equal(api().spaces[0].id, secondSpaceId);
+  assert.equal(api().spaces[1].id, firstSpaceId);
 
   api().moveSpace(secondSpaceId, "down");
-  updatedWs = api().workspaces.find((w) => w.id === api().activeWorkspaceId);
-  assert.equal(updatedWs?.spaces[0].id, firstSpaceId);
-  assert.equal(updatedWs?.spaces[1].id, secondSpaceId);
+  assert.equal(api().spaces[0].id, firstSpaceId);
+  assert.equal(api().spaces[1].id, secondSpaceId);
 });
 

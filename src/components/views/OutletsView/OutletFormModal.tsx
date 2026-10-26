@@ -22,7 +22,6 @@ export interface OutletFormModalProps {
   onClose: () => void;
   branches: { id: string; name: string; code: string }[];
   onSuccess: () => void;
-  activeWorkspaceId?: string;
 }
 
 interface OutletFormModalContentProps {
@@ -30,7 +29,6 @@ interface OutletFormModalContentProps {
   onClose: () => void;
   branches: { id: string; name: string; code: string }[];
   onSuccess: () => void;
-  activeWorkspaceId: string;
 }
 
 function OutletFormModalContent({
@@ -38,7 +36,6 @@ function OutletFormModalContent({
   onClose,
   branches,
   onSuccess,
-  activeWorkspaceId,
 }: OutletFormModalContentProps) {
   const { invalidateOutlets, invalidatePlacements, invalidateMous } = useMarcomDataStore();
 
@@ -110,8 +107,8 @@ function OutletFormModalContent({
       const isEdit = Boolean(formOutlet.id);
       await handleSaveOutletApi(formOutlet, isAddAnother ? false : isEdit);
       invalidateOutlets();
-      invalidatePlacements(activeWorkspaceId);
-      invalidateMous(activeWorkspaceId);
+      invalidatePlacements();
+      invalidateMous();
       onSuccess();
 
       if (isAddAnother) {
@@ -550,7 +547,6 @@ export function OutletFormModal({
   onClose,
   branches,
   onSuccess,
-  activeWorkspaceId = "ws-main",
 }: OutletFormModalProps) {
   const targetOutlet =
     outlet !== undefined ? outlet : isOpen ? initialOutlet || {} : null;
@@ -564,7 +560,6 @@ export function OutletFormModal({
       onClose={onClose}
       branches={branches}
       onSuccess={onSuccess}
-      activeWorkspaceId={activeWorkspaceId}
     />
   );
 }

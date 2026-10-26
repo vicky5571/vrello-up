@@ -5,7 +5,6 @@ import type {
   Space,
   Task,
   ChannelMessage,
-  Workspace,
 } from "@/types";
 import {
   MARCOM_SPACE_ID,
@@ -85,7 +84,6 @@ export const SEED_TAGS: Tag[] = [
 export const INITIAL_SPACES: Space[] = [
   {
     id: PRODUCT_SPACE_ID,
-    workspaceId: "ws-main",
     name: "Design & Product",
     icon: "Palette",
     color: "#8B5CF6",
@@ -108,7 +106,6 @@ export const INITIAL_SPACES: Space[] = [
   },
   {
     id: MARCOM_SPACE_ID,
-    workspaceId: "ws-main",
     name: "Marketing & Campaigns",
     icon: "Sparkles",
     color: "#EC4899",
@@ -414,10 +411,3 @@ export const INITIAL_CHANNEL_MESSAGES: ChannelMessage[] = [
   },
 ];
 
-export const INITIAL_WORKSPACE: Workspace = {
-  id: "ws-main",
-  name: "Acme Product Workspace",
-  avatar: "V",
-  spaces: INITIAL_SPACES,
-  members: SEED_USERS,
-};

@@ -11,7 +11,6 @@ import {
   SearchX,
   RotateCcw,
 } from "lucide-react";
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
 import { Outlet360Drawer } from "@/components/views/OutletsView/Outlet360Drawer";
 import { PipelineFilterBar } from "./PipelineFilterBar";
@@ -29,9 +28,7 @@ import {
 } from "./pipelineTypes";
 import type { OutletPipelineRow } from "@/types";
 
-export function PipelineView({ workspaceId: propWorkspaceId, className }: PipelineViewProps) {
-  const storeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId);
-  const activeWorkspaceId = propWorkspaceId || storeWorkspaceId || "ws-main";
+export function PipelineView({ className }: PipelineViewProps) {
 
   // Data & Fetching States
   const [data, setData] = useState<OutletPipelineRow[]>([]);
@@ -54,7 +51,7 @@ export function PipelineView({ workspaceId: propWorkspaceId, className }: Pipeli
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/marcom/pipeline?workspaceId=${encodeURIComponent(activeWorkspaceId)}`);
+      const res = await fetch(`/api/marcom/pipeline`);
       if (!res.ok) {
         const errorText = await res.text().catch(() => "Gagal memuat data pipeline.");
         throw new Error(`HTTP ${res.status}: ${errorText || "Gagal memuat pipeline."}`);
@@ -87,7 +84,7 @@ export function PipelineView({ workspaceId: propWorkspaceId, className }: Pipeli
     } finally {
       setIsLoading(false);
     }
-  }, [activeWorkspaceId]);
+  }, []);
 
   useEffect(() => {
     fetchPipeline();

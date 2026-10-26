@@ -9,7 +9,6 @@ export interface PlacementsRecapTabProps {
   placements: MarcomPlacement[];
   branches: Branch[];
   materials: { id: string; name: string; type?: string; requiresMou?: boolean }[];
-  workspaceId: string;
   viewSwitcherControls: React.ReactNode;
   isLoading: boolean;
   onRefresh: () => void;
@@ -21,7 +20,6 @@ export function PlacementsRecapTab({
   placements,
   branches,
   materials,
-  workspaceId,
   viewSwitcherControls,
   isLoading,
   onRefresh,
@@ -61,7 +59,6 @@ export function PlacementsRecapTab({
         placements={placements}
         branches={branches}
         materials={materials}
-        workspaceId={workspaceId}
         onDrillDown={onDrillDown}
         onRecordPlacement={onRecordPlacement}
       />

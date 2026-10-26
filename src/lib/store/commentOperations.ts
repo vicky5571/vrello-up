@@ -5,26 +5,20 @@ import {
   type TaskCommentAttachment,
   type ActivityLog,
   type ChannelMessage,
-  type Workspace,
 } from "@/types";
 import { generateId } from "@/lib/utils";
 
 /**
- * Resolves the acting user: explicit argument wins, otherwise the active
- * workspace member matching currentUserId, falling back to the seed user.
+ * Resolves the acting user: explicit argument wins, otherwise the user
+ * matching currentUserId from fallbackUsers (SEED_USERS), falling back to the first seed user.
  */
 export function resolveActor(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
   currentUserId: string,
   fallbackUsers: User[],
   provided?: User,
 ): User {
   if (provided) return provided;
-  const workspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  return (
-    workspace?.members.find((m) => m.id === currentUserId) ?? fallbackUsers[0]
-  );
+  return fallbackUsers.find((m) => m.id === currentUserId) ?? fallbackUsers[0];
 }
 
 /**

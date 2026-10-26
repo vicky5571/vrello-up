@@ -2,22 +2,19 @@
 
 import { useEffect, useRef } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { SEED_USERS } from "@/lib/constants/seeds";
 import { type User } from "@/types";
 
 export function useRealtime() {
   const currentUserId = useWorkspaceStore((s) => s.currentUserId);
   const selectedTaskId = useWorkspaceStore((s) => s.selectedTaskId);
-  const workspaces = useWorkspaceStore((s) => s.workspaces);
-  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
 
   const setPresenceByTaskId = useWorkspaceStore((s) => s.setPresenceByTaskId);
   const applyRemoteTaskUpsert = useWorkspaceStore((s) => s.applyRemoteTaskUpsert);
   const applyRemoteTaskDelete = useWorkspaceStore((s) => s.applyRemoteTaskDelete);
 
-  const activeWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
   const currentUser: User =
-    activeWorkspace?.members?.find((m) => m.id === currentUserId) || {
+    SEED_USERS.find((m) => m.id === currentUserId) || {
       id: currentUserId,
       name: "Anonymous",
       email: "user@vrelloup.dev",
@@ -30,16 +27,15 @@ export function useRealtime() {
   const currentUserRef = useRef(currentUser);
   currentUserRef.current = currentUser;
 
-  // 1. Establish SSE Connection scoped to active workspace
+  // 1. Establish SSE Connection
   useEffect(() => {
-    if (typeof window === "undefined" || !activeWorkspaceId) return;
+    if (typeof window === "undefined") return;
 
     let eventSource: EventSource | null = null;
     let reconnectTimeout: NodeJS.Timeout | null = null;
 
     function connect() {
-      const url = `/api/realtime?workspaceId=${encodeURIComponent(activeWorkspaceId)}`;
-      eventSource = new EventSource(url);
+      eventSource = new EventSource("/api/realtime");
 
       eventSource.onmessage = (e) => {
         try {
@@ -78,11 +74,11 @@ export function useRealtime() {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
       if (eventSource) eventSource.close();
     };
-  }, [activeWorkspaceId, setPresenceByTaskId, applyRemoteTaskUpsert, applyRemoteTaskDelete]);
+  }, [setPresenceByTaskId, applyRemoteTaskUpsert, applyRemoteTaskDelete]);
 
-  // 2. Presence Heartbeat scoped to active workspace
+  // 2. Presence Heartbeat
   useEffect(() => {
-    if (typeof window === "undefined" || !activeWorkspaceId) return;
+    if (typeof window === "undefined") return;
 
     function sendPresence(taskId: string | null) {
       const user = currentUserRef.current;
@@ -94,22 +90,18 @@ export function useRealtime() {
           userId: user.id,
           user,
           taskId,
-          workspaceId: activeWorkspaceId,
         }),
       }).catch(() => {});
     }
 
-    // Send immediately when selectedTaskId changes
     sendPresence(selectedTaskId);
 
-    // Periodic heartbeat every 10 seconds
     const interval = setInterval(() => {
       sendPresence(selectedTaskIdRef.current);
     }, 10_000);
 
     return () => {
       clearInterval(interval);
-      // Clean up presence on unmount
       if (typeof navigator !== "undefined" && navigator.sendBeacon) {
         navigator.sendBeacon(
           "/api/realtime/presence",
@@ -117,10 +109,9 @@ export function useRealtime() {
             userId: currentUserRef.current.id,
             user: currentUserRef.current,
             taskId: null,
-            workspaceId: activeWorkspaceId,
           }),
         );
       }
     };
-  }, [activeWorkspaceId, selectedTaskId]);
+  }, [selectedTaskId]);
 }

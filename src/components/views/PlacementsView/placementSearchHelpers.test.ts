@@ -9,7 +9,6 @@ import type { MarcomPlacement } from "@/types";
 test("extractPlacementSearchText indexes essential operational fields without technical IDs", () => {
   const sample: Partial<MarcomPlacement> = {
     id: "plc-9999",
-    workspaceId: "ws-main",
     outletId: "out-1234",
     materialId: "mat-5678",
     picName: "Budi Santoso",
@@ -29,7 +28,6 @@ test("extractPlacementSearchText indexes essential operational fields without te
   assert.ok(text.includes("shopblind outdoor"));
   assert.ok(text.includes("dekat pintu masuk utama"));
   assert.ok(!text.includes("plc-9999"));
-  assert.ok(!text.includes("ws-main"));
 });
 
 test("PLACEMENT_SEARCH_KEYS contains expected key fields", () => {

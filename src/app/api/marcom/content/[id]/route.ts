@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import {
   VALID_FORMATS,
   VALID_PLATFORMS,
@@ -10,7 +9,7 @@ import {
 } from "@/lib/marcom/contentTaxonomy";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -24,9 +23,6 @@ export async function GET(
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
-
-    const authError = await requireWorkspaceAccess(post.workspaceId, { requiredRole: "viewer", request });
-    if (authError) return authError;
 
     return NextResponse.json(post);
   } catch (err) {
@@ -44,9 +40,6 @@ export async function PATCH(
   if (!existing) {
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
-
-  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
 
   const body = await request.json().catch(() => ({}));
 
@@ -114,7 +107,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -122,9 +115,6 @@ export async function DELETE(
   if (!existing) {
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
-
-  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
 
   try {
     await prisma.contentPost.delete({ where: { id } });

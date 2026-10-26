@@ -35,8 +35,7 @@ export function FilterBar() {
   const {
     filters,
     viewPreferences,
-    workspaces,
-    activeWorkspaceId,
+    users,
     appMode,
     activeView,
     tags,
@@ -44,8 +43,7 @@ export function FilterBar() {
     useShallow((s) => ({
       filters: s.filters,
       viewPreferences: s.viewPreferences,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      users: s.users,
       appMode: s.appMode,
       activeView: s.activeView,
       tags: s.tags,
@@ -71,9 +69,7 @@ export function FilterBar() {
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const currentWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
-  const members = currentWorkspace?.members || [];
+  const members = users;
 
   // Close menus on outside click or Escape
   useEffect(() => {

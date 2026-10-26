@@ -8,7 +8,7 @@ import {
 } from "@/lib/router/urlState";
 
 test("parseUrlNavState parses full standard query string", () => {
-  const query = "?mode=marcom&view=events&space=space-marcom&list=list-field-ops&task=task-99&workspace=ws-main";
+  const query = "?mode=marcom&view=events&space=space-marcom&list=list-field-ops&task=task-99";
   const state = parseUrlNavState(query);
 
   assert.deepEqual(state, {
@@ -17,12 +17,11 @@ test("parseUrlNavState parses full standard query string", () => {
     spaceId: "space-marcom",
     listId: "list-field-ops",
     taskId: "task-99",
-    workspaceId: "ws-main",
   });
 });
 
 test("parseUrlNavState handles short parameter aliases", () => {
-  const query = "?m=tasks&v=board&s=space-prod&l=list-1&t=task-1&ws=ws-alt";
+  const query = "?m=tasks&v=board&s=space-prod&l=list-1&t=task-1";
   const state = parseUrlNavState(query);
 
   assert.deepEqual(state, {
@@ -31,7 +30,6 @@ test("parseUrlNavState handles short parameter aliases", () => {
     spaceId: "space-prod",
     listId: "list-1",
     taskId: "task-1",
-    workspaceId: "ws-alt",
   });
 });
 
@@ -88,12 +86,11 @@ test("buildShareableTaskUrl constructs clean task deep-link URL", () => {
 });
 
 test("parseUrlNavState correctly parses marcom branches deep link with space and list parameters", () => {
-  const query = "?mode=marcom&view=branches&workspace=ws-main&space=space-marcom&list=list-field-ops";
+  const query = "?mode=marcom&view=branches&space=space-marcom&list=list-field-ops";
   const state = parseUrlNavState(query);
 
   assert.equal(state.appMode, "marcom");
   assert.equal(state.view, "branches");
-  assert.equal(state.workspaceId, "ws-main");
   assert.equal(state.spaceId, "space-marcom");
   assert.equal(state.listId, "list-field-ops");
 });

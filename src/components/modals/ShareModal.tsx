@@ -13,17 +13,14 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ isOpen, onClose }: ShareModalProps) {
-  const workspaces = useWorkspaceStore((s) => s.workspaces);
-  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
+  const users = useWorkspaceStore((s) => s.users);
   const [isPublicLinkEnabled, setIsPublicLinkEnabled] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const currentWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
-  const members = currentWorkspace?.members || [];
+  const members = users;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(`https://vrello-up.dev/share/${currentWorkspace?.id || "ws-main"}`);
+    navigator.clipboard.writeText("https://vrello-up.dev/share");
     setCopied(true);
     toast.success("Public share link copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
@@ -116,7 +113,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                   <input
                     type="text"
                     readOnly
-                    value={`https://vrello-up.dev/share/${currentWorkspace?.id || "ws-main"}`}
+                    value="https://vrello-up.dev/share"
                     className="flex-1 px-3 py-1.5 rounded-lg text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 select-all"
                   />
                   <button

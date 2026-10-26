@@ -10,7 +10,6 @@ test("countOpenTasks - counts only open tasks in the specified spaces", () => {
       name: "Engineering",
       color: "#0073ea",
       icon: "folder",
-      workspaceId: "ws-1",
       lists: [
         { id: "list-1", name: "Backlog", spaceId: "space-1" },
       ],
@@ -36,7 +35,6 @@ test("countOpenTasks - counts only open tasks in the specified spaces", () => {
       name: "Other Space",
       color: "#0073ea",
       icon: "folder",
-      workspaceId: "ws-1",
       lists: [{ id: "list-other", name: "Other List", spaceId: "space-2" }],
       folders: [],
       statuses: [

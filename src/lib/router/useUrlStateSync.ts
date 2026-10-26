@@ -9,7 +9,7 @@ import {
 } from "./urlState";
 
 /**
- * Hook that binds workspace navigation state bidirectionally to URL search parameters.
+ * Hook that binds navigation state bidirectionally to URL search parameters.
  * - Hydrates store state on initial deep-link load.
  * - Handles browser Back/Forward (popstate) to navigate views and task drawers.
  * - Pushes/replaces history entries when the user interacts with the app.
@@ -17,7 +17,6 @@ import {
 export function useUrlStateSync() {
   const appMode = useWorkspaceStore((s) => s.appMode);
   const activeView = useWorkspaceStore((s) => s.activeView);
-  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
   const activeSpaceId = useWorkspaceStore((s) => s.activeSpaceId);
   const activeListId = useWorkspaceStore((s) => s.activeListId);
   const selectedTaskId = useWorkspaceStore((s) => s.selectedTaskId);
@@ -38,9 +37,6 @@ export function useUrlStateSync() {
 
       if (nav.appMode && nav.appMode !== api.appMode) {
         api.setAppMode(nav.appMode);
-      }
-      if (nav.workspaceId && nav.workspaceId !== api.activeWorkspaceId) {
-        api.setActiveWorkspace(nav.workspaceId);
       }
       if (nav.spaceId && nav.spaceId !== api.activeSpaceId) {
         api.setActiveSpace(nav.spaceId);
@@ -81,9 +77,6 @@ export function useUrlStateSync() {
 
       if (nav.appMode && nav.appMode !== api.appMode) {
         api.setAppMode(nav.appMode);
-      }
-      if (nav.workspaceId && nav.workspaceId !== api.activeWorkspaceId) {
-        api.setActiveWorkspace(nav.workspaceId);
       }
       if (nav.spaceId && nav.spaceId !== api.activeSpaceId) {
         api.setActiveSpace(nav.spaceId);
@@ -129,7 +122,6 @@ export function useUrlStateSync() {
     const currentState: UrlNavState = {
       appMode,
       view: activeView,
-      workspaceId: activeWorkspaceId,
       spaceId: activeSpaceId,
       listId: activeListId || undefined,
       taskId: selectedTaskId || undefined,
@@ -157,7 +149,6 @@ export function useUrlStateSync() {
   }, [
     appMode,
     activeView,
-    activeWorkspaceId,
     activeSpaceId,
     activeListId,
     selectedTaskId,

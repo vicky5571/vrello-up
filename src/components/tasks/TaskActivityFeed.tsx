@@ -4,7 +4,6 @@ import { useState, useRef } from "react";
 import { useDropdown } from "@/components/ui/useDropdown";
 import { Task, TaskComment, ActivityLog, TaskCommentAttachment } from "@/types";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import { SEED_USERS } from "@/lib/constants/seeds";
 import { useShallow } from "zustand/react/shallow";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import {
@@ -31,11 +30,10 @@ interface TaskActivityFeedProps {
 type FeedFilter = "all" | "comments" | "activity";
 
 export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
-  const { currentUserId, workspaces, activeWorkspaceId } = useWorkspaceStore(
+  const { currentUserId, users } = useWorkspaceStore(
     useShallow((s) => ({
       currentUserId: s.currentUserId,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      users: s.users,
     })),
   );
 
@@ -56,9 +54,8 @@ export function TaskActivityFeed({ task }: TaskActivityFeedProps) {
   const comments = task.comments || [];
   const activities = task.activities || [];
 
-  // Current logged in user from active workspace or seed fallback
-  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const members = currentWorkspace?.members || SEED_USERS;
+  // Current logged in user from users or fallback
+  const members = users;
   const currentUser = members.find((u) => u.id === currentUserId) || members[0];
 
   const handlePostComment = (e?: React.FormEvent) => {

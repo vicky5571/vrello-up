@@ -15,7 +15,6 @@ import type { MarcomPlacement } from "@/types";
 
 
 interface UsePlacementMutationsProps {
-  activeWorkspaceId: string;
   modalPlacement: Partial<MarcomPlacement> | null;
   setModalPlacement: React.Dispatch<React.SetStateAction<Partial<MarcomPlacement> | null>>;
   setSelectedPlacement: React.Dispatch<React.SetStateAction<MarcomPlacement | null>>;
@@ -26,14 +25,14 @@ interface UsePlacementMutationsProps {
 }
 
 export function usePlacementMutations({
-  activeWorkspaceId,
   modalPlacement,
   setModalPlacement,
   setSelectedPlacement,
 }: UsePlacementMutationsProps) {
   const [isSaving, setIsSaving] = useState(false);
   const tasks = useWorkspaceStore((s) => s.tasks);
-  const workspaces = useWorkspaceStore((s) => s.workspaces);
+  const spaces = useWorkspaceStore((s) => s.spaces);
+  const users = useWorkspaceStore((s) => s.users);
   const createTask = useWorkspaceStore((s) => s.createTask);
   const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
 
@@ -74,11 +73,10 @@ export function usePlacementMutations({
         toast.info("Opened existing production task");
         return;
       }
-      const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
       const targetSpace =
-        currentWorkspace?.spaces.find((s) => s.lists.some((l) => l.id === FIELD_OPS_LIST_ID)) ||
-        currentWorkspace?.spaces[0];
-      const members = currentWorkspace?.members || [];
+        spaces.find((s) => s.lists.some((l) => l.id === FIELD_OPS_LIST_ID)) ||
+        spaces[0];
+      const members = users;
       const taskPayload = buildPlacementTaskPayload(
         {
           id: placement.id,
@@ -108,7 +106,7 @@ export function usePlacementMutations({
       toast.success("Production task created in Field Operations!");
       setSelectedTaskId(task.id);
     },
-    [tasks, workspaces, activeWorkspaceId, createTask, setSelectedTaskId],
+    [tasks, spaces, users, createTask, setSelectedTaskId],
   );
 
   const handleSavePlacement = useCallback(
@@ -175,7 +173,6 @@ export function usePlacementMutations({
             notes,
             photoUrl,
             date,
-            workspaceId: activeWorkspaceId,
             latitude: typeof latitude === "number" ? latitude : null,
             longitude: typeof longitude === "number" ? longitude : null,
             shareLocationUrl,
@@ -198,23 +195,22 @@ export function usePlacementMutations({
         }
 
         if (isEdit && id) {
-          updateCachedPlacement(activeWorkspaceId, savedPlacement);
+          updateCachedPlacement(savedPlacement);
           setSelectedPlacement((prev) => (prev?.id === id ? savedPlacement : prev));
-          const currentWs = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
           syncTaskOnPlacementStatusChange(
             id,
             status,
             tasks,
-            currentWs?.spaces || [],
+            spaces,
             (taskId, updates) => useWorkspaceStore.getState().updateTask(taskId, updates),
           );
         } else {
-          addCachedPlacement(activeWorkspaceId, savedPlacement);
+          addCachedPlacement(savedPlacement);
         }
 
-        fetchPlacements(activeWorkspaceId, true);
+        fetchPlacements(true);
         toast.success(`Placement ${isEdit ? "updated" : "created"} successfully`);
-        invalidateMous(activeWorkspaceId);
+        invalidateMous();
         setModalPlacement(null);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to save placement");
@@ -224,8 +220,7 @@ export function usePlacementMutations({
     },
     [
       modalPlacement,
-      activeWorkspaceId,
-      workspaces,
+      spaces,
       tasks,
       updateCachedOutlet,
       invalidateOutlets,
@@ -242,13 +237,13 @@ export function usePlacementMutations({
     async (id: string) => {
       const res = await fetch(`/api/marcom/placements/${id}`, { method: "DELETE" });
       if (res.ok) {
-        removeCachedPlacement(activeWorkspaceId, id);
-        invalidateMous(activeWorkspaceId);
+        removeCachedPlacement(id);
+        invalidateMous();
         setSelectedPlacement((prev) => (prev?.id === id ? null : prev));
       }
       return res.ok;
     },
-    [activeWorkspaceId, removeCachedPlacement, invalidateMous, setSelectedPlacement],
+    [removeCachedPlacement, invalidateMous, setSelectedPlacement],
   );
 
   const deleteBatch = useCallback(
@@ -256,18 +251,18 @@ export function usePlacementMutations({
       const res = await fetch("/api/marcom/placements", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids, workspaceId: activeWorkspaceId }),
+        body: JSON.stringify({ ids }),
       });
       if (res.ok) {
         for (const id of ids) {
-          removeCachedPlacement(activeWorkspaceId, id);
+          removeCachedPlacement(id);
         }
-        invalidateMous(activeWorkspaceId);
+        invalidateMous();
         setSelectedPlacement((prev) => (prev && ids.includes(prev.id) ? null : prev));
       }
       return res.ok;
     },
-    [activeWorkspaceId, removeCachedPlacement, invalidateMous, setSelectedPlacement],
+    [removeCachedPlacement, invalidateMous, setSelectedPlacement],
   );
 
   return {

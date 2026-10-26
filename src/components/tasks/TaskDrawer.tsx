@@ -1,7 +1,6 @@
 "use client";
 
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import { SEED_USERS } from "@/lib/constants/seeds";
 import { useShallow } from "zustand/react/shallow";
 import { Task, Priority, PostPlatform, PostFormat, TaskAttachment, Folder as FolderModel, List as ListModel, ViewMode } from "@/types";
 import { PlatformBadge } from "@/components/ui/PlatformBadge";
@@ -70,8 +69,8 @@ export function TaskDrawer() {
   const {
     tasks,
     selectedTaskId,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
+    users,
     activeSpaceId,
     appMode,
     activeView,
@@ -84,8 +83,8 @@ export function TaskDrawer() {
     useShallow((s) => ({
       tasks: s.tasks,
       selectedTaskId: s.selectedTaskId,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
+      users: s.users,
       activeSpaceId: s.activeSpaceId,
       appMode: s.appMode,
       activeView: s.activeView,
@@ -130,17 +129,13 @@ export function TaskDrawer() {
     ? (presenceByTaskId[task.id] || []).filter((u) => u.id !== currentUserId)
     : [];
 
-  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = currentWorkspace?.spaces.find(
+  const currentSpace = spaces.find(
     (s) => s.id === activeSpaceId,
   );
   const statuses = currentSpace?.statuses || [];
-  const members = currentWorkspace?.members || SEED_USERS;
+  const members = users;
 
-  const allSpaces = useMemo(
-    () => workspaces.flatMap((w) => w.spaces || []),
-    [workspaces],
-  );
+  const allSpaces = spaces;
 
   const { owningSpace, owningFolder, owningList } = useMemo(() => {
     if (!task?.listId) {

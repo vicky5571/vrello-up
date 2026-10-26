@@ -32,14 +32,12 @@ import {
 export interface OutletApprovalQueueTabProps {
   outlets: MarcomOutlet[];
   branches: { id: string; name: string; code: string }[];
-  workspaceId?: string;
   onRefresh: () => Promise<void>;
 }
 
 export function OutletApprovalQueueTab({
   outlets,
   branches,
-  workspaceId = "ws-main",
   onRefresh,
 }: OutletApprovalQueueTabProps) {
   const { can, assignedBranchIds } = useMarcomPermissions();
@@ -115,7 +113,7 @@ export function OutletApprovalQueueTab({
     setIsProcessing(true);
     try {
       const branchesParam = assignedBranchIds.join(",");
-      const url = `/api/marcom/outlets/${approvingOutlet.id}/approval?workspaceId=${workspaceId}&userBranches=${branchesParam}`;
+      const url = `/api/marcom/outlets/${approvingOutlet.id}/approval?userBranches=${branchesParam}`;
 
       const res = await fetch(url, {
         method: "PATCH",
@@ -135,7 +133,7 @@ export function OutletApprovalQueueTab({
         `Outlet "${approvingOutlet.name}" berhasil di-ACC dan aktif dengan kode ${officialCodeInput.trim()}!`
       );
       invalidateOutlets();
-      invalidatePlacements(workspaceId);
+      invalidatePlacements();
       setApprovingOutlet(null);
       await onRefresh();
     } catch (err) {
@@ -155,7 +153,7 @@ export function OutletApprovalQueueTab({
     setIsProcessing(true);
     try {
       const branchesParam = assignedBranchIds.join(",");
-      const url = `/api/marcom/outlets/${rejectingOutlet.id}/approval?workspaceId=${workspaceId}&userBranches=${branchesParam}`;
+      const url = `/api/marcom/outlets/${rejectingOutlet.id}/approval?userBranches=${branchesParam}`;
 
       const res = await fetch(url, {
         method: "PATCH",

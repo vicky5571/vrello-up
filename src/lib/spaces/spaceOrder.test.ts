@@ -6,7 +6,6 @@ import { reorderSpacesList, moveSpaceDirection } from "@/lib/spaces/spaceOrder";
 const mockSpaces: Space[] = [
   {
     id: "space-1",
-    workspaceId: "ws-main",
     name: "Engineering",
     icon: "Code2",
     color: "#3B82F6",
@@ -16,7 +15,6 @@ const mockSpaces: Space[] = [
   },
   {
     id: "space-2",
-    workspaceId: "ws-main",
     name: "Design",
     icon: "Palette",
     color: "#EC4899",
@@ -26,7 +24,6 @@ const mockSpaces: Space[] = [
   },
   {
     id: "space-3",
-    workspaceId: "ws-main",
     name: "Marketing",
     icon: "Megaphone",
     color: "#10B981",

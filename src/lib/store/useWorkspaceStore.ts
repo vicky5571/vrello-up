@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { Workspace, Task, ViewMode } from "@/types";
-import { DEFAULT_STATUSES, INITIAL_SPACES, INITIAL_TASKS, INITIAL_WORKSPACE, SEED_USERS } from "@/lib/constants/seeds";
+import type { Task, Space, ViewMode } from "@/types";
+import { DEFAULT_STATUSES, INITIAL_SPACES, INITIAL_TASKS } from "@/lib/constants/seeds";
 import { quotaAwareStorage, STORAGE_WARN_BYTES } from "@/lib/store/storeStorage";
 import {
   PRODUCT_SPACE_ID,
@@ -13,12 +13,11 @@ import { wouldCreateCycle } from "@/lib/store/dependencyOperations";
 import { getSpaceListIds } from "@/lib/store/spacesOperations";
 import {
   findSpaceForListId,
-  findWorkspaceForListId,
-  reconcileWorkspaces,
-} from "@/lib/store/workspaceSync";
+  reconcileSpaces,
+} from "@/lib/store/spaceSync";
 import type { WorkspaceStore, WorkspaceState, TrashedTask } from "./slices/types";
 import { normalizeViewMode } from "./slices/createUiSlice";
-import { createWorkspaceSlice } from "./slices/createWorkspaceSlice";
+import { createDataSlice } from "./slices/createDataSlice";
 import { createSpaceSlice } from "./slices/createSpaceSlice";
 import { createTaskSlice } from "./slices/createTaskSlice";
 import { createTrashSlice } from "./slices/createTrashSlice";
@@ -36,15 +35,14 @@ export {
   TRASH_LIMIT,
   TRASH_RETENTION_MS,
   findSpaceForListId,
-  findWorkspaceForListId,
-  reconcileWorkspaces,
+  reconcileSpaces,
   normalizeViewMode,
 };
 
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
     (...a) => ({
-      ...createWorkspaceSlice(...a),
+      ...createDataSlice(...a),
       ...createSpaceSlice(...a),
       ...createTaskSlice(...a),
       ...createTrashSlice(...a),
@@ -53,7 +51,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
     }),
     {
       name: "vrelloup-workspace-storage",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => quotaAwareStorage),
       onRehydrateStorage: () => (state) => {
         if (state) {
@@ -70,19 +68,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             state.lastTaskView = "list";
           }
 
-          if (Array.isArray(state.workspaces)) {
-            state.workspaces = state.workspaces.map((w) => ({
-              ...w,
-              members: (w.members || []).map((m) => {
-                if (m.id === "user-1" && !m.role) return { ...m, role: "admin" as const };
-                if (m.id.startsWith("google-") && !m.role) return { ...m, role: "admin" as const };
-                return m;
-              }),
-            }));
-
-            const activeWs = state.workspaces.find((w) => w.id === state.activeWorkspaceId);
-            if (activeWs && !activeWs.spaces.some((s) => s.id === state.activeSpaceId)) {
-              state.activeSpaceId = activeWs.spaces[0]?.id || "";
+          if (Array.isArray(state.spaces)) {
+            if (!state.spaces.some((s) => s.id === state.activeSpaceId)) {
+              state.activeSpaceId = state.spaces[0]?.id || PRODUCT_SPACE_ID;
               state.activeListId = null;
             }
           }
@@ -91,27 +79,33 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       migrate: (persistedState: unknown, version: number) => {
         const state = (persistedState || {}) as Record<string, unknown>;
 
-        // Migration from unversioned (v0) to v1
-        if (version === 0 || !version) {
-          let rawWorkspaces = Array.isArray(state.workspaces) && state.workspaces.length > 0
-            ? (state.workspaces as Workspace[]).map((w) => ({
-                ...w,
-                spaces: Array.isArray(w.spaces)
-                  ? w.spaces.map((s) => ({
-                      ...s,
-                      statuses: Array.isArray(s.statuses) && s.statuses.length > 0 ? s.statuses : DEFAULT_STATUSES,
-                      folders: Array.isArray(s.folders)
-                        ? s.folders.map((f) => ({
-                            ...f,
-                            lists: Array.isArray(f.lists) ? f.lists : [],
-                          }))
-                        : [],
-                      lists: Array.isArray(s.lists) ? s.lists : [],
-                    }))
-                  : INITIAL_SPACES,
-                members: Array.isArray(w.members) ? w.members : SEED_USERS,
-              }))
-            : [INITIAL_WORKSPACE];
+        // Migration from multi-workspace (v0 or v1) to single-tenant (v2)
+        if (version < 2) {
+          let rawSpaces: Space[] = INITIAL_SPACES;
+
+          if (Array.isArray(state.spaces) && state.spaces.length > 0) {
+            rawSpaces = state.spaces as Space[];
+          } else if (Array.isArray(state.workspaces) && state.workspaces.length > 0) {
+            const firstWs = state.workspaces[0] as { spaces?: Space[] };
+            if (Array.isArray(firstWs.spaces) && firstWs.spaces.length > 0) {
+              rawSpaces = firstWs.spaces;
+            }
+          }
+
+          rawSpaces = rawSpaces.map((s) => ({
+            ...s,
+            statuses: Array.isArray(s.statuses) && s.statuses.length > 0 ? s.statuses : DEFAULT_STATUSES,
+            folders: Array.isArray(s.folders)
+              ? s.folders.map((f) => ({
+                  ...f,
+                  lists: Array.isArray(f.lists) ? f.lists : [],
+                }))
+              : [],
+            lists: Array.isArray(s.lists) ? s.lists : [],
+          }));
+
+          // Purge legacy space-eng if present
+          rawSpaces = rawSpaces.filter((s) => s.id !== "space-eng");
 
           let rawTasks = Array.isArray(state.tasks)
             ? (state.tasks as Task[]).map((t) => ({
@@ -126,35 +120,35 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               }))
             : INITIAL_TASKS;
 
-          // Merge seeded posts if missing from persisted tasks
+          // Merge seeded tasks if missing
           const existingTaskIds = new Set(rawTasks.map((t) => t.id));
           const missingSeeds = INITIAL_TASKS.filter((t) => !existingTaskIds.has(t.id));
           if (missingSeeds.length > 0) {
             rawTasks = [...rawTasks, ...missingSeeds];
           }
 
-          // Ensure space-eng and its lists from previous client localStorage are purged
-          rawWorkspaces = rawWorkspaces.map((w) => ({
-            ...w,
-            spaces: (w.spaces || []).filter((s) => s.id !== "space-eng"),
-          }));
-
           const engListIds = new Set(["list-sprint-tasks", "list-roadmap", "list-bugs"]);
           rawTasks = rawTasks.filter((t) => !engListIds.has(t.listId));
 
-          const activeWs = rawWorkspaces[0];
-          const activeSpace = activeWs?.spaces[0];
+          const activeSpace = rawSpaces[0];
           const activeList =
             activeSpace?.lists[0]?.id ||
             activeSpace?.folders[0]?.lists[0]?.id ||
             "";
 
           return {
-            workspaces: rawWorkspaces,
+            spaces: rawSpaces,
             tasks: rawTasks,
-            activeWorkspaceId: (typeof state.activeWorkspaceId === "string" && state.activeWorkspaceId) || activeWs?.id || "ws-main",
-            activeSpaceId: (typeof state.activeSpaceId === "string" && state.activeSpaceId !== "space-eng" && state.activeSpaceId) || activeSpace?.id || PRODUCT_SPACE_ID,
-            activeListId: state.activeListId === null ? null : ((typeof state.activeListId === "string" && !engListIds.has(state.activeListId) && state.activeListId) || activeList || DESIGN_SYSTEM_LIST_ID),
+            activeSpaceId:
+              (typeof state.activeSpaceId === "string" && state.activeSpaceId !== "space-eng" && state.activeSpaceId) ||
+              activeSpace?.id ||
+              PRODUCT_SPACE_ID,
+            activeListId:
+              state.activeListId === null
+                ? null
+                : (typeof state.activeListId === "string" && !engListIds.has(state.activeListId) && state.activeListId) ||
+                  activeList ||
+                  DESIGN_SYSTEM_LIST_ID,
             activeView: normalizeViewMode((state.activeView as ViewMode) || "list"),
           };
         }
@@ -177,11 +171,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         return state;
       },
       partialize: (state) => ({
-        workspaces: state.workspaces,
+        spaces: state.spaces,
         tasks: state.tasks,
         trash: state.trash ?? [],
         channelMessages: state.channelMessages,
-        activeWorkspaceId: state.activeWorkspaceId,
         activeSpaceId: state.activeSpaceId,
         activeListId: state.activeListId,
         activeView: state.activeView,

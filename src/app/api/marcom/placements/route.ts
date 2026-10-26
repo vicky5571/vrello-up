@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { validatePlacementUpdate, type PlacementStatus } from "@/lib/marcom/placementMachine";
 import { autoBackfillOutletGps } from "@/lib/marcom/outletBackfill";
 
@@ -26,9 +25,6 @@ const placementInclude = {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const workspaceId = searchParams.get("workspaceId") || "ws-main";
-    const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
-    if (authError) return authError;
 
     const outletId = searchParams.get("outletId");
     const mouId = searchParams.get("mouId");
@@ -40,9 +36,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
-    const where: Prisma.PlacementWhereInput = {
-      workspaceId,
-    };
+    const where: Prisma.PlacementWhereInput = {};
     if (outletId && outletId !== "ALL") {
       where.outletId = outletId;
     }
@@ -86,9 +80,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const workspaceId = body?.workspaceId || "ws-main";
-  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
 
   const { outletId, materialId, mouId, status, brand, date, picName, photoUrl, dimensions, cost, notes, latitude, longitude, shareLocationUrl, locationNotes } = body ?? {};
   if (!outletId || !materialId) {
@@ -120,7 +111,6 @@ export async function POST(request: Request) {
   try {
     const placement = await prisma.placement.create({
       data: {
-        workspaceId,
         outletId,
         materialId,
         mouId: targetMouId,
@@ -169,10 +159,6 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const workspaceId = body?.workspaceId || "ws-main";
-  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
-
   const { ids, updates } = body ?? {};
   if (!Array.isArray(ids) || ids.length === 0) {
     return NextResponse.json({ error: "Missing or empty field: ids" }, { status: 400 });
@@ -195,7 +181,7 @@ export async function PATCH(request: Request) {
   try {
     if (updates.status === "DONE") {
       const candidates = await prisma.placement.findMany({
-        where: { id: { in: ids }, workspaceId },
+        where: { id: { in: ids } },
         select: { id: true, status: true, photoUrl: true, latitude: true, longitude: true, shareLocationUrl: true },
       });
 
@@ -222,7 +208,6 @@ export async function PATCH(request: Request) {
     const result = await prisma.placement.updateMany({
       where: {
         id: { in: ids },
-        workspaceId,
       },
       data: dataToUpdate,
     });
@@ -230,7 +215,7 @@ export async function PATCH(request: Request) {
     let backfilledCount = 0;
     if (updates.status === "DONE") {
       const completedPlacements = await prisma.placement.findMany({
-        where: { id: { in: ids }, workspaceId, status: "DONE" },
+        where: { id: { in: ids }, status: "DONE" },
         select: { outletId: true, status: true, latitude: true, longitude: true, shareLocationUrl: true },
       });
 
@@ -255,10 +240,6 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const workspaceId = body?.workspaceId || new URL(request.url).searchParams.get("workspaceId") || "ws-main";
-    const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
-    if (authError) return authError;
-
     const ids: string[] = Array.isArray(body?.ids)
       ? body.ids.filter((id: unknown) => typeof id === "string" && id.trim() !== "")
       : [];
@@ -270,7 +251,6 @@ export async function DELETE(request: Request) {
     const result = await prisma.placement.deleteMany({
       where: {
         id: { in: ids },
-        workspaceId,
       },
     });
 
@@ -280,4 +260,3 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Failed to batch delete placements" }, { status: 500 });
   }
 }
-

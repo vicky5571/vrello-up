@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import {
   filterPlacementsByCriteria,
@@ -39,22 +38,11 @@ export interface UseAnalyticsDataResult {
 export function useAnalyticsData(
   filters: AnalyticsFilterState = DEFAULT_ANALYTICS_FILTERS
 ): UseAnalyticsDataResult {
-  const activeWorkspaceId =
-    useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
-
   // Subscribe to client Marcom store caches
-  const placements = useMarcomDataStore(
-    (state) => state.placementsByWorkspace[activeWorkspaceId]
-  );
-  const mous = useMarcomDataStore(
-    (state) => state.mousByWorkspace[activeWorkspaceId]
-  );
-  const events = useMarcomDataStore(
-    (state) => state.eventsByWorkspace[activeWorkspaceId]
-  );
-  const posts = useMarcomDataStore(
-    (state) => state.postsByWorkspace[activeWorkspaceId]
-  );
+  const placements = useMarcomDataStore((state) => state.placements);
+  const mous = useMarcomDataStore((state) => state.mous);
+  const events = useMarcomDataStore((state) => state.events);
+  const posts = useMarcomDataStore((state) => state.posts);
   const outlets = useMarcomDataStore((state) => state.outlets);
   const branches = useMarcomDataStore((state) => state.branches);
 
@@ -68,16 +56,13 @@ export function useAnalyticsData(
   // Pre-warm local store caches in background so multi-dimensional filters
   // can slice and dice the data in memory without cold-start starvation
   useEffect(() => {
-    if (!activeWorkspaceId) return;
-
     // Fire non-blocking background fetches
     void fetchBranches(false);
-    void fetchPlacements(activeWorkspaceId, false);
-    void fetchMous(activeWorkspaceId, false);
-    void fetchEvents(activeWorkspaceId, false);
-    void fetchPosts(activeWorkspaceId, false);
+    void fetchPlacements(false);
+    void fetchMous(false);
+    void fetchEvents(false);
+    void fetchPosts(false);
   }, [
-    activeWorkspaceId,
     fetchBranches,
     fetchPlacements,
     fetchMous,
@@ -127,9 +112,7 @@ export function useAnalyticsData(
     setIsFetching(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/marcom/analytics?workspaceId=${encodeURIComponent(activeWorkspaceId)}`
-      );
+      const res = await fetch(`/api/marcom/analytics`);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: Gagal memuat analitik`);
       }
@@ -145,13 +128,7 @@ export function useAnalyticsData(
     } finally {
       setIsFetching(false);
     }
-  }, [activeWorkspaceId]);
-
-  // Reset remote state whenever the active workspace changes
-  useEffect(() => {
-    setRemoteData(null);
-    setError(null);
-  }, [activeWorkspaceId]);
+  }, []);
 
   useEffect(() => {
     fetchRemote();

@@ -36,7 +36,7 @@ export function runOverdueEscalation(): number {
   let escalated = 0;
   for (const task of state.tasks) {
     if (task.priority === "urgent" || !isOverdue(task.dueDate)) continue;
-    const space = findSpaceForListId(state.workspaces, task.listId);
+    const space = findSpaceForListId(state.spaces, task.listId);
     const category = space?.statuses.find(
       (s) => s.id === task.statusId,
     )?.category;
@@ -68,15 +68,9 @@ export function runOverdueEscalation(): number {
 export async function checkUpcomingEvents(): Promise<number> {
   if (typeof window === "undefined") return 0;
   const state = useWorkspaceStore.getState();
-  const currentWorkspace = state.workspaces.find(
-    (w) => w.id === state.activeWorkspaceId,
-  );
 
   try {
-    const activeWorkspaceId = state.activeWorkspaceId || "ws-main";
-    const res = await fetch(
-      `/api/marcom/events?workspaceId=${encodeURIComponent(activeWorkspaceId)}&status=UPCOMING`,
-    );
+    const res = await fetch(`/api/marcom/events?status=UPCOMING`);
     if (!res.ok) return 0;
     const json = await res.json();
     const events: EventSlaCandidate[] = Array.isArray(json) ? json : (json.data || []);
@@ -102,7 +96,7 @@ export async function checkUpcomingEvents(): Promise<number> {
       if (isAlertNotified(alertKey)) continue;
 
       // Determine target space and list
-      const spaces = currentWorkspace?.spaces || [];
+      const spaces = state.spaces || [];
       const destination = getDefaultDestinationForChannel(spaces, "on_ground");
       if (!destination.listId || !destination.spaceId) continue;
 
@@ -126,7 +120,7 @@ export async function checkUpcomingEvents(): Promise<number> {
         },
         listId: destination.listId,
         statusId: defaultStatusId,
-        members: currentWorkspace?.members || [],
+        members: state.users || [],
         picIdOrName: ev.picName,
         subtasks,
         priority: "high",
@@ -161,13 +155,9 @@ export async function checkUpcomingEvents(): Promise<number> {
  */
 export async function checkExpiringMous(): Promise<number> {
   if (typeof window === "undefined") return 0;
-  const state = useWorkspaceStore.getState();
-  const activeWorkspaceId = state.activeWorkspaceId || "ws-main";
 
   try {
-    const res = await fetch(
-      `/api/marcom/mous?workspaceId=${encodeURIComponent(activeWorkspaceId)}`,
-    );
+    const res = await fetch(`/api/marcom/mous`);
     if (!res.ok) return 0;
     const json = await res.json();
     const mous = Array.isArray(json.data) ? json.data : [];
@@ -225,15 +215,9 @@ export async function checkExpiringMous(): Promise<number> {
  */
 export async function checkContentReviewSla(): Promise<number> {
   if (typeof window === "undefined") return 0;
-  const state = useWorkspaceStore.getState();
-  const activeWorkspaceId = state.activeWorkspaceId || "ws-main";
 
   try {
-    const res = await fetch(
-      `/api/marcom/content?workspaceId=${encodeURIComponent(
-        activeWorkspaceId,
-      )}&status=IN_REVIEW`,
-    );
+    const res = await fetch(`/api/marcom/content?status=IN_REVIEW`);
     if (!res.ok) return 0;
     const json = await res.json();
     const contents = Array.isArray(json.data) ? json.data : [];

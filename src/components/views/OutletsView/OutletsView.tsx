@@ -59,7 +59,6 @@ const TYPE_STYLES: Record<OutletType, string> = {
 
 export function OutletsView() {
   const { can, role } = useMarcomPermissions();
-  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const marcomFilters = useWorkspaceStore((s) => s.marcomFilters);
   const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
   const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);
@@ -377,12 +376,12 @@ export function OutletsView() {
       const res = await fetch(`/api/marcom/outlets/${id}`, { method: "DELETE" });
       if (res.ok) {
         invalidateOutlets();
-        invalidatePlacements(activeWorkspaceId);
-        invalidateMous(activeWorkspaceId);
+        invalidatePlacements();
+        invalidateMous();
       }
       return res.ok;
     },
-    [activeWorkspaceId, invalidateOutlets, invalidatePlacements, invalidateMous],
+    [invalidateOutlets, invalidatePlacements, invalidateMous],
   );
 
   const deleteBatch = useCallback(
@@ -394,12 +393,12 @@ export function OutletsView() {
       });
       if (res.ok) {
         invalidateOutlets();
-        invalidatePlacements(activeWorkspaceId);
-        invalidateMous(activeWorkspaceId);
+        invalidatePlacements();
+        invalidateMous();
       }
       return res.ok;
     },
-    [activeWorkspaceId, invalidateOutlets, invalidatePlacements, invalidateMous],
+    [invalidateOutlets, invalidatePlacements, invalidateMous],
   );
 
   const kpiItems = useMemo(() => {
@@ -520,7 +519,6 @@ export function OutletsView() {
               <OutletApprovalQueueTab
                 outlets={outlets}
                 branches={branches}
-                workspaceId={activeWorkspaceId}
                 onRefresh={fetchOutlets}
               />
             </div>
@@ -656,14 +654,12 @@ export function OutletsView() {
         onClose={() => setModalOutlet(null)}
         branches={branches}
         onSuccess={fetchOutlets}
-        activeWorkspaceId={activeWorkspaceId}
       />
 
       <SubmitDraftOutletModal
         isOpen={isDraftModalOpen}
         onClose={() => setIsDraftModalOpen(false)}
         branches={branches}
-        workspaceId={activeWorkspaceId}
         onSuccess={() => {
           fetchOutlets();
         }}

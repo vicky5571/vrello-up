@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 
 export async function POST(
   request: Request,
@@ -11,17 +10,10 @@ export async function POST(
 
     const existingTask = await prisma.taskItem.findUnique({
       where: { id: taskId },
-      include: { list: { include: { space: true } } },
     });
     if (!existingTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
-
-    const authError = await requireWorkspaceAccess(
-      existingTask.list.space.workspaceId,
-      { requiredRole: "viewer", request },
-    );
-    if (authError) return authError;
 
     const body = await request.json();
     const { id, userId, user, content, attachments } = body;
@@ -53,4 +45,3 @@ export async function POST(
     );
   }
 }
-

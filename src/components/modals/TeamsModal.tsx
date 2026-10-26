@@ -17,24 +17,21 @@ interface TeamsModalProps {
 
 export function TeamsModal({ isOpen, onClose, onOpenInvite }: TeamsModalProps) {
   const { data: session } = useSession();
-  const { workspaces, activeWorkspaceId, tasks, currentUserId } =
+  const { users, tasks, currentUserId } =
     useWorkspaceStore(
       useShallow((s) => ({
-        workspaces: s.workspaces,
-        activeWorkspaceId: s.activeWorkspaceId,
+        users: s.users,
         tasks: s.tasks,
         currentUserId: s.currentUserId,
       })),
     );
 
   const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
-  const removeWorkspaceMember = useWorkspaceStore((s) => s.removeWorkspaceMember);
+  const removeUser = useWorkspaceStore((s) => s.removeUser);
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const currentWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
-  const members = currentWorkspace?.members || [];
+  const members = users;
 
   const filteredMembers = members.filter(
     (m) =>
@@ -72,7 +69,7 @@ export function TeamsModal({ isOpen, onClose, onOpenInvite }: TeamsModalProps) {
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                    Workspace Team & Members
+                    Team & Members
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     Manage team permissions, active assignees, and roles ({members.length} members)
@@ -196,8 +193,8 @@ export function TeamsModal({ isOpen, onClose, onOpenInvite }: TeamsModalProps) {
                           <button
                             type="button"
                             onClick={() => {
-                              removeWorkspaceMember(member.id);
-                              toast.success(`Removed ${member.name} from workspace`);
+                              removeUser(member.id);
+                              toast.success(`Removed ${member.name}`);
                             }}
                             title="Remove member"
                             className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"

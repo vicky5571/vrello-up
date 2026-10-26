@@ -14,16 +14,14 @@ import {
   applyToggleCustomAutomation,
   executeAutomationsForTrigger,
 } from "@/lib/store/automationOperations";
-import { findSpaceForListId } from "@/lib/store/workspaceSync";
+import { findSpaceForListId } from "@/lib/store/spaceSync";
 import { SEED_USERS, INITIAL_CHANNEL_MESSAGES } from "@/lib/constants/seeds";
 import { syncAddComment } from "./syncHelpers";
 
 export function getActor(state: WorkspaceStore, provided?: User): User {
   return resolveActor(
-    state.workspaces,
-    state.activeWorkspaceId,
     state.currentUserId,
-    SEED_USERS,
+    state.users?.length ? state.users : SEED_USERS,
     provided,
   );
 }
@@ -124,8 +122,7 @@ export const createAutomationSlice: StateCreator<
           updateTask: state.updateTask,
           logActivity: state.logActivity,
           tasks: state.tasks,
-          workspaces: state.workspaces,
-          activeWorkspaceId: state.activeWorkspaceId,
+          spaces: state.spaces,
           activeListId: state.activeListId,
           actor: getActor(state),
           findSpaceForListId,

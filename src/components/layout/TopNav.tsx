@@ -10,7 +10,6 @@ import { ViewSwitcher } from "./ViewSwitcher";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { NotificationCenter } from "./NotificationCenter";
 import { UserMenuDropdown } from "./UserMenuDropdown";
-import type { Workspace } from "@/types";
 import { Search, Download, LogIn } from "lucide-react";
 
 const LoginModal = dynamic(
@@ -20,26 +19,18 @@ const LoginModal = dynamic(
 
 export function TopNav() {
   const appMode = useWorkspaceStore((s) => s.appMode);
-  const workspaces = useWorkspaceStore((s) => s.workspaces);
-  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
+  const users = useWorkspaceStore((s) => s.users);
   const currentUserId = useWorkspaceStore((s) => s.currentUserId);
   const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
   const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
   const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
 
-  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const members = currentWorkspace?.members ?? [];
-  const me = members.find((u) => u.id === currentUserId) ?? members[0];
+  const me = users.find((u) => u.id === currentUserId) ?? users[0];
 
   const { data: session } = useSession();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isCreateWsOpen, setIsCreateWsOpen] = useState(false);
-  const [editWsModalState, setEditWsModalState] = useState<{
-    isOpen: boolean;
-    workspace: Workspace | null;
-  }>({ isOpen: false, workspace: null });
 
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -79,11 +70,7 @@ export function TopNav() {
           /* Lean Single-Tier Header for Marketing Hub (~44px) */
           <header className="h-11 px-4 flex items-center justify-between gap-3 bg-white dark:bg-[#18191B]">
             {/* Left: Breadcrumbs */}
-            <TopNavBreadcrumbs
-              variant="full"
-              onOpenCreateWorkspace={() => setIsCreateWsOpen(true)}
-              onOpenEditWorkspace={(ws) => setEditWsModalState({ isOpen: true, workspace: ws })}
-            />
+            <TopNavBreadcrumbs variant="full" />
 
             {/* Center: Command Palette Trigger */}
             <div
@@ -134,7 +121,7 @@ export function TopNav() {
                   <UserMenuDropdown
                     session={session}
                     me={me}
-                    members={members}
+                    members={users}
                     setCurrentUserId={setCurrentUserId}
                     onClose={() => setIsUserMenuOpen(false)}
                     onOpenLogin={() => setIsLoginModalOpen(true)}
@@ -145,14 +132,10 @@ export function TopNav() {
           </header>
         ) : (
           <>
-            {/* Tier 1: Global Workspace & Utility Bar */}
+            {/* Tier 1: Global Brand & Utility Bar */}
             <header className="h-11 px-4 flex items-center justify-between gap-4 border-b border-slate-200/60 dark:border-slate-800/60">
-              {/* Left: Workspace dropdown */}
-              <TopNavBreadcrumbs
-                variant="workspace-only"
-                onOpenCreateWorkspace={() => setIsCreateWsOpen(true)}
-                onOpenEditWorkspace={(ws) => setEditWsModalState({ isOpen: true, workspace: ws })}
-              />
+              {/* Left: Brand / Org anchor */}
+              <TopNavBreadcrumbs variant="workspace-only" />
 
               {/* Center: Search Pill */}
               <div className="hidden md:flex items-center gap-2">
@@ -177,10 +160,6 @@ export function TopNav() {
                 <TopNavActionModals
                   showCallActions={true}
                   showQuickActions={false}
-                  isCreateWsOpen={isCreateWsOpen}
-                  setIsCreateWsOpen={setIsCreateWsOpen}
-                  editWsModalState={editWsModalState}
-                  setEditWsModalState={setEditWsModalState}
                 />
 
                 <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-0.5" />
@@ -233,7 +212,7 @@ export function TopNav() {
                     <UserMenuDropdown
                       session={session}
                       me={me}
-                      members={members}
+                      members={users}
                       setCurrentUserId={setCurrentUserId}
                       onClose={() => setIsUserMenuOpen(false)}
                       onOpenLogin={() => setIsLoginModalOpen(true)}
@@ -243,13 +222,9 @@ export function TopNav() {
               </div>
             </header>
 
-            {/* Tier 2: Space / Project Breadcrumbs & View Switcher Bar */}
+            {/* Tier 2: Space Breadcrumbs & View Switcher Bar */}
             <div className="relative z-20 px-4 py-1.5 flex items-center justify-between gap-3 border-b border-slate-200/60 dark:border-slate-800/60">
-              <TopNavBreadcrumbs
-                variant="space-list"
-                onOpenCreateWorkspace={() => setIsCreateWsOpen(true)}
-                onOpenEditWorkspace={(ws) => setEditWsModalState({ isOpen: true, workspace: ws })}
-              />
+              <TopNavBreadcrumbs variant="space-list" />
 
               {/* View Switcher Tabs */}
               <div className="min-w-0 flex-1 flex items-center">
@@ -262,10 +237,6 @@ export function TopNav() {
               <TopNavActionModals
                 showCallActions={false}
                 showQuickActions={true}
-                isCreateWsOpen={isCreateWsOpen}
-                setIsCreateWsOpen={setIsCreateWsOpen}
-                editWsModalState={editWsModalState}
-                setEditWsModalState={setEditWsModalState}
               />
             </div>
           </>

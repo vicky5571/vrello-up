@@ -9,16 +9,6 @@ const toJson = (v: unknown): Prisma.InputJsonValue =>
   JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue;
 const toDate = (s: string): Date => new Date(s);
 
-// ---------------------------------------------------------------------------
-// WorkspaceMember rows: vrello-up SEED_USERS
-// (src/lib/store/useWorkspaceStore.ts), matched on email, MarcomRole via
-// {Lead Architect: admin, Senior Frontend Engineer: staff, Product Designer: staff}
-// ---------------------------------------------------------------------------
-const SEED_MEMBERS = [
-  { workspaceId: "ws-main", email: "alex@vrelloup.dev", role: "admin" },
-  { workspaceId: "ws-main", email: "sarah@vrelloup.dev", role: "staff" },
-  { workspaceId: "ws-main", email: "marcus@vrelloup.dev", role: "staff" },
-] as const;
 
 // ---------------------------------------------------------------------------
 // Material catalogue derived from the distinct placement material types in
@@ -792,13 +782,6 @@ async function main() {
   // Every write is an upsert keyed on a stable id, so re-running the seed
   // converges without duplicates.
 
-  for (const m of SEED_MEMBERS) {
-    await prisma.workspaceMember.upsert({
-      where: { workspaceId_email: { workspaceId: m.workspaceId, email: m.email } },
-      update: { role: m.role },
-      create: { workspaceId: m.workspaceId, email: m.email, role: m.role },
-    });
-  }
 
   const branches = branchDefinitions.map((item, index) => {
     const branchNum = index + 1;
@@ -1081,7 +1064,6 @@ async function main() {
   }
 
   const counts: Record<string, number> = {
-    workspaceMembers: await prisma.workspaceMember.count(),
     branches: await prisma.branch.count(),
     outlets: await prisma.outlet.count(),
     materials: await prisma.material.count(),

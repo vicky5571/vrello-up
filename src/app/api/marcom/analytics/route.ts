@@ -1,25 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { buildMarcomAnalyticsDashboard } from "@/lib/marcom/analyticsEngine";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const workspaceId = searchParams.get("workspaceId") || "ws-main";
-
-    const authError = await requireWorkspaceAccess(workspaceId, {
-      requiredRole: "viewer",
-      request,
-    });
-    if (authError) return authError;
-
     // Run parallel queries across all operational Marcom entities.
     // NOTE: `Outlet` is global master data (~25k rows). We NEVER load full
     // outlet records; we only need a lightweight SQL COUNT aggregation.
     const [mous, placements, contents, events, activeOutletCount] = await Promise.all([
       prisma.mou.findMany({
-        where: { workspaceId },
         select: {
           id: true,
           status: true,
@@ -30,7 +19,6 @@ export async function GET(request: Request) {
         },
       }),
       prisma.placement.findMany({
-        where: { workspaceId },
         select: {
           id: true,
           status: true,
@@ -58,7 +46,6 @@ export async function GET(request: Request) {
         },
       }),
       prisma.contentPost.findMany({
-        where: { workspaceId },
         select: {
           id: true,
           platform: true,
@@ -67,7 +54,6 @@ export async function GET(request: Request) {
         },
       }),
       prisma.fieldEvent.findMany({
-        where: { workspaceId },
         select: {
           id: true,
           eventType: true,
@@ -99,4 +85,3 @@ export async function GET(request: Request) {
     );
   }
 }
-

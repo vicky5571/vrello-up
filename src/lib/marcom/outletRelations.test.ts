@@ -8,17 +8,15 @@ import {
 } from "@/lib/marcom/outletRelations";
 
 test("buildOutletEventWhere generates strict relational constraint without loose location matching", () => {
-  const where = buildOutletEventWhere("ws-main", "out-123");
+  const where = buildOutletEventWhere("out-123");
   assert.deepEqual(where, {
-    workspaceId: "ws-main",
     outletId: "out-123",
   });
 });
 
 test("buildOutletContentWhere matches outletId and bracketed code only", () => {
   // With valid code
-  const whereWithCode = buildOutletContentWhere("ws-main", "out-123", "BDG-001");
-  assert.equal(whereWithCode.workspaceId, "ws-main");
+  const whereWithCode = buildOutletContentWhere("out-123", "BDG-001");
   assert.ok(Array.isArray(whereWithCode.OR));
   assert.equal(whereWithCode.OR?.length, 2);
   assert.deepEqual(whereWithCode.OR?.[0], { outletId: "out-123" });
@@ -30,11 +28,11 @@ test("buildOutletContentWhere matches outletId and bracketed code only", () => {
   });
 
   // Without code or short code (< 3 chars)
-  const whereNoCode = buildOutletContentWhere("ws-main", "out-123", "");
+  const whereNoCode = buildOutletContentWhere("out-123", "");
   assert.equal(whereNoCode.OR?.length, 1);
   assert.deepEqual(whereNoCode.OR?.[0], { outletId: "out-123" });
 
-  const whereShortCode = buildOutletContentWhere("ws-main", "out-123", "12");
+  const whereShortCode = buildOutletContentWhere("out-123", "12");
   assert.equal(whereShortCode.OR?.length, 1);
 });
 

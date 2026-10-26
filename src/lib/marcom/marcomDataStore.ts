@@ -23,17 +23,29 @@ export interface MarcomDataState {
   isOutletsLoaded: boolean;
   isOutletsLoading: boolean;
 
+  // Operational data
+  posts: ContentPostItem[];
+  isPostsLoaded: boolean;
+  isPostsLoading: boolean;
+  reports: MonthlyReport[];
+  isReportsLoaded: boolean;
+  isReportsLoading: boolean;
+  documents: DocumentItem[];
+  isDocumentsLoaded: boolean;
+  isDocumentsLoading: boolean;
+  mous: MarcomMou[];
+  isMousLoaded: boolean;
+  isMousLoading: boolean;
+  placements: MarcomPlacement[];
+  isPlacementsLoaded: boolean;
+  isPlacementsLoading: boolean;
+  events: FieldEventItem[];
+  isEventsLoaded: boolean;
+  isEventsLoading: boolean;
+
   // Resilient Error Tracking
   lastError: string | null;
   clearError: () => void;
-
-  // SWR View Caches keyed by workspaceId
-  postsByWorkspace: Record<string, ContentPostItem[]>;
-  reportsByWorkspace: Record<string, MonthlyReport[]>;
-  documentsByWorkspace: Record<string, DocumentItem[]>;
-  mousByWorkspace: Record<string, MarcomMou[]>;
-  placementsByWorkspace: Record<string, MarcomPlacement[]>;
-  eventsByWorkspace: Record<string, FieldEventItem[]>;
 
   // Master data actions
   fetchBranches: (force?: boolean) => Promise<BranchItem[]>;
@@ -47,64 +59,47 @@ export interface MarcomDataState {
   invalidateMaterials: () => void;
   invalidateOutlets: () => void;
 
-  // View cache actions
-  getCachedPosts: (workspaceId: string) => ContentPostItem[] | undefined;
-  setCachedPosts: (workspaceId: string, posts: ContentPostItem[]) => void;
-  updateCachedPost: (
-    workspaceId: string,
-    post: Partial<ContentPostItem> & { id: string }
-  ) => void;
-  removeCachedPost: (workspaceId: string, postId: string) => void;
-  addCachedPost: (workspaceId: string, post: ContentPostItem) => void;
-  fetchPosts: (workspaceId: string, force?: boolean) => Promise<ContentPostItem[]>;
-  invalidatePosts: (workspaceId?: string) => void;
+  // Operational data actions
+  fetchPosts: (force?: boolean) => Promise<ContentPostItem[]>;
+  setCachedPosts: (posts: ContentPostItem[]) => void;
+  updateCachedPost: (post: Partial<ContentPostItem> & { id: string }) => void;
+  removeCachedPost: (postId: string) => void;
+  addCachedPost: (post: ContentPostItem) => void;
+  invalidatePosts: () => void;
 
-  getCachedReports: (workspaceId: string) => MonthlyReport[] | undefined;
-  setCachedReports: (workspaceId: string, reports: MonthlyReport[]) => void;
-  addCachedReport: (workspaceId: string, report: MonthlyReport) => void;
-  fetchReports: (workspaceId: string, force?: boolean) => Promise<MonthlyReport[]>;
-  invalidateReports: (workspaceId?: string) => void;
+  fetchReports: (force?: boolean) => Promise<MonthlyReport[]>;
+  setCachedReports: (reports: MonthlyReport[]) => void;
+  addCachedReport: (report: MonthlyReport) => void;
+  invalidateReports: () => void;
 
-  getCachedDocuments: (workspaceId: string) => DocumentItem[] | undefined;
-  setCachedDocuments: (workspaceId: string, documents: DocumentItem[]) => void;
-  fetchDocuments: (workspaceId: string, force?: boolean) => Promise<DocumentItem[]>;
-  invalidateDocuments: (workspaceId?: string) => void;
+  fetchDocuments: (force?: boolean) => Promise<DocumentItem[]>;
+  setCachedDocuments: (documents: DocumentItem[]) => void;
+  invalidateDocuments: () => void;
 
-  getCachedMous: (workspaceId: string) => MarcomMou[] | undefined;
-  setCachedMous: (workspaceId: string, mous: MarcomMou[]) => void;
-  invalidateMous: (workspaceId?: string) => void;
+  fetchMous: (force?: boolean) => Promise<MarcomMou[]>;
+  setCachedMous: (mous: MarcomMou[]) => void;
+  addCachedMou: (mou: MarcomMou) => void;
+  updateCachedMou: (mou: Partial<MarcomMou> & { id: string }) => void;
+  removeCachedMou: (mouId: string) => void;
+  invalidateMous: () => void;
 
-  getCachedPlacements: (workspaceId: string) => MarcomPlacement[] | undefined;
-  setCachedPlacements: (workspaceId: string, placements: MarcomPlacement[]) => void;
-  invalidatePlacements: (workspaceId?: string) => void;
-
-  getCachedEvents: (workspaceId: string) => FieldEventItem[] | undefined;
-  setCachedEvents: (workspaceId: string, events: FieldEventItem[]) => void;
-  invalidateEvents: (workspaceId?: string) => void;
-  fetchEvents: (workspaceId: string, force?: boolean) => Promise<FieldEventItem[]>;
-  fetchMous: (workspaceId: string, force?: boolean) => Promise<MarcomMou[]>;
-  fetchPlacements: (workspaceId: string, force?: boolean) => Promise<MarcomPlacement[]>;
-
-  addCachedPlacement: (workspaceId: string, placement: MarcomPlacement) => void;
+  fetchPlacements: (force?: boolean) => Promise<MarcomPlacement[]>;
+  setCachedPlacements: (placements: MarcomPlacement[]) => void;
+  addCachedPlacement: (placement: MarcomPlacement) => void;
   updateCachedPlacement: (
-    workspaceId: string,
     placement: Partial<MarcomPlacement> & { id: string }
   ) => void;
-  removeCachedPlacement: (workspaceId: string, placementId: string) => void;
+  removeCachedPlacement: (placementId: string) => void;
+  invalidatePlacements: () => void;
 
-  addCachedMou: (workspaceId: string, mou: MarcomMou) => void;
-  updateCachedMou: (
-    workspaceId: string,
-    mou: Partial<MarcomMou> & { id: string }
-  ) => void;
-  removeCachedMou: (workspaceId: string, mouId: string) => void;
-
-  addCachedEvent: (workspaceId: string, event: FieldEventItem) => void;
+  fetchEvents: (force?: boolean) => Promise<FieldEventItem[]>;
+  setCachedEvents: (events: FieldEventItem[]) => void;
+  addCachedEvent: (event: FieldEventItem) => void;
   updateCachedEvent: (
-    workspaceId: string,
     event: Partial<FieldEventItem> & { id: string }
   ) => void;
-  removeCachedEvent: (workspaceId: string, eventId: string) => void;
+  removeCachedEvent: (eventId: string) => void;
+  invalidateEvents: () => void;
 }
 
 export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
@@ -120,15 +115,32 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
   isOutletsLoaded: false,
   isOutletsLoading: false,
 
+  posts: [],
+  isPostsLoaded: false,
+  isPostsLoading: false,
+
+  reports: [],
+  isReportsLoaded: false,
+  isReportsLoading: false,
+
+  documents: [],
+  isDocumentsLoaded: false,
+  isDocumentsLoading: false,
+
+  mous: [],
+  isMousLoaded: false,
+  isMousLoading: false,
+
+  placements: [],
+  isPlacementsLoaded: false,
+  isPlacementsLoading: false,
+
+  events: [],
+  isEventsLoaded: false,
+  isEventsLoading: false,
+
   lastError: null,
   clearError: () => set({ lastError: null }),
-
-  postsByWorkspace: {},
-  reportsByWorkspace: {},
-  documentsByWorkspace: {},
-  mousByWorkspace: {},
-  placementsByWorkspace: {},
-  eventsByWorkspace: {},
 
   fetchBranches: async (force = false) => {
     const state = get();
@@ -237,446 +249,283 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
     set({ isOutletsLoaded: false });
   },
 
-  getCachedPosts: (workspaceId: string) => {
-    return get().postsByWorkspace[workspaceId];
-  },
-
-  setCachedPosts: (workspaceId: string, posts: ContentPostItem[]) => {
-    set((s) => ({
-      postsByWorkspace: { ...s.postsByWorkspace, [workspaceId]: posts },
-    }));
-  },
-
-  updateCachedPost: (
-    workspaceId: string,
-    post: Partial<ContentPostItem> & { id: string }
-  ) => {
-    set((s) => {
-      const existing = s.postsByWorkspace[workspaceId];
-      if (!existing) return s;
-      return {
-        postsByWorkspace: {
-          ...s.postsByWorkspace,
-          [workspaceId]: existing.map((p) =>
-            p.id === post.id ? ({ ...p, ...post } as ContentPostItem) : p
-          ),
-        },
-      };
-    });
-  },
-
-  removeCachedPost: (workspaceId: string, postId: string) => {
-    set((s) => {
-      const existing = s.postsByWorkspace[workspaceId];
-      if (!existing) return s;
-      return {
-        postsByWorkspace: {
-          ...s.postsByWorkspace,
-          [workspaceId]: existing.filter((p) => p.id !== postId),
-        },
-      };
-    });
-  },
-
-  addCachedPost: (workspaceId: string, post: ContentPostItem) => {
-    set((s) => {
-      const existing = s.postsByWorkspace[workspaceId] || [];
-      return {
-        postsByWorkspace: {
-          ...s.postsByWorkspace,
-          [workspaceId]: [post, ...existing.filter((p) => p.id !== post.id)],
-        },
-      };
-    });
-  },
-
-  fetchPosts: async (workspaceId: string, force = false) => {
-    if (!workspaceId) return [];
+  // Posts
+  fetchPosts: async (force = false) => {
     const state = get();
-    const cached = state.postsByWorkspace[workspaceId];
-    if (cached && !force) {
-      return cached;
+    if (state.isPostsLoaded && !force) {
+      return state.posts;
     }
+    if (state.isPostsLoading) {
+      return state.posts;
+    }
+    set({ isPostsLoading: true });
     try {
-      const res = await fetch(`/api/marcom/content?workspaceId=${encodeURIComponent(workspaceId)}`);
+      const res = await fetch("/api/marcom/content");
       if (!res.ok) throw new Error(`Failed to fetch content posts (${res.status})`);
       const json = await res.json();
       const list: ContentPostItem[] = Array.isArray(json.data) ? json.data : [];
-      set((s) => ({
-        postsByWorkspace: { ...s.postsByWorkspace, [workspaceId]: list },
-      }));
+      set({ posts: list, isPostsLoaded: true, isPostsLoading: false });
       return list;
     } catch (err) {
       console.error("[marcomDataStore] fetchPosts error:", err);
-      return cached || [];
+      set({ isPostsLoading: false });
+      return state.posts;
     }
   },
 
-  invalidatePosts: (workspaceId?: string) => {
-    set((s) => {
-      if (workspaceId) {
-        const copy = { ...s.postsByWorkspace };
-        delete copy[workspaceId];
-        return { postsByWorkspace: copy };
-      }
-      return { postsByWorkspace: {} };
-    });
+  setCachedPosts: (posts: ContentPostItem[]) => {
+    set({ posts, isPostsLoaded: true });
   },
 
-  getCachedReports: (workspaceId: string) => {
-    return get().reportsByWorkspace[workspaceId];
-  },
-
-  setCachedReports: (workspaceId: string, reports: MonthlyReport[]) => {
+  updateCachedPost: (post: Partial<ContentPostItem> & { id: string }) => {
     set((s) => ({
-      reportsByWorkspace: { ...s.reportsByWorkspace, [workspaceId]: reports },
+      posts: s.posts.map((p) =>
+        p.id === post.id ? ({ ...p, ...post } as ContentPostItem) : p
+      ),
     }));
   },
 
-  addCachedReport: (workspaceId: string, report: MonthlyReport) => {
-    set((s) => {
-      const existing = s.reportsByWorkspace[workspaceId] || [];
-      return {
-        reportsByWorkspace: {
-          ...s.reportsByWorkspace,
-          [workspaceId]: [report, ...existing.filter((r) => r.id !== report.id)],
-        },
-      };
-    });
+  removeCachedPost: (postId: string) => {
+    set((s) => ({
+      posts: s.posts.filter((p) => p.id !== postId),
+    }));
   },
 
-  fetchReports: async (workspaceId: string, force = false) => {
-    if (!workspaceId) return [];
+  addCachedPost: (post: ContentPostItem) => {
+    set((s) => ({
+      posts: [post, ...s.posts.filter((p) => p.id !== post.id)],
+    }));
+  },
+
+  invalidatePosts: () => {
+    set({ isPostsLoaded: false });
+  },
+
+  // Reports
+  fetchReports: async (force = false) => {
     const state = get();
-    const cached = state.reportsByWorkspace[workspaceId];
-    if (cached && !force) {
-      return cached;
+    if (state.isReportsLoaded && !force) {
+      return state.reports;
     }
+    if (state.isReportsLoading) {
+      return state.reports;
+    }
+    set({ isReportsLoading: true });
     try {
-      const res = await fetch(`/api/marcom/reports?workspaceId=${encodeURIComponent(workspaceId)}`);
+      const res = await fetch("/api/marcom/reports");
       if (!res.ok) throw new Error(`Failed to fetch reports (${res.status})`);
       const json = await res.json();
       const list: MonthlyReport[] = Array.isArray(json.data) ? json.data : [];
-      set((s) => ({
-        reportsByWorkspace: { ...s.reportsByWorkspace, [workspaceId]: list },
-      }));
+      set({ reports: list, isReportsLoaded: true, isReportsLoading: false });
       return list;
     } catch (err) {
       console.error("[marcomDataStore] fetchReports error:", err);
-      return cached || [];
+      set({ isReportsLoading: false });
+      return state.reports;
     }
   },
 
-  invalidateReports: (workspaceId?: string) => {
-    set((s) => {
-      if (workspaceId) {
-        const copy = { ...s.reportsByWorkspace };
-        delete copy[workspaceId];
-        return { reportsByWorkspace: copy };
-      }
-      return { reportsByWorkspace: {} };
-    });
+  setCachedReports: (reports: MonthlyReport[]) => {
+    set({ reports, isReportsLoaded: true });
   },
 
-  getCachedDocuments: (workspaceId: string) => {
-    return get().documentsByWorkspace[workspaceId];
-  },
-
-  setCachedDocuments: (workspaceId: string, documents: DocumentItem[]) => {
+  addCachedReport: (report: MonthlyReport) => {
     set((s) => ({
-      documentsByWorkspace: { ...s.documentsByWorkspace, [workspaceId]: documents },
+      reports: [report, ...s.reports.filter((r) => r.id !== report.id)],
     }));
   },
 
-  fetchDocuments: async (workspaceId: string, force = false) => {
-    if (!workspaceId) return [];
+  invalidateReports: () => {
+    set({ isReportsLoaded: false });
+  },
+
+  // Documents
+  fetchDocuments: async (force = false) => {
     const state = get();
-    const cached = state.documentsByWorkspace[workspaceId];
-    if (cached && !force) {
-      return cached;
+    if (state.isDocumentsLoaded && !force) {
+      return state.documents;
     }
+    if (state.isDocumentsLoading) {
+      return state.documents;
+    }
+    set({ isDocumentsLoading: true });
     try {
-      const res = await fetch(`/api/marcom/documents?workspaceId=${encodeURIComponent(workspaceId)}`);
+      const res = await fetch("/api/marcom/documents");
       if (!res.ok) throw new Error(`Failed to fetch documents (${res.status})`);
       const json = await res.json();
       const list: DocumentItem[] = Array.isArray(json.data) ? json.data : [];
-      set((s) => ({
-        documentsByWorkspace: { ...s.documentsByWorkspace, [workspaceId]: list },
-      }));
+      set({ documents: list, isDocumentsLoaded: true, isDocumentsLoading: false });
       return list;
     } catch (err) {
       console.error("[marcomDataStore] fetchDocuments error:", err);
-      return cached || [];
+      set({ isDocumentsLoading: false });
+      return state.documents;
     }
   },
 
-  invalidateDocuments: (workspaceId?: string) => {
-    set((s) => {
-      if (workspaceId) {
-        const copy = { ...s.documentsByWorkspace };
-        delete copy[workspaceId];
-        return { documentsByWorkspace: copy };
-      }
-      return { documentsByWorkspace: {} };
-    });
+  setCachedDocuments: (documents: DocumentItem[]) => {
+    set({ documents, isDocumentsLoaded: true });
   },
 
-  getCachedMous: (workspaceId: string) => {
-    return get().mousByWorkspace[workspaceId];
+  invalidateDocuments: () => {
+    set({ isDocumentsLoaded: false });
   },
 
-  setCachedMous: (workspaceId: string, mous: MarcomMou[]) => {
-    set((s) => ({
-      mousByWorkspace: { ...s.mousByWorkspace, [workspaceId]: mous },
-    }));
-  },
-
-  invalidateMous: (workspaceId?: string) => {
-    set((s) => {
-      if (workspaceId) {
-        const copy = { ...s.mousByWorkspace };
-        delete copy[workspaceId];
-        return { mousByWorkspace: copy };
-      }
-      return { mousByWorkspace: {} };
-    });
-  },
-
-  getCachedPlacements: (workspaceId: string) => {
-    return get().placementsByWorkspace[workspaceId];
-  },
-
-  setCachedPlacements: (workspaceId: string, placements: MarcomPlacement[]) => {
-    set((s) => ({
-      placementsByWorkspace: { ...s.placementsByWorkspace, [workspaceId]: placements },
-    }));
-  },
-
-  invalidatePlacements: (workspaceId?: string) => {
-    set((s) => {
-      if (workspaceId) {
-        const copy = { ...s.placementsByWorkspace };
-        delete copy[workspaceId];
-        return { placementsByWorkspace: copy };
-      }
-      return { placementsByWorkspace: {} };
-    });
-  },
-
-  getCachedEvents: (workspaceId: string) => {
-    return get().eventsByWorkspace[workspaceId];
-  },
-
-  setCachedEvents: (workspaceId: string, events: FieldEventItem[]) => {
-    set((s) => ({
-      eventsByWorkspace: { ...s.eventsByWorkspace, [workspaceId]: events },
-    }));
-  },
-
-  invalidateEvents: (workspaceId?: string) => {
-    set((s) => {
-      if (workspaceId) {
-        const copy = { ...s.eventsByWorkspace };
-        delete copy[workspaceId];
-        return { eventsByWorkspace: copy };
-      }
-      return { eventsByWorkspace: {} };
-    });
-  },
-
-  fetchEvents: async (workspaceId: string, force = false) => {
-    if (!workspaceId) return [];
+  // MoUs
+  fetchMous: async (force = false) => {
     const state = get();
-    const cached = state.eventsByWorkspace[workspaceId];
-    if (cached && !force) {
-      return cached;
+    if (state.isMousLoaded && !force) {
+      return state.mous;
     }
+    if (state.isMousLoading) {
+      return state.mous;
+    }
+    set({ isMousLoading: true });
     try {
-      const res = await fetch(`/api/marcom/events?workspaceId=${encodeURIComponent(workspaceId)}`);
-      if (!res.ok) throw new Error(`Failed to fetch events (${res.status})`);
-      const json = await res.json();
-      const list: FieldEventItem[] = Array.isArray(json.data) ? json.data : [];
-      set((s) => ({
-        eventsByWorkspace: { ...s.eventsByWorkspace, [workspaceId]: list },
-      }));
-      return list;
-    } catch (err) {
-      console.error("[marcomDataStore] fetchEvents error:", err);
-      return cached || [];
-    }
-  },
-
-  fetchMous: async (workspaceId: string, force = false) => {
-    if (!workspaceId) return [];
-    const state = get();
-    const cached = state.mousByWorkspace[workspaceId];
-    if (cached && !force) {
-      return cached;
-    }
-    try {
-      const res = await fetch(`/api/marcom/mous?workspaceId=${encodeURIComponent(workspaceId)}`);
+      const res = await fetch("/api/marcom/mous");
       if (!res.ok) throw new Error(`Failed to fetch mous (${res.status})`);
       const json = await res.json();
       const list: MarcomMou[] = Array.isArray(json.data) ? json.data : [];
-      set((s) => ({
-        mousByWorkspace: { ...s.mousByWorkspace, [workspaceId]: list },
-      }));
+      set({ mous: list, isMousLoaded: true, isMousLoading: false });
       return list;
     } catch (err) {
       console.error("[marcomDataStore] fetchMous error:", err);
-      return cached || [];
+      set({ isMousLoading: false });
+      return state.mous;
     }
   },
 
-  fetchPlacements: async (workspaceId: string, force = false) => {
-    if (!workspaceId) return [];
+  setCachedMous: (mous: MarcomMou[]) => {
+    set({ mous, isMousLoaded: true });
+  },
+
+  addCachedMou: (mou: MarcomMou) => {
+    set((s) => ({
+      mous: [mou, ...s.mous.filter((m) => m.id !== mou.id)],
+    }));
+  },
+
+  updateCachedMou: (mou: Partial<MarcomMou> & { id: string }) => {
+    set((s) => ({
+      mous: s.mous.map((m) =>
+        m.id === mou.id ? ({ ...m, ...mou } as MarcomMou) : m
+      ),
+    }));
+  },
+
+  removeCachedMou: (mouId: string) => {
+    set((s) => ({
+      mous: s.mous.filter((m) => m.id !== mouId),
+    }));
+  },
+
+  invalidateMous: () => {
+    set({ isMousLoaded: false });
+  },
+
+  // Placements
+  fetchPlacements: async (force = false) => {
     const state = get();
-    const cached = state.placementsByWorkspace[workspaceId];
-    if (cached && !force) {
-      return cached;
+    if (state.isPlacementsLoaded && !force) {
+      return state.placements;
     }
+    if (state.isPlacementsLoading) {
+      return state.placements;
+    }
+    set({ isPlacementsLoading: true });
     try {
-      const res = await fetch(`/api/marcom/placements?workspaceId=${encodeURIComponent(workspaceId)}`);
+      const res = await fetch("/api/marcom/placements");
       if (!res.ok) throw new Error(`Failed to fetch placements (${res.status})`);
       const json = await res.json();
       const list: MarcomPlacement[] = Array.isArray(json.data) ? json.data : [];
-      set((s) => ({
-        placementsByWorkspace: { ...s.placementsByWorkspace, [workspaceId]: list },
-      }));
+      set({ placements: list, isPlacementsLoaded: true, isPlacementsLoading: false });
       return list;
     } catch (err) {
       console.error("[marcomDataStore] fetchPlacements error:", err);
-      return cached || [];
+      set({ isPlacementsLoading: false });
+      return state.placements;
     }
   },
 
-  addCachedPlacement: (workspaceId: string, placement: MarcomPlacement) => {
-    set((s) => {
-      const existing = s.placementsByWorkspace[workspaceId] || [];
-      return {
-        placementsByWorkspace: {
-          ...s.placementsByWorkspace,
-          [workspaceId]: [placement, ...existing.filter((p) => p.id !== placement.id)],
-        },
-      };
-    });
+  setCachedPlacements: (placements: MarcomPlacement[]) => {
+    set({ placements, isPlacementsLoaded: true });
+  },
+
+  addCachedPlacement: (placement: MarcomPlacement) => {
+    set((s) => ({
+      placements: [placement, ...s.placements.filter((p) => p.id !== placement.id)],
+    }));
   },
 
   updateCachedPlacement: (
-    workspaceId: string,
     placement: Partial<MarcomPlacement> & { id: string }
   ) => {
-    set((s) => {
-      const existing = s.placementsByWorkspace[workspaceId];
-      if (!existing) return s;
-      return {
-        placementsByWorkspace: {
-          ...s.placementsByWorkspace,
-          [workspaceId]: existing.map((p) =>
-            p.id === placement.id ? ({ ...p, ...placement } as MarcomPlacement) : p
-          ),
-        },
-      };
-    });
+    set((s) => ({
+      placements: s.placements.map((p) =>
+        p.id === placement.id ? ({ ...p, ...placement } as MarcomPlacement) : p
+      ),
+    }));
   },
 
-  removeCachedPlacement: (workspaceId: string, placementId: string) => {
-    set((s) => {
-      const existing = s.placementsByWorkspace[workspaceId];
-      if (!existing) return s;
-      return {
-        placementsByWorkspace: {
-          ...s.placementsByWorkspace,
-          [workspaceId]: existing.filter((p) => p.id !== placementId),
-        },
-      };
-    });
+  removeCachedPlacement: (placementId: string) => {
+    set((s) => ({
+      placements: s.placements.filter((p) => p.id !== placementId),
+    }));
   },
 
-  addCachedMou: (workspaceId: string, mou: MarcomMou) => {
-    set((s) => {
-      const existing = s.mousByWorkspace[workspaceId] || [];
-      return {
-        mousByWorkspace: {
-          ...s.mousByWorkspace,
-          [workspaceId]: [mou, ...existing.filter((m) => m.id !== mou.id)],
-        },
-      };
-    });
+  invalidatePlacements: () => {
+    set({ isPlacementsLoaded: false });
   },
 
-  updateCachedMou: (
-    workspaceId: string,
-    mou: Partial<MarcomMou> & { id: string }
-  ) => {
-    set((s) => {
-      const existing = s.mousByWorkspace[workspaceId];
-      if (!existing) return s;
-      return {
-        mousByWorkspace: {
-          ...s.mousByWorkspace,
-          [workspaceId]: existing.map((p) =>
-            p.id === mou.id ? ({ ...p, ...mou } as MarcomMou) : p
-          ),
-        },
-      };
-    });
+  // Events
+  fetchEvents: async (force = false) => {
+    const state = get();
+    if (state.isEventsLoaded && !force) {
+      return state.events;
+    }
+    if (state.isEventsLoading) {
+      return state.events;
+    }
+    set({ isEventsLoading: true });
+    try {
+      const res = await fetch("/api/marcom/events");
+      if (!res.ok) throw new Error(`Failed to fetch events (${res.status})`);
+      const json = await res.json();
+      const list: FieldEventItem[] = Array.isArray(json.data) ? json.data : [];
+      set({ events: list, isEventsLoaded: true, isEventsLoading: false });
+      return list;
+    } catch (err) {
+      console.error("[marcomDataStore] fetchEvents error:", err);
+      set({ isEventsLoading: false });
+      return state.events;
+    }
   },
 
-  removeCachedMou: (workspaceId: string, mouId: string) => {
-    set((s) => {
-      const existing = s.mousByWorkspace[workspaceId];
-      if (!existing) return s;
-      return {
-        mousByWorkspace: {
-          ...s.mousByWorkspace,
-          [workspaceId]: existing.filter((m) => m.id !== mouId),
-        },
-      };
-    });
+  setCachedEvents: (events: FieldEventItem[]) => {
+    set({ events, isEventsLoaded: true });
   },
 
-  addCachedEvent: (workspaceId: string, event: FieldEventItem) => {
-    set((s) => {
-      const existing = s.eventsByWorkspace[workspaceId] || [];
-      return {
-        eventsByWorkspace: {
-          ...s.eventsByWorkspace,
-          [workspaceId]: [event, ...existing.filter((e) => e.id !== event.id)],
-        },
-      };
-    });
+  addCachedEvent: (event: FieldEventItem) => {
+    set((s) => ({
+      events: [event, ...s.events.filter((e) => e.id !== event.id)],
+    }));
   },
 
-  updateCachedEvent: (
-    workspaceId: string,
-    event: Partial<FieldEventItem> & { id: string }
-  ) => {
-    set((s) => {
-      const existing = s.eventsByWorkspace[workspaceId];
-      if (!existing) return s;
-      return {
-        eventsByWorkspace: {
-          ...s.eventsByWorkspace,
-          [workspaceId]: existing.map((e) =>
-            e.id === event.id ? ({ ...e, ...event } as FieldEventItem) : e
-          ),
-        },
-      };
-    });
+  updateCachedEvent: (event: Partial<FieldEventItem> & { id: string }) => {
+    set((s) => ({
+      events: s.events.map((e) =>
+        e.id === event.id ? ({ ...e, ...event } as FieldEventItem) : e
+      ),
+    }));
   },
 
-  removeCachedEvent: (workspaceId: string, eventId: string) => {
-    set((s) => {
-      const existing = s.eventsByWorkspace[workspaceId];
-      if (!existing) return s;
-      return {
-        eventsByWorkspace: {
-          ...s.eventsByWorkspace,
-          [workspaceId]: existing.filter((e) => e.id !== eventId),
-        },
-      };
-    });
+  removeCachedEvent: (eventId: string) => {
+    set((s) => ({
+      events: s.events.filter((e) => e.id !== eventId),
+    }));
+  },
+
+  invalidateEvents: () => {
+    set({ isEventsLoaded: false });
   },
 }));
-

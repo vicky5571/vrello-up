@@ -21,7 +21,7 @@ import {
   PRODUCT_SPACE_ID,
   DESIGN_SYSTEM_LIST_ID,
 } from "@/lib/marcom/marcomIds";
-import { syncWorkspaces, syncDeleteTasks } from "./syncHelpers";
+import { syncDeleteTasks } from "./syncHelpers";
 
 export const createSpaceSlice: StateCreator<
   WorkspaceStore,
@@ -39,36 +39,27 @@ export const createSpaceSlice: StateCreator<
   setActiveList: (id) => set({ activeListId: id }),
 
   createSpace: (name, icon, color) => {
-    const { workspaces, activeSpaceId, activeListId, newSpace } = applyCreateSpace(
-      get().workspaces,
-      get().activeWorkspaceId,
+    const { spaces, activeSpaceId, activeListId, newSpace } = applyCreateSpace(
+      get().spaces,
       name,
       icon,
       color,
       DEFAULT_STATUSES,
     );
-    set({ workspaces, activeSpaceId, activeListId });
-    syncWorkspaces(get().workspaces);
+    set({ spaces, activeSpaceId, activeListId });
     return newSpace;
   },
 
   updateSpace: (spaceId, updates) => {
     set((state) => ({
-      workspaces: applyUpdateSpace(
-        state.workspaces,
-        state.activeWorkspaceId,
-        spaceId,
-        updates,
-      ),
+      spaces: applyUpdateSpace(state.spaces, spaceId, updates),
     }));
-    syncWorkspaces(get().workspaces);
   },
 
   deleteSpace: (spaceId) => {
     const state = get();
     const res = applyDeleteSpace(
-      state.workspaces,
-      state.activeWorkspaceId,
+      state.spaces,
       state.tasks,
       state.activeSpaceId,
       state.activeListId,
@@ -78,7 +69,7 @@ export const createSpaceSlice: StateCreator<
       spaceId,
     );
     set({
-      workspaces: res.workspaces,
+      spaces: res.spaces,
       tasks: res.tasks,
       activeSpaceId: res.activeSpaceId,
       activeListId: res.activeListId,
@@ -86,64 +77,46 @@ export const createSpaceSlice: StateCreator<
       lastSelectedTaskId: res.lastSelectedTaskId,
       selectedTaskIds: res.selectedTaskIds,
     });
-    // Replace N+1 syncDeleteTask calls with a single atomic batch delete
     syncDeleteTasks(res.tasksToDelete.map((t) => t.id));
-    syncWorkspaces(get().workspaces);
   },
 
   reorderSpaces: (orderedSpaceIds) => {
     set((state) => ({
-      workspaces: applyReorderSpaces(
-        state.workspaces,
-        state.activeWorkspaceId,
-        orderedSpaceIds,
-      ),
+      spaces: applyReorderSpaces(state.spaces, orderedSpaceIds),
     }));
-    syncWorkspaces(get().workspaces);
   },
 
   moveSpace: (spaceId, direction) => {
     set((state) => ({
-      workspaces: applyMoveSpace(
-        state.workspaces,
-        state.activeWorkspaceId,
-        spaceId,
-        direction,
-      ),
+      spaces: applyMoveSpace(state.spaces, spaceId, direction),
     }));
-    syncWorkspaces(get().workspaces);
   },
 
   createFolder: (spaceId, name) => {
-    const { workspaces, newFolder } = applyCreateFolder(
-      get().workspaces,
-      get().activeWorkspaceId,
+    const { spaces, newFolder } = applyCreateFolder(
+      get().spaces,
       spaceId,
       name,
     );
-    set({ workspaces });
-    syncWorkspaces(get().workspaces);
+    set({ spaces });
     return newFolder;
   },
 
   updateFolder: (spaceId, folderId, name) => {
     set((state) => ({
-      workspaces: applyUpdateFolder(
-        state.workspaces,
-        state.activeWorkspaceId,
+      spaces: applyUpdateFolder(
+        state.spaces,
         spaceId,
         folderId,
         name,
       ),
     }));
-    syncWorkspaces(get().workspaces);
   },
 
   deleteFolder: (spaceId, folderId) => {
     const state = get();
     const res = applyDeleteFolder(
-      state.workspaces,
-      state.activeWorkspaceId,
+      state.spaces,
       state.tasks,
       state.activeListId,
       state.selectedTaskId,
@@ -153,7 +126,7 @@ export const createSpaceSlice: StateCreator<
       folderId,
     );
     set({
-      workspaces: res.workspaces,
+      spaces: res.spaces,
       tasks: res.tasks,
       activeListId: res.activeListId,
       selectedTaskId: res.selectedTaskId,
@@ -161,41 +134,35 @@ export const createSpaceSlice: StateCreator<
       selectedTaskIds: res.selectedTaskIds,
     });
     syncDeleteTasks(res.tasksToDelete.map((t) => t.id));
-    syncWorkspaces(get().workspaces);
   },
 
   createList: (spaceId, name, folderId) => {
-    const { workspaces, activeListId, newList } = applyCreateList(
-      get().workspaces,
-      get().activeWorkspaceId,
+    const { spaces, activeListId, newList } = applyCreateList(
+      get().spaces,
       spaceId,
       name,
       folderId,
     );
-    set({ workspaces, activeListId });
-    syncWorkspaces(get().workspaces);
+    set({ spaces, activeListId });
     return newList;
   },
 
   updateList: (spaceId, listId, updates, folderId) => {
     set((state) => ({
-      workspaces: applyUpdateList(
-        state.workspaces,
-        state.activeWorkspaceId,
+      spaces: applyUpdateList(
+        state.spaces,
         spaceId,
         listId,
         updates,
         folderId,
       ),
     }));
-    syncWorkspaces(get().workspaces);
   },
 
   deleteList: (spaceId, listId, folderId) => {
     const state = get();
     const res = applyDeleteList(
-      state.workspaces,
-      state.activeWorkspaceId,
+      state.spaces,
       state.tasks,
       state.activeListId,
       state.selectedTaskId,
@@ -206,7 +173,7 @@ export const createSpaceSlice: StateCreator<
       folderId,
     );
     set({
-      workspaces: res.workspaces,
+      spaces: res.spaces,
       tasks: res.tasks,
       activeListId: res.activeListId,
       selectedTaskId: res.selectedTaskId,
@@ -214,49 +181,42 @@ export const createSpaceSlice: StateCreator<
       selectedTaskIds: res.selectedTaskIds,
     });
     syncDeleteTasks(res.tasksToDelete.map((t) => t.id));
-    syncWorkspaces(get().workspaces);
   },
 
   addStatusToSpace: (spaceId, name, color) => {
     set((state) => ({
-      workspaces: applyAddStatusToSpace(
-        state.workspaces,
-        state.activeWorkspaceId,
+      spaces: applyAddStatusToSpace(
+        state.spaces,
         spaceId,
         name,
         color,
       ),
     }));
-    syncWorkspaces(get().workspaces);
   },
 
   updateStatus: (spaceId, statusId, updates) => {
     set((state) => ({
-      workspaces: applyUpdateSpaceStatus(
-        state.workspaces,
-        state.activeWorkspaceId,
+      spaces: applyUpdateSpaceStatus(
+        state.spaces,
         spaceId,
         statusId,
         updates,
       ),
     }));
-    syncWorkspaces(get().workspaces);
   },
 
   deleteStatus: (spaceId, statusId, fallbackStatusId) => {
     const state = get();
     const res = applyDeleteSpaceStatus(
-      state.workspaces,
-      state.activeWorkspaceId,
+      state.spaces,
       state.tasks,
       spaceId,
       statusId,
       fallbackStatusId,
     );
     set({
-      workspaces: res.workspaces,
+      spaces: res.spaces,
       tasks: res.tasks,
     });
-    syncWorkspaces(get().workspaces);
   },
 });

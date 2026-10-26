@@ -47,7 +47,6 @@ export interface OutletSearchComboboxProps {
   selectedOutlet?: OutletSearchResult | null;
   onSelectOutlet: (outlet: OutletSelectionPayload) => void;
   onRequestNewOutlet?: (searchQuery: string) => void;
-  workspaceId?: string;
   brand?: Brand | string;
   onSetBrand?: (brand: Brand) => void;
   placeholder?: string;
@@ -89,7 +88,6 @@ export function OutletSearchCombobox({
   selectedOutlet,
   onSelectOutlet,
   onRequestNewOutlet,
-  workspaceId = "ws-main",
   brand,
   onSetBrand,
   placeholder = "Cari nama outlet atau kode (cth: O-SMG-001)...",
@@ -146,9 +144,7 @@ export function OutletSearchCombobox({
     let isMounted = true;
     const fetchSelectedOutlet = async () => {
       try {
-        const url = `/api/marcom/outlets/${encodeURIComponent(selectedOutletId)}${
-          workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : ""
-        }`;
+        const url = `/api/marcom/outlets/${encodeURIComponent(selectedOutletId)}`;
         const res = await fetch(url);
         if (!res.ok) return;
         const data = await res.json();
@@ -164,7 +160,7 @@ export function OutletSearchCombobox({
     return () => {
       isMounted = false;
     };
-  }, [selectedOutletId, selectedOutlet, workspaceId, internalSelected?.id]);
+  }, [selectedOutletId, selectedOutlet, internalSelected?.id]);
 
   // Debounced search on typing; strictly no-op when searchQuery is empty to save resources
   useEffect(() => {
@@ -191,9 +187,6 @@ export function OutletSearchCombobox({
           q: trimmed,
           limit: "15",
         });
-        if (workspaceId) {
-          params.set("workspaceId", workspaceId);
-        }
         if (brand && brand !== "ALL") {
           params.set("brand", brand);
         }
@@ -255,7 +248,7 @@ export function OutletSearchCombobox({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [searchQuery, workspaceId, brand, cachedOutlets, currentOutlet, isChanging]);
+  }, [searchQuery, brand, cachedOutlets, currentOutlet, isChanging]);
 
   // Scroll active item into view
   useEffect(() => {
@@ -757,7 +750,6 @@ export function OutletSearchCombobox({
             onClose={() => setIsDraftModalOpen(false)}
             initialName={searchQuery}
             branches={branches.map((b) => ({ id: b.id, name: b.name, code: b.code }))}
-            workspaceId={workspaceId}
             onSuccess={(created) => {
               handleSelect({
                 id: created.id,

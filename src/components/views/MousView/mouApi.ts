@@ -14,7 +14,6 @@ export interface MouSavePayload {
   docPath?: string;
   compensationValue?: number;
   notes?: string;
-  workspaceId: string;
 }
 
 export async function saveMou(

@@ -30,23 +30,23 @@ import { buildTaskGridTemplate } from "@/lib/tasks/taskColumns";
 export function ListView() {
   const {
     tasks,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
     activeSpaceId,
     activeListId,
     filters,
     viewPreferences,
     selectedTaskIds,
+    users,
   } = useWorkspaceStore(
     useShallow((s) => ({
       tasks: s.tasks,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
       activeSpaceId: s.activeSpaceId,
       activeListId: s.activeListId,
       filters: s.filters,
       viewPreferences: s.viewPreferences,
       selectedTaskIds: s.selectedTaskIds,
+      users: s.users,
     })),
   );
 
@@ -71,8 +71,7 @@ export function ListView() {
     onClose: () => setShowColumnsMenu(false),
   });
 
-  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = currentWorkspace?.spaces.find(
+  const currentSpace = spaces.find(
     (s) => s.id === activeSpaceId,
   );
   const statuses = useMemo(
@@ -80,8 +79,8 @@ export function ListView() {
     [currentSpace?.statuses],
   );
   const members = useMemo(
-    () => currentWorkspace?.members || [],
-    [currentWorkspace?.members],
+    () => users || [],
+    [users],
   );
   const spaceListIds = useMemo(
     () => new Set(getSpaceListIds(currentSpace)),

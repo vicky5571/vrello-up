@@ -30,7 +30,6 @@ export interface SubmitDraftOutletModalProps {
   initialName?: string;
   branches: { id: string; name: string; code: string }[];
   onSuccess?: (newOutlet: OutletItem) => void;
-  workspaceId?: string;
 }
 
 export function SubmitDraftOutletModal({
@@ -39,7 +38,6 @@ export function SubmitDraftOutletModal({
   initialName = "",
   branches = [],
   onSuccess,
-  workspaceId = "ws-main",
 }: SubmitDraftOutletModalProps) {
   const { invalidateOutlets } = useMarcomDataStore();
 
@@ -134,7 +132,7 @@ export function SubmitDraftOutletModal({
     setIsSubmitting(true);
     try {
       const payload = buildDraftSubmissionPayload(formData);
-      const res = await fetch(`/api/marcom/outlets/draft?workspaceId=${workspaceId}`, {
+      const res = await fetch("/api/marcom/outlets/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

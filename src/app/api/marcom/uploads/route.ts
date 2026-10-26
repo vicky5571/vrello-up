@@ -17,7 +17,7 @@ const VALID_KINDS = ["documents", "events", "tasks", "placements"] as const;
 export async function POST(request: Request) {
   let role;
   try {
-    role = await requireMember("ws-main");
+    role = await requireMember();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;

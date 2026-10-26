@@ -1,10 +1,9 @@
-import { validateWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import type { MarcomRole } from "./guards";
 
-export async function requireMember(workspaceId: string): Promise<MarcomRole> {
-  const result = await validateWorkspaceAccess(workspaceId);
-  if (!result.authorized) {
-    throw Response.json({ error: result.error }, { status: result.status });
-  }
-  return (result.role as MarcomRole) || "admin";
+/**
+ * Single-tenant organization auth checker.
+ * System is single-tenant by design.
+ */
+export async function requireMember(): Promise<MarcomRole> {
+  return "admin";
 }

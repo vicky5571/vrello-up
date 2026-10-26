@@ -1,5 +1,4 @@
 import {
-  type Workspace,
   type Space,
   type Folder,
   type List,
@@ -29,17 +28,16 @@ export function getSpaceListIds(space?: Space | null): string[] {
 }
 
 /**
- * Creates a new space with a default General list and returns the updated workspaces.
+ * Creates a new space with a default General list and returns the updated spaces.
  */
 export function applyCreateSpace(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   name: string,
   icon: string,
   color: string,
   defaultStatuses: Status[],
 ): {
-  workspaces: Workspace[];
+  spaces: Space[];
   activeSpaceId: string;
   activeListId: string;
   newSpace: Space;
@@ -47,7 +45,6 @@ export function applyCreateSpace(
   const id = generateId("space");
   const newSpace: Space = {
     id,
-    workspaceId: activeWorkspaceId,
     name,
     icon,
     color,
@@ -63,14 +60,8 @@ export function applyCreateSpace(
     ],
   };
 
-  const nextWorkspaces = workspaces.map((w) =>
-    w.id === activeWorkspaceId
-      ? { ...w, spaces: [...w.spaces, newSpace] }
-      : w,
-  );
-
   return {
-    workspaces: nextWorkspaces,
+    spaces: [...spaces, newSpace],
     activeSpaceId: id,
     activeListId: newSpace.lists[0].id,
     newSpace,
@@ -78,30 +69,21 @@ export function applyCreateSpace(
 }
 
 /**
- * Updates metadata on an existing space in the active workspace.
+ * Updates metadata on an existing space.
  */
 export function applyUpdateSpace(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   spaceId: string,
   updates: Partial<Space>,
-): Workspace[] {
-  return workspaces.map((w) =>
-    w.id === activeWorkspaceId
-      ? {
-          ...w,
-          spaces: w.spaces.map((s) => (s.id === spaceId ? { ...s, ...updates } : s)),
-        }
-      : w,
-  );
+): Space[] {
+  return spaces.map((s) => (s.id === spaceId ? { ...s, ...updates } : s));
 }
 
 /**
  * Deletes a space and performs cascading task & list cleanups.
  */
 export function applyDeleteSpace(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   tasks: Task[],
   activeSpaceId: string,
   activeListId: string | null,
@@ -110,7 +92,7 @@ export function applyDeleteSpace(
   selectedTaskIds: string[],
   spaceId: string,
 ): {
-  workspaces: Workspace[];
+  spaces: Space[];
   tasks: Task[];
   activeSpaceId: string;
   activeListId: string | null;
@@ -119,11 +101,10 @@ export function applyDeleteSpace(
   selectedTaskIds: string[];
   tasksToDelete: Task[];
 } {
-  const activeWs = workspaces.find((w) => w.id === activeWorkspaceId);
-  const spaceToDelete = activeWs?.spaces.find((s) => s.id === spaceId);
+  const spaceToDelete = spaces.find((s) => s.id === spaceId);
   if (!spaceToDelete) {
     return {
-      workspaces,
+      spaces,
       tasks,
       activeSpaceId,
       activeListId,
@@ -135,7 +116,7 @@ export function applyDeleteSpace(
   }
 
   const listIdsToDelete = new Set<string>(getSpaceListIds(spaceToDelete));
-  const remainingSpaces = activeWs?.spaces.filter((s) => s.id !== spaceId) || [];
+  const remainingSpaces = spaces.filter((s) => s.id !== spaceId);
   const nextSpace = remainingSpaces[0];
   const nextListId =
     nextSpace?.lists[0]?.id ||
@@ -146,11 +127,7 @@ export function applyDeleteSpace(
   const deletedTaskIds = new Set(tasksToDelete.map((t) => t.id));
 
   return {
-    workspaces: workspaces.map((w) =>
-      w.id === activeWorkspaceId
-        ? { ...w, spaces: w.spaces.filter((s) => s.id !== spaceId) }
-        : w,
-    ),
+    spaces: remainingSpaces,
     tasks: tasks
       .filter((t) => !listIdsToDelete.has(t.listId))
       .map((t) =>
@@ -173,46 +150,35 @@ export function applyDeleteSpace(
 }
 
 /**
- * Reorders spaces within the active workspace.
+ * Reorders spaces.
  */
 export function applyReorderSpaces(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   orderedSpaceIds: string[],
-): Workspace[] {
-  return workspaces.map((w) =>
-    w.id === activeWorkspaceId
-      ? { ...w, spaces: reorderSpacesList(w.spaces, orderedSpaceIds) }
-      : w,
-  );
+): Space[] {
+  return reorderSpacesList(spaces, orderedSpaceIds);
 }
 
 /**
- * Moves a space up or down within the active workspace.
+ * Moves a space up or down.
  */
 export function applyMoveSpace(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   spaceId: string,
   direction: "up" | "down",
-): Workspace[] {
-  return workspaces.map((w) =>
-    w.id === activeWorkspaceId
-      ? { ...w, spaces: moveSpaceDirection(w.spaces, spaceId, direction) }
-      : w,
-  );
+): Space[] {
+  return moveSpaceDirection(spaces, spaceId, direction);
 }
 
 /**
  * Creates a folder inside a space.
  */
 export function applyCreateFolder(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   spaceId: string,
   name: string,
 ): {
-  workspaces: Workspace[];
+  spaces: Space[];
   newFolder: Folder;
 } {
   const newFolder: Folder = {
@@ -222,40 +188,27 @@ export function applyCreateFolder(
     lists: [],
   };
 
-  const nextWorkspaces = workspaces.map((w) => {
-    if (w.id !== activeWorkspaceId) return w;
-    return {
-      ...w,
-      spaces: w.spaces.map((s) =>
-        s.id === spaceId ? { ...s, folders: [...s.folders, newFolder] } : s,
-      ),
-    };
-  });
+  const nextSpaces = spaces.map((s) =>
+    s.id === spaceId ? { ...s, folders: [...s.folders, newFolder] } : s,
+  );
 
-  return { workspaces: nextWorkspaces, newFolder };
+  return { spaces: nextSpaces, newFolder };
 }
 
 /**
- * Updates a folder name in the active workspace.
+ * Updates a folder name.
  */
 export function applyUpdateFolder(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   spaceId: string,
   folderId: string,
   name: string,
-): Workspace[] {
-  return workspaces.map((w) => {
-    if (w.id !== activeWorkspaceId) return w;
+): Space[] {
+  return spaces.map((s) => {
+    if (s.id !== spaceId) return s;
     return {
-      ...w,
-      spaces: w.spaces.map((s) => {
-        if (s.id !== spaceId) return s;
-        return {
-          ...s,
-          folders: s.folders.map((f) => (f.id === folderId ? { ...f, name } : f)),
-        };
-      }),
+      ...s,
+      folders: s.folders.map((f) => (f.id === folderId ? { ...f, name } : f)),
     };
   });
 }
@@ -264,8 +217,7 @@ export function applyUpdateFolder(
  * Deletes a folder and cascades deletion to nested lists and tasks.
  */
 export function applyDeleteFolder(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   tasks: Task[],
   activeListId: string | null,
   selectedTaskId: string | null,
@@ -274,7 +226,7 @@ export function applyDeleteFolder(
   spaceId: string,
   folderId: string,
 ): {
-  workspaces: Workspace[];
+  spaces: Space[];
   tasks: Task[];
   activeListId: string | null;
   selectedTaskId: string | null;
@@ -282,12 +234,11 @@ export function applyDeleteFolder(
   selectedTaskIds: string[];
   tasksToDelete: Task[];
 } {
-  const activeWs = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = activeWs?.spaces.find((s) => s.id === spaceId);
+  const currentSpace = spaces.find((s) => s.id === spaceId);
   const folderToDelete = currentSpace?.folders.find((f) => f.id === folderId);
   if (!folderToDelete) {
     return {
-      workspaces,
+      spaces,
       tasks,
       activeListId,
       selectedTaskId,
@@ -311,17 +262,11 @@ export function applyDeleteFolder(
   const deletedTaskIds = new Set(tasksToDelete.map((t) => t.id));
 
   return {
-    workspaces: workspaces.map((w) => {
-      if (w.id !== activeWorkspaceId) return w;
+    spaces: spaces.map((s) => {
+      if (s.id !== spaceId) return s;
       return {
-        ...w,
-        spaces: w.spaces.map((s) => {
-          if (s.id !== spaceId) return s;
-          return {
-            ...s,
-            folders: s.folders.filter((f) => f.id !== folderId),
-          };
-        }),
+        ...s,
+        folders: s.folders.filter((f) => f.id !== folderId),
       };
     }),
     tasks: tasks
@@ -348,13 +293,12 @@ export function applyDeleteFolder(
  * Creates a list either top-level in space or nested inside a folder.
  */
 export function applyCreateList(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   spaceId: string,
   name: string,
   folderId?: string | null,
 ): {
-  workspaces: Workspace[];
+  spaces: Space[];
   activeListId: string;
   newList: List;
 } {
@@ -366,27 +310,21 @@ export function applyCreateList(
     icon: "ListTodo",
   };
 
-  const nextWorkspaces = workspaces.map((w) => {
-    if (w.id !== activeWorkspaceId) return w;
-    return {
-      ...w,
-      spaces: w.spaces.map((s) => {
-        if (s.id !== spaceId) return s;
-        if (folderId) {
-          return {
-            ...s,
-            folders: s.folders.map((f) =>
-              f.id === folderId ? { ...f, lists: [...f.lists, newList] } : f,
-            ),
-          };
-        }
-        return { ...s, lists: [...s.lists, newList] };
-      }),
-    };
+  const nextSpaces = spaces.map((s) => {
+    if (s.id !== spaceId) return s;
+    if (folderId) {
+      return {
+        ...s,
+        folders: s.folders.map((f) =>
+          f.id === folderId ? { ...f, lists: [...f.lists, newList] } : f,
+        ),
+      };
+    }
+    return { ...s, lists: [...s.lists, newList] };
   });
 
   return {
-    workspaces: nextWorkspaces,
+    spaces: nextSpaces,
     activeListId: newList.id,
     newList,
   };
@@ -396,37 +334,30 @@ export function applyCreateList(
  * Updates a list metadata.
  */
 export function applyUpdateList(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   spaceId: string,
   listId: string,
   updates: Partial<List>,
   folderId?: string | null,
-): Workspace[] {
-  return workspaces.map((w) => {
-    if (w.id !== activeWorkspaceId) return w;
+): Space[] {
+  return spaces.map((s) => {
+    if (s.id !== spaceId) return s;
+    if (folderId) {
+      return {
+        ...s,
+        folders: s.folders.map((f) =>
+          f.id === folderId
+            ? {
+                ...f,
+                lists: f.lists.map((l) => (l.id === listId ? { ...l, ...updates } : l)),
+              }
+            : f,
+        ),
+      };
+    }
     return {
-      ...w,
-      spaces: w.spaces.map((s) => {
-        if (s.id !== spaceId) return s;
-        if (folderId) {
-          return {
-            ...s,
-            folders: s.folders.map((f) =>
-              f.id === folderId
-                ? {
-                    ...f,
-                    lists: f.lists.map((l) => (l.id === listId ? { ...l, ...updates } : l)),
-                  }
-                : f,
-            ),
-          };
-        }
-        return {
-          ...s,
-          lists: s.lists.map((l) => (l.id === listId ? { ...l, ...updates } : l)),
-        };
-      }),
+      ...s,
+      lists: s.lists.map((l) => (l.id === listId ? { ...l, ...updates } : l)),
     };
   });
 }
@@ -435,8 +366,7 @@ export function applyUpdateList(
  * Deletes a list and cleans up tasks contained within it.
  */
 export function applyDeleteList(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   tasks: Task[],
   activeListId: string | null,
   selectedTaskId: string | null,
@@ -446,7 +376,7 @@ export function applyDeleteList(
   listId: string,
   folderId?: string | null,
 ): {
-  workspaces: Workspace[];
+  spaces: Space[];
   tasks: Task[];
   activeListId: string | null;
   selectedTaskId: string | null;
@@ -454,8 +384,7 @@ export function applyDeleteList(
   selectedTaskIds: string[];
   tasksToDelete: Task[];
 } {
-  const activeWs = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = activeWs?.spaces.find((s) => s.id === spaceId);
+  const currentSpace = spaces.find((s) => s.id === spaceId);
 
   let nextListId = activeListId;
   if (activeListId === listId) {
@@ -471,27 +400,21 @@ export function applyDeleteList(
   const deletedTaskIds = new Set(tasksToDelete.map((t) => t.id));
 
   return {
-    workspaces: workspaces.map((w) => {
-      if (w.id !== activeWorkspaceId) return w;
+    spaces: spaces.map((s) => {
+      if (s.id !== spaceId) return s;
+      if (folderId) {
+        return {
+          ...s,
+          folders: s.folders.map((f) =>
+            f.id === folderId
+              ? { ...f, lists: f.lists.filter((l) => l.id !== listId) }
+              : f,
+          ),
+        };
+      }
       return {
-        ...w,
-        spaces: w.spaces.map((s) => {
-          if (s.id !== spaceId) return s;
-          if (folderId) {
-            return {
-              ...s,
-              folders: s.folders.map((f) =>
-                f.id === folderId
-                  ? { ...f, lists: f.lists.filter((l) => l.id !== listId) }
-                  : f,
-              ),
-            };
-          }
-          return {
-            ...s,
-            lists: s.lists.filter((l) => l.id !== listId),
-          };
-        }),
+        ...s,
+        lists: s.lists.filter((l) => l.id !== listId),
       };
     }),
     tasks: tasks
@@ -518,28 +441,21 @@ export function applyDeleteList(
  * Adds a new status column to a space.
  */
 export function applyAddStatusToSpace(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   spaceId: string,
   name: string,
   color: string,
-): Workspace[] {
-  return workspaces.map((w) => {
-    if (w.id !== activeWorkspaceId) return w;
-    return {
-      ...w,
-      spaces: w.spaces.map((s) => {
-        if (s.id !== spaceId) return s;
-        const newStatus: Status = {
-          id: generateId("status"),
-          name: name.toUpperCase(),
-          color,
-          category: "in_progress",
-          order: s.statuses.length,
-        };
-        return { ...s, statuses: [...s.statuses, newStatus] };
-      }),
+): Space[] {
+  return spaces.map((s) => {
+    if (s.id !== spaceId) return s;
+    const newStatus: Status = {
+      id: generateId("status"),
+      name: name.toUpperCase(),
+      color,
+      category: "in_progress",
+      order: s.statuses.length,
     };
+    return { ...s, statuses: [...s.statuses, newStatus] };
   });
 }
 
@@ -547,25 +463,18 @@ export function applyAddStatusToSpace(
  * Updates a status in a space.
  */
 export function applyUpdateSpaceStatus(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   spaceId: string,
   statusId: string,
   updates: Partial<Status>,
-): Workspace[] {
-  return workspaces.map((w) => {
-    if (w.id !== activeWorkspaceId) return w;
+): Space[] {
+  return spaces.map((s) => {
+    if (s.id !== spaceId) return s;
     return {
-      ...w,
-      spaces: w.spaces.map((s) => {
-        if (s.id !== spaceId) return s;
-        return {
-          ...s,
-          statuses: s.statuses.map((st) =>
-            st.id === statusId ? { ...st, ...updates } : st,
-          ),
-        };
-      }),
+      ...s,
+      statuses: s.statuses.map((st) =>
+        st.id === statusId ? { ...st, ...updates } : st,
+      ),
     };
   });
 }
@@ -574,36 +483,27 @@ export function applyUpdateSpaceStatus(
  * Deletes a status from a space and reassigns orphan tasks to a fallback status.
  */
 export function applyDeleteSpaceStatus(
-  workspaces: Workspace[],
-  activeWorkspaceId: string,
+  spaces: Space[],
   tasks: Task[],
   spaceId: string,
   statusId: string,
   fallbackStatusId?: string,
 ): {
-  workspaces: Workspace[];
+  spaces: Space[];
   tasks: Task[];
 } {
-  const activeWs = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = activeWs?.spaces.find((s) => s.id === spaceId);
+  const currentSpace = spaces.find((s) => s.id === spaceId);
   const remainingStatuses = currentSpace?.statuses.filter((st) => st.id !== statusId) || [];
   const fallback = fallbackStatusId || remainingStatuses[0]?.id || "status-todo";
 
   return {
-    workspaces: workspaces.map((w) => {
-      if (w.id !== activeWorkspaceId) return w;
+    spaces: spaces.map((s) => {
+      if (s.id !== spaceId) return s;
       return {
-        ...w,
-        spaces: w.spaces.map((s) => {
-          if (s.id !== spaceId) return s;
-          return {
-            ...s,
-            statuses: s.statuses.filter((st) => st.id !== statusId),
-          };
-        }),
+        ...s,
+        statuses: s.statuses.filter((st) => st.id !== statusId),
       };
     }),
     tasks: tasks.map((t) => (t.statusId === statusId ? { ...t, statusId: fallback } : t)),
   };
 }
-

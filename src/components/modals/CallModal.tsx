@@ -25,15 +25,12 @@ interface CallModalProps {
 }
 
 export function CallModal({ isOpen, mode, onClose }: CallModalProps) {
-  const workspaces = useWorkspaceStore((s) => s.workspaces);
-  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
+  const users = useWorkspaceStore((s) => s.users);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(mode === "audio");
   const [copied, setCopied] = useState(false);
 
-  const currentWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
-  const members = currentWorkspace?.members || [];
+  const members = users;
 
   const handleCopy = () => {
     navigator.clipboard.writeText("https://vrello-up.dev/huddle/sprint-sync-42");

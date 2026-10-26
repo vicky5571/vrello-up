@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { generateReportDraft, getMonthDateRange } from "@/lib/marcom/reportDraftEngine";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const workspaceId = searchParams.get("workspaceId") || "ws-main";
-    const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
-    if (authError) return authError;
 
     const month = searchParams.get("month")?.trim();
     const yearParam = searchParams.get("year");
@@ -27,7 +23,6 @@ export async function GET(request: Request) {
     const [placements, mous, contents, events] = await Promise.all([
       prisma.placement.findMany({
         where: {
-          workspaceId,
           date: { gte: start, lte: end },
         },
         include: {
@@ -38,7 +33,6 @@ export async function GET(request: Request) {
       }),
       prisma.mou.findMany({
         where: {
-          workspaceId,
           OR: [
             { startDate: { gte: start, lte: end } },
             { submissionDate: { gte: start, lte: end } },
@@ -55,14 +49,12 @@ export async function GET(request: Request) {
       }),
       prisma.contentPost.findMany({
         where: {
-          workspaceId,
           publishDate: { gte: start, lte: end },
         },
         orderBy: { publishDate: "asc" },
       }),
       prisma.fieldEvent.findMany({
         where: {
-          workspaceId,
           startDate: { gte: start, lte: end },
         },
         orderBy: { startDate: "asc" },

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { isValidDocumentFilePath } from "@/lib/marcom/upload";
 import { VALID_DOCUMENT_STATUSES, isValidDocumentStatus } from "@/lib/marcom/documentTaxonomy";
 
@@ -9,9 +8,6 @@ const VALID_FILE_TYPES = ["PDF", "XLSX", "DOCX", "ZIP", "CSV", "MP4", "PNG", "JP
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get("workspaceId") || "ws-main";
-  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
-  if (authError) return authError;
 
   const category = searchParams.get("category");
   const fileType = searchParams.get("fileType");
@@ -21,9 +17,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid fileType" }, { status: 400 });
   }
 
-  const where: Prisma.DocumentItemWhereInput = {
-    workspaceId,
-  };
+  const where: Prisma.DocumentItemWhereInput = {};
   if (category && category !== "ALL") {
     where.category = { equals: category, mode: "insensitive" };
   }
@@ -41,10 +35,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const workspaceId = body?.workspaceId || "ws-main";
-  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
-
   const { name, category, period, branchName, ownerPic, status, fileType, fileSizeMb, filePath, description } = body ?? {};
   if (!name || !category || !fileType || !filePath) {
     return NextResponse.json({ error: "Missing required fields: name, category, fileType, filePath" }, { status: 400 });
@@ -65,7 +55,7 @@ export async function POST(request: Request) {
   }
 
   const document = await prisma.documentItem.create({
-    data: { workspaceId, name, category, period, branchName, ownerPic, status: rawStatus, fileType, fileSizeMb, filePath, description },
+    data: { name, category, period, branchName, ownerPic, status: rawStatus, fileType, fileSizeMb, filePath, description },
   });
   return NextResponse.json(document, { status: 201 });
 }

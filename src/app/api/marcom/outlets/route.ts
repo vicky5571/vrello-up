@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireMember } from "@/lib/marcom/auth";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { hasPermission } from "@/lib/marcom/guards";
 import {
   buildOutletSearchWhere,
@@ -11,13 +10,11 @@ import {
   VALID_STATUSES,
 } from "@/app/api/marcom/outlets/outletsSearchFilter";
 
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get("workspaceId") || "ws-main";
 
   try {
-    await requireMember(workspaceId);
+    await requireMember();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;
@@ -56,7 +53,6 @@ export async function GET(request: Request) {
       branch: { select: { id: true, code: true, name: true, city: true, region: true, picName: true, picPhone: true, address: true } },
       _count: { select: { placements: true, mous: true } },
       placements: {
-        where: { workspaceId },
         take: 5,
         orderBy: { id: "desc" },
         include: {
@@ -77,7 +73,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   let role;
   try {
-    role = await requireMember("ws-main");
+    role = await requireMember();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;
@@ -132,10 +128,6 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    // Outlets are global master data; deletion requires admin access
-    const authError = await requireWorkspaceAccess("ws-main", { requiredRole: "admin", request });
-    if (authError) return authError;
-
     const body = await request.json().catch(() => ({}));
     const ids: string[] = Array.isArray(body?.ids)
       ? body.ids.filter((id: unknown) => typeof id === "string" && id.trim() !== "")

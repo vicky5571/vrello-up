@@ -64,14 +64,12 @@ export function CommandPalette() {
   const {
     isCommandPaletteOpen,
     tasks,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
   } = useWorkspaceStore(
     useShallow((s) => ({
       isCommandPaletteOpen: s.isCommandPaletteOpen,
       tasks: s.tasks,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
     })),
   );
 
@@ -106,11 +104,9 @@ export function CommandPalette() {
     onEscape: closeCommandPalette,
   });
 
-  const currentWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
   const allStatuses = useMemo(() => {
-    return currentWorkspace?.spaces.flatMap((s) => s.statuses) || [];
-  }, [currentWorkspace]);
+    return spaces.flatMap((s) => s.statuses) || [];
+  }, [spaces]);
 
   // Global shortcut (⌘K / Ctrl+K)
   useEffect(() => {
@@ -157,13 +153,12 @@ export function CommandPalette() {
           return { id: `${prefix}${rawId}`, rawId, name, detail };
         })
         .filter((h) => !!h.name);
-    const wsParam = activeWorkspaceId ? `?workspaceId=${encodeURIComponent(activeWorkspaceId)}` : "";
     Promise.all([
       fetch("/api/marcom/branches").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
-      fetch(`/api/marcom/outlets${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
-      fetch(`/api/marcom/mous${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
-      fetch(`/api/marcom/content${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
-      fetch(`/api/marcom/events${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+      fetch("/api/marcom/outlets").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+      fetch("/api/marcom/mous").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+      fetch("/api/marcom/content").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
+      fetch("/api/marcom/events").then((r) => (r.ok ? r.json() : { data: [] })).catch(() => ({ data: [] })),
     ]).then(([b, o, m, c, e]) => {
       if (cancelled) return;
       setBranches(pick("branch:", b.data));
@@ -175,7 +170,7 @@ export function CommandPalette() {
     return () => {
       cancelled = true;
     };
-  }, [isCommandPaletteOpen, activeWorkspaceId]);
+  }, [isCommandPaletteOpen]);
 
   // Build searchable items list
   const allItems = useMemo<PaletteItem[]>(() => {
@@ -202,7 +197,7 @@ export function CommandPalette() {
       const status = allStatuses.find((s) => s.id === task.statusId);
       // Find list name
       let listName = "General";
-      for (const space of currentWorkspace?.spaces || []) {
+      for (const space of spaces) {
         const foundList =
           space.lists.find((l) => l.id === task.listId) ||
           space.folders.flatMap((f) => f.lists).find((l) => l.id === task.listId);
@@ -229,7 +224,7 @@ export function CommandPalette() {
     });
 
     // 2. Navigation (Spaces & Lists)
-    for (const space of currentWorkspace?.spaces || []) {
+    for (const space of spaces) {
       if (match([space.name])) {
         items.push({
           id: `space-${space.id}`,
@@ -494,7 +489,7 @@ export function CommandPalette() {
     mous,
     contentPosts,
     fieldEvents,
-    currentWorkspace,
+    spaces,
     allStatuses,
     theme,
     setTheme,

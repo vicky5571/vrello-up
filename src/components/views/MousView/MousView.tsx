@@ -22,7 +22,6 @@ import { calculateMouValidity } from "./mouDateHelpers";
 import type { MarcomMou, MouStatus } from "@/types";
 export type { MarcomMou, MouStatus };
 
-const EMPTY_MOUS: MarcomMou[] = [];
 
 const MOU_TYPES = [
   "Compensation",
@@ -43,15 +42,12 @@ const MOU_STATUS_CHIPS: { label: string; value: string }[] = [
 
 export function MousView() {
   const { can } = useMarcomPermissions();
-  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const marcomFilters = useWorkspaceStore((s) => s.marcomFilters);
   const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
   const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);
   const setSelectedBranchId = useWorkspaceStore((s) => s.setSelectedBranchId);
   const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
-  const mous = useMarcomDataStore(
-    (s) => s.mousByWorkspace[activeWorkspaceId] ?? EMPTY_MOUS
-  );
+  const mous = useMarcomDataStore((s) => s.mous);
   const fetchMous = useMarcomDataStore((s) => s.fetchMous);
   const addCachedMou = useMarcomDataStore((s) => s.addCachedMou);
   const updateCachedMou = useMarcomDataStore((s) => s.updateCachedMou);
@@ -63,7 +59,7 @@ export function MousView() {
   const invalidatePlacements = useMarcomDataStore((s) => s.invalidatePlacements);
 
   const [isLoading, setIsLoading] = useState(
-    () => !useMarcomDataStore.getState().mousByWorkspace[activeWorkspaceId]
+    () => useMarcomDataStore.getState().mous.length === 0
   );
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
@@ -123,13 +119,12 @@ export function MousView() {
   };
 
   const loadMous = useCallback(async (force = false) => {
-    if (!activeWorkspaceId) return;
-    const hasCache = Boolean(useMarcomDataStore.getState().mousByWorkspace[activeWorkspaceId]);
+    const hasCache = useMarcomDataStore.getState().mous.length > 0;
     if (!hasCache) setIsLoading(true);
     setError(null);
     try {
       await Promise.all([
-        fetchMous(activeWorkspaceId, force),
+        fetchMous(force),
         fetchBranches(),
         fetchOutlets(),
       ]);
@@ -138,7 +133,7 @@ export function MousView() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeWorkspaceId, fetchMous, fetchBranches, fetchOutlets]);
+  }, [fetchMous, fetchBranches, fetchOutlets]);
 
   useEffect(() => {
     loadMous();
@@ -148,8 +143,8 @@ export function MousView() {
     try {
       await transitionMouStatus(mou.id, nextStatus);
       toast.success(`MOU status updated to ${nextStatus}`);
-      updateCachedMou(activeWorkspaceId, { id: mou.id, status: nextStatus });
-      invalidatePlacements(activeWorkspaceId);
+      updateCachedMou({ id: mou.id, status: nextStatus });
+      invalidatePlacements();
       if (nextStatus === "APPROVED") {
         const triggered = await useWorkspaceStore.getState().runAutomationsForTrigger("mou:approved", {
           mouId: mou.id,
@@ -158,7 +153,7 @@ export function MousView() {
         });
         if (triggered > 0) toast.info(`Automations triggered: created setup task for ${mou.partnerName}`);
       }
-      fetchMous(activeWorkspaceId, true);
+      fetchMous(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update status");
     }
@@ -186,12 +181,12 @@ export function MousView() {
     async (id: string) => {
       const ok = await deleteMou(id);
       if (ok) {
-        removeCachedMou(activeWorkspaceId, id);
-        invalidatePlacements(activeWorkspaceId);
+        removeCachedMou(id);
+        invalidatePlacements();
       }
       return ok;
     },
-    [activeWorkspaceId, removeCachedMou, invalidatePlacements],
+    [removeCachedMou, invalidatePlacements],
   );
 
   const deleteBatch = useCallback(
@@ -199,17 +194,17 @@ export function MousView() {
       const res = await fetch("/api/marcom/mous", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids, workspaceId: activeWorkspaceId }),
+        body: JSON.stringify({ ids }),
       });
       if (res.ok) {
         for (const id of ids) {
-          removeCachedMou(activeWorkspaceId, id);
+          removeCachedMou(id);
         }
-        invalidatePlacements(activeWorkspaceId);
+        invalidatePlacements();
       }
       return res.ok;
     },
-    [activeWorkspaceId, removeCachedMou, invalidatePlacements],
+    [removeCachedMou, invalidatePlacements],
   );
 
   const kpiItems = useMemo(() => buildMouKpiItems(mous), [mous]);
@@ -394,16 +389,15 @@ export function MousView() {
           mou={modalMou}
           branches={branches}
           outlets={outletsList}
-          activeWorkspaceId={activeWorkspaceId}
           isLoading={isLoading}
           onSaved={(savedMou, isEdit) => {
             if (isEdit) {
-              updateCachedMou(activeWorkspaceId, savedMou);
+              updateCachedMou(savedMou);
             } else {
-              addCachedMou(activeWorkspaceId, savedMou);
+              addCachedMou(savedMou);
             }
-            invalidatePlacements(activeWorkspaceId);
-            fetchMous(activeWorkspaceId, true);
+            invalidatePlacements();
+            fetchMous(true);
           }}
           onClose={() => setModalMou(null)}
           onTestPreview={setViewingDocMou}

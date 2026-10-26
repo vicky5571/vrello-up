@@ -10,7 +10,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import {
   getAvailableQuarters,
   calculateQuarterKpis,
@@ -20,19 +19,14 @@ import {
 import { loadQuarterlyTargets } from "@/components/views/PlacementsView/quarterlyRecapHelpers";
 import { formatQuarterlyPosmCsv, downloadCsvFile } from "./quarterlyPosmReportHelpers";
 import { toast } from "sonner";
-import type { MarcomPlacement } from "@/types";
 
-const EMPTY_PLACEMENTS: MarcomPlacement[] = [];
 
 interface QuarterlyPosmReportTabProps {
   onNavigateToPlacements?: () => void;
 }
 
 export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosmReportTabProps) {
-  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
-  const placements = useMarcomDataStore(
-    (s) => s.placementsByWorkspace[activeWorkspaceId] ?? EMPTY_PLACEMENTS
-  );
+  const placements = useMarcomDataStore((s) => s.placements);
   const fetchPlacements = useMarcomDataStore((s) => s.fetchPlacements);
   const storeBranches = useMarcomDataStore((s) => s.branches);
   const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
@@ -45,7 +39,7 @@ export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosm
     setIsLoading(true);
     try {
       await Promise.all([
-        fetchPlacements(activeWorkspaceId, force),
+        fetchPlacements(force),
         fetchBranches(force),
         fetchMaterials(force),
       ]);
@@ -54,17 +48,17 @@ export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosm
     } finally {
       setIsLoading(false);
     }
-  }, [activeWorkspaceId, fetchPlacements, fetchBranches, fetchMaterials]);
+  }, [fetchPlacements, fetchBranches, fetchMaterials]);
 
   useEffect(() => {
-    const cached = useMarcomDataStore.getState().placementsByWorkspace[activeWorkspaceId];
+    const cached = useMarcomDataStore.getState().placements;
     if (!cached || cached.length === 0) {
       fetchReportData();
     } else {
       fetchBranches();
       fetchMaterials();
     }
-  }, [activeWorkspaceId, fetchReportData, fetchBranches, fetchMaterials]);
+  }, [fetchReportData, fetchBranches, fetchMaterials]);
 
   const availableQuarters = useMemo(
     () => getAvailableQuarters(placements, "Q3 2026"),
@@ -76,8 +70,8 @@ export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosm
   );
 
   const targets = useMemo(
-    () => loadQuarterlyTargets(activeWorkspaceId, selectedQuarter),
-    [activeWorkspaceId, selectedQuarter]
+    () => loadQuarterlyTargets(selectedQuarter),
+    [selectedQuarter]
   );
 
   const materialsList = useMemo(

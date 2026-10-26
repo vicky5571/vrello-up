@@ -62,14 +62,13 @@ import { PLATFORM_CONFIG, DEFAULT_POST_SUBTASKS } from "./contentConstants";
 
 const columnHelper = createMarcomColumnHelper<ContentPostItem>();
 
-const EMPTY_POSTS: ContentPostItem[] = [];
 
 export function ContentPlannerView() {
   const { can } = useMarcomPermissions();
-  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const {
     tasks,
-    workspaces,
+    spaces,
+    users,
     activeSpaceId,
     activeListId,
     isCreatePostModalOpen,
@@ -77,7 +76,8 @@ export function ContentPlannerView() {
   } = useWorkspaceStore(
     useShallow((s) => ({
       tasks: s.tasks,
-      workspaces: s.workspaces,
+      spaces: s.spaces,
+      users: s.users,
       activeSpaceId: s.activeSpaceId,
       activeListId: s.activeListId,
       isCreatePostModalOpen: s.isCreatePostModalOpen,
@@ -95,23 +95,15 @@ export function ContentPlannerView() {
   const setCreatePostModalOpen = useWorkspaceStore((s) => s.setCreatePostModalOpen);
   const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
 
-  const currentWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
-  const members = useMemo(
-    () => currentWorkspace?.members || [],
-    [currentWorkspace]
-  );
+  const members = users;
+  const rawSpaces = spaces;
   const currentSpace = useMemo(
-    () => currentWorkspace?.spaces.find((s) => s.id === activeSpaceId),
-    [currentWorkspace, activeSpaceId]
+    () => spaces.find((s) => s.id === activeSpaceId),
+    [spaces, activeSpaceId]
   );
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
 
   // Destination Space & List resolution
-  const rawSpaces = useMemo(
-    () => currentWorkspace?.spaces || [],
-    [currentWorkspace]
-  );
   const flatSpaces = useMemo(
     () => getWorkspaceSpacesAndLists(rawSpaces),
     [rawSpaces]
@@ -125,9 +117,7 @@ export function ContentPlannerView() {
     addCachedPost,
   } = useMarcomDataStore();
 
-  const posts = useMarcomDataStore(
-    (s) => s.postsByWorkspace[activeWorkspaceId] ?? EMPTY_POSTS,
-  );
+  const posts = useMarcomDataStore((s) => s.posts);
   const storeFetchPosts = useMarcomDataStore((s) => s.fetchPosts);
 
   const branches = useMemo(
@@ -136,7 +126,7 @@ export function ContentPlannerView() {
   );
 
   const [isLoading, setIsLoading] = useState(
-    () => !Boolean(useMarcomDataStore.getState().postsByWorkspace[activeWorkspaceId])
+    () => useMarcomDataStore.getState().posts.length === 0
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -229,7 +219,7 @@ export function ContentPlannerView() {
       setError(null);
       try {
         await Promise.all([
-          storeFetchPosts(activeWorkspaceId, !isSilent),
+          storeFetchPosts(!isSilent),
           fetchBranches(),
         ]);
       } catch (e) {
@@ -238,13 +228,13 @@ export function ContentPlannerView() {
         setIsLoading(false);
       }
     },
-    [activeWorkspaceId, storeFetchPosts, fetchBranches]
+    [storeFetchPosts, fetchBranches]
   );
 
   useEffect(() => {
-    const hasCache = Boolean(useMarcomDataStore.getState().postsByWorkspace[activeWorkspaceId]);
+    const hasCache = useMarcomDataStore.getState().posts.length > 0;
     fetchPosts({ silent: hasCache });
-  }, [fetchPosts, activeWorkspaceId]);
+  }, [fetchPosts]);
 
   const handleQuickTransition = async (
     post: ContentPostItem,
@@ -277,7 +267,7 @@ export function ContentPlannerView() {
 
       const statusMeta = getContentStatusMeta(targetStatus);
       toast.success(`Post "${post.title}" diubah menjadi [${statusMeta.label}]`);
-      updateCachedPost(activeWorkspaceId, {
+      updateCachedPost({
         id: post.id,
         status: targetStatus,
         revisionNotes: notes !== undefined ? notes : post.revisionNotes || "",
@@ -347,7 +337,6 @@ export function ContentPlannerView() {
         revisionNotes: revisionNotes.trim(),
         subtasks: postSubtasks,
         outletId: outletId || null,
-        workspaceId: activeWorkspaceId,
       };
 
       const res = await fetch("/api/marcom/content", {
@@ -416,7 +405,7 @@ export function ContentPlannerView() {
         },
       });
       closeModal();
-      addCachedPost(activeWorkspaceId, savedItem);
+      addCachedPost(savedItem);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to save content post"
@@ -442,7 +431,6 @@ export function ContentPlannerView() {
           branchName: updated.branchName,
           revisionNotes: updated.revisionNotes,
           subtasks: updated.subtasks,
-          workspaceId: activeWorkspaceId,
         }),
       });
 
@@ -452,7 +440,7 @@ export function ContentPlannerView() {
       }
 
       const savedItem: ContentPostItem = await res.json();
-      updateCachedPost(activeWorkspaceId, savedItem);
+      updateCachedPost(savedItem);
       setSelectedDrawerPost(savedItem);
 
       // Sync linked task if exists
@@ -481,7 +469,7 @@ export function ContentPlannerView() {
       if (!res.ok) {
         throw new Error("Failed to delete post");
       }
-      removeCachedPost(activeWorkspaceId, id);
+      removeCachedPost(id);
       setSelectedDrawerPost(null);
     } catch (err) {
       console.error("Failed to delete post from drawer:", err);
@@ -1212,7 +1200,7 @@ export function ContentPlannerView() {
           onDeleteOne={async (id) => {
             const res = await fetch(`/api/marcom/content/${id}`, { method: "DELETE" });
             if (res.ok) {
-              removeCachedPost(activeWorkspaceId, id);
+              removeCachedPost(id);
             }
             return res.ok;
           }}

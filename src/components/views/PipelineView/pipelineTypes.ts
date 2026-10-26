@@ -71,7 +71,6 @@ export interface PipelineCockpitCardListProps {
 }
 
 export interface PipelineViewProps {
-  workspaceId?: string;
   className?: string;
 }
 

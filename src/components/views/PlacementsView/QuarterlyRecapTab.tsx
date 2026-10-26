@@ -31,7 +31,6 @@ interface QuarterlyRecapTabProps {
   placements: MarcomPlacement[];
   branches: Branch[];
   materials: { id: string; name: string }[];
-  workspaceId?: string;
   onDrillDown: (filters: DrillDownFilter) => void;
   onRecordPlacement?: () => void;
 }
@@ -40,7 +39,6 @@ export function QuarterlyRecapTab({
   placements,
   branches,
   materials,
-  workspaceId = "ws-main",
   onDrillDown,
   onRecordPlacement,
 }: QuarterlyRecapTabProps) {
@@ -54,15 +52,15 @@ export function QuarterlyRecapTab({
   );
   const [selectedBranchId, setSelectedBranchId] = useState<string>("");
 
-  // Targets state loaded per workspace + quarter
+  // Targets state loaded per quarter
   const [targets, setTargets] = useState<QuarterlyTargetMap>(() =>
-    loadQuarterlyTargets(workspaceId, selectedQuarter)
+    loadQuarterlyTargets(selectedQuarter)
   );
 
-  // Reload targets when quarter or workspace changes
+  // Reload targets when quarter changes
   useEffect(() => {
-    setTargets(loadQuarterlyTargets(workspaceId, selectedQuarter));
-  }, [workspaceId, selectedQuarter]);
+    setTargets(loadQuarterlyTargets(selectedQuarter));
+  }, [selectedQuarter]);
 
   // Target Settings Modal state
   const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
@@ -74,7 +72,7 @@ export function QuarterlyRecapTab({
   };
 
   const handleSaveTargets = () => {
-    saveQuarterlyTargets(workspaceId, selectedQuarter, tempTargets);
+    saveQuarterlyTargets(selectedQuarter, tempTargets);
     setTargets(tempTargets);
     setIsTargetModalOpen(false);
     toast.success(`Target alokasi ${selectedQuarter} berhasil disimpan`);

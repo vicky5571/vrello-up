@@ -15,14 +15,14 @@ export interface Status {
   order: number;
 }
 
-export type WorkspaceRole = "admin" | "staff" | "viewer";
+export type UserRole = "admin" | "staff" | "viewer";
 
 export interface User {
   id: string;
   name: string;
   email: string;
   avatar: string;
-  role?: WorkspaceRole;
+  role?: UserRole;
   assignedBranchIds?: string[];
 }
 
@@ -150,21 +150,12 @@ export interface Folder {
 
 export interface Space {
   id: string;
-  workspaceId: string;
   name: string;
   icon: string;
   color: string;
   statuses: Status[];
   folders: Folder[];
   lists: List[];
-}
-
-export interface Workspace {
-  id: string;
-  name: string;
-  avatar?: string;
-  spaces: Space[];
-  members: User[];
 }
 
 export type AppMode = "tasks" | "marcom";
@@ -199,7 +190,6 @@ export type PostStatus =
 
 export interface ContentPostItem {
   id: string;
-  workspaceId?: string;
   title: string;
   platform: PostPlatform;
   format: PostFormat;
@@ -232,7 +222,6 @@ export interface EventFootage {
 
 export interface FieldEventItem {
   id: string;
-  workspaceId?: string;
   name: string;
   eventType: string;
   startDate?: string | null;
@@ -269,7 +258,6 @@ export type UnifiedPlacementStatus = Exclude<PlacementStatus, "ISSUE">;
 
 export interface Placement {
   id: string;
-  workspaceId?: string;
   outletId: string;
   materialId: string;
   status: PlacementStatus;
@@ -296,7 +284,6 @@ export type PlacementItem = Placement;
 
 export interface MarcomPlacement {
   id: string;
-  workspaceId?: string;
   outletId: string;
   materialId: string;
   mouId?: string | null;
@@ -342,7 +329,6 @@ export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE"
 
 export interface Mou {
   id: string;
-  workspaceId?: string;
   branchId: string;
   outletId?: string | null;
   outletName?: string;
@@ -365,7 +351,6 @@ export type MouItem = Mou;
 
 export interface MarcomMou {
   id: string;
-  workspaceId?: string;
   branchId: string;
   outletId?: string | null;
   outletName: string;
@@ -398,7 +383,6 @@ export type DocumentStatus = "DRAFT" | "ACTIVE" | "ARCHIVED";
 
 export interface DocumentItem {
   id: string;
-  workspaceId?: string;
   name: string;
   category: string;
   period?: string;
@@ -413,7 +397,6 @@ export interface DocumentItem {
 
 export interface MonthlyReport {
   id: string;
-  workspaceId?: string;
   month: string;
   year: number;
   summary?: { totalActivities?: number; completionRate?: number } | Record<string, unknown>;

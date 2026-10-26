@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import {
   VALID_FORMATS,
   VALID_PLATFORMS,
@@ -12,9 +11,6 @@ import {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get("workspaceId") || "ws-main";
-  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
-  if (authError) return authError;
 
   const status = searchParams.get("status");
   const platform = searchParams.get("platform");
@@ -23,9 +19,7 @@ export async function GET(request: Request) {
   const limitParam = searchParams.get("limit");
   const pageParam = searchParams.get("page");
 
-  const where: Prisma.ContentPostWhereInput = {
-    workspaceId,
-  };
+  const where: Prisma.ContentPostWhereInput = {};
 
   if (status && status !== "ALL") {
     where.status = status;
@@ -85,9 +79,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const workspaceId = body?.workspaceId || "ws-main";
-  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
 
   const {
     title,
@@ -134,7 +125,6 @@ export async function POST(request: Request) {
   try {
     const post = await prisma.contentPost.create({
       data: {
-        workspaceId,
         title: title.trim(),
         platform: normalizedPlatform,
         format: normalizedFormat,

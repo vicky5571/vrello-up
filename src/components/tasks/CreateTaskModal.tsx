@@ -28,23 +28,22 @@ export function CreateTaskModal({
   const {
     activeListId,
     activeSpaceId,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
+    users,
     tags,
   } = useWorkspaceStore(
     useShallow((s) => ({
       activeListId: s.activeListId,
       activeSpaceId: s.activeSpaceId,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
+      users: s.users,
       tags: s.tags,
     })),
   );
 
   const createTask = useWorkspaceStore((s) => s.createTask);
 
-  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const rawSpaces = currentWorkspace?.spaces || [];
+  const rawSpaces = spaces;
   const flatSpaces = getWorkspaceSpacesAndLists(rawSpaces);
 
   const [selectedSpaceId, setSelectedSpaceId] = useState<string>(() => {
@@ -66,7 +65,7 @@ export function CreateTaskModal({
   });
 
   const statuses = selectedSpace?.statuses || [];
-  const members = currentWorkspace?.members || SEED_USERS;
+  const members = users;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

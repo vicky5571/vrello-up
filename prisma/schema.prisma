@@ -7,12 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum MarcomRole {
-  admin
-  staff
-  viewer
-}
-
 enum BranchStatus {
   DONE
   ON_PROGRESS
@@ -79,21 +73,11 @@ enum DocFileType {
   JPG
 }
 
-model WorkspaceMember {
-  workspaceId String
-  email       String
-  role        MarcomRole @default(viewer)
-
-  @@id([workspaceId, email])
-}
-
 // ============================================================================
 // GLOBAL MASTER DATA (ORGANIZATION-WIDE)
 // Entities in this section (Branch, Outlet, Material) represent physical,
 // persistent organizational infrastructure and material catalogs.
-// INVARIANT: DO NOT ADD `workspaceId` to these models. They must be shared
-// universally across all workspaces without partitioning. Switching active
-// workspace in the UI never filters or changes these records.
+// System is single-tenant by design (one organization). No workspace scoping.
 // ============================================================================
 
 model Branch {
@@ -130,7 +114,7 @@ model Outlet {
   events     FieldEvent[]
   posts      ContentPost[]
 
-  // Lifecycle & Approval fields (Fase 2B)
+  // Lifecycle & Approval fields
   status          OutletStatus  @default(APPROVED)
   photoUrl        String        @default("")
   submittedBy     String        @default("")
@@ -151,43 +135,37 @@ model Material {
 }
 
 // ============================================================================
-// WORKSPACE-SCOPED OPERATIONAL WORK ITEMS (TRANSACTIONAL)
-// Entities in this section (Placement, Mou, ContentPost, FieldEvent, etc.)
-// represent time-bounded marketing campaigns, contracts, and tasks.
-// INVARIANT: ALL models here MUST contain `workspaceId` referencing
-// `WorkspaceItem` with `onDelete: Cascade`. Switching workspace in the UI
-// isolates these records strictly by tenant.
+// OPERATIONAL WORK ITEMS (ORG-WIDE, SINGLE-TENANT)
+// Entities below represent time-bounded marketing campaigns, contracts, tasks.
+// System is single-tenant — no workspaceId scoping required.
 // ============================================================================
 
 model Placement {
-  id          String          @id @default(cuid())
-  workspaceId String          @default("ws-main")
-  workspace   WorkspaceItem   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  outletId    String
-  outlet      Outlet          @relation(fields: [outletId], references: [id], onDelete: Cascade)
-  materialId  String
-  material    Material        @relation(fields: [materialId], references: [id])
-  mouId       String?
-  mou         Mou?            @relation(fields: [mouId], references: [id], onDelete: SetNull)
-  status      PlacementStatus @default(NOT_STARTED)
-  brand       Brand           @default(IM3)
-  date        DateTime?
-  picName     String          @default("")
-  photoUrl    String          @default("")
-  dimensions  String          @default("")
-  cost        Float           @default(0)
-  notes       String          @default("")
+  id         String          @id @default(cuid())
+  outletId   String
+  outlet     Outlet          @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  materialId String
+  material   Material        @relation(fields: [materialId], references: [id])
+  mouId      String?
+  mou        Mou?            @relation(fields: [mouId], references: [id], onDelete: SetNull)
+  status     PlacementStatus @default(NOT_STARTED)
+  brand      Brand           @default(IM3)
+  date       DateTime?
+  picName    String          @default("")
+  photoUrl   String          @default("")
+  dimensions String          @default("")
+  cost       Float           @default(0)
+  notes      String          @default("")
 
-  latitude         Float?
-  longitude        Float?
-  shareLocationUrl String          @default("")
-  locationNotes    String          @default("")
-  quarter          String          @default("Q3 2026")
-  campaignTheme    String          @default("")
-  isLocationValid  Boolean         @default(true)
+  latitude          Float?
+  longitude         Float?
+  shareLocationUrl  String  @default("")
+  locationNotes     String  @default("")
+  quarter           String  @default("Q3 2026")
+  campaignTheme     String  @default("")
+  isLocationValid   Boolean @default(true)
   locationDeviation Float?
 
-  @@index([workspaceId])
   @@index([mouId])
   @@index([outletId])
   @@index([materialId])
@@ -196,54 +174,48 @@ model Placement {
 }
 
 model Mou {
-  id                String        @id @default(cuid())
-  workspaceId       String        @default("ws-main")
-  workspace         WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id                String     @id @default(cuid())
   branchId          String
-  branch            Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branch            Branch     @relation(fields: [branchId], references: [id], onDelete: Cascade)
   outletId          String?
-  outlet            Outlet?       @relation(fields: [outletId], references: [id], onDelete: SetNull)
-  outletName        String        @default("")
+  outlet            Outlet?    @relation(fields: [outletId], references: [id], onDelete: SetNull)
+  outletName        String     @default("")
   partnerName       String
   mouType           String
   submissionDate    DateTime?
   startDate         DateTime?
   endDate           DateTime?
-  status            MouStatus     @default(DRAFT)
-  picName           String        @default("")
-  picPhone          String        @default("")
-  docPath           String        @default("")
-  compensationValue Float         @default(0)
-  notes             String        @default("")
+  status            MouStatus  @default(DRAFT)
+  picName           String     @default("")
+  picPhone          String     @default("")
+  docPath           String     @default("")
+  compensationValue Float      @default(0)
+  notes             String     @default("")
 
-  placements        Placement[]
+  placements Placement[]
 
-  @@index([workspaceId])
   @@index([outletId])
   @@index([branchId])
 }
 
 model ContentPost {
-  id          String        @id @default(cuid())
-  workspaceId String        @default("ws-main")
-  workspace   WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  title       String
-  platform    String
-  format      String
-  publishDate DateTime?
-  status      String        @default("SCHEDULED")
-  caption     String        @default("")
-  mediaUrl    String        @default("")
-  branchName  String        @default("")
-  picName       String        @default("")
-  revisionNotes String        @default("")
-  subtasks      Json          @default("[]")
+  id            String    @id @default(cuid())
+  title         String
+  platform      String
+  format        String
+  publishDate   DateTime?
+  status        String    @default("SCHEDULED")
+  caption       String    @default("")
+  mediaUrl      String    @default("")
+  branchName    String    @default("")
+  picName       String    @default("")
+  revisionNotes String    @default("")
+  subtasks      Json      @default("[]")
   outletId      String?
-  outlet        Outlet?       @relation(fields: [outletId], references: [id], onDelete: SetNull)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  outlet        Outlet?   @relation(fields: [outletId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  @@index([workspaceId])
   @@index([platform])
   @@index([status])
   @@index([publishDate])
@@ -252,8 +224,6 @@ model ContentPost {
 
 model FieldEvent {
   id             String         @id @default(cuid())
-  workspaceId    String         @default("ws-main")
-  workspace      WorkspaceItem  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   name           String
   eventType      String
   startDate      DateTime?
@@ -272,12 +242,12 @@ model FieldEvent {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  @@index([workspaceId])
   @@index([status])
   @@index([startDate])
   @@index([branchName])
   @@index([outletId])
 }
+
 model EventFootage {
   id       String     @id @default(cuid())
   eventId  String
@@ -288,68 +258,46 @@ model EventFootage {
 }
 
 model DocumentItem {
-  id          String        @id @default(cuid())
-  workspaceId String        @default("ws-main")
-  workspace   WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id          String      @id @default(cuid())
   name        String
   category    String
-  period      String        @default("")
-  branchName  String        @default("")
-  ownerPic    String        @default("")
-  status      String        @default("DRAFT")
+  period      String      @default("")
+  branchName  String      @default("")
+  ownerPic    String      @default("")
+  status      String      @default("DRAFT")
   fileType    DocFileType
-  fileSizeMb  Float         @default(0)
+  fileSizeMb  Float       @default(0)
   filePath    String
-  description String        @default("")
-
-  @@index([workspaceId])
+  description String      @default("")
 }
 
 model MonthlyReport {
-  id           String        @id @default(cuid())
-  workspaceId  String        @default("ws-main")
-  workspace    WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
   month        String
   year         Int
-  summary      Json          @default("{}")
-  activities   Json          @default("[]")
-  achievements Json          @default("[]")
-  keyIssues    Json          @default("[]")
-  actionPlans  Json          @default("[]")
-
-  @@index([workspaceId])
+  summary      Json     @default("{}")
+  activities   Json     @default("[]")
+  achievements Json     @default("[]")
+  keyIssues    Json     @default("[]")
+  actionPlans  Json     @default("[]")
 }
 
-model WorkspaceItem {
-  id             String          @id @default(cuid())
-  name           String
-  avatar         String          @default("")
-  members        Json            @default("[]")
-  spaces         SpaceItem[]
-  placements     Placement[]
-  mous           Mou[]
-  fieldEvents    FieldEvent[]
-  contentPosts   ContentPost[]
-  monthlyReports MonthlyReport[]
-  documents      DocumentItem[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-}
+// ============================================================================
+// TASK MANAGEMENT HIERARCHY
+// SpaceItem → FolderItem → ListItem → TaskItem → TaskCommentItem
+// Single-tenant: SpaceItem is top-level, no workspace parent.
+// ============================================================================
 
 model SpaceItem {
-  id          String        @id @default(cuid())
-  workspaceId String
-  workspace   WorkspaceItem @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  name        String
-  icon        String        @default("folder")
-  color       String        @default("#64748B")
-  statuses    Json          @default("[]")
-  folders     FolderItem[]
-  lists       ListItem[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  @@index([workspaceId])
+  id        String      @id @default(cuid())
+  name      String
+  icon      String      @default("folder")
+  color     String      @default("#64748B")
+  statuses  Json        @default("[]")
+  folders   FolderItem[]
+  lists     ListItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
 
 model FolderItem {
@@ -382,16 +330,16 @@ model ListItem {
 }
 
 model TaskItem {
-  id              String            @id @default(cuid())
-  listId          String
-  list            ListItem          @relation(fields: [listId], references: [id], onDelete: Cascade)
-  title           String
-  description     String            @default("")
-  statusId        String
-  priority        String            @default("normal")
-  dueDate         String?
-  startDate       String?
-  estimatedHours  Float?
+  id                String            @id @default(cuid())
+  listId            String
+  list              ListItem          @relation(fields: [listId], references: [id], onDelete: Cascade)
+  title             String
+  description       String            @default("")
+  statusId          String
+  priority          String            @default("normal")
+  dueDate           String?
+  startDate         String?
+  estimatedHours    Float?
   orderIndex        Int               @default(0)
   relatedMarcomId   String?
   relatedMarcomType String?

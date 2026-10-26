@@ -70,20 +70,17 @@ const INITIAL_AGENTS: AgentItem[] = [
 
 export function AgentsModal({ isOpen, onClose }: AgentsModalProps) {
   const [agents, setAgents] = useState<AgentItem[]>(INITIAL_AGENTS);
-  const { tasks, workspaces, activeWorkspaceId, activeSpaceId } =
+  const { tasks, spaces, activeSpaceId } =
     useWorkspaceStore(
       useShallow((s) => ({
         tasks: s.tasks,
-        workspaces: s.workspaces,
-        activeWorkspaceId: s.activeWorkspaceId,
+        spaces: s.spaces,
         activeSpaceId: s.activeSpaceId,
       })),
     );
 
   const statuses =
-    workspaces
-      .find((w) => w.id === activeWorkspaceId)
-      ?.spaces.find((s) => s.id === activeSpaceId)?.statuses ?? [];
+    spaces.find((s) => s.id === activeSpaceId)?.statuses ?? [];
 
   const toggleAgent = (id: string) => {
     setAgents((prev) =>

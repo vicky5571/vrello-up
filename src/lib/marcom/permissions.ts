@@ -1,7 +1,7 @@
 "use client";
 
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import { useShallow } from "zustand/react/shallow";
+import { SEED_USERS } from "@/lib/constants/seeds";
 import {
   hasScopedPermission,
   canAccessBranch,
@@ -21,15 +21,8 @@ export function useMarcomPermissions(): {
   can: (action: PermissionAction, targetBranchId?: string) => boolean;
   canAccessBranch: (targetBranchId?: string) => boolean;
 } {
-  const { workspaces, activeWorkspaceId, currentUserId } = useWorkspaceStore(
-    useShallow((s) => ({
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
-      currentUserId: s.currentUserId,
-    })),
-  );
-  const members =
-    workspaces.find((w) => w.id === activeWorkspaceId)?.members ?? [];
+  const currentUserId = useWorkspaceStore((s) => s.currentUserId);
+  const members = SEED_USERS;
   const currentMember = members.find((m) => m.id === currentUserId);
   const role = resolveMarcomRole(members, currentUserId);
   const assignedBranchIds = currentMember?.assignedBranchIds ?? [];

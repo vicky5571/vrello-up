@@ -3,7 +3,6 @@ import { type ViewMode, type AppMode } from "@/types";
 export interface UrlNavState {
   appMode?: AppMode;
   view?: ViewMode;
-  workspaceId?: string;
   spaceId?: string;
   listId?: string;
   taskId?: string;
@@ -64,11 +63,7 @@ export function parseUrlNavState(
   const rawSpace = params.get("space") || params.get("s");
   const rawList = params.get("list") || params.get("l");
   const rawTask = params.get("task") || params.get("t");
-  const rawWorkspace = params.get("workspace") || params.get("ws");
 
-  if (rawWorkspace) {
-    state.workspaceId = rawWorkspace.trim();
-  }
   if (rawSpace) {
     state.spaceId = rawSpace.trim();
   }
@@ -127,9 +122,6 @@ export function serializeUrlNavState(state: UrlNavState): string {
   if (state.view) {
     params.set("view", state.view);
   }
-  if (state.workspaceId) {
-    params.set("workspace", state.workspaceId);
-  }
   if (state.spaceId) {
     params.set("space", state.spaceId);
   }
@@ -146,7 +138,7 @@ export function serializeUrlNavState(state: UrlNavState): string {
 
 /**
  * Constructs a shareable deep-link URL for a specific task.
- * Retains relevant existing context (e.g. view, space, workspace) if available.
+ * Retains relevant existing context (e.g. view, space) if available.
  */
 export function buildShareableTaskUrl(
   taskId: string,

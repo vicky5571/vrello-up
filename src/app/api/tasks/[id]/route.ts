@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { realtimeHub } from "@/lib/server/realtimeHub";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import {
   type Task,
   type User,
@@ -33,12 +32,6 @@ export async function PATCH(
     if (!existingTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
-
-    const authError = await requireWorkspaceAccess(
-      existingTask.list.space.workspaceId,
-      { requiredRole: "staff", request },
-    );
-    if (authError) return authError;
 
     const body = await request.json();
 
@@ -149,7 +142,7 @@ export async function PATCH(
       updatedAt: updated.updatedAt.toISOString(),
     };
 
-    realtimeHub.broadcastTaskUpsert(formattedTask, existingTask.list.space.workspaceId);
+    realtimeHub.broadcastTaskUpsert(formattedTask);
     return NextResponse.json(formattedTask);
   } catch (error) {
     console.error("Error updating task in database:", error);
@@ -169,23 +162,16 @@ export async function DELETE(
 
     const existingTask = await prisma.taskItem.findUnique({
       where: { id },
-      include: { list: { include: { space: true } } },
     });
     if (!existingTask) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
-    const authError = await requireWorkspaceAccess(
-      existingTask.list.space.workspaceId,
-      { requiredRole: "staff", request: _request },
-    );
-    if (authError) return authError;
-
     await prisma.taskItem.delete({
       where: { id },
     });
 
-    realtimeHub.broadcastTaskDelete(id, existingTask.list.space.workspaceId);
+    realtimeHub.broadcastTaskDelete(id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Error deleting task in database:", error);
@@ -195,4 +181,3 @@ export async function DELETE(
     );
   }
 }
-

@@ -251,7 +251,6 @@ function PlacementFormModalContent({
                 selectedOutletObj={selectedOutletObj}
                 onSelectOutlet={handleSelectOutlet}
                 onSetBrand={handleSetBrand}
-                workspaceId={placement.workspaceId || "ws-main"}
               />
             )}
 

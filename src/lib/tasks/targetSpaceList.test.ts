@@ -7,7 +7,6 @@ import { getWorkspaceSpacesAndLists, findSpaceByListId, getDefaultDestinationFor
 const SAMPLE_SPACES: Space[] = [
   {
     id: "space-product",
-    workspaceId: "ws-main",
     name: "Design & Product",
     icon: "Palette",
     color: "#8B5CF6",
@@ -37,7 +36,6 @@ const SAMPLE_SPACES: Space[] = [
   },
   {
     id: "space-marcom",
-    workspaceId: "ws-main",
     name: "Marketing & Campaigns",
     icon: "Sparkles",
     color: "#EC4899",

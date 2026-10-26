@@ -52,10 +52,7 @@ export const ListGroup = memo(function ListGroup({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const activeListId = useWorkspaceStore((s) => s.activeListId);
-  const members = useWorkspaceStore((s) => {
-    const ws = s.workspaces.find((w) => w.id === s.activeWorkspaceId);
-    return ws?.members || EMPTY_MEMBERS;
-  });
+  const members = useWorkspaceStore((s) => s.users || EMPTY_MEMBERS);
   const createTask = useWorkspaceStore((s) => s.createTask);
   const updateTask = useWorkspaceStore((s) => s.updateTask);
 

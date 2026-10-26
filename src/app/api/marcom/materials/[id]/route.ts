@@ -10,7 +10,7 @@ const PATCHABLE_FIELDS = ["type", "name", "requiresMou"] as const;
 async function requireMasterData() {
   let role;
   try {
-    role = await requireMember("ws-main");
+    role = await requireMember();
   } catch (e) {
     if (e instanceof Response) throw e;
     throw e;

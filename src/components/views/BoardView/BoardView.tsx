@@ -30,19 +30,19 @@ export function BoardView() {
     tasks,
     activeListId,
     activeSpaceId,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
     filters,
     selectedTaskIds,
+    users,
   } = useWorkspaceStore(
     useShallow((s) => ({
       tasks: s.tasks,
       activeListId: s.activeListId,
       activeSpaceId: s.activeSpaceId,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
       filters: s.filters,
       selectedTaskIds: s.selectedTaskIds,
+      users: s.users,
     })),
   );
 
@@ -52,8 +52,7 @@ export function BoardView() {
   const toggleTaskSelection = useWorkspaceStore((s) => s.toggleTaskSelection);
   const setTaskSelection = useWorkspaceStore((s) => s.setTaskSelection);
 
-  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = currentWorkspace?.spaces.find(
+  const currentSpace = spaces.find(
     (s) => s.id === activeSpaceId,
   );
   const statuses = useMemo(
@@ -61,8 +60,8 @@ export function BoardView() {
     [currentSpace?.statuses],
   );
   const members = useMemo(
-    () => currentWorkspace?.members || [],
-    [currentWorkspace?.members],
+    () => users || [],
+    [users],
   );
   const spaceListIds = useMemo(
     () => new Set(getSpaceListIds(currentSpace)),

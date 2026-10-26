@@ -23,7 +23,7 @@ import {
   applyToggleTaskTag,
 } from "@/lib/store/tagOperations";
 import { applyIncrementAutomationRun } from "@/lib/store/automationOperations";
-import { findSpaceForListId, findWorkspaceForListId } from "@/lib/store/workspaceSync";
+import { findSpaceForListId } from "@/lib/store/spaceSync";
 import { syncFieldEventOnTaskStatusChange } from "@/lib/tasks/eventTaskSync";
 import {
   syncPlacementOnTaskStatusChange,
@@ -90,9 +90,7 @@ export const createTaskSlice: StateCreator<
 
   createTask: (newTaskData) => {
     const state = get();
-    const currentSpace = state.workspaces
-      .flatMap((w) => w.spaces)
-      .find((s) => s.id === state.activeSpaceId);
+    const currentSpace = state.spaces.find((s) => s.id === state.activeSpaceId);
     const defaultListId =
       state.activeListId ||
       currentSpace?.lists[0]?.id ||
@@ -114,8 +112,7 @@ export const createTaskSlice: StateCreator<
     set({ tasks: nextTasks });
     syncUpdateTask(id, effectiveUpdates);
     if (updates.statusId && prev?.relatedMarcomId) {
-      const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
-      const spaces = currentWs?.spaces || [];
+      const spaces = get().spaces;
       const revertOnFailure = (result: MarcomSyncResult) => {
         if (!result.synced && !result.skipped && result.error) {
           const { nextTasks: reverted } = applyUpdateTask(
@@ -141,13 +138,7 @@ export const createTaskSlice: StateCreator<
     const state = get();
     const task = state.tasks.find((t) => t.id === id);
     if (!task) return;
-    const workspace = findWorkspaceForListId(state.workspaces, task.listId);
-    const members =
-      workspace && workspace.members.length > 0
-        ? workspace.members
-        : SEED_USERS;
-    const lead =
-      members.find((m) => m.role === "admin") ?? members[0];
+    const lead = SEED_USERS.find((m) => m.role === "admin") ?? SEED_USERS[0];
     if (!lead) return;
     state.updateTask(id, {
       assignees: task.assignees.some((a) => a.id === lead.id)
@@ -185,8 +176,7 @@ export const createTaskSlice: StateCreator<
 
     // Fire Marcom sync hooks for tasks with statusId changes
     if (updates.statusId) {
-      const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
-      const spaces = currentWs?.spaces || [];
+      const spaces = get().spaces;
 
       for (const id of ids) {
         const prev = prevTasks.find((t) => t.id === id);
@@ -231,8 +221,7 @@ export const createTaskSlice: StateCreator<
       orderIndex: newOrderIndex,
     });
     if (prev?.relatedMarcomId) {
-      const currentWs = get().workspaces.find((w) => w.id === get().activeWorkspaceId);
-      const spaces = currentWs?.spaces || [];
+      const spaces = get().spaces;
       const revertOnFailure = (result: MarcomSyncResult) => {
         if (!result.synced && !result.skipped && result.error) {
           const { nextTasks: reverted } = applyMoveTaskStatus(
@@ -259,7 +248,7 @@ export const createTaskSlice: StateCreator<
     if (!state.automationEnabled["rule-2"]) return;
     const task = state.tasks.find((t) => t.id === taskId);
     if (!task) return;
-    const space = findSpaceForListId(state.workspaces, task.listId);
+    const space = findSpaceForListId(state.spaces, task.listId);
     const oldCategory = space?.statuses.find(
       (s) => s.id === prev.statusId,
     )?.category;
@@ -314,7 +303,7 @@ export const createTaskSlice: StateCreator<
     if (!state.automationEnabled["rule-3"]) return;
     const updated = state.tasks.find((t) => t.id === taskId);
     if (!updated) return;
-    const space = findSpaceForListId(state.workspaces, updated.listId);
+    const space = findSpaceForListId(state.spaces, updated.listId);
     const current = space?.statuses.find((s) => s.id === updated.statusId);
     if (!current || current.category !== "in_progress") return;
     const review = space!.statuses.find((s) => s.category === "review");

@@ -71,16 +71,14 @@ export function GanttView() {
     tasks,
     activeListId,
     activeSpaceId,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
     filters,
   } = useWorkspaceStore(
     useShallow((s) => ({
       tasks: s.tasks,
       activeListId: s.activeListId,
       activeSpaceId: s.activeSpaceId,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
       filters: s.filters,
     })),
   );
@@ -91,8 +89,7 @@ export function GanttView() {
   const addDependency = useWorkspaceStore((s) => s.addDependency);
   const removeDependency = useWorkspaceStore((s) => s.removeDependency);
 
-  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = currentWorkspace?.spaces.find(
+  const currentSpace = spaces.find(
     (s) => s.id === activeSpaceId,
   );
   const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);

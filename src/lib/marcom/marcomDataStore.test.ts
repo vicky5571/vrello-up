@@ -24,12 +24,12 @@ describe("useMarcomDataStore", () => {
       isOutletsLoaded: false,
       isOutletsLoading: false,
       lastError: null,
-      postsByWorkspace: {},
-      reportsByWorkspace: {},
-      documentsByWorkspace: {},
-      mousByWorkspace: {},
-      placementsByWorkspace: {},
-      eventsByWorkspace: {},
+      posts: [],
+      reports: [],
+      documents: [],
+      mous: [],
+      placements: [],
+      events: [],
     });
   });
 
@@ -193,9 +193,9 @@ describe("useMarcomDataStore", () => {
   });
 
   describe("SWR Content Posts Cache", () => {
-    it("sets, gets, updates, and invalidates posts per workspace", () => {
+    it("sets, gets, updates, and invalidates posts", () => {
+      useMarcomDataStore.setState({ posts: [], isPostsLoaded: false });
       const store = useMarcomDataStore.getState();
-      const wsId = "ws-test";
 
       const initialPosts: ContentPostItem[] = [
         {
@@ -214,41 +214,36 @@ describe("useMarcomDataStore", () => {
         },
       ];
 
-      // Cache miss initially
-      assert.equal(store.getCachedPosts(wsId), undefined);
-
       // Set cache
-      store.setCachedPosts(wsId, initialPosts);
-      const cached = store.getCachedPosts(wsId);
-      assert.ok(cached);
-      assert.equal(cached.length, 2);
+      store.setCachedPosts(initialPosts);
+      assert.equal(useMarcomDataStore.getState().isPostsLoaded, true);
+      assert.equal(useMarcomDataStore.getState().posts.length, 2);
 
       // Update a post
-      store.updateCachedPost(wsId, { id: "cp-1", status: "PUBLISHED" });
-      const updated = store.getCachedPosts(wsId);
-      assert.equal(updated?.find((p) => p.id === "cp-1")?.status, "PUBLISHED");
+      store.updateCachedPost({ id: "cp-1", status: "PUBLISHED" });
+      const updated = useMarcomDataStore.getState().posts;
+      assert.equal(updated.find((p) => p.id === "cp-1")?.status, "PUBLISHED");
 
       // Remove a post
-      store.removeCachedPost(wsId, "cp-2");
-      assert.equal(store.getCachedPosts(wsId)?.length, 1);
+      store.removeCachedPost("cp-2");
+      assert.equal(useMarcomDataStore.getState().posts.length, 1);
 
       // Invalidate cache
-      store.invalidatePosts(wsId);
-      assert.equal(store.getCachedPosts(wsId), undefined);
+      store.invalidatePosts();
+      assert.equal(useMarcomDataStore.getState().isPostsLoaded, false);
     });
   });
 
   describe("SWR Reports & Documents Cache", () => {
-    it("caches reports and documents per workspace", () => {
+    it("caches reports and documents", () => {
+      useMarcomDataStore.setState({ reports: [], documents: [], isReportsLoaded: false, isDocumentsLoaded: false });
       const store = useMarcomDataStore.getState();
-      const wsId = "ws-test-2";
 
       const mockReports: MonthlyReport[] = [
         {
           id: "rep-1",
           month: "September",
           year: 2026,
-          workspaceId: wsId,
         },
       ];
 
@@ -262,27 +257,26 @@ describe("useMarcomDataStore", () => {
         },
       ];
 
-      store.setCachedReports(wsId, mockReports);
-      store.setCachedDocuments(wsId, mockDocs);
+      store.setCachedReports(mockReports);
+      store.setCachedDocuments(mockDocs);
 
-      assert.equal(store.getCachedReports(wsId)?.length, 1);
-      assert.equal(store.getCachedDocuments(wsId)?.length, 1);
+      assert.equal(useMarcomDataStore.getState().reports.length, 1);
+      assert.equal(useMarcomDataStore.getState().documents.length, 1);
 
-      store.invalidateReports(wsId);
-      assert.equal(store.getCachedReports(wsId), undefined);
-      assert.equal(store.getCachedDocuments(wsId)?.length, 1); // Docs untouched
+      store.invalidateReports();
+      assert.equal(useMarcomDataStore.getState().isReportsLoaded, false);
+      assert.equal(useMarcomDataStore.getState().isDocumentsLoaded, true); // Docs untouched
     });
   });
 
   describe("SWR MOUs Cache", () => {
-    it("sets, gets, and invalidates MOUs per workspace", () => {
+    it("sets, gets, and invalidates MOUs", () => {
+      useMarcomDataStore.setState({ mous: [], isMousLoaded: false });
       const store = useMarcomDataStore.getState();
-      const wsId = "ws-mou-1";
 
       const mockMous: MarcomMou[] = [
         {
           id: "mou-1",
-          workspaceId: wsId,
           branchId: "b1",
           outletName: "Outlet 1",
           partnerName: "Partner A",
@@ -299,34 +293,24 @@ describe("useMarcomDataStore", () => {
         },
       ];
 
-      assert.equal(store.getCachedMous(wsId), undefined);
+      store.setCachedMous(mockMous);
+      assert.equal(useMarcomDataStore.getState().isMousLoaded, true);
+      assert.equal(useMarcomDataStore.getState().mous.length, 1);
+      assert.equal(useMarcomDataStore.getState().mous[0].partnerName, "Partner A");
 
-      store.setCachedMous(wsId, mockMous);
-      const cached = store.getCachedMous(wsId);
-      assert.ok(cached);
-      assert.equal(cached.length, 1);
-      assert.equal(cached[0].partnerName, "Partner A");
-
-      // Invalidate specific workspace
-      store.invalidateMous(wsId);
-      assert.equal(store.getCachedMous(wsId), undefined);
-
-      // Invalidate all workspaces
-      store.setCachedMous("ws-mou-2", mockMous);
       store.invalidateMous();
-      assert.equal(store.getCachedMous("ws-mou-2"), undefined);
+      assert.equal(useMarcomDataStore.getState().isMousLoaded, false);
     });
   });
 
   describe("SWR Placements Cache", () => {
-    it("sets, gets, and invalidates Placements per workspace", () => {
+    it("sets, gets, and invalidates Placements", () => {
+      useMarcomDataStore.setState({ placements: [], isPlacementsLoaded: false });
       const store = useMarcomDataStore.getState();
-      const wsId = "ws-place-1";
 
       const mockPlacements: MarcomPlacement[] = [
         {
           id: "plc-1",
-          workspaceId: wsId,
           outletId: "out-1",
           materialId: "mat-1",
           status: "DONE",
@@ -340,34 +324,24 @@ describe("useMarcomDataStore", () => {
         },
       ];
 
-      assert.equal(store.getCachedPlacements(wsId), undefined);
+      store.setCachedPlacements(mockPlacements);
+      assert.equal(useMarcomDataStore.getState().isPlacementsLoaded, true);
+      assert.equal(useMarcomDataStore.getState().placements.length, 1);
+      assert.equal(useMarcomDataStore.getState().placements[0].picName, "Rudi");
 
-      store.setCachedPlacements(wsId, mockPlacements);
-      const cached = store.getCachedPlacements(wsId);
-      assert.ok(cached);
-      assert.equal(cached.length, 1);
-      assert.equal(cached[0].picName, "Rudi");
-
-      // Invalidate specific workspace
-      store.invalidatePlacements(wsId);
-      assert.equal(store.getCachedPlacements(wsId), undefined);
-
-      // Invalidate all
-      store.setCachedPlacements("ws-place-2", mockPlacements);
       store.invalidatePlacements();
-      assert.equal(store.getCachedPlacements("ws-place-2"), undefined);
+      assert.equal(useMarcomDataStore.getState().isPlacementsLoaded, false);
     });
   });
 
   describe("SWR Events Cache", () => {
-    it("sets, gets, and invalidates Field Events per workspace", () => {
+    it("sets, gets, and invalidates Field Events", () => {
+      useMarcomDataStore.setState({ events: [], isEventsLoaded: false });
       const store = useMarcomDataStore.getState();
-      const wsId = "ws-event-1";
 
       const mockEvents: FieldEventItem[] = [
         {
           id: "evt-1",
-          workspaceId: wsId,
           name: "Car Free Day Promo",
           eventType: "ROADSHOW",
           branchName: "Semarang",
@@ -382,215 +356,102 @@ describe("useMarcomDataStore", () => {
         },
       ];
 
-      assert.equal(store.getCachedEvents(wsId), undefined);
+      store.setCachedEvents(mockEvents);
+      assert.equal(useMarcomDataStore.getState().isEventsLoaded, true);
+      assert.equal(useMarcomDataStore.getState().events.length, 1);
+      assert.equal(useMarcomDataStore.getState().events[0].name, "Car Free Day Promo");
 
-      store.setCachedEvents(wsId, mockEvents);
-      const cached = store.getCachedEvents(wsId);
-      assert.ok(cached);
-      assert.equal(cached.length, 1);
-      assert.equal(cached[0].name, "Car Free Day Promo");
-
-      // Invalidate specific workspace
-      store.invalidateEvents(wsId);
-      assert.equal(store.getCachedEvents(wsId), undefined);
-
-      // Invalidate all
-      store.setCachedEvents("ws-event-2", mockEvents);
       store.invalidateEvents();
-      assert.equal(store.getCachedEvents("ws-event-2"), undefined);
-    });
-  });
-
-  describe("Scoped Async Fetch Actions (fetchEvents & fetchMous)", () => {
-    it("fetchEvents returns empty array immediately if workspaceId is empty without calling fetch", async () => {
-      const store = useMarcomDataStore.getState();
-      const res = await store.fetchEvents("");
-      assert.deepEqual(res, []);
-    });
-
-    it("fetchMous returns empty array immediately if workspaceId is empty without calling fetch", async () => {
-      const store = useMarcomDataStore.getState();
-      const res = await store.fetchMous("");
-      assert.deepEqual(res, []);
-    });
-
-    it("fetchEvents returns cached events when available without refetching", async () => {
-      const store = useMarcomDataStore.getState();
-      const wsId = "ws-cached-events";
-      const dummyEvents = [
-        {
-          id: "e-1",
-          workspaceId: wsId,
-          name: "Cached Event",
-          eventType: "PROMO",
-          status: "UPCOMING" as const,
-        },
-      ];
-      store.setCachedEvents(wsId, dummyEvents as unknown as FieldEventItem[]);
-
-      const res = await store.fetchEvents(wsId);
-      assert.deepEqual(res, dummyEvents);
-    });
-
-    it("fetchMous returns cached mous when available without refetching", async () => {
-      const store = useMarcomDataStore.getState();
-      const wsId = "ws-cached-mous";
-      const dummyMous = [
-        {
-          id: "m-1",
-          workspaceId: wsId,
-          partnerName: "Cached Partner",
-          mouType: "Sponsorship",
-          status: "DRAFT" as const,
-        },
-      ];
-      store.setCachedMous(wsId, dummyMous as unknown as MarcomMou[]);
-
-      const res = await store.fetchMous(wsId);
-      assert.deepEqual(res, dummyMous);
+      assert.equal(useMarcomDataStore.getState().isEventsLoaded, false);
     });
   });
 
   describe("Reactive Mutation Actions", () => {
     it("adds, updates, and removes cached placements immutably", () => {
+      useMarcomDataStore.setState({ placements: [] });
       const store = useMarcomDataStore.getState();
-      const wsId = "ws-test-place";
       const initial: MarcomPlacement = {
         id: "p-1",
-        workspaceId: wsId,
         outletId: "out-1",
         materialId: "mat-1",
         status: "NOT_STARTED",
       } as unknown as MarcomPlacement;
 
-      store.addCachedPlacement(wsId, initial);
-      assert.equal(useMarcomDataStore.getState().placementsByWorkspace[wsId]?.length, 1);
-      assert.equal(useMarcomDataStore.getState().placementsByWorkspace[wsId]?.[0].status, "NOT_STARTED");
+      store.addCachedPlacement(initial);
+      assert.equal(useMarcomDataStore.getState().placements.length, 1);
+      assert.equal(useMarcomDataStore.getState().placements[0].status, "NOT_STARTED");
 
-      store.updateCachedPlacement(wsId, { id: "p-1", status: "DONE" });
-      assert.equal(useMarcomDataStore.getState().placementsByWorkspace[wsId]?.[0].status, "DONE");
+      store.updateCachedPlacement({ id: "p-1", status: "DONE" });
+      assert.equal(useMarcomDataStore.getState().placements[0].status, "DONE");
 
-      store.removeCachedPlacement(wsId, "p-1");
-      assert.equal(useMarcomDataStore.getState().placementsByWorkspace[wsId]?.length, 0);
+      store.removeCachedPlacement("p-1");
+      assert.equal(useMarcomDataStore.getState().placements.length, 0);
     });
 
     it("adds, updates, and removes cached MOUs immutably", () => {
+      useMarcomDataStore.setState({ mous: [] });
       const store = useMarcomDataStore.getState();
-      const wsId = "ws-test-mou";
       const initial: MarcomMou = {
         id: "m-1",
-        workspaceId: wsId,
         partnerName: "Partner A",
         status: "DRAFT",
       } as unknown as MarcomMou;
 
-      store.addCachedMou(wsId, initial);
-      assert.equal(useMarcomDataStore.getState().mousByWorkspace[wsId]?.length, 1);
+      store.addCachedMou(initial);
+      assert.equal(useMarcomDataStore.getState().mous.length, 1);
 
-      store.updateCachedMou(wsId, { id: "m-1", status: "APPROVED" });
-      assert.equal(useMarcomDataStore.getState().mousByWorkspace[wsId]?.[0].status, "APPROVED");
+      store.updateCachedMou({ id: "m-1", status: "APPROVED" });
+      assert.equal(useMarcomDataStore.getState().mous[0].status, "APPROVED");
 
-      store.removeCachedMou(wsId, "m-1");
-      assert.equal(useMarcomDataStore.getState().mousByWorkspace[wsId]?.length, 0);
+      store.removeCachedMou("m-1");
+      assert.equal(useMarcomDataStore.getState().mous.length, 0);
     });
 
     it("adds, updates, and removes cached Field Events immutably", () => {
+      useMarcomDataStore.setState({ events: [] });
       const store = useMarcomDataStore.getState();
-      const wsId = "ws-test-evt";
       const initial: FieldEventItem = {
         id: "e-1",
-        workspaceId: wsId,
         name: "Initial Event",
         status: "UPCOMING",
       } as unknown as FieldEventItem;
 
-      store.addCachedEvent(wsId, initial);
-      assert.equal(useMarcomDataStore.getState().eventsByWorkspace[wsId]?.length, 1);
+      store.addCachedEvent(initial);
+      assert.equal(useMarcomDataStore.getState().events.length, 1);
 
-      store.updateCachedEvent(wsId, { id: "e-1", name: "Updated Event" });
-      assert.equal(useMarcomDataStore.getState().eventsByWorkspace[wsId]?.[0].name, "Updated Event");
+      store.updateCachedEvent({ id: "e-1", name: "Updated Event" });
+      assert.equal(useMarcomDataStore.getState().events[0].name, "Updated Event");
 
-      store.removeCachedEvent(wsId, "e-1");
-      assert.equal(useMarcomDataStore.getState().eventsByWorkspace[wsId]?.length, 0);
-    });
-
-    it("fetchPlacements returns empty array if workspaceId is empty", async () => {
-      const store = useMarcomDataStore.getState();
-      const res = await store.fetchPlacements("");
-      assert.deepEqual(res, []);
-    });
-
-    it("fetchPlacements returns cached placements when available without refetching", async () => {
-      const store = useMarcomDataStore.getState();
-      const wsId = "ws-cached-place";
-      const dummy: MarcomPlacement[] = [
-        { id: "pl-1", workspaceId: wsId, outletId: "o1", materialId: "m1", status: "ON_PROGRESS" } as unknown as MarcomPlacement,
-      ];
-      store.setCachedPlacements(wsId, dummy);
-
-      const res = await store.fetchPlacements(wsId);
-      assert.deepEqual(res, dummy);
-    });
-
-    it("fetchPosts returns empty array immediately if workspaceId is empty without calling fetch", async () => {
-      const store = useMarcomDataStore.getState();
-      const res = await store.fetchPosts("");
-      assert.deepEqual(res, []);
-    });
-
-    it("fetchPosts returns cached posts when available without refetching", async () => {
-      const store = useMarcomDataStore.getState();
-      const wsId = "ws-cached-posts";
-      const dummyPosts = [
-        {
-          id: "post-1",
-          workspaceId: wsId,
-          title: "Cached Post",
-          platform: "INSTAGRAM" as const,
-          format: "FEED" as const,
-          status: "DRAFT" as const,
-        },
-      ];
-      store.setCachedPosts(wsId, dummyPosts as unknown as ContentPostItem[]);
-
-      const res = await store.fetchPosts(wsId);
-      assert.deepEqual(res, dummyPosts);
+      store.removeCachedEvent("e-1");
+      assert.equal(useMarcomDataStore.getState().events.length, 0);
     });
 
     it("adds cached posts immutably without duplicates", () => {
+      useMarcomDataStore.setState({ posts: [] });
       const store = useMarcomDataStore.getState();
-      const wsId = "ws-test-post";
       const initial: ContentPostItem = {
         id: "post-1",
-        workspaceId: wsId,
         title: "Test Post",
         platform: "TIKTOK" as const,
         format: "REEL" as const,
         status: "IDEA" as const,
       } as unknown as ContentPostItem;
 
-      store.addCachedPost(wsId, initial);
-      assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.length, 1);
-      assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.[0].title, "Test Post");
+      store.addCachedPost(initial);
+      assert.equal(useMarcomDataStore.getState().posts.length, 1);
+      assert.equal(useMarcomDataStore.getState().posts[0].title, "Test Post");
 
       // Adding duplicate ID replaces or keeps single entry
-      store.addCachedPost(wsId, { ...initial, title: "Test Post Updated" });
-      assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.length, 1);
-      assert.equal(useMarcomDataStore.getState().postsByWorkspace[wsId]?.[0].title, "Test Post Updated");
-    });
-
-    it("fetchReports and fetchDocuments return empty array if workspaceId is empty", async () => {
-      const store = useMarcomDataStore.getState();
-      assert.deepEqual(await store.fetchReports(""), []);
-      assert.deepEqual(await store.fetchDocuments(""), []);
+      store.addCachedPost({ ...initial, title: "Test Post Updated" });
+      assert.equal(useMarcomDataStore.getState().posts.length, 1);
+      assert.equal(useMarcomDataStore.getState().posts[0].title, "Test Post Updated");
     });
 
     it("adds cached reports immutably", () => {
+      useMarcomDataStore.setState({ reports: [] });
       const store = useMarcomDataStore.getState();
-      const wsId = "ws-test-rep";
       const initial: MonthlyReport = {
         id: "rep-1",
-        workspaceId: wsId,
         month: "October",
         year: 2026,
         summary: {},
@@ -600,43 +461,9 @@ describe("useMarcomDataStore", () => {
         actionPlans: [],
       } as unknown as MonthlyReport;
 
-      store.addCachedReport(wsId, initial);
-      assert.equal(useMarcomDataStore.getState().reportsByWorkspace[wsId]?.length, 1);
-      assert.equal(useMarcomDataStore.getState().reportsByWorkspace[wsId]?.[0].month, "October");
-    });
-
-    it("fetchReports returns cached reports when available without refetching", async () => {
-      const store = useMarcomDataStore.getState();
-      const wsId = "ws-cached-rep";
-      const dummyReports = [
-        {
-          id: "rep-1",
-          workspaceId: wsId,
-          month: "September",
-          year: 2026,
-          summary: {},
-        },
-      ];
-      store.setCachedReports(wsId, dummyReports as unknown as MonthlyReport[]);
-
-      const res = await store.fetchReports(wsId);
-      assert.deepEqual(res, dummyReports);
-    });
-
-    it("fetchDocuments returns cached documents when available without refetching", async () => {
-      const store = useMarcomDataStore.getState();
-      const wsId = "ws-cached-doc";
-      const dummyDocs = [
-        {
-          id: "doc-1",
-          workspaceId: wsId,
-          name: "Doc A",
-        },
-      ];
-      store.setCachedDocuments(wsId, dummyDocs as unknown as DocumentItem[]);
-
-      const res = await store.fetchDocuments(wsId);
-      assert.deepEqual(res, dummyDocs);
+      store.addCachedReport(initial);
+      assert.equal(useMarcomDataStore.getState().reports.length, 1);
+      assert.equal(useMarcomDataStore.getState().reports[0].month, "October");
     });
   });
 });

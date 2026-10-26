@@ -3,7 +3,6 @@ import {
   type AutomationTrigger,
   type Task,
   type User,
-  type Workspace,
   type Space,
   type Status,
 } from "@/types";
@@ -23,11 +22,10 @@ export interface AutomationExecutionContext {
   updateTask: (id: string, updates: Partial<Task>) => void;
   logActivity: (taskId: string, action: string) => void;
   tasks: Task[];
-  workspaces: Workspace[];
-  activeWorkspaceId: string;
+  spaces: Space[];
   activeListId: string | null;
   actor: User;
-  findSpaceForListId: (workspaces: Workspace[], listId: string) => Space | undefined;
+  findSpaceForListId: (spaces: Space[], listId: string) => Space | undefined;
 }
 
 /**
@@ -108,10 +106,7 @@ export async function executeAutomationsForTrigger(
   }
 
   let executedCount = 0;
-  const currentWorkspace =
-    context.workspaces.find((w) => w.id === context.activeWorkspaceId) ||
-    context.workspaces[0];
-  const defaultSpace = currentWorkspace?.spaces[0];
+  const defaultSpace = context.spaces[0];
   const defaultListId =
     defaultSpace?.lists[0]?.id || context.activeListId || DESIGN_SYSTEM_LIST_ID;
   const defaultStatusId = defaultSpace?.statuses[0]?.id || "status-todo";
@@ -217,7 +212,7 @@ export async function executeAutomationsForTrigger(
         if (taskId) {
           const targetTask = context.tasks.find((t) => t.id === taskId);
           const space = targetTask
-            ? context.findSpaceForListId(context.workspaces, targetTask.listId)
+            ? context.findSpaceForListId(context.spaces, targetTask.listId)
             : defaultSpace;
           const reviewStatus =
             space?.statuses.find(

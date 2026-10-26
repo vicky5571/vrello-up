@@ -52,7 +52,6 @@ interface EventFormModalProps {
   branches: { id: string; name: string }[];
   members: User[];
   rawSpaces: Space[];
-  activeWorkspaceId: string;
   tasks: Task[];
   createTask: (payload: Omit<Task, "id" | "createdAt" | "updatedAt" | "listId"> & {
     listId?: string | null;
@@ -70,7 +69,6 @@ export function EventFormModal({
   branches,
   members,
   rawSpaces,
-  activeWorkspaceId,
   tasks,
   createTask,
   updateTask,
@@ -125,8 +123,7 @@ export function EventFormModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    const wsParam = activeWorkspaceId ? `?workspaceId=${encodeURIComponent(activeWorkspaceId)}` : "";
-    fetch(`/api/marcom/outlets${wsParam}`)
+    fetch("/api/marcom/outlets")
       .then((res) => (res.ok ? res.json() : []))
       .then((json) => {
         if (Array.isArray(json)) {
@@ -136,7 +133,7 @@ export function EventFormModal({
         }
       })
       .catch(() => {});
-  }, [isOpen, activeWorkspaceId]);
+  }, [isOpen]);
 
   // Destination Space & List
   const flatSpaces = useMemo(() => getWorkspaceSpacesAndLists(rawSpaces), [rawSpaces]);
@@ -362,7 +359,6 @@ export function EventFormModal({
         notes: eventNotes.trim(),
         mediaUrl: eventMediaUrl.trim() || undefined,
         footage: eventFootageList,
-        workspaceId: activeWorkspaceId,
       };
 
       let savedId = event?.id;

@@ -75,16 +75,14 @@ function timeAgo(iso: string): string {
 export function NotificationCenter() {
   const {
     tasks,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
     activeSpaceId,
     currentUserId,
     lastSeenNotificationsAt,
   } = useWorkspaceStore(
     useShallow((s) => ({
       tasks: s.tasks,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
       activeSpaceId: s.activeSpaceId,
       currentUserId: s.currentUserId,
       lastSeenNotificationsAt: s.lastSeenNotificationsAt,
@@ -100,13 +98,11 @@ export function NotificationCenter() {
   const panelRef = useRef<HTMLDivElement>(null);
 
   const doneStatusIds = useMemo(() => {
-    const space = workspaces
-      .find((w) => w.id === activeWorkspaceId)
-      ?.spaces.find((s) => s.id === activeSpaceId);
+    const space = spaces.find((s) => s.id === activeSpaceId);
     return (space?.statuses ?? [])
       .filter((s) => s.category === "done" || s.category === "closed")
       .map((s) => s.id);
-  }, [workspaces, activeWorkspaceId, activeSpaceId]);
+  }, [spaces, activeSpaceId]);
 
   const taskNotifs = useMemo(
     () => deriveTaskNotifications(tasks, { currentUserId, doneStatusIds }),
@@ -129,7 +125,7 @@ export function NotificationCenter() {
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
-    fetch(`/api/marcom/mous?workspaceId=${encodeURIComponent(activeWorkspaceId)}`)
+    fetch("/api/marcom/mous")
       .then((r) => (r.ok ? r.json() : { data: [] }))
       .then((json) => {
         if (!cancelled && Array.isArray(json.data)) setMouRows(json.data);
@@ -138,7 +134,7 @@ export function NotificationCenter() {
     return () => {
       cancelled = true;
     };
-  }, [isOpen, activeWorkspaceId]);
+  }, [isOpen]);
 
   // Close on outside click / Escape.
   useEffect(() => {

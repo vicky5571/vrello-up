@@ -7,7 +7,7 @@ import {
 
 describe("Outlet Search Where Builder", () => {
   test("builds case-insensitive OR condition for code, name, city, and picName when search query is provided", () => {
-    const where = buildOutletSearchWhere("agus", "ws-main");
+    const where = buildOutletSearchWhere("agus");
     assert.deepEqual(where.OR, [
       { code: { contains: "agus", mode: "insensitive" } },
       { name: { contains: "agus", mode: "insensitive" } },
@@ -27,7 +27,7 @@ describe("Outlet Search Where Builder", () => {
   });
 
   test("handles empty search query without OR condition", () => {
-    const whereEmpty = buildOutletSearchWhere("", "ws-main");
+    const whereEmpty = buildOutletSearchWhere("");
     assert.equal(whereEmpty.OR, undefined);
 
     const whereWhitespace = buildOutletSearchWhere("   ");
@@ -208,7 +208,7 @@ describe("GET /api/marcom/outlets integration", () => {
   test("returns outlets with recent placements and respects limit parameter", async () => {
     // @ts-expect-error Node strip-types runner requires explicit extension
     const { GET } = await import("./route.ts");
-    const req = new Request("http://localhost:3000/api/marcom/outlets?workspaceId=ws-main&limit=2");
+    const req = new Request("http://localhost:3000/api/marcom/outlets?limit=2");
     const res = await GET(req);
     assert.equal(res.status, 200);
     const json = await res.json();
@@ -225,7 +225,7 @@ describe("GET /api/marcom/outlets integration", () => {
   test("applies search query filter and returns matching outlets", async () => {
     // @ts-expect-error Node strip-types runner requires explicit extension
     const { GET } = await import("./route.ts");
-    const req = new Request("http://localhost:3000/api/marcom/outlets?workspaceId=ws-main&q=OUT");
+    const req = new Request("http://localhost:3000/api/marcom/outlets?q=OUT");
     const res = await GET(req);
     assert.equal(res.status, 200);
     const json = await res.json();
@@ -244,7 +244,7 @@ describe("GET /api/marcom/outlets integration", () => {
   test("enforces safe default cap of 100 on bare query without limit or q", async () => {
     // @ts-expect-error Node strip-types runner requires explicit extension
     const { GET } = await import("./route.ts");
-    const req = new Request("http://localhost:3000/api/marcom/outlets?workspaceId=ws-main");
+    const req = new Request("http://localhost:3000/api/marcom/outlets");
     const res = await GET(req);
     assert.equal(res.status, 200);
     const json = await res.json();
@@ -255,7 +255,7 @@ describe("GET /api/marcom/outlets integration", () => {
   test("filters outlets by brand in GET query", async () => {
     // @ts-expect-error Node strip-types runner requires explicit extension
     const { GET } = await import("./route.ts");
-    const req = new Request("http://localhost:3000/api/marcom/outlets?workspaceId=ws-main&brand=TRI&limit=10");
+    const req = new Request("http://localhost:3000/api/marcom/outlets?brand=TRI&limit=10");
     const res = await GET(req);
     assert.equal(res.status, 200);
     const json = await res.json();

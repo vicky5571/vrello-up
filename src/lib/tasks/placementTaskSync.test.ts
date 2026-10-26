@@ -11,7 +11,6 @@ import {
 
 const SAMPLE_SPACE: Space = {
   id: "space-marcom",
-  workspaceId: "ws-main",
   name: "Marketing & Communication",
   icon: "Megaphone",
   color: "#EC4899",

@@ -4,7 +4,7 @@ import { realtimeHub } from "@/lib/server/realtimeHub";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userId, user, taskId, workspaceId } = body;
+    const { userId, user, taskId } = body;
 
     if (!userId || !user) {
       return NextResponse.json(
@@ -17,7 +17,6 @@ export async function POST(request: Request) {
       userId,
       user,
       taskId || null,
-      workspaceId || "default",
     );
     return NextResponse.json({ ok: true });
   } catch (error) {

@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
@@ -16,9 +15,6 @@ export async function GET(
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
-    const authError = await requireWorkspaceAccess(report.workspaceId, { requiredRole: "viewer", request });
-    if (authError) return authError;
-
     return NextResponse.json(report);
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
@@ -29,7 +25,7 @@ export async function GET(
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
@@ -37,9 +33,6 @@ export async function DELETE(
   if (!existing) {
     return NextResponse.json({ error: "Report not found" }, { status: 404 });
   }
-
-  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
 
   try {
     await prisma.monthlyReport.delete({ where: { id } });

@@ -1,27 +1,24 @@
-import { realtimeHub, RealtimeHub, type RealtimeEvent } from "@/lib/server/realtimeHub";
+import { realtimeHub, type RealtimeEvent } from "@/lib/server/realtimeHub";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const encoder = new TextEncoder();
-  const url = new URL(request.url);
-  const workspaceId = url.searchParams.get("workspaceId") || undefined;
-  const channel = RealtimeHub.getWorkspaceChannel(workspaceId);
+  const channel = "*";
 
   let unsubscribe: (() => void) | null = null;
   let keepAlive: NodeJS.Timeout | null = null;
 
   const stream = new ReadableStream({
     start(controller) {
-      // Send initial presence state immediately on connection for the active workspace
+      // Send initial presence state immediately on connection
       const initialPresence = {
         type: "presence:sync",
-        workspaceId,
-        data: realtimeHub.getPresenceSnapshot(workspaceId || "default"),
+        data: realtimeHub.getPresenceSnapshot(),
       };
       controller.enqueue(encoder.encode(`data: ${JSON.stringify(initialPresence)}\n\n`));
 
-      // Listen for realtime events on the workspace channel (or wildcard)
+      // Listen for realtime events
       unsubscribe = realtimeHub.subscribe(channel, (event: RealtimeEvent) => {
         try {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));

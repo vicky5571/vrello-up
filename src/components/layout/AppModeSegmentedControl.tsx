@@ -16,27 +16,21 @@ export function AppModeSegmentedControl({
 }: AppModeSegmentedControlProps) {
   const appMode = useWorkspaceStore((s) => s.appMode);
   const setAppMode = useWorkspaceStore((s) => s.setAppMode);
-  const workspaces = useWorkspaceStore((s) => s.workspaces);
-  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
+  const spaces = useWorkspaceStore((s) => s.spaces);
   const tasks = useWorkspaceStore((s) => s.tasks);
 
   const shouldReduceMotion = useReducedMotion();
 
-  const activeWs = useMemo(
-    () => workspaces.find((w) => w.id === activeWorkspaceId),
-    [workspaces, activeWorkspaceId]
-  );
-
   const openTasks = useMemo(() => {
     if (!showBadges) return 0;
-    return countOpenTasks(tasks, activeWs?.spaces || []);
-  }, [showBadges, tasks, activeWs]);
+    return countOpenTasks(tasks, spaces || []);
+  }, [showBadges, tasks, spaces]);
 
   return (
     <div className="px-2.5 pt-2.5 pb-1.5 shrink-0">
       <div
         role="tablist"
-        aria-label="Workspace Context Switcher"
+        aria-label="App Mode Switcher"
         className="relative p-0.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 flex items-stretch gap-0.5 select-none"
       >
         {/* Projects & Tasks Mode Button */}

@@ -47,7 +47,7 @@ export function parseOutletSearchLimit(
  */
 export function buildOutletSearchWhere(
   queryOrOptions?: string | OutletSearchFilterOptions | null,
-  workspaceIdOrOptions?: string | Omit<OutletSearchFilterOptions, "q"> | null,
+  options?: Omit<OutletSearchFilterOptions, "q"> | null,
   extraOptions?: Omit<OutletSearchFilterOptions, "q">
 ): Prisma.OutletWhereInput {
   let q: string | null | undefined = undefined;
@@ -64,11 +64,11 @@ export function buildOutletSearchWhere(
     brand = queryOrOptions.brand;
   } else {
     q = queryOrOptions;
-    if (typeof workspaceIdOrOptions === "object" && workspaceIdOrOptions !== null) {
-      branchId = workspaceIdOrOptions.branchId;
-      type = workspaceIdOrOptions.type;
-      status = workspaceIdOrOptions.status;
-      brand = workspaceIdOrOptions.brand;
+    if (typeof options === "object" && options !== null) {
+      branchId = options.branchId;
+      type = options.type;
+      status = options.status;
+      brand = options.brand;
     } else if (typeof extraOptions === "object" && extraOptions !== null) {
       branchId = extraOptions.branchId;
       type = extraOptions.type;

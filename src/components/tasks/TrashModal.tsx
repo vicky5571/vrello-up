@@ -25,11 +25,11 @@ function deletedAgo(iso: string): string {
  * expired-Undo toast path.
  */
 export function TrashModal() {
-  const { isTrashOpen, trash, workspaces } = useWorkspaceStore(
+  const { isTrashOpen, trash, spaces } = useWorkspaceStore(
     useShallow((s) => ({
       isTrashOpen: s.isTrashOpen,
       trash: s.trash,
-      workspaces: s.workspaces,
+      spaces: s.spaces,
     })),
   );
 
@@ -49,14 +49,12 @@ export function TrashModal() {
   if (!isTrashOpen) return null;
 
   const listNameFor = (listId: string): string => {
-    for (const w of workspaces) {
-      for (const s of w.spaces) {
-        const direct = s.lists.find((l) => l.id === listId);
-        if (direct) return `${s.name} / ${direct.name}`;
-        for (const f of s.folders) {
-          const nested = f.lists.find((l) => l.id === listId);
-          if (nested) return `${s.name} / ${f.name} / ${nested.name}`;
-        }
+    for (const s of spaces) {
+      const direct = s.lists.find((l) => l.id === listId);
+      if (direct) return `${s.name} / ${direct.name}`;
+      for (const f of s.folders) {
+        const nested = f.lists.find((l) => l.id === listId);
+        if (nested) return `${s.name} / ${f.name} / ${nested.name}`;
       }
     }
     return "Unknown list";

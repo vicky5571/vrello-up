@@ -193,7 +193,7 @@ test("pipeline GET route handler: executes with SQL pushdown for branchId and q"
   const { GET } = await import("./route.ts");
 
   // Test with branch-1 filter
-  const reqBranch = new Request("http://localhost:3000/api/marcom/pipeline?workspaceId=ws-main&branchId=branch-1");
+  const reqBranch = new Request("http://localhost:3000/api/marcom/pipeline?branchId=branch-1");
   const resBranch = await GET(reqBranch);
   assert.equal(resBranch.status, 200);
   const jsonBranch = await resBranch.json();
@@ -201,7 +201,7 @@ test("pipeline GET route handler: executes with SQL pushdown for branchId and q"
   assert.ok(jsonBranch.data.every((r: OutletPipelineRow) => r.branch?.id === "branch-1"));
 
   // Test with q search filter
-  const reqSearch = new Request("http://localhost:3000/api/marcom/pipeline?workspaceId=ws-main&q=Berkah");
+  const reqSearch = new Request("http://localhost:3000/api/marcom/pipeline?q=Berkah");
   const resSearch = await GET(reqSearch);
   assert.equal(resSearch.status, 200);
   const jsonSearch = await resSearch.json();
@@ -213,7 +213,7 @@ test("pipeline GET route handler: executes with SQL pushdown for branchId and q"
   ));
 
   // Test with 'ALL' branch (returns full dataset without SQL filtering)
-  const reqAll = new Request("http://localhost:3000/api/marcom/pipeline?workspaceId=ws-main&branchId=ALL");
+  const reqAll = new Request("http://localhost:3000/api/marcom/pipeline?branchId=ALL");
   const resAll = await GET(reqAll);
   assert.equal(resAll.status, 200);
   const jsonAll = await resAll.json();

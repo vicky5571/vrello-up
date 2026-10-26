@@ -10,7 +10,7 @@ const PATCHABLE_FIELDS = ["code", "name", "region", "city", "status", "picName",
 async function requireMasterData() {
   let role;
   try {
-    role = await requireMember("ws-main");
+    role = await requireMember();
   } catch (e) {
     if (e instanceof Response) throw e;
     throw e;
@@ -22,7 +22,7 @@ async function requireMasterData() {
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireMember("ws-main");
+    await requireMember();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;

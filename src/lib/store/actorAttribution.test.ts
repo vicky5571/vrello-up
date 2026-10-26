@@ -66,11 +66,7 @@ test("google session member attribution strictly resolves to the authenticated u
   };
 
   useWorkspaceStore.setState((state) => ({
-    workspaces: state.workspaces.map((w) =>
-      w.id === state.activeWorkspaceId
-        ? { ...w, members: [googleUser, ...w.members.filter((m) => m.id !== googleUser.id)] }
-        : w
-    ),
+    users: [googleUser, ...state.users.filter((u) => u.id !== googleUser.id)],
   }));
 
   api().setCurrentUserId(googleUser.id);

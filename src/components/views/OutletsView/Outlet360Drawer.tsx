@@ -179,7 +179,6 @@ export function Outlet360Drawer({
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [viewingDocMou, setViewingDocMou] = useState<Outlet360Mou | null>(null);
 
-  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const navigateToMarcom = useWorkspaceStore((state) => state.navigateToMarcom);
   const { can } = useMarcomPermissions();
 
@@ -189,7 +188,7 @@ export function Outlet360Drawer({
       return;
     }
 
-    const cacheKey = `${activeWorkspaceId}:${outletId}`;
+    const cacheKey = outletId;
     const cached = outletDetailsCache.get(cacheKey);
 
     if (cached) {
@@ -203,7 +202,7 @@ export function Outlet360Drawer({
 
     let isMounted = true;
 
-    fetch(`/api/marcom/outlets/${outletId}?workspaceId=${encodeURIComponent(activeWorkspaceId)}`)
+    fetch(`/api/marcom/outlets/${outletId}`)
       .then(async (res) => {
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -232,7 +231,7 @@ export function Outlet360Drawer({
     return () => {
       isMounted = false;
     };
-  }, [outletId, activeWorkspaceId]);
+  }, [outletId]);
 
   const placements = useMemo(() => data?.placements || [], [data]);
   const mous = useMemo(() => data?.mous || [], [data]);
@@ -283,7 +282,7 @@ export function Outlet360Drawer({
         );
         const updated = { ...prev, mous: updatedMous };
         if (outletId) {
-          outletDetailsCache.set(`${activeWorkspaceId}:${outletId}`, {
+          outletDetailsCache.set(outletId, {
             data: updated,
             timestamp: Date.now(),
           });
@@ -291,8 +290,8 @@ export function Outlet360Drawer({
         return updated;
       });
 
-      useMarcomDataStore.getState().invalidateMous(activeWorkspaceId);
-      useMarcomDataStore.getState().invalidatePlacements(activeWorkspaceId);
+      useMarcomDataStore.getState().invalidateMous();
+      useMarcomDataStore.getState().invalidatePlacements();
 
       try {
         const triggered = await useWorkspaceStore.getState().runAutomationsForTrigger("mou:approved", {
@@ -343,7 +342,7 @@ export function Outlet360Drawer({
         );
         const updated = { ...prev, mous: updatedMous };
         if (outletId) {
-          outletDetailsCache.set(`${activeWorkspaceId}:${outletId}`, {
+          outletDetailsCache.set(outletId, {
             data: updated,
             timestamp: Date.now(),
           });
@@ -351,7 +350,7 @@ export function Outlet360Drawer({
         return updated;
       });
 
-      useMarcomDataStore.getState().invalidateMous(activeWorkspaceId);
+      useMarcomDataStore.getState().invalidateMous();
       toast.success(`MoU "${mou.partnerName}" telah ditolak`);
       onDataChange?.();
     } catch (err) {
@@ -391,7 +390,7 @@ export function Outlet360Drawer({
         );
         const updated = { ...prev, placements: updatedPlacements };
         if (outletId) {
-          outletDetailsCache.set(`${activeWorkspaceId}:${outletId}`, {
+          outletDetailsCache.set(outletId, {
             data: updated,
             timestamp: Date.now(),
           });
@@ -399,7 +398,7 @@ export function Outlet360Drawer({
         return updated;
       });
 
-      useMarcomDataStore.getState().invalidatePlacements(activeWorkspaceId);
+      useMarcomDataStore.getState().invalidatePlacements();
       const label = targetStatus === "DONE" ? "Selesai (DONE)" : "Sedang Dipasang (ON PROGRESS)";
       toast.success(`Status materi "${placement.material?.name || "Promosi"}" diubah ke ${label}`);
       onDataChange?.();

@@ -36,16 +36,14 @@ export function CalendarView() {
     tasks,
     activeListId,
     activeSpaceId,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
     filters,
   } = useWorkspaceStore(
     useShallow((s) => ({
       tasks: s.tasks,
       activeListId: s.activeListId,
       activeSpaceId: s.activeSpaceId,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
       filters: s.filters,
     })),
   );
@@ -53,8 +51,7 @@ export function CalendarView() {
   const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
-  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = currentWorkspace?.spaces.find(
+  const currentSpace = spaces.find(
     (s) => s.id === activeSpaceId,
   );
   const statuses = currentSpace?.statuses || [];
@@ -67,17 +64,16 @@ export function CalendarView() {
   const [showMarketing, setShowMarketing] = useState(true);
   const [createTaskDate, setCreateTaskDate] = useState<string | null>(null);
 
-  // Centralized Marketing Data Store subscription (workspace-scoped & cached)
-  const events = useMarcomDataStore((s) => s.eventsByWorkspace[activeWorkspaceId]);
-  const mous = useMarcomDataStore((s) => s.mousByWorkspace[activeWorkspaceId]);
+  // Centralized Marketing Data Store subscription (cached)
+  const events = useMarcomDataStore((s) => s.events);
+  const mous = useMarcomDataStore((s) => s.mous);
   const fetchEvents = useMarcomDataStore((s) => s.fetchEvents);
   const fetchMous = useMarcomDataStore((s) => s.fetchMous);
 
   useEffect(() => {
-    if (!activeWorkspaceId) return;
-    fetchEvents(activeWorkspaceId);
-    fetchMous(activeWorkspaceId);
-  }, [activeWorkspaceId, fetchEvents, fetchMous]);
+    fetchEvents();
+    fetchMous();
+  }, [fetchEvents, fetchMous]);
 
   const marketingItems = useMemo(() => {
     const items: { id: string; title: string; date: string; postPlatform?: string; view: "events" | "mous" }[] = [];

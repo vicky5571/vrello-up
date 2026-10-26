@@ -15,7 +15,6 @@ interface Step1OutletProps {
   selectedOutletObj?: OutletSearchResult;
   onSelectOutlet: (outlet: OutletSelectionPayload) => void;
   onSetBrand: (brand: Brand) => void;
-  workspaceId: string;
 }
 
 export function Step1Outlet({
@@ -23,7 +22,6 @@ export function Step1Outlet({
   selectedOutletObj,
   onSelectOutlet,
   onSetBrand,
-  workspaceId,
 }: Step1OutletProps) {
   const currentBrand: Brand =
     placement.brand === "TRI" || (placement.brand as string) === "3" ? "TRI" : "IM3";
@@ -132,7 +130,6 @@ export function Step1Outlet({
           selectedOutletId={placement.outletId}
           selectedOutlet={selectedOutletObj}
           onSelectOutlet={onSelectOutlet}
-          workspaceId={workspaceId}
           brand={selectedOutlet ? currentBrand : (activeBrandFilter === "ALL" ? undefined : activeBrandFilter)}
           onSetBrand={onSetBrand}
           placeholder="Ketik nama toko (mis: Toko Barokah) atau kode (O-SMG-001)..."

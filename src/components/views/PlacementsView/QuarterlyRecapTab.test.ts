@@ -8,8 +8,8 @@ import {
 
 describe("quarterlyRecapHelpers", () => {
   it("formats target storage key consistently", () => {
-    assert.equal(formatTargetKey("ws-main", "Q3 2026"), "vrello_posm_targets_ws-main_Q3 2026");
-    assert.equal(formatTargetKey("ws-1", "q2 2026"), "vrello_posm_targets_ws-1_q2 2026");
+    assert.equal(formatTargetKey("Q3 2026"), "vrello_posm_targets_Q3 2026");
+    assert.equal(formatTargetKey("q2 2026"), "vrello_posm_targets_q2 2026");
   });
 
   it("assigns accurate progress bar colors based on completion percentage", () => {

@@ -58,7 +58,7 @@ export function isIgnoredValue(val: string): boolean {
  * Recursively extracts clean, space-separated searchable text tokens from an entity or object.
  *
  * Excludes:
- * - Internal / relation IDs (e.g. `id`, `outletId`, `workspaceId`)
+ * - Internal / relation IDs (e.g. `id`, `outletId`, `spaceId`)
  * - URLs and image assets (e.g. `photoUrl`, `avatarUrl`)
  * - Technical metadata and ISO timestamps (e.g. `createdAt`, `2026-09-28T...`)
  * - Booleans, functions, and symbols

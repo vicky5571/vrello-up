@@ -111,24 +111,17 @@ function ReportSection({ title, items }: { title: string; items: unknown[] }) {
   );
 }
 
-const EMPTY_REPORTS: MarcomReport[] = [];
-const EMPTY_DOCS: MarcomDocument[] = [];
 
 export function ReportsView() {
   const { can } = useMarcomPermissions();
-  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
   const setExportCenterOpen = useWorkspaceStore((state) => state.setExportCenterOpen);
   const navigateToMarcom = useWorkspaceStore((state) => state.navigateToMarcom);
   const [reportTab, setReportTab] = useState<"monthly" | "posm_quarterly">("monthly");
   
-  const rawReports = useMarcomDataStore(
-    (s) => s.reportsByWorkspace[activeWorkspaceId] ?? EMPTY_REPORTS,
-  );
+  const rawReports = useMarcomDataStore((s) => s.reports);
   const reports = rawReports as unknown as MarcomReport[];
 
-  const rawDocs = useMarcomDataStore(
-    (s) => s.documentsByWorkspace[activeWorkspaceId] ?? EMPTY_DOCS,
-  );
+  const rawDocs = useMarcomDataStore((s) => s.documents);
   const documents = rawDocs as unknown as MarcomDocument[];
 
   const storeFetchReports = useMarcomDataStore((s) => s.fetchReports);
@@ -137,8 +130,8 @@ export function ReportsView() {
 
   const [isLoading, setIsLoading] = useState(
     () =>
-      !Boolean(useMarcomDataStore.getState().reportsByWorkspace[activeWorkspaceId]) &&
-      !Boolean(useMarcomDataStore.getState().documentsByWorkspace[activeWorkspaceId])
+      useMarcomDataStore.getState().reports.length === 0 &&
+      useMarcomDataStore.getState().documents.length === 0
   );
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -154,8 +147,6 @@ export function ReportsView() {
   const [keyIssuesText, setKeyIssuesText] = useState("");
   const [actionPlansText, setActionPlansText] = useState("");
   const [activitiesList, setActivitiesList] = useState<DraftActivityItem[]>([]);
-  const workspaces = useWorkspaceStore((state) => state.workspaces);
-  const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
   const [isInstantExporting, setIsInstantExporting] = useState(false);
 
   // Report creation is gated on MANAGE_MASTER_DATA (admin-only, matching
@@ -170,8 +161,8 @@ export function ReportsView() {
       setError(null);
       try {
         await Promise.all([
-          storeFetchReports(activeWorkspaceId, !isSilent),
-          storeFetchDocuments(activeWorkspaceId, !isSilent),
+          storeFetchReports(!isSilent),
+          storeFetchDocuments(!isSilent),
         ]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load reports");
@@ -179,16 +170,16 @@ export function ReportsView() {
         setIsLoading(false);
       }
     },
-    [activeWorkspaceId, storeFetchReports, storeFetchDocuments]
+    [storeFetchReports, storeFetchDocuments]
   );
 
   useEffect(() => {
     const hasCache = Boolean(
-      useMarcomDataStore.getState().reportsByWorkspace[activeWorkspaceId] ||
-      useMarcomDataStore.getState().documentsByWorkspace[activeWorkspaceId]
+      useMarcomDataStore.getState().reports.length > 0 ||
+      useMarcomDataStore.getState().documents.length > 0
     );
     fetchReports({ silent: hasCache });
-  }, [fetchReports, activeWorkspaceId]);
+  }, [fetchReports]);
 
   // Reports are not tasks: row click toggles a local expandable detail row.
   // TaskDrawer (setSelectedTaskId) is deliberately not wired here.
@@ -216,7 +207,7 @@ export function ReportsView() {
     setIsDrafting(true);
     try {
       const res = await fetch(
-        `/api/marcom/reports/draft?workspaceId=${encodeURIComponent(activeWorkspaceId)}&month=${encodeURIComponent(month.trim())}&year=${parsedYear}`,
+        `/api/marcom/reports/draft?month=${encodeURIComponent(month.trim())}&year=${parsedYear}`,
       );
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
@@ -248,7 +239,7 @@ export function ReportsView() {
       const activeYear = Number(year) || new Date().getFullYear();
 
       const res = await fetch(
-        `/api/marcom/reports/draft?workspaceId=${encodeURIComponent(activeWorkspaceId)}&month=${encodeURIComponent(activeMonth)}&year=${activeYear}`,
+        `/api/marcom/reports/draft?month=${encodeURIComponent(activeMonth)}&year=${activeYear}`,
       );
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
@@ -259,7 +250,7 @@ export function ReportsView() {
         throw new Error("Draf laporan kosong");
       }
       printSingleMonthlyReport(json.draft, {
-        workspaceName: activeWorkspace?.name || "Vrello Marcom Operations",
+        workspaceName: "Vrello Marcom Operations",
       });
       toast.success(`Membuka Dokumen Eksekutif ${activeMonth} ${activeYear} (Save as PDF)...`);
     } catch (err) {
@@ -272,7 +263,7 @@ export function ReportsView() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canManage) {
-      toast.error("Hanya admin workspace yang dapat membuat laporan");
+      toast.error("Hanya admin yang dapat membuat laporan");
       return;
     }
     const parsedYear = Number(year);
@@ -319,7 +310,6 @@ export function ReportsView() {
           achievements: parseLines(achievementsText),
           keyIssues: parseLines(keyIssuesText),
           actionPlans: parseLines(actionPlansText),
-          workspaceId: activeWorkspaceId,
         }),
       });
       if (!res.ok) {
@@ -327,7 +317,7 @@ export function ReportsView() {
         throw new Error(errJson.error || `Request failed (${res.status})`);
       }
       const savedReport = await res.json();
-      addCachedReport(activeWorkspaceId, savedReport);
+      addCachedReport(savedReport);
       toast.success("Laporan bulanan berhasil dibuat dan disimpan!");
       setTotalActivities("");
       setCompletionRate("");
@@ -697,7 +687,7 @@ export function ReportsView() {
                         onClick={(e) => {
                           e.stopPropagation();
                           printSingleMonthlyReport(report, {
-                            workspaceName: activeWorkspace?.name || "Vrello Marcom Operations",
+                            workspaceName: "Vrello Marcom Operations",
                           });
                         }}
                         title={`Export PDF ${periodLabel(report)}`}
@@ -729,7 +719,7 @@ export function ReportsView() {
                           type="button"
                           onClick={() =>
                             printSingleMonthlyReport(report, {
-                              workspaceName: activeWorkspace?.name || "Vrello Marcom Operations",
+                              workspaceName: "Vrello Marcom Operations",
                             })
                           }
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer"

@@ -8,11 +8,10 @@ import { type User } from "@/types";
 
 export function AuthSync() {
   const { data: session } = useSession();
-  const { currentUserId, workspaces, activeWorkspaceId } = useWorkspaceStore(
+  const { currentUserId, users } = useWorkspaceStore(
     useShallow((s) => ({
       currentUserId: s.currentUserId,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      users: s.users,
     })),
   );
   const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
@@ -26,8 +25,7 @@ export function AuthSync() {
         `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`;
       const googleId = `google-${email.replace(/[^a-zA-Z0-9]/g, "_")}`;
 
-      const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-      const existingMember = currentWorkspace?.members.find((m) => m.id === googleId);
+      const existingMember = users.find((m) => m.id === googleId);
       const role = existingMember?.role || "admin";
 
       const googleUser: User = {
@@ -40,11 +38,7 @@ export function AuthSync() {
 
       if (!existingMember || existingMember.name !== name || existingMember.avatar !== avatar) {
         useWorkspaceStore.setState((state) => ({
-          workspaces: state.workspaces.map((w) =>
-            w.id === state.activeWorkspaceId
-              ? { ...w, members: [googleUser, ...w.members.filter((m) => m.id !== googleId)] }
-              : w
-          ),
+          users: [googleUser, ...state.users.filter((m) => m.id !== googleId)],
         }));
       }
 
@@ -57,7 +51,7 @@ export function AuthSync() {
         setCurrentUserId("user-1");
       }
     }
-  }, [session, currentUserId, setCurrentUserId, workspaces, activeWorkspaceId]);
+  }, [session, currentUserId, setCurrentUserId, users]);
 
   return null;
 }

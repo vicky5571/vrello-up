@@ -5,7 +5,7 @@ import { getStorageStatus } from "@/lib/marcom/storageMetrics";
 
 export async function GET() {
   try {
-    await requireMember("ws-main");
+    await requireMember();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;

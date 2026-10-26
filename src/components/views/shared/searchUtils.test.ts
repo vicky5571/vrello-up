@@ -9,7 +9,7 @@ describe("searchUtils", () => {
     it("identifies ID keys to ignore", () => {
       assert.strictEqual(isIgnoredKey("id"), true);
       assert.strictEqual(isIgnoredKey("outletId"), true);
-      assert.strictEqual(isIgnoredKey("workspaceId"), true);
+      assert.strictEqual(isIgnoredKey("spaceId"), true);
       assert.strictEqual(isIgnoredKey("branch_id"), true);
       assert.strictEqual(isIgnoredKey("createdById"), true);
       assert.strictEqual(isIgnoredKey("name"), false);

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import type { Workspace } from "@/types";
 import { Bot, Zap, Brain, Share2, Phone, Video } from "lucide-react";
 
 const AgentsModal = dynamic(
@@ -25,37 +24,15 @@ const AutomationsModal = dynamic(
     ),
   { ssr: false },
 );
-const CreateWorkspaceModal = dynamic(
-  () =>
-    import("@/components/workspaces/CreateWorkspaceModal").then(
-      (m) => m.CreateWorkspaceModal,
-    ),
-  { ssr: false },
-);
-const EditWorkspaceModal = dynamic(
-  () =>
-    import("@/components/workspaces/EditWorkspaceModal").then(
-      (m) => m.EditWorkspaceModal,
-    ),
-  { ssr: false },
-);
 
 export interface TopNavActionModalsProps {
   showQuickActions?: boolean;
   showCallActions?: boolean;
-  isCreateWsOpen: boolean;
-  setIsCreateWsOpen: (open: boolean) => void;
-  editWsModalState: { isOpen: boolean; workspace: Workspace | null };
-  setEditWsModalState: (state: { isOpen: boolean; workspace: Workspace | null }) => void;
 }
 
 export function TopNavActionModals({
   showQuickActions = true,
   showCallActions = false,
-  isCreateWsOpen,
-  setIsCreateWsOpen,
-  editWsModalState,
-  setEditWsModalState,
 }: TopNavActionModalsProps) {
   const setAiDrawerOpen = useWorkspaceStore((s) => s.setAiDrawerOpen);
 
@@ -150,17 +127,6 @@ export function TopNavActionModals({
         isOpen={callModalState.isOpen}
         mode={callModalState.mode}
         onClose={() => setCallModalState((prev) => ({ ...prev, isOpen: false }))}
-      />
-
-      <CreateWorkspaceModal
-        isOpen={isCreateWsOpen}
-        onClose={() => setIsCreateWsOpen(false)}
-      />
-
-      <EditWorkspaceModal
-        isOpen={editWsModalState.isOpen}
-        workspace={editWsModalState.workspace}
-        onClose={() => setEditWsModalState({ isOpen: false, workspace: null })}
       />
     </>
   );

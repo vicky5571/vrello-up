@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { canTransitionEvent, type EventStatus } from "@/lib/marcom/eventMachine";
 
 const VALID_STATUSES = ["UPCOMING", "ON_PROGRESS", "COMPLETED", "CANCELLED"] as const;
@@ -33,9 +32,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!existing) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
-
-  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
 
   const body = await request.json().catch(() => ({}));
   const data: Record<string, unknown> = {};
@@ -112,15 +108,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const existing = await prisma.fieldEvent.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
-
-  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
 
   try {
     await prisma.fieldEvent.delete({ where: { id } });

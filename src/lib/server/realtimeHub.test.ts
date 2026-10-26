@@ -107,41 +107,39 @@ test("RealtimeHub in-memory event bus and presence tracker", async (t) => {
     }
   });
 
-  await t.test("isolates events strictly by workspace channel (multi-tenant boundary)", () => {
-    const hub = new RealtimeHub();
-    const ws1Events: RealtimeEvent[] = [];
-    const ws2Events: RealtimeEvent[] = [];
-    const wildcardEvents: RealtimeEvent[] = [];
+  await t.test("isolates events by custom channel", () => {
+    const broker = new InMemoryBroker();
+    const chan1Events: RealtimeEvent[] = [];
+    const chan2Events: RealtimeEvent[] = [];
 
-    const unsubWs1 = hub.subscribe("workspace:ws-alpha", (e) => ws1Events.push(e));
-    const unsubWs2 = hub.subscribe("workspace:ws-beta", (e) => ws2Events.push(e));
-    const unsubWildcard = hub.subscribe("*", (e) => wildcardEvents.push(e));
+    const unsubChan1 = broker.subscribe("channel:alpha", (e) => chan1Events.push(e));
+    const unsubChan2 = broker.subscribe("channel:beta", (e) => chan2Events.push(e));
 
     try {
-      // Broadcast to ws-alpha
-      hub.broadcastTaskUpsert(dummyTask, "ws-alpha");
+      broker.publish("channel:alpha", {
+        type: "task:upsert",
+        data: dummyTask,
+      });
 
-      assert.equal(ws1Events.length, 1, "ws-alpha subscriber should receive event");
-      assert.equal(ws2Events.length, 0, "ws-beta subscriber must NOT receive ws-alpha event");
-      assert.equal(wildcardEvents.length, 1, "wildcard subscriber should receive event");
+      assert.equal(chan1Events.length, 1, "alpha subscriber should receive event");
+      assert.equal(chan2Events.length, 0, "beta subscriber must NOT receive alpha event");
 
-      // Broadcast to ws-beta
-      hub.broadcastTaskDelete("task-deleted", "ws-beta");
+      broker.publish("channel:beta", {
+        type: "task:delete",
+        data: { taskId: "task-deleted" },
+      });
 
-      assert.equal(ws1Events.length, 1, "ws-alpha subscriber must not receive ws-beta delete");
-      assert.equal(ws2Events.length, 1, "ws-beta subscriber should receive delete");
-      assert.equal(wildcardEvents.length, 2, "wildcard subscriber should receive all events");
+      assert.equal(chan1Events.length, 1, "alpha subscriber must not receive beta delete");
+      assert.equal(chan2Events.length, 1, "beta subscriber should receive delete");
     } finally {
-      unsubWs1();
-      unsubWs2();
-      unsubWildcard();
-      hub.destroy();
+      unsubChan1();
+      unsubChan2();
     }
   });
 
   await t.test("handles >150 concurrent subscribers with zero listener warnings and reclaims memory on unsubscribe", () => {
     const broker = new InMemoryBroker();
-    const channel = "workspace:load-test";
+    const channel = "channel:load-test";
     const unsubs: Array<() => void> = [];
     let receivedCount = 0;
 
@@ -172,25 +170,22 @@ test("RealtimeHub in-memory event bus and presence tracker", async (t) => {
     assert.equal(broker.getSubscriberCount(), 0, "Broker channels map should be completely purged");
   });
 
-  await t.test("isolates presence by workspaceId", () => {
+  await t.test("tracks presence across multiple tasks concurrently", () => {
     const hub = new RealtimeHub();
     try {
       const userAlpha: User = { ...dummyUser, id: "user-alpha", name: "User Alpha" };
       const userBeta: User = { ...dummyUser, id: "user-beta", name: "User Beta" };
 
-      hub.updatePresence(userAlpha.id, userAlpha, "task-100", "ws-alpha");
-      hub.updatePresence(userBeta.id, userBeta, "task-200", "ws-beta");
+      hub.updatePresence(userAlpha.id, userAlpha, "task-100");
+      hub.updatePresence(userBeta.id, userBeta, "task-200");
 
-      const snapshotAlpha = hub.getPresenceSnapshot("ws-alpha");
-      const snapshotBeta = hub.getPresenceSnapshot("ws-beta");
+      const snapshot = hub.getPresenceSnapshot();
 
-      assert.equal(snapshotAlpha["task-100"]?.length, 1);
-      assert.equal(snapshotAlpha["task-100"]?.[0].id, "user-alpha");
-      assert.equal(snapshotAlpha["task-200"], undefined, "ws-alpha should not see task-200");
+      assert.equal(snapshot["task-100"]?.length, 1);
+      assert.equal(snapshot["task-100"]?.[0].id, "user-alpha");
 
-      assert.equal(snapshotBeta["task-200"]?.length, 1);
-      assert.equal(snapshotBeta["task-200"]?.[0].id, "user-beta");
-      assert.equal(snapshotBeta["task-100"], undefined, "ws-beta should not see task-100");
+      assert.equal(snapshot["task-200"]?.length, 1);
+      assert.equal(snapshot["task-200"]?.[0].id, "user-beta");
     } finally {
       hub.destroy();
     }
@@ -209,9 +204,9 @@ test("RealtimeHub in-memory event bus and presence tracker", async (t) => {
 
     const hub = new RealtimeHub(customBroker);
     try {
-      hub.broadcastTaskUpsert(dummyTask, "ws-custom");
+      hub.broadcastTaskUpsert(dummyTask);
       assert.equal(customBrokerCalls.length, 1);
-      assert.equal(customBrokerCalls[0].channel, "workspace:ws-custom");
+      assert.equal(customBrokerCalls[0].channel, "*");
       assert.equal(customBrokerCalls[0].event.type, "task:upsert");
     } finally {
       hub.destroy();

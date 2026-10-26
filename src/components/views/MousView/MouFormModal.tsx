@@ -35,7 +35,6 @@ export interface MouFormModalProps {
   mou: Partial<MarcomMou>;
   branches: BranchOption[];
   outlets: OutletOption[];
-  activeWorkspaceId: string;
   isLoading?: boolean;
   onSaved: (savedMou: MarcomMou, isEdit: boolean) => void;
   onClose: () => void;
@@ -54,7 +53,6 @@ export function MouFormModal({
   mou: initialMou,
   branches,
   outlets,
-  activeWorkspaceId,
   isLoading = false,
   onSaved,
   onClose,
@@ -161,7 +159,6 @@ export function MouFormModal({
           compensationValue:
             compensationValue != null ? Math.max(0, Number(compensationValue)) : 0,
           notes: notes || "",
-          workspaceId: activeWorkspaceId,
         },
         isEdit ? id : undefined
       );

@@ -1,30 +1,10 @@
-import type { Task, TaskComment, Workspace } from "@/types";
+import type { Task, TaskComment } from "@/types";
 import {
   syncCreateTaskApi,
   syncUpdateTaskApi,
   syncDeleteTaskApi,
   syncDeleteTasksApi,
 } from "@/lib/tasks/taskSync";
-
-export function syncWorkspaces(workspaces: Workspace[]) {
-  if (typeof window === "undefined") return;
-  fetch("/api/workspaces", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ workspaces }),
-  }).catch((err) =>
-    console.warn("[vrello sync] failed to persist workspaces:", err),
-  );
-}
-
-export function syncDeleteWorkspace(id: string) {
-  if (typeof window === "undefined") return;
-  fetch(`/api/workspaces?id=${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  }).catch((err) =>
-    console.warn("[vrello sync] failed to persist workspace deletion:", err),
-  );
-}
 
 export function syncCreateTask(task: Task, spaceId?: string, listName?: string) {
   if (typeof window === "undefined") return;
@@ -45,7 +25,6 @@ export function syncDeleteTasks(ids: string[]) {
   if (typeof window === "undefined" || ids.length === 0) return;
   syncDeleteTasksApi(ids);
 }
-
 
 export function syncAddComment(taskId: string, comment: TaskComment) {
   if (typeof window === "undefined") return;

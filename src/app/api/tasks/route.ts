@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import {
   type Task,
-  type Workspace,
+  type Space,
   type Status,
   type Priority,
   type PostPlatform,
@@ -23,70 +23,59 @@ import {
   DESIGN_SYSTEM_LIST_ID,
 } from "@/lib/marcom/marcomIds";
 import { realtimeHub } from "@/lib/server/realtimeHub";
-import { fetchTasksForWorkspace } from "@/lib/tasks/taskQuery";
-import {
-  getAuthenticatedUser,
-  requireWorkspaceAccess,
-} from "@/lib/server/workspaceAuth";
+import { fetchAllTasks } from "@/lib/tasks/taskQuery";
 import {
   validateTaskStatus,
   resolveSpaceStatusesForList,
 } from "@/lib/tasks/taskStatusValidator";
 
-// Auto-seed initial workspace, spaces, lists, and tasks if PostgreSQL task tables are empty
+// Auto-seed initial spaces, lists, and tasks if PostgreSQL task tables are empty
 async function ensureSeedData() {
-  const count = await prisma.workspaceItem.count();
+  const count = await prisma.spaceItem.count();
   if (count > 0) return;
 
-  const ws = await prisma.workspaceItem.create({
+  await prisma.spaceItem.create({
     data: {
-      id: "ws-main",
-      name: "Acme Corp Core",
-      avatar: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80",
-      members: JSON.parse(JSON.stringify(SEED_USERS)),
-      spaces: {
+      id: PRODUCT_SPACE_ID,
+      name: "Design & Product",
+      icon: "Palette",
+      color: "#8B5CF6",
+      statuses: JSON.parse(JSON.stringify(DEFAULT_STATUSES)),
+      lists: {
         create: [
           {
-            id: PRODUCT_SPACE_ID,
-            name: "Design & Product",
-            icon: "Palette",
-            color: "#8B5CF6",
-            statuses: JSON.parse(JSON.stringify(DEFAULT_STATUSES)),
-            lists: {
-              create: [
-                {
-                  id: DESIGN_SYSTEM_LIST_ID,
-                  name: "Design Tokens & UI Specs",
-                  icon: "Layers",
-                },
-                {
-                  id: "list-user-research",
-                  name: "Customer Interviews",
-                  icon: "Users",
-                },
-              ],
-            },
+            id: DESIGN_SYSTEM_LIST_ID,
+            name: "Design Tokens & UI Specs",
+            icon: "Layers",
           },
           {
-            id: MARCOM_SPACE_ID,
-            name: "Marketing & Campaigns",
-            icon: "Sparkles",
-            color: "#EC4899",
-            statuses: JSON.parse(JSON.stringify(DEFAULT_STATUSES)),
-            lists: {
-              create: [
-                {
-                  id: CONTENT_PLANNER_LIST_ID,
-                  name: "Social & Content Calendar",
-                  icon: "Calendar",
-                },
-                {
-                  id: FIELD_OPS_LIST_ID,
-                  name: "Field Operations & Setup",
-                  icon: "Layers",
-                },
-              ],
-            },
+            id: "list-user-research",
+            name: "Customer Interviews",
+            icon: "Users",
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.spaceItem.create({
+    data: {
+      id: MARCOM_SPACE_ID,
+      name: "Marketing & Campaigns",
+      icon: "Sparkles",
+      color: "#EC4899",
+      statuses: JSON.parse(JSON.stringify(DEFAULT_STATUSES)),
+      lists: {
+        create: [
+          {
+            id: CONTENT_PLANNER_LIST_ID,
+            name: "Social & Content Calendar",
+            icon: "Calendar",
+          },
+          {
+            id: FIELD_OPS_LIST_ID,
+            name: "Field Operations & Setup",
+            icon: "Layers",
           },
         ],
       },
@@ -165,91 +154,58 @@ async function ensureSeedData() {
       },
     ],
   });
-
-  return ws;
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     await ensureSeedData();
 
-    const { searchParams } = new URL(request.url);
-    const workspaceId = searchParams.get("workspaceId");
-
-    if (workspaceId) {
-      const authError = await requireWorkspaceAccess(workspaceId, {
-        requiredRole: "viewer",
-        request,
-      });
-      if (authError) return authError;
-    } else {
-      const user = await getAuthenticatedUser(request);
-      if (!user) {
-        return NextResponse.json(
-          { error: "Unauthorized: Active session required" },
-          { status: 401 },
-        );
-      }
-    }
-
-    const [dbWorkspaces, dbTasks] = await Promise.all([
-      prisma.workspaceItem.findMany({
+    const [dbSpaces, dbTasks] = await Promise.all([
+      prisma.spaceItem.findMany({
         include: {
-          spaces: {
+          folders: {
             include: {
-              folders: {
-                include: {
-                  lists: true,
-                },
-              },
               lists: true,
             },
           },
+          lists: true,
         },
       }),
-      fetchTasksForWorkspace(workspaceId),
+      fetchAllTasks(),
     ]);
 
-    // Format workspaces to match frontend Workspace shape
-    const workspaces: Workspace[] = dbWorkspaces.map((ws) => ({
-      id: ws.id,
-      name: ws.name,
-      avatar: ws.avatar || undefined,
-      members: (ws.members as unknown as User[]) || [],
-      spaces: ws.spaces.map((sp) => {
-        // Direct lists: lists that do not belong to any folder
-        const directLists = sp.lists.filter((l) => !l.folderId);
-        return {
-          id: sp.id,
-          workspaceId: sp.workspaceId,
-          name: sp.name,
-          icon: sp.icon,
-          color: sp.color,
-          statuses: (sp.statuses as unknown as Status[]) || DEFAULT_STATUSES,
-          folders: sp.folders.map((f) => ({
-            id: f.id,
-            spaceId: f.spaceId,
-            name: f.name,
-            lists: f.lists.map((l) => ({
-              id: l.id,
-              spaceId: l.spaceId,
-              folderId: l.folderId || undefined,
-              name: l.name,
-              color: l.color,
-              icon: l.icon,
-            })),
-          })),
-          lists: directLists.map((l) => ({
+    // Format spaces to match frontend Space shape
+    const spaces: Space[] = dbSpaces.map((sp) => {
+      const directLists = sp.lists.filter((l) => !l.folderId);
+      return {
+        id: sp.id,
+        name: sp.name,
+        icon: sp.icon,
+        color: sp.color,
+        statuses: (sp.statuses as unknown as Status[]) || DEFAULT_STATUSES,
+        folders: sp.folders.map((f) => ({
+          id: f.id,
+          spaceId: f.spaceId,
+          name: f.name,
+          lists: f.lists.map((l) => ({
             id: l.id,
             spaceId: l.spaceId,
-            folderId: undefined,
+            folderId: l.folderId || undefined,
             name: l.name,
             color: l.color,
             icon: l.icon,
           })),
-        };
-      }),
-    }));
+        })),
+        lists: directLists.map((l) => ({
+          id: l.id,
+          spaceId: l.spaceId,
+          folderId: undefined,
+          name: l.name,
+          color: l.color,
+          icon: l.icon,
+        })),
+      };
+    });
 
     // Format tasks to match frontend Task shape
     const tasks: Task[] = dbTasks.map((t) => ({
@@ -287,7 +243,10 @@ export async function GET(request: Request) {
       updatedAt: t.updatedAt.toISOString(),
     }));
 
-    return NextResponse.json({ workspaces, tasks });
+    return NextResponse.json({
+      spaces,
+      tasks,
+    });
   } catch (error) {
     console.error("Error fetching tasks from database:", error);
     return NextResponse.json(
@@ -331,33 +290,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate tenant membership and write permission
-    let targetWsId: string | null = null;
+    // Verify parent list exists; if not, create it under target space so listId is preserved
+    let targetListId = listId;
     const existingList = await prisma.listItem.findUnique({
       where: { id: listId },
       include: { space: true },
     });
-    if (existingList?.space?.workspaceId) {
-      targetWsId = existingList.space.workspaceId;
-    } else if (body.spaceId) {
-      const space = await prisma.spaceItem.findUnique({
-        where: { id: body.spaceId },
-      });
-      if (space?.workspaceId) targetWsId = space.workspaceId;
-    }
-
-    if (targetWsId) {
-      const authError = await requireWorkspaceAccess(targetWsId, {
-        requiredRole: "staff",
-        request,
-      });
-      if (authError) return authError;
-    }
-
-    // Verify parent list exists; if not, create it under target space so listId is preserved
-    let targetListId = listId;
-    const listExists = existingList || (await prisma.listItem.findUnique({ where: { id: listId } }));
-    if (!listExists) {
+    if (!existingList) {
       const parentSpace =
         (body.spaceId
           ? await prisma.spaceItem.findUnique({ where: { id: body.spaceId } })
@@ -463,7 +402,7 @@ export async function POST(request: Request) {
       updatedAt: task.updatedAt.toISOString(),
     };
 
-    realtimeHub.broadcastTaskUpsert(formattedTask, targetWsId || undefined);
+    realtimeHub.broadcastTaskUpsert(formattedTask);
     return NextResponse.json(formattedTask, { status: 201 });
   } catch (error) {
     console.error("Error creating task in database:", error);
@@ -485,38 +424,12 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "No task IDs provided" }, { status: 400 });
     }
 
-    // Query tasks to verify workspace authorization and prepare realtime broadcast targets
-    const tasks = await prisma.taskItem.findMany({
-      where: { id: { in: ids } },
-      include: { list: { include: { space: true } } },
-    });
-
-    if (tasks.length === 0) {
-      return NextResponse.json({ ok: true, count: 0 });
-    }
-
-    // Verify user has staff access to all workspaces represented in the batch
-    const workspaceIds = [...new Set(tasks.map((t) => t.list.space.workspaceId))];
-    for (const wsId of workspaceIds) {
-      const authError = await requireWorkspaceAccess(wsId, {
-        requiredRole: "staff",
-        request,
-      });
-      if (authError) return authError;
-    }
-
     const deleteResult = await prisma.taskItem.deleteMany({
       where: { id: { in: ids } },
     });
 
-    // Broadcast deletions per workspace
-    for (const wsId of workspaceIds) {
-      const wsTaskIds = tasks
-        .filter((t) => t.list.space.workspaceId === wsId)
-        .map((t) => t.id);
-      for (const taskId of wsTaskIds) {
-        realtimeHub.broadcastTaskDelete(taskId, wsId);
-      }
+    for (const taskId of ids) {
+      realtimeHub.broadcastTaskDelete(taskId);
     }
 
     return NextResponse.json({ ok: true, count: deleteResult.count });
@@ -528,5 +441,3 @@ export async function DELETE(request: Request) {
     );
   }
 }
-
-

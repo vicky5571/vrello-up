@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import { WorkspaceMenuDropdown } from "./WorkspaceMenuDropdown";
 import { MARCOM_VIEW_LABELS } from "./topNavConstants";
-import type { Workspace, ViewMode } from "@/types";
+import type { ViewMode } from "@/types";
 import {
   ChevronDown,
   Folder as FolderIcon,
@@ -20,22 +19,16 @@ import { toast } from "sonner";
 
 export interface TopNavBreadcrumbsProps {
   variant?: "full" | "workspace-only" | "space-list";
-  onOpenCreateWorkspace: () => void;
-  onOpenEditWorkspace: (ws: Workspace) => void;
 }
 
 export function TopNavBreadcrumbs({
   variant = "full",
-  onOpenCreateWorkspace,
-  onOpenEditWorkspace,
 }: TopNavBreadcrumbsProps) {
   const appMode = useWorkspaceStore((s) => s.appMode);
   const activeView = useWorkspaceStore((s) => s.activeView);
-  const workspaces = useWorkspaceStore((s) => s.workspaces);
-  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
+  const spaces = useWorkspaceStore((s) => s.spaces);
   const activeSpaceId = useWorkspaceStore((s) => s.activeSpaceId);
   const activeListId = useWorkspaceStore((s) => s.activeListId);
-  const setActiveWorkspace = useWorkspaceStore((s) => s.setActiveWorkspace);
   const setActiveList = useWorkspaceStore((s) => s.setActiveList);
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
   const setAppMode = useWorkspaceStore((s) => s.setAppMode);
@@ -43,29 +36,22 @@ export function TopNavBreadcrumbs({
   const navigatedFromMarcom = useWorkspaceStore((s) => s.navigatedFromMarcom);
   const setNavigatedFromMarcom = useWorkspaceStore((s) => s.setNavigatedFromMarcom);
 
-  const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId);
-  const currentSpace = currentWorkspace?.spaces.find((s) => s.id === activeSpaceId);
+  const currentSpace = spaces.find((s) => s.id === activeSpaceId);
 
-  const [isWsMenuOpen, setIsWsMenuOpen] = useState(false);
   const [isListMenuOpen, setIsListMenuOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  const wsMenuRef = useRef<HTMLDivElement>(null);
   const listMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
-      if (wsMenuRef.current && !wsMenuRef.current.contains(target)) {
-        setIsWsMenuOpen(false);
-      }
       if (listMenuRef.current && !listMenuRef.current.contains(target)) {
         setIsListMenuOpen(false);
       }
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsWsMenuOpen(false);
         setIsListMenuOpen(false);
       }
     };
@@ -108,7 +94,7 @@ export function TopNavBreadcrumbs({
     );
   };
 
-  const renderWorkspaceAnchor = () => (
+  const renderBrandAnchor = () => (
     <div className="flex items-center gap-2 text-xs shrink-0">
       <button
         type="button"
@@ -120,41 +106,12 @@ export function TopNavBreadcrumbs({
       </button>
 
       <div className="w-5 h-5 rounded bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shadow-2xs shrink-0">
-        {currentWorkspace?.avatar || "V"}
+        V
       </div>
 
-      <div ref={wsMenuRef} className="relative shrink-0">
-        <button
-          type="button"
-          onClick={() => setIsWsMenuOpen(!isWsMenuOpen)}
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-        >
-          <span className="truncate max-w-[160px] sm:max-w-[200px]">
-            {currentWorkspace?.name || "Acme Workspace"}
-          </span>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-        </button>
-
-        {isWsMenuOpen && (
-          <WorkspaceMenuDropdown
-            workspaces={workspaces}
-            currentWorkspaceId={currentWorkspace?.id}
-            onSelectWorkspace={(id) => {
-              setActiveWorkspace(id);
-              setIsWsMenuOpen(false);
-            }}
-            onClose={() => setIsWsMenuOpen(false)}
-            onOpenEditWorkspace={(ws) => {
-              setIsWsMenuOpen(false);
-              onOpenEditWorkspace(ws);
-            }}
-            onOpenCreateWorkspace={() => {
-              setIsWsMenuOpen(false);
-              onOpenCreateWorkspace();
-            }}
-          />
-        )}
-      </div>
+      <span className="font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[160px] sm:max-w-[200px]">
+        Vrello
+      </span>
     </div>
   );
 
@@ -297,7 +254,7 @@ export function TopNavBreadcrumbs({
   );
 
   if (variant === "workspace-only") {
-    return renderWorkspaceAnchor();
+    return renderBrandAnchor();
   }
 
   if (variant === "space-list") {
@@ -307,7 +264,7 @@ export function TopNavBreadcrumbs({
   // variant === "full"
   return (
     <div className="flex items-center gap-2 text-xs min-w-0">
-      {renderWorkspaceAnchor()}
+      {renderBrandAnchor()}
       <span className="text-slate-300 dark:text-slate-700 shrink-0">/</span>
       {appMode === "marcom" ? renderMarcomTrail() : renderSpaceListBreadcrumb()}
     </div>

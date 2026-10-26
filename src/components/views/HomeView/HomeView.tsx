@@ -60,16 +60,16 @@ function TaskRow({ task, onOpen }: { task: Task; onOpen: () => void }) {
 export function HomeView() {
   const {
     tasks,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
     activeSpaceId,
+    users,
     currentUserId,
   } = useWorkspaceStore(
     useShallow((s) => ({
       tasks: s.tasks,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
       activeSpaceId: s.activeSpaceId,
+      users: s.users,
       currentUserId: s.currentUserId,
     })),
   );
@@ -77,16 +77,14 @@ export function HomeView() {
   const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
-  const currentWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) ?? workspaces[0];
-  const currentSpace = currentWorkspace?.spaces.find(
+  const currentSpace = spaces.find(
     (s) => s.id === activeSpaceId,
-  );
+  ) ?? spaces[0];
   const statuses = useMemo(
     () => currentSpace?.statuses ?? [],
     [currentSpace?.statuses],
   );
-  const members = currentWorkspace?.members ?? SEED_USERS;
+  const members = users.length > 0 ? users : SEED_USERS;
   const me = members.find((u) => u.id === currentUserId) ?? members[0];
 
   const assigned = useMemo(

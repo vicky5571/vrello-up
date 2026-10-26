@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireMember } from "@/lib/marcom/auth";
 import {
   buildOutletPipelineRows,
   filterPipelineRows,
@@ -8,14 +7,6 @@ import {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get("workspaceId") || "ws-main";
-
-  try {
-    await requireMember(workspaceId);
-  } catch (e) {
-    if (e instanceof Response) return e;
-    throw e;
-  }
 
   const branchId = searchParams.get("branchId");
   const q = searchParams.get("q");
@@ -43,9 +34,9 @@ export async function GET(request: Request) {
 
   if (activeOnly === "true" || activeOnly === "1") {
     const activityConditions: Prisma.OutletWhereInput[] = [
-      { placements: { some: { workspaceId } } },
-      { mous: { some: { workspaceId } } },
-      { events: { some: { workspaceId } } },
+      { placements: { some: {} } },
+      { mous: { some: {} } },
+      { events: { some: {} } },
     ];
     if (outletWhere.OR) {
       outletWhere.AND = [{ OR: outletWhere.OR }, { OR: activityConditions }];
@@ -62,14 +53,12 @@ export async function GET(request: Request) {
       include: {
         branch: true,
         placements: {
-          where: { workspaceId },
           include: {
             material: true,
             mou: true,
           },
         },
         mous: {
-          where: { workspaceId },
           include: {
             branch: true,
           },
@@ -77,12 +66,10 @@ export async function GET(request: Request) {
       },
     }),
     prisma.fieldEvent.findMany({
-      where: { workspaceId },
       orderBy: { startDate: "asc" },
       include: { footage: true },
     }),
     prisma.contentPost.findMany({
-      where: { workspaceId },
       orderBy: { publishDate: "desc" },
     }),
     prisma.branch.findMany({

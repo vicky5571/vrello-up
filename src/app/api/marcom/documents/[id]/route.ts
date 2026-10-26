@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { isValidDocumentFilePath } from "@/lib/marcom/upload";
 import { VALID_DOCUMENT_STATUSES, isValidDocumentStatus } from "@/lib/marcom/documentTaxonomy";
 
@@ -14,9 +13,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!existing) {
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
   }
-
-  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
 
   const body = await request.json().catch(() => ({}));
   const data: Record<string, unknown> = {};
@@ -50,15 +46,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const existing = await prisma.documentItem.findUnique({ where: { id } });
   if (!existing) {
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
   }
-
-  const authError = await requireWorkspaceAccess(existing.workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
 
   try {
     await prisma.documentItem.delete({ where: { id } });

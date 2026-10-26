@@ -23,8 +23,8 @@ export function ChannelView() {
   const {
     activeListId,
     activeSpaceId,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
+    users,
     currentUserId,
     channelMessages,
     tasks,
@@ -32,8 +32,8 @@ export function ChannelView() {
     useShallow((s) => ({
       activeListId: s.activeListId,
       activeSpaceId: s.activeSpaceId,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
+      users: s.users,
       currentUserId: s.currentUserId,
       channelMessages: s.channelMessages,
       tasks: s.tasks,
@@ -46,11 +46,9 @@ export function ChannelView() {
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const currentWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
-  const members = currentWorkspace?.members || SEED_USERS;
+  const members = users.length > 0 ? users : SEED_USERS;
 
-  const currentSpace = currentWorkspace?.spaces.find((s) => s.id === activeSpaceId);
+  const currentSpace = spaces.find((s) => s.id === activeSpaceId);
   const currentList =
     currentSpace?.lists.find((l) => l.id === activeListId) ||
     currentSpace?.folders.flatMap((f) => f.lists).find((l) => l.id === activeListId);

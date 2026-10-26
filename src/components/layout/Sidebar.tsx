@@ -46,8 +46,7 @@ import { SortableSpaceItem } from "@/components/spaces/SortableSpaceItem";
 export function Sidebar() {
   const {
     appMode,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
     activeSpaceId,
     activeListId,
     activeView,
@@ -58,8 +57,7 @@ export function Sidebar() {
   } = useWorkspaceStore(
     useShallow((s) => ({
       appMode: s.appMode,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
       activeSpaceId: s.activeSpaceId,
       activeListId: s.activeListId,
       activeView: s.activeView,
@@ -82,9 +80,6 @@ export function Sidebar() {
   const reorderSpaces = useWorkspaceStore((s) => s.reorderSpaces);
   const moveSpace = useWorkspaceStore((s) => s.moveSpace);
 
-  const currentWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
-
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -98,9 +93,8 @@ export function Sidebar() {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id || !currentWorkspace) return;
+    if (!over || active.id === over.id) return;
 
-    const spaces = currentWorkspace.spaces;
     const oldIndex = spaces.findIndex((s) => s.id === active.id);
     const newIndex = spaces.findIndex((s) => s.id === over.id);
 
@@ -277,10 +271,10 @@ export function Sidebar() {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={currentWorkspace?.spaces.map((s) => s.id) || []}
+                  items={spaces.map((s) => s.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {currentWorkspace?.spaces.map((space, spaceIndex) => {
+                  {spaces.map((space, spaceIndex) => {
                     const isSpaceActive = activeSpaceId === space.id && !activeListId;
                     const isExpanded = !!expandedSpaces[space.id];
 
@@ -289,7 +283,7 @@ export function Sidebar() {
                         key={space.id}
                         space={space}
                         spaceIndex={spaceIndex}
-                        totalSpaces={currentWorkspace.spaces.length}
+                        totalSpaces={spaces.length}
                         isSpaceActive={isSpaceActive}
                         isExpanded={isExpanded}
                         activeSpaceId={activeSpaceId}
@@ -358,7 +352,7 @@ export function Sidebar() {
               <button
                 type="button"
                 onClick={() => setIsSettingsOpen(true)}
-                title="Workspace & Account Settings"
+                title="Settings"
                 className="p-1 rounded hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
               >
                 <Settings className="w-3.5 h-3.5" />

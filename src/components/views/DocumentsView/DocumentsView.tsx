@@ -19,7 +19,6 @@ import {
   Cloud,
   Copy,
 } from "lucide-react";
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn } from "@/lib/utils";
@@ -67,7 +66,6 @@ const columnHelper = createMarcomColumnHelper<MarcomDocument>();
 
 export function DocumentsView() {
   const { can } = useMarcomPermissions();
-  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
 
   const [documents, setDocuments] = useState<MarcomDocument[]>([]);
   const [branches, setBranches] = useState<BranchOption[]>([]);
@@ -103,7 +101,7 @@ export function DocumentsView() {
     setError(null);
     try {
       const [resDocs, branchList] = await Promise.all([
-        fetch(`/api/marcom/documents?workspaceId=${encodeURIComponent(activeWorkspaceId)}`),
+        fetch(`/api/marcom/documents`),
         fetchBranches(),
       ]);
       if (!resDocs.ok) throw new Error(`Request failed (${resDocs.status})`);
@@ -117,11 +115,11 @@ export function DocumentsView() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeWorkspaceId, fetchBranches]);
+  }, [fetchBranches]);
 
   useEffect(() => {
     fetchDocuments();
-  }, [fetchDocuments, activeWorkspaceId]);
+  }, [fetchDocuments]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -189,7 +187,6 @@ export function DocumentsView() {
           filePath: filePath!.trim(),
           fileSizeMb: Number(fileSizeMb) || 0,
           description: description?.trim() || undefined,
-          workspaceId: activeWorkspaceId,
         }),
       });
       if (!res.ok) {

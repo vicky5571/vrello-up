@@ -8,12 +8,9 @@ const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET
 const VALID_BRANDS = ["IM3", "TRI"] as const;
 const PATCHABLE_FIELDS = ["code", "name", "type", "brand", "branchId", "address", "city", "picName", "picPhone", "active", "latitude", "longitude"] as const;
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get("workspaceId") || "ws-main";
-
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireMember(workspaceId);
+    await requireMember();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;
@@ -25,7 +22,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     include: {
       branch: { select: { id: true, code: true, name: true, city: true, region: true, picName: true, picPhone: true, address: true } },
       placements: {
-        where: { workspaceId },
         orderBy: { id: "desc" },
         include: {
           material: { select: { id: true, name: true, type: true, requiresMou: true } },
@@ -33,7 +29,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         },
       },
       mous: {
-        where: { workspaceId },
         orderBy: { id: "desc" },
         include: {
           branch: { select: { id: true, code: true, name: true } },
@@ -48,13 +43,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const [events, contents] = await Promise.all([
     prisma.fieldEvent.findMany({
-      where: buildOutletEventWhere(workspaceId, outlet.id),
+      where: buildOutletEventWhere(outlet.id),
       orderBy: { startDate: "desc" },
       take: 50,
       include: { footage: true },
     }),
     prisma.contentPost.findMany({
-      where: buildOutletContentWhere(workspaceId, outlet.id, outlet.code),
+      where: buildOutletContentWhere(outlet.id, outlet.code),
       orderBy: { publishDate: "desc" },
       take: 50,
     }),
@@ -70,7 +65,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 async function requireMasterData() {
   let role;
   try {
-    role = await requireMember("ws-main");
+    role = await requireMember();
   } catch (e) {
     if (e instanceof Response) throw e;
     throw e;

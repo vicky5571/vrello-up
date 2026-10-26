@@ -33,9 +33,8 @@ export function PlacementBulkActionBar({
   onDeleteBatch,
   canManage,
 }: PlacementBulkActionBarProps) {
-  const activeWorkspaceId = useWorkspaceStore((state) => state.activeWorkspaceId) || "ws-main";
-  const { tasks, workspaces } = useWorkspaceStore(
-    useShallow((s) => ({ tasks: s.tasks, workspaces: s.workspaces })),
+  const { tasks, spaces } = useWorkspaceStore(
+    useShallow((s) => ({ tasks: s.tasks, spaces: s.spaces })),
   );
   const updateTask = useWorkspaceStore((s) => s.updateTask);
 
@@ -79,7 +78,6 @@ export function PlacementBulkActionBar({
         body: JSON.stringify({
           ids: selectedIds,
           updates: { status },
-          workspaceId: activeWorkspaceId,
         }),
       });
       if (!res.ok) {
@@ -87,17 +85,16 @@ export function PlacementBulkActionBar({
         throw new Error(data.error || `Gagal memperbarui status (${res.status})`);
       }
 
-      // Sync linked Kanban tasks in workspace for each selected placement
-      const currentWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
+      // Sync linked Kanban tasks for each selected placement
       selectedIds.forEach((id) => {
         syncTaskOnPlacementStatusChange(
           id,
           status,
           tasks,
-          currentWorkspace?.spaces || [],
+          spaces,
           (taskId, updates) => updateTask(taskId, updates),
         );
-        updateCachedPlacement(activeWorkspaceId, { id, status });
+        updateCachedPlacement({ id, status });
       });
 
       const label =
@@ -115,7 +112,7 @@ export function PlacementBulkActionBar({
 
       toast.success(`Status ${count} placement berhasil diubah menjadi "${label}"!`);
       onClearSelection();
-      await fetchPlacements(activeWorkspaceId, true);
+      await fetchPlacements(true);
       await onRefresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal memperbarui status masal");
@@ -144,7 +141,6 @@ export function PlacementBulkActionBar({
         body: JSON.stringify({
           ids: selectedIds,
           updates: { picName: cleanPic },
-          workspaceId: activeWorkspaceId,
         }),
       });
       if (!res.ok) {
@@ -153,14 +149,14 @@ export function PlacementBulkActionBar({
       }
 
       selectedIds.forEach((id) => {
-        updateCachedPlacement(activeWorkspaceId, { id, picName: cleanPic });
+        updateCachedPlacement({ id, picName: cleanPic });
       });
 
       toast.success(`PIC "${cleanPic}" berhasil ditetapkan untuk ${count} placement!`);
       setShowPicModal(false);
       setPicInput("");
       onClearSelection();
-      await fetchPlacements(activeWorkspaceId, true);
+      await fetchPlacements(true);
       await onRefresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal menetapkan PIC masal");
@@ -185,7 +181,7 @@ export function PlacementBulkActionBar({
         if (ok) {
           toast.success(`${count} placement berhasil dihapus`);
           onClearSelection();
-          await fetchPlacements(activeWorkspaceId, true);
+          await fetchPlacements(true);
           await onRefresh();
         } else {
           toast.error("Gagal menghapus placement masal");
@@ -197,14 +193,14 @@ export function PlacementBulkActionBar({
       const res = await fetch("/api/marcom/placements", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: selectedIds, workspaceId: activeWorkspaceId }),
+        body: JSON.stringify({ ids: selectedIds }),
       });
       if (!res.ok) throw new Error("Batch delete failed");
-      selectedIds.forEach((id) => removeCachedPlacement(activeWorkspaceId, id));
-      invalidateMous(activeWorkspaceId);
+      selectedIds.forEach((id) => removeCachedPlacement(id));
+      invalidateMous();
       toast.success(`${count} placement berhasil dihapus`);
       onClearSelection();
-      await fetchPlacements(activeWorkspaceId, true);
+      await fetchPlacements(true);
       await onRefresh();
     } catch {
       toast.error("Gagal menghapus beberapa placement");

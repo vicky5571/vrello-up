@@ -1,75 +1,63 @@
-import { type Workspace, type Task, type Tag, type User } from "@/types";
+import { type Space, type Task, type Tag } from "@/types";
 
 export interface BackupData {
-  workspace?: Workspace;
+  spaces?: Space[];
+  workspace?: { spaces?: Space[] }; // For backward compatibility with legacy backups
   tasks?: Task[];
   tags?: Tag[];
 }
 
 export interface ParsedBackupResult {
   isValid: boolean;
-  normalizedWorkspace?: Workspace;
+  spaces?: Space[];
   tasks?: Task[];
   tags?: Tag[];
 }
 
 /**
- * Validates untrusted backup JSON data and extracts normalized workspace, tasks, and tags.
+ * Validates untrusted backup JSON data and extracts normalized spaces, tasks, and tags.
  */
-export function validateAndParseBackup(
-  data: unknown,
-  fallbackMembers: User[],
-): ParsedBackupResult {
+export function validateAndParseBackup(data: unknown): ParsedBackupResult {
   if (!data || typeof data !== "object") return { isValid: false };
   const backup = data as BackupData;
-  const workspace = backup.workspace;
-  if (
-    !workspace ||
-    typeof workspace.id !== "string" ||
-    !Array.isArray(workspace.spaces)
-  ) {
+  const spaces = Array.isArray(backup.spaces)
+    ? backup.spaces
+    : Array.isArray(backup.workspace?.spaces)
+      ? backup.workspace.spaces
+      : null;
+
+  if (!spaces) {
     return { isValid: false };
   }
 
   const tasks = Array.isArray(backup.tasks) ? backup.tasks : [];
   const tags = Array.isArray(backup.tags) ? backup.tags : [];
-  const normalized: Workspace = {
-    ...workspace,
-    members: Array.isArray(workspace.members)
-      ? workspace.members
-      : fallbackMembers,
-  };
 
   return {
     isValid: true,
-    normalizedWorkspace: normalized,
+    spaces,
     tasks,
     tags,
   };
 }
 
 /**
- * Pure function to integrate parsed backup data into workspace state.
+ * Pure function to integrate parsed backup data into store state.
  */
 export function applyImportBackup(
-  currentWorkspaces: Workspace[],
+  currentSpaces: Space[],
   parsed: ParsedBackupResult,
 ) {
-  if (!parsed.isValid || !parsed.normalizedWorkspace) {
+  if (!parsed.isValid || !parsed.spaces) {
     return null;
   }
-  const normalized = parsed.normalizedWorkspace;
-  const exists = currentWorkspaces.some((w) => w.id === normalized.id);
-  const space = normalized.spaces[0];
-  const nextWorkspaces = exists
-    ? currentWorkspaces.map((w) => (w.id === normalized.id ? normalized : w))
-    : [...currentWorkspaces, normalized];
+  const nextSpaces = parsed.spaces;
+  const space = nextSpaces[0];
 
   return {
-    workspaces: nextWorkspaces,
+    spaces: nextSpaces,
     tasks: parsed.tasks ?? [],
     tags: parsed.tags ?? [],
-    activeWorkspaceId: normalized.id,
     activeSpaceId: space?.id || "",
     activeListId:
       space?.lists[0]?.id || space?.folders[0]?.lists[0]?.id || "",

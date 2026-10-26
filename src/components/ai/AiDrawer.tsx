@@ -29,16 +29,14 @@ const GREETING =
 export function AiDrawer() {
   const {
     tasks,
-    workspaces,
-    activeWorkspaceId,
+    spaces,
     activeSpaceId,
     selectedTaskId,
     isAiDrawerOpen,
   } = useWorkspaceStore(
     useShallow((s) => ({
       tasks: s.tasks,
-      workspaces: s.workspaces,
-      activeWorkspaceId: s.activeWorkspaceId,
+      spaces: s.spaces,
       activeSpaceId: s.activeSpaceId,
       selectedTaskId: s.selectedTaskId,
       isAiDrawerOpen: s.isAiDrawerOpen,
@@ -50,9 +48,7 @@ export function AiDrawer() {
   const updateTask = useWorkspaceStore((s) => s.updateTask);
 
   const statuses =
-    workspaces
-      .find((w) => w.id === activeWorkspaceId)
-      ?.spaces.find((sp) => sp.id === activeSpaceId)?.statuses ?? [];
+    spaces.find((sp) => sp.id === activeSpaceId)?.statuses ?? [];
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set());

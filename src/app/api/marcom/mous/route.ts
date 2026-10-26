@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 import { MOU_STATUSES } from "@/lib/marcom/mouMachine";
 
 const VALID_STATUSES = MOU_STATUSES;
-// Creation is clamped to the entry of the approval flow: omitting status
-// yields the Prisma DRAFT default; only DRAFT/SUBMITTED are accepted so
-// callers cannot mint APPROVED/DONE rows and bypass the approval gate.
 const CREATABLE_STATUSES = ["DRAFT", "SUBMITTED"] as const;
 
 const mouInclude = {
@@ -27,12 +23,6 @@ const mouInclude = {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get("workspaceId");
-  if (!workspaceId) {
-    return NextResponse.json({ error: "workspaceId query parameter is required" }, { status: 400 });
-  }
-  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
-  if (authError) return authError;
 
   const branchId = searchParams.get("branchId") ?? searchParams.get("branch");
   const outletId = searchParams.get("outletId");
@@ -43,9 +33,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const where: Prisma.MouWhereInput = {
-    workspaceId,
-  };
+  const where: Prisma.MouWhereInput = {};
   if (branchId && branchId !== "ALL") {
     where.branchId = branchId;
   }
@@ -70,12 +58,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const workspaceId = body?.workspaceId;
-  if (!workspaceId) {
-    return NextResponse.json({ error: "workspaceId is required in request body" }, { status: 400 });
-  }
-  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
 
   const { branchId, outletId, outletName, partnerName, mouType, submissionDate, startDate, endDate, status, picName, picPhone, docPath, compensationValue, notes } = body ?? {};
   if (!branchId || !partnerName || !mouType) {
@@ -91,7 +73,6 @@ export async function POST(request: Request) {
   try {
     const mou = await prisma.mou.create({
       data: {
-        workspaceId,
         branchId,
         outletId: targetOutletId,
         outletName: targetOutletName,
@@ -122,10 +103,6 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const workspaceId = body?.workspaceId || new URL(request.url).searchParams.get("workspaceId") || "ws-main";
-    const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
-    if (authError) return authError;
-
     const ids: string[] = Array.isArray(body?.ids)
       ? body.ids.filter((id: unknown) => typeof id === "string" && id.trim() !== "")
       : [];
@@ -137,7 +114,6 @@ export async function DELETE(request: Request) {
     const result = await prisma.mou.deleteMany({
       where: {
         id: { in: ids },
-        workspaceId,
       },
     });
 

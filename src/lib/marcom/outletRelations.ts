@@ -6,11 +6,9 @@ import type { Prisma } from "@prisma/client";
  * roadshows or city-level events from accidentally attaching to retail outlets.
  */
 export function buildOutletEventWhere(
-  workspaceId: string,
   outletId: string
 ): Prisma.FieldEventWhereInput {
   return {
-    workspaceId,
     outletId,
   };
 }
@@ -22,7 +20,6 @@ export function buildOutletEventWhere(
  * Drops loose `title: { equals: outlet.name }` matching to prevent homonym collisions.
  */
 export function buildOutletContentWhere(
-  workspaceId: string,
   outletId: string,
   outletCode?: string | null
 ): Prisma.ContentPostWhereInput {
@@ -39,7 +36,6 @@ export function buildOutletContentWhere(
   }
 
   return {
-    workspaceId,
     OR: contentOr,
   };
 }

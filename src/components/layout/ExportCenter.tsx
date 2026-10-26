@@ -87,12 +87,11 @@ function DatasetCard({ icon: Icon, title, description, count, onCsv, onPdf }: Da
  * monthly reports, placements, MOUs — plus the current batch selection.
  */
 export function ExportCenter() {
-  const { isExportCenterOpen, tasks, selectedTaskIds, activeWorkspaceId } = useWorkspaceStore(
+  const { isExportCenterOpen, tasks, selectedTaskIds } = useWorkspaceStore(
     useShallow((s) => ({
       isExportCenterOpen: s.isExportCenterOpen,
       tasks: s.tasks,
       selectedTaskIds: s.selectedTaskIds,
-      activeWorkspaceId: s.activeWorkspaceId,
     })),
   );
   const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
@@ -106,11 +105,10 @@ export function ExportCenter() {
     if (!isExportCenterOpen) return;
     let cancelled = false;
     setIsLoading(true);
-    const wsParam = activeWorkspaceId ? `?workspaceId=${encodeURIComponent(activeWorkspaceId)}` : "";
     Promise.all([
-      fetch(`/api/marcom/reports${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })),
-      fetch(`/api/marcom/placements${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })),
-      fetch(`/api/marcom/mous${wsParam}`).then((r) => (r.ok ? r.json() : { data: [] })),
+      fetch("/api/marcom/reports").then((r) => (r.ok ? r.json() : { data: [] })),
+      fetch("/api/marcom/placements").then((r) => (r.ok ? r.json() : { data: [] })),
+      fetch("/api/marcom/mous").then((r) => (r.ok ? r.json() : { data: [] })),
     ])
       .then(([rj, pj, mj]) => {
         if (cancelled) return;
@@ -127,7 +125,7 @@ export function ExportCenter() {
     return () => {
       cancelled = true;
     };
-  }, [isExportCenterOpen, activeWorkspaceId]);
+  }, [isExportCenterOpen]);
 
   const close = () => setExportCenterOpen(false);
   const selectedTasks = tasks.filter((t) => selectedTaskIds.includes(t.id));

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
 import { applyAddComment, applyDeleteComment, applyAddChannelMessage, applyLogActivity, resolveActor } from "./commentOperations.ts";
-import type { Task, User, Workspace, ChannelMessage } from "../../types/index.ts";
+import type { Task, User, ChannelMessage } from "../../types/index.ts";
 
 const dummyActor: User = {
   id: "u-1",
@@ -31,23 +31,18 @@ const initialTask: Task = {
 
 test("resolveActor returns explicit user if provided", () => {
   const explicit: User = { id: "u-2", name: "Bob", email: "bob@test.com", avatar: "", role: "staff" };
-  const resolved = resolveActor([], "ws-1", "u-1", [dummyActor], explicit);
+  const resolved = resolveActor("u-1", [dummyActor], explicit);
   assert.equal(resolved.id, "u-2");
 });
 
-test("resolveActor finds member matching currentUserId in active workspace", () => {
-  const ws: Workspace = {
-    id: "ws-1",
-    name: "Main",
-    spaces: [],
-    members: [{ id: "u-member", name: "Member", email: "m@test.com", avatar: "", role: "staff" }],
-  };
-  const resolved = resolveActor([ws], "ws-1", "u-member", [dummyActor]);
+test("resolveActor finds member matching currentUserId in users list", () => {
+  const member: User = { id: "u-member", name: "Member", email: "m@test.com", avatar: "", role: "staff" };
+  const resolved = resolveActor("u-member", [dummyActor, member]);
   assert.equal(resolved.id, "u-member");
 });
 
-test("resolveActor falls back to fallbackUser if currentUserId not in workspace", () => {
-  const resolved = resolveActor([], "ws-1", "ghost", [dummyActor]);
+test("resolveActor falls back to fallbackUser if currentUserId not in users list", () => {
+  const resolved = resolveActor("ghost", [dummyActor]);
   assert.equal(resolved.id, "u-1");
 });
 

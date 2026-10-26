@@ -18,7 +18,6 @@ import type {
 } from "@/types";
 import { PLATFORM_CONFIG } from "./contentConstants";
 import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 
 export interface FlatSpaceItem {
   id: string;
@@ -96,20 +95,18 @@ export function ContentPostModal({
   outletId,
   setOutletId,
 }: ContentPostModalProps) {
-  const activeWorkspaceId = useWorkspaceStore((s) => s.activeWorkspaceId);
   const [outlets, setOutlets] = useState<OutletOption[]>([]);
 
   useEffect(() => {
     if (!isOpen) return;
-    const wsParam = activeWorkspaceId ? `?workspaceId=${encodeURIComponent(activeWorkspaceId)}` : "";
-    fetch(`/api/marcom/outlets${wsParam}`)
+    fetch("/api/marcom/outlets")
       .then((res) => (res.ok ? res.json() : []))
       .then((json) => {
         if (Array.isArray(json)) setOutlets(json);
         else if (json && Array.isArray(json.data)) setOutlets(json.data);
       })
       .catch(() => {});
-  }, [isOpen, activeWorkspaceId]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

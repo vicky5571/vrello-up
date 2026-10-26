@@ -1,30 +1,10 @@
 import { prisma } from "@/lib/db";
-import { type Prisma } from "@prisma/client";
 
 /**
- * Builds a Prisma `where` clause that enforces strict tenant boundaries
- * ensuring tasks are only returned if their parent space belongs to the given workspaceId.
+ * Queries all tasks from PostgreSQL (single-tenant).
  */
-export function buildTaskTenantWhere(
-  workspaceId?: string | null,
-): Prisma.TaskItemWhereInput | undefined {
-  if (!workspaceId) return undefined;
-  return {
-    list: {
-      space: {
-        workspaceId,
-      },
-    },
-  };
-}
-
-/**
- * Queries tasks from PostgreSQL scoped strictly to a workspaceId when provided.
- */
-export async function fetchTasksForWorkspace(workspaceId?: string | null) {
-  const where = buildTaskTenantWhere(workspaceId);
+export async function fetchAllTasks() {
   return prisma.taskItem.findMany({
-    where,
     include: {
       comments: true,
     },
@@ -33,3 +13,4 @@ export async function fetchTasksForWorkspace(workspaceId?: string | null) {
     },
   });
 }
+

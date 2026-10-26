@@ -9,47 +9,47 @@ test("importBackup rejects garbage without touching state", () => {
   const tasksBefore = api().tasks.length;
   assert.equal(api().importBackup(null), false);
   assert.equal(api().importBackup({}), false);
-  assert.equal(api().importBackup({ workspace: { id: 42 } }), false);
+  assert.equal(api().importBackup({ spaces: "not-an-array" }), false);
   assert.equal(api().tasks.length, tasksBefore);
 });
 
-test("importBackup restores a new workspace and replaces tasks and tags", () => {
+test("importBackup restores spaces and replaces tasks and tags", () => {
   const snap = api();
-  const ws = { ...snap.workspaces[0], id: "ws-backup-test", name: "Backup Test" };
+  const customSpace = { ...snap.spaces[0], id: "space-backup-test", name: "Backup Test" };
   assert.equal(
-    api().importBackup({ workspace: ws, tasks: [], tags: [] }),
+    api().importBackup({ spaces: [customSpace], tasks: [], tags: [] }),
     true,
   );
   const restored = api();
-  assert.equal(restored.activeWorkspaceId, "ws-backup-test");
+  assert.equal(restored.activeSpaceId, "space-backup-test");
   assert.deepEqual(restored.tasks, []);
   assert.deepEqual(restored.tags, []);
 
   assert.equal(
     api().importBackup({
-      workspace: { ...ws, name: "Backup Test v2" },
+      spaces: [{ ...customSpace, name: "Backup Test v2" }],
       tasks: [],
       tags: [],
     }),
     true,
   );
   assert.equal(
-    api().workspaces.filter((w) => w.id === "ws-backup-test").length,
+    api().spaces.filter((s) => s.id === "space-backup-test").length,
     1,
   );
   assert.equal(
-    api().workspaces.find((w) => w.id === "ws-backup-test")?.name,
+    api().spaces.find((s) => s.id === "space-backup-test")?.name,
     "Backup Test v2",
   );
 
   assert.equal(
     api().importBackup({
-      workspace: snap.workspaces[0],
+      spaces: snap.spaces,
       tasks: snap.tasks,
       tags: snap.tags,
     }),
     true,
   );
-  assert.equal(api().activeWorkspaceId, snap.activeWorkspaceId);
+  assert.equal(api().activeSpaceId, snap.activeSpaceId);
   assert.equal(api().tasks.length, snap.tasks.length);
 });

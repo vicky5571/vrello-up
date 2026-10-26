@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireWorkspaceAccess } from "@/lib/server/workspaceAuth";
 
 const VALID_STATUSES = ["UPCOMING", "ON_PROGRESS", "COMPLETED", "CANCELLED"] as const;
 
@@ -12,12 +11,6 @@ const eventInclude = {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const workspaceId = searchParams.get("workspaceId");
-  if (!workspaceId) {
-    return NextResponse.json({ error: "workspaceId query parameter is required" }, { status: 400 });
-  }
-  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "viewer", request });
-  if (authError) return authError;
 
   const status = searchParams.get("status");
   const query = searchParams.get("q")?.toLowerCase();
@@ -26,9 +19,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  const where: Prisma.FieldEventWhereInput = {
-    workspaceId,
-  };
+  const where: Prisma.FieldEventWhereInput = {};
   if (status && status !== "ALL") {
     where.status = status as (typeof VALID_STATUSES)[number];
   }
@@ -65,12 +56,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const workspaceId = body?.workspaceId;
-  if (!workspaceId) {
-    return NextResponse.json({ error: "workspaceId is required in request body" }, { status: 400 });
-  }
-  const authError = await requireWorkspaceAccess(workspaceId, { requiredRole: "staff", request });
-  if (authError) return authError;
 
   const {
     name,
@@ -116,7 +101,6 @@ export async function POST(request: Request) {
 
   const event = await prisma.fieldEvent.create({
     data: {
-      workspaceId,
       name,
       startDate: eventDate ? new Date(eventDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,

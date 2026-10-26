@@ -23,21 +23,18 @@ interface LoginModalProps {
 
 export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { data: session } = useSession();
-  const { currentUserId, workspaces, activeWorkspaceId } =
+  const { currentUserId, users } =
     useWorkspaceStore(
       useShallow((s) => ({
         currentUserId: s.currentUserId,
-        workspaces: s.workspaces,
-        activeWorkspaceId: s.activeWorkspaceId,
+        users: s.users,
       })),
     );
   const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
   const [isLoading, setIsLoading] = useState(false);
 
-  const currentWorkspace =
-    workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0];
   const currentUser =
-    currentWorkspace?.members.find((u) => u.id === currentUserId) ||
+    users.find((u) => u.id === currentUserId) ||
     SEED_USERS[0];
 
   const handleGoogleSignIn = async () => {
