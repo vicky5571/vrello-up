@@ -7,9 +7,12 @@ import {
   verifyPassword,
   normalizeRole,
   normalizeStatus,
+  normalizeEmail,
+  resolveJwtClaims,
   handleGoogleSignInLogic,
+  PendingAccountError,
+  RejectedAccountError,
 } from "@/lib/server/auth-helpers";
-import type { UserRole, UserStatus } from "@/types";
 import authConfig from "./auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -32,7 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email },
+          where: { email: normalizeEmail(parsed.data.email) },
         });
 
         if (!user || !user.password) {
@@ -40,11 +43,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         if (user.status === "PENDING") {
-          throw new Error("PENDING");
+          throw new PendingAccountError();
         }
 
         if (user.status === "REJECTED") {
-          throw new Error("REJECTED");
+          throw new RejectedAccountError();
         }
 
         const isValid = await verifyPassword(parsed.data.password, user.password);
@@ -111,36 +114,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async jwt({ token, user }) {
       if (user) {
-        const u = user as {
-          id?: string;
-          role?: UserRole;
-          status?: UserStatus;
-          email?: string | null;
-        };
-        if (u.role && u.status) {
-          token.id = u.id ?? "";
-          token.role = u.role;
-          token.status = u.status;
-        } else if (u.email) {
-          const dbUser = await prisma.user.findUnique({
-            where: { email: u.email.toLowerCase() },
-          });
-          if (dbUser) {
-            token.id = dbUser.id;
-            token.role = normalizeRole(dbUser.role);
-            token.status = normalizeStatus(dbUser.status);
-          }
-        }
+        const claims = await resolveJwtClaims({
+          user,
+          findUserByEmail: (email) =>
+            prisma.user.findUnique({
+              where: { email },
+              select: { id: true, role: true, status: true },
+            }),
+        });
+
+        // Incomplete claims must never reach the session callback.
+        // Returning null makes Auth.js clear the session cookie.
+        if (!claims) return null;
+
+        token.id = claims.id;
+        token.role = claims.role;
+        token.status = claims.status;
+        return token;
       }
+
+      // Session refresh: invalidate tokens issued before the claims existed.
+      if (!token.id || !token.role || !token.status) return null;
+
       return token;
-    },
-    session({ session, token }) {
-      if (session.user) {
-        if (token.id) session.user.id = token.id as string;
-        if (token.role) session.user.role = token.role as UserRole;
-        if (token.status) session.user.status = token.status as UserStatus;
-      }
-      return session;
     },
   },
 });

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { hashPassword } from "@/lib/server/auth-helpers";
+import { hashPassword, normalizeEmail } from "@/lib/server/auth-helpers";
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -25,7 +25,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, email, password } = parsed.data;
+    const { name, password } = parsed.data;
+    const email = normalizeEmail(parsed.data.email);
 
     const existing = await prisma.user.findUnique({
       where: { email },

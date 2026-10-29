@@ -4,6 +4,21 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-10-31]
+
+- `fix(auth)`: Correct login error signaling and enforce approval status (B1–B5)
+  - `authorize()` throws client-safe `CredentialsSignin` subclasses (`pending` / `rejected`), so PENDING/REJECTED users see the correct message instead of "Email atau password tidak sesuai"
+  - Middleware `authorized()` requires `status === "APPROVED"`; `auth.config.ts` now maps `id`/`role`/`status` into the session (required by the Edge middleware instance)
+  - `/login` only redirects APPROVED sessions and renders the PENDING/REJECTED banner; `/register` routes non-APPROVED sessions to `/login` — prevents redirect loops
+  - JWT hydration returns `null` when claims cannot be resolved, invalidating the session and clearing the cookie
+  - `PATCH /api/admin/users/[id]` blocks self role/status changes (400)
+  - Emails normalized (lowercase + trim) in register, credentials login, Google sign-in, and JWT hydration
+  - 12 new unit tests; `npm test` 569 pass / 0 fail; build check 0 errors; drift check clean
+  Spec: `docs/superpowers/specs/2026-10-30-auth-user-management-design.md`
+  Plan: `docs/auth-user-management/login-fix-plan.md`
+
+---
+
 ## [2026-10-30]
 
 - `feat(projects)`: Feature parity across unified Projects views (Board, List, Calendar, Gantt)

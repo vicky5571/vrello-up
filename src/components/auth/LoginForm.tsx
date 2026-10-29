@@ -10,9 +10,16 @@ interface LoginFormProps {
   pending?: boolean;
   rejected?: boolean;
   error?: string;
+  code?: string;
 }
 
-export function LoginForm({ pending, rejected, error }: LoginFormProps) {
+const PENDING_MESSAGE =
+  "Akun Anda sedang menunggu persetujuan administrator. Anda akan menerima email setelah disetujui.";
+
+const REJECTED_MESSAGE =
+  "Permintaan akun Anda tidak disetujui oleh administrator. Hubungi admin untuk informasi lebih lanjut.";
+
+export function LoginForm({ pending, rejected, error, code }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,6 +29,13 @@ export function LoginForm({ pending, rejected, error }: LoginFormProps) {
 
   const queryErrorMessage = (() => {
     if (!error) return null;
+
+    if (error === "CredentialsSignin") {
+      if (code === "pending") return PENDING_MESSAGE;
+      if (code === "rejected") return REJECTED_MESSAGE;
+      return "Email atau password tidak sesuai.";
+    }
+
     switch (error) {
       case "AccessDenied":
         return "Akses ditolak. Akun Anda sedang menunggu persetujuan administrator atau izin akses Google tidak diberikan.";
@@ -56,14 +70,10 @@ export function LoginForm({ pending, rejected, error }: LoginFormProps) {
       }
 
       if (res.error) {
-        if (res.error.includes("PENDING")) {
-          setErrorMessage(
-            "Akun Anda sedang menunggu persetujuan administrator. Anda akan menerima email setelah disetujui."
-          );
-        } else if (res.error.includes("REJECTED")) {
-          setErrorMessage(
-            "Permintaan akun Anda tidak disetujui oleh administrator. Hubungi admin untuk informasi lebih lanjut."
-          );
+        if (res.code === "pending") {
+          setErrorMessage(PENDING_MESSAGE);
+        } else if (res.code === "rejected") {
+          setErrorMessage(REJECTED_MESSAGE);
         } else {
           setErrorMessage("Email atau password tidak sesuai.");
         }

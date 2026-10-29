@@ -5,8 +5,12 @@ import {
   verifyPassword,
   normalizeRole,
   normalizeStatus,
+  normalizeEmail,
   toAppUser,
   handleGoogleSignInLogic,
+  resolveJwtClaims,
+  PendingAccountError,
+  RejectedAccountError,
 } from "./auth-helpers";
 import type { User as PrismaUser, DbUserRole, DbUserStatus } from "@prisma/client";
 
@@ -202,5 +206,70 @@ test("handleGoogleSignInLogic updates and logs in APPROVED existing user", async
   assert.ok(updatedData.lastLoginAt instanceof Date);
   assert.equal(updatedData.googleId, "g-approved");
   assert.equal(updatedData.avatar, "https://avatar.png");
+});
+
+test("normalizeEmail lowercases and trims email addresses", () => {
+  assert.equal(normalizeEmail("  Alice@Company.COM "), "alice@company.com");
+  assert.equal(normalizeEmail("bob@example.com"), "bob@example.com");
+});
+
+test("PendingAccountError is a client-safe CredentialsSignin with code 'pending'", () => {
+  const error = new PendingAccountError();
+  assert.equal(error.code, "pending");
+  assert.equal(error.type, "CredentialsSignin");
+  assert.ok(error instanceof Error);
+});
+
+test("RejectedAccountError is a client-safe CredentialsSignin with code 'rejected'", () => {
+  const error = new RejectedAccountError();
+  assert.equal(error.code, "rejected");
+  assert.equal(error.type, "CredentialsSignin");
+  assert.ok(error instanceof Error);
+});
+
+test("resolveJwtClaims returns credentials claims without querying the database", async () => {
+  let lookupCalled = false;
+  const claims = await resolveJwtClaims({
+    user: { id: "u-1", role: "admin", status: "APPROVED" },
+    findUserByEmail: async () => {
+      lookupCalled = true;
+      return null;
+    },
+  });
+
+  assert.deepEqual(claims, { id: "u-1", role: "admin", status: "APPROVED" });
+  assert.equal(lookupCalled, false);
+});
+
+test("resolveJwtClaims hydrates Google users from the normalized email", async () => {
+  let queriedEmail = "";
+  const claims = await resolveJwtClaims({
+    user: { email: " Alice@Company.COM " },
+    findUserByEmail: async (email) => {
+      queriedEmail = email;
+      return { id: "u-2", role: "STAFF" as DbUserRole, status: "APPROVED" as DbUserStatus };
+    },
+  });
+
+  assert.equal(queriedEmail, "alice@company.com");
+  assert.deepEqual(claims, { id: "u-2", role: "staff", status: "APPROVED" });
+});
+
+test("resolveJwtClaims returns null when the database user is missing", async () => {
+  const claims = await resolveJwtClaims({
+    user: { email: "ghost@example.com" },
+    findUserByEmail: async () => null,
+  });
+
+  assert.equal(claims, null);
+});
+
+test("resolveJwtClaims returns null when neither claims nor email are available", async () => {
+  const claims = await resolveJwtClaims({
+    user: {},
+    findUserByEmail: async () => null,
+  });
+
+  assert.equal(claims, null);
 });
 

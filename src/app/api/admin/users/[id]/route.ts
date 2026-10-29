@@ -43,6 +43,16 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    // Prevent admins from demoting or deactivating themselves through this
+    // endpoint (they would lose access to the admin panel immediately).
+    if (id === session.user.id) {
+      return NextResponse.json(
+        { error: "Tidak dapat mengubah akun Anda sendiri melalui panel ini." },
+        { status: 400 }
+      );
+    }
+
     const body = await req.json();
     const parsed = patchSchema.safeParse(body);
 

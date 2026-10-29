@@ -1,6 +1,31 @@
 import bcrypt from "bcryptjs";
+import { CredentialsSignin } from "@auth/core/errors";
 import type { DbUserRole, DbUserStatus, User as PrismaUser } from "@prisma/client";
 import type { AppUser, UserRole, UserStatus } from "@/types";
+
+/**
+ * Auth.js only forwards `AuthError` subclasses from its `clientErrors` set to
+ * the client. These subclasses let `authorize()` signal PENDING / REJECTED
+ * accounts without being wrapped as `CallbackRouteError` (which surfaces as a
+ * generic `Configuration` error). `next-auth` re-exports this exact class from
+ * `@auth/core/errors`; the subpath import keeps this module loadable by
+ * `node:test` (the `next-auth` barrel imports `next/server`).
+ */
+export class PendingAccountError extends CredentialsSignin {
+  code = "pending";
+}
+
+export class RejectedAccountError extends CredentialsSignin {
+  code = "rejected";
+}
+
+/**
+ * Normalize an email address so credentials and Google sign-in resolve to the
+ * same database record regardless of casing or surrounding whitespace.
+ */
+export function normalizeEmail(email: string): string {
+  return email.toLowerCase().trim();
+}
 
 /**
  * Hash a plain-text password with bcrypt (cost factor 12).
@@ -45,6 +70,54 @@ export function normalizeStatus(dbStatus: DbUserStatus): UserStatus {
     default:
       return "PENDING";
   }
+}
+
+export interface JwtClaims {
+  id: string;
+  role: UserRole;
+  status: UserStatus;
+}
+
+export interface JwtUserInput {
+  id?: string;
+  role?: UserRole;
+  status?: UserStatus;
+  email?: string | null;
+}
+
+/**
+ * Resolve the JWT claims for a signing-in user.
+ *
+ * The credentials provider already hydrates `role` and `status` in
+ * `authorize()`. OAuth profiles (Google) only carry identity fields, so their
+ * claims are read from the database. Returns `null` when claims cannot be
+ * resolved — the caller must treat that as an invalid session.
+ */
+export async function resolveJwtClaims({
+  user,
+  findUserByEmail,
+}: {
+  user: JwtUserInput;
+  findUserByEmail: (email: string) => Promise<{
+    id: string;
+    role: DbUserRole;
+    status: DbUserStatus;
+  } | null>;
+}): Promise<JwtClaims | null> {
+  if (user.role && user.status) {
+    return { id: user.id ?? "", role: user.role, status: user.status };
+  }
+
+  if (!user.email) return null;
+
+  const dbUser = await findUserByEmail(normalizeEmail(user.email));
+  if (!dbUser) return null;
+
+  return {
+    id: dbUser.id,
+    role: normalizeRole(dbUser.role),
+    status: normalizeStatus(dbUser.status),
+  };
 }
 
 /**
