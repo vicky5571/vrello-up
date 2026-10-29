@@ -7,6 +7,7 @@ import {
   verifyPassword,
   normalizeRole,
   normalizeStatus,
+  handleGoogleSignInLogic,
 } from "@/lib/server/auth-helpers";
 import type { UserRole, UserStatus } from "@/types";
 import authConfig from "./auth.config";
@@ -81,38 +82,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig.callbacks,
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        if (!user.email) return false;
-
-        const existing = await prisma.user.findUnique({
-          where: { email: user.email },
-        });
-
-        if (!existing) {
-          await prisma.user.create({
-            data: {
-              name: user.name || user.email.split("@")[0],
-              email: user.email,
-              googleId: account.providerAccountId || user.id,
-              avatar: user.image ?? "",
-              role: "STAFF",
-              status: "PENDING",
-            },
+        try {
+          return await handleGoogleSignInLogic({
+            user,
+            account,
+            seedAdminEmail: process.env.SEED_ADMIN_EMAIL,
+            findUserByEmail: (email) =>
+              prisma.user.findUnique({
+                where: { email },
+                select: {
+                  id: true,
+                  status: true,
+                  role: true,
+                  googleId: true,
+                  avatar: true,
+                },
+              }),
+            createUser: (data) => prisma.user.create({ data }),
+            updateUser: (id, data) => prisma.user.update({ where: { id }, data }),
           });
-          return "/login?pending=1";
+        } catch (err) {
+          console.error("[auth] Google signIn error:", err);
+          return false;
         }
-
-        if (existing.status === "PENDING") {
-          return "/login?pending=1";
-        }
-
-        if (existing.status === "REJECTED") {
-          return "/login?rejected=1";
-        }
-
-        await prisma.user.update({
-          where: { id: existing.id },
-          data: { lastLoginAt: new Date() },
-        });
       }
 
       return true;
@@ -131,7 +123,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.status = u.status;
         } else if (u.email) {
           const dbUser = await prisma.user.findUnique({
-            where: { email: u.email },
+            where: { email: u.email.toLowerCase() },
           });
           if (dbUser) {
             token.id = dbUser.id;

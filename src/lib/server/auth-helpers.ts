@@ -63,3 +63,108 @@ export function toAppUser(prismaUser: PrismaUser): AppUser {
   };
 }
 
+export interface GoogleSignInUserData {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  id?: string;
+}
+
+export interface GoogleSignInAccountData {
+  providerAccountId?: string;
+  provider?: string;
+}
+
+export interface HandleGoogleSignInParams {
+  user: GoogleSignInUserData;
+  account?: GoogleSignInAccountData | null;
+  seedAdminEmail?: string | null;
+  findUserByEmail: (email: string) => Promise<{
+    id: string;
+    status: DbUserStatus;
+    role: DbUserRole;
+    googleId: string | null;
+    avatar: string;
+  } | null>;
+  createUser: (data: {
+    name: string;
+    email: string;
+    googleId: string;
+    avatar: string;
+    role: DbUserRole;
+    status: DbUserStatus;
+  }) => Promise<unknown>;
+  updateUser: (
+    id: string,
+    data: {
+      lastLoginAt: Date;
+      googleId?: string;
+      avatar?: string;
+      status?: DbUserStatus;
+      role?: DbUserRole;
+    }
+  ) => Promise<unknown>;
+}
+
+export async function handleGoogleSignInLogic({
+  user,
+  account,
+  seedAdminEmail,
+  findUserByEmail,
+  createUser,
+  updateUser,
+}: HandleGoogleSignInParams): Promise<string | boolean> {
+  if (account?.provider !== "google") return true;
+  if (!user.email) return false;
+
+  const email = user.email.toLowerCase().trim();
+  const isSeedAdmin =
+    Boolean(seedAdminEmail) && email === seedAdminEmail?.toLowerCase().trim();
+
+  const existing = await findUserByEmail(email);
+
+  if (!existing) {
+    const role: DbUserRole = isSeedAdmin ? "ADMIN" : "STAFF";
+    const status: DbUserStatus = isSeedAdmin ? "APPROVED" : "PENDING";
+    await createUser({
+      name: user.name?.trim() || email.split("@")[0],
+      email,
+      googleId: account?.providerAccountId || user.id || "",
+      avatar: user.image ?? "",
+      role,
+      status,
+    });
+
+    if (!isSeedAdmin) {
+      return "/login?pending=1";
+    }
+    return true;
+  }
+
+  if (existing.status === "PENDING") {
+    if (isSeedAdmin) {
+      await updateUser(existing.id, {
+        status: "APPROVED",
+        role: "ADMIN",
+        lastLoginAt: new Date(),
+        googleId: existing.googleId ?? account?.providerAccountId ?? user.id,
+        avatar: existing.avatar || user.image || "",
+      });
+      return true;
+    }
+    return "/login?pending=1";
+  }
+
+  if (existing.status === "REJECTED") {
+    return "/login?rejected=1";
+  }
+
+  await updateUser(existing.id, {
+    lastLoginAt: new Date(),
+    googleId: existing.googleId ?? account?.providerAccountId ?? user.id,
+    avatar: existing.avatar || user.image || "",
+  });
+
+  return true;
+}
+

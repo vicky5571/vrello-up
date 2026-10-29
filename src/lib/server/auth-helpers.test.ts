@@ -6,8 +6,9 @@ import {
   normalizeRole,
   normalizeStatus,
   toAppUser,
+  handleGoogleSignInLogic,
 } from "./auth-helpers";
-import type { User as PrismaUser } from "@prisma/client";
+import type { User as PrismaUser, DbUserRole, DbUserStatus } from "@prisma/client";
 
 test("hashPassword returns valid bcrypt hash string", async () => {
   const hash = await hashPassword("mySecretPassword123");
@@ -90,5 +91,116 @@ test("toAppUser handles null lastLoginAt", () => {
   assert.equal(appUser.lastLoginAt, null);
   assert.equal(appUser.role, "staff");
   assert.equal(appUser.status, "PENDING");
+});
+
+test("handleGoogleSignInLogic returns false if user email is missing", async () => {
+  const result = await handleGoogleSignInLogic({
+    user: { name: "No Email" },
+    account: { provider: "google", providerAccountId: "g-123" },
+    findUserByEmail: async () => null,
+    createUser: async () => {},
+    updateUser: async () => {},
+  });
+  assert.equal(result, false);
+});
+
+test("handleGoogleSignInLogic creates new user with PENDING status and redirects to /login?pending=1", async () => {
+  let createdData: any = null;
+  const result = await handleGoogleSignInLogic({
+    user: { name: "New User", email: "newuser@example.com", image: "https://photo.jpg" },
+    account: { provider: "google", providerAccountId: "g-999" },
+    findUserByEmail: async () => null,
+    createUser: async (data) => {
+      createdData = data;
+    },
+    updateUser: async () => {},
+  });
+
+  assert.equal(result, "/login?pending=1");
+  assert.equal(createdData.email, "newuser@example.com");
+  assert.equal(createdData.role, "STAFF");
+  assert.equal(createdData.status, "PENDING");
+  assert.equal(createdData.googleId, "g-999");
+});
+
+test("handleGoogleSignInLogic auto-approves new user if matching seedAdminEmail", async () => {
+  let createdData: any = null;
+  const result = await handleGoogleSignInLogic({
+    user: { name: "Admin Google", email: "admin@vrelloup.dev" },
+    account: { provider: "google", providerAccountId: "g-admin" },
+    seedAdminEmail: "admin@vrelloup.dev",
+    findUserByEmail: async () => null,
+    createUser: async (data) => {
+      createdData = data;
+    },
+    updateUser: async () => {},
+  });
+
+  assert.equal(result, true);
+  assert.equal(createdData.role, "ADMIN");
+  assert.equal(createdData.status, "APPROVED");
+});
+
+test("handleGoogleSignInLogic redirects PENDING existing user to /login?pending=1", async () => {
+  const result = await handleGoogleSignInLogic({
+    user: { email: "pending@example.com" },
+    account: { provider: "google", providerAccountId: "g-pending" },
+    findUserByEmail: async () => ({
+      id: "u-1",
+      email: "pending@example.com",
+      status: "PENDING" as DbUserStatus,
+      role: "STAFF" as DbUserRole,
+      googleId: "g-pending",
+      avatar: "",
+    }),
+    createUser: async () => {},
+    updateUser: async () => {},
+  });
+
+  assert.equal(result, "/login?pending=1");
+});
+
+test("handleGoogleSignInLogic redirects REJECTED existing user to /login?rejected=1", async () => {
+  const result = await handleGoogleSignInLogic({
+    user: { email: "rejected@example.com" },
+    account: { provider: "google", providerAccountId: "g-rejected" },
+    findUserByEmail: async () => ({
+      id: "u-2",
+      email: "rejected@example.com",
+      status: "REJECTED" as DbUserStatus,
+      role: "STAFF" as DbUserRole,
+      googleId: "g-rejected",
+      avatar: "",
+    }),
+    createUser: async () => {},
+    updateUser: async () => {},
+  });
+
+  assert.equal(result, "/login?rejected=1");
+});
+
+test("handleGoogleSignInLogic updates and logs in APPROVED existing user", async () => {
+  let updatedData: any = null;
+  const result = await handleGoogleSignInLogic({
+    user: { email: "approved@example.com", image: "https://avatar.png" },
+    account: { provider: "google", providerAccountId: "g-approved" },
+    findUserByEmail: async () => ({
+      id: "u-3",
+      email: "approved@example.com",
+      status: "APPROVED" as DbUserStatus,
+      role: "STAFF" as DbUserRole,
+      googleId: null,
+      avatar: "",
+    }),
+    createUser: async () => {},
+    updateUser: async (id, data) => {
+      updatedData = data;
+    },
+  });
+
+  assert.equal(result, true);
+  assert.ok(updatedData.lastLoginAt instanceof Date);
+  assert.equal(updatedData.googleId, "g-approved");
+  assert.equal(updatedData.avatar, "https://avatar.png");
 });
 

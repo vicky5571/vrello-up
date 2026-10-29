@@ -9,15 +9,31 @@ import { Loader2, AlertCircle, Clock, XCircle } from "lucide-react";
 interface LoginFormProps {
   pending?: boolean;
   rejected?: boolean;
+  error?: string;
 }
 
-export function LoginForm({ pending, rejected }: LoginFormProps) {
+export function LoginForm({ pending, rejected, error }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const queryErrorMessage = (() => {
+    if (!error) return null;
+    switch (error) {
+      case "AccessDenied":
+        return "Akses ditolak. Akun Anda sedang menunggu persetujuan administrator atau izin akses Google tidak diberikan.";
+      case "Configuration":
+        return "Konfigurasi server untuk Google OAuth tidak lengkap. Pastikan kredensial telah terkonfigurasi.";
+      case "OAuthSignin":
+      case "OAuthCallbackError":
+        return "Gagal menghubungkan dengan Google. Silakan coba kembali.";
+      default:
+        return `Terjadi kesalahan saat masuk (${error}). Silakan coba lagi.`;
+    }
+  })();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,10 +119,10 @@ export function LoginForm({ pending, rejected }: LoginFormProps) {
         </div>
       )}
 
-      {errorMessage && (
+      {(errorMessage || queryErrorMessage) && (
         <div className="flex items-start gap-3 p-3.5 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs sm:text-sm">
           <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-          <span>{errorMessage}</span>
+          <span>{errorMessage || queryErrorMessage}</span>
         </div>
       )}
 

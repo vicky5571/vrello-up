@@ -6,6 +6,7 @@ interface LoginPageProps {
   searchParams: Promise<{
     pending?: string;
     rejected?: string;
+    error?: string;
   }>;
 }
 
@@ -19,7 +20,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const isPending = params.pending === "1";
   const isRejected = params.rejected === "1";
+  const errorParam = params.error;
 
-  return <LoginForm pending={isPending} rejected={isRejected} />;
+  return <LoginForm pending={isPending} rejected={isRejected} error={errorParam} />;
 }
 
