@@ -48,6 +48,10 @@
 6. **Preserved Domain Views:**
    - Domain timeline views `EventsView/EventsTimelineView.tsx` and `ContentPlannerView/ContentGanttView.tsx` remain untouched and functional.
 
+7. **Hydration Error Fix (`src/components/views/ProjectsView/ProjectsListTable.tsx`):**
+   - Replaced invalid wrapper `<tr className="contents">` with `<Fragment key={`group-wrapper-${key}`}>`.
+   - Resolves React DOM validation and hydration error `In HTML, <tr> cannot be a child of <tr>`.
+
 ---
 
 ## Verification Gates (this session)

@@ -6,6 +6,11 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `fix(projects)`: Replace invalid nested `<tr className="contents">` with `<Fragment>` in `ProjectsListTable`
+  - Fixed HTML hydration error where `<tr>` cannot be a child of `<tr>`
+  - Grouped section rows (header, items, quick-add) are now direct children of `<tbody>`
+  - Gates: `npm test` 569 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `refactor(projects)`: Remove Projects Gantt view
   - Deleted 4 core Gantt files: `ProjectsGanttView.tsx`, `useProjectsGantt.ts`, `GanttBar.tsx`, `GanttUnscheduledShelf.tsx` (-790 LOC)
   - Removed `"gantt"` from `ViewMode` union in `src/types/index.ts`

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -184,7 +184,7 @@ export function ProjectsListTable({
           {groupedSections.map(({ key, label, items }) => {
             const isCollapsed = collapsedGroups.has(key);
             return (
-              <tr key={`group-wrapper-${key}`} className="contents">
+              <Fragment key={`group-wrapper-${key}`}>
                 {groupBy !== "none" && (
                   <tr className="bg-slate-100/60 dark:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50">
                     <td colSpan={9} className="px-3 py-1.5">
@@ -271,7 +271,7 @@ export function ProjectsListTable({
                     </td>
                   </tr>
                 )}
-              </tr>
+              </Fragment>
             );
           })}
 
