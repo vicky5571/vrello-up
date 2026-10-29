@@ -406,7 +406,8 @@ export function ReportsView() {
   };
 
   return (
-    <div className="flex-1 overflow-auto p-6">
+    <div className="h-full overflow-y-auto">
+      <div className="p-6">
       {/* Top Header with Tab Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div className="flex items-center gap-3">
@@ -894,6 +895,7 @@ export function ReportsView() {
         </div>
         </>
       )}
+    </div>
     </div>
   );
 }
