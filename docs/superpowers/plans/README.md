@@ -44,3 +44,4 @@ Every plan MUST have a matching spec file:
 | 2026-10-01 | remove-outlet-tier-option-2a | — | Done |
 | 2026-10-27 | remove-workspace-single-tenant | 22 phases | Done |
 | 2026-10-29 | reports-view-improvements | 8 phases | Done |
+| 2026-10-30 | auth-user-management | 22 phases | Done |

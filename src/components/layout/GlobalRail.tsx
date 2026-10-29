@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   Home,
@@ -8,7 +10,6 @@ import {
   Sparkles,
   Users,
   Grid3X3,
-  UserPlus,
   ChevronsLeft,
   ChevronsRight,
   Kanban,
@@ -17,12 +18,12 @@ import {
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
-import { TeamsModal } from "@/components/modals/TeamsModal";
-import { InviteModal } from "@/components/modals/InviteModal";
-
 import { MoreAppsMenu } from "@/components/modals/MoreAppsMenu";
 
 export function GlobalRail() {
+  const router = useRouter();
+  const { data: session } = useSession();
+
   const {
     appMode,
     isSidebarOpen,
@@ -42,12 +43,10 @@ export function GlobalRail() {
   const setAiDrawerOpen = useWorkspaceStore((s) => s.setAiDrawerOpen);
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
-  const [isTeamsOpen, setIsTeamsOpen] = useState(false);
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
-
   const [isMoreOpen, setIsMoreOpen] = useState(false);
-
   const shouldReduceMotion = useReducedMotion();
+
+  const isAdmin = session?.user?.role === "admin";
 
   const NAV_ITEMS = [
     {
@@ -71,13 +70,17 @@ export function GlobalRail() {
       isActive: isAiDrawerOpen,
       onClick: () => setAiDrawerOpen(true),
     },
-    {
-      id: "teams",
-      label: "Teams",
-      icon: Users,
-      isActive: isTeamsOpen,
-      onClick: () => setIsTeamsOpen(true),
-    },
+    ...(isAdmin
+      ? [
+          {
+            id: "users",
+            label: "Users",
+            icon: Users,
+            isActive: false,
+            onClick: () => router.push("/admin/users"),
+          },
+        ]
+      : []),
     {
       id: "more",
       label: "More",
@@ -212,41 +215,11 @@ export function GlobalRail() {
             );
           })}
         </div>
-
-        {/* Bottom Section: Invite & Upgrade */}
-        <div className="flex flex-col items-center w-full gap-1 pt-2 border-t border-[#202328]">
-          <button
-            type="button"
-            onClick={() => setIsInviteOpen(true)}
-            title="Invite members"
-            className="w-11 py-1.5 flex flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors cursor-pointer"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span className="leading-none">Invite</span>
-          </button>
-
-        </div>
       </aside>
-
-      {/* Interactive Modals connected to Global Rail */}
-      <TeamsModal
-        isOpen={isTeamsOpen}
-        onClose={() => setIsTeamsOpen(false)}
-        onOpenInvite={() => setIsInviteOpen(true)}
-      />
-
-      <InviteModal
-        isOpen={isInviteOpen}
-        onClose={() => setIsInviteOpen(false)}
-      />
-
-
 
       <MoreAppsMenu
         isOpen={isMoreOpen}
         onClose={() => setIsMoreOpen(false)}
-        onOpenTeams={() => setIsTeamsOpen(true)}
-        onOpenInvite={() => setIsInviteOpen(true)}
       />
     </>
   );

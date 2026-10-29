@@ -17,6 +17,19 @@ export interface Status {
 
 export type UserRole = "admin" | "staff" | "viewer";
 
+export type UserStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  role: UserRole;
+  status: UserStatus;
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
 export interface User {
   id: string;
   name: string;

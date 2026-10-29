@@ -3,14 +3,10 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import { Bot, Zap, Brain, Share2, Phone, Video } from "lucide-react";
+import { Bot, Zap, Brain, Phone, Video } from "lucide-react";
 
 const AgentsModal = dynamic(
   () => import("@/components/modals/AgentsModal").then((m) => m.AgentsModal),
-  { ssr: false },
-);
-const ShareModal = dynamic(
-  () => import("@/components/modals/ShareModal").then((m) => m.ShareModal),
   { ssr: false },
 );
 const CallModal = dynamic(
@@ -38,7 +34,6 @@ export function TopNavActionModals({
 
   const [isAgentsOpen, setIsAgentsOpen] = useState(false);
   const [isAutomationsOpen, setIsAutomationsOpen] = useState(false);
-  const [isShareOpen, setIsShareOpen] = useState(false);
   const [callModalState, setCallModalState] = useState<{
     isOpen: boolean;
     mode: "audio" | "video";
@@ -95,15 +90,6 @@ export function TopNavActionModals({
             <Brain className="w-3.5 h-3.5 text-purple-500" />
             <span className="hidden sm:inline">Brain²</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => setIsShareOpen(true)}
-            className="flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer font-medium text-slate-700 dark:text-slate-200"
-          >
-            <Share2 className="w-3.5 h-3.5 text-blue-500" />
-            <span className="hidden sm:inline">Share</span>
-          </button>
         </div>
       )}
 
@@ -116,11 +102,6 @@ export function TopNavActionModals({
       <AutomationsModal
         isOpen={isAutomationsOpen}
         onClose={() => setIsAutomationsOpen(false)}
-      />
-
-      <ShareModal
-        isOpen={isShareOpen}
-        onClose={() => setIsShareOpen(false)}
       />
 
       <CallModal

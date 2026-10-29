@@ -10,18 +10,12 @@ import { ViewSwitcher } from "./ViewSwitcher";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { NotificationCenter } from "./NotificationCenter";
 import { UserMenuDropdown } from "./UserMenuDropdown";
-import { Search, Download, LogIn } from "lucide-react";
-
-const LoginModal = dynamic(
-  () => import("@/components/modals/LoginModal").then((m) => m.LoginModal),
-  { ssr: false },
-);
+import { Search, Download } from "lucide-react";
 
 export function TopNav() {
   const appMode = useWorkspaceStore((s) => s.appMode);
   const users = useWorkspaceStore((s) => s.users);
   const currentUserId = useWorkspaceStore((s) => s.currentUserId);
-  const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
   const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
   const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
 
@@ -30,7 +24,6 @@ export function TopNav() {
   const { data: session } = useSession();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -119,12 +112,7 @@ export function TopNav() {
 
                 {isUserMenuOpen && (
                   <UserMenuDropdown
-                    session={session}
-                    me={me}
-                    members={users}
-                    setCurrentUserId={setCurrentUserId}
                     onClose={() => setIsUserMenuOpen(false)}
-                    onOpenLogin={() => setIsLoginModalOpen(true)}
                   />
                 )}
               </div>
@@ -179,17 +167,6 @@ export function TopNav() {
 
                 {/* User Profile */}
                 <div ref={userMenuRef} className="relative ml-1 flex items-center gap-1.5">
-                  {!session && (
-                    <button
-                      type="button"
-                      onClick={() => setIsLoginModalOpen(true)}
-                      className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors cursor-pointer"
-                    >
-                      <LogIn className="w-3.5 h-3.5" />
-                      <span>Sign In</span>
-                    </button>
-                  )}
-
                   <button
                     type="button"
                     title={
@@ -210,12 +187,7 @@ export function TopNav() {
 
                   {isUserMenuOpen && (
                     <UserMenuDropdown
-                      session={session}
-                      me={me}
-                      members={users}
-                      setCurrentUserId={setCurrentUserId}
                       onClose={() => setIsUserMenuOpen(false)}
-                      onOpenLogin={() => setIsLoginModalOpen(true)}
                     />
                   )}
                 </div>
@@ -242,12 +214,6 @@ export function TopNav() {
           </>
         )}
       </div>
-
-      {/* Login Modal */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
     </>
   );
 }

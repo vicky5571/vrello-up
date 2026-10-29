@@ -11,8 +11,6 @@ import {
   Kanban,
   Home,
   Plus,
-  Users,
-  UserPlus,
   Moon,
   Sun,
   X,
@@ -25,16 +23,9 @@ import { ViewMode } from "@/types";
 interface MoreAppsMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpenTeams: () => void;
-  onOpenInvite: () => void;
 }
 
-export function MoreAppsMenu({
-  isOpen,
-  onClose,
-  onOpenTeams,
-  onOpenInvite,
-}: MoreAppsMenuProps) {
+export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
   const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
   const setAiDrawerOpen = useWorkspaceStore((s) => s.setAiDrawerOpen);
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
@@ -184,34 +175,6 @@ export function MoreAppsMenu({
 
             {/* Quick Actions & Modals */}
             <div className="pt-2 space-y-1">
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenTeams();
-                }}
-                className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Team Directory</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenInvite();
-                }}
-                className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <UserPlus className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Invite Teammate</span>
-                </div>
-              </button>
-
               <button
                 type="button"
                 onClick={() => {

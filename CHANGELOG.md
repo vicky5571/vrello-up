@@ -4,6 +4,35 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-10-30]
+
+- `feat(auth)`: Add credential registration, admin approval gate, and user management page
+  - Add User Prisma model (`DbUserRole`/`DbUserStatus` enums, `PENDING` approval flow)
+  - Add `/register` page with email+password form and Google OAuth path
+  - Add `/login` page (credentials + Google, status-aware error messages)
+  - Add NextAuth Credentials provider with bcryptjs, status blocking, lastLoginAt update
+  - Add `/api/auth/register` endpoint (`POST`, bcrypt hash, duplicate guard)
+  - Add `/api/admin/users` GET + PATCH + DELETE endpoints (admin-only)
+  - Add `/admin/users` full-page view (Pending/Active/Rejected tabs)
+  - Add Nodemailer email notifications for approval and rejection
+  - Add Next.js middleware protecting all app routes via session cookie validation
+  - Add `bcryptjs` and `nodemailer` dependencies
+  - Add `auth-helpers` and `mailer` server utilities with unit test suites
+  - Remove deprecated `LoginModal`, `InviteModal`, `TeamsModal`, `ShareModal`, and `AuthSync`
+  - Remove persona switcher from `UserMenuDropdown` and `SettingsModal`
+  - Remove Invite rail item; update Teams rail item to `/admin/users` navigation link
+  - Remove Share button from `TopNavActionModals`
+  Spec: `docs/superpowers/specs/2026-10-30-auth-user-management-design.md`  
+  Plan: `docs/superpowers/plans/2026-10-30-auth-user-management.md`  
+  ADR:  `docs/auth-user-management/adr.md`
+
+- `docs(auth)`: ARD, spec, and implementation plan for Authentication & User Management system
+  Spec: `docs/superpowers/specs/2026-10-30-auth-user-management-design.md`
+  Plan: `docs/superpowers/plans/2026-10-30-auth-user-management.md`
+  ADR:  `docs/auth-user-management/adr.md`
+
+---
+
 ## [2026-10-29]
 
 - `fix(reports)`: Add outer scroll container to prevent content clipping  

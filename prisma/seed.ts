@@ -2,6 +2,7 @@
 // Production starts empty; members join via invite/Google login.
 // Keep this file out of the deploy pipeline.
 import { PrismaClient, Prisma } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -779,6 +780,25 @@ const monthlyReports = [
 ];
 
 async function main() {
+  // Seed initial Admin User if not exists
+  const adminExists = await prisma.user.findFirst({ where: { role: "ADMIN" } });
+  if (!adminExists) {
+    const hashed = await bcrypt.hash(
+      process.env.SEED_ADMIN_PASSWORD ?? "changeme123",
+      12
+    );
+    await prisma.user.create({
+      data: {
+        name: "System Admin",
+        email: process.env.SEED_ADMIN_EMAIL ?? "admin@vrelloup.dev",
+        password: hashed,
+        role: "ADMIN",
+        status: "APPROVED",
+      },
+    });
+    console.log("Seeded admin user:", process.env.SEED_ADMIN_EMAIL ?? "admin@vrelloup.dev");
+  }
+
   // Every write is an upsert keyed on a stable id, so re-running the seed
   // converges without duplicates.
 
