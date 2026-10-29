@@ -6,6 +6,24 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `refactor(projects)`: Remove Projects Gantt view
+  - Deleted 4 core Gantt files: `ProjectsGanttView.tsx`, `useProjectsGantt.ts`, `GanttBar.tsx`, `GanttUnscheduledShelf.tsx` (-790 LOC)
+  - Removed `"gantt"` from `ViewMode` union in `src/types/index.ts`
+  - Removed `"gantt"` from `VALID_VIEW_MODES` in `src/lib/router/urlState.ts`
+  - Removed dynamic import and switch case from `src/components/views/ActiveViewStage.tsx`
+  - Removed Gantt navigation item from `PROJECTS_NAV_ITEMS` and unused `Clock` icon in `navConfig.ts`
+  - Updated Projects view guards in `Sidebar.tsx` to `["board", "list", "calendar"]`
+  - Removed hotkey `"4"` mapping from `useWorkspaceHotkeys.ts`
+  - Removed Gantt entry and unused `GanttChart` icon from `CommandPalette.tsx`
+  - Removed Gantt button and unused `Milestone` icon from `MoreAppsMenu.tsx`
+  - Updated `HelpDocsModal.tsx` shortcuts label to `"1 - 3"`, removed Gantt guide item and unused `Layers` icon
+  - Removed Gantt features item and updated marketing subtitle in `UpgradeModal.tsx`
+  - Added hydration and normalization fallback for legacy/persisted `gantt` state to `"list"` in `createUiSlice.ts` and `useWorkspaceStore.ts`
+  - Gates: `npm test` 569 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-10-31-remove-gantt-design.md`
+  Plan: `docs/superpowers/plans/2026-10-31-remove-gantt.md`
+  Refs: `docs/remove-gantt/adr.md`
+
 - `fix(auth)`: Correct login error signaling and enforce approval status (B1–B5)
   - `authorize()` throws client-safe `CredentialsSignin` subclasses (`pending` / `rejected`), so PENDING/REJECTED users see the correct message instead of "Email atau password tidak sesuai"
   - Middleware `authorized()` requires `status === "APPROVED"`; `auth.config.ts` now maps `id`/`role`/`status` into the session (required by the Edge middleware instance)

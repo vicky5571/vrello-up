@@ -11,7 +11,6 @@ import {
   Kanban,
   ListTodo,
   Calendar,
-  Layers,
   Zap,
   Bot,
   HelpCircle,
@@ -26,7 +25,7 @@ const SHORTCUTS = [
   { key: "⌘ / Ctrl + K", label: "Open Command Palette & Global Search" },
   { key: "N / C", label: "Create New Task" },
   { key: "Space", label: "Toggle Task Slide-Over Drawer" },
-  { key: "1 - 5", label: "Quick Switch Views (List, Board, Calendar, Gantt, Home)" },
+  { key: "1 - 3", label: "Quick Switch Views (List, Board, Calendar)" },
   { key: "Marketing tabs", label: "Open Branches, Outlets, MOUs, Placements, Events, Documents, Reports, Analytics (tab bar or ⌘/Ctrl + K search)" },
   { key: "Esc", label: "Close Active Modal / Drawer" },
   { key: "?", label: "Open Help & Documentation" },
@@ -48,11 +47,6 @@ const GUIDES = [
     icon: Calendar,
     title: "Calendar View",
     desc: "Schedule milestone deliverables and visualize task due dates across monthly and weekly calendar grids.",
-  },
-  {
-    icon: Layers,
-    title: "Gantt Timeline & Dependencies",
-    desc: "Track task timelines with cycle-detection-safe dependency links, start dates, and duration progress.",
   },
   {
     icon: Bot,

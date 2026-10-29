@@ -46,7 +46,6 @@ const PLANS: PlanTier[] = [
     description: "For fast-moving engineering and product teams.",
     features: [
       "Everything in Free, plus:",
-      "Interactive Gantt & Timeline Dependencies",
       "Full Table View & Column Resizing",
       "Unlimited Brain² AI Prompts",
       "Custom Statuses & Workspace Tags",
@@ -114,7 +113,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Supercharge team workflows with Gantt dependencies, TanStack Table, and Brain² AI.
+                    Supercharge team workflows with AI-powered insights, TanStack Table, and Brain² AI.
                   </p>
                 </div>
               </div>

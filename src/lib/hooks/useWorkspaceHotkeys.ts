@@ -5,12 +5,11 @@ import { toast } from "sonner";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import type { ViewMode } from "@/types";
 
-// Mirrors hotkeys: 1-4 → List, Board, Calendar, Gantt
+// Mirrors hotkeys: 1-3 → List, Board, Calendar
 const VIEW_SHORTCUTS: Record<string, ViewMode> = {
   "1": "list",
   "2": "board",
   "3": "calendar",
-  "4": "gantt",
 };
 
 function isTypingTarget(target: EventTarget | null): boolean {

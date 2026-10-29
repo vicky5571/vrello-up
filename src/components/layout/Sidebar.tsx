@@ -78,7 +78,7 @@ export function Sidebar() {
               type="button"
               onClick={() => {
                 setAppMode("tasks");
-                if (!["board", "list", "calendar", "gantt"].includes(activeView)) {
+                if (!["board", "list", "calendar"].includes(activeView)) {
                   setActiveView("board");
                 }
               }}
@@ -96,7 +96,7 @@ export function Sidebar() {
               type="button"
               onClick={() => {
                 setAppMode("marcom");
-                if (["board", "list", "calendar", "gantt"].includes(activeView)) {
+                if (["board", "list", "calendar"].includes(activeView)) {
                   setActiveView("pipeline");
                 }
               }}

@@ -97,13 +97,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           if ((state.activeView as string) === "content") {
             state.activeView = "content-planner";
           }
-          if ((state.activeView as string) === "table") {
+          if ((state.activeView as string) === "table" || (state.activeView as string) === "gantt") {
             state.activeView = "list";
           }
           if ((state.lastMarcomView as string) === "content") {
             state.lastMarcomView = "content-planner";
           }
-          if ((state.lastTaskView as string) === "table") {
+          if ((state.lastTaskView as string) === "table" || (state.lastTaskView as string) === "gantt") {
             state.lastTaskView = "list";
           }
         }

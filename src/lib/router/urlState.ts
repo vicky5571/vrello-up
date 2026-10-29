@@ -14,7 +14,6 @@ export const VALID_VIEW_MODES = new Set<ViewMode>([
   "list",
   "board",
   "calendar",
-  "gantt",
   "channel",
   "content-planner",
   "branches",

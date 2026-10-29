@@ -6,94 +6,65 @@
 
 ## Current Status
 
-**Date:** 2026-10-30
+**Date:** 2026-10-31
 **Active Branch:** `vicky`
-**Active Feature:** Auth UI Redesign — **IMPLEMENTED & VERIFIED**
-**Spec:** `docs/superpowers/specs/2026-10-30-auth-ui-redesign-design.md`
-**Plan:** `docs/superpowers/plans/2026-10-30-auth-ui-redesign.md`
-**Previous Feature:** Login bug fix B1–B5 (`899b4b6`) —
-`docs/auth-user-management/login-fix-plan.md`
+**Active Feature:** Remove Projects Gantt View — **IMPLEMENTED & VERIFIED**
+**Spec:** `docs/superpowers/specs/2026-10-31-remove-gantt-design.md`
+**Plan:** `docs/superpowers/plans/2026-10-31-remove-gantt.md`
+**ADR:** `docs/remove-gantt/adr.md`
+**Previous Feature:** Auth UI Redesign (`866b997`) —
+`docs/superpowers/specs/2026-10-30-auth-ui-redesign-design.md`
 
 ---
 
 ## What Was Completed This Session
 
-1. **Root-cause token fix (`src/app/globals.css`):**
-   - Added a Tailwind 4 `@theme inline` block mapping the shadcn HSL tokens
-     (`background`, `card`, `primary`, `secondary`, `muted`, `accent`,
-     `destructive`, `border`, `input`, `ring`, …) to `hsl(var(--token))`.
-   - Before this, `bg-card`, `bg-primary`, `border-border`, `text-foreground`,
-     and `text-muted-foreground` compiled to nothing; auth cards were
-     transparent and the primary CTA invisible.
-   - `inline` is required so the existing ClickUp hex tokens
-     (`--color-primary`, `--color-border`, …) still win for direct
-     `var(--color-*)` usage. Verified with PostCSS: utilities compile and the
-     hex values remain intact.
+1. **Phase 1 — Deleted 4 core Gantt files (-790 LOC):**
+   - `src/components/views/ProjectsView/ProjectsGanttView.tsx`
+   - `src/components/views/ProjectsView/useProjectsGantt.ts`
+   - `src/components/views/ProjectsView/GanttBar.tsx`
+   - `src/components/views/ProjectsView/GanttUnscheduledShelf.tsx`
 
-2. **Class-based dark mode (`src/app/globals.css`):**
-   - Tailwind 4's `dark:` variant defaults to `prefers-color-scheme`, but
-     next-themes toggles `.dark` on `<html>`. Added
-     `@custom-variant dark (&:where(.dark, .dark *))`.
-   - This also repairs semantic dark styling in `UsersView` and
-     `UserMenuDropdown`, which already used `dark:` utilities.
+2. **Phase 2 — Type System, Routing & Store Fallback:**
+   - Removed `"gantt"` from `ViewMode` union in `src/types/index.ts`.
+   - Removed `"gantt"` from `VALID_VIEW_MODES` in `src/lib/router/urlState.ts`.
+   - Updated `normalizeViewMode` in `src/lib/store/slices/createUiSlice.ts` to normalize `"gantt"` to `"list"`.
+   - Updated `onRehydrateStorage` in `src/lib/store/useWorkspaceStore.ts` to redirect persisted `activeView === "gantt"` or `lastTaskView === "gantt"` to `"list"`.
 
-3. **Auth primitives (`src/components/auth/`):**
-   - `AuthCard` (surface + header + divider), `AuthField` (label, icon,
-     password visibility, error/hint), `AuthAlert` (error/warning/info),
-     `AuthSubmitButton`, `GoogleButton`, `PasswordStrength`,
-     `AuthBoardPreview` (CSS kanban), `AuthBrandPanel`.
+3. **Phase 3 — ActiveViewStage Cleanup:**
+   - Removed dynamic import of `ProjectsGanttView` and `case "gantt"` in `src/components/views/ActiveViewStage.tsx`.
 
-4. **Screens:**
-   - `src/app/(auth)/layout.tsx` — responsive split shell: dark brand rail +
-     light/dark workspace panel, mobile brand header, bordered theme toggle,
-     footer. `lg:bg-[#0F1115]` keeps the rail colour behind the sticky panel.
-   - `LoginForm` — Google + credentials, deduplicated PENDING/REJECTED/error
-     banners via `pushNotice`, password visibility, preserved B1–B5 behavior.
-   - `RegisterForm` — field-level validation, password strength meter, live
-     confirm-match indicator, `noValidate` + focus-first-invalid.
-   - `RegisterSuccess` — animated check, 3-step approval timeline, registered
-     email note.
+4. **Phase 4 — Navigation Entry Points & Hotkeys:**
+   - `src/components/layout/navConfig.ts`: Removed Gantt entry from `PROJECTS_NAV_ITEMS` and unused `Clock` import.
+   - `src/components/layout/Sidebar.tsx`: Updated mode-switch guard arrays from `["board", "list", "calendar", "gantt"]` to `["board", "list", "calendar"]`.
+   - `src/lib/hooks/useWorkspaceHotkeys.ts`: Unbound shortcut key `"4"` (previously mapped to `"gantt"`).
+   - `src/components/layout/CommandPalette.tsx`: Removed `"gantt"` from views array and unused `GanttChart` import.
+   - `src/components/modals/MoreAppsMenu.tsx`: Removed Gantt button from Quick Views grid and unused `Milestone` import.
 
-5. **`ThemeToggle`:** now uses `resolvedTheme` (and keys the icon animation on
-   it), so system-selected themes render the correct icon.
+5. **Phase 5 — Modal Help & Upgrade Copy:**
+   - `src/components/modals/HelpDocsModal.tsx`: Updated shortcuts text from `"1 - 5"` to `"1 - 3"`, removed Gantt guide item and unused `Layers` import.
+   - `src/components/modals/UpgradeModal.tsx`: Removed Gantt item from features list and updated marketing subtitle copy.
 
-6. **Visual QA:** Playwright at 375 / 768 / 1440 px in light + dark for login,
-   register, and success. No horizontal overflow. Cross-link focus ring
-   verified via real keyboard Tab (teal ring + offset after the 150 ms
-   transition). No console errors apart from the pre-existing dev-only
-   next-auth `ClientFetchError`.
+6. **Preserved Domain Views:**
+   - Domain timeline views `EventsView/EventsTimelineView.tsx` and `ContentPlannerView/ContentGanttView.tsx` remain untouched and functional.
 
 ---
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (18 specs paired)
+- `npm run drift:check` → ✅ No drift detected (19 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ 569 passed, 0 failed
-- Visual QA → ✅ no overflow; light/dark + focus states verified
+- `npm test` → ✅ 569 passed, 0 failed (99 suites)
 
 ---
 
 ## Blocked / Risks
 
-- Pre-existing DB rows with mixed-case emails are not migrated. Normalization
-  applies to new writes/lookups only. If such rows exist, run a one-off SQL
-  update (`lower(trim(email))`) before relying on case-insensitive login.
-- The semantic token mapping activates previously-dead utilities in
-  `UsersView` / `UserMenuDropdown`. They were authored with these tokens in
-  mind, and visual QA of the auth routes is clean, but a quick admin-screen
-  pass is still worth doing.
-- Playwright's headless shell is not installed; scripts must launch full
-  Chromium via
-  `~/Library/Caches/ms-playwright/chromium-1155/chrome-mac/Chromium.app/Contents/MacOS/Chromium`.
+- None. Deep links to `?view=gantt` and persisted stores with `lastTaskView: "gantt"` safely fall back to `"list"`.
 
 ---
 
 ## Next Step for Following Session
 
-1. Run `npm run drift:check`, `npm run build:check`, and `npm test` at session
-   start (569 pass, 0 fail).
-2. Optional: verify the admin Users screens (`/` → Users) after the token
-   activation.
-3. Optional: end-to-end login checks (PENDING message, APPROVED login,
-   middleware redirect, admin self-PATCH 400) against the real database.
+1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
+2. Coordinate deployment or staging push (`git push origin vicky`).

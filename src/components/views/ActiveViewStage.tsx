@@ -24,10 +24,6 @@ const ProjectsCalendarView = dynamic(
   () => import("@/components/views/ProjectsView/ProjectsCalendarView").then((m) => m.ProjectsCalendarView),
   { ssr: false, loading: () => <ViewFallback /> },
 );
-const ProjectsGanttView = dynamic(
-  () => import("@/components/views/ProjectsView/ProjectsGanttView").then((m) => m.ProjectsGanttView),
-  { ssr: false, loading: () => <ViewFallback /> },
-);
 const PipelineView = dynamic(
   () => import("@/components/views/PipelineView").then((m) => m.PipelineView),
   { ssr: false, loading: () => <ViewFallback /> },
@@ -80,8 +76,6 @@ export function ActiveViewStage() {
         return <ProjectsListView />;
       case "calendar":
         return <ProjectsCalendarView />;
-      case "gantt":
-        return <ProjectsGanttView />;
       case "pipeline":
         return <PipelineView />;
       case "branches":

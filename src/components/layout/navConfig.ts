@@ -2,7 +2,6 @@ import {
   Kanban,
   List,
   Calendar,
-  Clock,
   Sparkles,
   CalendarDays,
   MapPin,
@@ -28,7 +27,6 @@ export const PROJECTS_NAV_ITEMS: NavItem[] = [
   { id: "board", label: "Board", icon: Kanban, iconColor: "text-blue-500" },
   { id: "list", label: "List", icon: List, iconColor: "text-slate-500" },
   { id: "calendar", label: "Calendar", icon: Calendar, iconColor: "text-emerald-500" },
-  { id: "gantt", label: "Gantt Timeline", icon: Clock, iconColor: "text-amber-500" },
 ];
 
 export const MARCOM_WORK_ITEMS: NavItem[] = [

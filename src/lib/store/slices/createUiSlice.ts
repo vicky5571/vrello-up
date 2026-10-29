@@ -63,7 +63,7 @@ export const MARCOM_VIEW_SET = new Set<ViewMode>([
  */
 export function normalizeViewMode(view: ViewMode | string): ViewMode {
   if (view === "content") return "content-planner";
-  if (view === "table") return "list";
+  if (view === "table" || view === "gantt") return "list";
   return view as ViewMode;
 }
 
