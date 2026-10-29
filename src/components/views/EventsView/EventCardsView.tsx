@@ -9,18 +9,15 @@ import {
   Film,
   Play,
   Folder,
-  Layers,
   CheckSquare,
   Users,
-  Kanban,
   Edit2,
   Trash2,
 } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
-import type { FieldEventItem, Task, Space, User } from "@/types";
-import type { EventConflictDetail } from "@/lib/tasks/eventTaskSync";
-import { formatEventDateRange, findMemberForPic } from "@/lib/tasks/eventTaskSync";
-import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
+import type { FieldEventItem, User } from "@/types";
+import type { EventConflictDetail } from "@/lib/marcom/eventChecklist";
+import { formatEventDateRange, findMemberForPic } from "@/lib/marcom/eventChecklist";
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
 import {
   calculateEventUnitEconomics,
@@ -31,11 +28,8 @@ import { STATUS_CONFIG, EVENT_TYPE_STYLES } from "./eventsConstants";
 interface EventCardsViewProps {
   events: FieldEventItem[];
   conflicts: Map<string, EventConflictDetail>;
-  tasks: Task[];
-  rawSpaces: Space[];
   members: User[];
   onSelectEvent: (event: FieldEventItem) => void;
-  onNavigateToTask: (event: FieldEventItem) => void;
   onDeleteEvent: (id: string) => void;
   onOpenFootageModal: (event: FieldEventItem, clipIdx?: number) => void;
 }
@@ -43,11 +37,8 @@ interface EventCardsViewProps {
 export function EventCardsView({
   events,
   conflicts,
-  tasks,
-  rawSpaces,
   members,
   onSelectEvent,
-  onNavigateToTask,
   onDeleteEvent,
   onOpenFootageModal,
 }: EventCardsViewProps) {
@@ -59,27 +50,15 @@ export function EventCardsView({
           label: event.eventType,
           badge: "bg-slate-500/10 text-slate-600 border-slate-500/20",
         };
-        const linkedTask = tasks.find((t) => t.relatedMarcomId === event.id);
         const attendancePct =
           event.targetAttendee > 0
             ? Math.min(100, Math.round((event.attendeeCount / event.targetAttendee) * 100))
             : 0;
 
-        const linkedSpace = linkedTask
-          ? findSpaceByListId(rawSpaces, linkedTask.listId)
-          : null;
-        const linkedList =
-          linkedSpace?.lists.find((l) => l.id === linkedTask?.listId) ||
-          linkedSpace?.folders
-            .flatMap((f) => f.lists)
-            .find((l) => l.id === linkedTask?.listId);
-
-        const subtasks = linkedTask?.subtasks || [];
+        const subtasks = event.checklist || event.subtasks || [];
         const completedSubtasksCount = subtasks.filter((s) => s.completed).length;
 
-        const picMember =
-          linkedTask?.assignees?.[0] ||
-          findMemberForPic(members, event.picName);
+        const picMember = findMemberForPic(members, event.picName);
 
         const range = formatEventDateRange(event.startDate || event.date, event.endDate);
         const conflict = conflicts.get(event.id);
@@ -322,38 +301,18 @@ export function EventCardsView({
                 </div>
               )}
 
-              {/* Linked Workspace Task & Checklist info */}
-              <div className="mt-3 space-y-1.5">
-                {/* Destination Task Breadcrumb */}
-                <div className="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
-                  <div className="flex items-center gap-1.5 min-w-0 text-slate-600 dark:text-slate-300">
-                    <Layers className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                    <span className="font-semibold truncate">
-                      {linkedSpace && linkedList
-                        ? `${linkedSpace.name} › ${linkedList.name}`
-                        : "Workspace Task"}
-                    </span>
+              {/* Checklist info */}
+              {subtasks.length > 0 && (
+                <div className="mt-3 flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border border-blue-200/40 dark:border-blue-900/30">
+                  <div className="flex items-center gap-1.5">
+                    <CheckSquare className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span>Checklist:</span>
                   </div>
-                  {linkedSpace && linkedList && (
-                    <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 shrink-0 ml-2">
-                      Linked
-                    </span>
-                  )}
+                  <span className="font-semibold font-mono text-[10px]">
+                    {completedSubtasksCount}/{subtasks.length} Done
+                  </span>
                 </div>
-
-                {/* Checklist summary */}
-                {subtasks.length > 0 && (
-                  <div className="flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border border-blue-200/40 dark:border-blue-900/30">
-                    <div className="flex items-center gap-1.5">
-                      <CheckSquare className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                      <span>Checklist:</span>
-                    </div>
-                    <span className="font-semibold font-mono text-[10px]">
-                      {completedSubtasksCount}/{subtasks.length} Done
-                    </span>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
 
             {/* Card Footer Actions */}
@@ -377,16 +336,6 @@ export function EventCardsView({
               </div>
 
               <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => onNavigateToTask(event)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer transition-colors"
-                  title="View task on Kanban Board"
-                >
-                  <Kanban className="w-3 h-3" />
-                  <span>Board</span>
-                </button>
-
                 <button
                   type="button"
                   onClick={() => onSelectEvent(event)}

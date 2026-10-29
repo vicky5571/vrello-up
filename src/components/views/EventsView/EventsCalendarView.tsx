@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import type { FieldEventItem } from "@/types";
-import type { EventConflictDetail } from "@/lib/tasks/eventTaskSync";
+import type { EventConflictDetail } from "@/lib/marcom/eventChecklist";
 
 const EVENT_STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   UPCOMING: {

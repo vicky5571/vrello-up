@@ -34,7 +34,7 @@ export interface PlacementsMapTabProps {
   onExport: () => void;
   onAddPlacement: () => void;
   onEditPlacement: (placement: MarcomPlacement) => void;
-  onTrackAsTask: (placement: MarcomPlacement) => void;
+  onTrackAsTask?: (placement: MarcomPlacement) => void;
   canManage: boolean;
 }
 

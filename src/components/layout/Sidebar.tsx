@@ -1,232 +1,173 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useDropdown } from "@/components/ui/useDropdown";
+import { useState } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
-import { type Space } from "@/types";
 import {
-  Plus,
   Settings,
   HelpCircle,
-  Trash2,
+  FolderKanban,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  MARCOM_SPACE_ID,
-  PRODUCT_SPACE_ID,
-} from "@/lib/marcom/marcomIds";
-import { AppModeSegmentedControl } from "@/components/layout/AppModeSegmentedControl";
-import { WORK_ITEM_VIEWS, MASTER_DATA_VIEWS } from "@/components/layout/ViewSwitcher";
-import { CreateSpaceModal } from "@/components/spaces/CreateSpaceModal";
-import { EditSpaceModal } from "@/components/spaces/EditSpaceModal";
-import { CreateListModal } from "@/components/spaces/CreateListModal";
-import { CreateFolderModal } from "@/components/spaces/CreateFolderModal";
-import { RenameListModal } from "@/components/spaces/RenameListModal";
+  PROJECTS_NAV_ITEMS,
+  MARCOM_WORK_ITEMS,
+  MARCOM_MASTER_DATA,
+} from "./navConfig";
 import { HelpDocsModal } from "@/components/modals/HelpDocsModal";
 import { SettingsModal } from "@/components/modals/SettingsModal";
-import { toast } from "sonner";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  sortableKeyboardCoordinates,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import { SortableSpaceItem } from "@/components/spaces/SortableSpaceItem";
 
 export function Sidebar() {
   const {
     appMode,
-    spaces,
-    activeSpaceId,
-    activeListId,
     activeView,
-    tasks,
     isSidebarOpen,
     isHelpDocsOpen,
-    trash,
   } = useWorkspaceStore(
     useShallow((s) => ({
       appMode: s.appMode,
-      spaces: s.spaces,
-      activeSpaceId: s.activeSpaceId,
-      activeListId: s.activeListId,
       activeView: s.activeView,
-      tasks: s.tasks,
       isSidebarOpen: s.isSidebarOpen,
       isHelpDocsOpen: s.isHelpDocsOpen,
-      trash: s.trash,
     })),
   );
 
-  const setActiveSpace = useWorkspaceStore((s) => s.setActiveSpace);
-  const setActiveList = useWorkspaceStore((s) => s.setActiveList);
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
-  const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
+  const setAppMode = useWorkspaceStore((s) => s.setAppMode);
   const setHelpDocsOpen = useWorkspaceStore((s) => s.setHelpDocsOpen);
-  const setTrashOpen = useWorkspaceStore((s) => s.setTrashOpen);
-  const deleteSpace = useWorkspaceStore((s) => s.deleteSpace);
-  const deleteFolder = useWorkspaceStore((s) => s.deleteFolder);
-  const deleteList = useWorkspaceStore((s) => s.deleteList);
-  const reorderSpaces = useWorkspaceStore((s) => s.reorderSpaces);
-  const moveSpace = useWorkspaceStore((s) => s.moveSpace);
+  const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = spaces.findIndex((s) => s.id === active.id);
-    const newIndex = spaces.findIndex((s) => s.id === over.id);
-
-    if (oldIndex !== -1 && newIndex !== -1) {
-      const reordered = arrayMove(spaces, oldIndex, newIndex);
-      reorderSpaces(reordered.map((s) => s.id));
-      toast.success("Spaces reordered");
-    }
-  };
-
-  const [expandedSpaces, setExpandedSpaces] = useState<Record<string, boolean>>({
-    [PRODUCT_SPACE_ID]: true,
-    [MARCOM_SPACE_ID]: true,
-  });
-
-  useEffect(() => {
-    if (activeSpaceId) {
-      setExpandedSpaces((prev) =>
-        prev[activeSpaceId] ? prev : { ...prev, [activeSpaceId]: true },
-      );
-    }
-  }, [activeSpaceId]);
-
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
-
-  // Modal States
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isCreateSpaceOpen, setIsCreateSpaceOpen] = useState(false);
-  const [editSpaceModalState, setEditSpaceModalState] = useState<{
-    isOpen: boolean;
-    space: Space | null;
-  }>({ isOpen: false, space: null });
-
-  const [createListModalState, setCreateListModalState] = useState<{
-    isOpen: boolean;
-    spaceId: string;
-    folderId?: string;
-  }>({ isOpen: false, spaceId: "" });
-
-  const [folderModalState, setFolderModalState] = useState<{
-    isOpen: boolean;
-    spaceId: string;
-    folderId?: string;
-    initialName?: string;
-  }>({ isOpen: false, spaceId: "" });
-
-  const [renameListModalState, setRenameListModalState] = useState<{
-    isOpen: boolean;
-    spaceId: string;
-    listId: string;
-    folderId?: string;
-    initialName?: string;
-  }>({ isOpen: false, spaceId: "", listId: "" });
-
-  // Context Menu State
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  const menuRef = useDropdown<HTMLDivElement>({
-    isOpen: Boolean(activeMenuId),
-    onClose: () => setActiveMenuId(null),
-  });
-
-
-  const toggleSpaceExpand = (spaceId: string) => {
-    setExpandedSpaces((prev) => ({ ...prev, [spaceId]: !prev[spaceId] }));
-  };
-
-  const toggleFolderExpand = (folderId: string) => {
-    setExpandedFolders((prev) => ({ ...prev, [folderId]: !prev[folderId] }));
-  };
-
-  if (!isSidebarOpen) {
-    return null;
-  }
 
   return (
     <>
-      {/* Mobile backdrop: tap outside to close slide-over */}
-      <div
-        onClick={toggleSidebar}
-        className="fixed inset-0 z-40 bg-slate-950/40 md:hidden"
-      />
-      <aside className="fixed left-2 top-2 bottom-2 z-50 w-72 md:static md:z-20 md:w-60 md:h-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#18191B] shadow-lg flex flex-col justify-between shrink-0 select-none overflow-hidden">
-        {/* Navigation Tree */}
-        <div className="flex flex-col h-full overflow-hidden">
-          {/* Dual-Context Segmented Mode Switcher */}
-          <AppModeSegmentedControl />
+      {/* Mobile overlay backdrop */}
+      {isSidebarOpen && (
+        <div
+          onClick={toggleSidebar}
+          className="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-2xs transition-opacity"
+        />
+      )}
 
-          {/* Spaces Header in Tasks Mode */}
-          {appMode === "tasks" && (
-            <div className="px-3 pt-1 pb-1 shrink-0">
-              <div className="flex items-center justify-between px-2 mb-1">
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Spaces
-                </span>
-                <button
-                  onClick={() => setIsCreateSpaceOpen(true)}
-                  title="Create new Space"
-                  className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
+      <aside
+        className={cn(
+          "fixed md:static inset-y-0 left-0 z-40 flex flex-col w-64 bg-white dark:bg-[#141721] border-r border-slate-200/80 dark:border-slate-800 transition-transform duration-200 ease-in-out select-none",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+        )}
+      >
+        {/* Workspace Brand / Header */}
+        <div className="h-11 px-4 flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+              V
+            </div>
+            <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-slate-100">
+              Vrello
+            </span>
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+              v2.0
+            </span>
+          </div>
+        </div>
+
+        {/* Mode Switcher Segmented Control */}
+        <div className="p-2 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20">
+          <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800/80 text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => {
+                setAppMode("tasks");
+                if (!["board", "list", "calendar", "gantt"].includes(activeView)) {
+                  setActiveView("board");
+                }
+              }}
+              className={cn(
+                "flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                appMode === "tasks"
+                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+              )}
+            >
+              <FolderKanban className="w-3.5 h-3.5" />
+              <span>Projects</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAppMode("marcom");
+                if (["board", "list", "calendar", "gantt"].includes(activeView)) {
+                  setActiveView("pipeline");
+                }
+              }}
+              className={cn(
+                "flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                appMode === "marcom"
+                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+              )}
+            >
+              <Megaphone className="w-3.5 h-3.5" />
+              <span>Marcom</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Navigation Body */}
+        <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
+          {appMode === "tasks" ? (
+            <div>
+              <div className="px-2 pb-1.5 text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">
+                Work Item Views
+              </div>
+              <div className="space-y-0.5">
+                {PROJECTS_NAV_ITEMS.map((item) => {
+                  const isItemActive = activeView === item.id;
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveView(item.id)}
+                      className={cn(
+                        "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors text-left",
+                        isItemActive
+                          ? "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold border border-blue-200/50 dark:border-blue-900/40"
+                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200",
+                      )}
+                    >
+                      <Icon className={cn("w-4 h-4 shrink-0", item.iconColor)} />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          )}
-
-          {/* Main Body based on appMode */}
-          {appMode === "marcom" ? (
-            <div className="flex-1 overflow-y-auto px-2 py-2 space-y-4">
-              {/* Work Items Group */}
+          ) : (
+            <>
+              {/* Marcom Work Items Group */}
               <div>
                 <div className="px-2 pb-1.5 text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">
-                  Work Items
+                  Operations & Planning
                 </div>
                 <div className="space-y-0.5">
-                  {WORK_ITEM_VIEWS.map((mv) => {
-                    const isItemActive = activeView === mv.id;
-                    const Icon = mv.icon;
-
+                  {MARCOM_WORK_ITEMS.map((item) => {
+                    const isItemActive = activeView === item.id;
+                    const Icon = item.icon;
                     return (
                       <button
-                        key={mv.id}
+                        key={item.id}
                         type="button"
-                        onClick={() => setActiveView(mv.id)}
+                        onClick={() => setActiveView(item.id)}
                         className={cn(
                           "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors text-left",
                           isItemActive
-                            ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
-                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200",
+                            ? "bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 font-semibold border border-pink-200/50 dark:border-pink-900/40"
+                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200",
                         )}
                       >
-                        <Icon className={cn("w-4 h-4 shrink-0", mv.iconColor)} />
-                        <span className="truncate">{mv.label}</span>
+                        <Icon className={cn("w-4 h-4 shrink-0", item.iconColor)} />
+                        <span className="truncate">{item.label}</span>
                       </button>
                     );
                   })}
@@ -236,175 +177,61 @@ export function Sidebar() {
               {/* Master Data Group */}
               <div>
                 <div className="px-2 pb-1.5 text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">
-                  Master Data
+                  Master Data & Intelligence
                 </div>
                 <div className="space-y-0.5">
-                  {MASTER_DATA_VIEWS.map((mv) => {
-                    const isItemActive = activeView === mv.id;
-                    const Icon = mv.icon;
-
+                  {MARCOM_MASTER_DATA.map((item) => {
+                    const isItemActive = activeView === item.id;
+                    const Icon = item.icon;
                     return (
                       <button
-                        key={mv.id}
+                        key={item.id}
                         type="button"
-                        onClick={() => setActiveView(mv.id)}
+                        onClick={() => setActiveView(item.id)}
                         className={cn(
                           "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors text-left",
                           isItemActive
                             ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold"
-                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200",
+                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200",
                         )}
                       >
-                        <Icon className={cn("w-4 h-4 shrink-0", mv.iconColor)} />
-                        <span className="truncate">{mv.label}</span>
+                        <Icon className={cn("w-4 h-4 shrink-0", item.iconColor)} />
+                        <span className="truncate">{item.label}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto px-2 space-y-1 pb-16">
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={spaces.map((s) => s.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {spaces.map((space, spaceIndex) => {
-                    const isSpaceActive = activeSpaceId === space.id && !activeListId;
-                    const isExpanded = !!expandedSpaces[space.id];
-
-                    return (
-                      <SortableSpaceItem
-                        key={space.id}
-                        space={space}
-                        spaceIndex={spaceIndex}
-                        totalSpaces={spaces.length}
-                        isSpaceActive={isSpaceActive}
-                        isExpanded={isExpanded}
-                        activeSpaceId={activeSpaceId}
-                        activeListId={activeListId}
-                        activeMenuId={activeMenuId}
-                        expandedFolders={expandedFolders}
-                        tasks={tasks}
-                        menuRef={menuRef}
-                        onSelectSpace={(id) => setActiveSpace(id)}
-                        onToggleSpaceExpand={toggleSpaceExpand}
-                        onToggleFolderExpand={toggleFolderExpand}
-                        onOpenCreateListModal={(spaceId, folderId) =>
-                          setCreateListModalState({ isOpen: true, spaceId, folderId })
-                        }
-                        onOpenFolderModal={(spaceId, folderId, initialName) =>
-                          setFolderModalState({ isOpen: true, spaceId, folderId, initialName })
-                        }
-                        onOpenRenameListModal={(spaceId, listId, folderId, initialName) =>
-                          setRenameListModalState({ isOpen: true, spaceId, listId, folderId, initialName })
-                        }
-                        onOpenEditSpaceModal={(sp) =>
-                          setEditSpaceModalState({ isOpen: true, space: sp })
-                        }
-                        onSetActiveMenuId={setActiveMenuId}
-                        onDeleteSpace={deleteSpace}
-                        onDeleteFolder={deleteFolder}
-                        onDeleteList={deleteList}
-                        onSelectList={(spaceId, listId) => {
-                          setActiveSpace(spaceId);
-                          setActiveList(listId);
-                        }}
-                        onMoveSpace={moveSpace}
-                      />
-                    );
-                  })}
-                </SortableContext>
-              </DndContext>
-            </div>
+            </>
           )}
+        </div>
 
-          {/* Bottom Settings / Help */}
-          <div className="p-3 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
-            <button
-              type="button"
-              onClick={() => setHelpDocsOpen(true)}
-              className="flex items-center gap-1.5 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Help & Docs</span>
-            </button>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setTrashOpen(true)}
-                title="Trash — restore deleted tasks"
-                aria-label={`Trash${trash.length > 0 ? `, ${trash.length} deleted tasks` : ""}`}
-                className="relative p-1 rounded hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                {trash.length > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-3.5 h-3.5 px-0.5 rounded-full bg-slate-500 text-white text-[8px] font-bold flex items-center justify-center">
-                    {trash.length > 9 ? "9+" : trash.length}
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsSettingsOpen(true)}
-                title="Settings"
-                className="p-1 rounded hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
-              >
-                <Settings className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
+        {/* Bottom Actions */}
+        <div className="p-3 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+          <button
+            type="button"
+            onClick={() => setHelpDocsOpen(true)}
+            className="flex items-center gap-1.5 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Help & Docs</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Settings"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
         </div>
       </aside>
 
       {/* Modals */}
-      <CreateSpaceModal
-        isOpen={isCreateSpaceOpen}
-        onClose={() => setIsCreateSpaceOpen(false)}
-      />
-
-      <EditSpaceModal
-        isOpen={editSpaceModalState.isOpen}
-        space={editSpaceModalState.space}
-        onClose={() => setEditSpaceModalState({ isOpen: false, space: null })}
-      />
-
-      <CreateListModal
-        isOpen={createListModalState.isOpen}
-        spaceId={createListModalState.spaceId}
-        folderId={createListModalState.folderId}
-        onClose={() => setCreateListModalState({ isOpen: false, spaceId: "" })}
-      />
-
-      <CreateFolderModal
-        isOpen={folderModalState.isOpen}
-        spaceId={folderModalState.spaceId}
-        folderId={folderModalState.folderId}
-        initialName={folderModalState.initialName}
-        onClose={() => setFolderModalState({ isOpen: false, spaceId: "" })}
-      />
-
-      <RenameListModal
-        isOpen={renameListModalState.isOpen}
-        spaceId={renameListModalState.spaceId}
-        listId={renameListModalState.listId}
-        folderId={renameListModalState.folderId}
-        initialName={renameListModalState.initialName}
-        onClose={() =>
-          setRenameListModalState({ isOpen: false, spaceId: "", listId: "" })
-        }
-      />
-
       <HelpDocsModal
         isOpen={isHelpDocsOpen}
         onClose={() => setHelpDocsOpen(false)}
       />
-
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}

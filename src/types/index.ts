@@ -171,7 +171,24 @@ export interface Space {
   lists: List[];
 }
 
-export type AppMode = "tasks" | "marcom";
+export type AppMode = "tasks" | "projects" | "marcom";
+
+export type MarcomWorkItemType = "content" | "event" | "placement";
+
+export type MarcomWorkItem =
+  | (ContentPostItem & { _type: "content" })
+  | (FieldEventItem & { _type: "event" })
+  | (MarcomPlacement & { _type: "placement" });
+
+export type ProjectsColumn =
+  | "Upcoming"
+  | "To Do"
+  | "In Progress"
+  | "Ready"
+  | "Done"
+  | "Blocked"
+  | "Cancelled"
+  | "Archived";
 
 export type ViewMode =
   | "pipeline"
@@ -252,6 +269,8 @@ export interface FieldEventItem {
   footage?: EventFootage[];
   outletId?: string | null;
   outlet?: { id: string; name: string; code: string } | null;
+  checklist?: { id: string; title: string; completed?: boolean }[];
+  subtasks?: { id: string; title: string; completed?: boolean }[];
   createdAt?: string;
   updatedAt?: string;
 }

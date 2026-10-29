@@ -3,16 +3,14 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import { isFilterBarSupported } from "@/lib/tasks/filterTasks";
 import type { ViewMode } from "@/types";
 
-// Mirrors HelpDocsModal: 1-5 → List, Board, Calendar, Gantt, Home
+// Mirrors hotkeys: 1-4 → List, Board, Calendar, Gantt
 const VIEW_SHORTCUTS: Record<string, ViewMode> = {
   "1": "list",
   "2": "board",
   "3": "calendar",
   "4": "gantt",
-  "5": "home",
 };
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -31,45 +29,20 @@ export function useWorkspaceHotkeys() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const state = useWorkspaceStore.getState();
 
-      // Esc closes one layer per press, even from inputs (mirrors HelpDocsModal).
+      // Esc closes one layer per press, even from inputs
       if (e.key === "Escape") {
         if (state.isCommandPaletteOpen) state.closeCommandPalette();
-        else if (state.isCreateTaskModalOpen) state.setCreateTaskModalOpen(false);
         else if (state.isHelpDocsOpen) state.setHelpDocsOpen(false);
         else if (state.isAiDrawerOpen) state.setAiDrawerOpen(false);
-        else if (state.selectedTaskId !== null) state.setSelectedTaskId(null);
         return;
       }
 
       if (isTypingTarget(e.target)) return;
 
-      // Space toggles the task drawer; never hijack buttons/links or modals.
-      if (e.key === " " && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        const tag =
-          e.target instanceof HTMLElement ? e.target.tagName : "";
-        if (tag === "BUTTON" || tag === "A") return;
-        if (
-          state.isCommandPaletteOpen ||
-          state.isCreateTaskModalOpen ||
-          state.isHelpDocsOpen ||
-          state.isAiDrawerOpen
-        ) {
-          return;
-        }
-        e.preventDefault();
-        if (state.selectedTaskId !== null) state.setSelectedTaskId(null);
-        else if (state.lastSelectedTaskId) {
-          state.setSelectedTaskId(state.lastSelectedTaskId);
-        }
-        return;
-      }
-
       if (
         state.isCommandPaletteOpen ||
-        state.isCreateTaskModalOpen ||
         state.isHelpDocsOpen ||
-        state.isAiDrawerOpen ||
-        state.selectedTaskId !== null
+        state.isAiDrawerOpen
       ) {
         return;
       }
@@ -80,34 +53,19 @@ export function useWorkspaceHotkeys() {
         e.key.toLowerCase() === "f"
       ) {
         e.preventDefault();
-        if (state.appMode === "tasks") {
-          if (isFilterBarSupported(state.appMode, state.activeView)) {
-            state.setFilterBarOpen(!state.isFilterBarOpen);
-          } else {
-            toast.info(`Filter bar tidak tersedia pada tampilan ${state.activeView}`);
-          }
+        const searchInput = document.querySelector<HTMLInputElement>(
+          'input[type="search"], input[placeholder*="Search"]'
+        );
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
         } else {
-          // Marcom mode: auto-focus active table search input
-          const searchInput = document.querySelector<HTMLInputElement>(
-            'input[type="search"], input[placeholder*="Search"]'
-          );
-          if (searchInput) {
-            searchInput.focus();
-            searchInput.select();
-          } else {
-            toast.info("Gunakan filter dan kolom pencarian pada modul Marcom ini");
-          }
+          toast.info("Gunakan filter dan kolom pencarian pada modul ini");
         }
         return;
       }
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-      const key = e.key.toLowerCase();
-      if (key === "c" || key === "n") {
-        e.preventDefault();
-        state.setCreateTaskModalOpen(true);
-        return;
-      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
 
       const view = VIEW_SHORTCUTS[e.key];
       if (view) {

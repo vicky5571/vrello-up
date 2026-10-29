@@ -8,95 +8,62 @@
 
 **Date:** 2026-10-30
 **Active Branch:** `vicky`
-**Active Feature:** Authentication & User Management System — **IMPLEMENTATION COMPLETE & VERIFIED**
-**Spec:** `docs/superpowers/specs/2026-10-30-auth-user-management-design.md`
-**Plan:** `docs/superpowers/plans/2026-10-30-auth-user-management.md`
-**ADR:**  `docs/auth-user-management/adr.md`
+**Active Feature:** Remove General Tasks — Repurpose Projects Board for Marcom Work Items — **IMPLEMENTATION COMPLETE & VERIFIED**
+**Spec:** `docs/superpowers/specs/2026-10-30-remove-general-tasks-design.md`
+**Plan:** `docs/superpowers/plans/2026-10-30-remove-general-tasks.md`
+**ADR:**  `docs/remove-general-tasks/adr.md`
 
 ---
 
 ## What Was Completed This Session
 
-- Fully executed all 22 phases of `docs/superpowers/plans/2026-10-30-auth-user-management.md`:
-  - **Phase 1 (Dependencies):** Installed `bcryptjs`, `nodemailer`, `@types/bcryptjs`, `@types/nodemailer`.
-  - **Phase 2 (Prisma):** Added `DbUserRole`, `DbUserStatus` enums and `User` model to `prisma/schema.prisma`. Ran migration `20261029072742_add_user_auth_model` and generated client.
-  - **Phase 3 (SSOT Types):** Added `UserStatus` and `AppUser` to `src/types/index.ts`. Added session/JWT augmentations in `src/types/next-auth.d.ts`.
-  - **Phase 4 (Auth Helpers):** Implemented `hashPassword`, `verifyPassword`, `normalizeRole`, `normalizeStatus`, and `toAppUser` in `src/lib/server/auth-helpers.ts`.
-  - **Phase 5 (Mailer):** Implemented fail-silent SMTP utility `sendApprovalEmail` and `sendRejectionEmail` in `src/lib/server/mailer.ts`.
-  - **Phase 6 (NextAuth Rewrite):** Rewrote `src/auth.ts` to include Credentials provider (validates against Prisma, hashes with bcryptjs, blocks non-APPROVED users, tracks `lastLoginAt`), Google provider with auto-provisioning as PENDING, and typed callbacks.
-  - **Phase 7 (Register API):** Created `POST /api/auth/register` with Zod validation, unique email constraint check, and bcrypt hashing.
-  - **Phase 8 (Admin API):** Created `GET /api/admin/users` and `PATCH`/`DELETE /api/admin/users/[id]` with role checks and mailer triggers.
-  - **Phase 9 (Middleware):** Implemented edge-compatible session cookie validation in `src/middleware.ts` protecting app routes.
-  - **Phase 10 (Auth Layout & Pages):** Built `src/app/(auth)/layout.tsx`, `src/app/(auth)/login/page.tsx`, and `src/app/(auth)/register/page.tsx`.
-  - **Phase 11 (Auth Forms):** Created `<LoginForm />` (supporting credentials, Google OAuth, status notices) and `<RegisterForm />`.
-  - **Phase 12 (Admin Users Page):** Built `src/app/admin/users/page.tsx` with role guard and parallel tab counts query.
-  - **Phase 13 (UsersView Components):** Implemented `UsersView.tsx` coordinator, `UsersPendingTab.tsx`, `UsersActiveTab.tsx`, `UsersRejectedTab.tsx`, `UserStatusBadge.tsx`, and `UserRoleSelect.tsx`.
-  - **Phase 14 (GlobalRail):** Removed Teams/Invite modals and buttons; added admin-only "Users" navigation link to `/admin/users`; cleaned up `MoreAppsMenu.tsx`.
-  - **Phase 15 (TopNavActionModals):** Removed Share button and `ShareModal`.
-  - **Phase 16 (UserMenuDropdown):** Simplified to session-only user card with Google verified badge and sign-out handler; updated `TopNav.tsx` call sites.
-  - **Phase 17 (SettingsModal):** Removed "Active Profile" persona switcher tab; kept Backup & Data and Appearance.
-  - **Phase 18 (Component Deletion):** Verified 0 usages and deleted `LoginModal.tsx`, `InviteModal.tsx`, `TeamsModal.tsx`, `ShareModal.tsx`, and `AuthSync.tsx`.
-  - **Phase 19 (Seed):** Added admin user seed to `prisma/seed.ts` and successfully seeded `admin@vrelloup.dev`.
-  - **Phase 20 (.env.example):** Updated with SMTP and seed admin environment variables.
-  - **Phase 21 (Tests):** Authored `src/lib/server/auth-helpers.test.ts` and `src/lib/server/mailer.test.ts` (11 unit tests, all passing).
-  - **Phase 22 (Full Verification):**
+- Fully executed all phases of `docs/superpowers/plans/2026-10-30-remove-general-tasks.md`:
+  - **Phase 1 (MarcomWorkItem Types + Utilities):** Created `src/lib/marcom/workItems.ts` and `workItems.test.ts`. Defined `MarcomWorkItemType`, `MarcomWorkItem`, `ProjectsColumn`, and helpers (`getWorkItemColumn`, `mapColumnToStatus`, `getWorkItemTitle`, `getWorkItemDate`, `getWorkItemPic`). Added unit tests (all passing).
+  - **Phase 2 (ProjectsBoardView):** Created `ProjectsBoardView.tsx`, `ProjectsBoardColumn.tsx`, and `ProjectsWorkItemCard.tsx` in `src/components/views/ProjectsView/`. Built unified Kanban board across `posts`, `events`, and `placements` with `@dnd-kit/core` drag-and-drop, direct status mapping, and optimistic store caching.
+  - **Phase 3 (ProjectsListView):** Created `ProjectsListView.tsx` in `src/components/views/ProjectsView/` with `MarcomTableShell`, type badges, status chips, dates, and PIC attribution.
+  - **Phase 4 (ProjectsCalendarView):** Created `ProjectsCalendarView.tsx` in `src/components/views/ProjectsView/` for month calendar scheduling across all 3 work item entities.
+  - **Phase 5 (ProjectsGanttView):** Created `ProjectsGanttView.tsx` in `src/components/views/ProjectsView/` grouped into Field Events (bars), Content Posts (markers), and Placements (markers).
+  - **Phase 6 & 8 (ActiveViewStage & Navigation):** Wired Projects views into `src/components/views/ActiveViewStage.tsx`. Created `src/components/layout/navConfig.ts`. Updated `src/components/layout/Sidebar.tsx` with clean Projects/Marcom segmented mode switcher and modular nav lists. Updated `src/components/layout/TopNav.tsx` and `TopNavBreadcrumbs.tsx` to remove old task modal triggers and deleted views.
+  - **Phase 7 (Bridge Code Removal):** Removed all "Track as Task" and "View on Board" buttons and task-sync code from `EventsView`, `PlacementsView`, and `ContentPlannerView`. Cleaned up `ContentPostModal.tsx`, `EventCardsView.tsx`, `EventTableView.tsx`, `usePlacementMutations.ts`, and `PlacementDetailDrawer.tsx`.
+  - **Phase 9-12 (Store & Codebase Deletion):** Gutted `src/lib/store/useWorkspaceStore.ts` (122 LOC) down to `createDataSlice` and `createUiSlice`. Deleted legacy slices (`createTaskSlice`, `createSpaceSlice`, `createTrashSlice`, `createAutomationSlice`, `syncHelpers`). Deleted `src/lib/tasks/`, `src/components/tasks/`, `src/components/spaces/`, legacy task views (`BoardView`, `ListView`, `CalendarView`, `GanttView`, `ChannelView`, `HomeView`), and legacy task API routes (`/api/tasks/`, `/api/realtime/`).
+  - **Phase 13 (Prisma Migration):** Removed `SpaceItem`, `FolderItem`, `ListItem`, `TaskItem`, and `TaskCommentItem` models from `prisma/schema.prisma`. Ran `npx prisma migrate dev` and `npx prisma generate`.
+  - **Phase 14 & 15 (Verification Gates):**
     - `npm run drift:check` → ✅ No drift detected.
-    - `npm run build:check` → 0 errors.
-    - `npm test` → 702 passed, 0 failed.
-    - All coordinator files ≤250 LOC.
+    - `npm run build:check` (`tsc --noEmit`) → 0 errors.
+    - `npm test` → 539 passed, 0 failed.
+    - All coordinator files strictly ≤250 LOC (`useWorkspaceStore.ts` 122 LOC, `page.tsx` 84 LOC, `Sidebar.tsx` 214 LOC, `TopNav.tsx` 98 LOC, `ActiveViewStage.tsx` 135 LOC).
 
 ---
 
-## Active Feature: Authentication & User Management System
+## Active Feature: Remove General Tasks
 
 ### Phase Completion Status
 
-- [x] Phase 1  — Install dependencies (bcryptjs, nodemailer + types)
-- [x] Phase 2  — Prisma schema + migration (User model, DbUserRole, DbUserStatus enums)
-- [x] Phase 3  — SSOT types (add UserStatus, AppUser; new next-auth.d.ts)
-- [x] Phase 4  — Auth helpers (src/lib/server/auth-helpers.ts)
-- [x] Phase 5  — Mailer utility (src/lib/server/mailer.ts)
-- [x] Phase 6  — NextAuth config rewrite (Credentials provider + Google signIn callback + pages config)
-- [x] Phase 7  — Register API route (POST /api/auth/register)
-- [x] Phase 8  — Admin users API routes (GET/PATCH/DELETE /api/admin/users/[id])
-- [x] Phase 9  — Middleware (src/middleware.ts rewrite)
-- [x] Phase 10 — Auth layout + page shells (src/app/(auth)/layout.tsx, login/page.tsx, register/page.tsx)
-- [x] Phase 11 — Auth form components (LoginForm.tsx, RegisterForm.tsx)
-- [x] Phase 12 — Admin users page (src/app/admin/users/page.tsx)
-- [x] Phase 13 — UsersView components (6 files: coordinator + 3 tabs + badge + role select)
-- [x] Phase 14 — GlobalRail update (remove Teams modal + Invite; add /admin/users nav)
-- [x] Phase 15 — TopNavActionModals update (remove Share button + ShareModal)
-- [x] Phase 16 — UserMenuDropdown cleanup (remove persona switcher)
-- [x] Phase 17 — SettingsModal cleanup (remove Active Profile tab)
-- [x] Phase 18 — DELETE removed components (5 files: LoginModal, InviteModal, TeamsModal, ShareModal, AuthSync)
-- [x] Phase 19 — Prisma seed (initial ADMIN user)
-- [x] Phase 20 — .env.example update (SMTP + SEED_ADMIN vars)
-- [x] Phase 21 — Tests (auth-helpers.test.ts, mailer.test.ts)
-- [x] Phase 22 — Full verification
-
----
-
-## Active Feature: Authentication & User Management System — Audit Fixes
-
-**Plan:** `docs/superpowers/plans/2026-10-30-auth-user-management-fixes.md`
-**Phases:** 4 | **Status:** COMPLETED & VERIFIED
-
-### Phase Completion Status
-
-- [x] Fix Phase 1 — `src/types/next-auth.d.ts`: make JWT fields required (remove `?`)
-- [x] Fix Phase 2 — `src/middleware.ts` + new `src/auth.config.ts`: proper Auth.js v5 JWT verification
-- [x] Fix Phase 3 — Extract `RegisterSuccess.tsx`, bring `RegisterForm.tsx` to ≤ 250 LOC (249 LOC)
-- [x] Fix Phase 4 — `mailer.test.ts`: add 2 tests for SMTP-configured + `sendMail` rejects path (704 pass)
+- [x] Phase 1  — Add MarcomWorkItem types + utility functions
+- [x] Phase 2  — Build ProjectsBoardView (ContentPost + FieldEvent + Placement Kanban)
+- [x] Phase 3  — Build ProjectsListView (unified table)
+- [x] Phase 4  — Build ProjectsCalendarView (three entities by date)
+- [x] Phase 5  — Build ProjectsGanttView (timeline with three groups)
+- [x] Phase 6  — Wire new views into page.tsx & ActiveViewStage + update mode switcher
+- [x] Phase 7  — Remove bridge code from all marcom views
+- [x] Phase 8  — Remove AppMode task store reads + unify sidebar
+- [x] Phase 9  — Delete task store slices
+- [x] Phase 10 — Delete task UI components + task view files
+- [x] Phase 11 — Delete task API routes
+- [x] Phase 12 — Delete src/lib/tasks/ directory
+- [x] Phase 13 — Drop Prisma task models (migration)
+- [x] Phase 14 — Remove Task types from src/types/index.ts
+- [x] Phase 15 — Fix tests & full verification
 
 ---
 
 ## Blocked / Risks
 
-- None. All auth implementation tasks and audit fixes are complete and verified.
+- None. All tasks and verification gates pass.
 
 ---
 
 ## Next Step for Following Session
 
-1. Run `npm run drift:check` and `npm test` at session start (704 pass, 0 fail).
+1. Run `npm run drift:check`, `npm run build:check`, and `npm test` at session start (539 pass, 0 fail).
 2. Ready for next scheduled feature or user instructions.

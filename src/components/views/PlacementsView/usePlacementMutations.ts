@@ -6,13 +6,7 @@ import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { isValidCoordinate } from "@/lib/marcom/locationUtils";
 import { type MouSummaryInfo } from "@/lib/marcom/placementMouBridge";
-import {
-  buildPlacementTaskPayload,
-  syncTaskOnPlacementStatusChange,
-} from "@/lib/tasks/placementTaskSync";
-import { FIELD_OPS_LIST_ID } from "@/lib/marcom/marcomIds";
 import type { MarcomPlacement } from "@/types";
-
 
 interface UsePlacementMutationsProps {
   modalPlacement: Partial<MarcomPlacement> | null;
@@ -30,11 +24,6 @@ export function usePlacementMutations({
   setSelectedPlacement,
 }: UsePlacementMutationsProps) {
   const [isSaving, setIsSaving] = useState(false);
-  const tasks = useWorkspaceStore((s) => s.tasks);
-  const spaces = useWorkspaceStore((s) => s.spaces);
-  const users = useWorkspaceStore((s) => s.users);
-  const createTask = useWorkspaceStore((s) => s.createTask);
-  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
 
   const fetchPlacements = useMarcomDataStore((s) => s.fetchPlacements);
   const addCachedPlacement = useMarcomDataStore((s) => s.addCachedPlacement);
@@ -63,51 +52,6 @@ export function usePlacementMutations({
       locationNotes: "",
     });
   }, [setModalPlacement]);
-
-
-  const handleTrackAsTask = useCallback(
-    (placement: MarcomPlacement) => {
-      const existing = tasks.find((t) => t.relatedMarcomId === placement.id);
-      if (existing) {
-        setSelectedTaskId(existing.id);
-        toast.info("Opened existing production task");
-        return;
-      }
-      const targetSpace =
-        spaces.find((s) => s.lists.some((l) => l.id === FIELD_OPS_LIST_ID)) ||
-        spaces[0];
-      const members = users;
-      const taskPayload = buildPlacementTaskPayload(
-        {
-          id: placement.id,
-          materialName: placement.material?.name,
-          outletName: placement.outlet?.name,
-          dimensions: placement.dimensions,
-          picName: placement.picName,
-          notes: placement.notes,
-          photoUrl: placement.photoUrl,
-          status: placement.status,
-        },
-        targetSpace,
-      );
-
-      const task = createTask({
-        ...taskPayload,
-        assignees: members[0] ? [members[0]] : [],
-        tags: [],
-        orderIndex:
-          Math.max(
-            -1,
-            ...tasks
-              .filter((t) => t.statusId === taskPayload.statusId)
-              .map((t) => t.orderIndex),
-          ) + 1,
-      });
-      toast.success("Production task created in Field Operations!");
-      setSelectedTaskId(task.id);
-    },
-    [tasks, spaces, users, createTask, setSelectedTaskId],
-  );
 
   const handleSavePlacement = useCallback(
     async (e: React.FormEvent) => {
@@ -197,13 +141,6 @@ export function usePlacementMutations({
         if (isEdit && id) {
           updateCachedPlacement(savedPlacement);
           setSelectedPlacement((prev) => (prev?.id === id ? savedPlacement : prev));
-          syncTaskOnPlacementStatusChange(
-            id,
-            status,
-            tasks,
-            spaces,
-            (taskId, updates) => useWorkspaceStore.getState().updateTask(taskId, updates),
-          );
         } else {
           addCachedPlacement(savedPlacement);
         }
@@ -220,8 +157,6 @@ export function usePlacementMutations({
     },
     [
       modalPlacement,
-      spaces,
-      tasks,
       updateCachedOutlet,
       invalidateOutlets,
       updateCachedPlacement,
@@ -268,7 +203,6 @@ export function usePlacementMutations({
   return {
     isSaving,
     handleSavePlacement,
-    handleTrackAsTask,
     handleOpenAddPlacement,
     deleteOne,
     deleteBatch,

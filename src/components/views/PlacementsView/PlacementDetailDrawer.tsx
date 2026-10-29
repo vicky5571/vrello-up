@@ -26,7 +26,7 @@ interface PlacementDetailDrawerProps {
   placement: MarcomPlacement | null;
   onClose: () => void;
   onEdit: (placement: MarcomPlacement) => void;
-  onTrackAsTask: (placement: MarcomPlacement) => void;
+  onTrackAsTask?: (placement: MarcomPlacement) => void;
   canManage: boolean;
 }
 
@@ -34,7 +34,6 @@ export function PlacementDetailDrawer({
   placement,
   onClose,
   onEdit,
-  onTrackAsTask,
   canManage,
 }: PlacementDetailDrawerProps) {
   const [copiedCoords, setCopiedCoords] = useState(false);
@@ -233,18 +232,6 @@ export function PlacementDetailDrawer({
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => onTrackAsTask(placement)}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm cursor-pointer"
-            >
-              <CheckSquare className="w-4 h-4" />
-              <span>Track as Production Task</span>
-            </button>
           </div>
         </div>
       </div>

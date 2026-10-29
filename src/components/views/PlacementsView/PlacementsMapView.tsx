@@ -32,7 +32,7 @@ import { PlacementPhotoGallery } from "./PlacementPhotoGallery";
 interface PlacementsMapViewProps {
   placements: MarcomPlacement[];
   onEditPlacement: (placement: MarcomPlacement) => void;
-  onTrackAsTask: (placement: MarcomPlacement) => void;
+  onTrackAsTask?: (placement: MarcomPlacement) => void;
   canManage: boolean;
 }
 
@@ -831,15 +831,6 @@ export function PlacementsMapView({
                 <span>Edit</span>
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={() => onTrackAsTask(selectedPlacement)}
-              className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-2xs cursor-pointer"
-            >
-              <CheckSquare className="w-3.5 h-3.5" />
-              <span>Track Task</span>
-            </button>
           </div>
         </div>
       )}

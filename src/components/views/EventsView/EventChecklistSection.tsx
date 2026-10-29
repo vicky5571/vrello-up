@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { ListTodo, RotateCcw, X, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { getEventChecklistTemplate } from "@/lib/tasks/eventTaskSync";
+import { getEventChecklistTemplate } from "@/lib/marcom/eventChecklist";
 
 export interface EventSubtaskItem {
   id: string;

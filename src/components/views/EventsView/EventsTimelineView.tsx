@@ -21,7 +21,7 @@ import type { FieldEventItem } from "@/types";
 import {
   type EventConflictDetail,
   calculateTimelineBarMetrics,
-} from "@/lib/tasks/eventTaskSync";
+} from "@/lib/marcom/eventChecklist";
 
 const STATUS_BAR_COLORS: Record<string, { bar: string; text: string; border: string }> = {
   UPCOMING: {

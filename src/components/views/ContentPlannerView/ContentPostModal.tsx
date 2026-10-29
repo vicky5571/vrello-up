@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import {
   Sparkles,
   X,
-  Layers,
   AlertCircle,
   Copy,
   RefreshCw,
@@ -18,12 +17,6 @@ import type {
 } from "@/types";
 import { PLATFORM_CONFIG } from "./contentConstants";
 import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
-
-export interface FlatSpaceItem {
-  id: string;
-  name: string;
-  lists: { id: string; name: string }[];
-}
 
 export interface OutletOption {
   id: string;
@@ -39,12 +32,6 @@ export interface ContentPostModalProps {
   isSaving: boolean;
   title: string;
   setTitle: (val: string) => void;
-  targetSpaceId: string;
-  onTargetSpaceChange: (newSpaceId: string) => void;
-  targetListId: string;
-  setTargetListId: (newListId: string) => void;
-  flatSpaces: FlatSpaceItem[];
-  targetLists: { id: string; name: string }[];
   platform: PostPlatform;
   setPlatform: (val: PostPlatform) => void;
   format: PostFormat;
@@ -71,12 +58,6 @@ export function ContentPostModal({
   isSaving,
   title,
   setTitle,
-  targetSpaceId,
-  onTargetSpaceChange,
-  targetListId,
-  setTargetListId,
-  flatSpaces,
-  targetLists,
   platform,
   setPlatform,
   format,
@@ -110,9 +91,6 @@ export function ContentPostModal({
 
   if (!isOpen) return null;
 
-  const currentSpace = flatSpaces.find((s) => s.id === targetSpaceId);
-  const currentList = targetLists.find((l) => l.id === targetListId);
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
       <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-[#18191B] border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
@@ -144,67 +122,6 @@ export function ContentPostModal({
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500"
             />
-          </div>
-
-          {/* Destination: Target Space & List */}
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
-                <Layers className="w-3.5 h-3.5 text-pink-500" />
-                <span>Target Space & List (Lokasi Penyimpanan Task)</span>
-              </label>
-              <span className="text-[10px] text-pink-600 dark:text-pink-400 font-medium">
-                Tersinkronisasi ke Board
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Pilih Space dan List di Workspace tempat task postingan ini akan dibuat dan dipantau.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                  Pilih Space
-                </label>
-                <select
-                  value={targetSpaceId}
-                  onChange={(e) => onTargetSpaceChange(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-                >
-                  {flatSpaces.map((sp) => (
-                    <option key={sp.id} value={sp.id}>
-                      {sp.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                  Pilih List
-                </label>
-                <select
-                  value={targetListId}
-                  onChange={(e) => setTargetListId(e.target.value)}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-                >
-                  {targetLists.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Live destination preview pill */}
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300 pt-1">
-              <span className="text-slate-400">Tujuan akhir:</span>
-              <span className="inline-flex items-center gap-1 font-semibold text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/40 px-2 py-0.5 rounded-md border border-pink-200/50 dark:border-pink-900/40">
-                <Layers className="w-3.5 h-3.5" />
-                {currentSpace?.name || "Space"} › {currentList?.name || "List"}
-              </span>
-            </div>
           </div>
 
           {/* Platform & Format */}

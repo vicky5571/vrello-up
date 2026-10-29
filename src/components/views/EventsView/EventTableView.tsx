@@ -15,10 +15,9 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
-import type { FieldEventItem, Task, Space, User } from "@/types";
-import type { EventConflictDetail } from "@/lib/tasks/eventTaskSync";
-import { formatEventDateRange, findMemberForPic } from "@/lib/tasks/eventTaskSync";
-import { findSpaceByListId } from "@/lib/tasks/targetSpaceList";
+import type { FieldEventItem, User } from "@/types";
+import type { EventConflictDetail } from "@/lib/marcom/eventChecklist";
+import { formatEventDateRange, findMemberForPic } from "@/lib/marcom/eventChecklist";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
@@ -34,15 +33,12 @@ const columnHelper = createMarcomColumnHelper<FieldEventItem>();
 interface EventTableViewProps {
   events: FieldEventItem[];
   conflicts: Map<string, EventConflictDetail>;
-  tasks: Task[];
-  rawSpaces: Space[];
   members: User[];
   isLoading: boolean;
   error: string | null;
   canDelete: boolean;
   onRefresh: () => void;
   onSelectEvent: (event: FieldEventItem) => void;
-  onNavigateToTask: (event: FieldEventItem) => void;
   onDeleteEvent: (id: string) => Promise<boolean>;
   onOpenFootageModal: (event: FieldEventItem, clipIdx?: number) => void;
 }
@@ -50,15 +46,12 @@ interface EventTableViewProps {
 export function EventTableView({
   events,
   conflicts,
-  tasks,
-  rawSpaces,
   members,
   isLoading,
   error,
   canDelete,
   onRefresh,
   onSelectEvent,
-  onNavigateToTask,
   onDeleteEvent,
   onOpenFootageModal,
 }: EventTableViewProps) {
@@ -231,10 +224,7 @@ export function EventTableView({
         size: 150,
         cell: ({ row }) => {
           const e = row.original;
-          const linkedTask = tasks.find((t) => t.relatedMarcomId === e.id);
-          const member =
-            linkedTask?.assignees?.[0] ||
-            findMemberForPic(members, e.picName);
+          const member = findMemberForPic(members, e.picName);
 
           return (
             <div className="flex items-center gap-2 text-xs">
@@ -270,34 +260,6 @@ export function EventTableView({
         },
       }),
       columnHelper.display({
-        id: "destination",
-        header: "Task Location (Workspace)",
-        size: 190,
-        cell: ({ row }) => {
-          const e = row.original;
-          const linkedTask = tasks.find((t) => t.relatedMarcomId === e.id);
-          const linkedSpace = linkedTask
-            ? findSpaceByListId(rawSpaces, linkedTask.listId)
-            : null;
-          const linkedList =
-            linkedSpace?.lists.find((l) => l.id === linkedTask?.listId) ||
-            linkedSpace?.folders
-              .flatMap((f) => f.lists)
-              .find((l) => l.id === linkedTask?.listId);
-
-          return (
-            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-              <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="truncate font-medium">
-                {linkedSpace && linkedList
-                  ? `${linkedSpace.name} › ${linkedList.name}`
-                  : "Not linked"}
-              </span>
-            </div>
-          );
-        },
-      }),
-      columnHelper.display({
         id: "actions",
         header: "Actions",
         size: 140,
@@ -305,15 +267,6 @@ export function EventTableView({
           const e = row.original;
           return (
             <div className="flex items-center gap-1.5 justify-end">
-              <button
-                type="button"
-                onClick={() => onNavigateToTask(e)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 text-[10px] font-semibold transition-colors cursor-pointer"
-                title="View task on Kanban Board"
-              >
-                <Kanban className="w-3 h-3" />
-                <span>Board</span>
-              </button>
               <button
                 type="button"
                 onClick={() => onSelectEvent(e)}
@@ -339,7 +292,7 @@ export function EventTableView({
         },
       }),
     ],
-    [tasks, rawSpaces, members, onSelectEvent, onNavigateToTask, onDeleteEvent, conflicts, onOpenFootageModal]
+    [members, onSelectEvent, onDeleteEvent, conflicts, onOpenFootageModal]
   );
 
   return (

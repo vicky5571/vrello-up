@@ -22,17 +22,10 @@ import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn, formatIDR } from "@/lib/utils";
 import type { FieldEventItem, EventStatus, EventFootage } from "@/types";
 import {
-  findSpaceByListId,
-  getDefaultDestinationForChannel,
-} from "@/lib/tasks/targetSpaceList";
-import { FIELD_OPS_LIST_ID } from "@/lib/marcom/marcomIds";
-import {
-  getEventChecklistTemplate,
   findMemberForPic,
-  buildEventDescription,
   detectEventConflicts,
   calculateFieldEventsKPI,
-} from "@/lib/tasks/eventTaskSync";
+} from "@/lib/marcom/eventChecklist";
 import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
 import { EventsCalendarView } from "./EventsCalendarView";
 import { EventsTimelineView } from "./EventsTimelineView";
@@ -54,44 +47,22 @@ interface EventsViewProps {
   initialView?: ActivityViewMode;
 }
 
-
 export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   const { can } = useMarcomPermissions();
   const {
-    tasks,
-    spaces,
     users,
-    activeSpaceId,
-    activeListId,
     marcomFilters,
   } = useWorkspaceStore(
     useShallow((s) => ({
-      tasks: s.tasks,
-      spaces: s.spaces,
       users: s.users,
-      activeSpaceId: s.activeSpaceId,
-      activeListId: s.activeListId,
       marcomFilters: s.marcomFilters,
     })),
   );
 
-  const createTask = useWorkspaceStore((s) => s.createTask);
-  const updateTask = useWorkspaceStore((s) => s.updateTask);
-  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
-  const setAppMode = useWorkspaceStore((s) => s.setAppMode);
-  const setActiveSpace = useWorkspaceStore((s) => s.setActiveSpace);
-  const setActiveList = useWorkspaceStore((s) => s.setActiveList);
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
   const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
-  const setNavigatedFromMarcom = useWorkspaceStore((s) => s.setNavigatedFromMarcom);
 
   const members = users;
-  const rawSpaces = spaces;
-  const currentSpace = useMemo(
-    () => spaces.find((s) => s.id === activeSpaceId),
-    [spaces, activeSpaceId]
-  );
-  const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
 
   const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
   const storeBranches = useMarcomDataStore((s) => s.branches);
@@ -202,86 +173,12 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     }
   }, [editingEvent, closeFormModal, removeCachedEvent]);
 
-  // Navigate to linked Board Task
-  const navigateToTask = useCallback(
-    (event: FieldEventItem) => {
-      let existing = tasks.find((t) => t.relatedMarcomId === event.id);
-
-      if (!existing) {
-        const dest = getDefaultDestinationForChannel(rawSpaces, "on_ground");
-        const chosenListId = dest.listId || activeListId || FIELD_OPS_LIST_ID;
-        const targetSpace = rawSpaces.find((s) => s.id === dest.spaceId) || rawSpaces[0];
-        const targetStatus = targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
-        const picMember = findMemberForPic(members, event.picName) || members[0];
-        const eventDateVal = event.startDate || event.date;
-
-        existing = createTask({
-          listId: chosenListId,
-          title: `[Field Event] ${event.name}`,
-          description: buildEventDescription({
-            location: event.location,
-            branchName: event.branchName,
-            eventType: event.eventType,
-            budget: event.budget,
-            targetAttendee: event.targetAttendee,
-            notes: event.notes,
-          }),
-          statusId: targetStatus,
-          priority: "high",
-          assignees: picMember ? [picMember] : [],
-          dueDate: eventDateVal ? eventDateVal.slice(0, 10) : undefined,
-          orderIndex: 0,
-          tags: [],
-          subtasks: getEventChecklistTemplate(event.eventType || "Roadshow").map((t, i) => ({
-            id: `sub-${Date.now()}-${i}`,
-            title: t,
-            completed: false,
-            createdAt: new Date().toISOString(),
-          })),
-          relatedMarcomId: event.id,
-          relatedMarcomType: "FIELD_EVENT",
-        });
-      }
-
-      const owningSpace = findSpaceByListId(rawSpaces, existing.listId);
-      if (owningSpace) {
-        setActiveSpace(owningSpace.id);
-        setActiveList(existing.listId);
-      }
-      setNavigatedFromMarcom({ view: "events", label: "Field Events" });
-      setAppMode("tasks");
-      setActiveView("board");
-      setSelectedTaskId(existing.id);
-      toast.info(`Beralih ke ${owningSpace?.name || "Workspace"} › Board`);
-    },
-    [
-      tasks,
-      rawSpaces,
-      activeListId,
-      statuses,
-      members,
-      createTask,
-      setActiveSpace,
-      setActiveList,
-      setNavigatedFromMarcom,
-      setAppMode,
-      setActiveView,
-      setSelectedTaskId,
-    ]
-  );
-
   const handleEventSaved = useCallback(
-    (savedItem: FieldEventItem, locationLabel: string) => {
+    (savedItem: FieldEventItem) => {
       toast.success(
         editingEvent
-          ? `Field event updated & synced to "${locationLabel}"`
-          : `Field event created & saved in "${locationLabel}"`,
-        {
-          action: {
-            label: "View on Board",
-            onClick: () => navigateToTask(savedItem),
-          },
-        }
+          ? "Field event updated successfully"
+          : "Field event created successfully"
       );
       if (editingEvent) {
         updateCachedEvent(savedItem);
@@ -292,7 +189,6 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     },
     [
       editingEvent,
-      navigateToTask,
       addCachedEvent,
       updateCachedEvent,
       storeFetchEvents,
@@ -591,11 +487,8 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         <EventCardsView
           events={filteredEvents}
           conflicts={conflicts}
-          tasks={tasks}
-          rawSpaces={rawSpaces}
           members={members}
           onSelectEvent={openEditModal}
-          onNavigateToTask={navigateToTask}
           onDeleteEvent={handleDeleteEvent}
           onOpenFootageModal={openFootageModal}
         />
@@ -603,15 +496,12 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         <EventTableView
           events={filteredEvents}
           conflicts={conflicts}
-          tasks={tasks}
-          rawSpaces={rawSpaces}
           members={members}
           isLoading={isLoading}
           error={error}
           canDelete={can("CREATE_EVENT")}
           onRefresh={() => fetchEvents(true)}
           onSelectEvent={openEditModal}
-          onNavigateToTask={navigateToTask}
           onDeleteEvent={handleDeleteEvent}
           onOpenFootageModal={openFootageModal}
         />
@@ -625,10 +515,6 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         defaultDate={defaultDate}
         branches={branches}
         members={members}
-        rawSpaces={rawSpaces}
-        tasks={tasks}
-        createTask={createTask}
-        updateTask={updateTask}
         onSaved={handleEventSaved}
         onOpenFootageModal={openFootageModal}
       />

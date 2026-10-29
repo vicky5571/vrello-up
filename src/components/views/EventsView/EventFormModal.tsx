@@ -20,24 +20,13 @@ import type {
   FieldEventItem,
   EventStatus,
   EventFootage,
-  Task,
-  Subtask,
-  Space,
   User,
 } from "@/types";
 import { cn, formatIDR } from "@/lib/utils";
 import {
-  getWorkspaceSpacesAndLists,
-  findSpaceByListId,
-  getDefaultDestinationForChannel,
-} from "@/lib/tasks/targetSpaceList";
-import { FIELD_OPS_LIST_ID } from "@/lib/marcom/marcomIds";
-import {
   getEventChecklistTemplate,
   findMemberForPic,
-  buildEventDescription,
-  mapEventStatusToTaskStatusId,
-} from "@/lib/tasks/eventTaskSync";
+} from "@/lib/marcom/eventChecklist";
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import { EventChecklistSection } from "./EventChecklistSection";
@@ -51,13 +40,7 @@ interface EventFormModalProps {
   defaultDate?: string;
   branches: { id: string; name: string }[];
   members: User[];
-  rawSpaces: Space[];
-  tasks: Task[];
-  createTask: (payload: Omit<Task, "id" | "createdAt" | "updatedAt" | "listId"> & {
-    listId?: string | null;
-  }) => Task;
-  updateTask: (id: string, updates: Partial<Task>) => void;
-  onSaved: (savedEvent: FieldEventItem, locationLabel: string) => void;
+  onSaved: (savedEvent: FieldEventItem, locationLabel?: string) => void;
   onOpenFootageModal?: (event: FieldEventItem, clipIdx?: number) => void;
 }
 
@@ -68,10 +51,6 @@ export function EventFormModal({
   defaultDate,
   branches,
   members,
-  rawSpaces,
-  tasks,
-  createTask,
-  updateTask,
   onSaved,
   onOpenFootageModal,
 }: EventFormModalProps) {
@@ -135,27 +114,6 @@ export function EventFormModal({
       .catch(() => {});
   }, [isOpen]);
 
-  // Destination Space & List
-  const flatSpaces = useMemo(() => getWorkspaceSpacesAndLists(rawSpaces), [rawSpaces]);
-  const [targetSpaceId, setTargetSpaceId] = useState<string>("");
-  const [targetListId, setTargetListId] = useState<string>("");
-  const [createExecutionTask, setCreateExecutionTask] = useState(true);
-
-  const selectedTargetSpace = useMemo(
-    () => flatSpaces.find((s) => s.id === targetSpaceId) || flatSpaces[0],
-    [flatSpaces, targetSpaceId]
-  );
-  const targetLists = useMemo(
-    () => selectedTargetSpace?.lists || [],
-    [selectedTargetSpace]
-  );
-
-  const handleTargetSpaceChange = (newSpaceId: string) => {
-    setTargetSpaceId(newSpaceId);
-    const dest = getDefaultDestinationForChannel(rawSpaces, "on_ground", newSpaceId);
-    setTargetListId(dest.listId);
-  };
-
   const filteredOutlets = useMemo(() => {
     if (!eventBranchName) return outlets;
     const selectedBranchObj = branches.find((b) => b.name.toLowerCase() === eventBranchName.toLowerCase());
@@ -203,52 +161,25 @@ export function EventFormModal({
       setNewFootageTitle("");
       setNewFootageDuration("");
       setNewFootagePath("");
-      setCreateExecutionTask(true);
 
-      const existingTask = tasks.find((t) => t.relatedMarcomId === event.id);
-      if (existingTask) {
-        const owningSpace = findSpaceByListId(rawSpaces, existingTask.listId);
-        if (owningSpace) {
-          setTargetSpaceId(owningSpace.id);
-          setTargetListId(existingTask.listId);
-        }
-        const assignedUser = existingTask.assignees?.[0];
-        if (assignedUser) {
-          setPicMemberId(assignedUser.id);
-          setEventPicName(assignedUser.name);
-        } else {
-          const matched = findMemberForPic(members, event.picName);
-          setPicMemberId(matched?.id || "custom");
-          setEventPicName(event.picName || "");
-        }
-        setEventSubtasks(
-          Array.isArray(existingTask.subtasks) && existingTask.subtasks.length > 0
-            ? existingTask.subtasks.map((s, i) => ({
-                id: s.id || `sub-edit-${i}`,
-                title: s.title,
-                completed: Boolean(s.completed),
-              }))
-            : getEventChecklistTemplate(event.eventType || "Roadshow").map((t, i) => ({
-                id: `sub-edit-${i}`,
-                title: t,
-                completed: false,
-              }))
-        );
-      } else {
-        const dest = getDefaultDestinationForChannel(rawSpaces, "on_ground");
-        setTargetSpaceId(dest.spaceId);
-        setTargetListId(dest.listId);
-        const matched = findMemberForPic(members, event.picName);
-        setPicMemberId(matched?.id || members[0]?.id || "custom");
-        setEventPicName(event.picName || members[0]?.name || "");
-        setEventSubtasks(
-          getEventChecklistTemplate(event.eventType || "Roadshow").map((t, i) => ({
-            id: `sub-edit-${i}`,
-            title: t,
-            completed: false,
-          }))
-        );
-      }
+      const matched = findMemberForPic(members, event.picName);
+      setPicMemberId(matched?.id || "custom");
+      setEventPicName(event.picName || "");
+
+      const checklistItems = event.checklist || event.subtasks || [];
+      setEventSubtasks(
+        checklistItems.length > 0
+          ? checklistItems.map((s, i) => ({
+              id: s.id || `sub-edit-${i}`,
+              title: s.title,
+              completed: Boolean(s.completed),
+            }))
+          : getEventChecklistTemplate(event.eventType || "Roadshow").map((t, i) => ({
+              id: `sub-edit-${i}`,
+              title: t,
+              completed: false,
+            }))
+      );
     } else {
       // Create mode
       setEventName("");
@@ -271,7 +202,6 @@ export function EventFormModal({
       setNewFootageTitle("");
       setNewFootageDuration("");
       setNewFootagePath("");
-      setCreateExecutionTask(true);
       setEventSubtasks(
         getEventChecklistTemplate("Roadshow").map((t, i) => ({
           id: `sub-init-${i}`,
@@ -279,12 +209,8 @@ export function EventFormModal({
           completed: false,
         }))
       );
-
-      const dest = getDefaultDestinationForChannel(rawSpaces, "on_ground");
-      setTargetSpaceId(dest.spaceId);
-      setTargetListId(dest.listId);
     }
-  }, [isOpen, event, defaultDate, branches, members, rawSpaces, tasks]);
+  }, [isOpen, event, defaultDate, branches, members]);
 
   // Keyboard escape listener
   useEffect(() => {
@@ -359,6 +285,7 @@ export function EventFormModal({
         notes: eventNotes.trim(),
         mediaUrl: eventMediaUrl.trim() || undefined,
         footage: eventFootageList,
+        checklist: eventSubtasks,
       };
 
       let savedId = event?.id;
@@ -386,77 +313,6 @@ export function EventFormModal({
         members.find((m) => m.id === picMemberId) ||
         findMemberForPic(members, eventPicName);
 
-      const targetSpace = rawSpaces.find((s) => s.id === targetSpaceId);
-      const chosenListId = targetListId || targetSpace?.lists[0]?.id || FIELD_OPS_LIST_ID;
-      const targetStatus = mapEventStatusToTaskStatusId(
-        eventStatus,
-        targetSpace?.statuses || []
-      );
-
-      const formattedSubtasks: Subtask[] = eventSubtasks.map((s, i) => ({
-        id: s.id || `sub-${Date.now()}-${i}`,
-        title: s.title,
-        completed: Boolean(s.completed),
-        createdAt: new Date().toISOString(),
-      }));
-
-      // Sync Execution Task in designated Space & List
-      const existingTask = savedId
-        ? tasks.find((t) => t.relatedMarcomId === savedId)
-        : undefined;
-
-      if (!existingTask && createExecutionTask && savedId) {
-        createTask({
-          listId: chosenListId,
-          title: `[Field Event] ${eventName.trim()}`,
-          description: buildEventDescription({
-            location: eventLocation,
-            branchName: eventBranchName,
-            eventType,
-            budget: parsedBudget,
-            targetAttendee: parsedTargetAttendee,
-            notes: eventNotes,
-          }),
-          statusId: targetStatus,
-          priority: "high",
-          assignees: picMember ? [picMember] : members[0] ? [members[0]] : [],
-          dueDate: eventStartDate || undefined,
-          orderIndex: 0,
-          tags: [],
-          subtasks: formattedSubtasks,
-          relatedMarcomId: savedId,
-          relatedMarcomType: "FIELD_EVENT",
-        });
-      } else if (existingTask) {
-        const updates: Partial<Task> = {
-          title: `[Field Event] ${eventName.trim()}`,
-          description: buildEventDescription({
-            location: eventLocation,
-            branchName: eventBranchName,
-            eventType,
-            budget: parsedBudget,
-            targetAttendee: parsedTargetAttendee,
-            notes: eventNotes,
-          }),
-          statusId: targetStatus,
-          dueDate: eventStartDate || undefined,
-          assignees: picMember ? [picMember] : [],
-          subtasks: formattedSubtasks,
-        };
-        if (targetListId && targetListId !== existingTask.listId) {
-          updates.listId = targetListId;
-        }
-        updateTask(existingTask.id, updates);
-      }
-
-      const targetListName =
-        targetSpace?.lists.find((l) => l.id === targetListId)?.name ||
-        targetSpace?.folders
-          .flatMap((f) => f.lists)
-          .find((l) => l.id === targetListId)?.name ||
-        "List";
-      const locationLabel = `${targetSpace?.name || "Space"} › ${targetListName}`;
-
       const savedItem: FieldEventItem = {
         id: savedId || "",
         name: eventName.trim(),
@@ -475,9 +331,10 @@ export function EventFormModal({
         mediaUrl: eventMediaUrl.trim() || null,
         footage: eventFootageList,
         outletId: eventOutletId || null,
+        checklist: eventSubtasks,
       };
 
-      onSaved(savedItem, locationLabel);
+      onSaved(savedItem, "Field Event");
       onClose();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save field event");
@@ -1048,80 +905,6 @@ export function EventFormModal({
                 eventSubtasks={eventSubtasks}
                 setEventSubtasks={setEventSubtasks}
               />
-
-              {/* Target Space & List Destination */}
-              <div className="p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-                      Target Space & List (Task Storage Destination)
-                    </span>
-                  </div>
-                  <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer font-medium">
-                    <input
-                      type="checkbox"
-                      checked={createExecutionTask}
-                      onChange={(e) => setCreateExecutionTask(e.target.checked)}
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    Sync to Kanban Board
-                  </label>
-                </div>
-
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Select the Workspace Space and List where this event task will be created and tracked alongside its checklist.
-                </p>
-
-                {createExecutionTask && (
-                  <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                      <div>
-                        <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                          Select Space
-                        </label>
-                        <select
-                          value={targetSpaceId}
-                          onChange={(e) => handleTargetSpaceChange(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 outline-hidden font-medium cursor-pointer"
-                        >
-                          {flatSpaces.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                          Select List
-                        </label>
-                        <select
-                          value={targetListId}
-                          onChange={(e) => setTargetListId(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 outline-hidden font-medium cursor-pointer"
-                        >
-                          {targetLists.map((l) => (
-                            <option key={l.id} value={l.id}>
-                              {l.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Live destination preview pill */}
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300 pt-1">
-                      <span className="text-slate-400">Destination:</span>
-                      <span className="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-blue-200/50 dark:border-blue-900/40">
-                        <Layers className="w-3 h-3" />
-                        {selectedTargetSpace?.name || "Space"} › {targetLists.find((l) => l.id === targetListId)?.name || "List"}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
 
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">

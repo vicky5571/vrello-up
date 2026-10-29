@@ -30,17 +30,10 @@ import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import {
   PostPlatform,
   PostFormat,
-  Priority,
   ContentPostItem,
   PostStatus,
 } from "@/types";
 import { formatDate, cn } from "@/lib/utils";
-import {
-  getWorkspaceSpacesAndLists,
-  findSpaceByListId,
-  getDefaultDestinationForChannel,
-} from "@/lib/tasks/targetSpaceList";
-import { CONTENT_PLANNER_LIST_ID } from "@/lib/marcom/marcomIds";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
@@ -66,48 +59,22 @@ const columnHelper = createMarcomColumnHelper<ContentPostItem>();
 export function ContentPlannerView() {
   const { can } = useMarcomPermissions();
   const {
-    tasks,
-    spaces,
     users,
-    activeSpaceId,
-    activeListId,
     isCreatePostModalOpen,
     marcomFilters,
   } = useWorkspaceStore(
     useShallow((s) => ({
-      tasks: s.tasks,
-      spaces: s.spaces,
       users: s.users,
-      activeSpaceId: s.activeSpaceId,
-      activeListId: s.activeListId,
       isCreatePostModalOpen: s.isCreatePostModalOpen,
       marcomFilters: s.marcomFilters,
     })),
   );
 
-  const createTask = useWorkspaceStore((s) => s.createTask);
-  const updateTask = useWorkspaceStore((s) => s.updateTask);
-  const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
-  const setAppMode = useWorkspaceStore((s) => s.setAppMode);
-  const setActiveSpace = useWorkspaceStore((s) => s.setActiveSpace);
-  const setActiveList = useWorkspaceStore((s) => s.setActiveList);
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
   const setCreatePostModalOpen = useWorkspaceStore((s) => s.setCreatePostModalOpen);
   const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
 
   const members = users;
-  const rawSpaces = spaces;
-  const currentSpace = useMemo(
-    () => spaces.find((s) => s.id === activeSpaceId),
-    [spaces, activeSpaceId]
-  );
-  const statuses = useMemo(() => currentSpace?.statuses || [], [currentSpace]);
-
-  // Destination Space & List resolution
-  const flatSpaces = useMemo(
-    () => getWorkspaceSpacesAndLists(rawSpaces),
-    [rawSpaces]
-  );
 
   const {
     fetchBranches,
@@ -162,7 +129,6 @@ export function ContentPlannerView() {
     new Date().toISOString().slice(0, 10)
   );
   const [status, setStatus] = useState<PostStatus>("SCHEDULED");
-  const [priority, setPriority] = useState<Priority>("normal");
   const [branchName, setBranchName] = useState("");
   const [caption, setCaption] = useState("");
   const [outletId, setOutletId] = useState("");
@@ -191,25 +157,6 @@ export function ContentPlannerView() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [previewMedia]);
-
-  // Target Space & List selection
-  const [targetSpaceId, setTargetSpaceId] = useState<string>("");
-  const [targetListId, setTargetListId] = useState<string>("");
-
-  const selectedTargetSpace = useMemo(
-    () => flatSpaces.find((s) => s.id === targetSpaceId) || flatSpaces[0],
-    [flatSpaces, targetSpaceId]
-  );
-  const targetLists = useMemo(
-    () => selectedTargetSpace?.lists || [],
-    [selectedTargetSpace]
-  );
-
-  const handleTargetSpaceChange = (newSpaceId: string) => {
-    setTargetSpaceId(newSpaceId);
-    const dest = getDefaultDestinationForChannel(rawSpaces, "social", newSpaceId);
-    setTargetListId(dest.listId);
-  };
 
   const fetchPosts = useCallback(
     async (options?: { silent?: boolean } | React.SyntheticEvent) => {
@@ -283,7 +230,6 @@ export function ContentPlannerView() {
     setFormat("reel");
     setPublishDate(new Date().toISOString().slice(0, 10));
     setStatus("SCHEDULED");
-    setPriority("normal");
     setBranchName(branches[0]?.name || "");
     setCaption("");
     setOutletId("");
@@ -294,13 +240,8 @@ export function ContentPlannerView() {
       DEFAULT_POST_SUBTASKS.map((t, i) => ({ id: `sub-init-${i}`, title: t }))
     );
 
-    // Resolve Target Space & List
-    const dest = getDefaultDestinationForChannel(rawSpaces, "social");
-    setTargetSpaceId(dest.spaceId);
-    setTargetListId(dest.listId);
-
     setIsModalOpen(true);
-  }, [branches, members, rawSpaces]);
+  }, [branches, members]);
 
   useEffect(() => {
     if (isCreatePostModalOpen) {
@@ -351,59 +292,7 @@ export function ContentPlannerView() {
       }
 
       const savedItem: ContentPostItem = await res.json();
-
-      // Create linked task
-      const chosenListId =
-        targetListId || activeListId || CONTENT_PLANNER_LIST_ID;
-      const targetSpace = rawSpaces.find((s) => s.id === targetSpaceId);
-      const targetStatus =
-        targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
-      const assignedUsers = members.filter((u) => assigneeIds.includes(u.id));
-
-      createTask({
-        listId: chosenListId,
-        title: `[Content] ${title.trim()}`,
-        description: caption.trim()
-          ? `<p>${caption.trim()}</p>`
-          : "<p>Draft post copy...</p>",
-        statusId: targetStatus,
-        priority,
-        assignees:
-          assignedUsers.length > 0
-            ? assignedUsers
-            : members[0]
-            ? [members[0]]
-            : [],
-        dueDate: publishDate || undefined,
-        postPlatform: platform,
-        postFormat: format,
-        mediaUrl: mediaUrl.trim() || undefined,
-        relatedMarcomId: savedItem.id,
-        relatedMarcomType: "CONTENT",
-        tags: [],
-        subtasks: postSubtasks.map((s, i) => ({
-          id: `sub-${Date.now()}-${i}`,
-          title: s.title,
-          completed: false,
-          createdAt: new Date().toISOString(),
-        })),
-        orderIndex: 0,
-      });
-
-      const targetListName =
-        targetSpace?.lists.find((l) => l.id === targetListId)?.name ||
-        targetSpace?.folders
-          .flatMap((f) => f.lists)
-          .find((l) => l.id === targetListId)?.name ||
-        "List";
-      const locationLabel = `${targetSpace?.name || "Space"} › ${targetListName}`;
-
-      toast.success(`Postingan dibuat & tersimpan di "${locationLabel}"`, {
-        action: {
-          label: "Lihat di Board",
-          onClick: () => navigateToTask(savedItem),
-        },
-      });
+      toast.success("Postingan berhasil dibuat");
       closeModal();
       addCachedPost(savedItem);
     } catch (err) {
@@ -442,19 +331,6 @@ export function ContentPlannerView() {
       const savedItem: ContentPostItem = await res.json();
       updateCachedPost(savedItem);
       setSelectedDrawerPost(savedItem);
-
-      // Sync linked task if exists
-      const existingTask = tasks.find((t) => t.relatedMarcomId === savedItem.id);
-      if (existingTask) {
-        updateTask(existingTask.id, {
-          title: `[Content] ${savedItem.title}`,
-          description: savedItem.caption ? `<p>${savedItem.caption}</p>` : existingTask.description,
-          dueDate: savedItem.publishDate ? savedItem.publishDate.slice(0, 10) : undefined,
-          postPlatform: savedItem.platform,
-          postFormat: savedItem.format,
-          mediaUrl: savedItem.mediaUrl || undefined,
-        });
-      }
     } catch (err) {
       console.error("Failed to update post from drawer:", err);
       throw err;
@@ -476,82 +352,6 @@ export function ContentPlannerView() {
       throw err;
     }
   };
-
-  const getOrCreateLinkedTask = useCallback(
-    (item: ContentPostItem) => {
-      let existing = tasks.find((t) => t.relatedMarcomId === item.id);
-
-      if (!existing) {
-        const dest = getDefaultDestinationForChannel(rawSpaces, "social", targetSpaceId);
-        const chosenListId = dest.listId || activeListId || CONTENT_PLANNER_LIST_ID;
-        const targetSpace = rawSpaces.find((s) => s.id === dest.spaceId) || rawSpaces[0];
-        const targetStatus = targetSpace?.statuses[0]?.id || statuses[0]?.id || "status-todo";
-
-        existing = createTask({
-          listId: chosenListId,
-          title: `[Content] ${item.title}`,
-          description: item.caption
-            ? `<p>${item.caption}</p>`
-            : "<p>Draft post copy...</p>",
-          statusId: targetStatus,
-          priority: "normal",
-          assignees: members[0] ? [members[0]] : [],
-          dueDate: item.publishDate ? item.publishDate.slice(0, 10) : undefined,
-          postPlatform: item.platform,
-          postFormat: item.format,
-          mediaUrl: item.mediaUrl || undefined,
-          relatedMarcomId: item.id,
-          relatedMarcomType: "CONTENT",
-          tags: [],
-          subtasks: Array.isArray(item.subtasks)
-            ? item.subtasks.map((s, i) => ({
-                id: `sub-post-${Date.now()}-${i}`,
-                title: s.title,
-                completed: Boolean(s.completed),
-                createdAt: new Date().toISOString(),
-              }))
-            : [],
-          orderIndex: 0,
-        });
-      }
-      return existing;
-    },
-    [
-      tasks,
-      rawSpaces,
-      targetSpaceId,
-      activeListId,
-      statuses,
-      members,
-      createTask,
-    ]
-  );
-
-  const navigateToTask = useCallback(
-    (item: ContentPostItem) => {
-      const existing = getOrCreateLinkedTask(item);
-      if (!existing) return;
-
-      const owningSpace = findSpaceByListId(rawSpaces, existing.listId);
-      if (owningSpace) {
-        setActiveSpace(owningSpace.id);
-        setActiveList(existing.listId);
-      }
-      setAppMode("tasks");
-      setActiveView("board");
-      setSelectedTaskId(existing.id);
-      toast.info(`Beralih ke ${owningSpace?.name || "Workspace"} › Board`);
-    },
-    [
-      getOrCreateLinkedTask,
-      rawSpaces,
-      setActiveSpace,
-      setActiveList,
-      setAppMode,
-      setActiveView,
-      setSelectedTaskId,
-    ]
-  );
 
   const filteredPosts = useMemo(() => {
     const q = (marcomFilters["content-planner"] || "").trim().toLowerCase();
@@ -698,42 +498,9 @@ export function ContentPlannerView() {
         ),
       }),
       columnHelper.display({
-        id: "destination",
-        header: "Lokasi Task (Workspace)",
-        size: 190,
-        cell: ({ row }) => {
-          const linkedTask = tasks.find((t) => t.relatedMarcomId === row.original.id);
-          const linkedSpace = linkedTask
-            ? findSpaceByListId(rawSpaces, linkedTask.listId)
-            : null;
-          const linkedList =
-            linkedSpace?.lists.find((l) => l.id === linkedTask?.listId) ||
-            linkedSpace?.folders
-              .flatMap((f) => f.lists)
-              .find((l) => l.id === linkedTask?.listId);
-
-          return (
-            <button
-              type="button"
-              onClick={() => navigateToTask(row.original)}
-              className="group/loc flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 hover:text-pink-600 dark:hover:text-pink-400 cursor-pointer text-left transition-colors"
-              title="Klik untuk melihat di Kanban Board"
-            >
-              <Layers className="w-3.5 h-3.5 text-pink-500 shrink-0" />
-              <span className="truncate font-medium">
-                {linkedSpace && linkedList
-                  ? `${linkedSpace.name} › ${linkedList.name}`
-                  : "Workspace Task"}
-              </span>
-              <ExternalLink className="w-3 h-3 opacity-0 group-hover/loc:opacity-100 shrink-0 text-pink-500 transition-opacity" />
-            </button>
-          );
-        },
-      }),
-      columnHelper.display({
         id: "actions",
         header: "Actions",
-        size: 140,
+        size: 80,
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5">
             <button
@@ -744,20 +511,11 @@ export function ContentPlannerView() {
             >
               <Edit2 className="w-3.5 h-3.5" />
             </button>
-            <button
-              type="button"
-              onClick={() => navigateToTask(row.original)}
-              className="px-2 py-1 rounded-md text-[10px] font-semibold bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/50 cursor-pointer flex items-center gap-1 transition-colors"
-              title="Lihat task di Kanban Board"
-            >
-              <Kanban className="w-3 h-3" />
-              <span>Board</span>
-            </button>
           </div>
         ),
       }),
     ],
-    [setSelectedDrawerPost, navigateToTask, tasks, rawSpaces]
+    [setSelectedDrawerPost]
   );
 
   return (
@@ -1048,42 +806,6 @@ export function ContentPlannerView() {
                     </div>
                   )}
 
-                  {/* Destination Breadcrumb */}
-                  {(() => {
-                    const linkedTask = tasks.find((t) => t.relatedMarcomId === post.id);
-                    const linkedSpace = linkedTask
-                      ? findSpaceByListId(rawSpaces, linkedTask.listId)
-                      : null;
-                    const linkedList =
-                      linkedSpace?.lists.find((l) => l.id === linkedTask?.listId) ||
-                      linkedSpace?.folders
-                        .flatMap((f) => f.lists)
-                        .find((l) => l.id === linkedTask?.listId);
-
-                    return (
-                      <div className="mt-3 flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
-                        <div className="flex items-center gap-1.5 min-w-0 text-slate-600 dark:text-slate-300">
-                          <Layers className="w-3.5 h-3.5 text-pink-500 shrink-0" />
-                          <span className="font-semibold truncate">
-                            {linkedSpace && linkedList
-                              ? `${linkedSpace.name} › ${linkedList.name}`
-                              : "Workspace Task"}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigateToTask(post);
-                          }}
-                          className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-pink-600 dark:text-pink-400 hover:underline cursor-pointer ml-2"
-                        >
-                          <span>Board</span>
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    );
-                  })()}
                 </div>
 
                 {/* Quick Approval Action Bar & Metadata Footer */}
@@ -1136,21 +858,6 @@ export function ContentPlannerView() {
                           <span>Tandai Tayang</span>
                         </button>
                       )}
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigateToTask(post);
-                        }}
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/50 cursor-pointer transition-colors"
-                        title="Buka dan beralih ke Kanban Board"
-                      >
-                        <Kanban className="w-3 h-3" />
-                        <span>Board</span>
-                      </button>
                     </div>
                   </div>
 
@@ -1218,12 +925,6 @@ export function ContentPlannerView() {
         isSaving={isSaving}
         title={title}
         setTitle={setTitle}
-        targetSpaceId={targetSpaceId}
-        onTargetSpaceChange={handleTargetSpaceChange}
-        targetListId={targetListId}
-        setTargetListId={setTargetListId}
-        flatSpaces={flatSpaces}
-        targetLists={targetLists}
         platform={platform}
         setPlatform={setPlatform}
         format={format}
@@ -1428,7 +1129,6 @@ export function ContentPlannerView() {
         onClose={() => setSelectedDrawerPost(null)}
         onUpdatePost={handleDrawerUpdate}
         onDeletePost={handleDrawerDelete}
-        onNavigateToTask={navigateToTask}
         onOpenDrivePicker={openSelector}
         onPreviewMedia={setPreviewMedia}
       />

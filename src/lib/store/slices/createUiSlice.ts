@@ -1,10 +1,40 @@
 import type { StateCreator } from "zustand";
 import type { WorkspaceStore, UiSlice } from "./types";
-import type { AppMode, ViewMode } from "@/types";
-import {
-  DEFAULT_VIEW_PREFERENCES,
-  applyViewPreferences,
-} from "@/lib/store/viewPreferencesOperations";
+import type { AppMode, ViewMode, ViewPreferences } from "@/types";
+
+export const DEFAULT_VIEW_PREFERENCES: ViewPreferences = {
+  density: "standard",
+  visibleFields: {
+    assignees: true,
+    priority: true,
+    dueDate: true,
+    tags: true,
+    subtasks: true,
+  },
+  taskSortField: null,
+  taskSortDirection: "asc",
+};
+
+export type ViewPreferencesUpdate = {
+  density?: ViewPreferences["density"];
+  visibleFields?: Partial<ViewPreferences["visibleFields"]>;
+  taskSortField?: ViewPreferences["taskSortField"];
+  taskSortDirection?: ViewPreferences["taskSortDirection"];
+};
+
+export function applyViewPreferences(
+  current: ViewPreferences = DEFAULT_VIEW_PREFERENCES,
+  prefs: ViewPreferencesUpdate,
+): ViewPreferences {
+  return {
+    ...current,
+    ...prefs,
+    visibleFields: {
+      ...current.visibleFields,
+      ...(prefs.visibleFields || {}),
+    },
+  };
+}
 
 export const MARCOM_VIEW_SET = new Set<ViewMode>([
   "pipeline",

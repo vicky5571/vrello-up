@@ -11,9 +11,6 @@ import {
   Trash2,
 } from "lucide-react";
 import type { PlacementStatus, MarcomPlacement } from "./PlacementsView";
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import { useShallow } from "zustand/react/shallow";
-import { syncTaskOnPlacementStatusChange } from "@/lib/tasks/placementTaskSync";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 
 interface PlacementBulkActionBarProps {
@@ -33,11 +30,6 @@ export function PlacementBulkActionBar({
   onDeleteBatch,
   canManage,
 }: PlacementBulkActionBarProps) {
-  const { tasks, spaces } = useWorkspaceStore(
-    useShallow((s) => ({ tasks: s.tasks, spaces: s.spaces })),
-  );
-  const updateTask = useWorkspaceStore((s) => s.updateTask);
-
   const fetchPlacements = useMarcomDataStore((s) => s.fetchPlacements);
   const updateCachedPlacement = useMarcomDataStore((s) => s.updateCachedPlacement);
   const removeCachedPlacement = useMarcomDataStore((s) => s.removeCachedPlacement);
@@ -85,15 +77,8 @@ export function PlacementBulkActionBar({
         throw new Error(data.error || `Gagal memperbarui status (${res.status})`);
       }
 
-      // Sync linked Kanban tasks for each selected placement
+      // Update cached placements
       selectedIds.forEach((id) => {
-        syncTaskOnPlacementStatusChange(
-          id,
-          status,
-          tasks,
-          spaces,
-          (taskId, updates) => updateTask(taskId, updates),
-        );
         updateCachedPlacement({ id, status });
       });
 

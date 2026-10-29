@@ -52,7 +52,7 @@ export function PlacementsView() {
   const outletsList = useMemo(() => storeOutlets.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName, branchId: o.branchId })), [storeOutlets]);
   const materialsList = useMemo(() => storeMaterials.map((m) => ({ id: m.id, name: m.name, type: m.type, requiresMou: m.requiresMou })), [storeMaterials]);
 
-  const { isSaving, handleSavePlacement, handleTrackAsTask, handleOpenAddPlacement, deleteOne, deleteBatch } =
+  const { isSaving, handleSavePlacement, handleOpenAddPlacement, deleteOne, deleteBatch } =
     usePlacementMutations({ modalPlacement, setModalPlacement, setSelectedPlacement, outletsList, materialsList, placements, mousList: storeMous });
 
   const filteredPlacements = useMemo(() => {
@@ -188,7 +188,6 @@ export function PlacementsView() {
           onExport={() => setExportCenterOpen(true)}
           onAddPlacement={handleOpenAddPlacement}
           onEditPlacement={setModalPlacement}
-          onTrackAsTask={handleTrackAsTask}
           canManage={canManage}
         />
       ) : (
@@ -208,7 +207,6 @@ export function PlacementsView() {
         placement={selectedPlacement}
         onClose={() => setSelectedPlacement(null)}
         onEdit={setModalPlacement}
-        onTrackAsTask={handleTrackAsTask}
         canManage={canManage}
       />
 

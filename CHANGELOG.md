@@ -6,6 +6,21 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-30]
 
+- `refactor(marcom-hub)`: Remove general tasks and repurpose project views for unified Marcom Work Items
+  - Implement unified `ProjectsBoardView`, `ProjectsListView`, `ProjectsCalendarView`, and `ProjectsGanttView` in `src/components/views/ProjectsView/` across Content Posts, Field Events, and Placements
+  - Repurpose Board, Calendar, List, and Gantt sub-views inside `ContentPlannerView` to manage `ContentPostItem`
+  - Remove task bridge & sync code across Events, Placements, MOUs, and Outlets views; create `src/lib/marcom/eventChecklist.ts`
+  - Unify sidebar and mode switcher between Projects and Marcom Hub modes via `src/components/layout/navConfig.ts`
+  - Delete task, space, and automation Zustand slices (`createTaskSlice`, `createSpaceSlice`, `createAutomationSlice`, `syncHelpers`)
+  - Delete task UI components (`src/components/tasks/`), legacy views (`BoardView/`, `ListView/`, `GanttView/`, `CalendarView/`, `ChannelView/`, `HomeView/`), and task modals
+  - Delete `/api/tasks` and `/api/realtime` routes and `src/lib/tasks/`
+  - Drop Prisma task models (`SpaceItem`, `FolderItem`, `ListItem`, `TaskItem`, `TaskCommentItem`) via migration `20261029134026_drop_task_models`
+  - Extract `ActiveViewStage.tsx` from `page.tsx` maintaining all coordinator files ≤ 250 LOC (`page.tsx` 84 LOC, `Sidebar.tsx` 214 LOC, `useWorkspaceStore.ts` 122 LOC)
+  - All 539 unit tests pass, 0 fail; build check 0 errors; drift check clean
+  Spec: `docs/superpowers/specs/2026-10-30-remove-general-tasks-design.md`
+  Plan: `docs/superpowers/plans/2026-10-30-remove-general-tasks.md`
+  ADR:  `docs/remove-general-tasks/adr.md`
+
 - `fix(auth)`: Resolve 4 audit issues from auth implementation
   - `fix(auth)`: Make JWT type fields required in `src/types/next-auth.d.ts`
   - `fix(middleware)`: Implement Auth.js v5 JWT verification with split `src/auth.config.ts` for Edge compatibility
