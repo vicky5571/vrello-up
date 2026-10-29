@@ -131,7 +131,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email?: string | null;
         };
         if (u.role && u.status) {
-          token.id = u.id;
+          token.id = u.id ?? "";
           token.role = u.role;
           token.status = u.status;
         } else if (u.email) {

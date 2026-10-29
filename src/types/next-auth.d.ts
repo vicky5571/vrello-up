@@ -18,16 +18,16 @@ declare module "next-auth" {
 
 declare module "@auth/core/jwt" {
   interface JWT {
-    id?: string;
-    role?: UserRole;
-    status?: UserStatus;
+    id: string;
+    role: UserRole;
+    status: UserStatus;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    id?: string;
-    role?: UserRole;
-    status?: UserStatus;
+    id: string;
+    role: UserRole;
+    status: UserStatus;
   }
 }
