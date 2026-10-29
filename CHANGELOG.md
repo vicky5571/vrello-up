@@ -6,6 +6,10 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-29]
 
+- `feat(reports)`: Reports view UX improvements (KPI cards, progress bar, period highlight, empty state, report deletion)  
+  Spec: `docs/superpowers/specs/2026-10-29-reports-view-improvements-design.md`  
+  Plan: `docs/superpowers/plans/2026-10-29-reports-view-improvements.md`  
+  ADR: `docs/reports-improvements/adr.md`
 - `fix(documents)`: Add outer scroll container to prevent content clipping  
   Ref: `docs/handover-scroll-documents-view.md`
 

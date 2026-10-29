@@ -38,3 +38,4 @@ YYYY-MM-DD-<feature-slug>-design.md
 | 2026-09-21 | url-routing-and-state-sync | Done |
 | 2026-10-01 | remove-outlet-tier-option-2a | Done |
 | 2026-10-27 | remove-workspace-single-tenant | Done |
+| 2026-10-29 | reports-view-improvements | Done |

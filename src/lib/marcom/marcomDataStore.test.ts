@@ -465,6 +465,20 @@ describe("useMarcomDataStore", () => {
       assert.equal(useMarcomDataStore.getState().reports.length, 1);
       assert.equal(useMarcomDataStore.getState().reports[0].month, "October");
     });
+
+    it("removes cached reports by id", () => {
+      useMarcomDataStore.setState({
+        reports: [
+          { id: "rep-1", month: "October", year: 2026 } as MonthlyReport,
+          { id: "rep-2", month: "November", year: 2026 } as MonthlyReport,
+        ],
+      });
+      const store = useMarcomDataStore.getState();
+      store.removeCachedReport("rep-1");
+      const remaining = useMarcomDataStore.getState().reports;
+      assert.equal(remaining.length, 1);
+      assert.equal(remaining[0].id, "rep-2");
+    });
   });
 });
 

@@ -27,9 +27,10 @@
   - Updated `specs/README.md` and `plans/README.md` indices to **Done**.
   - Updated `CHANGELOG.md` entry.
 - Fixed DocumentsView layout: added outer `h-full overflow-y-auto` scroll container to prevent content clipping (per docs/handover-scroll-documents-view.md).
+- Implemented Reports View Improvements (ADR, Spec, Plan): dynamic quarter fallback, KpiSummaryCards, progress bar in list rows, "Bulan Ini" period highlight, empty state with CTA, and admin report deletion (marcomDataStore.removeCachedReport + DELETE API).
 - Full verification gates confirmed:
   - `npm run drift:check` → ✅ No drift detected. All invariants pass.
-  - `npm test` → ✅ 690 pass, 0 fail (103 suites).
+  - `npm test` → ✅ 691 pass, 0 fail (103 suites).
   - `npm run build:check` → ✅ tsc exit 0, 0 errors.
 
 ---

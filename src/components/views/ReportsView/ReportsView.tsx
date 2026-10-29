@@ -13,6 +13,10 @@ import {
   Sparkles,
   CheckCircle2,
   AlertTriangle,
+  FileText,
+  Activity,
+  TrendingUp,
+  Trash2,
 } from "lucide-react";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
@@ -22,6 +26,7 @@ import { summarizeReports } from "@/lib/marcom/analytics";
 import { printSingleMonthlyReport } from "@/lib/productivity/exportCenter";
 import type { ReportDraftResult, DraftActivityItem } from "@/lib/marcom/reportDraftEngine";
 import { QuarterlyPosmReportTab } from "./QuarterlyPosmReportTab";
+import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
 
 const MONTH_OPTIONS = [
   "January",
@@ -90,6 +95,13 @@ function renderJsonItem(item: unknown, fallback: string) {
   }
   return fallback;
 }
+
+function completionBarColor(rate: number): string {
+  if (rate >= 80) return "bg-emerald-500";
+  if (rate >= 50) return "bg-amber-400";
+  return "bg-rose-500";
+}
+
 function ReportSection({ title, items }: { title: string; items: unknown[] }) {
   return (
     <div>
@@ -127,6 +139,7 @@ export function ReportsView() {
   const storeFetchReports = useMarcomDataStore((s) => s.fetchReports);
   const storeFetchDocuments = useMarcomDataStore((s) => s.fetchDocuments);
   const addCachedReport = useMarcomDataStore((s) => s.addCachedReport);
+  const removeCachedReport = useMarcomDataStore((s) => s.removeCachedReport);
 
   const [isLoading, setIsLoading] = useState(
     () =>
@@ -148,6 +161,7 @@ export function ReportsView() {
   const [actionPlansText, setActionPlansText] = useState("");
   const [activitiesList, setActivitiesList] = useState<DraftActivityItem[]>([]);
   const [isInstantExporting, setIsInstantExporting] = useState(false);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
 
   // Report creation is gated on MANAGE_MASTER_DATA (admin-only, matching
   // the server route). Export stays open to all roles (EXPORT_REPORTS).
@@ -193,6 +207,41 @@ export function ReportsView() {
       ),
     [reports],
   );
+
+  const kpiCards = useMemo<KpiCardItem[]>(() => {
+    const rate = summary.completionRate;
+    const rateColor =
+      rate >= 80 ? "emerald" : rate >= 50 ? "amber" : "rose";
+    const rateHelper =
+      rate >= 80
+        ? "Di atas target operasional"
+        : rate >= 50
+        ? "Perlu perhatian"
+        : "Di bawah ekspektasi";
+    return [
+      {
+        label: "Total Laporan",
+        value: summary.total,
+        helper: "Laporan tersimpan",
+        icon: FileText,
+        color: "indigo",
+      },
+      {
+        label: "Total Aktivitas",
+        value: summary.totalActivities,
+        helper: "Akumulasi semua periode",
+        icon: Activity,
+        color: "blue",
+      },
+      {
+        label: "Avg Completion",
+        value: `${rate}%`,
+        helper: rateHelper,
+        icon: TrendingUp,
+        color: rateColor,
+      },
+    ];
+  }, [summary]);
 
   const handleAutoDraft = async () => {
     if (!month.trim()) {
@@ -334,6 +383,28 @@ export function ReportsView() {
     }
   };
 
+  const handleDeleteReport = async (report: MarcomReport) => {
+    const confirmed = window.confirm(
+      `Hapus laporan "${periodLabel(report)}"? Tindakan ini tidak dapat dibatalkan.`
+    );
+    if (!confirmed) return;
+    setIsDeletingId(report.id);
+    try {
+      const res = await fetch(`/api/marcom/reports/${report.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Gagal menghapus laporan (${res.status})`);
+      }
+      removeCachedReport(report.id);
+      if (expandedId === report.id) setExpandedId(null);
+      toast.success(`Laporan ${periodLabel(report)} berhasil dihapus`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus laporan");
+    } finally {
+      setIsDeletingId(null);
+    }
+  };
+
   return (
     <div className="flex-1 overflow-auto p-6">
       {/* Top Header with Tab Switcher */}
@@ -419,24 +490,12 @@ export function ReportsView() {
         <>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-        {[
-          { label: "Total reports", value: String(summary.total) },
-          { label: "Total activities", value: String(summary.totalActivities) },
-          { label: "Avg completion", value: `${summary.completionRate}%` },
-        ].map((card) => (
-          <div
-            key={card.label}
-            className="rounded-lg border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#18191B] px-4 py-3 shadow-2xs"
-          >
-            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {card.label}
-            </div>
-            <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              {card.value}
-            </div>
-          </div>
-        ))}
+      <div className="mb-3">
+        <KpiSummaryCards
+          items={kpiCards}
+          isLoading={isLoading}
+          skeletonCount={3}
+        />
       </div>
 
       {/* Create form (admin only) */}
@@ -664,22 +723,44 @@ export function ReportsView() {
             {reports.map((report) => {
               const isExpanded = expandedId === report.id;
               const supporting = documents.filter((d) => matchesPeriod(d.period, report));
+              const now = new Date();
+              const isCurrentPeriod =
+                report.month === MONTH_OPTIONS[now.getMonth()] &&
+                report.year === now.getFullYear();
               return (
                 <div key={report.id}>
                   <div
                     onClick={() => toggleExpand(report.id)}
-                    className="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer text-xs"
+                    className={cn(
+                      "flex items-center justify-between px-4 py-2.5 transition-colors cursor-pointer text-xs",
+                      isCurrentPeriod
+                        ? "bg-indigo-50/50 dark:bg-indigo-950/20 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                        : "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                    )}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="font-semibold text-slate-900 dark:text-slate-100 truncate">
                         {periodLabel(report)}
                       </span>
+                      {isCurrentPeriod && (
+                        <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100/80 dark:bg-indigo-900/40 px-1.5 py-0.5 rounded-full shrink-0">
+                          Bulan Ini
+                        </span>
+                      )}
                       <span className="text-slate-500 dark:text-slate-400 shrink-0">
                         {report.summary?.totalActivities ?? 0} activities
                       </span>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
-                        {report.summary?.completionRate ?? 0}%
-                      </span>
+                      <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                        <div className="w-24 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                          <div
+                            className={cn("h-full rounded-full transition-all", completionBarColor(report.summary?.completionRate ?? 0))}
+                            style={{ width: `${Math.min(report.summary?.completionRate ?? 0, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 tabular-nums w-8 text-right">
+                          {report.summary?.completionRate ?? 0}%
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
@@ -715,18 +796,34 @@ export function ReportsView() {
                             Dokumen resmi siap cetak atau simpan sebagai PDF eksekutif
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            printSingleMonthlyReport(report, {
-                              workspaceName: "Vrello Marcom Operations",
-                            })
-                          }
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer"
-                        >
-                          <Printer className="w-3.5 h-3.5" />
-                          <span>Cetak Dokumen Resmi (Save as PDF)</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {canManage && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteReport(report)}
+                              disabled={isDeletingId === report.id}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer disabled:opacity-50"
+                            >
+                              {isDeletingId === report.id
+                                ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                : <Trash2 className="w-3.5 h-3.5" />
+                              }
+                              <span>{isDeletingId === report.id ? "Menghapus..." : "Hapus Laporan"}</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              printSingleMonthlyReport(report, {
+                                workspaceName: "Vrello Marcom Operations",
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                            <span>Cetak Dokumen Resmi (Save as PDF)</span>
+                          </button>
+                        </div>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                         <ReportSection title="Activities" items={report.activities ?? []} />
@@ -772,9 +869,26 @@ export function ReportsView() {
         )}
 
           {!isLoading && !error && reports.length === 0 && (
-            <div className="p-12 text-center text-slate-500 dark:text-slate-400 text-xs flex flex-col items-center gap-2">
-              <Layers className="w-8 h-8 text-slate-300 dark:text-slate-700" />
-              <span>No reports found.</span>
+            <div className="p-16 flex flex-col items-center justify-center text-center gap-3">
+              <FileText className="w-10 h-10 text-slate-300 dark:text-slate-700" />
+              <div>
+                <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                  Belum ada laporan tersimpan
+                </p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
+                  Buat laporan bulanan pertama untuk mulai mendokumentasikan aktivitas Marcom.
+                </p>
+              </div>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => setShowCreateForm(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-xs cursor-pointer mt-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Buat Laporan Pertama</span>
+                </button>
+              )}
             </div>
           )}
         </div>

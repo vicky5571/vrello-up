@@ -70,6 +70,7 @@ export interface MarcomDataState {
   fetchReports: (force?: boolean) => Promise<MonthlyReport[]>;
   setCachedReports: (reports: MonthlyReport[]) => void;
   addCachedReport: (report: MonthlyReport) => void;
+  removeCachedReport: (reportId: string) => void;
   invalidateReports: () => void;
 
   fetchDocuments: (force?: boolean) => Promise<DocumentItem[]>;
@@ -332,6 +333,12 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
   addCachedReport: (report: MonthlyReport) => {
     set((s) => ({
       reports: [report, ...s.reports.filter((r) => r.id !== report.id)],
+    }));
+  },
+
+  removeCachedReport: (reportId: string) => {
+    set((s) => ({
+      reports: s.reports.filter((r) => r.id !== reportId),
     }));
   },
 
