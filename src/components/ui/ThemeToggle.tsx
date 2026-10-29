@@ -6,7 +6,7 @@ import { Moon, Sun } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export function ThemeToggle() {
     );
   }
 
-  const isDark = theme === "dark";
+  const isDark = resolvedTheme === "dark";
 
   return (
     <motion.button
@@ -30,7 +30,7 @@ export function ThemeToggle() {
       aria-label="Toggle theme"
     >
       <motion.div
-        key={theme}
+        key={resolvedTheme ?? "theme"}
         initial={{ rotate: -90, opacity: 0 }}
         animate={{ rotate: 0, opacity: 1 }}
         exit={{ rotate: 90, opacity: 0 }}

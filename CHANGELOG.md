@@ -21,6 +21,35 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-30]
 
+- `feat(auth)`: Redesign login, register, and registration-success screens
+  - Split-shell layout that mirrors the product: dark `#0F1115` brand rail with
+    the Sidebar's emerald→teal "V" mark, CSS kanban preview, and feature cards;
+    light/dark workspace panel on the right
+  - New auth primitives: `AuthCard`, `AuthField`, `AuthAlert`,
+    `AuthSubmitButton`, `GoogleButton`, `PasswordStrength`,
+    `AuthBoardPreview`, `AuthBrandPanel`
+  - Login: Google + credentials, deduplicated PENDING/REJECTED/error banners,
+    password visibility, field-level semantics, preserved B1–B5 behavior
+  - Register: field-level validation, 4-segment password strength meter,
+    live confirm-match indicator, approval-pending timeline on success
+  - **Root-cause fix:** `globals.css` never mapped the shadcn HSL tokens into
+    Tailwind's theme, so `bg-card`, `bg-primary`, `border-border`,
+    `text-foreground`, `bg-secondary`, `ring-primary`, etc. were never
+    generated. Added an `@theme inline` block; `inline` keeps the ClickUp hex
+    `--color-*` tokens working for direct variable usage
+  - **Root-cause fix:** Tailwind 4's `dark:` variant defaults to
+    `prefers-color-scheme`, while next-themes toggles `.dark`. Added
+    `@custom-variant dark (&:where(.dark, .dark *))` so class-based dark mode
+    works app-wide
+  - `ThemeToggle` now derives its icon from `resolvedTheme`, so system-selected
+    themes render the correct control
+  - Visual QA at 375 / 768 / 1440 px in light + dark: no horizontal overflow;
+    keyboard focus rings verified on cross-links and form controls
+  - Gates: `npm test` 569 pass / 0 fail; `npm run build:check` 0 errors;
+    `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-10-30-auth-ui-redesign-design.md`
+  Plan: `docs/superpowers/plans/2026-10-30-auth-ui-redesign.md`
+
 - `feat(projects)`: Feature parity across unified Projects views (Board, List, Calendar, Gantt)
   - **Filter Bar (`ProjectsFilterBar`)**: Multi-criteria search and filter toolbar (search, types, columns, branches, pics, dateFrom, dateTo) with `applyProjectsFilters` pure function and 10 unit tests. Integrated directly into `TopNav` when in Projects mode.
   - **Board View (`ProjectsBoardView`)**:

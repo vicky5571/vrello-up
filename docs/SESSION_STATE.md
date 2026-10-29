@@ -6,55 +6,71 @@
 
 ## Current Status
 
-**Date:** 2026-10-31
+**Date:** 2026-10-30
 **Active Branch:** `vicky`
-**Active Feature:** Login System Bug Fix (B1–B5) — **IMPLEMENTED & VERIFIED**
-**Plan:** `docs/auth-user-management/login-fix-plan.md`
-**Spec:** `docs/superpowers/specs/2026-10-30-auth-user-management-design.md` (system design; this session was a bug-fix pass)
-**ADR:**  `docs/auth-user-management/adr.md`
+**Active Feature:** Auth UI Redesign — **IMPLEMENTED & VERIFIED**
+**Spec:** `docs/superpowers/specs/2026-10-30-auth-ui-redesign-design.md`
+**Plan:** `docs/superpowers/plans/2026-10-30-auth-ui-redesign.md`
+**Previous Feature:** Login bug fix B1–B5 (`899b4b6`) —
+`docs/auth-user-management/login-fix-plan.md`
 
 ---
 
 ## What Was Completed This Session
 
-1. **B1 — Correct credentials error signaling:**
-   - `authorize()` now throws `PendingAccountError` / `RejectedAccountError`
-     (`CredentialsSignin` subclasses, code `pending` / `rejected`) instead of raw
-     `Error`, so Auth.js forwards `?error=CredentialsSignin&code=...` to the client.
-   - `LoginForm` reads `res.code` and shows the correct Indonesian message.
-   - `/login` reads the `code` search param and maps it for the redirect path.
+1. **Root-cause token fix (`src/app/globals.css`):**
+   - Added a Tailwind 4 `@theme inline` block mapping the shadcn HSL tokens
+     (`background`, `card`, `primary`, `secondary`, `muted`, `accent`,
+     `destructive`, `border`, `input`, `ring`, …) to `hsl(var(--token))`.
+   - Before this, `bg-card`, `bg-primary`, `border-border`, `text-foreground`,
+     and `text-muted-foreground` compiled to nothing; auth cards were
+     transparent and the primary CTA invisible.
+   - `inline` is required so the existing ClickUp hex tokens
+     (`--color-primary`, `--color-border`, …) still win for direct
+     `var(--color-*)` usage. Verified with PostCSS: utilities compile and the
+     hex values remain intact.
 
-2. **B2 — Middleware status enforcement:**
-   - `authorized()` returns false unless `auth.user.status === "APPROVED"`.
-   - Added the token → session mapping to `auth.config.ts`; without it the
-     middleware session had no `status` field (the `src/auth.ts` callback is not
-     part of the middleware instance).
-   - `/login` only redirects APPROVED sessions and shows the PENDING/REJECTED
-     banner otherwise, preventing a `/` ↔ `/login` redirect loop. `/register`
-     routes non-APPROVED sessions to `/login`.
+2. **Class-based dark mode (`src/app/globals.css`):**
+   - Tailwind 4's `dark:` variant defaults to `prefers-color-scheme`, but
+     next-themes toggles `.dark` on `<html>`. Added
+     `@custom-variant dark (&:where(.dark, .dark *))`.
+   - This also repairs semantic dark styling in `UsersView` and
+     `UserMenuDropdown`, which already used `dark:` utilities.
 
-3. **B3 — JWT/session hardening:**
-   - Extracted `resolveJwtClaims()`; the `jwt` callback returns `null` when
-     claims cannot be hydrated (Auth.js clears the cookie).
-   - Tokens missing `id`/`role`/`status` are invalidated on session refresh.
-   - Session callback now maps required fields unconditionally.
+3. **Auth primitives (`src/components/auth/`):**
+   - `AuthCard` (surface + header + divider), `AuthField` (label, icon,
+     password visibility, error/hint), `AuthAlert` (error/warning/info),
+     `AuthSubmitButton`, `GoogleButton`, `PasswordStrength`,
+     `AuthBoardPreview` (CSS kanban), `AuthBrandPanel`.
 
-4. **B4 — Admin self-modification guard:** `PATCH /api/admin/users/[id]`
-   returns 400 when `id === session.user.id`.
+4. **Screens:**
+   - `src/app/(auth)/layout.tsx` — responsive split shell: dark brand rail +
+     light/dark workspace panel, mobile brand header, bordered theme toggle,
+     footer. `lg:bg-[#0F1115]` keeps the rail colour behind the sticky panel.
+   - `LoginForm` — Google + credentials, deduplicated PENDING/REJECTED/error
+     banners via `pushNotice`, password visibility, preserved B1–B5 behavior.
+   - `RegisterForm` — field-level validation, password strength meter, live
+     confirm-match indicator, `noValidate` + focus-first-invalid.
+   - `RegisterSuccess` — animated check, 3-step approval timeline, registered
+     email note.
 
-5. **B5 — Email normalization:** `normalizeEmail()` is used by register,
-   credentials `authorize()`, Google sign-in, and JWT hydration.
+5. **`ThemeToggle`:** now uses `resolvedTheme` (and keys the icon animation on
+   it), so system-selected themes render the correct icon.
 
-6. **Tests added:** 12 new tests (`auth-helpers.test.ts` + `auth.config.test.ts`).
+6. **Visual QA:** Playwright at 375 / 768 / 1440 px in light + dark for login,
+   register, and success. No horizontal overflow. Cross-link focus ring
+   verified via real keyboard Tab (teal ring + offset after the 150 ms
+   transition). No console errors apart from the pre-existing dev-only
+   next-auth `ClientFetchError`.
 
 ---
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected
+- `npm run drift:check` → ✅ No drift detected (18 specs paired)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ 569 passed, 0 failed (was 557; +12 new)
-- `npm run test:smoke` → ✅ 78 passed, 0 failed
+- `npm test` → ✅ 569 passed, 0 failed
+- Visual QA → ✅ no overflow; light/dark + focus states verified
 
 ---
 
@@ -63,6 +79,13 @@
 - Pre-existing DB rows with mixed-case emails are not migrated. Normalization
   applies to new writes/lookups only. If such rows exist, run a one-off SQL
   update (`lower(trim(email))`) before relying on case-insensitive login.
+- The semantic token mapping activates previously-dead utilities in
+  `UsersView` / `UserMenuDropdown`. They were authored with these tokens in
+  mind, and visual QA of the auth routes is clean, but a quick admin-screen
+  pass is still worth doing.
+- Playwright's headless shell is not installed; scripts must launch full
+  Chromium via
+  `~/Library/Caches/ms-playwright/chromium-1155/chrome-mac/Chromium.app/Contents/MacOS/Chromium`.
 
 ---
 
@@ -70,5 +93,7 @@
 
 1. Run `npm run drift:check`, `npm run build:check`, and `npm test` at session
    start (569 pass, 0 fail).
-2. Optional: verify the login flows end-to-end in the browser (PENDING login
-   message, APPROVED login, middleware redirect, admin self-PATCH 400).
+2. Optional: verify the admin Users screens (`/` → Users) after the token
+   activation.
+3. Optional: end-to-end login checks (PENDING message, APPROVED login,
+   middleware redirect, admin self-PATCH 400) against the real database.
