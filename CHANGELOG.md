@@ -6,6 +6,42 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-30]
 
+- `feat(projects)`: Feature parity across unified Projects views (Board, List, Calendar, Gantt)
+  - **Filter Bar (`ProjectsFilterBar`)**: Multi-criteria search and filter toolbar (search, types, columns, branches, pics, dateFrom, dateTo) with `applyProjectsFilters` pure function and 10 unit tests. Integrated directly into `TopNav` when in Projects mode.
+  - **Board View (`ProjectsBoardView`)**:
+    - Within-column reordering persisted in `viewPreferences.projectsBoardOrder`
+    - Visual drop-line indicator (`DropLineIndicator`) with blue dot and guide
+    - WCAG 2.2 keyboard dragging via `KeyboardSensor` with `sortableKeyboardCoordinates` and screen-reader announcements
+    - Card enhancements: media thumbnail preview, subtask/checklist progress pill, overdue red date highlight, and quick `⋯` context menu for status move
+    - Per-column select-all and card checkboxes connected to floating `ProjectsBulkActionBar` (bulk status change, bulk delete, clear)
+    - Inline quick-create form per column with entity type selector (Content Post, Field Event, Placement)
+  - **List View (`ProjectsListView`)**:
+    - Sortable column headers with cycle none → asc → desc → none and active arrows
+    - Group By toolbar selector (Type, Status, Branch, PIC, None) with collapsible groups and inline `+ New [Item]` in group footers
+    - Inline editing per row: double-click title, click status for dropdown, click date for date input, click PIC for text input
+    - Columns visibility dropdown menu wired to `viewPreferences.visibleFields`
+    - Per-row checkbox and header select-all wired to `ProjectsBulkActionBar`
+    - Overdue row highlight with red date and dimmed text
+  - **Calendar View (`ProjectsCalendarView`)**:
+    - Status-colored chips (15% bg opacity, 30% border, full color text) based on unified `STATUS_HEX_COLORS`
+    - Day cell overflow handling (max 3 chips per day with `+N more` button opening `CalendarOverflowPopover`)
+    - Empty day area click/double-click opening `CalendarCreatePopover` with date pre-filled
+    - Multi-day Field Event spanning across date ranges with `↳` continuation indicator
+  - **Gantt View (`ProjectsGanttView`)**:
+    - Interactive drag operations: move body (shifts dates), left resize handle (shifts startDate), right resize handle (shifts endDate), and progress circle drag (updates event progress)
+    - Collapsible left sidebar (280px) with "Hide Tasks" / "Show Tasks" toggle
+    - Bottom "Unscheduled Shelf" for items lacking date fields with quick-schedule date picker popover
+    - Zoom levels: Day (48px/col), Week (36px/col), Month (24px/col)
+    - Screen-reader announcements for drag status
+  - **Invariants & Gates**:
+    - All 10 coordinator files strictly ≤ 250 LOC (`ProjectsBoardView` 114 LOC, `ProjectsListView` 89 LOC, `ProjectsCalendarView` 121 LOC, `ProjectsGanttView` 217 LOC)
+    - Drift check passes: 0 drift detected
+    - Build check passes: 0 TypeScript errors
+    - Test suite passes: 549 tests pass, 0 fail
+  Spec: `docs/remove-general-tasks/02-feature-parity-spec.md`
+  Plan: `docs/remove-general-tasks/02-feature-parity-plan.md`
+  ADR:  `docs/remove-general-tasks/02-feature-parity-adr.md`
+
 - `refactor(marcom-hub)`: Remove general tasks and repurpose project views for unified Marcom Work Items
   - Implement unified `ProjectsBoardView`, `ProjectsListView`, `ProjectsCalendarView`, and `ProjectsGanttView` in `src/components/views/ProjectsView/` across Content Posts, Field Events, and Placements
   - Repurpose Board, Calendar, List, and Gantt sub-views inside `ContentPlannerView` to manage `ContentPostItem`

@@ -14,6 +14,7 @@ import type {
   Tag,
   AutomationTrigger,
   CustomAutomationRule,
+  ProjectsFilterState,
 } from "@/types";
 
 export interface TrashedTask {
@@ -160,11 +161,14 @@ export interface UiSlice {
   isTrashOpen: boolean;
   lastSeenNotificationsAt: string | null;
   marcomFilters: Record<string, string>;
+  projectsFilters: ProjectsFilterState;
   selectedBranchId: string | null;
   navigatedFromMarcom: { view: ViewMode | string; label: string } | null;
 
   setNavigatedFromMarcom: (context: { view: ViewMode | string; label: string } | null) => void;
   setAppMode: (mode: AppMode) => void;
+  setProjectsFilters: (filters: Partial<ProjectsFilterState>) => void;
+  resetProjectsFilters: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
@@ -189,6 +193,7 @@ export interface UiSlice {
     visibleFields?: Partial<ViewPreferences["visibleFields"]>;
     taskSortField?: ViewPreferences["taskSortField"];
     taskSortDirection?: ViewPreferences["taskSortDirection"];
+    projectsBoardOrder?: ViewPreferences["projectsBoardOrder"];
   }) => void;
   resetViewPreferences: () => void;
 }

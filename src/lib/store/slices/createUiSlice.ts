@@ -1,6 +1,7 @@
 import type { StateCreator } from "zustand";
 import type { WorkspaceStore, UiSlice } from "./types";
-import type { AppMode, ViewMode, ViewPreferences } from "@/types";
+import type { AppMode, ViewMode, ViewPreferences, ProjectsFilterState } from "@/types";
+import { DEFAULT_PROJECTS_FILTERS } from "@/lib/marcom/projectsFilters";
 
 export const DEFAULT_VIEW_PREFERENCES: ViewPreferences = {
   density: "standard",
@@ -13,6 +14,7 @@ export const DEFAULT_VIEW_PREFERENCES: ViewPreferences = {
   },
   taskSortField: null,
   taskSortDirection: "asc",
+  projectsBoardOrder: {},
 };
 
 export type ViewPreferencesUpdate = {
@@ -20,6 +22,7 @@ export type ViewPreferencesUpdate = {
   visibleFields?: Partial<ViewPreferences["visibleFields"]>;
   taskSortField?: ViewPreferences["taskSortField"];
   taskSortDirection?: ViewPreferences["taskSortDirection"];
+  projectsBoardOrder?: ViewPreferences["projectsBoardOrder"];
 };
 
 export function applyViewPreferences(
@@ -32,6 +35,10 @@ export function applyViewPreferences(
     visibleFields: {
       ...current.visibleFields,
       ...(prefs.visibleFields || {}),
+    },
+    projectsBoardOrder: {
+      ...(current.projectsBoardOrder || {}),
+      ...(prefs.projectsBoardOrder || {}),
     },
   };
 }
@@ -83,6 +90,7 @@ export const createUiSlice: StateCreator<
   isTrashOpen: false,
   lastSeenNotificationsAt: null,
   marcomFilters: {},
+  projectsFilters: DEFAULT_PROJECTS_FILTERS,
   selectedBranchId: null,
 
   filters: {
@@ -157,6 +165,14 @@ export const createUiSlice: StateCreator<
             : state.marcomFilters,
       };
     }),
+
+  setProjectsFilters: (newFilters) =>
+    set((state) => ({
+      projectsFilters: { ...state.projectsFilters, ...newFilters },
+    })),
+
+  resetProjectsFilters: () =>
+    set({ projectsFilters: DEFAULT_PROJECTS_FILTERS }),
 
   setCurrentUserId: (id) => set({ currentUserId: id }),
 

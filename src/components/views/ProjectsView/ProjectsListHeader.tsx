@@ -1,0 +1,135 @@
+"use client";
+
+import { useState } from "react";
+import {
+  List,
+  RefreshCw,
+  SlidersHorizontal,
+  X,
+  Check,
+} from "lucide-react";
+import type { VisibleFields } from "@/types";
+import type { GroupByOption, SortField } from "./useProjectsList";
+import { cn } from "@/lib/utils";
+
+interface ProjectsListHeaderProps {
+  totalCount: number;
+  groupBy: GroupByOption;
+  onSetGroupBy: (g: GroupByOption) => void;
+  visibleFields: VisibleFields;
+  onToggleVisibleField: (f: keyof VisibleFields) => void;
+  sortField: SortField | null;
+  onClearSort: () => void;
+  isLoading: boolean;
+  onRefresh: () => void;
+}
+
+export function ProjectsListHeader({
+  totalCount,
+  groupBy,
+  onSetGroupBy,
+  visibleFields,
+  onToggleVisibleField,
+  sortField,
+  onClearSort,
+  isLoading,
+  onRefresh,
+}: ProjectsListHeaderProps) {
+  const [isColumnsMenuOpen, setIsColumnsMenuOpen] = useState(false);
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+      <div className="flex items-center gap-2">
+        <List className="w-5 h-5 text-blue-500" />
+        <h1 className="text-base font-bold text-slate-900 dark:text-slate-100">
+          Work Items List
+        </h1>
+        <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-mono text-slate-600 dark:text-slate-400">
+          {totalCount}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap text-xs">
+        {/* Group By selector */}
+        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+          <span className="text-slate-500 text-[11px] px-1 font-medium">Group:</span>
+          {(["type", "status", "branch", "pic", "none"] as GroupByOption[]).map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => onSetGroupBy(g)}
+              className={cn(
+                "px-2.5 py-0.5 rounded-lg font-medium transition-colors cursor-pointer capitalize text-[11px]",
+                groupBy === g
+                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 font-bold shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
+              )}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+
+        {/* Columns Visibility Toggle */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsColumnsMenuOpen(!isColumnsMenuOpen)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 cursor-pointer"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
+            <span>Columns</span>
+          </button>
+
+          {isColumnsMenuOpen && (
+            <div className="absolute right-0 mt-1 w-44 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 p-2 z-40 space-y-1.5 text-xs">
+              <div className="font-semibold text-slate-500 text-[10px] uppercase px-1">
+                Toggle Columns
+              </div>
+              {[
+                { key: "dueDate" as const, label: "Date" },
+                { key: "tags" as const, label: "Branch" },
+                { key: "assignees" as const, label: "PIC" },
+                { key: "subtasks" as const, label: "Checklist" },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => onToggleVisibleField(key)}
+                  className="flex items-center justify-between w-full px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-left"
+                >
+                  <span>{label}</span>
+                  {visibleFields[key] && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Active sort clear */}
+        {sortField && (
+          <button
+            type="button"
+            onClick={onClearSort}
+            className="flex items-center gap-1 px-2 py-1 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300 text-[11px] font-semibold cursor-pointer"
+          >
+            <span>Sort: {sortField}</span>
+            <X className="w-3 h-3" />
+          </button>
+        )}
+
+        {/* Refresh */}
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={isLoading}
+          className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-600 hover:text-slate-900 cursor-pointer disabled:opacity-50"
+          title="Refresh items"
+        >
+          <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin text-blue-500")} />
+        </button>
+      </div>
+    </div>
+  );
+}
+

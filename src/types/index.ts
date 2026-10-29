@@ -190,6 +190,16 @@ export type ProjectsColumn =
   | "Cancelled"
   | "Archived";
 
+export interface ProjectsFilterState {
+  search: string;
+  types: MarcomWorkItemType[];
+  columns: ProjectsColumn[];
+  branches: string[];
+  pics: string[];
+  dateFrom: string | null;
+  dateTo: string | null;
+}
+
 export type ViewMode =
   | "pipeline"
   | "home"
@@ -467,6 +477,7 @@ export interface ViewPreferences {
   visibleFields: VisibleFields;
   taskSortField: TaskSortField | null;
   taskSortDirection: TaskSortDirection;
+  projectsBoardOrder?: Partial<Record<ProjectsColumn, string[]>>;
 }
 
 export type TaskSortField =

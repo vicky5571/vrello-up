@@ -7,11 +7,13 @@ import { TopNavBreadcrumbs } from "./TopNavBreadcrumbs";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { NotificationCenter } from "./NotificationCenter";
 import { UserMenuDropdown } from "./UserMenuDropdown";
+import { ProjectsFilterBar } from "./ProjectsFilterBar";
 import { Search, Download } from "lucide-react";
 
 export function TopNav() {
   const users = useWorkspaceStore((s) => s.users);
   const currentUserId = useWorkspaceStore((s) => s.currentUserId);
+  const appMode = useWorkspaceStore((s) => s.appMode);
   const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
   const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
 
@@ -108,6 +110,7 @@ export function TopNav() {
           </div>
         </div>
       </header>
+      {appMode === "tasks" && <ProjectsFilterBar />}
     </div>
   );
 }
