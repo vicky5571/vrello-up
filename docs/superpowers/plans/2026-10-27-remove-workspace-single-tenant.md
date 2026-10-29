@@ -46,7 +46,9 @@ git push vrello-up-workspace vicky:main
 git remote remove vrello-up-workspace
 ```
 
-**Checkpoint:** Buka https://github.com/vicky5571/vrello-up-workspace — repo terisi.
+- [x] Fork repo confirmed manual backup at https://github.com/vicky5571/vrello-up-workspace
+
+**Checkpoint:** Buka https://github.com/vicky5571/vrello-up-workspace — repo terisi (Completed).
 
 ---
 
@@ -54,16 +56,16 @@ git remote remove vrello-up-workspace
 
 File: `prisma/schema.prisma`
 
-- [ ] Hapus seluruh `model WorkspaceMember { ... }`
-- [ ] Hapus seluruh `model WorkspaceItem { ... }` (beserta semua relasi ke sana)
-- [ ] Di `SpaceItem`: hapus field `workspaceId String`, `workspace WorkspaceItem @relation(...)`, `@@index([workspaceId])`
-- [ ] Di `Placement`: hapus field `workspaceId`, `workspace WorkspaceItem @relation(...)`, `@@index([workspaceId])`
-- [ ] Di `Mou`: sama
-- [ ] Di `FieldEvent`: sama
-- [ ] Di `ContentPost`: sama
-- [ ] Di `DocumentItem`: sama
-- [ ] Di `MonthlyReport`: sama
-- [ ] Hapus `enum MarcomRole` jika hanya dipakai di `WorkspaceMember`
+- [x] Hapus seluruh `model WorkspaceMember { ... }`
+- [x] Hapus seluruh `model WorkspaceItem { ... }` (beserta semua relasi ke sana)
+- [x] Di `SpaceItem`: hapus field `workspaceId String`, `workspace WorkspaceItem @relation(...)`, `@@index([workspaceId])`
+- [x] Di `Placement`: hapus field `workspaceId`, `workspace WorkspaceItem @relation(...)`, `@@index([workspaceId])`
+- [x] Di `Mou`: sama
+- [x] Di `FieldEvent`: sama
+- [x] Di `ContentPost`: sama
+- [x] Di `DocumentItem`: sama
+- [x] Di `MonthlyReport`: sama
+- [x] Hapus `enum MarcomRole` jika hanya dipakai di `WorkspaceMember`
 
 **Checkpoint:** `npx prisma validate` → OK.
 
@@ -82,9 +84,9 @@ npx prisma generate
 
 ## Phase 3 — SSOT Types (`src/types/index.ts`)
 
-- [ ] Hapus `export interface Workspace { ... }`
-- [ ] Hapus `export type WorkspaceRole = "admin" | "staff" | "viewer";`
-- [ ] Dari `export interface Space { ... }`: hapus field `workspaceId: string`
+- [x] Hapus `export interface Workspace { ... }`
+- [x] Hapus `export type WorkspaceRole = "admin" | "staff" | "viewer";`
+- [x] Dari `export interface Space { ... }`: hapus field `workspaceId: string`
 
 **Checkpoint:** `grep -n "Workspace\b\|WorkspaceRole" src/types/index.ts` → 0 results.
 
@@ -113,37 +115,37 @@ rm src/lib/server/workspaceAuth.ts
 ## Phase 6 — Store Types + Coordinator
 
 ### `src/lib/store/slices/types.ts`
-- [ ] Remove `workspaces: Workspace[]`
-- [ ] Remove `activeWorkspaceId: string`
-- [ ] Add `spaces: Space[]`
-- [ ] Remove `fetchServerTasks(workspaceId?: string)` → rename to `fetchServerData()`
-- [ ] Remove `setActiveWorkspace`, `addWorkspace`, `updateWorkspace`, `deleteWorkspace` from `StoreActions`
-- [ ] Remove `workspaceSync` actions
+- [x] Remove `workspaces: Workspace[]`
+- [x] Remove `activeWorkspaceId: string`
+- [x] Add `spaces: Space[]`
+- [x] Remove `fetchServerTasks(workspaceId?: string)` → rename to `fetchServerData()`
+- [x] Remove `setActiveWorkspace`, `addWorkspace`, `updateWorkspace`, `deleteWorkspace` from `StoreActions`
+- [x] Remove `workspaceSync` actions
 
 ### `src/lib/store/useWorkspaceStore.ts`
-- [ ] Remove `createWorkspaceSlice` import + composition
-- [ ] Add `spaces: INITIAL_SPACES` to initial state (move initial space from old workspace slice)
-- [ ] Adjust localStorage persistence: serialize/deserialize `spaces[]` directly
+- [x] Remove `createWorkspaceSlice` import + composition
+- [x] Add `spaces: INITIAL_SPACES` to initial state (move initial space from old workspace slice)
+- [x] Adjust localStorage persistence: serialize/deserialize `spaces[]` directly
 
 ---
 
 ## Phase 7 — Update Store Slices
 
 ### `src/lib/store/slices/createWorkspaceSlice.ts`
-- [ ] **REPLACE** this file with `createDataSlice.ts` — only `fetchServerData()` action (fetches spaces + tasks from `/api/tasks`)
+- [x] **REPLACE** this file with `createDataSlice.ts` — only `fetchServerData()` action (fetches spaces + tasks from `/api/tasks`)
 
 ### `src/lib/store/slices/createSpaceSlice.ts`
-- [ ] All methods: replace `state.workspaces.find(ws => ws.id === state.activeWorkspaceId)` → direct `state.spaces`
-- [ ] `addSpace`: push to `state.spaces` directly
-- [ ] `deleteSpace`: filter from `state.spaces`
-- [ ] `updateSpace`: map over `state.spaces`
+- [x] All methods: replace `state.workspaces.find(ws => ws.id === state.activeWorkspaceId)` → direct `state.spaces`
+- [x] `addSpace`: push to `state.spaces` directly
+- [x] `deleteSpace`: filter from `state.spaces`
+- [x] `updateSpace`: map over `state.spaces`
 
 ### `src/lib/store/slices/createTaskSlice.ts`
-- [ ] Replace workspace nesting traversal with direct `spaces[]` traversal
-- [ ] Remove `activeWorkspaceId` references
+- [x] Replace workspace nesting traversal with direct `spaces[]` traversal
+- [x] Remove `activeWorkspaceId` references
 
 ### `src/lib/store/slices/createAutomationSlice.ts`
-- [ ] Same: traverse `spaces[]` directly
+- [x] Same: traverse `spaces[]` directly
 
 ---
 
@@ -151,14 +153,14 @@ rm src/lib/server/workspaceAuth.ts
 
 For each of these files, replace `workspaces: Workspace[]` param with `spaces: Space[]` and remove workspace nesting logic:
 
-- [ ] `src/lib/store/spacesOperations.ts`
-- [ ] `src/lib/store/taskOperations.ts`
-- [ ] `src/lib/store/commentOperations.ts`
-- [ ] `src/lib/store/tagOperations.ts`
-- [ ] `src/lib/store/trashOperations.ts`
-- [ ] `src/lib/store/dependencyOperations.ts`
-- [ ] `src/lib/store/automationOperations.ts`
-- [ ] `src/lib/store/backupOperations.ts` — update import/export JSON shape (remove `workspaces` wrapper)
+- [x] `src/lib/store/spacesOperations.ts`
+- [x] `src/lib/store/taskOperations.ts`
+- [x] `src/lib/store/commentOperations.ts`
+- [x] `src/lib/store/tagOperations.ts`
+- [x] `src/lib/store/trashOperations.ts`
+- [x] `src/lib/store/dependencyOperations.ts`
+- [x] `src/lib/store/automationOperations.ts`
+- [x] `src/lib/store/backupOperations.ts` — update import/export JSON shape (remove `workspaces` wrapper)
 
 **Checkpoint:** `grep -n "workspaces\b\|activeWorkspaceId\|Workspace\b" src/lib/store/*.ts` → 0 results.
 
@@ -166,11 +168,11 @@ For each of these files, replace `workspaces: Workspace[]` param with `spaces: S
 
 ## Phase 9 — Rewrite workspaceSync.ts → spaceSync.ts
 
-- [ ] Rename file to `src/lib/store/spaceSync.ts`
-- [ ] Remove `findWorkspaceForListId`, `reconcileWorkspaces`
-- [ ] Keep `findSpaceForListId(spaces: Space[], listId)` — simplified signature
-- [ ] Remove `shouldSyncToServer` workspace reconciliation logic
-- [ ] Update all imports from `workspaceSync` → `spaceSync`
+- [x] Rename file to `src/lib/store/spaceSync.ts`
+- [x] Remove `findWorkspaceForListId`, `reconcileWorkspaces`
+- [x] Keep `findSpaceForListId(spaces: Space[], listId)` — simplified signature
+- [x] Remove `shouldSyncToServer` workspace reconciliation logic
+- [x] Update all imports from `workspaceSync` → `spaceSync`
 
 ---
 
@@ -189,17 +191,17 @@ Update `src/lib/marcom/permissions.ts` to remove workspace permission checks.
 ## Phase 11 — Update Tasks API Routes
 
 ### `src/app/api/tasks/route.ts`
-- [ ] Remove `workspaceId` query param handling
-- [ ] Remove `requireWorkspaceAccess` guard
-- [ ] Remove `WorkspaceItem.findMany` + `WorkspaceMember` queries
-- [ ] Simplify GET: fetch all spaces + tasks without workspace filter
-- [ ] Simplify auto-seed: create single `SpaceItem` with `WS_MAIN_ID`-less (SpaceItem no longer has workspaceId)
+- [x] Remove `workspaceId` query param handling
+- [x] Remove `requireWorkspaceAccess` guard
+- [x] Remove `WorkspaceItem.findMany` + `WorkspaceMember` queries
+- [x] Simplify GET: fetch all spaces + tasks without workspace filter
+- [x] Simplify auto-seed: create single `SpaceItem` with `WS_MAIN_ID`-less (SpaceItem no longer has workspaceId)
 
 ### `src/app/api/tasks/[id]/route.ts`
-- [ ] Remove `requireWorkspaceAccess(existingTask.list.space.workspaceId, ...)`
+- [x] Remove `requireWorkspaceAccess(existingTask.list.space.workspaceId, ...)`
 
 ### `src/app/api/tasks/[id]/comments/route.ts`
-- [ ] Remove `requireWorkspaceAccess` call
+- [x] Remove `requireWorkspaceAccess` call
 
 **Checkpoint:** `grep -n "requireWorkspaceAccess\|workspaceId" src/app/api/tasks/**/*.ts` → 0 results.
 
@@ -214,22 +216,22 @@ For each file, remove:
 - `workspaceId` from Prisma `create` / `update` data
 
 Files:
-- [ ] `src/app/api/marcom/events/route.ts`
-- [ ] `src/app/api/marcom/events/[id]/route.ts`
-- [ ] `src/app/api/marcom/content/route.ts`
-- [ ] `src/app/api/marcom/content/[id]/route.ts`
-- [ ] `src/app/api/marcom/mous/route.ts`
-- [ ] `src/app/api/marcom/mous/[id]/route.ts`
-- [ ] `src/app/api/marcom/placements/route.ts`
-- [ ] `src/app/api/marcom/placements/[id]/route.ts`
-- [ ] `src/app/api/marcom/documents/route.ts`
-- [ ] `src/app/api/marcom/documents/[id]/route.ts`
-- [ ] `src/app/api/marcom/reports/route.ts`
-- [ ] `src/app/api/marcom/reports/[id]/route.ts`
-- [ ] `src/app/api/marcom/reports/draft/route.ts`
-- [ ] `src/app/api/marcom/analytics/route.ts`
-- [ ] `src/app/api/marcom/pipeline/route.ts`
-- [ ] `src/app/api/marcom/outlets/route.ts` (check for workspace refs)
+- [x] `src/app/api/marcom/events/route.ts`
+- [x] `src/app/api/marcom/events/[id]/route.ts`
+- [x] `src/app/api/marcom/content/route.ts`
+- [x] `src/app/api/marcom/content/[id]/route.ts`
+- [x] `src/app/api/marcom/mous/route.ts`
+- [x] `src/app/api/marcom/mous/[id]/route.ts`
+- [x] `src/app/api/marcom/placements/route.ts`
+- [x] `src/app/api/marcom/placements/[id]/route.ts`
+- [x] `src/app/api/marcom/documents/route.ts`
+- [x] `src/app/api/marcom/documents/[id]/route.ts`
+- [x] `src/app/api/marcom/reports/route.ts`
+- [x] `src/app/api/marcom/reports/[id]/route.ts`
+- [x] `src/app/api/marcom/reports/draft/route.ts`
+- [x] `src/app/api/marcom/analytics/route.ts`
+- [x] `src/app/api/marcom/pipeline/route.ts`
+- [x] `src/app/api/marcom/outlets/route.ts` (check for workspace refs)
 
 **Checkpoint:** `grep -rn "requireWorkspaceAccess\|workspaceId" src/app/api/marcom/` → 0 results.
 
@@ -238,15 +240,15 @@ Files:
 ## Phase 13 — Rewrite Marcom Data Store
 
 ### `src/lib/marcom/marcomDataStore.ts`
-- [ ] Remove `workspaceId: string` from all method signatures
-- [ ] Change cache keys from `workspaceId` to static constant (single global cache)
-- [ ] Update all `fetchPosts(wsId)` → `fetchPosts()`
+- [x] Remove `workspaceId: string` from all method signatures
+- [x] Change cache keys from `workspaceId` to static constant (single global cache)
+- [x] Update all `fetchPosts(wsId)` → `fetchPosts()`
 
 ### `src/lib/marcom/auth.ts`
-- [ ] Remove workspace-scoped auth
+- [x] Remove workspace-scoped auth
 
 ### `src/lib/marcom/permissions.ts`
-- [ ] Remove workspace permission model
+- [x] Remove workspace permission model
 
 ---
 
@@ -264,26 +266,26 @@ rmdir src/components/workspaces/  # if empty
 ## Phase 15 — Update Layout Components
 
 ### `src/components/layout/TopNav.tsx`
-- [ ] Remove workspace switcher button + `WorkspaceMenuDropdown` usage
-- [ ] Remove `onOpenCreateWorkspace`, `onOpenEditWorkspace` props
-- [ ] Show static org name (e.g. "vrello" or configurable env var)
+- [x] Remove workspace switcher button + `WorkspaceMenuDropdown` usage
+- [x] Remove `onOpenCreateWorkspace`, `onOpenEditWorkspace` props
+- [x] Show static org name (e.g. "vrello" or configurable env var)
 
 ### `src/components/layout/TopNavActionModals.tsx`
-- [ ] Remove `showCreateWorkspace`, `showEditWorkspace` state
-- [ ] Remove workspace modal renders
+- [x] Remove `showCreateWorkspace`, `showEditWorkspace` state
+- [x] Remove workspace modal renders
 
 ### `src/components/layout/GlobalRail.tsx`
-- [ ] Remove workspace avatar/initial display
-- [ ] Remove workspace switcher logic
+- [x] Remove workspace avatar/initial display
+- [x] Remove workspace switcher logic
 
 ### `src/components/layout/Sidebar.tsx`
-- [ ] Replace `workspaces.find(ws => ws.id === activeWorkspaceId)?.spaces` → `spaces` from store
+- [x] Replace `workspaces.find(ws => ws.id === activeWorkspaceId)?.spaces` → `spaces` from store
 
 ### `src/components/layout/CommandPalette.tsx`
-- [ ] Remove workspace switching commands
+- [x] Remove workspace switching commands
 
 ### Other layout components (FilterBar, ExportCenter, NotificationCenter, TopNavBreadcrumbs, AppModeSegmentedControl, ViewSwitcher)
-- [ ] Remove `activeWorkspaceId` from props and store selector
+- [x] Remove `activeWorkspaceId` from props and store selector
 
 ---
 
@@ -321,18 +323,18 @@ Files include all views in:
 ## Phase 17 — Router / URL State
 
 ### `src/lib/router/urlState.ts`
-- [ ] Remove `wsId` from URL state shape
+- [x] Remove `wsId` from URL state shape
 
 ### `src/lib/router/useUrlStateSync.ts`
-- [ ] Remove workspace sync from URL params
+- [x] Remove workspace sync from URL params
 
 ---
 
 ## Phase 18 — taskQuery.ts
 
 ### `src/lib/tasks/taskQuery.ts`
-- [ ] Remove `buildTaskTenantWhere` function
-- [ ] Rename `fetchTasksForWorkspace` → `fetchAllTasks`; remove workspace filter
+- [x] Remove `buildTaskTenantWhere` function
+- [x] Rename `fetchTasksForWorkspace` → `fetchAllTasks`; remove workspace filter
 
 ---
 
@@ -360,28 +362,28 @@ spaces: [...]
 ```
 
 Files:
-- [ ] `src/lib/store/taskCrud.test.ts`
-- [ ] `src/lib/store/spaces.test.ts`
-- [ ] `src/lib/store/trash.test.ts`
-- [ ] `src/lib/store/backupRestore.test.ts`
-- [ ] `src/lib/store/commentOperations.test.ts`
-- [ ] `src/lib/store/dependencies.test.ts`
-- [ ] `src/lib/store/tagOperations.test.ts`
-- [ ] `src/lib/store/automationRules.test.ts`
-- [ ] `src/lib/store/marcomNavigation.test.ts`
-- [ ] `src/lib/store/marcomViews.test.ts`
-- [ ] Other test files as TS errors guide
+- [x] `src/lib/store/taskCrud.test.ts`
+- [x] `src/lib/store/spaces.test.ts`
+- [x] `src/lib/store/trash.test.ts`
+- [x] `src/lib/store/backupRestore.test.ts`
+- [x] `src/lib/store/commentOperations.test.ts`
+- [x] `src/lib/store/dependencies.test.ts`
+- [x] `src/lib/store/tagOperations.test.ts`
+- [x] `src/lib/store/automationRules.test.ts`
+- [x] `src/lib/store/marcomNavigation.test.ts`
+- [x] `src/lib/store/marcomViews.test.ts`
+- [x] Other test files as TS errors guide
 
 ---
 
 ## Phase 21 — Realtime Hub
 
 ### `src/lib/server/realtimeHub.ts`
-- [ ] Remove `workspaceId` from `broadcastTaskUpsert`, `broadcastTaskDelete` signatures
-- [ ] Remove workspace-scoped SSE channels
+- [x] Remove `workspaceId` from `broadcastTaskUpsert`, `broadcastTaskDelete` signatures
+- [x] Remove workspace-scoped SSE channels
 
 ### `src/lib/hooks/useRealtime.ts`
-- [ ] Remove `activeWorkspaceId` from SSE subscription
+- [x] Remove `activeWorkspaceId` from SSE subscription
 
 ---
 
@@ -441,3 +443,15 @@ and workspace-keyed marcom caches.
 Spec: docs/superpowers/specs/2026-10-27-remove-workspace-single-tenant-design.md
 Plan: docs/superpowers/plans/2026-10-27-remove-workspace-single-tenant.md
 ```
+
+---
+
+## Sign-off & Verification Record
+
+- **Date:** 2026-10-29
+- **Status:** Complete (100%)
+- **Verification Gates Passed:**
+  - `npm run drift:check` → 0 violations (single-tenant, SSOT, god-file < 250 LOC, pairing OK)
+  - `npm test` → 690 pass, 0 fail (103 suites)
+  - `npm run build:check` (`tsc --noEmit`) → 0 errors
+  - Migration generated & applied: `prisma/migrations/20261027000000_remove_workspace_tenant/migration.sql`

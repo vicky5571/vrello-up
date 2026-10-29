@@ -46,6 +46,7 @@ yarn-error.log*
 
 # database dumps & data noise (prevent AI context window bloat)
 *.sql
+!prisma/migrations/**/*.sql
 *.dump
 *.sqlite
 *.sqlite3
