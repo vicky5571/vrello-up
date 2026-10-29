@@ -452,7 +452,8 @@ export function DocumentsView() {
   }, [fetchDocuments]);
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
+    <div className="h-full overflow-y-auto">
+      <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
       {/* 1. Header & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -944,6 +945,7 @@ export function DocumentsView() {
         onAttach={handleManualAttach}
         defaultKind="all"
       />
+    </div>
     </div>
   );
 }

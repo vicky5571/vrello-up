@@ -4,6 +4,13 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-10-29]
+
+- `fix(documents)`: Add outer scroll container to prevent content clipping  
+  Ref: `docs/handover-scroll-documents-view.md`
+
+---
+
 ## [2026-10-27]
 
 - `refactor(workspace)`: Remove multi-workspace layer — single-tenant simplification  

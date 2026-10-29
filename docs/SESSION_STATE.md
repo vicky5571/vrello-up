@@ -26,6 +26,7 @@
   - All 22 phases in `docs/superpowers/plans/2026-10-27-remove-workspace-single-tenant.md` marked complete with verification record.
   - Updated `specs/README.md` and `plans/README.md` indices to **Done**.
   - Updated `CHANGELOG.md` entry.
+- Fixed DocumentsView layout: added outer `h-full overflow-y-auto` scroll container to prevent content clipping (per docs/handover-scroll-documents-view.md).
 - Full verification gates confirmed:
   - `npm run drift:check` → ✅ No drift detected. All invariants pass.
   - `npm test` → ✅ 690 pass, 0 fail (103 suites).
