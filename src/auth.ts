@@ -9,8 +9,10 @@ import {
   normalizeStatus,
 } from "@/lib/server/auth-helpers";
 import type { UserRole, UserStatus } from "@/types";
+import authConfig from "./auth.config";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -75,15 +77,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         "development-google-client-secret",
     }),
   ],
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
-  secret:
-    process.env.AUTH_SECRET ||
-    "vrello-auth-development-secret-32-chars-long",
-  trustHost: true,
   callbacks: {
+    ...authConfig.callbacks,
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         if (!user.email) return false;
