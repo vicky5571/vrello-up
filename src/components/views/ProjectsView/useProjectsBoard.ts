@@ -97,6 +97,15 @@ export function useProjectsBoard() {
     return applyProjectsFilters(rawList, projectsFilters);
   }, [posts, events, placements, projectsFilters]);
 
+  // Pre-indexed map for O(1) item lookup during drag
+  const itemsMap = useMemo(() => {
+    const map = new Map<string, MarcomWorkItem>();
+    for (const item of allWorkItems) {
+      map.set(`${item._type}:${item.id}`, item);
+    }
+    return map;
+  }, [allWorkItems]);
+
   // Group items by column respecting local within-column order
   const itemsByColumn = useMemo(() => {
     const map = new Map<ProjectsColumn, MarcomWorkItem[]>();
@@ -145,7 +154,7 @@ export function useProjectsBoard() {
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) {
-      setDropIndicator(null);
+      setDropIndicator((prev) => (prev === null ? prev : null));
       return;
     }
 
@@ -153,24 +162,56 @@ export function useProjectsBoard() {
     if (!activeItemData) return;
 
     const overId = String(over.id);
-    let targetColumn: ProjectsColumn | null = null;
-    let targetKey: string | null = null;
+    const activeKey = `${activeItemData._type}:${activeItemData.id}`;
+
+    if (activeKey === overId) {
+      setDropIndicator((prev) => (prev === null ? prev : null));
+      return;
+    }
 
     if (PROJECTS_COLUMN_ORDER_WITH_ARCHIVED.includes(overId as ProjectsColumn)) {
-      targetColumn = overId as ProjectsColumn;
-      setDropIndicator({ column: targetColumn, itemKey: null, position: "bottom" });
+      const targetColumn = overId as ProjectsColumn;
+      setDropIndicator((prev) => {
+        if (
+          prev?.column === targetColumn &&
+          prev?.itemKey === null &&
+          prev?.position === "bottom"
+        ) {
+          return prev;
+        }
+        return { column: targetColumn, itemKey: null, position: "bottom" };
+      });
       return;
     }
 
     if (overId.includes(":")) {
-      const overItem = allWorkItems.find((i) => `${i._type}:${i.id}` === overId);
+      const overItem = itemsMap.get(overId);
       if (overItem) {
-        targetColumn = getWorkItemColumn(overItem);
-        targetKey = overId;
-        setDropIndicator({
-          column: targetColumn,
-          itemKey: targetKey,
-          position: "after",
+        const targetColumn = getWorkItemColumn(overItem);
+        let position: "before" | "after" = "before";
+        const translatedTop = active.rect.current.translated?.top;
+        if (translatedTop != null && over.rect) {
+          const activeMidY =
+            translatedTop + (active.rect.current.translated?.height || 0) / 2;
+          const overMidY = over.rect.top + over.rect.height / 2;
+          if (activeMidY > overMidY) {
+            position = "after";
+          }
+        }
+
+        setDropIndicator((prev) => {
+          if (
+            prev?.column === targetColumn &&
+            prev?.itemKey === overId &&
+            prev?.position === position
+          ) {
+            return prev;
+          }
+          return {
+            column: targetColumn,
+            itemKey: overId,
+            position,
+          };
         });
       }
     }
@@ -187,6 +228,21 @@ export function useProjectsBoard() {
         return;
       }
 
+      const prevStatus = item.status;
+
+      // 1. Optimistic Update (instant UI feedback, 0ms lag)
+      if (item._type === "content") {
+        updateCachedPost({ id: item.id, status: newStatus as PostStatus });
+      } else if (item._type === "event") {
+        updateCachedEvent({ id: item.id, status: newStatus as EventStatus });
+      } else {
+        updateCachedPlacement({ id: item.id, status: newStatus as PlacementStatus });
+      }
+
+      toast.success(`Dipindahkan ke ${targetColumn}`);
+      setAnnouncement(`Moved ${getWorkItemTitle(item)} to ${targetColumn}`);
+
+      // 2. Background Server Sync with Automatic Rollback on Failure
       try {
         const endpoint =
           item._type === "content"
@@ -202,20 +258,17 @@ export function useProjectsBoard() {
         });
 
         if (!res.ok) throw new Error("Update status failed");
-
-        if (item._type === "content") {
-          updateCachedPost({ id: item.id, status: newStatus as PostStatus });
-        } else if (item._type === "event") {
-          updateCachedEvent({ id: item.id, status: newStatus as EventStatus });
-        } else {
-          updateCachedPlacement({ id: item.id, status: newStatus as PlacementStatus });
-        }
-
-        toast.success(`Dipindahkan ke ${targetColumn}`);
-        setAnnouncement(`Moved ${getWorkItemTitle(item)} to ${targetColumn}`);
       } catch (err) {
-        console.error(err);
-        toast.error("Gagal memperbarui status di server");
+        console.error("Failed to sync status update with server:", err);
+        // Rollback optimistic update
+        if (item._type === "content") {
+          updateCachedPost({ id: item.id, status: prevStatus as PostStatus });
+        } else if (item._type === "event") {
+          updateCachedEvent({ id: item.id, status: prevStatus as EventStatus });
+        } else {
+          updateCachedPlacement({ id: item.id, status: prevStatus as PlacementStatus });
+        }
+        toast.error("Gagal memperbarui status di server (perubahan dibatalkan)");
       }
     },
     [updateCachedPost, updateCachedEvent, updateCachedPlacement],

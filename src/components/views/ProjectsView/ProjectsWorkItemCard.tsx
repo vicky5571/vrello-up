@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -36,7 +36,7 @@ interface ProjectsWorkItemCardProps {
   density?: "compact" | "default" | "relaxed";
 }
 
-export function ProjectsWorkItemCard({
+export const ProjectsWorkItemCard = memo(function ProjectsWorkItemCard({
   item,
   onSelect,
   isOverlay = false,
@@ -58,13 +58,16 @@ export function ProjectsWorkItemCard({
     isDragging,
   } = useSortable({
     id: itemKey,
+    disabled: isOverlay,
     data: { item },
   });
 
-  const style = {
-    transform: CSS.Translate.toString(transform),
-    transition,
-  };
+  const style = isOverlay
+    ? undefined
+    : {
+        transform: CSS.Translate.toString(transform),
+        transition: isDragging ? undefined : transition,
+      };
 
   useEffect(() => {
     if (!showMoveMenu) return;
@@ -372,4 +375,4 @@ export function ProjectsWorkItemCard({
       </div>
     </div>
   );
-}
+});

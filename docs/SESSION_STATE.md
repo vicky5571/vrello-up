@@ -58,6 +58,24 @@
    - Sits mode switcher cleanly at the top of the sidebar card.
    - Restored clean collapse state when `isSidebarOpen` is false.
 
+9. **Projects List & Calendar View Visual Bugs Fix:**
+   - Fixed height clipping: switched from `h-[calc(100vh-3.5rem)]` to `h-full min-h-0 overflow-hidden` across List, Calendar, and Board views.
+   - Fixed dynamic `colSpan`: replaced hardcoded `colSpan={9}` with calculated `colSpan={totalColumns}` across group headers, quick add, and empty rows.
+   - Fixed column width mismatch: aligned Status column between header and body row to `w-36`.
+   - Fixed table crushing: added `min-w-[840px]` to `<table>` and solidified sticky header background.
+   - Fixed calendar 6-week months: replaced `grid-rows-5` with dynamic `repeat(${numWeeks}, minmax(0, 1fr))` preventing 6th row cutoff.
+   - Unified calendar card container with `rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-2xs`.
+   - Fixed contrast of inactive month days and chip truncation `min-w-0`.
+   - Added click-outside listener to "Columns" toggle menu in `ProjectsListHeader.tsx`.
+
+10. **Kanban Board Drag & Drop Performance Optimization (`ProjectsBoardView`, `useProjectsBoard`, `ProjectsWorkItemCard`, `ProjectsBoardColumn`):**
+   - Indexed items into `useMemo(() => new Map(...))` for $O(1)$ lookups during drag & drop events.
+   - Memoized `ProjectsWorkItemCard` and `ProjectsBoardColumn` with `React.memo` preventing 50+ card re-render cascades on drag frames.
+   - Added equality guard in `handleDragOver` so `setDropIndicator` only updates when column, key, or position actually changes, eliminating continuous 60-120fps re-render storms.
+   - Fixed duplicate sortable registration in `@dnd-kit` by passing `disabled: isOverlay` to `useSortable`.
+   - Removed CSS `transition` during active drag to eliminate pointer latency/lag.
+   - Added optimistic state updates in `moveToColumn` with background API sync and auto-rollback on error for instant (0ms) card drops.
+
 ---
 
 ## Verification Gates (this session)

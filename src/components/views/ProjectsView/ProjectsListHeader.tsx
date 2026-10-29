@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   List,
   RefreshCw,
@@ -36,6 +36,19 @@ export function ProjectsListHeader({
   onRefresh,
 }: ProjectsListHeaderProps) {
   const [isColumnsMenuOpen, setIsColumnsMenuOpen] = useState(false);
+  const columnsMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (columnsMenuRef.current && !columnsMenuRef.current.contains(e.target as Node)) {
+        setIsColumnsMenuOpen(false);
+      }
+    }
+    if (isColumnsMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isColumnsMenuOpen]);
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
@@ -71,7 +84,7 @@ export function ProjectsListHeader({
         </div>
 
         {/* Columns Visibility Toggle */}
-        <div className="relative">
+        <div ref={columnsMenuRef} className="relative">
           <button
             type="button"
             onClick={() => setIsColumnsMenuOpen(!isColumnsMenuOpen)}

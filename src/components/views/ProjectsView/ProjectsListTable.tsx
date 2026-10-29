@@ -62,6 +62,13 @@ export function ProjectsListTable({
   const allSelected =
     sortedItems.length > 0 && selectedKeys.size === sortedItems.length;
 
+  const totalColumns =
+    5 +
+    (visibleFields.dueDate ? 1 : 0) +
+    (visibleFields.tags ? 1 : 0) +
+    (visibleFields.assignees ? 1 : 0) +
+    (visibleFields.subtasks ? 1 : 0);
+
   const renderSortIndicator = (field: SortField) => {
     if (sortField !== field) {
       return <ArrowUpDown className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100" />;
@@ -82,8 +89,8 @@ export function ProjectsListTable({
 
   return (
     <div className="flex-1 overflow-auto rounded-2xl border border-slate-200/70 dark:border-slate-800/80 bg-white dark:bg-[#151823]/70 shadow-2xs">
-      <table className="w-full border-collapse text-left text-xs">
-        <thead className="sticky top-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xs z-10 border-b border-slate-200/70 dark:border-slate-800 font-semibold text-slate-700 dark:text-slate-300">
+      <table className="w-full min-w-[840px] border-collapse text-left text-xs">
+        <thead className="sticky top-0 bg-slate-50 dark:bg-[#151823] z-10 border-b border-slate-200/70 dark:border-slate-800 font-semibold text-slate-700 dark:text-slate-300">
           <tr>
             <th className="w-10 px-3 py-2 text-center">
               <button
@@ -122,7 +129,7 @@ export function ProjectsListTable({
               </button>
             </th>
 
-            <th className="w-32 px-3 py-2">
+            <th className="w-36 px-3 py-2">
               <button
                 type="button"
                 onClick={() => onToggleSort("status")}
@@ -187,7 +194,7 @@ export function ProjectsListTable({
               <Fragment key={`group-wrapper-${key}`}>
                 {groupBy !== "none" && (
                   <tr className="bg-slate-100/60 dark:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50">
-                    <td colSpan={9} className="px-3 py-1.5">
+                    <td colSpan={totalColumns} className="px-3 py-1.5">
                       <button
                         type="button"
                         onClick={() => onToggleGroupCollapse(key)}
@@ -225,7 +232,7 @@ export function ProjectsListTable({
 
                 {!isCollapsed && groupBy !== "none" && (
                   <tr className="border-b border-slate-100 dark:border-slate-800/60 text-xs">
-                    <td colSpan={9} className="px-8 py-1.5">
+                    <td colSpan={totalColumns} className="px-3 py-1.5 pl-10">
                       {addingInGroup === key ? (
                         <div className="flex items-center gap-2 max-w-md">
                           <input
@@ -277,7 +284,7 @@ export function ProjectsListTable({
 
           {sortedItems.length === 0 && (
             <tr>
-              <td colSpan={9} className="py-12 text-center text-slate-400">
+              <td colSpan={totalColumns} className="py-12 text-center text-slate-400">
                 No work items found matching current filters.
               </td>
             </tr>

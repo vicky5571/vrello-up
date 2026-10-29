@@ -35,8 +35,10 @@ export function ProjectsCalendarView({ onSelectItem }: ProjectsCalendarViewProps
   const nextMonth = () => setCurrentMonth((prev) => addMonths(prev, 1));
   const goToToday = () => setCurrentMonth(new Date());
 
+  const numWeeks = Math.max(1, Math.ceil(days.length / 7));
+
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)] p-4 space-y-3 select-none">
+    <div className="flex flex-col h-full min-h-0 p-4 space-y-3 select-none overflow-hidden">
       {/* Calendar Header */}
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
@@ -71,31 +73,37 @@ export function ProjectsCalendarView({ onSelectItem }: ProjectsCalendarViewProps
         </div>
       </div>
 
-      {/* Weekday Header */}
-      <div className="grid grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800 text-center text-xs font-semibold py-1.5 rounded-t-xl shrink-0">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((w) => (
-          <div key={w} className="text-slate-500 dark:text-slate-400">
-            {w}
-          </div>
-        ))}
-      </div>
+      {/* Unified Calendar Card: Weekdays Header + Days Grid */}
+      <div className="flex-1 flex flex-col min-h-0 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#151823] shadow-2xs overflow-hidden">
+        {/* Weekday Header */}
+        <div className="grid grid-cols-7 bg-slate-100/90 dark:bg-slate-800/80 border-b border-slate-200/80 dark:border-white/10 text-center text-xs font-semibold py-2 shrink-0">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((w) => (
+            <div key={w} className="text-slate-600 dark:text-slate-400">
+              {w}
+            </div>
+          ))}
+        </div>
 
-      {/* Days Grid */}
-      <div className="flex-1 grid grid-cols-7 grid-rows-5 gap-px bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-b-xl overflow-hidden min-h-0">
-        {days.map((day) => {
-          const dateStr = format(day, "yyyy-MM-dd");
-          return (
-            <CalendarDayCell
-              key={dateStr}
-              day={day}
-              currentMonth={currentMonth}
-              dayItems={itemsByDate.get(dateStr) || []}
-              onSelectItem={onSelectItem}
-              onOpenCreate={setCreateDate}
-              onOpenOverflow={setOverflowDate}
-            />
-          );
-        })}
+        {/* Days Grid */}
+        <div
+          style={{ gridTemplateRows: `repeat(${numWeeks}, minmax(0, 1fr))` }}
+          className="flex-1 grid grid-cols-7 gap-px bg-slate-200/70 dark:bg-slate-800/80 min-h-0 overflow-hidden"
+        >
+          {days.map((day) => {
+            const dateStr = format(day, "yyyy-MM-dd");
+            return (
+              <CalendarDayCell
+                key={dateStr}
+                day={day}
+                currentMonth={currentMonth}
+                dayItems={itemsByDate.get(dateStr) || []}
+                onSelectItem={onSelectItem}
+                onOpenCreate={setCreateDate}
+                onOpenOverflow={setOverflowDate}
+              />
+            );
+          })}
+        </div>
       </div>
 
       {/* Overflow Modal Popover */}

@@ -46,7 +46,7 @@ export function CalendarDayCell({
               ? "bg-blue-600 text-white"
               : isCurrentMonth
               ? "text-slate-700 dark:text-slate-300"
-              : "text-slate-300 dark:text-slate-600",
+              : "text-slate-400 dark:text-slate-500",
           )}
         >
           {format(day, "d")}
@@ -80,7 +80,7 @@ export function CalendarDayCell({
               }}
               style={style}
               title={`${title} • ${item.status}`}
-              className="text-[10px] px-1.5 py-0.5 rounded-md border truncate cursor-pointer hover:opacity-85 transition-opacity font-medium flex items-center gap-1 leading-tight"
+              className="text-[10px] px-1.5 py-0.5 rounded-md border min-w-0 cursor-pointer hover:opacity-85 transition-opacity font-medium flex items-center gap-1 leading-tight"
             >
               {item._type === "content" ? (
                 <Sparkles className="w-2.5 h-2.5 shrink-0" />
@@ -89,7 +89,7 @@ export function CalendarDayCell({
               ) : (
                 <MapPin className="w-2.5 h-2.5 shrink-0" />
               )}
-              <span className="truncate">
+              <span className="truncate min-w-0">
                 {isContinuation ? `↳ ${title}` : title}
               </span>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -64,7 +64,7 @@ const COLUMN_COLORS: Record<ProjectsColumn, { dot: string; countBadge: string }>
   },
 };
 
-export function ProjectsBoardColumn({
+export const ProjectsBoardColumn = memo(function ProjectsBoardColumn({
   column,
   items,
   onSelect,
@@ -264,4 +264,4 @@ export function ProjectsBoardColumn({
       </div>
     </div>
   );
-}
+});

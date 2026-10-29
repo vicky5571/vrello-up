@@ -40,7 +40,7 @@ export function ProjectsListView({ onSelectItem }: ProjectsListViewProps) {
   } = useProjectsList();
 
   return (
-    <div className="relative flex flex-col h-[calc(100vh-3.5rem)] p-4 space-y-3">
+    <div className="relative flex flex-col h-full min-h-0 p-4 space-y-3 overflow-hidden">
       {/* Header with Group By, Columns, Sort clear, Refresh */}
       <ProjectsListHeader
         totalCount={sortedItems.length}

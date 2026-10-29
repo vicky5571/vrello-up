@@ -1,6 +1,14 @@
 "use client";
 
-import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
+import { useCallback, useMemo } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  pointerWithin,
+  closestCenter,
+  type CollisionDetection,
+  defaultDropAnimationSideEffects,
+} from "@dnd-kit/core";
 import { RefreshCw, Kanban } from "lucide-react";
 import type { MarcomWorkItem } from "@/types";
 import {
@@ -43,8 +51,31 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
     handleQuickCreate,
   } = useProjectsBoard();
 
+  const collisionDetectionStrategy: CollisionDetection = useCallback((args) => {
+    const pointerCollisions = pointerWithin(args);
+    if (pointerCollisions.length > 0) {
+      return pointerCollisions;
+    }
+    return closestCenter(args);
+  }, []);
+
+  const dropAnimationConfig = useMemo(
+    () => ({
+      duration: 200,
+      easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+      sideEffects: defaultDropAnimationSideEffects({
+        styles: {
+          active: {
+            opacity: "0",
+          },
+        },
+      }),
+    }),
+    [],
+  );
+
   return (
-    <div className="relative flex flex-col h-[calc(100vh-3.5rem)] p-4 space-y-3">
+    <div className="relative flex flex-col h-full min-h-0 p-4 space-y-3 overflow-hidden">
       {/* Screen-reader live announcement */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
@@ -92,7 +123,7 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
       {/* Kanban Board Horizontal Scroll Container */}
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
@@ -118,8 +149,12 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
           </div>
         </div>
 
-        <DragOverlay>
-          {activeItem && <ProjectsWorkItemCard item={activeItem} isOverlay />}
+        <DragOverlay dropAnimation={dropAnimationConfig}>
+          {activeItem && (
+            <div className="w-72 sm:w-80 pointer-events-none">
+              <ProjectsWorkItemCard item={activeItem} isOverlay />
+            </div>
+          )}
         </DragOverlay>
       </DndContext>
 
