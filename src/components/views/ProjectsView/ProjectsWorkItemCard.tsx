@@ -21,6 +21,8 @@ import {
   getWorkItemDate,
   getWorkItemPic,
   getWorkItemColumn,
+  getWorkItemSubStatus,
+  VALID_COLUMNS_BY_TYPE,
 } from "@/lib/marcom/workItems";
 import { cn } from "@/lib/utils";
 
@@ -33,12 +35,6 @@ interface ProjectsWorkItemCardProps {
   onMoveToColumn?: (item: MarcomWorkItem, column: ProjectsColumn) => void;
   density?: "compact" | "default" | "relaxed";
 }
-
-const VALID_COLUMNS_BY_TYPE: Record<MarcomWorkItemType, ProjectsColumn[]> = {
-  content: ["In Progress", "Ready", "Done", "Archived"],
-  event: ["Upcoming", "In Progress", "Done", "Cancelled"],
-  placement: ["To Do", "In Progress", "Done", "Blocked"],
-};
 
 export function ProjectsWorkItemCard({
   item,
@@ -216,9 +212,11 @@ export function ProjectsWorkItemCard({
         </div>
 
         <div className="flex items-center gap-1">
-          <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 truncate max-w-[80px]">
-            {item.status}
-          </span>
+          {density === "compact" && (
+            <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 truncate max-w-[80px]">
+              {item.status}
+            </span>
+          )}
 
           {/* Context Menu Button */}
           {onMoveToColumn && (
@@ -305,6 +303,32 @@ export function ProjectsWorkItemCard({
       >
         {title}
       </h4>
+
+      {/* Sub-status badge */}
+      {density !== "compact" && (() => {
+        const sub = getWorkItemSubStatus(item);
+        return (
+          <div className="mb-1.5">
+            <span
+              style={{
+                backgroundColor: `${sub.color}26`,
+                borderColor: `${sub.color}4D`,
+                color: sub.color,
+              }}
+              className={cn(
+                "inline-flex items-center gap-1 font-medium px-1.5 py-0.5 rounded-full border w-fit",
+                density === "relaxed" ? "text-[11px]" : "text-[10px]",
+              )}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: sub.color }}
+              />
+              {sub.label}
+            </span>
+          </div>
+        );
+      })()}
 
       {/* Subtitle / Context */}
       <div className="mb-2 truncate">{renderSubtitle()}</div>

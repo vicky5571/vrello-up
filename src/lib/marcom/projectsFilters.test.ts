@@ -11,7 +11,7 @@ const mockItems: MarcomWorkItem[] = [
     platform: "instagram",
     format: "reel",
     publishDate: "2026-06-15",
-    status: "DRAFT", // In Progress column
+    status: "DRAFT", // To Do column
     picName: "Alice",
     branchName: "Jakarta",
   },
@@ -22,7 +22,7 @@ const mockItems: MarcomWorkItem[] = [
     eventType: "ACTIVATION",
     startDate: "2026-07-01",
     endDate: "2026-07-03",
-    status: "UPCOMING", // Upcoming column
+    status: "UPCOMING", // To Do column
     picName: "Bob",
     branchName: "Bandung",
     budget: 5000000,
@@ -35,7 +35,7 @@ const mockItems: MarcomWorkItem[] = [
     outletId: "o1",
     materialId: "m1",
     date: "2026-06-20",
-    status: "NOT_STARTED", // To Do column
+    status: "ON_PROGRESS", // In Progress column
     picName: "Charlie",
     dimensions: "2x3m",
     cost: 500000,
@@ -76,12 +76,19 @@ test("projectsFilters: type filter hides non-matching items", () => {
 test("projectsFilters: column filter shows only items in selected columns", () => {
   const result = applyProjectsFilters(mockItems, {
     ...DEFAULT_PROJECTS_FILTERS,
-    columns: ["Upcoming", "To Do"],
+    columns: ["In Progress"],
   });
-  assert.equal(result.length, 2);
-  const ids = result.map((r) => r.id);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "p1");
+
+  const resultMultiple = applyProjectsFilters(mockItems, {
+    ...DEFAULT_PROJECTS_FILTERS,
+    columns: ["To Do"],
+  });
+  assert.equal(resultMultiple.length, 2);
+  const ids = resultMultiple.map((r) => r.id);
+  assert.ok(ids.includes("c1"));
   assert.ok(ids.includes("e1"));
-  assert.ok(ids.includes("p1"));
 });
 
 test("projectsFilters: branch filter matches branchName or branchId", () => {

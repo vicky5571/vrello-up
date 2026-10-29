@@ -3,7 +3,10 @@
 import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
 import { RefreshCw, Kanban } from "lucide-react";
 import type { MarcomWorkItem } from "@/types";
-import { PROJECTS_COLUMN_ORDER } from "@/lib/marcom/workItems";
+import {
+  PROJECTS_COLUMN_ORDER,
+  PROJECTS_COLUMN_ORDER_WITH_ARCHIVED,
+} from "@/lib/marcom/workItems";
 import { ProjectsBoardColumn } from "./ProjectsBoardColumn";
 import { ProjectsWorkItemCard } from "./ProjectsWorkItemCard";
 import { ProjectsBulkActionBar } from "./ProjectsBulkActionBar";
@@ -23,6 +26,8 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
     dropIndicator,
     selectedKeys,
     announcement,
+    showArchived,
+    setShowArchived,
     density,
     sensors,
     loadData,
@@ -57,15 +62,31 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={loadData}
-          disabled={isLoading}
-          className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-600 hover:text-slate-900 cursor-pointer disabled:opacity-50"
-          title="Refresh items"
-        >
-          <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin text-blue-500")} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowArchived(!showArchived)}
+            className={cn(
+              "text-xs px-2.5 py-1 rounded-lg border transition-colors cursor-pointer",
+              showArchived
+                ? "bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-200 font-medium"
+                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200",
+            )}
+            title={showArchived ? "Hide archived items" : "Show archived items"}
+          >
+            {showArchived ? "Sembunyikan Arsip" : "Tampilkan Arsip"}
+          </button>
+
+          <button
+            type="button"
+            onClick={loadData}
+            disabled={isLoading}
+            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-600 hover:text-slate-900 cursor-pointer disabled:opacity-50"
+            title="Refresh items"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin text-blue-500")} />
+          </button>
+        </div>
       </div>
 
       {/* Kanban Board Horizontal Scroll Container */}
@@ -78,10 +99,11 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
       >
         <div className="flex-1 overflow-x-auto overflow-y-hidden pb-2">
           <div className="flex gap-3 h-full min-w-max">
-            {PROJECTS_COLUMN_ORDER.map((column) => (
+            {(showArchived ? PROJECTS_COLUMN_ORDER_WITH_ARCHIVED : PROJECTS_COLUMN_ORDER).map((column) => (
               <ProjectsBoardColumn
                 key={column}
                 column={column}
+                className={column === "Archived" ? "opacity-60" : undefined}
                 items={itemsByColumn.get(column) || []}
                 onSelect={onSelectItem}
                 dropIndicator={dropIndicator?.column === column ? dropIndicator : null}

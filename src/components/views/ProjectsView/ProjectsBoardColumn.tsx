@@ -30,13 +30,10 @@ interface ProjectsBoardColumnProps {
     title: string,
   ) => Promise<void> | void;
   density?: "compact" | "default" | "relaxed";
+  className?: string;
 }
 
 const COLUMN_COLORS: Record<ProjectsColumn, { dot: string; countBadge: string }> = {
-  Upcoming: {
-    dot: "bg-blue-500",
-    countBadge: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  },
   "To Do": {
     dot: "bg-slate-400",
     countBadge: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
@@ -45,9 +42,9 @@ const COLUMN_COLORS: Record<ProjectsColumn, { dot: string; countBadge: string }>
     dot: "bg-amber-500",
     countBadge: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
   },
-  Ready: {
-    dot: "bg-purple-500",
-    countBadge: "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+  "In Review": {
+    dot: "bg-blue-500",
+    countBadge: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
   },
   Done: {
     dot: "bg-emerald-500",
@@ -78,6 +75,7 @@ export function ProjectsBoardColumn({
   onMoveToColumn,
   onQuickCreate,
   density = "default",
+  className,
 }: ProjectsBoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column,
@@ -86,7 +84,9 @@ export function ProjectsBoardColumn({
   const [isAdding, setIsAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [selectedType, setSelectedType] = useState<MarcomWorkItemType>(() => {
-    if (column === "Upcoming") return "event";
+    if (column === "Blocked") return "placement";
+    if (column === "Cancelled") return "event";
+    if (column === "In Review") return "content";
     if (column === "To Do") return "placement";
     return "content";
   });
@@ -109,6 +109,7 @@ export function ProjectsBoardColumn({
       className={cn(
         "flex flex-col shrink-0 w-72 rounded-2xl bg-slate-50/60 dark:bg-[#151823]/70 border border-slate-200/70 dark:border-slate-800/80 p-2.5 transition-colors max-h-full",
         isOver && "ring-2 ring-blue-500/40 bg-blue-50/20 dark:bg-blue-950/20",
+        className,
       )}
     >
       {/* Column Header */}

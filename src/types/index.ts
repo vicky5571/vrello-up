@@ -181,14 +181,18 @@ export type MarcomWorkItem =
   | (MarcomPlacement & { _type: "placement" });
 
 export type ProjectsColumn =
-  | "Upcoming"
   | "To Do"
   | "In Progress"
-  | "Ready"
+  | "In Review"
   | "Done"
   | "Blocked"
   | "Cancelled"
   | "Archived";
+
+export interface WorkItemSubStatus {
+  label: string;
+  color: string;
+}
 
 export interface ProjectsFilterState {
   search: string;

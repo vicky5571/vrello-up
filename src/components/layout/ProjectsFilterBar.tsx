@@ -14,7 +14,7 @@ import {
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import type { MarcomWorkItemType, ProjectsColumn } from "@/types";
-import { PROJECTS_COLUMN_ORDER } from "@/lib/marcom/workItems";
+import { PROJECTS_COLUMN_ORDER_WITH_ARCHIVED } from "@/lib/marcom/workItems";
 import { cn } from "@/lib/utils";
 
 export function ProjectsFilterBar() {
@@ -159,7 +159,7 @@ export function ProjectsFilterBar() {
               <Layers className="w-3 h-3" />
               <span>Status:</span>
             </span>
-            {PROJECTS_COLUMN_ORDER.map((col) => {
+            {PROJECTS_COLUMN_ORDER_WITH_ARCHIVED.map((col) => {
               const isSelected = projectsFilters.columns.includes(col);
               return (
                 <button

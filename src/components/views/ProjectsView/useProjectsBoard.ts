@@ -24,6 +24,7 @@ import type {
 } from "@/types";
 import {
   PROJECTS_COLUMN_ORDER,
+  PROJECTS_COLUMN_ORDER_WITH_ARCHIVED,
   getWorkItemColumn,
   mapColumnToStatus,
   getWorkItemTitle,
@@ -60,6 +61,7 @@ export function useProjectsBoard() {
   } | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [announcement, setAnnouncement] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -98,7 +100,7 @@ export function useProjectsBoard() {
   // Group items by column respecting local within-column order
   const itemsByColumn = useMemo(() => {
     const map = new Map<ProjectsColumn, MarcomWorkItem[]>();
-    for (const col of PROJECTS_COLUMN_ORDER) {
+    for (const col of PROJECTS_COLUMN_ORDER_WITH_ARCHIVED) {
       map.set(col, []);
     }
     for (const item of allWorkItems) {
@@ -107,7 +109,7 @@ export function useProjectsBoard() {
     }
 
     const savedOrder = viewPreferences.projectsBoardOrder || {};
-    for (const col of PROJECTS_COLUMN_ORDER) {
+    for (const col of PROJECTS_COLUMN_ORDER_WITH_ARCHIVED) {
       const colItems = map.get(col) || [];
       const orderKeys = savedOrder[col];
       if (orderKeys && orderKeys.length > 0) {
@@ -154,7 +156,7 @@ export function useProjectsBoard() {
     let targetColumn: ProjectsColumn | null = null;
     let targetKey: string | null = null;
 
-    if (PROJECTS_COLUMN_ORDER.includes(overId as ProjectsColumn)) {
+    if (PROJECTS_COLUMN_ORDER_WITH_ARCHIVED.includes(overId as ProjectsColumn)) {
       targetColumn = overId as ProjectsColumn;
       setDropIndicator({ column: targetColumn, itemKey: null, position: "bottom" });
       return;
@@ -232,7 +234,7 @@ export function useProjectsBoard() {
     const activeKey = `${activeItemData._type}:${activeItemData.id}`;
     let targetColumn: ProjectsColumn | null = null;
 
-    if (PROJECTS_COLUMN_ORDER.includes(overId as ProjectsColumn)) {
+    if (PROJECTS_COLUMN_ORDER_WITH_ARCHIVED.includes(overId as ProjectsColumn)) {
       targetColumn = overId as ProjectsColumn;
     } else if (overId.includes(":")) {
       const overItem = allWorkItems.find((i) => `${i._type}:${i.id}` === overId);
@@ -437,6 +439,8 @@ export function useProjectsBoard() {
     dropIndicator,
     selectedKeys,
     announcement,
+    showArchived,
+    setShowArchived,
     density: viewPreferences.density as "compact" | "default" | "relaxed",
     sensors,
     loadData,

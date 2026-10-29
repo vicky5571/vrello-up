@@ -20,6 +20,7 @@ import {
   getWorkItemTitle,
   getWorkItemDate,
   getWorkItemPic,
+  getWorkItemSubStatus,
 } from "@/lib/marcom/workItems";
 import { cn } from "@/lib/utils";
 
@@ -239,18 +240,32 @@ export function ProjectsListRow({
       </td>
 
       {/* Status (click to change dropdown) */}
-      <td className="w-32 px-3 py-2 whitespace-nowrap relative">
+      <td className="w-36 px-3 py-2 whitespace-nowrap relative">
         <div ref={statusDropdownRef} className="relative inline-block text-left">
-          <button
-            type="button"
-            onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-            className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
-          >
-            {item.status}
-          </button>
+          {(() => {
+            const sub = getWorkItemSubStatus(item);
+            return (
+              <button
+                type="button"
+                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                style={{
+                  backgroundColor: `${sub.color}26`,
+                  borderColor: `${sub.color}4D`,
+                  color: sub.color,
+                }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] font-medium rounded-full border transition-opacity hover:opacity-80 cursor-pointer"
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: sub.color }}
+                />
+                <span>{sub.label}</span>
+              </button>
+            );
+          })()}
 
           {isStatusDropdownOpen && (
-            <div className="absolute left-0 mt-1 w-36 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-30">
+            <div className="absolute left-0 mt-1 w-44 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-30">
               {validStatuses.map((st) => (
                 <button
                   key={st}
@@ -260,7 +275,7 @@ export function ProjectsListRow({
                     await onUpdateStatus(item, st);
                   }}
                   className={cn(
-                    "w-full text-left px-3 py-1 text-[11px] font-mono hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer",
+                    "w-full text-left px-3 py-1.5 text-[11px] font-mono hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer",
                     item.status === st && "text-blue-600 font-bold bg-blue-50/50 dark:bg-blue-950/30",
                   )}
                 >
