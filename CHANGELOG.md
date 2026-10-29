@@ -6,6 +6,18 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-30]
 
+- `fix(auth)`: Resolve 4 audit issues from auth implementation
+  - `fix(auth)`: Make JWT type fields required in `src/types/next-auth.d.ts`
+  - `fix(middleware)`: Implement Auth.js v5 JWT verification with split `src/auth.config.ts` for Edge compatibility
+  - `fix(register)`: Extract `RegisterSuccess.tsx` subcomponent, bringing `RegisterForm.tsx` to 249 LOC
+  - `test(mailer)`: Add silent-catch tests for `sendMail` rejection path in `src/lib/server/mailer.test.ts`
+  Spec: `docs/superpowers/specs/2026-10-30-auth-user-management-design.md`
+  Plan: `docs/superpowers/plans/2026-10-30-auth-user-management-fixes.md`
+
+- `docs(auth-fixes)`: Fix plan for 4 audit issues found in auth implementation
+  Plan: `docs/superpowers/plans/2026-10-30-auth-user-management-fixes.md`
+  Issues: JWT optional fields, cookie-only middleware, RegisterForm LOC, missing mailer failure test
+
 - `feat(auth)`: Add credential registration, admin approval gate, and user management page
   - Add User Prisma model (`DbUserRole`/`DbUserStatus` enums, `PENDING` approval flow)
   - Add `/register` page with email+password form and Google OAuth path

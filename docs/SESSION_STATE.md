@@ -76,13 +76,27 @@
 
 ---
 
+## Active Feature: Authentication & User Management System — Audit Fixes
+
+**Plan:** `docs/superpowers/plans/2026-10-30-auth-user-management-fixes.md`
+**Phases:** 4 | **Status:** COMPLETED & VERIFIED
+
+### Phase Completion Status
+
+- [x] Fix Phase 1 — `src/types/next-auth.d.ts`: make JWT fields required (remove `?`)
+- [x] Fix Phase 2 — `src/middleware.ts` + new `src/auth.config.ts`: proper Auth.js v5 JWT verification
+- [x] Fix Phase 3 — Extract `RegisterSuccess.tsx`, bring `RegisterForm.tsx` to ≤ 250 LOC (249 LOC)
+- [x] Fix Phase 4 — `mailer.test.ts`: add 2 tests for SMTP-configured + `sendMail` rejects path (704 pass)
+
+---
+
 ## Blocked / Risks
 
-- None. Feature implementation complete and all tests pass.
+- None. All auth implementation tasks and audit fixes are complete and verified.
 
 ---
 
 ## Next Step for Following Session
 
-1. Run `npm run drift:check` and `npm test` at session start.
-2. Review UI in browser and perform end-to-end user acceptance testing if needed.
+1. Run `npm run drift:check` and `npm test` at session start (704 pass, 0 fail).
+2. Ready for next scheduled feature or user instructions.
