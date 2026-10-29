@@ -52,6 +52,12 @@
    - Replaced invalid wrapper `<tr className="contents">` with `<Fragment key={`group-wrapper-${key}`}>`.
    - Resolves React DOM validation and hydration error `In HTML, <tr> cannot be a child of <tr>`.
 
+8. **Restored Rounded Sidebar Styling & Removed Header (`src/components/layout/Sidebar.tsx`):**
+   - Restored floating card style with `rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#18191B] shadow-lg`.
+   - Removed top `Vrello 2.0` header, logo, and badge.
+   - Sits mode switcher cleanly at the top of the sidebar card.
+   - Restored clean collapse state when `isSidebarOpen` is false.
+
 ---
 
 ## Verification Gates (this session)

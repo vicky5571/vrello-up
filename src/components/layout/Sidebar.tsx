@@ -50,68 +50,49 @@ export function Sidebar() {
         />
       )}
 
-      <aside
-        className={cn(
-          "fixed md:static inset-y-0 left-0 z-40 flex flex-col w-64 bg-white dark:bg-[#141721] border-r border-slate-200/80 dark:border-slate-800 transition-transform duration-200 ease-in-out select-none",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-        )}
-      >
-        {/* Workspace Brand / Header */}
-        <div className="h-11 px-4 flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-              V
+      {isSidebarOpen && (
+        <aside className="fixed left-2 top-2 bottom-2 z-50 w-72 md:static md:z-20 md:w-60 md:h-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#18191B] shadow-lg flex flex-col justify-between shrink-0 select-none overflow-hidden">
+          {/* Mode Switcher Segmented Control */}
+          <div className="p-2 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/20">
+            <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800/80 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => {
+                  setAppMode("tasks");
+                  if (!["board", "list", "calendar"].includes(activeView)) {
+                    setActiveView("board");
+                  }
+                }}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                  appMode === "tasks"
+                    ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+                )}
+              >
+                <FolderKanban className="w-3.5 h-3.5" />
+                <span>Projects</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAppMode("marcom");
+                  if (["board", "list", "calendar"].includes(activeView)) {
+                    setActiveView("pipeline");
+                  }
+                }}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                  appMode === "marcom"
+                    ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+                )}
+              >
+                <Megaphone className="w-3.5 h-3.5" />
+                <span>Marcom</span>
+              </button>
             </div>
-            <span className="font-bold text-sm tracking-tight text-slate-900 dark:text-slate-100">
-              Vrello
-            </span>
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-              v2.0
-            </span>
           </div>
-        </div>
-
-        {/* Mode Switcher Segmented Control */}
-        <div className="p-2 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20">
-          <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800/80 text-xs font-medium">
-            <button
-              type="button"
-              onClick={() => {
-                setAppMode("tasks");
-                if (!["board", "list", "calendar"].includes(activeView)) {
-                  setActiveView("board");
-                }
-              }}
-              className={cn(
-                "flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                appMode === "tasks"
-                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-              )}
-            >
-              <FolderKanban className="w-3.5 h-3.5" />
-              <span>Projects</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setAppMode("marcom");
-                if (["board", "list", "calendar"].includes(activeView)) {
-                  setActiveView("pipeline");
-                }
-              }}
-              className={cn(
-                "flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                appMode === "marcom"
-                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-              )}
-            >
-              <Megaphone className="w-3.5 h-3.5" />
-              <span>Marcom</span>
-            </button>
-          </div>
-        </div>
 
         {/* Navigation Body */}
         <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
@@ -207,7 +188,7 @@ export function Sidebar() {
         </div>
 
         {/* Bottom Actions */}
-        <div className="p-3 border-t border-slate-200/80 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+        <div className="p-3 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-between text-xs text-slate-500">
           <button
             type="button"
             onClick={() => setHelpDocsOpen(true)}
@@ -226,6 +207,7 @@ export function Sidebar() {
           </button>
         </div>
       </aside>
+      )}
 
       {/* Modals */}
       <HelpDocsModal
