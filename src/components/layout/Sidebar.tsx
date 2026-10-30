@@ -6,8 +6,6 @@ import { useShallow } from "zustand/react/shallow";
 import {
   Settings,
   HelpCircle,
-  FolderKanban,
-  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -15,6 +13,7 @@ import {
   MARCOM_WORK_ITEMS,
   MARCOM_MASTER_DATA,
 } from "./navConfig";
+import { AppModeSegmentedControl } from "./AppModeSegmentedControl";
 import { HelpDocsModal } from "@/components/modals/HelpDocsModal";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 
@@ -34,7 +33,6 @@ export function Sidebar() {
   );
 
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
-  const setAppMode = useWorkspaceStore((s) => s.setAppMode);
   const setHelpDocsOpen = useWorkspaceStore((s) => s.setHelpDocsOpen);
   const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
 
@@ -53,46 +51,7 @@ export function Sidebar() {
       {isSidebarOpen && (
         <aside className="fixed left-2 top-2 bottom-2 z-50 w-72 md:static md:z-20 md:w-60 md:h-full rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#18191B] shadow-lg flex flex-col justify-between shrink-0 select-none overflow-hidden">
           {/* Mode Switcher Segmented Control */}
-          <div className="p-2 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/20">
-            <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800/80 text-xs font-medium">
-              <button
-                type="button"
-                onClick={() => {
-                  setAppMode("tasks");
-                  if (!["board", "list", "calendar"].includes(activeView)) {
-                    setActiveView("board");
-                  }
-                }}
-                className={cn(
-                  "flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                  appMode === "tasks"
-                    ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-                )}
-              >
-                <FolderKanban className="w-3.5 h-3.5" />
-                <span>Projects</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAppMode("marcom");
-                  if (["board", "list", "calendar"].includes(activeView)) {
-                    setActiveView("pipeline");
-                  }
-                }}
-                className={cn(
-                  "flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                  appMode === "marcom"
-                    ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-                )}
-              >
-                <Megaphone className="w-3.5 h-3.5" />
-                <span>Marcom</span>
-              </button>
-            </div>
-          </div>
+          <AppModeSegmentedControl />
 
         {/* Navigation Body */}
         <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">

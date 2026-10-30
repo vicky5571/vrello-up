@@ -44,6 +44,13 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-30]
 
+- `style(layout)`: Restore Projects Kanban icon, Marcom Hub label, and sliding pill animation
+  - Replaced `FolderKanban` with original `Kanban` icon in Projects mode button
+  - Renamed `Marcom` to `Marcom Hub` in mode switcher and GlobalRail
+  - Restored Framer Motion animated sliding pill (`motion.div layoutId="activeAppModeIndicator"`)
+  - Extracted `AppModeSegmentedControl.tsx` (104 LOC), reducing `Sidebar.tsx` coordinator to 182 LOC
+  - Gates: `npm test` 582 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `feat(inventory)`: Add Field Event Equipment Inventory & Borrowing System
   - Implemented master catalog `InventoryItem` with unique codes, category filters, and unit tracking
   - Implemented borrow workflow `BorrowRecord` and `BorrowItem` with sequential code `BRW-YYYYMMDD-NNN` and multi-state lifecycle (`PENDING` → `APPROVED` → `ACTIVE` → `RETURNED`)

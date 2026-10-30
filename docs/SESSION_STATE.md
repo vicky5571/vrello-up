@@ -68,6 +68,12 @@
    - `src/lib/marcom/inventoryLogic.test.ts`: pure domain logic tests for availability, code generation, and condition status.
    - `src/app/api/marcom/inventory/inventoryApi.test.ts`: API route tests.
 
+9. **Sidebar Mode Switcher Restoration (`AppModeSegmentedControl.tsx`, `Sidebar.tsx`, `GlobalRail.tsx`):**
+   - Restored original Projects logo icon (`Kanban` from `lucide-react`) replacing `FolderKanban`.
+   - Restored label text to `"Marcom Hub"` in mode switcher pills and `GlobalRail`.
+   - Restored Framer Motion animated sliding pill (`motion.div layoutId="activeAppModeIndicator"` with spring physics and reduced-motion support).
+   - Extracted `AppModeSegmentedControl.tsx` (104 LOC), bringing `Sidebar.tsx` coordinator down to 182 LOC.
+
 ---
 
 ## Verification Gates (this session)

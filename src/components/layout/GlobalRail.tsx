@@ -137,12 +137,12 @@ export function GlobalRail() {
                     <Kanban className="relative z-10 w-4 h-4 transition-transform group-hover:scale-105" />
                   </motion.button>
 
-                  {/* Marketing & Ops Mode Toggle */}
+                  {/* Marcom Hub Mode Toggle */}
                   <motion.button
                     type="button"
                     whileTap={shouldReduceMotion ? undefined : { scale: 0.92 }}
                     onClick={() => setAppMode("marcom")}
-                    title="Marketing & Ops Hub"
+                    title="Marcom Hub"
                     className={cn(
                       "relative w-9 h-8 flex items-center justify-center rounded-lg cursor-pointer group transition-colors",
                       appMode === "marcom"
