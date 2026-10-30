@@ -40,3 +40,5 @@ YYYY-MM-DD-<feature-slug>-design.md
 | 2026-10-27 | remove-workspace-single-tenant | Done |
 | 2026-10-29 | reports-view-improvements | Done |
 | 2026-10-30 | auth-user-management | Done |
+| 2026-10-30 | inventory-system | Done |
+| 2026-10-31 | event-card-equipment-indicator | Planned |

@@ -81,11 +81,20 @@
    - Added Equipment Inventory view and quick action to `CommandPalette.tsx`.
    - Added automated tests in `marcomViews.test.ts` and `urlState.test.ts`.
 
+11. **Bugfix: Stale Prisma Client Runtime on Development Server (500 error on fetchBorrowRecords):**
+   - Root cause: Dev server process started before `BorrowRecord` / `BorrowItem` schema migration, retaining stale Prisma client in Node process memory where `prisma.borrowRecord` was `undefined`.
+   - Terminated stale process, restarted clean Next.js server on port 3000, verified authenticated requests return HTTP 200 (`/api/marcom/inventory/borrow` and `/api/marcom/inventory`).
+
+12. **Architecture & Planning: Event Card Equipment Logistics Indicator Chip:**
+   - Created Spec: `docs/superpowers/specs/2026-10-31-event-card-equipment-indicator-design.md`
+   - Created Plan: `docs/superpowers/plans/2026-10-31-event-card-equipment-indicator.md`
+   - Created ADR: `docs/adr/0006-event-card-equipment-indicator.md` (ADR-06)
+
 ---
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (22 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (23 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
 - `npm test` → ✅ 584 passed, 0 failed (100 suites)
 
@@ -99,5 +108,6 @@
 
 ## Next Step for Following Session
 
-1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. Commit and push the implemented feature to remote (`git push origin vicky`).
+1. Implement Phase 1 of `2026-10-31-event-card-equipment-indicator` (pure logic helper and unit tests).
+2. Implement Phase 2 (wire indicator chip into `EventCardsView.tsx`).
+3. Verify all gates and commit.

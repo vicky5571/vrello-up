@@ -46,3 +46,5 @@ Every plan MUST have a matching spec file:
 | 2026-10-29 | reports-view-improvements | 8 phases | Done |
 | 2026-10-30 | auth-user-management | 22 phases | Done |
 | 2026-10-30 | auth-user-management-fixes | 4 phases | Not Started |
+| 2026-10-30 | inventory-system | 7 phases | Done |
+| 2026-10-31 | event-card-equipment-indicator | 3 phases | Planned |
