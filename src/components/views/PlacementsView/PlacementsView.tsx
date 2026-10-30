@@ -115,8 +115,8 @@ export function PlacementsView() {
     />
   );
   return (
-    <div className="space-y-4">
-      {/* 1. Persistent Static Page Header */}
+    <div className="p-4 sm:p-6 space-y-4 h-full overflow-y-auto">
+      {/* 1. Persistent Static Page Header (Option B: Card-Banner Container) */}
       <PlacementsHeader
         totalPlacements={filteredPlacements.length}
         viewMode={viewMode}
@@ -128,13 +128,14 @@ export function PlacementsView() {
         onAddPlacement={handleOpenAddPlacement}
       />
 
-      {/* 2. Persistent Static KPI Bar */}
-      <KpiSummaryCards items={kpiItems} />
+      {/* 2. KPI Bar (hidden on Map View to maximize map canvas viewport) */}
+      {viewMode !== "map" && <KpiSummaryCards items={kpiItems} />}
 
       {/* 3. Dynamic Content Area */}
       {viewMode === "table" ? (
         <MarcomTableShell
-          fixedViewport
+          noPadding
+          hideRefreshButton
           data={filteredPlacements}
           columns={columns}
           getRowId={(row) => row.id}

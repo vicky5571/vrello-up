@@ -93,6 +93,7 @@ interface MarcomTableShellProps<T extends object & { id: string }> {
   // layout controls
   hideHeader?: boolean;
   hideSearch?: boolean;
+  hideRefreshButton?: boolean;
   noPadding?: boolean;
   fixedViewport?: boolean;
   className?: string;
@@ -133,6 +134,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
   emptyLabel = `No ${entityPlural} found.`,
   hideHeader = false,
   hideSearch = false,
+  hideRefreshButton = false,
   noPadding = false,
   fixedViewport = false,
   className,
@@ -347,16 +349,18 @@ export function MarcomTableShell<T extends object & { id: string }>({
                 <span>{addLabel}</span>
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => onRefresh()}
-              disabled={isLoading}
-              title={`Refresh ${entityPlural}`}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
-              <span>Refresh</span>
-            </button>
+            {!hideRefreshButton && (
+              <button
+                type="button"
+                onClick={() => onRefresh()}
+                disabled={isLoading}
+                title={`Refresh ${entityPlural}`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
+                <span>Refresh</span>
+              </button>
+            )}
           </div>
         </div>
       )}
