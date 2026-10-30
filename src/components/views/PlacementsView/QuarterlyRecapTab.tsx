@@ -13,6 +13,7 @@ import {
   Check,
 } from "lucide-react";
 import type { MarcomPlacement, Branch, QuarterlyTargetMap } from "@/types";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import {
   getAvailableQuarters,
   calculateQuarterKpis,
@@ -119,35 +120,33 @@ export function QuarterlyRecapTab({
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Kuartal:
             </span>
-            <select
+            <CustomDropdown
               value={selectedQuarter}
-              onChange={(e) => setSelectedQuarter(e.target.value)}
-              className="px-3 py-1.5 text-sm font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-            >
-              {availableQuarters.map((q) => (
-                <option key={q} value={q}>
-                  {q}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedQuarter}
+              options={availableQuarters.map((q) => ({ value: q, label: q }))}
+              ariaLabel="Pilih Kuartal"
+              className="w-32 sm:w-36 text-xs sm:text-sm font-semibold"
+            />
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Cabang:
             </span>
-            <select
+            <CustomDropdown
               value={selectedBranchId}
-              onChange={(e) => setSelectedBranchId(e.target.value)}
-              className="px-3 py-1.5 text-sm rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-            >
-              <option value="">Semua Cabang (Regional Jateng)</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  Cabang {b.name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedBranchId}
+              options={[
+                { value: "", label: "Semua Cabang (Regional Jateng)" },
+                ...branches.map((b) => ({
+                  value: b.id,
+                  label: `Cabang ${b.name}`,
+                })),
+              ]}
+              ariaLabel="Pilih Cabang"
+              searchPlaceholder="Cari cabang..."
+              className="w-48 sm:w-56 text-xs sm:text-sm"
+            />
           </div>
         </div>
 

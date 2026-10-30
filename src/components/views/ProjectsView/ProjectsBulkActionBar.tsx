@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, X, CheckSquare, Layers } from "lucide-react";
 import type { MarcomWorkItem, ProjectsColumn } from "@/types";
 import { PROJECTS_COLUMN_ORDER } from "@/lib/marcom/workItems";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 interface ProjectsBulkActionBarProps {
   selectedKeys: Set<string>;
@@ -36,28 +37,22 @@ export function ProjectsBulkActionBar({
         </div>
 
         {/* Bulk Status Select */}
-        <div className="flex items-center gap-1.5">
-          <Layers className="w-3.5 h-3.5 text-slate-400" />
-          <select
-            defaultValue=""
-            onChange={(e) => {
-              if (e.target.value) {
-                onBulkStatus(selectedKeys, e.target.value as ProjectsColumn);
-                e.target.value = "";
-              }
-            }}
-            className="bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer border border-slate-700 dark:border-slate-300 focus:outline-hidden"
-          >
-            <option value="" disabled>
-              Move to status...
-            </option>
-            {PROJECTS_COLUMN_ORDER.map((col) => (
-              <option key={col} value={col}>
-                {col}
-              </option>
-            ))}
-          </select>
-        </div>
+        <CustomDropdown
+          value=""
+          placeholder="Move to status..."
+          onChange={(val) => {
+            if (val) {
+              onBulkStatus(selectedKeys, val as ProjectsColumn);
+            }
+          }}
+          options={PROJECTS_COLUMN_ORDER.map((col) => ({
+            value: col,
+            label: col,
+          }))}
+          icon={Layers}
+          ariaLabel="Move to status"
+          className="w-36 text-xs text-slate-900 dark:text-slate-100"
+        />
 
         {/* Delete Button */}
         <button

@@ -16,6 +16,7 @@ import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import type { MarcomWorkItemType, ProjectsColumn } from "@/types";
 import { PROJECTS_COLUMN_ORDER_WITH_ARCHIVED } from "@/lib/marcom/workItems";
 import { cn } from "@/lib/utils";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export function ProjectsFilterBar() {
   const projectsFilters = useWorkspaceStore((s) => s.projectsFilters);
@@ -181,48 +182,42 @@ export function ProjectsFilterBar() {
 
           {/* Branch filter */}
           {availableBranches.length > 0 && (
-            <div className="flex items-center gap-1">
-              <Building2 className="w-3 h-3 text-slate-400" />
-              <select
-                value={projectsFilters.branches[0] || ""}
-                onChange={(e) =>
-                  setProjectsFilters({
-                    branches: e.target.value ? [e.target.value] : [],
-                  })
-                }
-                className="text-[11px] px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
-              >
-                <option value="">All Branches</option>
-                {availableBranches.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomDropdown
+              value={projectsFilters.branches[0] || ""}
+              onChange={(val) =>
+                setProjectsFilters({
+                  branches: val ? [val] : [],
+                })
+              }
+              options={[
+                { value: "", label: "All Branches" },
+                ...availableBranches.map((b) => ({ value: b, label: b })),
+              ]}
+              ariaLabel="Filter Branch"
+              icon={Building2}
+              searchPlaceholder="Cari branch..."
+              className="w-32 sm:w-36 text-[11px]"
+            />
           )}
 
           {/* PIC filter */}
           {availablePics.length > 0 && (
-            <div className="flex items-center gap-1">
-              <User className="w-3 h-3 text-slate-400" />
-              <select
-                value={projectsFilters.pics[0] || ""}
-                onChange={(e) =>
-                  setProjectsFilters({
-                    pics: e.target.value ? [e.target.value] : [],
-                  })
-                }
-                className="text-[11px] px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
-              >
-                <option value="">All PICs</option>
-                {availablePics.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomDropdown
+              value={projectsFilters.pics[0] || ""}
+              onChange={(val) =>
+                setProjectsFilters({
+                  pics: val ? [val] : [],
+                })
+              }
+              options={[
+                { value: "", label: "All PICs" },
+                ...availablePics.map((p) => ({ value: p, label: p })),
+              ]}
+              ariaLabel="Filter PIC"
+              icon={User}
+              searchPlaceholder="Cari PIC..."
+              className="w-28 sm:w-32 text-[11px]"
+            />
           )}
 
           {/* Date range filter */}

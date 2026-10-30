@@ -17,6 +17,7 @@ import {
   Tag,
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import type { FieldEventItem } from "@/types";
 import {
   type EventConflictDetail,
@@ -190,15 +191,17 @@ export function EventsTimelineView({
           </div>
 
           {/* Days count range selector */}
-          <select
+          <CustomDropdown<number>
             value={daysCount}
-            onChange={(e) => setDaysCount(Number(e.target.value))}
-            className="px-2.5 py-1 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 cursor-pointer"
-          >
-            <option value={14}>2 Weeks (14 Days)</option>
-            <option value={21}>3 Weeks (21 Days)</option>
-            <option value={35}>5 Weeks (35 Days)</option>
-          </select>
+            onChange={(val) => setDaysCount(Number(val))}
+            options={[
+              { value: 14, label: "2 Weeks (14 Days)" },
+              { value: 21, label: "3 Weeks (21 Days)" },
+              { value: 35, label: "5 Weeks (35 Days)" },
+            ]}
+            ariaLabel="Range hari timeline"
+            className="w-36 text-xs"
+          />
 
           {/* Pagination */}
           <div className="flex items-center gap-1">

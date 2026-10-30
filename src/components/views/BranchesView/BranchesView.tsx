@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Building2, Plus, Edit2, Store, FileText, X, Eye } from "lucide-react";
+import { Building2, Edit2, Store, FileText, X, Eye } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
-import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
+import { BranchesHeader } from "./BranchesHeader";
 import { cn } from "@/lib/utils";
 import {
   calculateBranchKpis,
@@ -94,6 +94,25 @@ export function BranchesView() {
   };
 
   const kpiItems = useMemo(() => calculateBranchKpis(branches), [branches]);
+
+  const statusCounts = useMemo(() => {
+    const done = branches.filter((b) => b.status === "DONE").length;
+    const progress = branches.filter((b) => b.status === "ON_PROGRESS").length;
+    const pending = branches.filter((b) => b.status === "PENDING").length;
+    return [
+      { id: "ALL", label: "Semua Status", count: branches.length },
+      { id: "DONE", label: "Done", count: done },
+      { id: "ON_PROGRESS", label: "In Progress", count: progress },
+      { id: "PENDING", label: "Pending", count: pending },
+    ];
+  }, [branches]);
+
+  const handleResetFilters = () => {
+    setSelectedRegion("ALL");
+    setSelectedStatus("ALL");
+    setMarcomFilter("branches", "");
+    fetchBranches("ALL", "ALL");
+  };
 
   const columns = useMemo(
     () =>
@@ -319,81 +338,62 @@ export function BranchesView() {
   }, []);
 
   return (
-    <>
-      <MarcomTableShell
-        fixedViewport
-        kpiBar={<KpiSummaryCards items={kpiItems} mobileStrip />}
-        data={branches}
-        columns={columns}
-        getRowId={(row) => row.id}
-        initialSorting={[{ id: "code", desc: false }]}
-        title="Branches"
-        titleIcon={Building2}
-        entityName="branch"
-        entityPlural="branches"
+    <div className="flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto">
+      {/* Unified Inventory-Style Header */}
+      <BranchesHeader
+        totalBranches={branches.length}
+        kpiItems={kpiItems}
         isLoading={isLoading}
-        error={error}
-        onRefresh={fetchBranches}
-        onRowClick={(branch) => setSelectedBranchId(branch.id)}
-        canDelete={canManage}
-        deleteRequiresMessage="Delete requires admin role"
-        onDeleteOne={deleteOne}
-        canAdd={canAddBranch}
-        onAdd={() => setModalBranch({ code: "", name: "", region: "", city: "", status: "PENDING", picName: "", picPhone: "", address: "" })}
-        addLabel="Add Branch"
-        addIcon={Plus}
-        addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 transition-colors shadow-2xs cursor-pointer"
-        filterBar={
-          <div className="flex flex-wrap items-center gap-2.5 text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-slate-500 dark:text-slate-400">Region:</span>
-              <select
-                value={selectedRegion}
-                onChange={(e) => handleRegionChange(e.target.value)}
-                aria-label="Filter by region"
-                className="px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500 cursor-pointer"
-              >
-                <option value="ALL">All Regions</option>
-                {availableRegions.map((reg) => (
-                  <option key={reg} value={reg}>
-                    {reg}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-slate-500 dark:text-slate-400">Status:</span>
-              <select
-                value={selectedStatus}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                aria-label="Filter by status"
-                className="px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-cyan-500 cursor-pointer"
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="DONE">Done</option>
-                <option value="ON_PROGRESS">In Progress</option>
-                <option value="PENDING">Pending</option>
-              </select>
-            </div>
-            {(selectedRegion !== "ALL" || selectedStatus !== "ALL") && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedRegion("ALL");
-                  setSelectedStatus("ALL");
-                  fetchBranches("ALL", "ALL");
-                }}
-                className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 underline font-medium cursor-pointer"
-              >
-                Reset Filters
-              </button>
-            )}
-          </div>
+        onRefresh={() => fetchBranches(selectedRegion, selectedStatus)}
+        canAddBranch={canAddBranch}
+        onAddBranch={() =>
+          setModalBranch({
+            code: "",
+            name: "",
+            region: "",
+            city: "",
+            status: "PENDING",
+            picName: "",
+            picPhone: "",
+            address: "",
+          })
         }
-        searchTerm={marcomFilters["branches"] || ""}
+        selectedStatus={selectedStatus}
+        onStatusChange={handleStatusChange}
+        statusCounts={statusCounts}
+        selectedRegion={selectedRegion}
+        onRegionChange={handleRegionChange}
+        availableRegions={availableRegions}
+        onResetFilters={handleResetFilters}
+        searchQuery={marcomFilters["branches"] || ""}
         onSearchChange={(q) => setMarcomFilter("branches", q)}
-        emptyLabel="No branches found."
       />
+
+      {/* Main Stage Content */}
+      <div className="p-4 sm:p-6 flex-1 min-h-0 space-y-4">
+        <MarcomTableShell
+          data={branches}
+          columns={columns}
+          getRowId={(row) => row.id}
+          initialSorting={[{ id: "code", desc: false }]}
+          title="Branches"
+          titleIcon={Building2}
+          entityName="branch"
+          entityPlural="branches"
+          isLoading={isLoading}
+          error={error}
+          onRefresh={fetchBranches}
+          onRowClick={(branch) => setSelectedBranchId(branch.id)}
+          canDelete={canManage}
+          deleteRequiresMessage="Delete requires admin role"
+          onDeleteOne={deleteOne}
+          hideHeader
+          noPadding
+          searchTerm={marcomFilters["branches"] || ""}
+          onSearchChange={(q) => setMarcomFilter("branches", q)}
+          emptyLabel="No branches found."
+        />
+      </div>
 
       {modalBranch && (
         <div
@@ -543,6 +543,6 @@ export function BranchesView() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

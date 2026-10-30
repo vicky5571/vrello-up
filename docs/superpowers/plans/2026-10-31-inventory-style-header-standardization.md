@@ -99,6 +99,17 @@
   - Replace inline header, floating KPI strip, and inline filterBar with `<OutletsHeader ... />`.
   - Wrap stage content area in responsive stage container `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
 
+### Phase 2.11: Branches & Regional Hubs Header Upgrade
+- **`src/components/views/BranchesView/BranchesHeader.tsx`**:
+  - Create atomic header component (`p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+  - Row 1: Inline icon (`Building2 text-cyan-600 dark:text-cyan-400`), Title `Branches & Regional Hubs`, count badge, subtitle, and top-right action buttons (Refresh, + Tambah Branch).
+  - Row 2: 4 Embedded KPI Cards (`KpiSummaryCards items={kpiItems} skeletonCount={4}`).
+  - Row 3: Status filter pills (Semua Status, Done, In Progress, Pending with active count badges), Region dropdown selector, Search input, and Reset Filters button.
+- **`src/components/views/BranchesView/BranchesView.tsx`**:
+  - Outer container: `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`.
+  - Replace inline title/filter bar/kpiBar in MarcomTableShell with `<BranchesHeader ... />`.
+  - Wrap table shell in responsive stage container `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
+
 ### Phase 3: Verification & Gate Checks
 - [x] Run `npm run drift:check`
 - [x] Run `npm run build:check`
@@ -111,8 +122,8 @@
 
 | File | Action | LOC Impact |
 |---|---|---|
-| `docs/superpowers/specs/2026-10-31-inventory-style-header-standardization-design.md` | Create / Modify | ~140 LOC |
-| `docs/superpowers/plans/2026-10-31-inventory-style-header-standardization.md` | Create / Modify | ~135 LOC |
+| `docs/superpowers/specs/2026-10-31-inventory-style-header-standardization-design.md` | Create / Modify | ~160 LOC |
+| `docs/superpowers/plans/2026-10-31-inventory-style-header-standardization.md` | Create / Modify | ~150 LOC |
 | `src/components/views/PlacementsView/PlacementsHeader.tsx` | Modify | ~110 LOC |
 | `src/components/views/PlacementsView/PlacementsView.tsx` | Modify | ~210 LOC |
 | `src/components/views/ContentPlannerView/ContentPlannerHeader.tsx` | Create | ~160 LOC |
@@ -129,3 +140,5 @@
 | `src/components/views/DocumentsView/DocumentsView.tsx` | Modify | ~210 LOC |
 | `src/components/views/OutletsView/OutletsHeader.tsx` | Create | ~190 LOC |
 | `src/components/views/OutletsView/OutletsView.tsx` | Modify | ~-100 LOC (reduction) |
+| `src/components/views/BranchesView/BranchesHeader.tsx` | Create | ~185 LOC |
+| `src/components/views/BranchesView/BranchesView.tsx` | Modify | ~-70 LOC (reduction) |

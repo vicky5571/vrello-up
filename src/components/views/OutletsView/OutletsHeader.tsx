@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export interface BranchOption {
   id: string;
@@ -163,32 +164,35 @@ export function OutletsHeader({
 
         {/* Filters & Search */}
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <CustomDropdown
             value={selectedBranch}
-            onChange={(e) => onBranchChange(e.target.value)}
-            aria-label="Filter by branch"
-            className="px-2.5 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-orange-500 cursor-pointer max-w-[170px] truncate"
-          >
-            <option value="ALL">All Branches</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name} ({b.code})
-              </option>
-            ))}
-          </select>
+            onChange={onBranchChange}
+            options={[
+              { value: "ALL", label: "All Branches" },
+              ...branches.map((b) => ({
+                value: b.id,
+                label: `${b.name} (${b.code})`,
+              })),
+            ]}
+            ariaLabel="Filter by branch"
+            searchPlaceholder="Cari cabang..."
+            className="w-36 sm:w-44 text-xs"
+          />
 
-          <select
+          <CustomDropdown
             value={selectedType}
-            onChange={(e) => onTypeChange(e.target.value)}
-            aria-label="Filter by store type"
-            className="px-2.5 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-orange-500 cursor-pointer"
-          >
-            <option value="ALL">All Store Types</option>
-            <option value="TRADITIONAL">Traditional</option>
-            <option value="MODERN_RETAIL">Modern Retail</option>
-            <option value="EXCLUSIVE">Official Store / Exclusive</option>
-            <option value="CAMPUS_OUTLET">Campus Outlet</option>
-          </select>
+            onChange={onTypeChange}
+            options={[
+              { value: "ALL", label: "All Store Types" },
+              { value: "TRADITIONAL", label: "Traditional" },
+              { value: "MODERN_RETAIL", label: "Modern Retail" },
+              { value: "EXCLUSIVE", label: "Official Store / Exclusive" },
+              { value: "CAMPUS_OUTLET", label: "Campus Outlet" },
+            ]}
+            ariaLabel="Filter by store type"
+            searchPlaceholder="Cari tipe..."
+            className="w-36 sm:w-44 text-xs"
+          />
 
           <div className="relative w-44 sm:w-52 text-xs">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />

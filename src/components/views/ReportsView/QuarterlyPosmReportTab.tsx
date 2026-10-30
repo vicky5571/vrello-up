@@ -19,6 +19,7 @@ import {
 import { loadQuarterlyTargets } from "@/components/views/PlacementsView/quarterlyRecapHelpers";
 import { formatQuarterlyPosmCsv, downloadCsvFile } from "./quarterlyPosmReportHelpers";
 import { toast } from "sonner";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 
 interface QuarterlyPosmReportTabProps {
@@ -132,17 +133,13 @@ export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosm
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Pilih Periode:
           </span>
-          <select
+          <CustomDropdown
             value={selectedQuarter}
-            onChange={(e) => setSelectedQuarter(e.target.value)}
-            className="px-3 py-1.5 text-sm font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-          >
-            {availableQuarters.map((q) => (
-              <option key={q} value={q}>
-                {q}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedQuarter}
+            options={availableQuarters.map((q) => ({ value: q, label: q }))}
+            ariaLabel="Pilih Periode Kuartal"
+            className="w-32 sm:w-36 text-xs sm:text-sm font-semibold"
+          />
         </div>
 
         <div className="flex items-center gap-2">

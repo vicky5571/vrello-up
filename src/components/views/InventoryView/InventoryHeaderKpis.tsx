@@ -13,6 +13,7 @@ import {
   Search,
 } from "lucide-react";
 import { EQUIPMENT_CATEGORIES } from "./inventoryConstants";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 interface InventoryHeaderKpisProps {
   kpis: {
@@ -185,16 +186,17 @@ export function InventoryHeaderKpis({
           </div>
 
           {activeTab === "catalog" && (
-            <select
+            <CustomDropdown
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-700 dark:text-slate-300 focus:outline-none"
-            >
-              <option value="ALL">All Categories</option>
-              {EQUIPMENT_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+              onChange={setSelectedCategory}
+              options={[
+                { value: "ALL", label: "All Categories" },
+                ...EQUIPMENT_CATEGORIES.map((cat) => ({ value: cat, label: cat })),
+              ]}
+              ariaLabel="Filter Category"
+              searchPlaceholder="Cari kategori..."
+              className="w-36 sm:w-44 text-xs"
+            />
           )}
 
           <div className="flex items-center border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden p-0.5 bg-white dark:bg-slate-900">

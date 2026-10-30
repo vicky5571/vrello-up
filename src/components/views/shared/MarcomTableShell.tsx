@@ -34,6 +34,7 @@ import {
 import { sortFns } from "@tanstack/table-core";
 import { cn } from "@/lib/utils";
 import { extractSearchableText } from "./searchUtils";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 // Shared TanStack features for all marcom tables —
 // keep columnVisibility for getVisibleCells typing, columnSizing for size/getSize.
@@ -582,21 +583,23 @@ export function MarcomTableShell<T extends object & { id: string }>({
             {selectedRowIds.length > 0 && ` · ${selectedRowIds.length} selected`}
           </span>
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-1.5">
-              Rows
-              <select
+            <div className="flex items-center gap-1.5">
+              <span>Rows</span>
+              <CustomDropdown<number>
                 value={pagination.pageSize}
-                onChange={(e) => {
-                  setPagination({ pageIndex: 0, pageSize: Number(e.target.value) });
+                onChange={(val) => {
+                  setPagination({ pageIndex: 0, pageSize: Number(val) });
                   if (fixedViewport) scrollTableToTop();
                 }}
-                className="px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 cursor-pointer"
-              >
-                {[10, 25, 50, 100].map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-            </label>
+                options={[10, 25, 50, 100].map((n) => ({
+                  value: n,
+                  label: String(n),
+                }))}
+                ariaLabel="Rows per page"
+                className="w-18 text-xs"
+                size="sm"
+              />
+            </div>
             <span className="tabular-nums">Page {clampedPageIndex + 1} of {pageCount}</span>
             <button
               type="button"

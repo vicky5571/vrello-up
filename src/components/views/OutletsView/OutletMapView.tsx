@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import type * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import type { MarcomOutlet } from "./OutletsView";
 import {
   resolveOutletCoordinates,
@@ -480,59 +481,64 @@ export function OutletMapView({
           </div>
 
           {/* Brand Filter */}
-          <select
+          <CustomDropdown
             value={selectedBrand}
-            onChange={(e) => setSelectedBrand(e.target.value)}
-            aria-label="Filter Brand"
-            className="px-2.5 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
-          >
-            <option value="ALL">Semua Brand</option>
-            <option value="IM3">IM3 (Kuning)</option>
-            <option value="TRI">3 / Tri (Pink)</option>
-          </select>
+            onChange={setSelectedBrand}
+            options={[
+              { value: "ALL", label: "Semua Brand" },
+              { value: "IM3", label: "IM3 (Kuning)" },
+              { value: "TRI", label: "3 / Tri (Pink)" },
+            ]}
+            ariaLabel="Filter Brand"
+            className="w-32 sm:w-36 text-xs"
+          />
 
           {/* Type Filter */}
-          <select
+          <CustomDropdown
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            aria-label="Filter Store Type"
-            className="px-2.5 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
-          >
-            <option value="ALL">Semua Tipe Toko</option>
-            <option value="TRADITIONAL">Traditional</option>
-            <option value="MODERN_RETAIL">Modern Retail</option>
-            <option value="EXCLUSIVE">Exclusive / Official</option>
-            <option value="CAMPUS_OUTLET">Campus Outlet</option>
-          </select>
+            onChange={setSelectedType}
+            options={[
+              { value: "ALL", label: "Semua Tipe Toko" },
+              { value: "TRADITIONAL", label: "Traditional" },
+              { value: "MODERN_RETAIL", label: "Modern Retail" },
+              { value: "EXCLUSIVE", label: "Exclusive / Official" },
+              { value: "CAMPUS_OUTLET", label: "Campus Outlet" },
+            ]}
+            ariaLabel="Filter Store Type"
+            searchPlaceholder="Cari tipe..."
+            className="w-36 sm:w-40 text-xs"
+          />
 
           {/* Branch Filter */}
           {branchOptions.length > 0 && (
-            <select
+            <CustomDropdown
               value={selectedBranch}
-              onChange={(e) => setSelectedBranch(e.target.value)}
-              aria-label="Filter Branch"
-              className="max-w-[170px] truncate px-2.5 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
-            >
-              <option value="ALL">Semua Branch</option>
-              {branchOptions.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedBranch}
+              options={[
+                { value: "ALL", label: "Semua Branch" },
+                ...branchOptions.map((b) => ({
+                  value: b.id,
+                  label: b.name,
+                })),
+              ]}
+              ariaLabel="Filter Branch"
+              searchPlaceholder="Cari branch..."
+              className="w-36 sm:w-44 text-xs"
+            />
           )}
 
           {/* MoU Status Filter */}
-          <select
+          <CustomDropdown
             value={selectedMouFilter}
-            onChange={(e) => setSelectedMouFilter(e.target.value)}
-            aria-label="Filter MoU Status"
-            className="px-2.5 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
-          >
-            <option value="ALL">Semua Status MoU</option>
-            <option value="HAS_MOU">Memiliki MoU Aktif</option>
-            <option value="NO_MOU">Belum Ada MoU</option>
-          </select>
+            onChange={setSelectedMouFilter}
+            options={[
+              { value: "ALL", label: "Semua Status MoU" },
+              { value: "HAS_MOU", label: "Memiliki MoU Aktif" },
+              { value: "NO_MOU", label: "Belum Ada MoU" },
+            ]}
+            ariaLabel="Filter MoU Status"
+            className="w-36 sm:w-44 text-xs"
+          />
 
           {hasActiveFilters && (
             <button

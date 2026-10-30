@@ -9,6 +9,7 @@ import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn } from "@/lib/utils";
 import { MarcomTableShell } from "@/components/views/shared/MarcomTableShell";
 import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { MouDocumentViewerModal } from "./MouDocumentViewerModal";
 import { transitionMouStatus, deleteMou } from "./mouApi";
 import { buildMouKpiItems } from "./mouKpi";
@@ -273,36 +274,35 @@ export function MousView() {
 
             <div className="flex items-center gap-1.5">
               <span className="font-semibold text-slate-500 dark:text-slate-400">Branch:</span>
-              <select
+              <CustomDropdown
                 value={filterBranchId}
-                onChange={(e) => setFilterBranchId(e.target.value)}
-                aria-label="Filter by branch"
-                className="px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer"
-              >
-                <option value="ALL">All Branches</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.code} - {b.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setFilterBranchId}
+                options={[
+                  { value: "ALL", label: "All Branches" },
+                  ...branches.map((b) => ({
+                    value: b.id,
+                    label: `${b.code} - ${b.name}`,
+                  })),
+                ]}
+                ariaLabel="Filter by branch"
+                searchPlaceholder="Cari branch..."
+                className="w-36 sm:w-44 text-xs"
+              />
             </div>
 
             <div className="flex items-center gap-1.5">
               <span className="font-semibold text-slate-500 dark:text-slate-400">Type:</span>
-              <select
+              <CustomDropdown
                 value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                aria-label="Filter by MOU type"
-                className="px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500 cursor-pointer"
-              >
-                <option value="ALL">All Types</option>
-                {MOU_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+                onChange={setSelectedType}
+                options={[
+                  { value: "ALL", label: "All Types" },
+                  ...MOU_TYPES.map((t) => ({ value: t, label: t })),
+                ]}
+                ariaLabel="Filter by MOU type"
+                searchPlaceholder="Cari tipe..."
+                className="w-36 sm:w-44 text-xs"
+              />
             </div>
 
             <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />

@@ -9,6 +9,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import type { PipelineFilterBarProps } from "./pipelineTypes";
 import { DEFAULT_PIPELINE_FILTERS } from "./pipelineTypes";
 
@@ -82,35 +83,23 @@ export function PipelineFilterBar({
         {/* Center & Right: Dropdowns + Bottleneck Quick Chip */}
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
           {/* Branch Dropdown */}
-          <div className="relative flex-1 sm:flex-none min-w-[140px]">
-            <label htmlFor={branchId} className="sr-only">
-              Filter Branch
-            </label>
-            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
-              <Building2 className="w-3.5 h-3.5" />
-            </div>
-            <select
-              id={branchId}
-              value={filters.branchId}
-              onChange={(e) =>
-                onChange({
-                  ...filters,
-                  branchId: e.target.value,
-                })
-              }
-              className="w-full pl-8 pr-7 py-2 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg text-xs sm:text-sm text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-colors appearance-none cursor-pointer"
-            >
-              <option value="ALL">Semua Branch</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name} {b.code ? `(${b.code})` : ""}
-                </option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400 text-[10px]">
-              ▼
-            </div>
-          </div>
+          <CustomDropdown
+            id={branchId}
+            value={filters.branchId}
+            onChange={(val) => onChange({ ...filters, branchId: val })}
+            options={[
+              { value: "ALL", label: "Semua Branch" },
+              ...branches.map((b) => ({
+                value: b.id,
+                label: `${b.name}${b.code ? ` (${b.code})` : ""}`,
+              })),
+            ]}
+            ariaLabel="Filter Branch"
+            icon={Building2}
+            searchPlaceholder="Cari branch..."
+            size="md"
+            className="flex-1 sm:flex-none min-w-[150px] sm:w-48 text-xs sm:text-sm"
+          />
 
           {/* Bottleneck Quick Toggle Chip */}
           <button

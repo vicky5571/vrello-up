@@ -14,6 +14,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { formatCompactIDR } from "@/lib/marcom/analyticsFormatters";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import type { AnalyticsDashboardData } from "@/lib/marcom/analyticsEngine";
@@ -221,43 +222,28 @@ export function AnalyticsHeader({
           </div>
 
           {/* Branch Selector */}
-          <div className="relative inline-flex items-center">
-            <MapPin className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
-            <select
-              value={filters.branchId}
-              onChange={(e) =>
-                onFilterChange({ ...filters, branchId: e.target.value })
-              }
-              aria-label="Filter Wilayah Branch"
-              className={selectClass}
-            >
-              <option value="ALL">Semua Branch</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CustomDropdown
+            value={filters.branchId}
+            onChange={(val) => onFilterChange({ ...filters, branchId: val })}
+            options={[
+              { value: "ALL", label: "Semua Branch" },
+              ...branches.map((b) => ({ value: b.id, label: b.name })),
+            ]}
+            ariaLabel="Filter Wilayah Branch"
+            icon={MapPin}
+            searchPlaceholder="Cari branch..."
+            className="w-36 sm:w-44 text-xs"
+          />
 
           {/* Quarter Selector */}
-          <div className="relative inline-flex items-center">
-            <Calendar className="w-3.5 h-3.5 absolute left-2.5 text-slate-400 pointer-events-none" />
-            <select
-              value={filters.quarter}
-              onChange={(e) =>
-                onFilterChange({ ...filters, quarter: e.target.value })
-              }
-              aria-label="Filter Periode Kuartal"
-              className={selectClass}
-            >
-              {QUARTERS.map((q) => (
-                <option key={q.value} value={q.value}>
-                  {q.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CustomDropdown
+            value={filters.quarter}
+            onChange={(val) => onFilterChange({ ...filters, quarter: val })}
+            options={QUARTERS}
+            ariaLabel="Filter Periode Kuartal"
+            icon={Calendar}
+            className="w-32 sm:w-36 text-xs"
+          />
 
           {/* Brand Toggle Pills */}
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60">

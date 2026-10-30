@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { suggestOfficialOutletCode } from "@/lib/marcom/outletCodeGenerator";
@@ -243,18 +244,17 @@ export function OutletApprovalQueueTab({
             />
           </div>
 
-          <select
+          <CustomDropdown
             value={selectedBranch}
-            onChange={(e) => setSelectedBranch(e.target.value)}
-            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-orange-500"
-          >
-            <option value="ALL">Semua Cabang</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedBranch}
+            options={[
+              { value: "ALL", label: "Semua Cabang" },
+              ...branches.map((b) => ({ value: b.id, label: b.name })),
+            ]}
+            ariaLabel="Filter Cabang"
+            searchPlaceholder="Cari cabang..."
+            className="w-40 sm:w-48 text-xs"
+          />
         </div>
 
         <p className="text-xs text-slate-500 dark:text-slate-400 self-start sm:self-center">

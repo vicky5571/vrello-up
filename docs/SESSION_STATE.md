@@ -208,13 +208,50 @@
       - Bottom controls row with View mode switcher tabs (Tabel Data, Peta Sebaran, Antrean Approval with pending count badge), Branch dropdown selector, Store Type dropdown selector, search input with clear button, and Reset Filters button.
     - Updated `OutletsView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`, replaced inline header, floating KPI cards, and inline filterBar with `<OutletsHeader ... />`, and wrapped stage content in `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
 
+29. **Branches & Regional Hubs Inventory-Style Unified Header (`BranchesHeader.tsx`, `BranchesView.tsx`):**
+    - Created `BranchesHeader.tsx` (~185 LOC) following the Equipment Inventory design:
+      - Unified backdrop blur container (`p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+      - Title row with inline `Building2` icon (`text-cyan-600 dark:text-cyan-400`), branch count badge (`{totalBranches} branch`), concise subtitle, and top-right action buttons (Refresh and `+ Tambah Branch`).
+      - Embedded 4 KPI Cards (Total Branches, Outlets Network, Active Partnerships, Avg Program Progress) with `KpiSummaryCards items={kpiItems}` within the header zone.
+      - Bottom controls row with Status filter pills (Semua Status, Done, In Progress, Pending with count badges), Region dropdown selector, search input with clear button, and Reset Filters button.
+    - Updated `BranchesView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`, replaced inline header, floating KPI cards, and inline filterBar with `<BranchesHeader ... />`, and wrapped table shell in responsive stage container `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
+
+30. **CustomDropdown Component & Sitewide Dropdown Standardization (`CustomDropdown.tsx`, Multiple Views):**
+    - Spec: `docs/superpowers/specs/2026-10-31-custom-dropdown-standardization-design.md`
+    - Plan: `docs/superpowers/plans/2026-10-31-custom-dropdown-standardization.md`
+    - Built reusable, accessible, dark-mode-ready, and searchable `CustomDropdown` component (`src/components/ui/CustomDropdown.tsx`) and pure helpers (`src/components/ui/customDropdownHelpers.ts`).
+    - Features:
+      - Auto-activated search input when options count $\ge 6$ (or explicit `searchable={true}`) with real-time filtering and clear button.
+      - Click-outside and Escape key dismissal powered by existing `useDropdown` hook with trigger focus restoration.
+      - Keyboard navigation (ArrowDown, ArrowUp, Enter, Space) and ARIA attributes (`role="combobox"`, `role="listbox"`, `role="option"`, `aria-selected`).
+      - Active item indicator checkmark (`Check` icon), optional option badges and leading icons.
+      - Glassmorphic backdrop blur styling matching both light and dark modes.
+    - Replaced native unstyled `<select>` elements across:
+      - `BranchesHeader.tsx` (Region dropdown — resolves user screenshot)
+      - `OutletsHeader.tsx` (Branch & Store Type dropdowns)
+      - `AnalyticsHeader.tsx` (Branch & Quarter dropdowns with icons)
+      - `PipelineFilterBar.tsx` (Branch dropdown)
+      - `InventoryHeaderKpis.tsx` (Category dropdown)
+      - `MousView.tsx` (Branch & Type dropdowns)
+      - `QuarterlyRecapTab.tsx` (Quarter & Branch dropdowns)
+      - `EventsTimelineView.tsx` (Days range dropdown)
+      - `QuarterlyPosmReportTab.tsx` (Quarter dropdown)
+      - `OutletApprovalQueueTab.tsx` (Branch dropdown)
+      - `OutletMapView.tsx` (Brand, Store Type, Branch, and MoU Status dropdowns)
+      - `MarcomTableShell.tsx` (Sitewide table pagination pageSize dropdown)
+      - `ProjectsFilterBar.tsx` (Branch & PIC dropdowns)
+      - `ProjectsBulkActionBar.tsx` (Bulk status dropdown)
+      - `PlacementBulkActionBar.tsx` (Bulk status dropdown)
+      - `UserRoleSelect.tsx` (User role select)
+    - Created unit tests in `src/components/ui/CustomDropdown.test.ts` (8 tests passing).
+
 ---
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (27 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (28 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ 591 passed, 0 failed (100 suites)
+- `npm test` → ✅ 599 passed, 0 failed (103 suites)
 - `npm run test:smoke` → ✅ 83 passed, 0 failed
 
 ---
