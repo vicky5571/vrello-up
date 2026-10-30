@@ -8,10 +8,10 @@
 
 **Date:** 2026-10-31  
 **Active Branch:** `vicky`  
-**Active Feature:** Placements Persistent Header & Static View Switcher — **IMPLEMENTED & VERIFIED**  
-**Spec:** `docs/superpowers/specs/2026-10-31-placements-persistent-header-view-switcher-design.md`  
-**Plan:** `docs/superpowers/plans/2026-10-31-placements-persistent-header-view-switcher.md`  
-**Previous Feature:** Comprehensive QA Database Seeder (`prisma/seed.ts`)  
+**Active Feature:** Marcom UI Standardization (Placements Unified Header, Content Planner Padding, Outlets Labels) — **IMPLEMENTED & VERIFIED**  
+**Spec:** `docs/superpowers/specs/2026-10-31-inventory-style-header-standardization-design.md`  
+**Plan:** `docs/superpowers/plans/2026-10-31-inventory-style-header-standardization.md`  
+**Previous Feature:** Placements Persistent Header & Static View Switcher  
 
 ---
 
@@ -135,13 +135,40 @@
     - Integrated title, flag icon badge, event counter badge (`{totalEvents} events`), subtitle, animated view switcher (`layoutId="activeFieldEventsViewPill"`), refresh action, and role-guarded `+ New Field Event` action (`can("CREATE_EVENT")`).
     - Reduced `EventsView.tsx` from 531 to 447 LOC by decomposing the coordinator header.
 
+19. **Content Planner Container Margin & Padding Alignment (`ContentPlannerView.tsx`):**
+    - Removed restrictive `max-w-7xl mx-auto` that caused excessive lateral empty space on widescreen viewports.
+    - Aligned outer container styling with `PlacementsView.tsx`: `p-4 sm:p-6 space-y-4 h-full overflow-y-auto`.
+    - Removed redundant `pt-2` on Controls Bar for uniform 16px (`space-y-4`) vertical rhythm.
+
+20. **Outlets Header & Navigation Labels Alignment (`OutletsView.tsx`, `navConfig.ts`):**
+    - Renamed header title in `OutletsView.tsx` from `"Store Command Center"` to `"Outlets Directory"`.
+    - Renamed sidebar navigation item in `navConfig.ts` under Master Data from `"Outlets Directory"` to `"Outlets"`.
+
+21. **Media Placements Inventory-Style Unified Header (`PlacementsHeader.tsx`, `PlacementsView.tsx`):**
+    - Restyled header zone with unified backdrop blur container (`p-4 sm:p-6 pb-2 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+    - Standardized Title row with inline `MapPin` icon (`text-emerald-500`), count badge, and updated actions bar.
+    - Integrated `KpiSummaryCards` directly within the header (conditionally hidden on map view to maximize interactive map canvas viewport).
+    - Positioned `PlacementViewSwitcher` at the bottom controls row before the bottom border.
+    - Updated `PlacementsView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` with content container `p-4 sm:p-6 flex-1 min-h-0`.
+    - Maintained coordinator `PlacementsView.tsx` strictly under the 250 LOC limit (213 LOC).
+
+22. **Content Planner Inventory-Style Unified Header (`ContentPlannerHeader.tsx`, `ContentPlannerView.tsx`):**
+    - Extracted atomic subcomponent `ContentPlannerHeader.tsx` (247 LOC) with unified backdrop blur container (`p-4 sm:p-6 pb-2 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+    - Standardized Title row with inline `Sparkles` icon (`text-pink-500`), count badge, subtitle, and top-right Refresh & Schedule Post buttons.
+    - Integrated `KpiSummaryCards` directly within the header zone.
+    - Standardized bottom controls row with Platform filter pills (`motion.div layoutId="activeContentPlannerPlatformPill"`), Search input, and Cards/Table view switcher (`layoutId="activeContentPlannerViewPill"`).
+    - Updated `ContentPlannerView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` with content container `p-4 sm:p-6 flex-1 min-h-0`.
+    - Reduced `ContentPlannerView.tsx` by ~185 LOC by decoupling header and filter logic.
+
+
 ---
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (26 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (27 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
 - `npm test` → ✅ 591 passed, 0 failed (100 suites)
+- `npm run test:smoke` → ✅ 83 passed, 0 failed
 
 ---
 
@@ -154,4 +181,5 @@
 ## Next Step for Following Session
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. Commit and push implemented feature to remote (`git push origin vicky`).
+2. Push committed branch to remote (`git push origin vicky`).
+3. Proceed with Phase 2 of Header Standardization (Content Planner header extraction & unification) if desired.

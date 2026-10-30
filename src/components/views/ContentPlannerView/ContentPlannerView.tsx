@@ -40,7 +40,7 @@ import {
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
 import { matchOutletQuery } from "@/lib/marcom/outletRelations";
-import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
+import { ContentPlannerHeader } from "./ContentPlannerHeader";
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
@@ -521,209 +521,25 @@ export function ContentPlannerView() {
   );
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
-      {/* 1. Header & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-pink-500" />
-            <span>Content Planner</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-              {filteredPosts.length} {filteredPosts.length === 1 ? "post" : "posts"}
-            </span>
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Social media calendar, video formats, copywriting, and digital asset
-            pipeline
-          </p>
-        </div>
+    <div className="flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto">
+      {/* 1. Unified Top Header Zone (Equipment Inventory Style) */}
+      <ContentPlannerHeader
+        totalPosts={filteredPosts.length}
+        kpiItems={kpiItems}
+        selectedPlatform={selectedPlatform}
+        onSelectPlatform={setSelectedPlatform}
+        searchTerm={marcomFilters["content-planner"] || ""}
+        onSearchChange={(q) => setMarcomFilter("content-planner", q)}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        isLoading={isLoading}
+        onRefresh={fetchPosts}
+        onSchedulePost={openCreateModal}
+      />
 
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 shadow-xs hover:shadow-md transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Schedule Post</span>
-        </button>
-      </div>
-
-      {/* 2. KPI Cards */}
-      <KpiSummaryCards items={kpiItems} />
-
-      {/* 3. Controls Bar: Platform Pills & View Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-        {/* Platform Pills */}
-        <div
-          role="tablist"
-          aria-label="Filter by platform"
-          className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none"
-        >
-          <motion.button
-            type="button"
-            role="tab"
-            aria-selected={selectedPlatform === "all"}
-            whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
-            onClick={() => setSelectedPlatform("all")}
-            className={cn(
-              "relative px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer",
-              selectedPlatform === "all"
-                ? "text-white dark:text-slate-900"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
-            )}
-          >
-            {selectedPlatform === "all" && (
-              <motion.div
-                layoutId="activeContentPlannerPlatformPill"
-                className="absolute inset-0 bg-slate-900 dark:bg-white rounded-xl shadow-xs"
-                transition={
-                  shouldReduceMotion
-                    ? { duration: 0 }
-                    : { type: "spring", stiffness: 450, damping: 35 }
-                }
-              />
-            )}
-            <span className="relative z-10">All Platforms</span>
-          </motion.button>
-          {(Object.keys(PLATFORM_CONFIG) as PostPlatform[]).map((p) => {
-            const isSelected = selectedPlatform === p;
-            return (
-              <motion.button
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                key={p}
-                whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
-                onClick={() => setSelectedPlatform(p)}
-                className={cn(
-                  "relative px-2.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer",
-                  isSelected
-                    ? "text-white"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
-                )}
-              >
-                {isSelected && (
-                  <motion.div
-                    layoutId="activeContentPlannerPlatformPill"
-                    className="absolute inset-0 bg-pink-500 rounded-xl shadow-xs shadow-pink-500/20"
-                    transition={
-                      shouldReduceMotion
-                        ? { duration: 0 }
-                        : { type: "spring", stiffness: 450, damping: 35 }
-                    }
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-1.5">
-                  <PlatformIcon platform={p} className="w-3.5 h-3.5" />
-                  <span>{PLATFORM_CONFIG[p].label}</span>
-                </span>
-              </motion.button>
-            );
-          })}
-        </div>
-
-        {/* View Mode Toggle & Search */}
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search posts..."
-              value={marcomFilters["content-planner"] || ""}
-              onChange={(e) =>
-                setMarcomFilter("content-planner", e.target.value)
-              }
-              className="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-pink-500 w-36 sm:w-48"
-            />
-          </div>
-
-          {/* 4 View Modes Switcher */}
-          <div
-            role="tablist"
-            aria-label="View Mode Switcher"
-            className="relative flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 select-none"
-          >
-            <motion.button
-              type="button"
-              role="tab"
-              aria-selected={viewMode === "cards"}
-              whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
-              onClick={() => setViewMode("cards")}
-              className={cn(
-                "relative p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold",
-                viewMode === "cards"
-                  ? "text-pink-600 dark:text-pink-400"
-                  : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              )}
-              title="Box / Cards View"
-            >
-              {viewMode === "cards" && (
-                <motion.div
-                  layoutId="activeContentPlannerViewPill"
-                  className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
-                  transition={
-                    shouldReduceMotion
-                      ? { duration: 0 }
-                      : { type: "spring", stiffness: 450, damping: 35 }
-                  }
-                />
-              )}
-              <span className="relative z-10 flex items-center gap-1">
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Cards</span>
-              </span>
-            </motion.button>
-            <motion.button
-              type="button"
-              role="tab"
-              aria-selected={viewMode === "table"}
-              whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
-              onClick={() => setViewMode("table")}
-              className={cn(
-                "relative p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold",
-                viewMode === "table"
-                  ? "text-pink-600 dark:text-pink-400"
-                  : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              )}
-              title="Row / Table View"
-            >
-              {viewMode === "table" && (
-                <motion.div
-                  layoutId="activeContentPlannerViewPill"
-                  className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
-                  transition={
-                    shouldReduceMotion
-                      ? { duration: 0 }
-                      : { type: "spring", stiffness: 450, damping: 35 }
-                  }
-                />
-              )}
-              <span className="relative z-10 flex items-center gap-1">
-                <TableProperties className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Table</span>
-              </span>
-            </motion.button>
-          </div>
-
-          <button
-            type="button"
-            onClick={fetchPosts}
-            disabled={isLoading}
-            title="Refresh posts"
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw
-              className={cn(
-                "w-3.5 h-3.5",
-                isLoading && "animate-spin text-pink-500"
-              )}
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* 4. Content Area: Cards or Table */}
-      {isLoading ? (
+      {/* 2. Content Area */}
+      <div className="p-4 sm:p-6 flex-1 min-h-0">
+        {isLoading ? (
         <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-2">
           <RefreshCw className="w-6 h-6 animate-spin text-pink-500" />
           <p className="text-xs">Loading content planner...</p>
@@ -988,6 +804,7 @@ export function ContentPlannerView() {
           emptyLabel="No content posts found."
         />
       )}
+      </div>
 
       {/* 5. Schedule Post Center Modal */}
       <ContentPostModal

@@ -1,0 +1,52 @@
+# Implementation Plan: Inventory-Style Header Standardization Across Marcom Views
+
+**Spec:** `docs/superpowers/specs/2026-10-31-inventory-style-header-standardization-design.md`  
+**Date:** 2026-10-31  
+**Status:** Completed  
+
+---
+
+## Proposed Changes
+
+### Phase 1: Media Placements Header Upgrade
+- **`src/components/views/PlacementsView/PlacementsHeader.tsx`**:
+  - Update container styling to `p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`.
+  - Update Title row: inline icon (`MapPin className="w-5 h-5 text-emerald-500"`), bold title, badge, subtitle.
+  - Standardize top-right buttons: Refresh (`p-2 border rounded-lg`), Export (`px-3.5 py-1.5 border rounded-lg text-xs font-semibold`), Add Placement (`px-3.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold`).
+  - Integrate KPI cards (`KpiSummaryCards items={kpiItems}`) conditionally within header when `viewMode !== "map"`.
+  - Position `PlacementViewSwitcher` at the bottom controls row before `border-b`.
+- **`src/components/views/PlacementsView/PlacementsView.tsx`**:
+  - Outer container: `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`.
+  - Content container: `p-4 sm:p-6 flex-1 min-h-0`.
+  - Keep coordinator under 250 LOC.
+
+### Phase 2: Content Planner Header Upgrade
+- **`src/components/views/ContentPlannerView/ContentPlannerHeader.tsx`**:
+  - Create atomic header component (LOC ~120).
+  - Container styling: `p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`.
+  - Row 1: Inline icon (`Sparkles text-pink-500`), Title, count badge, subtitle; Top-right actions: Refresh button (`p-2 border rounded-lg`), Schedule Post (`px-3.5 py-1.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg text-xs font-semibold`).
+  - Row 2: KPI summary cards (`KpiSummaryCards items={kpiItems}`).
+  - Row 3: Platform pills, Search input, and View mode switcher (Cards | Table) with animated sliding pills.
+- **`src/components/views/ContentPlannerView/ContentPlannerView.tsx`**:
+  - Outer container: `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`.
+  - Replace inline header with `<ContentPlannerHeader ... />`.
+  - Content container: `p-4 sm:p-6 flex-1 min-h-0`.
+
+### Phase 3: Verification & Gate Checks
+- [x] Run `npm run drift:check`
+- [x] Run `npm run build:check`
+- [x] Run `npm test`
+- [x] Update `docs/SESSION_STATE.md`
+
+---
+
+## File Manifest
+
+| File | Action | LOC Impact |
+|---|---|---|
+| `docs/superpowers/specs/2026-10-31-inventory-style-header-standardization-design.md` | Create | ~60 LOC |
+| `docs/superpowers/plans/2026-10-31-inventory-style-header-standardization.md` | Create | ~55 LOC |
+| `src/components/views/PlacementsView/PlacementsHeader.tsx` | Modify | ~110 LOC |
+| `src/components/views/PlacementsView/PlacementsView.tsx` | Modify | ~210 LOC |
+| `src/components/views/ContentPlannerView/ContentPlannerHeader.tsx` | Create | ~160 LOC |
+| `src/components/views/ContentPlannerView/ContentPlannerView.tsx` | Modify | ~-120 LOC (reduction) |

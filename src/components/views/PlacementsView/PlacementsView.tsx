@@ -7,7 +7,6 @@ import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { MarcomTableShell } from "@/components/views/shared/MarcomTableShell";
-import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
 import { buildPlacementKpiItems } from "./placementKpi";
 import { PlacementBulkActionBar } from "./PlacementBulkActionBar";
 import { PlacementFormModal } from "./PlacementFormModal";
@@ -115,8 +114,8 @@ export function PlacementsView() {
     />
   );
   return (
-    <div className="p-4 sm:p-6 space-y-4 h-full overflow-y-auto">
-      {/* 1. Persistent Static Page Header (Option B: Card-Banner Container) */}
+    <div className="flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto">
+      {/* 1. Unified Top Header Zone (Equipment Inventory Style) */}
       <PlacementsHeader
         totalPlacements={filteredPlacements.length}
         viewMode={viewMode}
@@ -126,14 +125,13 @@ export function PlacementsView() {
         onExport={() => setExportCenterOpen(true)}
         canManage={canManage}
         onAddPlacement={handleOpenAddPlacement}
+        kpiItems={kpiItems}
       />
 
-      {/* 2. KPI Bar (hidden on Map View to maximize map canvas viewport) */}
-      {viewMode !== "map" && <KpiSummaryCards items={kpiItems} />}
-
-      {/* 3. Dynamic Content Area */}
-      {viewMode === "table" ? (
-        <MarcomTableShell
+      {/* 2. Dynamic Content Area */}
+      <div className="p-4 sm:p-6 flex-1 min-h-0">
+        {viewMode === "table" ? (
+          <MarcomTableShell
           noPadding
           hideRefreshButton
           data={filteredPlacements}
@@ -190,6 +188,7 @@ export function PlacementsView() {
           onRecordPlacement={canManage ? handleOpenAddPlacement : undefined}
         />
       )}
+      </div>
 
       <PlacementDetailDrawer
         placement={selectedPlacement}

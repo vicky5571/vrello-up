@@ -455,7 +455,7 @@ export function OutletsView() {
               </div>
               <div>
                 <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  Store Command Center
+                  Outlets Directory
                 </h1>
                 <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
                   Pusat data jaringan outlet, integrasi MoU, riwayat branding fisik, dan geolokasi.
