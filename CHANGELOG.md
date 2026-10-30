@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `feat(seed)`: Implement comprehensive QA edge-case database seeder
+  - Rewrote `prisma/seed.ts` with clean database reset protocol (`cleanDatabase`) deleting in reverse FK topological order
+  - Populated realistic Indonesian business domain data across User, Branch, Material, Outlet, MoU, Placement, InventoryItem, BorrowRecord, FieldEvent, ContentPost, DocumentItem, and MonthlyReport
+  - Built comprehensive QA "what if" edge cases: SLA critical expired contracts, SLA warning near-expiry MoUs, pending approval aging >60d, GPS geolocation anomaly >1.4km deviation, installation blocked with ISSUE renovation status, permanent material without MoU warning, extreme billboard dimensions, cold/orphan outlets, overdue borrow records linked to events, and damaged returns tracking
+  - Standardized branch indexing (`branch-1`..`branch-12`) and preserved catalog item counts (13 items) for 100% downstream integration test compatibility
+  - Gates: `npm test` 591 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-10-31-qa-comprehensive-seeder-design.md`
+  Plan: `docs/superpowers/plans/2026-10-31-qa-comprehensive-seeder.md`
+
 - `fix(pipeline)`: Prevent HTML redirect response and JSON parse error in Pipeline view
   - Fixed NextAuth edge middleware authorized callback in `src/auth.config.ts` to return 401 JSON Response for `/api/` endpoints instead of redirecting to `/login` HTML page
   - Added defensive redirect/401 handling and content-type checking in `PipelineView.tsx` `fetchPipeline`

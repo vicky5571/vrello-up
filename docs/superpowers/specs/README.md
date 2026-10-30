@@ -42,3 +42,4 @@ YYYY-MM-DD-<feature-slug>-design.md
 | 2026-10-30 | auth-user-management | Done |
 | 2026-10-30 | inventory-system | Done |
 | 2026-10-31 | event-card-equipment-indicator | Planned |
+| 2026-10-31 | qa-comprehensive-seeder | Planned |

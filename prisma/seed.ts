@@ -1,1143 +1,1185 @@
-// SEED POLICY: dev/demo only — never run against production.
-// Production starts empty; members join via invite/Google login.
-// Keep this file out of the deploy pipeline.
-import { PrismaClient, Prisma } from "@prisma/client";
+// SEED POLICY: dev/demo/QA only — never run against production.
+import { PrismaClient, Prisma, DbUserRole, DbUserStatus, OutletType, OutletStatus, Brand, MaterialType, MouStatus, PlacementStatus, EquipmentStatus, BorrowStatus, EquipmentCondition, EventStatus, DocFileType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 const toJson = (v: unknown): Prisma.InputJsonValue =>
   JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue;
-const toDate = (s: string): Date => new Date(s);
 
+const now = new Date();
+const daysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+const daysFromNow = (days: number) => new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 
-// ---------------------------------------------------------------------------
-// Material catalogue derived from the distinct placement material types in
-// dashboard src/data/placements.ts, mapped onto the MaterialType enum.
-// ---------------------------------------------------------------------------
-const MATERIAL_ID_BY_NAME: Record<string, string> = {
-  Poster: "material-poster",
-  Shopblind: "material-shopblind",
-  "Stiker Etalase": "material-sticker",
-  "Bottom Etalase": "material-bottom",
-  Banner: "material-banner",
-  "Branding / Signboard": "material-signboard",
-  "Other Materials": "material-other",
-};
+// ============================================================================
+// 1. CLEAN RESET PROTOCOL (Reverse FK Dependency Order)
+// ============================================================================
+async function cleanDatabase() {
+  console.log("🧹 Cleaning database tables in reverse foreign-key order...");
+  await prisma.borrowItem.deleteMany({});
+  await prisma.borrowRecord.deleteMany({});
+  await prisma.eventFootage.deleteMany({});
+  await prisma.placement.deleteMany({});
+  await prisma.mou.deleteMany({});
+  await prisma.fieldEvent.deleteMany({});
+  await prisma.contentPost.deleteMany({});
+  await prisma.documentItem.deleteMany({});
+  await prisma.monthlyReport.deleteMany({});
+  await prisma.inventoryItem.deleteMany({});
+  await prisma.outlet.deleteMany({});
+  await prisma.material.deleteMany({});
+  await prisma.branch.deleteMany({});
+  await prisma.user.deleteMany({});
+  console.log("✅ Database tables successfully truncated.");
+}
 
-const MATERIAL_DEFS = [
-  { id: "material-poster", type: "POSTER", name: "Poster", requiresMou: false },
-  { id: "material-shopblind", type: "SHOPBLIND", name: "Shopblind", requiresMou: true },
-  { id: "material-sticker", type: "OTHER_MATERIALS", name: "Stiker Etalase", requiresMou: false },
-  { id: "material-bottom", type: "OTHER_MATERIALS", name: "Bottom Etalase", requiresMou: false },
-  { id: "material-banner", type: "BANNER", name: "Banner", requiresMou: false },
-  { id: "material-signboard", type: "BRANDING_SIGNBOARD", name: "Branding / Signboard", requiresMou: true },
-  { id: "material-other", type: "OTHER_MATERIALS", name: "Other Materials", requiresMou: false },
-] as const;
+// ============================================================================
+// 2. AUTHENTICATION & USERS SEED (QA Roles Matrix)
+// ============================================================================
+async function seedUsers() {
+  console.log("👤 Seeding authenticated QA user matrix...");
+  const passwordHash = await bcrypt.hash(
+    process.env.SEED_ADMIN_PASSWORD ?? "changeme123",
+    10
+  );
 
-// ---------------------------------------------------------------------------
-// Branch definitions adapted from dashboard src/data/branches.ts
-// (branchDefinitions + deterministic derivation, verbatim logic).
-// ---------------------------------------------------------------------------
-const branchDefinitions = [
-  { city: "Semarang", name: "Semarang Pusat", region: "Central Java", pic: "Budi Santoso", phone: "+62 811-2345-001", address: "Jl. Pandanaran No. 58, Semarang" },
-  { city: "Semarang", name: "Semarang Barat", region: "Central Java", pic: "Agus Prasetyo", phone: "+62 811-2345-002", address: "Jl. Siliwangi No. 120, Semarang" },
-  { city: "Semarang", name: "Semarang Timur", region: "Central Java", pic: "Dwi Haryanto", phone: "+62 811-2345-003", address: "Jl. Majapahit No. 340, Semarang" },
-  { city: "Semarang", name: "Semarang Selatan", region: "Central Java", pic: "Eko Wahyudi", phone: "+62 811-2345-004", address: "Jl. Setiabudi No. 89, Banyumanik, Semarang" },
-  { city: "Semarang", name: "Semarang Utara", region: "Central Java", pic: "Hendra Gunawan", phone: "+62 811-2345-005", address: "Jl. Pemuda No. 14, Semarang" },
-  { city: "Solo", name: "Solo Slamet Riyadi", region: "Central Java", pic: "Rina Wijaya", phone: "+62 812-3456-006", address: "Jl. Slamet Riyadi No. 275, Surakarta" },
-  { city: "Solo", name: "Solo Baru", region: "Central Java", pic: "Fajar Nugroho", phone: "+62 812-3456-007", address: "Jl. Ir. Soekarno No. 45, Sukoharjo" },
-  { city: "Solo", name: "Solo Jebres", region: "Central Java", pic: "Tri Wibowo", phone: "+62 812-3456-008", address: "Jl. Kolonel Sutarto No. 102, Surakarta" },
-  { city: "Solo", name: "Solo Laweyan", region: "Central Java", pic: "Bambang Pamungkas", phone: "+62 812-3456-009", address: "Jl. Dr. Radjiman No. 520, Surakarta" },
-  { city: "Yogyakarta", name: "Yogyakarta Malioboro", region: "DI Yogyakarta", pic: "Siti Rahmawati", phone: "+62 813-4567-010", address: "Jl. Malioboro No. 62, Danurejan, Yogyakarta" },
-  { city: "Yogyakarta", name: "Yogyakarta Kota Baru", region: "DI Yogyakarta", pic: "Andi Saputra", phone: "+62 813-4567-011", address: "Jl. Sudirman No. 40, Gondokusuman, Yogyakarta" },
-  { city: "Yogyakarta", name: "Yogyakarta Tugu", region: "DI Yogyakarta", pic: "Rizky Firmansyah", phone: "+62 813-4567-012", address: "Jl. P. Mangkubumi No. 110, Yogyakarta" },
-  { city: "Sleman", name: "Sleman Kaliurang", region: "DI Yogyakarta", pic: "Dimas Anggara", phone: "+62 813-4567-013", address: "Jl. Kaliurang KM 8.5, Sinduharjo, Sleman" },
-  { city: "Sleman", name: "Sleman Seturan", region: "DI Yogyakarta", pic: "Putri Ayu", phone: "+62 813-4567-014", address: "Jl. Seturan Raya No. 18, Depok, Sleman" },
-  { city: "Sleman", name: "Sleman Godean", region: "DI Yogyakarta", pic: "Aditya Kurniawan", phone: "+62 813-4567-015", address: "Jl. Godean KM 4, Gamping, Sleman" },
-  { city: "Sleman", name: "Sleman Gejayan", region: "DI Yogyakarta", pic: "Maya Sari", phone: "+62 813-4567-016", address: "Jl. Afandi (Gejayan) No. 33, Sleman" },
-  { city: "Sleman", name: "Sleman Jombor", region: "DI Yogyakarta", pic: "Reza Maulana", phone: "+62 813-4567-017", address: "Jl. Magelang KM 6.5, Mlati, Sleman" },
-  { city: "Bantul", name: "Bantul Kota", region: "DI Yogyakarta", pic: "Nurul Hidayat", phone: "+62 813-4567-018", address: "Jl. Jend. Sudirman No. 80, Bantul" },
-  { city: "Bantul", name: "Bantul Sewon", region: "DI Yogyakarta", pic: "Galih Pratama", phone: "+62 813-4567-019", address: "Jl. Parangtritis KM 6, Sewon, Bantul" },
-  { city: "Gunungkidul", name: "Gunungkidul Wonosari", region: "DI Yogyakarta", pic: "Wahyu Setiawan", phone: "+62 813-4567-020", address: "Jl. Brigjen Katamso No. 25, Wonosari" },
-  { city: "Kulon Progo", name: "Kulon Progo Wates", region: "DI Yogyakarta", pic: "Bayu Saputro", phone: "+62 813-4567-021", address: "Jl. Diponegoro No. 19, Wates, Kulon Progo" },
-  { city: "Purwokerto", name: "Purwokerto Kota", region: "Central Java", pic: "Aris Munandar", phone: "+62 814-5678-022", address: "Jl. Jend. Sudirman No. 450, Purwokerto" },
-  { city: "Purwokerto", name: "Purwokerto Dukuhwaluh", region: "Central Java", pic: "Doni Irawan", phone: "+62 814-5678-023", address: "Jl. Raden Patah No. 11, Purwokerto" },
-  { city: "Purwokerto", name: "Purwokerto Karanglewas", region: "Central Java", pic: "Yudi Purnomo", phone: "+62 814-5678-024", address: "Jl. Raya Karanglewas No. 88, Purwokerto" },
-  { city: "Banyumas", name: "Banyumas Ajibarang", region: "Central Java", pic: "Sri Mulyani", phone: "+62 814-5678-025", address: "Jl. Raya Ajibarang - Wangon KM 2, Banyumas" },
-  { city: "Banyumas", name: "Banyumas Wangon", region: "Central Java", pic: "Teguh Widodo", phone: "+62 814-5678-026", address: "Jl. Raya Barat Wangon No. 40, Banyumas" },
-  { city: "Cilacap", name: "Cilacap Kota", region: "Central Java", pic: "Ahmad Fauzi", phone: "+62 814-5678-027", address: "Jl. Gatot Subroto No. 64, Cilacap" },
-  { city: "Cilacap", name: "Cilacap Kroya", region: "Central Java", pic: "Lestari Dewi", phone: "+62 814-5678-028", address: "Jl. Jenderal Sudirman No. 125, Kroya, Cilacap" },
-  { city: "Cilacap", name: "Cilacap Majenang", region: "Central Java", pic: "Irfan Hakim", phone: "+62 814-5678-029", address: "Jl. Diponegoro No. 200, Majenang, Cilacap" },
-  { city: "Magelang", name: "Magelang Kota", region: "Central Java", pic: "Citra Kirana", phone: "+62 815-6789-030", address: "Jl. Pemuda No. 156, Magelang Tengah" },
-  { city: "Magelang", name: "Magelang Muntilan", region: "Central Java", pic: "Dedi Supriyadi", phone: "+62 815-6789-031", address: "Jl. Pemuda No. 88, Muntilan, Magelang" },
-  { city: "Magelang", name: "Magelang Secang", region: "Central Java", pic: "Novi Indah", phone: "+62 815-6789-032", address: "Jl. Raya Magelang - Semarang KM 10, Secang" },
-  { city: "Klaten", name: "Klaten Pemuda", region: "Central Java", pic: "Agung Wicaksono", phone: "+62 815-6789-033", address: "Jl. Pemuda No. 102, Klaten Tengah" },
-  { city: "Klaten", name: "Klaten Delanggu", region: "Central Java", pic: "Ratna Sari", phone: "+62 815-6789-034", address: "Jl. Raya Solo - Yogya KM 22, Delanggu" },
-  { city: "Klaten", name: "Klaten Pedan", region: "Central Java", pic: "Indra Kusuma", phone: "+62 815-6789-035", address: "Jl. Raya Pedan - Cawas No. 15, Klaten" },
-  { city: "Pekalongan", name: "Pekalongan Kota", region: "Central Java", pic: "Zainal Abidin", phone: "+62 816-7890-036", address: "Jl. Hayam Wuruk No. 44, Pekalongan Barat" },
-  { city: "Pekalongan", name: "Pekalongan Kajen", region: "Central Java", pic: "Farida Utami", phone: "+62 816-7890-037", address: "Jl. Mandurorejo No. 19, Kajen, Pekalongan" },
-  { city: "Batang", name: "Batang Kota", region: "Central Java", pic: "Yoga Pratama", phone: "+62 816-7890-038", address: "Jl. Jenderal Sudirman No. 76, Batang" },
-  { city: "Batang", name: "Batang Limpung", region: "Central Java", pic: "Siska Amelia", phone: "+62 816-7890-039", address: "Jl. Raya Limpung No. 32, Batang" },
-  { city: "Tegal", name: "Tegal Kota", region: "Central Java", pic: "Mochammad Ali", phone: "+62 816-7890-040", address: "Jl. AR Hakim No. 89, Tegal Timur" },
-  { city: "Tegal", name: "Tegal Slawi", region: "Central Java", pic: "Tia Monica", phone: "+62 816-7890-041", address: "Jl. Ahmad Yani No. 12, Slawi, Tegal" },
-  { city: "Brebes", name: "Brebes Kota", region: "Central Java", pic: "Hadi Purwanto", phone: "+62 817-8901-042", address: "Jl. Jenderal Sudirman No. 110, Brebes" },
-  { city: "Brebes", name: "Brebes Bumiayu", region: "Central Java", pic: "Anita Rahayu", phone: "+62 817-8901-043", address: "Jl. Raya Bumiayu No. 45, Brebes" },
-  { city: "Pemalang", name: "Pemalang Kota", region: "Central Java", pic: "Kurnia Sandi", phone: "+62 817-8901-044", address: "Jl. Jenderal Sudirman No. 55, Pemalang" },
-  { city: "Kudus", name: "Kudus Kota", region: "Central Java", pic: "Dian Permata", phone: "+62 817-8901-045", address: "Jl. Sunan Kudus No. 90, Kudus" },
-  { city: "Kudus", name: "Kudus Jati", region: "Central Java", pic: "Rian Hidayat", phone: "+62 817-8901-046", address: "Jl. Raya Kudus - Pati KM 4, Jati, Kudus" },
-  { city: "Jepara", name: "Jepara Kota", region: "Central Java", pic: "Nurul Annisa", phone: "+62 817-8901-047", address: "Jl. Pemuda No. 48, Jepara" },
-  { city: "Pati", name: "Pati Kota", region: "Central Java", pic: "Surya Dharma", phone: "+62 818-9012-048", address: "Jl. Kolonel Sunandar No. 34, Pati" },
-  { city: "Rembang", name: "Rembang Kota", region: "Central Java", pic: "Mega Puspita", phone: "+62 818-9012-049", address: "Jl. Diponegoro No. 80, Rembang" },
-  { city: "Blora", name: "Blora Kota", region: "Central Java", pic: "Joko Susilo", phone: "+62 818-9012-050", address: "Jl. Pemuda No. 22, Blora" },
-  { city: "Blora", name: "Blora Cepu", region: "Central Java", pic: "Eka Novita", phone: "+62 818-9012-051", address: "Jl. Diponegoro No. 67, Cepu, Blora" },
-  { city: "Grobogan", name: "Grobogan Purwodadi", region: "Central Java", pic: "Hari Saputro", phone: "+62 818-9012-052", address: "Jl. R. Suprapto No. 101, Purwodadi" },
-  { city: "Demak", name: "Demak Kota", region: "Central Java", pic: "Wulan Dari", phone: "+62 818-9012-053", address: "Jl. Sultan Fatah No. 15, Demak" },
-  { city: "Kendal", name: "Kendal Kota", region: "Central Java", pic: "Rizaldy Akbar", phone: "+62 818-9012-054", address: "Jl. Soekarno-Hatta No. 180, Kendal" },
-  { city: "Kendal", name: "Kendal Weleri", region: "Central Java", pic: "Desi Ratnasari", phone: "+62 818-9012-055", address: "Jl. Utama Timur No. 44, Weleri, Kendal" },
-  { city: "Salatiga", name: "Salatiga Diponegoro", region: "Central Java", pic: "Antonius Bayu", phone: "+62 819-0123-056", address: "Jl. Diponegoro No. 112, Salatiga" },
-  { city: "Boyolali", name: "Boyolali Pandanaran", region: "Central Java", pic: "Fitri Handayani", phone: "+62 819-0123-057", address: "Jl. Pandanaran No. 78, Boyolali" },
-  { city: "Sukoharjo", name: "Sukoharjo Kota", region: "Central Java", pic: "Rudi Hartono", phone: "+62 819-0123-058", address: "Jl. Jenderal Sudirman No. 99, Sukoharjo" },
-  { city: "Karanganyar", name: "Karanganyar Lawu", region: "Central Java", pic: "Lia Agustina", phone: "+62 819-0123-059", address: "Jl. Lawu No. 210, Karanganyar" },
-  { city: "Sragen", name: "Sragen Sukowati", region: "Central Java", pic: "Gunawan Santosa", phone: "+62 819-0123-060", address: "Jl. Raya Sukowati No. 145, Sragen" },
-  { city: "Wonogiri", name: "Wonogiri Kota", region: "Central Java", pic: "Putro Wicaksono", phone: "+62 819-0123-061", address: "Jl. Jenderal Ahmad Yani No. 50, Wonogiri" },
-  { city: "Temanggung", name: "Temanggung Kota", region: "Central Java", pic: "Maya Anggraini", phone: "+62 819-0123-062", address: "Jl. MT Haryono No. 33, Temanggung" },
-  { city: "Wonosobo", name: "Wonosobo Kota", region: "Central Java", pic: "Hafiz Ridwan", phone: "+62 819-0123-063", address: "Jl. Ahmad Yani No. 77, Wonosobo" },
-  { city: "Purbalingga", name: "Purbalingga Kota", region: "Central Java", pic: "Dedi Irawan", phone: "+62 819-0123-064", address: "Jl. MT Haryono No. 18, Purbalingga" },
-  { city: "Banjarnegara", name: "Banjarnegara Kota", region: "Central Java", pic: "Retno Palupi", phone: "+62 819-0123-065", address: "Jl. Dipayuda No. 24, Banjarnegara" },
-  { city: "Kebumen", name: "Kebumen Kota", region: "Central Java", pic: "Heri Susanto", phone: "+62 819-0123-066", address: "Jl. Pahlawan No. 60, Kebumen" },
-  { city: "Surabaya", name: "Surabaya Basuki Rahmat", region: "East Java", pic: "Taufik Hidayat", phone: "+62 821-1234-067", address: "Jl. Basuki Rahmat No. 106, Surabaya" },
-  { city: "Surabaya", name: "Surabaya Mayjen Sungkono", region: "East Java", pic: "Kezia Olivia", phone: "+62 821-1234-068", address: "Jl. Mayjen Sungkono No. 89, Surabaya" },
-  { city: "Surabaya", name: "Surabaya Rungkut", region: "East Java", pic: "Bagus Setiawan", phone: "+62 821-1234-069", address: "Jl. Rungkut Madya No. 45, Surabaya" },
-  { city: "Surabaya", name: "Surabaya Kertajaya", region: "East Java", pic: "Nadia Putri", phone: "+62 821-1234-070", address: "Jl. Kertajaya Indah No. 28, Surabaya" },
-  { city: "Sidoarjo", name: "Sidoarjo Kota", region: "East Java", pic: "Iqbal Ramadhan", phone: "+62 821-1234-071", address: "Jl. Pahlawan No. 12, Sidoarjo" },
-  { city: "Malang", name: "Malang Ijen", region: "East Java", pic: "Vicky Pratama", phone: "+62 821-1234-072", address: "Jl. Besar Ijen No. 77, Klojen, Malang" },
-  { city: "Malang", name: "Malang Soekarno Hatta", region: "East Java", pic: "Anisa Rahma", phone: "+62 821-1234-073", address: "Jl. Soekarno Hatta No. 40, Lowokwaru, Malang" },
-  { city: "Batu", name: "Batu Diponegoro", region: "East Java", pic: "Kevin Sanjaya", phone: "+62 821-1234-074", address: "Jl. Diponegoro No. 85, Batu, Malang" },
-  { city: "Kediri", name: "Kediri Dhoho", region: "East Java", pic: "Marthin L", phone: "+62 821-1234-075", address: "Jl. Dhoho No. 110, Kota Kediri" },
-  { city: "Blitar", name: "Blitar Merdeka", region: "East Java", pic: "Soni Wicaksono", phone: "+62 821-1234-076", address: "Jl. Merdeka No. 64, Sukorejo, Blitar" },
-  { city: "Madiun", name: "Madiun Pahlawan", region: "East Java", pic: "Agatha Cristie", phone: "+62 821-1234-077", address: "Jl. Pahlawan No. 58, Kota Madiun" },
-  { city: "Jember", name: "Jember Gajah Mada", region: "East Java", pic: "Denny Caknan", phone: "+62 821-1234-078", address: "Jl. Gajah Mada No. 190, Kaliwates, Jember" },
-  { city: "Banyuwangi", name: "Banyuwangi Kota", region: "East Java", pic: "Citra Monica", phone: "+62 821-1234-079", address: "Jl. Ahmad Yani No. 92, Banyuwangi" },
-  { city: "Pasuruan", name: "Pasuruan Kota", region: "East Java", pic: "Asep Sunandar", phone: "+62 821-1234-080", address: "Jl. Panglima Sudirman No. 43, Pasuruan" },
-  { city: "Probolinggo", name: "Probolinggo Soekarno Hatta", region: "East Java", pic: "Lala Karmela", phone: "+62 821-1234-081", address: "Jl. Soekarno-Hatta No. 120, Probolinggo" },
-  { city: "Tuban", name: "Tuban Basuki Rahmat", region: "East Java", pic: "Feri Irawan", phone: "+62 821-1234-082", address: "Jl. Basuki Rahmat No. 71, Tuban" },
-  { city: "Lamongan", name: "Lamongan Kota", region: "East Java", pic: "Kiki Amalia", phone: "+62 821-1234-083", address: "Jl. Lamongrejo No. 34, Lamongan" },
-  { city: "Gresik", name: "Gresik Veteran", region: "East Java", pic: "Budi Darmadi", phone: "+62 821-1234-084", address: "Jl. Veteran No. 90, Gresik" },
-  { city: "Bandung", name: "Bandung Dago", region: "West Java", pic: "Ridwan Kamil", phone: "+62 822-2345-085", address: "Jl. Ir. H. Juanda (Dago) No. 138, Bandung" },
-  { city: "Bandung", name: "Bandung Riau", region: "West Java", pic: "Atalia Praratya", phone: "+62 822-2345-086", address: "Jl. L.L.R.E. Martadinata No. 55, Bandung" },
-  { city: "Bandung", name: "Bandung Buah Batu", region: "West Java", pic: "Cecep Supriyatna", phone: "+62 822-2345-087", address: "Jl. Buah Batu No. 182, Bandung" },
-  { city: "Cimahi", name: "Cimahi Amir Machmud", region: "West Java", pic: "Yana Mulyana", phone: "+62 822-2345-088", address: "Jl. Jend. H. Amir Machmud No. 300, Cimahi" },
-  { city: "Bogor", name: "Bogor Pajajaran", region: "West Java", pic: "Bima Arya", phone: "+62 822-2345-089", address: "Jl. Pajajaran No. 88, Bogor Timur" },
-  { city: "Depok", name: "Depok Margonda", region: "West Java", pic: "Nur Mahmudi", phone: "+62 822-2345-090", address: "Jl. Margonda Raya No. 250, Depok" },
-  { city: "Bekasi", name: "Bekasi Ahmad Yani", region: "West Java", pic: "Rahmat Effendi", phone: "+62 822-2345-091", address: "Jl. Jend. Ahmad Yani No. 15, Bekasi Barat" },
-  { city: "Cirebon", name: "Cirebon Kartini", region: "West Java", pic: "Nashrudin Azis", phone: "+62 822-2345-092", address: "Jl. RA Kartini No. 42, Kejaksan, Cirebon" },
-  { city: "Tasikmalaya", name: "Tasikmalaya HZ Mustofa", region: "West Java", pic: "Budi Budiman", phone: "+62 822-2345-093", address: "Jl. KHZ Mustofa No. 145, Tasikmalaya" },
-  { city: "Sukabumi", name: "Sukabumi Siliwangi", region: "West Java", pic: "Achmad Fahmi", phone: "+62 822-2345-094", address: "Jl. Siliwangi No. 78, Cikole, Sukabumi" },
-  { city: "Jakarta", name: "Jakarta Selatan SCBD", region: "DKI Jakarta", pic: "Raffi Ahmad", phone: "+62 811-9876-095", address: "Pacific Place SCBD Lt. 8, Jl. Jend. Sudirman Kav 52, Jakarta Selatan" },
-  { city: "Jakarta", name: "Jakarta Pusat Thamrin", region: "DKI Jakarta", pic: "Nagita Slavina", phone: "+62 811-9876-096", address: "Jl. M.H. Thamrin No. 28, Menteng, Jakarta Pusat" },
-  { city: "Jakarta", name: "Jakarta Barat Puri", region: "DKI Jakarta", pic: "Daniel Mananta", phone: "+62 811-9876-097", address: "Jl. Puri Indah Raya No. 45, Kembangan, Jakarta Barat" },
-  { city: "Jakarta", name: "Jakarta Timur Rawamangun", region: "DKI Jakarta", pic: "Luna Maya", phone: "+62 811-9876-098", address: "Jl. Pemuda No. 80, Rawamangun, Jakarta Timur" },
-  { city: "Jakarta", name: "Jakarta Utara Kelapa Gading", region: "DKI Jakarta", pic: "Deddy Corbuzier", phone: "+62 811-9876-099", address: "Jl. Boulevard Barat Raya Blok LA-1, Kelapa Gading" },
-  { city: "Tangerang", name: "Tangerang BSD City", region: "Banten", pic: "Boy William", phone: "+62 811-9876-100", address: "BSD Green Office Park 6, Jl. Grand Boulevard, Tangerang" },
-  { city: "Tangerang", name: "Tangerang Karawaci", region: "Banten", pic: "Gita Gutawa", phone: "+62 811-9876-101", address: "Jl. Boulevard Palem Raya No. 12, Karawaci, Tangerang" },
-  { city: "Serang", name: "Serang Ahmad Yani", region: "Banten", pic: "Syafrudin", phone: "+62 811-9876-102", address: "Jl. Ahmad Yani No. 19, Serang, Banten" },
-  { city: "Cilegon", name: "Cilegon Cilegon Raya", region: "Banten", pic: "Helldy Agustian", phone: "+62 811-9876-103", address: "Jl. Raya Cilegon No. 104, Cilegon" },
-  { city: "Denpasar", name: "Denpasar Teuku Umar", region: "Bali", pic: "Wayan Koster", phone: "+62 812-7890-104", address: "Jl. Teuku Umar No. 188, Denpasar Barat, Bali" },
-  { city: "Denpasar", name: "Denpasar Sanur", region: "Bali", pic: "Made Mangku", phone: "+62 812-7890-105", address: "Jl. Bypass Ngurah Rai No. 240, Sanur, Denpasar" },
-  { city: "Badung", name: "Badung Kuta Sunset", region: "Bali", pic: "Ketut Suastika", phone: "+62 812-7890-106", address: "Jl. Sunset Road No. 99, Kuta, Badung, Bali" },
-];
-
-// ---------------------------------------------------------------------------
-// Outlet, MoU and Placement builders adapted from dashboard src/data/
-// outlets.ts, mous.ts and placements.ts (verbatim generation logic).
-// ---------------------------------------------------------------------------
-const outletNamePrefixes = [
-  "Toko Berkah Cellular",
-  "Sentral Ponsel Jaya",
-  "Indo Cellular Store",
-  "Prima Gadget Outlet",
-  "Mega Phone Plaza",
-  "Surya Abadi Cellular",
-  "Bintang Jaya Ponsel",
-  "Maju Lancar Cell",
-  "Mitra Sejati Telekom",
-  "Sinar Mas Cellular",
-  "Eka Jaya Phone",
-  "Sahabat Cell Express",
-  "Pilar Utama Ponsel",
-  "Global Digital Outlet",
-  "Nusantara Cell Hub",
-  "Multi Ponsel Sentosa",
-  "Cakrawala Mobile",
-  "Duta Gadget Store",
-  "Karya Utama Cellular",
-  "Rezeki Cell Corner",
-  "Kencana Ponsel",
-  "Anugerah Cell Center",
-  "Graha Gadgetindo",
-  "Sentosa Prima Mobile",
-  "Smart Link Communication",
-  "Tridaya Phone Hub",
-  "Metro Cell Station",
-  "Planet Cellular Zone",
-  "Barokah Ponsel",
-  "Wijaya Mobile Point",
-];
-
-const outletTypes = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET"] as const;
-
-const partnerNames = [
-  "PT Telekomunikasi Nusantara Mandiri",
-  "CV Berkah Digitalindo Sejahtera",
-  "PT Sinar Surya Abadi Tech",
-  "Koperasi Mitra Usaha Telekomunikasi",
-  "PT Gadget Raya International",
-  "CV Maju Jaya Cellular Mandiri",
-  "PT Global Digital Distribusi",
-  "CV Sentosa Prima Communication",
-  "PT Bintang Graha Ponselindo",
-  "CV Karya Bersama Retailindo",
-  "PT Tridaya Smart Network",
-  "CV Anugerah Selular Utama",
-  "PT Graha Media Komunika",
-  "CV Cahaya Bintang Cellular",
-  "PT Mahakarya Digital Kreasi",
-];
-
-const mouTypes = [
-  "Compensation",
-  "Exclusive Branding",
-  "Event Sponsorship",
-  "Space Rental",
-  "Joint Promotion",
-];
-
-const mouStatuses = [
-  "DONE",
-  "DONE",
-  "SUBMITTED",
-  "SUBMITTED",
-  "SUBMITTED",
-  "DRAFT",
-  "REJECTED",
-] as const;
-
-const placementMaterialTypes = [
-  "Poster",
-  "Shopblind",
-  "Banner",
-  "Branding / Signboard",
-  "Other Materials",
-];
-
-const placementStatuses = [
-  "DONE",
-  "DONE",
-  "DONE",
-  "ON_PROGRESS",
-  "ON_PROGRESS",
-  "NOT_STARTED",
-  "ISSUE",
-] as const;
-
-const samplePhotos = [
-  {
-    thumb: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=300&auto=format&fit=crop&q=60",
-    full: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&auto=format&fit=crop&q=80",
-    dim: "2m x 3m",
-  },
-  {
-    thumb: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=300&auto=format&fit=crop&q=60",
-    full: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1200&auto=format&fit=crop&q=80",
-    dim: "1.5m x 2.5m",
-  },
-  {
-    thumb: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=300&auto=format&fit=crop&q=60",
-    full: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&auto=format&fit=crop&q=80",
-    dim: "4m x 1.2m",
-  },
-  {
-    thumb: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&auto=format&fit=crop&q=60",
-    full: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80",
-    dim: "3m x 6m",
-  },
-  {
-    thumb: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=300&auto=format&fit=crop&q=60",
-    full: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1200&auto=format&fit=crop&q=80",
-    dim: "60cm x 90cm",
-  },
-  {
-    thumb: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=300&auto=format&fit=crop&q=60",
-    full: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&auto=format&fit=crop&q=80",
-    dim: "1m x 2m Rollup",
-  },
-];
-
-const placementCosts = [450000, 850000, 1500000, 3200000, 5800000, 950000];
-
-const placementNotes = [
-  "Installed at main front entrance facade with high street visibility.",
-  "Installed behind cashier billing counter for maximum consumer impression.",
-  "Replacement of previous faded banner with new seasonal Q3 campaign graphics.",
-  "Awaiting landlord permit approval for outdoor wall mounting.",
-  "Frame mounting completed. Lighting installation scheduled for tomorrow.",
-  "Defect reported on corner bracket; maintenance team dispatched.",
-  "Full outlet exterior branding with LED backlit fascia board.",
-];
-
-const compensationValues = [7500000, 12000000, 18500000, 24000000, 35000000, 50000000, 8500000];
-
-// ---------------------------------------------------------------------------
-// Event catalogue adapted from dashboard src/data/events.ts
-// (eventDefinitions + deterministic derivation, verbatim logic).
-// ---------------------------------------------------------------------------
-const eventDefinitions = [
-  {
-    name: "Marcom Roadshow 2026: Youth Digital Festival",
-    type: "Campus Roadshow",
-    location: "Auditorium Graha Sabha Pramana UGM, Sleman",
-    city: "Sleman",
-    attendee: 2450,
-    target: 2000,
-    budget: 85000000,
-    video: {
-      title: "UGM_Youth_Digital_Festival_Aftermovie_4K.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      duration: "04:45",
+  const usersData: Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: DbUserRole;
+    status: DbUserStatus;
+    avatar: string;
+  }> = [
+    {
+      id: "user-admin",
+      name: "Budi Pratama (Super Admin)",
+      email: process.env.SEED_ADMIN_EMAIL ?? "admin@vrelloup.dev",
+      role: "ADMIN",
+      status: "APPROVED",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80",
     },
-    notes: "Massive youth turnout exceeding target by 22.5%. Excellent brand engagement with 1,200+ app downloads and SIM activations.",
-  },
-  {
-    name: "Semarang Mega Tech & Gadget Expo 2026",
-    type: "Exhibition / Expo",
-    location: "Marina Convention Center, Semarang Barat",
-    city: "Semarang",
-    attendee: 5200,
-    target: 5000,
-    budget: 150000000,
-    video: {
-      title: "Semarang_Mega_Expo_Highlights_1080p.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-      duration: "06:12",
+    {
+      id: "user-staff-1",
+      name: "Dewi Lestari (Field Staff)",
+      email: "staff.dewi@vrelloup.dev",
+      role: "STAFF",
+      status: "APPROVED",
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
     },
-    notes: "Main booth generated over 450M IDR in bundled partner sales. Coverage featured in 6 local press media outlets.",
-  },
-  {
-    name: "Solo Culinary & Music Weekend Activation",
-    type: "Brand Activation",
-    location: "Benteng Vastenburg, Solo Slamet Riyadi",
-    city: "Solo",
-    attendee: 3800,
-    target: 3500,
-    budget: 65000000,
-    video: {
-      title: "Solo_Culinary_Weekend_Footage.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-      duration: "03:30",
+    {
+      id: "user-staff-2",
+      name: "Agus Prabowo (Field Staff)",
+      email: "staff.budi@vrelloup.dev",
+      role: "STAFF",
+      status: "APPROVED",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
     },
-    notes: "Successful merchant QRIS transactions & loyalty promo vouchers distributed to 2,800 visitors.",
-  },
-  {
-    name: "Purwokerto University On-Campus Experience Hub",
-    type: "Campus Roadshow",
-    location: "Gedung Soedirman Unsoed, Purwokerto",
-    city: "Purwokerto",
-    attendee: 1600,
-    target: 1500,
-    budget: 42000000,
-    video: {
-      title: "Unsoed_Purwokerto_Campus_Activation.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-      duration: "02:50",
+    {
+      id: "user-viewer",
+      name: "Hendra Gunawan (Stakeholder)",
+      email: "viewer.hendra@vrelloup.dev",
+      role: "VIEWER",
+      status: "APPROVED",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
     },
-    notes: "Student package subscription campaign converted 640 new campus recurring users.",
-  },
-  {
-    name: "Yogyakarta Gaming Community Championship 2026",
-    type: "Community Gathering",
-    location: "Jogja Expo Center (JEC), Bantul",
-    city: "Yogyakarta",
-    attendee: 1850,
-    target: 2000,
-    budget: 55000000,
-    video: {
-      title: "JEC_Gaming_Championship_Day1.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-      duration: "05:15",
+    {
+      id: "user-pending",
+      name: "Siti Rahmawati (Pending Review)",
+      email: "pending.siti@vrelloup.dev",
+      role: "STAFF",
+      status: "PENDING",
+      avatar: "",
     },
-    notes: "Ongoing esports tournament finals. Live streaming broadcasted across YouTube and TikTok with 15k concurrent viewers.",
-  },
-  {
-    name: "Magelang Borobudur Marathon Brand Sponsorship",
-    type: "Sponsorship Event",
-    location: "Taman Lumbini Candi Borobudur, Magelang",
-    city: "Magelang",
-    attendee: 8000,
-    target: 8000,
-    budget: 180000000,
-    video: {
-      title: "Borobudur_Marathon_Teaser_Promo.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4",
-      duration: "01:30",
+    {
+      id: "user-rejected",
+      name: "Rudi Hartono (Disapproved)",
+      email: "rejected.agus@vrelloup.dev",
+      role: "STAFF",
+      status: "REJECTED",
+      avatar: "",
     },
-    notes: "Official connectivity & hydration partner. 15 branding gantries and 8 runner water stations prepared.",
-  },
-  {
-    name: "Pekalongan Batik Night Carnival Activation",
-    type: "Brand Activation",
-    location: "Kawasan Budaya Jetayu, Pekalongan Kota",
-    city: "Pekalongan",
-    attendee: 4100,
-    target: 3500,
-    budget: 48000000,
-    video: {
-      title: "Pekalongan_Batik_Carnival_2026.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-      duration: "04:10",
-    },
-    notes: "High social media impression with official hashtag reaching trending topic #3 regionally.",
-  },
-  {
-    name: "Tegal Bahari SME & Merchant Festival",
-    type: "Brand Activation",
-    location: "Alun-Alun Kota Tegal, Tegal Kota",
-    city: "Tegal",
-    attendee: 3100,
-    target: 3000,
-    budget: 52000000,
-    video: {
-      title: "Tegal_Bahari_Festival_Summary.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
-      duration: "03:45",
-    },
-    notes: "Onboarded 78 new merchant retail stores into the regional partner tier programme.",
-  },
-  {
-    name: "Kudus Kretek Heritage Music Experience",
-    type: "Community Gathering",
-    location: "Museum Kretek, Kudus Kota",
-    city: "Kudus",
-    attendee: 2900,
-    target: 2500,
-    budget: 45000000,
-    video: {
-      title: "Kudus_Heritage_Music_Night.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4",
-      duration: "03:15",
-    },
-    notes: "Brand sentiment positive score of 94% recorded from on-site survey tablets.",
-  },
-  {
-    name: "Cilacap Coastal Sports & Community Run",
-    type: "Brand Activation",
-    location: "Pantai Teluk Penyu, Cilacap Kota",
-    city: "Cilacap",
-    attendee: 2100,
-    target: 2000,
-    budget: 38000000,
-    video: {
-      title: "Cilacap_Teluk_Penyu_Run.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-      duration: "04:00",
-    },
-    notes: "1,500 branded athletic jerseys distributed with prominent Marcom placement logos.",
-  },
-  {
-    name: "Surabaya National Tech Carnival 2026",
-    type: "Product Launch",
-    location: "Grand City Convention Hall, Surabaya Pusat",
-    city: "Surabaya",
-    attendee: 6800,
-    target: 6000,
-    budget: 220000000,
-    video: {
-      title: "Surabaya_Tech_Launch_Keynote.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
-      duration: "08:20",
-    },
-    notes: "Flagship regional product release with executive keynote and live media broadcast.",
-  },
-  {
-    name: "Bandung Creative Hub Music Showcase",
-    type: "Community Gathering",
-    location: "Paris Van Java Mall Rooftop, Bandung Dago",
-    city: "Bandung",
-    attendee: 3400,
-    target: 3000,
-    budget: 72000000,
-    video: {
-      title: "Bandung_PVJ_Showcase_Highlights.mp4",
-      streamUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
-      duration: "03:50",
-    },
-    notes: "Indie community partnership with exclusive streaming passes distributed.",
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Document builders adapted from dashboard src/data/documents.ts
-// (verbatim generation logic).
-// ---------------------------------------------------------------------------
-const docTemplates = [
-  {
-    name: "Report Placement Poster & Shopblind",
-    category: "Placement",
-    fileType: "XLSX",
-    size: 4.8,
-    desc: "Complete placement verification audit of all street posters, shopblinds, and lightbox fascias with GPS photo proofs and contractor invoice reconciliations.",
-  },
-  {
-    name: "Report MoU Compensation & Partnership Agreement",
-    category: "MoU",
-    fileType: "PDF",
-    size: 12.4,
-    desc: "Legal signed bilateral agreement, compensation schedules, bank verification records, and partner revenue sharing commitments.",
-  },
-  {
-    name: "Comprehensive Event & Brand Activation Report",
-    category: "Event",
-    fileType: "PDF",
-    size: 28.5,
-    desc: "Post-event evaluation deck covering attendee demographics, ROI metrics, video stream analytics, social buzz sentiment, and footage master links.",
-  },
-  {
-    name: "Monthly Executive Marcom Performance Report",
-    category: "Monthly",
-    fileType: "PDF",
-    size: 8.6,
-    desc: "Executive summary for regional directors tracking MoUs, placements, activations, key blockers, budget burn rate, and strategic action plans.",
-  },
-  {
-    name: "Weekly Marcom Progress & Operations Bulletin",
-    category: "Weekly",
-    fileType: "DOCX",
-    size: 2.1,
-    desc: "Weekly operational digest tracking field staff task completion, newly signed outlet partners, and urgent placement ticket updates.",
-  },
-  {
-    name: "Regional Branch Audit & Readiness Dossier",
-    category: "Branch",
-    fileType: "PDF",
-    size: 15.2,
-    desc: "Detailed branch operational review detailing outlet network expansion, POS compliance, tier distribution, and local vendor SLAs.",
-  },
-  {
-    name: "High-Res Media Footage & Documentation Ledger",
-    category: "Documentation",
-    fileType: "ZIP",
-    size: 245.0,
-    desc: "Archived 4K raw video rushes, drone footage, photo proof batches, and press clipping high-resolution assets.",
-  },
-  {
-    name: "Q3 Promotional Campaign & Merchandising Strategy",
-    category: "Campaign",
-    fileType: "XLSX",
-    size: 6.2,
-    desc: "Regional campaign allocation matrix, prize giveaways, POS material distributor logistics, and incentive disbursement tracker.",
-  },
-];
-
-const docPeriods = ["Q2 2026", "July 2026", "August 2026", "Q3 2026", "Q1 2026", "June 2026"];
-const docStatuses = ["ACTIVE", "ACTIVE", "DRAFT", "ARCHIVED"] as const;
-
-// ---------------------------------------------------------------------------
-// Monthly reports adapted from dashboard src/data/monthlyReports.ts
-// (verbatim content; `supportingDocuments` has no target column in the
-// ported MonthlyReport model and is intentionally not seeded).
-// ---------------------------------------------------------------------------
-const monthlyReports = [
-  {
-    id: "rep-2026-07",
-    month: "July 2026",
-    year: 2026,
-    summary: {
-      totalActivities: 148,
-      totalEvents: 12,
-      totalOutlets: 215,
-      totalMous: 89,
-      totalPlacements: 118,
-      completionRate: 88.5,
-      prevMonthCompletionRate: 76.2,
-      growthPercentage: 12.3,
-    },
-    activities: [
-      {
-        id: "act-01",
-        date: "2026-07-03",
-        title: "Q3 Promotional Poster & Shopblind Rollout Wave 1",
-        branchName: "Semarang Pusat",
-        category: "Placement",
-        status: "Completed",
-        picName: "Budi Santoso",
-        impact: "Deployed 24 new shopblinds and 30 acrylic counter posters across Tier-1 retail outlets.",
-      },
-      {
-        id: "act-02",
-        date: "2026-07-08",
-        title: "Bilateral MoU Compensation Agreement Signing Ceremony",
-        branchName: "Solo Slamet Riyadi",
-        category: "MoU",
-        status: "Completed",
-        picName: "Rina Wijaya",
-        impact: "Signed 15 high-volume retail partners with 1-year exclusive branding commitment.",
-      },
-      {
-        id: "act-03",
-        date: "2026-07-14",
-        title: "Youth Digital Festival & Campus Roadshow 2026",
-        branchName: "Sleman Kaliurang",
-        category: "Event",
-        status: "Completed",
-        picName: "Dimas Anggara",
-        impact: "2,450 student attendees, 1,200 app downloads, 4K aftermovie published to internal media center.",
-      },
-      {
-        id: "act-04",
-        date: "2026-07-21",
-        title: "Regional Outlet POS Branding Audit & Refresh",
-        branchName: "Purwokerto Kota",
-        category: "Placement",
-        status: "Completed",
-        picName: "Aris Munandar",
-        impact: "Replaced 18 damaged facade signboards; verified GPS timestamps for 100% compliance.",
-      },
-      {
-        id: "act-05",
-        date: "2026-07-28",
-        title: "Merchant Community Gathering & Loyalty Promo Launch",
-        branchName: "Yogyakarta Malioboro",
-        category: "Community",
-        status: "Completed",
-        picName: "Siti Rahmawati",
-        impact: "Engaged 85 local partner owners; onboarded 40 new merchant QRIS terminals.",
-      },
-    ],
-    achievements: [
-      { metric: "MoU Partner Onboarding", actual: 89, target: 80, variance: 11.25, status: "Achieved", unit: "Partners" },
-      { metric: "Promotional Material Placements", actual: 118, target: 110, variance: 7.27, status: "Achieved", unit: "Outlets" },
-      { metric: "Event Attendee Turnout", actual: 18450, target: 16000, variance: 15.31, status: "Achieved", unit: "Attendees" },
-      { metric: "4K Video Footage Archival", actual: 12, target: 12, variance: 0.0, status: "Achieved", unit: "Master Cuts" },
-      { metric: "Total Budget Disbursement Efficiency", actual: 94.2, target: 95.0, variance: -0.84, status: "On Track", unit: "%" },
-    ],
-    keyIssues: [
-      {
-        id: "iss-01",
-        title: "Delayed Landlord Outdoor Permit for Billboard Gantry",
-        branchName: "Magelang Kota",
-        severity: "HIGH",
-        status: "IN_PROGRESS",
-        owner: "Citra Kirana",
-        rootCause: "Local municipal zoning policy revisions required updated structural engineering endorsements.",
-        mitigation: "Expedited civil engineer inspection report submitted; temporary ground banners deployed.",
-      },
-      {
-        id: "iss-02",
-        title: "Weather Disturbance during Outdoor Weekend Activation",
-        branchName: "Cilacap Kota",
-        severity: "MEDIUM",
-        status: "RESOLVED",
-        owner: "Ahmad Fauzi",
-        rootCause: "Unseasonal heavy rainfall at Pantai Teluk Penyu required rapid canopy relocation.",
-        mitigation: "Shifted live acoustic stage to covered pavilion without interrupting merchant exhibits.",
-      },
-      {
-        id: "iss-03",
-        title: "Vendor Printing Backlog for Q3 Acrylic Shopblinds",
-        branchName: "Pekalongan Kota",
-        severity: "LOW",
-        status: "RESOLVED",
-        owner: "Zainal Abidin",
-        rootCause: "Primary printing vendor experienced equipment maintenance downtime.",
-        mitigation: "Split order of 40 shopblinds to secondary certified regional printing partner in Semarang.",
-      },
-    ],
-    actionPlans: [
-      {
-        id: "ap-01",
-        task: "Complete legal review & compensation payout for Tier-1 Solo partner batch",
-        branchName: "Solo Slamet Riyadi",
-        pic: "Rina Wijaya",
-        deadline: "2026-08-10",
-        priority: "HIGH",
-        status: "COMPLETED",
-      },
-      {
-        id: "ap-02",
-        task: "Execute Borobudur Marathon sponsorship branding installation",
-        branchName: "Magelang Kota",
-        pic: "Citra Kirana",
-        deadline: "2026-08-18",
-        priority: "HIGH",
-        status: "IN_PROGRESS",
-      },
-      {
-        id: "ap-03",
-        task: "Publish full 4K drone footage archive for Sleman Youth Festival to Cloudflare R2",
-        branchName: "Sleman Kaliurang",
-        pic: "Dimas Anggara",
-        deadline: "2026-08-05",
-        priority: "MEDIUM",
-        status: "COMPLETED",
-      },
-      {
-        id: "ap-04",
-        task: "Initiate quarterly retailer satisfaction survey across all Central Java outlets",
-        branchName: "Semarang Pusat",
-        pic: "Budi Santoso",
-        deadline: "2026-08-25",
-        priority: "LOW",
-        status: "NOT_STARTED",
-      },
-    ],
-  },
-  {
-    id: "rep-2026-08",
-    month: "August 2026",
-    year: 2026,
-    summary: {
-      totalActivities: 162,
-      totalEvents: 15,
-      totalOutlets: 225,
-      totalMous: 96,
-      totalPlacements: 126,
-      completionRate: 91.2,
-      prevMonthCompletionRate: 88.5,
-      growthPercentage: 2.7,
-    },
-    activities: [
-      {
-        id: "act-08-01",
-        date: "2026-08-05",
-        title: "Independence Day Regional Promo Campaign Kickoff",
-        branchName: "Semarang Pusat",
-        category: "Campaign",
-        status: "Completed",
-        picName: "Budi Santoso",
-        impact: "Deployed patriotic red-and-white store branding in 140 outlets across Central Java.",
-      },
-      {
-        id: "act-08-02",
-        date: "2026-08-12",
-        title: "East Java Modern Retail MoU Expansion Wave",
-        branchName: "Surabaya Basuki Rahmat",
-        category: "MoU",
-        status: "Completed",
-        picName: "Taufik Hidayat",
-        impact: "Signed 22 chain stores with automated monthly compensation billing integration.",
-      },
-      {
-        id: "act-08-03",
-        date: "2026-08-20",
-        title: "Borobudur Heritage Brand Activation & Marathon Expo",
-        branchName: "Magelang Kota",
-        category: "Event",
-        status: "Completed",
-        picName: "Citra Kirana",
-        impact: "8,000 runners engaged; captured 4K drone footage with live streaming replay.",
-      },
-    ],
-    achievements: [
-      { metric: "MoU Partner Onboarding", actual: 96, target: 90, variance: 6.67, status: "Achieved", unit: "Partners" },
-      { metric: "Promotional Material Placements", actual: 126, target: 120, variance: 5.0, status: "Achieved", unit: "Outlets" },
-      { metric: "Event Attendee Turnout", actual: 21500, target: 19000, variance: 13.16, status: "Achieved", unit: "Attendees" },
-      { metric: "4K Video Footage Archival", actual: 15, target: 15, variance: 0.0, status: "Achieved", unit: "Master Cuts" },
-      { metric: "Total Budget Disbursement Efficiency", actual: 96.8, target: 95.0, variance: 1.89, status: "Achieved", unit: "%" },
-    ],
-    keyIssues: [
-      {
-        id: "iss-08-01",
-        title: "Transport Delivery Delay for West Java POS Materials",
-        branchName: "Bandung Dago",
-        severity: "MEDIUM",
-        status: "RESOLVED",
-        owner: "Ridwan Kamil",
-        rootCause: "Toll road logistics congestion during long holiday weekend.",
-        mitigation: "Re-routed priority shipments via express air freight cargo.",
-      },
-    ],
-    actionPlans: [
-      {
-        id: "ap-08-01",
-        task: "Finalize Q4 2026 Marketing Strategy & Media Budget Allocation",
-        branchName: "Semarang Pusat",
-        pic: "Budi Santoso",
-        deadline: "2026-09-15",
-        priority: "HIGH",
-        status: "IN_PROGRESS",
-      },
-      {
-        id: "ap-08-02",
-        task: "Onboard 50 new Campus Outlets across Yogyakarta & Malang universities",
-        branchName: "Sleman Seturan",
-        pic: "Putri Ayu",
-        deadline: "2026-09-30",
-        priority: "HIGH",
-        status: "NOT_STARTED",
-      },
-    ],
-  },
-];
-
-async function main() {
-  // Seed initial Admin User if not exists
-  const adminExists = await prisma.user.findFirst({ where: { role: "ADMIN" } });
-  if (!adminExists) {
-    const hashed = await bcrypt.hash(
-      process.env.SEED_ADMIN_PASSWORD ?? "changeme123",
-      12
-    );
-    await prisma.user.create({
-      data: {
-        name: "System Admin",
-        email: process.env.SEED_ADMIN_EMAIL ?? "admin@vrelloup.dev",
-        password: hashed,
-        role: "ADMIN",
-        status: "APPROVED",
-      },
-    });
-    console.log("Seeded admin user:", process.env.SEED_ADMIN_EMAIL ?? "admin@vrelloup.dev");
-  }
-
-  // Every write is an upsert keyed on a stable id, so re-running the seed
-  // converges without duplicates.
-
-
-  const branches = branchDefinitions.map((item, index) => {
-    const branchNum = index + 1;
-    const code = `BR-${String(branchNum).padStart(3, "0")}`;
-    const totalOutlets = 12 + ((branchNum * 7) % 35);
-    const mouDone = Math.floor(totalOutlets * (0.5 + ((branchNum % 5) * 0.08)));
-    const placementDone = Math.floor(totalOutlets * (0.6 + ((branchNum % 4) * 0.07)));
-    const overallProgress = Math.min(
-      100,
-      Math.round(((mouDone / totalOutlets) * 0.5 + (placementDone / totalOutlets) * 0.5) * 100),
-    );
-    let status: "DONE" | "ON_PROGRESS" | "PENDING" = "ON_PROGRESS";
-    if (overallProgress >= 85) status = "DONE";
-    else if (overallProgress < 60) status = "PENDING";
-    return {
-      id: `branch-${branchNum}`,
-      code,
-      name: item.name,
-      region: item.region,
-      city: item.city,
-      status,
-      picName: item.pic,
-      picPhone: item.phone,
-      address: item.address,
-    };
-  });
-  for (const b of branches) {
-    const { id, ...data } = b;
-    await prisma.branch.upsert({ where: { id }, update: data, create: b });
-  }
-
-  for (const m of MATERIAL_DEFS) {
-    await prisma.material.upsert({
-      where: { id: m.id },
-      update: { type: m.type, name: m.name, requiresMou: m.requiresMou },
-      create: { id: m.id, type: m.type, name: m.name, requiresMou: m.requiresMou },
-    });
-  }
-
-  const CITY_COORDS: Record<string, [number, number]> = {
-    Jakarta: [-6.2088, 106.8456],
-    Tangerang: [-6.1783, 106.6319],
-    Depok: [-6.4025, 106.7942],
-    Bekasi: [-6.2383, 106.9756],
-    Bogor: [-6.5971, 106.806],
-    Bandung: [-6.9175, 107.6191],
-    Cimahi: [-6.8723, 107.5427],
-    Cirebon: [-6.732, 108.5523],
-    Sukabumi: [-6.9277, 106.93],
-    Tasikmalaya: [-7.3274, 108.2207],
-    Serang: [-6.1104, 106.164],
-    Cilegon: [-6.0174, 106.0538],
-    Semarang: [-6.9667, 110.4167],
-    Solo: [-7.5755, 110.8243],
-    Yogyakarta: [-7.7956, 110.3695],
-    Sleman: [-7.7156, 110.3556],
-    Bantul: [-7.8906, 110.3347],
-    Gunungkidul: [-7.9609, 110.6014],
-    "Kulon Progo": [-7.7766, 110.1583],
-    Purwokerto: [-7.4243, 109.2391],
-    Banyumas: [-7.5167, 109.2975],
-    Cilacap: [-7.7279, 109.0059],
-    Magelang: [-7.4706, 110.2178],
-    Klaten: [-7.7058, 110.6017],
-    Pekalongan: [-6.8886, 109.6753],
-    Batang: [-6.9103, 109.7303],
-    Tegal: [-6.8694, 109.1402],
-    Brebes: [-6.8703, 109.0425],
-    Pemalang: [-6.8919, 109.3812],
-    Kudus: [-6.8048, 110.8405],
-    Jepara: [-6.5932, 110.6778],
-    Pati: [-6.7561, 111.0379],
-    Rembang: [-6.7063, 111.3444],
-    Blora: [-6.9698, 111.4184],
-    Kendal: [-6.9249, 110.2038],
-    Boyolali: [-7.5361, 110.5947],
-    Sukoharjo: [-7.6833, 110.8333],
-    Karanganyar: [-7.5961, 110.9514],
-    Sragen: [-7.4264, 111.0219],
-    Wonogiri: [-7.8139, 110.9256],
-    Temanggung: [-7.3167, 110.1778],
-    Wonosobo: [-7.3639, 109.9],
-    Purbalingga: [-7.3892, 109.3639],
-    Banjarnegara: [-7.3975, 109.6975],
-    Kebumen: [-7.6686, 109.6522],
-    Demak: [-6.8944, 110.6389],
-    Grobogan: [-7.1136, 110.9167],
-    Salatiga: [-7.3306, 110.5083],
-    Surabaya: [-7.2575, 112.7521],
-    Sidoarjo: [-7.4478, 112.7183],
-    Malang: [-7.9797, 112.6304],
-    Batu: [-7.8711, 112.527],
-    Kediri: [-7.848, 112.0178],
-    Blitar: [-8.0983, 112.1681],
-    Madiun: [-7.6298, 111.5239],
-    Jember: [-8.1724, 113.6995],
-    Banyuwangi: [-8.2192, 114.3691],
-    Pasuruan: [-7.6453, 112.9075],
-    Probolinggo: [-7.7543, 113.2159],
-    Tuban: [-6.8976, 112.0649],
-    Lamongan: [-7.1282, 112.4131],
-    Gresik: [-7.1566, 112.6555],
-    Denpasar: [-8.6705, 115.2126],
-    Badung: [-8.5819, 115.1771],
-  };
-
-  const outlets = Array.from({ length: 225 }).map((_, index) => {
-    const outletNum = index + 1;
-    const branch = branches[index % branches.length];
-    const prefix = outletNamePrefixes[index % outletNamePrefixes.length];
-    const base = CITY_COORDS[branch.city] || [-6.2088, 106.8456];
-    const latOffset = (((index * 17) % 50) - 25) * 0.0012;
-    const lngOffset = (((index * 31) % 50) - 25) * 0.0012;
-    const latitude = Number((base[0] + latOffset).toFixed(6));
-    const longitude = Number((base[1] + lngOffset).toFixed(6));
-    return {
-      id: `outlet-${outletNum}`,
-      code: `OUT-${branch.code.replace("BR-", "")}-${String((index % 30) + 1).padStart(3, "0")}`,
-      name: `${prefix} - ${branch.city} #${Math.floor(index / outletNamePrefixes.length) + 1}`,
-      type: outletTypes[index % outletTypes.length],
-      address: `${branch.address.split("No.")[0]}No. ${10 + ((index * 3) % 200)}, ${branch.city}`,
-      city: branch.city,
-      latitude,
-      longitude,
-      picName: `PIC ${branch.picName.split(" ")[0]} - ${outletNum}`,
-      picPhone: `+62 821-${String(3000 + outletNum).padStart(4, "0")}-${String(100 + (outletNum % 900)).padStart(4, "0")}`,
-      active: index % 18 !== 0,
-      branchId: branch.id,
-    };
-  });
-  for (const o of outlets) {
-    const { id, ...data } = o;
-    await prisma.outlet.upsert({ where: { id }, update: data, create: o });
-  }
-
-  const mous = Array.from({ length: 120 }).map((_, index) => {
-    const mouNum = index + 1;
-    const outlet = outlets[index % outlets.length];
-    const branch = branches.find((b) => b.id === outlet.branchId) ?? branches[0];
-    const mouType = mouTypes[index % mouTypes.length];
-    const monthStr = String(1 + (index % 8)).padStart(2, "0");
-    const dayStr = String(1 + (index % 27)).padStart(2, "0");
-    return {
-      id: `mou-${mouNum}`,
-      branchId: branch.id,
-      outletId: outlet.id,
-      outletName: outlet.name,
-      partnerName: partnerNames[index % partnerNames.length],
-
-      mouType,
-      submissionDate: toDate(`2026-${monthStr}-${dayStr}`),
-      startDate: toDate(`2026-${monthStr}-01`),
-      endDate: toDate(`2027-${monthStr}-01`),
-      status: mouStatuses[index % mouStatuses.length],
-      picName: branch.picName,
-      docPath: `https://drive.google.com/file/d/1${String(index).padStart(4, "0")}xyz_mou_${branch.code}/view`,
-      compensationValue: compensationValues[index % compensationValues.length],
-      notes: `MoU partnership for ${mouType} at ${outlet.name}. Target ROI verified by Branch PIC ${branch.picName}.`,
-    };
-  });
-  for (const m of mous) {
-    const { id, ...data } = m;
-    await prisma.mou.upsert({ where: { id }, update: data, create: m });
-  }
-
-  const placements = Array.from({ length: 130 }).map((_, index) => {
-    const placementNum = index + 1;
-    const outlet = outlets[index % outlets.length];
-    const branch = branches.find((b) => b.id === outlet.branchId) ?? branches[0];
-    const materialType = placementMaterialTypes[index % placementMaterialTypes.length];
-    const photo = samplePhotos[index % samplePhotos.length];
-    const monthStr = String(1 + (index % 8)).padStart(2, "0");
-    const dayStr = String(1 + (index % 27)).padStart(2, "0");
-    return {
-      id: `placement-${placementNum}`,
-      outletId: outlet.id,
-      materialId: MATERIAL_ID_BY_NAME[materialType],
-      status: placementStatuses[index % placementStatuses.length],
-      date: toDate(`2026-${monthStr}-${dayStr}`),
-      picName: branch.picName,
-      photoUrl: photo.full,
-      dimensions: photo.dim,
-      cost: placementCosts[index % placementCosts.length],
-      notes: placementNotes[index % placementNotes.length],
-    };
-  });
-  for (const p of placements) {
-    const { id, ...data } = p;
-    await prisma.placement.upsert({ where: { id }, update: data, create: p });
-  }
-
-  const events = Array.from({ length: 32 }).map((_, index) => {
-    const eventNum = index + 1;
-    const base = eventDefinitions[index % eventDefinitions.length];
-    const branch = branches.find((b) => b.city === base.city) ?? branches[index % branches.length];
-    const monthStr = String(1 + (index % 8)).padStart(2, "0");
-    const startDay = 5 + (index % 20);
-    let status: "UPCOMING" | "ON_PROGRESS" | "COMPLETED" | "CANCELLED";
-    if (index === 0 || index === 4) status = "ON_PROGRESS";
-    else if (index === 5 || index > 28) status = "UPCOMING";
-    else if (index === 15) status = "CANCELLED";
-    else status = "COMPLETED";
-    return {
-      id: `event-${eventNum}`,
-      name:
-        index < eventDefinitions.length
-          ? base.name
-          : `${base.name} Vol. ${Math.floor(index / eventDefinitions.length) + 1}`,
-      startDate: toDate(`2026-${monthStr}-${String(startDay).padStart(2, "0")}`),
-      endDate: toDate(`2026-${monthStr}-${String(startDay + 2).padStart(2, "0")}`),
-      location: base.location,
-      branchName: branch.name,
-      picName: branch.picName,
-      eventType: base.type,
-      status,
-      budget: base.budget + index * 1500000,
-      attendeeCount: status === "UPCOMING" ? 0 : base.attendee + ((index * 50) % 500),
-      targetAttendee: base.target,
-      notes: base.notes,
-      footage: {
-        id: `vid-${eventNum}`,
-        title: `${branch.city}_${base.video.title}`,
-        filePath: base.video.streamUrl,
-        duration: base.video.duration,
-      },
-    };
-  });
-  for (const e of events) {
-    const { id, footage, ...data } = e;
-    await prisma.fieldEvent.upsert({ where: { id }, update: data, create: { id, ...data } });
-    await prisma.eventFootage.upsert({
-      where: { id: footage.id },
-      update: { eventId: id, title: footage.title, filePath: footage.filePath, duration: footage.duration },
-      create: { id: footage.id, eventId: id, title: footage.title, filePath: footage.filePath, duration: footage.duration },
-    });
-  }
-
-  const storageProviders = ["Cloudflare R2", "AWS S3", "Google Drive"];
-  const documents = Array.from({ length: 36 }).map((_, index) => {
-    const docNum = index + 1;
-    const template = docTemplates[index % docTemplates.length];
-    const branch = branches[index % branches.length];
-    const period = docPeriods[index % docPeriods.length];
-    const storageProvider = storageProviders[index % storageProviders.length];
-    const docName = `${template.name} - ${branch.city} (${period})`;
-    const filePath =
-      storageProvider === "Google Drive"
-        ? `https://drive.google.com/file/d/1A8x9yZ_${branch.code}_${index}/view?usp=sharing`
-        : `https://storage.marcom-internal.corp/assets/2026/${branch.code}/${docName.replace(/\s+/g, "_")}.${template.fileType.toLowerCase()}`;
-    return {
-      id: `doc-${docNum}`,
-      name: docName,
-      category: template.category,
-      period,
-      branchName: branch.name,
-      ownerPic: branch.picName,
-      status: docStatuses[index % docStatuses.length],
-      fileType: template.fileType as "PDF" | "XLSX" | "DOCX" | "ZIP",
-      fileSizeMb: template.size,
-      filePath,
-      description: template.desc,
-    };
-  });
-  for (const d of documents) {
-    const { id, ...data } = d;
-    await prisma.documentItem.upsert({ where: { id }, update: data, create: d });
-  }
-
-  for (const r of monthlyReports) {
-    const data = {
-      month: r.month,
-      year: r.year,
-      summary: toJson(r.summary),
-      activities: toJson(r.activities),
-      achievements: toJson(r.achievements),
-      keyIssues: toJson(r.keyIssues),
-      actionPlans: toJson(r.actionPlans),
-    };
-    await prisma.monthlyReport.upsert({ where: { id: r.id }, update: data, create: { id: r.id, ...data } });
-  }
-
-  const inventoryItemsSeed = [
-    { code: "TND-001", name: "Folding Tent 3×3", category: "Branding", totalUnits: 6, storageLocation: "Warehouse A - Rack 1" },
-    { code: "TND-002", name: "Folding Tent 2×2", category: "Branding", totalUnits: 4, storageLocation: "Warehouse A - Rack 1" },
-    { code: "BNR-001", name: "Roll-up Banner Stand", category: "Branding", totalUnits: 10, storageLocation: "Warehouse A - Rack 2" },
-    { code: "XBN-001", name: "X-Banner Stand", category: "Branding", totalUnits: 8, storageLocation: "Warehouse A - Rack 2" },
-    { code: "TBL-001", name: "Folding Table (180cm)", category: "Furniture", totalUnits: 8, storageLocation: "Warehouse B - Bay 1" },
-    { code: "CHR-001", name: "Folding Chair", category: "Furniture", totalUnits: 20, storageLocation: "Warehouse B - Bay 2" },
-    { code: "SPK-001", name: "Portable Bluetooth Speaker", category: "Audio", totalUnits: 4, storageLocation: "AV Room - Shelf A" },
-    { code: "MIC-001", name: "Wireless Microphone Set", category: "Audio", totalUnits: 3, storageLocation: "AV Room - Shelf A" },
-    { code: "MIX-001", name: "Audio Mixer (4-channel)", category: "Audio", totalUnits: 2, storageLocation: "AV Room - Shelf B" },
-    { code: "TV-001", name: 'LED TV 43" + Stand', category: "Display", totalUnits: 2, storageLocation: "Display Storage - Bay 1" },
-    { code: "LPT-001", name: "Demo Laptop", category: "Display", totalUnits: 3, storageLocation: "IT Cabinet" },
-    { code: "TRP-001", name: "Waterproof Tarpaulin (4×6m)", category: "Logistics", totalUnits: 5, storageLocation: "Warehouse B - Rack 3" },
-    { code: "HND-001", name: "Hand Truck / Sack Truck", category: "Logistics", totalUnits: 3, storageLocation: "Warehouse Entrance" },
   ];
 
-  for (const item of inventoryItemsSeed) {
-    await prisma.inventoryItem.upsert({
-      where: { code: item.code },
-      update: {
-        name: item.name,
-        category: item.category,
-        totalUnits: item.totalUnits,
-        storageLocation: item.storageLocation,
-      },
-      create: {
-        code: item.code,
-        name: item.name,
-        category: item.category,
-        totalUnits: item.totalUnits,
-        availableUnits: item.totalUnits,
-        storageLocation: item.storageLocation,
-        status: "AVAILABLE",
+  for (const u of usersData) {
+    await prisma.user.create({
+      data: {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        password: passwordHash,
+        role: u.role,
+        status: u.status,
+        avatar: u.avatar,
+        lastLoginAt: u.status === "APPROVED" ? daysAgo(1) : null,
       },
     });
   }
+}
+
+// ============================================================================
+// 3. MASTER INFRASTRUCTURE (Materials & Branches)
+// ============================================================================
+async function seedMaterials() {
+  console.log("🏷️ Seeding POSM materials catalog...");
+  const materialsData: Array<{ id: string; type: MaterialType; name: string; requiresMou: boolean }> = [
+    { id: "material-poster", type: "POSTER", name: "Poster Promosi A2/A3", requiresMou: false },
+    { id: "material-shopblind", type: "SHOPBLIND", name: "Shopblind Kanopi Depan", requiresMou: true },
+    { id: "material-sticker", type: "OTHER_MATERIALS", name: "Stiker Kaca & Etalase", requiresMou: false },
+    { id: "material-bottom", type: "OTHER_MATERIALS", name: "Bottom Etalase Acrylic", requiresMou: false },
+    { id: "material-banner", type: "BANNER", name: "Roll-up / X-Banner Display", requiresMou: false },
+    { id: "material-signboard", type: "BRANDING_SIGNBOARD", name: "Branding Signboard / Neonbox", requiresMou: true },
+    { id: "material-facade", type: "BRANDING_SIGNBOARD", name: "Fascia Wall Billboard", requiresMou: true },
+  ];
+
+  for (const m of materialsData) {
+    await prisma.material.create({ data: m });
+  }
+}
+
+async function seedBranches() {
+  console.log("🏢 Seeding corporate branch offices...");
+  const branchesData = [
+    { id: "branch-1", code: "BR-SMG-01", name: "Semarang Pandanaran", region: "Central Java", city: "Semarang", status: "DONE" as const, picName: "Budi Santoso", picPhone: "+62 811-2345-001", address: "Jl. Pandanaran No. 58, Semarang" },
+    { id: "branch-2", code: "BR-SMG-02", name: "Semarang Barat", region: "Central Java", city: "Semarang", status: "ON_PROGRESS" as const, picName: "Agus Prasetyo", picPhone: "+62 811-2345-002", address: "Jl. Siliwangi No. 120, Semarang" },
+    { id: "branch-3", code: "BR-SLO-01", name: "Solo Slamet Riyadi", region: "Central Java", city: "Solo", status: "DONE" as const, picName: "Rina Wijaya", picPhone: "+62 812-3456-006", address: "Jl. Slamet Riyadi No. 275, Surakarta" },
+    { id: "branch-4", code: "BR-SLO-02", name: "Solo Baru Sukoharjo", region: "Central Java", city: "Sukoharjo", status: "ON_PROGRESS" as const, picName: "Fajar Nugroho", picPhone: "+62 812-3456-007", address: "Jl. Ir. Soekarno No. 45, Sukoharjo" },
+    { id: "branch-5", code: "BR-YOG-01", name: "Yogyakarta Malioboro", region: "DI Yogyakarta", city: "Yogyakarta", status: "DONE" as const, picName: "Siti Rahmawati", picPhone: "+62 813-4567-010", address: "Jl. Malioboro No. 62, Danurejan, Yogyakarta" },
+    { id: "branch-6", code: "BR-YOG-02", name: "Sleman Kaliurang", region: "DI Yogyakarta", city: "Sleman", status: "ON_PROGRESS" as const, picName: "Dimas Anggara", picPhone: "+62 813-4567-013", address: "Jl. Kaliurang KM 8.5, Sinduharjo, Sleman" },
+    { id: "branch-7", code: "BR-PWT-01", name: "Purwokerto Sudirman", region: "Central Java", city: "Purwokerto", status: "DONE" as const, picName: "Aris Munandar", picPhone: "+62 814-5678-022", address: "Jl. Jend. Sudirman No. 450, Purwokerto" },
+    { id: "branch-8", code: "BR-MGL-01", name: "Magelang Pemuda", region: "Central Java", city: "Magelang", status: "ON_PROGRESS" as const, picName: "Citra Kirana", picPhone: "+62 815-6789-030", address: "Jl. Pemuda No. 156, Magelang Tengah" },
+    { id: "branch-9", code: "BR-KDS-01", name: "Kudus Kota", region: "Central Java", city: "Kudus", status: "PENDING" as const, picName: "Dian Permata", picPhone: "+62 817-8901-045", address: "Jl. Sunan Kudus No. 90, Kudus" },
+    { id: "branch-10", code: "BR-BDG-01", name: "Bandung Dago", region: "West Java", city: "Bandung", status: "DONE" as const, picName: "Yudi Purnomo", picPhone: "+62 818-9012-050", address: "Jl. Ir. H. Juanda No. 84, Bandung" },
+    { id: "branch-11", code: "BR-SBY-01", name: "Surabaya Gubeng", region: "East Java", city: "Surabaya", status: "DONE" as const, picName: "Ahmad Fauzi", picPhone: "+62 819-0123-060", address: "Jl. Raya Gubeng No. 32, Surabaya" },
+    { id: "branch-12", code: "BR-DPS-01", name: "Denpasar Teuku Umar", region: "Bali & Nusra", city: "Denpasar", status: "ON_PROGRESS" as const, picName: "Wayan Sudarma", picPhone: "+62 821-3104-0204", address: "Jl. Teuku Umar No. 119, Denpasar" },
+  ];
+
+  for (const b of branchesData) {
+    await prisma.branch.create({ data: b });
+  }
+}
+
+// ============================================================================
+// 4. RETAIL OUTLETS SEED (All Store Types, Approval Lifecycles & QA Cases)
+// ============================================================================
+async function seedOutlets() {
+  console.log("🏪 Seeding retail outlets with approval lifecycles & edge conditions...");
+  const outletsData = [
+    // 1. Healthy Flagship Modern Retail (Associated with branch-1, matches Berkah query)
+    {
+      id: "outlet-smg-001",
+      code: "OUT-SMG-001",
+      name: "Berkah Sinar Jaya Cellular",
+      type: "MODERN_RETAIL" as OutletType,
+      city: "Semarang",
+      address: "Jl. Pemuda No. 18, Pandanaran, Semarang",
+      picName: "Budi Santoso",
+      picPhone: "+62 812-3456-7890",
+      active: true,
+      brand: "IM3" as Brand,
+      latitude: -6.9826,
+      longitude: 110.4091,
+      branchId: "branch-1",
+      status: "APPROVED" as OutletStatus,
+      photoUrl: "https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=600&auto=format&fit=crop&q=80",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(120),
+    },
+    // 2. Traditional Store with Issue & Critical MoU
+    {
+      id: "outlet-smg-002",
+      code: "OUT-SMG-002",
+      name: "Warung Berkah Abadi Ponsel",
+      type: "TRADITIONAL" as OutletType,
+      city: "Semarang",
+      address: "Jl. Majapahit No. 142, Gayamsari, Semarang",
+      picName: "Agus Prasetyo",
+      picPhone: "+62 813-9876-5432",
+      active: true,
+      brand: "IM3" as Brand,
+      latitude: -7.0051,
+      longitude: 110.4582,
+      branchId: "branch-2",
+      status: "APPROVED" as OutletStatus,
+      photoUrl: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=600&auto=format&fit=crop&q=80",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(90),
+    },
+    // 3. Exclusive Store with High-Value Flagship MoU
+    {
+      id: "outlet-slo-001",
+      code: "OUT-SLO-001",
+      name: "Solo Megah Cellular Center",
+      type: "EXCLUSIVE" as OutletType,
+      city: "Solo",
+      address: "Jl. Slamet Riyadi No. 312, Laweyan, Surakarta",
+      picName: "Rina Wijaya",
+      picPhone: "+62 812-7788-9900",
+      active: true,
+      brand: "TRI" as Brand,
+      latitude: -7.5683,
+      longitude: 110.8124,
+      branchId: "branch-3",
+      status: "APPROVED" as OutletStatus,
+      photoUrl: "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=600&auto=format&fit=crop&q=80",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(150),
+    },
+    // 4. Campus Outlet with Impending Expiry MoU
+    {
+      id: "outlet-yog-001",
+      code: "OUT-YOG-001",
+      name: "Campus Cell Corner UGM",
+      type: "CAMPUS_OUTLET" as OutletType,
+      city: "Sleman",
+      address: "Jl. Kaliurang KM 5, Caturtunggal, Depok, Sleman",
+      picName: "Dimas Anggara",
+      picPhone: "+62 813-1122-3344",
+      active: true,
+      brand: "IM3" as Brand,
+      latitude: -7.7612,
+      longitude: 110.3812,
+      branchId: "branch-6",
+      status: "APPROVED" as OutletStatus,
+      photoUrl: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&auto=format&fit=crop&q=80",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(180),
+    },
+    // 5. Pending Approval Outlet (Awaiting Admin Review in Queue)
+    {
+      id: "outlet-yog-002",
+      code: "DRAFT-YOG-002",
+      name: "Jogja Gadget Point Malioboro",
+      type: "CAMPUS_OUTLET" as OutletType,
+      city: "Yogyakarta",
+      address: "Jl. Sosrowijayan No. 45, Gedongtengen, Yogyakarta",
+      picName: "Siti Rahmawati",
+      picPhone: "+62 813-5566-7788",
+      active: true,
+      brand: "TRI" as Brand,
+      latitude: -7.7925,
+      longitude: 110.3644,
+      branchId: "branch-5",
+      status: "PENDING_APPROVAL" as OutletStatus,
+      photoUrl: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&auto=format&fit=crop&q=80",
+      submittedBy: "staff.dewi@vrelloup.dev",
+    },
+    // 6. Rejected Outlet with Detailed Rejection Reason
+    {
+      id: "outlet-slo-002",
+      code: "DRAFT-SLO-002",
+      name: "Kios Pulsa Pojok Pasar Klewer",
+      type: "TRADITIONAL" as OutletType,
+      city: "Solo",
+      address: "Kompleks Pasar Klewer Blok C-12, Pasar Kliwon, Surakarta",
+      picName: "Fajar Nugroho",
+      picPhone: "+62 812-4455-6677",
+      active: false,
+      brand: "IM3" as Brand,
+      latitude: -7.5756,
+      longitude: 110.8289,
+      branchId: "branch-4",
+      status: "REJECTED" as OutletStatus,
+      photoUrl: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&auto=format&fit=crop&q=80",
+      submittedBy: "staff.budi@vrelloup.dev",
+      rejectionReason: "Lokasi berada di dalam lorong sempit tanpa akses pandang jalan raya. Visibilitas materi branding tidak memenuhi standar korporasi.",
+    },
+    // 7. Draft Outlet (Unsubmitted, Incomplete)
+    {
+      id: "outlet-mgl-001",
+      code: "DRAFT-MGL-001",
+      name: "Sentral Telepon Borobudur",
+      type: "MODERN_RETAIL" as OutletType,
+      city: "Magelang",
+      address: "Jl. Badrawati No. 8, Borobudur, Magelang",
+      picName: "Citra Kirana",
+      picPhone: "+62 815-1234-5678",
+      active: true,
+      brand: "IM3" as Brand,
+      latitude: -7.6079,
+      longitude: 110.2038,
+      branchId: "branch-8",
+      status: "DRAFT" as OutletStatus,
+      photoUrl: "",
+      submittedBy: "staff.dewi@vrelloup.dev",
+    },
+    // 8. Cold / Orphan Outlet (Active but 0 MoUs, 0 Placements, 0 Events)
+    {
+      id: "outlet-kds-001",
+      code: "OUT-KDS-001",
+      name: "Kudus Pratama Phone Shop",
+      type: "MODERN_RETAIL" as OutletType,
+      city: "Kudus",
+      address: "Jl. Ahmad Yani No. 88, Getas Pejaten, Jati, Kudus",
+      picName: "Dian Permata",
+      picPhone: "+62 817-9988-7766",
+      active: true,
+      brand: "TRI" as Brand,
+      latitude: -6.8144,
+      longitude: 110.8415,
+      branchId: "branch-9",
+      status: "APPROVED" as OutletStatus,
+      photoUrl: "https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=600&auto=format&fit=crop&q=80",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(30),
+    },
+    // 9. Bali Exclusive Outlet with Anomaly Geolocation
+    {
+      id: "outlet-dps-001",
+      code: "OUT-DPS-001",
+      name: "Dewata Selular Premium Hub",
+      type: "EXCLUSIVE" as OutletType,
+      city: "Denpasar",
+      address: "Jl. Teuku Umar No. 145, Dauh Puri Kauh, Denpasar Barat",
+      picName: "Wayan Sudarma",
+      picPhone: "+62 821-4433-2211",
+      active: true,
+      brand: "IM3" as Brand,
+      latitude: -8.6748,
+      longitude: 115.2075,
+      branchId: "branch-12",
+      status: "APPROVED" as OutletStatus,
+      photoUrl: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=600&auto=format&fit=crop&q=80",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(60),
+    },
+    // 10. Inactive / Retired Outlet
+    {
+      id: "outlet-pwt-001",
+      code: "OUT-PWT-001",
+      name: "Mitra Ponsel Purwokerto Lama",
+      type: "TRADITIONAL" as OutletType,
+      city: "Purwokerto",
+      address: "Jl. Jenderal Gatot Subroto No. 12, Purwokerto Timur",
+      picName: "Aris Munandar",
+      picPhone: "+62 814-1122-8899",
+      active: false,
+      brand: "IM3" as Brand,
+      latitude: -7.4243,
+      longitude: 109.2391,
+      branchId: "branch-7",
+      status: "APPROVED" as OutletStatus,
+      photoUrl: "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600&auto=format&fit=crop&q=80",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(300),
+    },
+  ];
+
+  for (const o of outletsData) {
+    await prisma.outlet.create({ data: o });
+  }
+}
+
+// ============================================================================
+// 5. MOUS & CONTRACT FUNNEL (Dynamic Dates & QA Scenarios)
+// ============================================================================
+async function seedMous() {
+  console.log("📑 Seeding legal MoUs (Expired, Expiring Soon, Pending Approval & Jumbo Contracts)...");
+  const mousData = [
+    // 1. Expired Contract (Triggers Critical Urgency in Pipeline)
+    {
+      id: "mou-exp-001",
+      branchId: "branch-2",
+      outletId: "outlet-smg-002",
+      outletName: "Warung Berkah Abadi Ponsel",
+      partnerName: "H. Sudirman Santoso",
+      mouType: "EXCLUSIVE_BRANDING",
+      submissionDate: daysAgo(420),
+      startDate: daysAgo(410),
+      endDate: daysAgo(45), // Expired 45 days ago
+      status: "APPROVED" as MouStatus,
+      picName: "Agus Prasetyo",
+      picPhone: "+62 813-9876-5432",
+      docPath: "https://drive.google.com/file/d/1A8x9yZ_mou_exp_001/view",
+      compensationValue: 24000000,
+      notes: "Kontrak telah habis masa berlakunya 45 hari lalu. Menunggu pengajuan perpanjangan sewa fascia toko.",
+    },
+    // 2. Near-Expiry Contract (Expiring in 8 Days -> SLA Warning)
+    {
+      id: "mou-soon-002",
+      branchId: "branch-6",
+      outletId: "outlet-yog-001",
+      outletName: "Campus Cell Corner UGM",
+      partnerName: "Prof. Ir. Bambang Soegito",
+      mouType: "CAMPUS_PARTNERSHIP",
+      submissionDate: daysAgo(360),
+      startDate: daysAgo(355),
+      endDate: daysFromNow(8), // Expiring in 8 days
+      status: "APPROVED" as MouStatus,
+      picName: "Dimas Anggara",
+      picPhone: "+62 813-1122-3344",
+      docPath: "https://drive.google.com/file/d/1A8x9yZ_mou_soon_002/view",
+      compensationValue: 36000000,
+      notes: "Sisa masa berlaku kontrak kurang dari 14 hari. Perlu follow up addendum perpanjangan display kanopi.",
+    },
+    // 3. Pending Approval Aging Contract (Submitted >60 Days Ago -> Bottleneck Alert)
+    {
+      id: "mou-sub-003",
+      branchId: "branch-12",
+      outletId: "outlet-dps-001",
+      outletName: "Dewata Selular Premium Hub",
+      partnerName: "I Made Sukadana",
+      mouType: "FLAGSHIP_STORE",
+      submissionDate: daysAgo(68), // Submitted 68 days ago
+      startDate: null,
+      endDate: null,
+      status: "SUBMITTED" as MouStatus,
+      picName: "Wayan Sudarma",
+      picPhone: "+62 821-4433-2211",
+      docPath: "https://drive.google.com/file/d/1A8x9yZ_mou_sub_003/view",
+      compensationValue: 48000000,
+      notes: "Dokumen MoU tertahan di meja legal regional selama lebih dari 60 hari karena revisi klausul termin pembayaran.",
+    },
+    // 4. Healthy Flagship Multi-Year Contract
+    {
+      id: "mou-hlth-004",
+      branchId: "branch-3",
+      outletId: "outlet-slo-001",
+      outletName: "Solo Megah Cellular Center",
+      partnerName: "Kurniawan Widjaja",
+      mouType: "EXCLUSIVE_BRANDING",
+      submissionDate: daysAgo(90),
+      startDate: daysAgo(85),
+      endDate: daysFromNow(280), // Valid for 280 more days
+      status: "APPROVED" as MouStatus,
+      picName: "Rina Wijaya",
+      picPhone: "+62 812-7788-9900",
+      docPath: "https://drive.google.com/file/d/1A8x9yZ_mou_hlth_004/view",
+      compensationValue: 150000000, // High-value IDR 150 Jt
+      notes: "Kontrak kemitraan flagship 1 tahun penuh dengan hak eksklusif branding neon box dan shopblind.",
+    },
+    // 5. Rejected MoU with Finance Disapproval Notes
+    {
+      id: "mou-rej-005",
+      branchId: "branch-1",
+      outletId: "outlet-smg-001",
+      outletName: "Berkah Sinar Jaya Cellular",
+      partnerName: "Budi Santoso",
+      mouType: "SECONDARY_DISPLAY",
+      submissionDate: daysAgo(30),
+      startDate: null,
+      endDate: null,
+      status: "REJECTED" as MouStatus,
+      picName: "Budi Santoso",
+      picPhone: "+62 812-3456-7890",
+      docPath: "",
+      compensationValue: 12000000,
+      notes: "Ditolak oleh Manager Keuangan: Nilai kompensasi melebihi batas plafon regional untuk material display sekunder.",
+    },
+    // 6. Draft MoU (Zero Compensation, Initial In-Progress Work)
+    {
+      id: "mou-draft-006",
+      branchId: "branch-8",
+      outletId: "outlet-mgl-001",
+      outletName: "Sentral Telepon Borobudur",
+      partnerName: "Hj. Ratna Ningsih",
+      mouType: "STANDARD_COMMERCIAL",
+      submissionDate: daysAgo(5),
+      startDate: null,
+      endDate: null,
+      status: "DRAFT" as MouStatus,
+      picName: "Citra Kirana",
+      picPhone: "+62 815-1234-5678",
+      docPath: "",
+      compensationValue: 0,
+      notes: "Draf awal perjanjian sedang disusun oleh tim operasional Magelang.",
+    },
+  ];
+
+  for (const m of mousData) {
+    await prisma.mou.create({ data: m });
+  }
+}
+
+// ============================================================================
+// 6. POSM PLACEMENTS (Done, Anomaly GPS, Issue Blocked, Extreme Dimensions)
+// ============================================================================
+async function seedPlacements() {
+  console.log("📌 Seeding POSM placements (Valid, GPS Deviation >1km, Issue Blocked, Missing Coords)...");
+  const placementsData = [
+    // 1. Valid Done Placement with Accurate GPS
+    {
+      id: "plc-001",
+      outletId: "outlet-smg-001",
+      materialId: "material-shopblind",
+      mouId: null,
+      status: "DONE" as PlacementStatus,
+      brand: "IM3" as Brand,
+      date: daysAgo(20),
+      picName: "Hendra Kurniawan (Vendor)",
+      photoUrl: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=600&auto=format&fit=crop&q=80",
+      dimensions: "300 x 90 cm",
+      cost: 1450000,
+      notes: "Pemasangan rapi dan terverifikasi di kanopi depan toko.",
+      latitude: -6.98262,
+      longitude: 110.40912,
+      shareLocationUrl: "https://maps.google.com/?q=-6.98262,110.40912",
+      locationNotes: "Check-in GPS akurat di teras toko (akurasi 8m).",
+      quarter: "Q4 2026",
+      campaignTheme: "Pesta Kuota Akhir Tahun",
+      isLocationValid: true,
+      locationDeviation: 12.4, // 12.4 meters deviation (healthy)
+    },
+    // 2. Anomaly GPS Deviation (>1.4 km deviation - Fraud/Incorrect check-in detection)
+    {
+      id: "plc-002",
+      outletId: "outlet-dps-001",
+      materialId: "material-signboard",
+      mouId: "mou-sub-003",
+      status: "DONE" as PlacementStatus,
+      brand: "IM3" as Brand,
+      date: daysAgo(14),
+      picName: "I Ketut Suardika (Vendor)",
+      photoUrl: "https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?w=600&auto=format&fit=crop&q=80",
+      dimensions: "400 x 120 cm",
+      cost: 4200000,
+      notes: "Foto bukti terunggah, namun sistem mendeteksi titik koordinat berada di luar radius outlet.",
+      latitude: -8.6872,
+      longitude: 115.2198,
+      shareLocationUrl: "https://maps.google.com/?q=-8.6872,115.2198",
+      locationNotes: "Peringatan Anomali GPS: Koordinat terdeteksi 1.450 meter dari titik master outlet.",
+      quarter: "Q4 2026",
+      campaignTheme: "Branding Flagship Denpasar",
+      isLocationValid: false,
+      locationDeviation: 1450.0, // High GPS deviation
+    },
+    // 3. Blocked Placement with ISSUE Status (Renovation obstacle)
+    {
+      id: "plc-003",
+      outletId: "outlet-smg-002",
+      materialId: "material-signboard",
+      mouId: "mou-exp-001",
+      status: "ISSUE" as PlacementStatus,
+      brand: "IM3" as Brand,
+      date: daysAgo(40),
+      picName: "Agus Prasetyo",
+      photoUrl: "",
+      dimensions: "350 x 100 cm",
+      cost: 3800000,
+      notes: "KENDALA: Pemilik outlet sedang merenovasi fasad bangunan toko. Pemasangan signboard ditunda hingga renovasi selesai.",
+      latitude: -7.0051,
+      longitude: 110.4582,
+      shareLocationUrl: "",
+      locationNotes: "Survei awal dilakukan, pengerjaan ditahan.",
+      quarter: "Q3 2026",
+      campaignTheme: "Sinergi Outlet Tradisional",
+      isLocationValid: true,
+      locationDeviation: 0,
+    },
+    // 4. In-Progress Placement without Coordinates (Missing Map Pinning)
+    {
+      id: "plc-004",
+      outletId: "outlet-yog-001",
+      materialId: "material-banner",
+      mouId: "mou-soon-002",
+      status: "ON_PROGRESS" as PlacementStatus,
+      brand: "IM3" as Brand,
+      date: daysAgo(3),
+      picName: "Dimas Anggara",
+      photoUrl: "",
+      dimensions: "85 x 200 cm",
+      cost: 450000,
+      notes: "Material banner sedang dalam proses pengiriman dari percetakan regional.",
+      latitude: null,
+      longitude: null,
+      shareLocationUrl: "",
+      locationNotes: "Belum dilakukan check-in fisik lokasi.",
+      quarter: "Q4 2026",
+      campaignTheme: "IM3 Colabonation Campus Tour",
+      isLocationValid: true,
+      locationDeviation: null,
+    },
+    // 5. Extreme Dimensions Facade Billboard
+    {
+      id: "plc-005",
+      outletId: "outlet-slo-001",
+      materialId: "material-facade",
+      mouId: "mou-hlth-004",
+      status: "DONE" as PlacementStatus,
+      brand: "TRI" as Brand,
+      date: daysAgo(60),
+      picName: "Surya Gemilang Perkasa (Vendor)",
+      photoUrl: "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=600&auto=format&fit=crop&q=80",
+      dimensions: "1200 x 400 cm", // Extreme dimensions
+      cost: 18500000,
+      notes: "Instalasi billboard jumbo di dinding samping gedung Solo Megah Cellular.",
+      latitude: -7.56832,
+      longitude: 110.81245,
+      shareLocationUrl: "https://maps.google.com/?q=-7.56832,110.81245",
+      locationNotes: "Verifikasi struktural selesai, lampu sorot LED menyala aktif.",
+      quarter: "Q3 2026",
+      campaignTheme: "Tri Jaringan Cepat Juara",
+      isLocationValid: true,
+      locationDeviation: 6.8,
+    },
+    // 6. Permanent Material without MoU (Policy Warning Case)
+    {
+      id: "plc-006",
+      outletId: "outlet-mgl-001",
+      materialId: "material-signboard",
+      mouId: null, // Requires MoU but unattached
+      status: "NOT_STARTED" as PlacementStatus,
+      brand: "IM3" as Brand,
+      date: null,
+      picName: "Citra Kirana",
+      photoUrl: "",
+      dimensions: "240 x 80 cm",
+      cost: 2100000,
+      notes: "PERINGATAN ATURAN: Signboard membutuhkan MoU legal sebelum vendor dapat memulai produksi fisik.",
+      latitude: null,
+      longitude: null,
+      shareLocationUrl: "",
+      locationNotes: "",
+      quarter: "Q4 2026",
+      campaignTheme: "Ekspansi Gerai Magelang",
+      isLocationValid: true,
+      locationDeviation: null,
+    },
+  ];
+
+  for (const p of placementsData) {
+    await prisma.placement.create({ data: p });
+  }
+}
+
+// ============================================================================
+// 7. INVENTORY EQUIPMENT CATALOG (5 Categories & Edge Statuses)
+// ============================================================================
+async function seedInventory() {
+  console.log("📦 Seeding equipment inventory catalog (Available, Borrowed, Maintenance & Retired)...");
+  const items = [
+    { id: "inv-001", code: "TND-001", name: "Folding Tent Branding 3×3m", category: "Staging/Booth", brand: "IM3 Pro", description: "Tenda lipat kanopi anti-air untuk booth outdoor", totalUnits: 6, availableUnits: 4, photoUrl: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=400&auto=format&fit=crop&q=80", storageLocation: "Warehouse A - Rack 1", status: "AVAILABLE" as EquipmentStatus },
+    { id: "inv-002", code: "TND-002", name: "Folding Tent Compact 2×2m", category: "Staging/Booth", brand: "Tri Juara", description: "Tenda stan sempit untuk aktivasi trotoar/pasar", totalUnits: 4, availableUnits: 0, photoUrl: "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=400&auto=format&fit=crop&q=80", storageLocation: "Warehouse A - Rack 1", status: "BORROWED" as EquipmentStatus }, // Exhausted units
+    { id: "inv-003", code: "SPK-001", name: "Portable PA Sound System 12-inch", category: "Audio/Visual", brand: "JBL Professional", description: "Speaker aktif troli baterai 150W dengan Bluetooth", totalUnits: 4, availableUnits: 3, photoUrl: "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=400&auto=format&fit=crop&q=80", storageLocation: "AV Room - Shelf A", status: "AVAILABLE" as EquipmentStatus },
+    { id: "inv-004", code: "MIC-001", name: "Wireless Dual Handheld Microphone", category: "Audio/Visual", brand: "Shure Vocal", description: "Mikrofon nirkabel UHF jarak jangkau 50 meter", totalUnits: 4, availableUnits: 3, photoUrl: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400&auto=format&fit=crop&q=80", storageLocation: "AV Room - Shelf A", status: "AVAILABLE" as EquipmentStatus },
+    { id: "inv-005", code: "MIC-002", name: "Clip-on Lavalier Mic Wireless", category: "Audio/Visual", brand: "Saramonic", description: "Mikrofon jepit untuk MC & live streamer event", totalUnits: 2, availableUnits: 0, photoUrl: "", storageLocation: "Service Center Vendor", status: "MAINTENANCE" as EquipmentStatus }, // Under maintenance
+    { id: "inv-006", code: "TV-001", name: 'Smart LED TV 43" Display Stand', category: "Merchandising/Display", brand: "Samsung Display", description: "TV showcase produk + bracket besi standing roda", totalUnits: 2, availableUnits: 1, photoUrl: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400&auto=format&fit=crop&q=80", storageLocation: "Display Bay - Floor 1", status: "AVAILABLE" as EquipmentStatus },
+    { id: "inv-007", code: "TBL-001", name: "Folding Registration Table 180cm", category: "Furniture/Logistics", brand: "Krisbow Heavy", description: "Meja lipat plastik tebal untuk regis peserta event", totalUnits: 8, availableUnits: 6, photoUrl: "", storageLocation: "Warehouse B - Bay 1", status: "AVAILABLE" as EquipmentStatus },
+    { id: "inv-008", code: "CHR-001", name: "Stacking / Folding Chair", category: "Furniture/Logistics", brand: "Futura Standar", description: "Kursi lipat besi busa hitam", totalUnits: 25, availableUnits: 15, photoUrl: "", storageLocation: "Warehouse B - Bay 2", status: "AVAILABLE" as EquipmentStatus },
+    { id: "inv-009", code: "GEN-001", name: "Silent Inverter Generator 2200W", category: "Electrical/Cables", brand: "Honda Silent", description: "Genset bensin hening untuk daya listrik lapangan", totalUnits: 2, availableUnits: 1, photoUrl: "", storageLocation: "Logistics Shed", status: "AVAILABLE" as EquipmentStatus },
+    { id: "inv-010", code: "CBL-001", name: "Heavy Duty Cable Roll 50m", category: "Electrical/Cables", brand: "Uticon Outdoor", description: "Kabel gulung stop kontak 4 lubang pelindung karet", totalUnits: 6, availableUnits: 4, photoUrl: "", storageLocation: "Warehouse B - Rack 3", status: "AVAILABLE" as EquipmentStatus },
+    { id: "inv-011", code: "DIS-OLD", name: "Legacy Acrylic Brochure Stand", category: "Merchandising/Display", brand: "Generic", description: "Stan brosur akrilik model lama, engsel retak", totalUnits: 2, availableUnits: 0, photoUrl: "", storageLocation: "Afkir Scrap Room", status: "RETIRED" as EquipmentStatus }, // Retired equipment
+    { id: "inv-012", code: "TRP-001", name: "Waterproof Tarpaulin (4×6m)", category: "Furniture/Logistics", brand: "Krisbow Heavy", description: "Terpal waterproof tebal untuk pelindung booth outdoor", totalUnits: 5, availableUnits: 5, photoUrl: "", storageLocation: "Warehouse B - Rack 3", status: "AVAILABLE" as EquipmentStatus },
+    { id: "inv-013", code: "HND-001", name: "Hand Truck / Heavy Sack Truck", category: "Furniture/Logistics", brand: "Krisbow Heavy", description: "Troli barang lipat kapasitas angkut 150kg", totalUnits: 3, availableUnits: 3, photoUrl: "", storageLocation: "Warehouse Entrance", status: "AVAILABLE" as EquipmentStatus },
+  ];
+
+  for (const item of items) {
+    await prisma.inventoryItem.create({ data: item });
+  }
+}
+
+// ============================================================================
+// 8. FIELD EVENTS & FOOTAGE SEED (Upcoming, On Progress, Done & Cancelled)
+// ============================================================================
+async function seedFieldEvents() {
+  console.log("🎪 Seeding field marketing events and media footages...");
+  const events = [
+    // 1. Upcoming Event Linked with Borrow Records
+    {
+      id: "event-001",
+      name: "Roadshow Colabonation Campus Tour UGM",
+      eventType: "CAMPUS_ROADSHOW",
+      startDate: daysFromNow(4),
+      endDate: daysFromNow(6),
+      location: "Plaza Boulevard UGM, Bulaksumur, Yogyakarta",
+      branchName: "Yogyakarta Malioboro",
+      picName: "Dimas Anggara",
+      status: "UPCOMING" as EventStatus,
+      budget: 18500000,
+      targetAttendee: 1500,
+      attendeeCount: 0,
+      notes: "Event aktivasi penetrasi kartu perdana mahasiswa baru dengan booth live gaming.",
+      outletId: "outlet-yog-001",
+    },
+    // 2. Overdue Logistics Event (Event Ended but Equipment Unreturned)
+    {
+      id: "event-002",
+      name: "Bazaar UMKM Festival Simpang Lima",
+      eventType: "COMMUNITY_BAZAAR",
+      startDate: daysAgo(10),
+      endDate: daysAgo(6), // Ended 6 days ago
+      location: "Lapangan Pancasila Simpang Lima, Semarang",
+      branchName: "Semarang Pandanaran",
+      picName: "Budi Santoso",
+      status: "COMPLETED" as EventStatus,
+      budget: 12000000,
+      targetAttendee: 800,
+      attendeeCount: 920,
+      notes: "Aktivasi stan bazaar sembako murah IM3. Catatan: Alat logistik belum dikembalikan ke gudang.",
+      outletId: "outlet-smg-001",
+    },
+    // 3. Completed Event with Video Documentation
+    {
+      id: "event-003",
+      name: "Car Free Day Sehat Bersama Tri Solo",
+      eventType: "CFD_ACTIVATION",
+      startDate: daysAgo(25),
+      endDate: daysAgo(25),
+      location: "Jl. Slamet Riyadi KM 3, Surakarta",
+      branchName: "Solo Slamet Riyadi",
+      picName: "Rina Wijaya",
+      status: "COMPLETED" as EventStatus,
+      budget: 8500000,
+      targetAttendee: 500,
+      attendeeCount: 650,
+      notes: "Senam zumba massal dan bagi-bagi merchandise starter pack Tri.",
+      outletId: "outlet-slo-001",
+    },
+    // 4. Cancelled Event
+    {
+      id: "event-004",
+      name: "Konser Mini Akustik Pantai Kuta",
+      eventType: "MUSIC_CONCERT",
+      startDate: daysAgo(5),
+      endDate: daysAgo(5),
+      location: "Area Parkir Pantai Kuta, Badung, Bali",
+      branchName: "Denpasar Teuku Umar",
+      picName: "Wayan Sudarma",
+      status: "CANCELLED" as EventStatus,
+      budget: 25000000,
+      targetAttendee: 2000,
+      attendeeCount: 0,
+      notes: "DIBATALKAN: Cuaca ekstrim dan angin kencang di pesisir pantai tidak memungkinkan pendirian panggung.",
+      outletId: "outlet-dps-001",
+    },
+  ];
+
+  for (const e of events) {
+    await prisma.fieldEvent.create({ data: e });
+  }
+
+  // Seed Event Footages for Event-003
+  await prisma.eventFootage.createMany({
+    data: [
+      {
+        id: "ftg-001",
+        eventId: "event-003",
+        title: "Video Highlight Zumba Massal & Crowd 4K",
+        filePath: "https://storage.marcom-internal.corp/events/2026/cfd_solo_highlight.mp4",
+        duration: "02:45",
+      },
+      {
+        id: "ftg-002",
+        eventId: "event-003",
+        title: "Dokumentasi Penyerahan Hadiah Doorprize",
+        filePath: "https://storage.marcom-internal.corp/events/2026/cfd_solo_doorprize.mp4",
+        duration: "01:15",
+      },
+    ],
+  });
+}
+
+// ============================================================================
+// 9. BORROW RECORDS & JUNCTION ITEMS (Overdue, Active, Damaged Return, Cancelled)
+// ============================================================================
+async function seedBorrowRecords() {
+  console.log("🚚 Seeding equipment borrow records (Overdue, Damaged Returns, Active & Pending)...");
+  
+  // 1. Overdue Borrow Record (Due 6 days ago -> Triggers Red Overdue Chip)
+  const brwOverdue = await prisma.borrowRecord.create({
+    data: {
+      id: "brw-rec-001",
+      borrowCode: "BRW-20261015-001",
+      borrowerName: "Budi Santoso",
+      borrowerPhone: "+62 811-2345-001",
+      borrowerDivision: "Field Marketing Semarang",
+      picName: "Budi Santoso",
+      eventId: "event-002",
+      eventLocation: "Lapangan Pancasila Simpang Lima, Semarang",
+      borrowDate: daysAgo(15),
+      returnDueDate: daysAgo(6), // Due 6 days ago -> OVERDUE
+      returnDate: null,
+      status: "OVERDUE" as BorrowStatus,
+      purpose: "Logistik Stan Bazaar UMKM Festival Simpang Lima",
+      notes: "DIPERINGATKAN: Belum dikembalikan ke gudang Semarang setelah event selesai.",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(14),
+      items: {
+        create: [
+          {
+            inventoryItemId: "inv-001", // Tenda 3x3
+            quantity: 2,
+            conditionOut: "GOOD" as EquipmentCondition,
+            conditionIn: null,
+            notes: "Kondisi keluar lengkap dengan pasak besi dan tas kanvas.",
+          },
+          {
+            inventoryItemId: "inv-003", // Speaker Portable
+            quantity: 1,
+            conditionOut: "GOOD" as EquipmentCondition,
+            conditionIn: null,
+            notes: "Disertai 1 charger adaptor orisinil.",
+          },
+        ],
+      },
+    },
+  });
+
+  // 2. Active Borrow Record (Due in 4 days)
+  await prisma.borrowRecord.create({
+    data: {
+      id: "brw-rec-002",
+      borrowCode: "BRW-20261028-002",
+      borrowerName: "Dimas Anggara",
+      borrowerPhone: "+62 813-4567-013",
+      borrowerDivision: "Creative & Activation DIY",
+      picName: "Dimas Anggara",
+      eventId: "event-001",
+      eventLocation: "Plaza Boulevard UGM, Yogyakarta",
+      borrowDate: daysAgo(2),
+      returnDueDate: daysFromNow(4), // Due in 4 days
+      returnDate: null,
+      status: "ACTIVE" as BorrowStatus,
+      purpose: "Peralatan Roadshow Colabonation UGM",
+      notes: "Penggunaan outdoor di kampus UGM selama 3 hari.",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(2),
+      items: {
+        create: [
+          {
+            inventoryItemId: "inv-002", // Tenda 2x2 (Total 4, all active)
+            quantity: 4,
+            conditionOut: "GOOD" as EquipmentCondition,
+            conditionIn: null,
+            notes: "Semua 4 unit dipinjam untuk booth registrasi.",
+          },
+          {
+            inventoryItemId: "inv-007", // Meja Lipat
+            quantity: 2,
+            conditionOut: "GOOD" as EquipmentCondition,
+            conditionIn: null,
+          },
+        ],
+      },
+    },
+  });
+
+  // 3. Pending Borrow Request (Awaiting Admin Approval)
+  await prisma.borrowRecord.create({
+    data: {
+      id: "brw-rec-003",
+      borrowCode: "BRW-20261030-003",
+      borrowerName: "Dewi Lestari",
+      borrowerPhone: "+62 812-3456-7890",
+      borrowerDivision: "Field Marketing Semarang",
+      picName: "Dewi Lestari",
+      eventId: null,
+      eventLocation: "Pameran Komputer Java Supermall Semarang",
+      borrowDate: daysFromNow(2),
+      returnDueDate: daysFromNow(7),
+      returnDate: null,
+      status: "PENDING" as BorrowStatus,
+      purpose: "Stan promosi bundling paket internet di pameran komputer",
+      notes: "Menunggu persetujuan kepala logistik / admin.",
+      items: {
+        create: [
+          {
+            inventoryItemId: "inv-006", // LED TV 43"
+            quantity: 1,
+            conditionOut: "GOOD" as EquipmentCondition,
+            conditionIn: null,
+            notes: "Untuk display looping video promosi paket data.",
+          },
+        ],
+      },
+    },
+  });
+
+  // 4. Returned with Major Damage & Lost Item Check-in
+  await prisma.borrowRecord.create({
+    data: {
+      id: "brw-rec-004",
+      borrowCode: "BRW-20261010-004",
+      borrowerName: "Rina Wijaya",
+      borrowerPhone: "+62 812-3456-006",
+      borrowerDivision: "Activation Solo",
+      picName: "Rina Wijaya",
+      eventId: "event-003",
+      eventLocation: "Jl. Slamet Riyadi KM 3, Surakarta",
+      borrowDate: daysAgo(26),
+      returnDueDate: daysAgo(24),
+      returnDate: daysAgo(23),
+      status: "RETURNED" as BorrowStatus,
+      purpose: "Peralatan CFD Solo Bersama Tri",
+      notes: "Peralatan dikembalikan dengan insiden kerusakan akibat hujan deras.",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(26),
+      returnNotes: "LAPORAN KERUSAKAN: 1 unit Tenda 3x3 mengalami sobek pada atap terpal karena tersangkut ranting pohon (MAJOR_DAMAGE). 1 unit Mikrofon Wireless hilang di lokasi CFD (LOST). Divisi Solo telah menyepakati penggantian biaya perbaikan.",
+      items: {
+        create: [
+          {
+            inventoryItemId: "inv-004", // Mic Wireless
+            quantity: 1,
+            conditionOut: "GOOD" as EquipmentCondition,
+            conditionIn: "LOST" as EquipmentCondition, // LOST equipment
+            notes: "Unit mikrofon hilang, transmitter masih ada.",
+          },
+          {
+            inventoryItemId: "inv-008", // Kursi Lipat
+            quantity: 10,
+            conditionOut: "GOOD" as EquipmentCondition,
+            conditionIn: "GOOD" as EquipmentCondition,
+            notes: "10 kursi kembali bersih dan utuh.",
+          },
+        ],
+      },
+    },
+  });
+}
+
+// ============================================================================
+// 10. DIGITAL CONTENT POSTS (Multi-Platform, Revision Needed & Scheduled)
+// ============================================================================
+async function seedContentPosts() {
+  console.log("📱 Seeding digital content posts (Instagram, TikTok, YouTube & Revisions)...");
+  const posts = [
+    // 1. Published Viral Reel
+    {
+      id: "cnt-001",
+      title: "Review Jujur Sinyal IM3 5G di Kampus UGM",
+      platform: "instagram",
+      format: "reels",
+      publishDate: daysAgo(3),
+      status: "PUBLISHED",
+      caption: "Tes kecepatan internet IM3 di berbagai sudut kampus UGM Jogja! Siapa yang kuliah di sini dan udah cobain kuota hematnya? 🔥 #IM3Colabonation #KencangTanpaKompromi",
+      mediaUrl: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=600&auto=format&fit=crop&q=80",
+      branchName: "Yogyakarta Malioboro",
+      picName: "Dimas Anggara",
+      outletId: "outlet-yog-001",
+      subtasks: toJson([
+        { id: "sub-1", title: "Shoot video speedtest di perpustakaan UGM", done: true },
+        { id: "sub-2", title: "Review visual grading tone kuning khas IM3", done: true },
+      ]),
+    },
+    // 2. Revision Needed (Clear Feedback Notes & Subtasks)
+    {
+      id: "cnt-002",
+      title: "Tutorial Klaim Kuota Bonus Tri via Aplikasi bima+",
+      platform: "tiktok",
+      format: "video",
+      publishDate: daysFromNow(2),
+      status: "REVISION_NEEDED",
+      caption: "Gampang banget! Begini cara redeem bonus kuota 30GB buat kamu pengguna setia Tri. Simak sampai habis ya! ✨ #TriJuara #BimaPlus",
+      mediaUrl: "https://images.unsplash.com/photo-1611605698335-8b1569810432?w=600&auto=format&fit=crop&q=80",
+      branchName: "Solo Slamet Riyadi",
+      picName: "Rina Wijaya",
+      outletId: "outlet-slo-001",
+      revisionNotes: "CATATAN REVISI: Font teks subtitle di detik ke 0:15 tertutup tombol like TikTok. Warna logo Tri di pojok kanan atas mohon ganti ke aset resmi resolusi tinggi.",
+      subtasks: toJson([
+        { id: "sub-3", title: "Reposition teks subtitle agar tidak menabrak UI TikTok", done: false },
+        { id: "sub-4", title: "Ganti logo Tri dengan file vector SVG high-res", done: false },
+        { id: "sub-5", title: "Tambahkan audio trending pop terkini", done: true },
+      ]),
+    },
+    // 3. In Review Post
+    {
+      id: "cnt-003",
+      title: "Infografis Promo Bundling Starter Pack Semarang",
+      platform: "instagram",
+      format: "carousel",
+      publishDate: daysFromNow(5),
+      status: "IN_REVIEW",
+      caption: "Makin hemat internetan sepanjang akhir tahun dengan paket kuota data spesial Semarang! Cek slide berikutnya untuk detail paket. 📲",
+      mediaUrl: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop&q=80",
+      branchName: "Semarang Pandanaran",
+      picName: "Dewi Lestari",
+      outletId: "outlet-smg-001",
+      subtasks: toJson([]),
+    },
+    // 4. Scheduled YouTube Shorts
+    {
+      id: "cnt-004",
+      title: "Suasana Heboh Bazaar UMKM Simpang Lima Bersama IM3",
+      platform: "youtube",
+      format: "shorts",
+      publishDate: daysFromNow(1),
+      status: "SCHEDULED",
+      caption: "Keseruan stan IM3 di Lapangan Simpang Lima Semarang kemarin! Banyak games seru dan voucher belanja gratis lho. 🎁",
+      mediaUrl: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=600&auto=format&fit=crop&q=80",
+      branchName: "Semarang Pandanaran",
+      picName: "Budi Santoso",
+      outletId: "outlet-smg-002",
+      subtasks: toJson([]),
+    },
+  ];
+
+  for (const post of posts) {
+    await prisma.contentPost.create({ data: post });
+  }
+}
+
+// ============================================================================
+// 11. DOCUMENTS & STRUCTURED MONTHLY REPORTS
+// ============================================================================
+async function seedDocumentsAndReports() {
+  console.log("📂 Seeding documents catalog & executive quarterly reports...");
+  const documents = [
+    {
+      id: "doc-001",
+      name: "Panduan Brand Guidelines IM3 2026 Versi Lengkap",
+      category: "Brand Guidelines",
+      period: "2026",
+      branchName: "Semarang Pandanaran",
+      ownerPic: "Budi Santoso",
+      status: "PUBLISHED",
+      fileType: "PDF" as DocFileType,
+      fileSizeMb: 14.8,
+      filePath: "https://storage.marcom-internal.corp/guidelines/IM3_Brand_Book_2026.pdf",
+      description: "Standard Operating Procedure untuk penerapan logo, palet warna kuning #FFD800, tipografi, dan tata letak kanopi outlet.",
+    },
+    {
+      id: "doc-002",
+      name: "Rekap Arsip MoU Regional Central Java Q3-2026",
+      category: "Legal & MoU",
+      period: "Q3 2026",
+      branchName: "Semarang Pandanaran",
+      ownerPic: "Agus Prasetyo",
+      status: "FINAL",
+      fileType: "ZIP" as DocFileType,
+      fileSizeMb: 88.5, // Large file QA scenario
+      filePath: "https://storage.marcom-internal.corp/archives/2026/MOU_Central_Java_Q3_Archived.zip",
+      description: "Arsip kompresi ZIP berisi seluruh scan PDF perjanjian kerjasama outlet di wilayah Semarang dan Solo.",
+    },
+    {
+      id: "doc-003",
+      name: "Template Perjanjian Kerjasama Gerai Eksklusif Tri",
+      category: "Templates",
+      period: "2026",
+      branchName: "Solo Slamet Riyadi",
+      ownerPic: "Rina Wijaya",
+      status: "DRAFT",
+      fileType: "DOCX" as DocFileType,
+      fileSizeMb: 2.1,
+      filePath: "https://storage.marcom-internal.corp/templates/Draft_PKS_Gerai_Tri_2026.docx",
+      description: "Draf master word template untuk kontrak kemitraan toko eksklusif.",
+    },
+    {
+      id: "doc-004",
+      name: "Data Mentah Log Audit GPS Penempatan POSM",
+      category: "Audit Logs",
+      period: "Oktober 2026",
+      branchName: "Denpasar Teuku Umar",
+      ownerPic: "Wayan Sudarma",
+      status: "VERIFIED",
+      fileType: "CSV" as DocFileType,
+      fileSizeMb: 4.6,
+      filePath: "https://storage.marcom-internal.corp/audit/gps_checkin_logs_oct2026.csv",
+      description: "Ekspor tabel CSV koordinat check-in vendor beserta kalkulasi deviasi radius meter.",
+    },
+  ];
+
+  for (const doc of documents) {
+    await prisma.documentItem.create({ data: doc });
+  }
+
+  // Seed Monthly Reports
+  const reports = [
+    {
+      id: "rep-2026-q3",
+      month: "September",
+      year: 2026,
+      summary: {
+        headline: "Realisasi Pemasangan POSM Q3 Mencapai 88% di Seluruh Regional Jawa Tengah & DIY",
+        totalBudgetSpent: 145000000,
+        completedPlacements: 18,
+        activeOutlets: 10,
+        mouComplianceRate: "92%",
+      },
+      activities: [
+        "Audit berkala titik signboard di Semarang dan Solo",
+        "Aktivasi campus roadshow di 3 universitas negeri",
+        "Pemberian sertifikat kemitraan outlet terbaik",
+      ],
+      achievements: [
+        "Peningkatan brand recall IM3 sebesar 14% di area kampus",
+        "Penyelesaian sengketa sewa etalase di 2 outlet tradisional",
+      ],
+      keyIssues: [
+        "Keterlambatan suplai bahan kain shopblind dari vendor percetakan",
+        "Deviasi lokasi GPS pada check-in vendor di beberapa titik Bali",
+      ],
+      actionPlans: [
+        "Menambah vendor cadangan untuk cetak kanopi tahan cuaca",
+        "Mewajibkan validasi foto geolokasi dua tahap pada aplikasi",
+      ],
+    },
+  ];
+
+  for (const r of reports) {
+    await prisma.monthlyReport.create({
+      data: {
+        id: r.id,
+        month: r.month,
+        year: r.year,
+        summary: toJson(r.summary),
+        activities: toJson(r.activities),
+        achievements: toJson(r.achievements),
+        keyIssues: toJson(r.keyIssues),
+        actionPlans: toJson(r.actionPlans),
+      },
+    });
+  }
+}
+
+// ============================================================================
+// MAIN EXECUTION ORCHESTRATOR
+// ============================================================================
+async function main() {
+  console.log("==================================================================");
+  console.log("🚀 STARTING DETERMINISTIC COMPREHENSIVE QA DATABASE SEEDER");
+  console.log("==================================================================");
+  const startTime = Date.now();
+
+  await cleanDatabase();
+  await seedUsers();
+  await seedMaterials();
+  await seedBranches();
+  await seedOutlets();
+  await seedMous();
+  await seedPlacements();
+  await seedInventory();
+  await seedFieldEvents();
+  await seedBorrowRecords();
+  await seedContentPosts();
+  await seedDocumentsAndReports();
 
   const counts: Record<string, number> = {
+    users: await prisma.user.count(),
     branches: await prisma.branch.count(),
-    outlets: await prisma.outlet.count(),
     materials: await prisma.material.count(),
-    placements: await prisma.placement.count(),
+    outlets: await prisma.outlet.count(),
     mous: await prisma.mou.count(),
-    events: await prisma.fieldEvent.count(),
-    footage: await prisma.eventFootage.count(),
-    documents: await prisma.documentItem.count(),
-    monthlyReports: await prisma.monthlyReport.count(),
+    placements: await prisma.placement.count(),
     inventoryItems: await prisma.inventoryItem.count(),
+    fieldEvents: await prisma.fieldEvent.count(),
+    eventFootage: await prisma.eventFootage.count(),
+    borrowRecords: await prisma.borrowRecord.count(),
+    borrowItems: await prisma.borrowItem.count(),
+    contentPosts: await prisma.contentPost.count(),
+    documentItems: await prisma.documentItem.count(),
+    monthlyReports: await prisma.monthlyReport.count(),
   };
-  for (const [model, count] of Object.entries(counts)) console.log(`${model}: ${count}`);
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log("\n==================================================================");
+  console.log(`✨ SEED COMPLETED SUCCESSFULLY IN ${elapsed}s!`);
+  console.log("==================================================================");
+  console.table(counts);
+
+  console.log("\n🔐 QA TEST CREDENTIALS (Password: changeme123):");
+  console.log("  • Super Admin:       admin@vrelloup.dev");
+  console.log("  • Field Staff 1:     staff.dewi@vrelloup.dev");
+  console.log("  • Field Staff 2:     staff.budi@vrelloup.dev");
+  console.log("  • Read-Only Viewer:  viewer.hendra@vrelloup.dev");
+  console.log("  • Pending Account:   pending.siti@vrelloup.dev");
+  console.log("  • Rejected Account:  rejected.agus@vrelloup.dev\n");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("❌ Seeding failed with error:", e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
