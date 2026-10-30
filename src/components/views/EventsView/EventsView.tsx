@@ -68,6 +68,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   const storeBranches = useMarcomDataStore((s) => s.branches);
   const events = useMarcomDataStore((s) => s.events);
   const storeFetchEvents = useMarcomDataStore((s) => s.fetchEvents);
+  const storeFetchBorrowRecords = useMarcomDataStore((s) => s.fetchBorrowRecords);
   const addCachedEvent = useMarcomDataStore((s) => s.addCachedEvent);
   const updateCachedEvent = useMarcomDataStore((s) => s.updateCachedEvent);
   const removeCachedEvent = useMarcomDataStore((s) => s.removeCachedEvent);
@@ -113,13 +114,14 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
       await Promise.all([
         storeFetchEvents(force),
         fetchBranches(),
+        storeFetchBorrowRecords(force),
       ]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load field events");
     } finally {
       setIsLoading(false);
     }
-  }, [fetchBranches, storeFetchEvents]);
+  }, [fetchBranches, storeFetchEvents, storeFetchBorrowRecords]);
 
   useEffect(() => {
     fetchEvents();

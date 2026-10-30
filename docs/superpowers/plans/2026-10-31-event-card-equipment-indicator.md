@@ -29,18 +29,18 @@ Implement an equipment indicator chip in `EventCardsView.tsx` to display physica
 ## 3. Phased Implementation Steps
 
 ### Phase 1: Pure Logic & Test-Driven Development (TDD)
-- [ ] Create test file `src/lib/marcom/eventEquipmentHelpers.test.ts` with assertions for:
+- [x] Create test file `src/lib/marcom/eventEquipmentHelpers.test.ts` with assertions for:
   - Empty or undefined borrow records return `null`.
   - Non-matching `eventId` returns `null`.
   - Accurately sums item quantities across multiple borrow records for the same event.
   - Correctly detects active loans (`hasActive`).
   - Correctly flags overdue loans (`hasOverdue = true`) when status is `OVERDUE`.
-- [ ] Implement `src/lib/marcom/eventEquipmentHelpers.ts` with TypeScript types and pure logic.
-- [ ] Verify test execution via `node --test --import ./test/register-alias.mjs src/lib/marcom/eventEquipmentHelpers.test.ts`.
+- [x] Implement `src/lib/marcom/eventEquipmentHelpers.ts` with TypeScript types and pure logic.
+- [x] Verify test execution via `node --test --import ./test/register-alias.mjs src/lib/marcom/eventEquipmentHelpers.test.ts`.
 
 ### Phase 2: UI Integration in Event Cards View
-- [ ] In `src/components/views/EventsView/EventsView.tsx`, ensure `fetchBorrowRecords()` is called during initial mount so data is pre-cached.
-- [ ] In `src/components/views/EventsView/EventCardsView.tsx`:
+- [x] In `src/components/views/EventsView/EventsView.tsx`, ensure `fetchBorrowRecords()` is called during initial mount so data is pre-cached.
+- [x] In `src/components/views/EventsView/EventCardsView.tsx`:
   - Subscribe to `borrowRecords` from `useMarcomDataStore`.
   - Compute `equipmentSummary = getEventEquipmentSummary(borrowRecords, event.id)`.
   - Render the equipment chip alongside the checklist section with appropriate color tokens:
@@ -49,9 +49,9 @@ Implement an equipment indicator chip in `EventCardsView.tsx` to display physica
   - Wire `onClick` handler to trigger `onSelectEvent(event)`.
 
 ### Phase 3: Non-Regression & Verification Gates
-- [ ] Run drift check: `npm run drift:check` (verify spec-plan pairing and coordinator file limits).
-- [ ] Run build check: `npm run build:check` (verify 0 TypeScript compilation errors).
-- [ ] Run full test suite: `npm test` (verify 0 failures).
+- [x] Run drift check: `npm run drift:check` (verify spec-plan pairing and coordinator file limits).
+- [x] Run build check: `npm run build:check` (verify 0 TypeScript compilation errors).
+- [x] Run full test suite: `npm test` (verify 0 failures).
 
 ---
 

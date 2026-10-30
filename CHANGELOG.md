@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `feat(events)`: Add equipment logistics indicator chip to event cards
+  - Created pure aggregation helper `getEventEquipmentSummary` in `src/lib/marcom/eventEquipmentHelpers.ts`
+  - Integrated reactive indicator chip into `EventCardsView.tsx` with teal active state and rose overdue state
+  - Added pre-fetch of `fetchBorrowRecords()` to `EventsView.tsx` for zero-lag cache resolution
+  - 4 new unit tests; full suite 588 passed, 0 failed; build check 0 errors; drift check clean
+  Spec: `docs/superpowers/specs/2026-10-31-event-card-equipment-indicator-design.md`
+  Plan: `docs/superpowers/plans/2026-10-31-event-card-equipment-indicator.md`
+  Refs: `docs/adr/0006-event-card-equipment-indicator.md` (ADR-06)
+
 - `fix(inventory)`: Fix equipment inventory navigation reverting appMode to projects
   - Added `"inventory"` to `MARCOM_VIEW_SET` in `src/lib/store/slices/createUiSlice.ts` so `setActiveView("inventory")` resolves `appMode = "marcom"`
   - Added `"inventory"` and `"equipment"`/`"equipments"` normalization aliases to `VALID_VIEW_MODES` and `MARCOM_VIEWS` in `src/lib/router/urlState.ts`

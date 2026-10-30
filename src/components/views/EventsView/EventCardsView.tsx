@@ -13,6 +13,7 @@ import {
   Users,
   Edit2,
   Trash2,
+  Package,
 } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
 import type { FieldEventItem, User } from "@/types";
@@ -24,6 +25,8 @@ import {
   getEfficiencyBadgeClasses,
 } from "@/lib/marcom/eventCostAnalytics";
 import { STATUS_CONFIG, EVENT_TYPE_STYLES } from "./eventsConstants";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
+import { getEventEquipmentSummary } from "@/lib/marcom/eventEquipmentHelpers";
 
 interface EventCardsViewProps {
   events: FieldEventItem[];
@@ -42,6 +45,8 @@ export function EventCardsView({
   onDeleteEvent,
   onOpenFootageModal,
 }: EventCardsViewProps) {
+  const borrowRecords = useMarcomDataStore((s) => s.borrowRecords);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {events.map((event) => {
@@ -73,6 +78,8 @@ export function EventCardsView({
             clipUrl.endsWith(".mov") ||
             clipUrl.endsWith(".webm") ||
             clipUrl.includes("mixkit.co"));
+
+        const equipmentSummary = getEventEquipmentSummary(borrowRecords, event.id);
 
         return (
           <motion.div
@@ -301,16 +308,41 @@ export function EventCardsView({
                 </div>
               )}
 
-              {/* Checklist info */}
-              {subtasks.length > 0 && (
-                <div className="mt-3 flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border border-blue-200/40 dark:border-blue-900/30">
-                  <div className="flex items-center gap-1.5">
-                    <CheckSquare className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                    <span>Checklist:</span>
-                  </div>
-                  <span className="font-semibold font-mono text-[10px]">
-                    {completedSubtasksCount}/{subtasks.length} Done
-                  </span>
+              {/* Checklist & Equipment Logistics info */}
+              {(subtasks.length > 0 || equipmentSummary) && (
+                <div className="mt-3 flex items-center gap-2 flex-wrap">
+                  {subtasks.length > 0 && (
+                    <div className="flex-1 min-w-[120px] flex items-center justify-between text-[11px] px-2.5 py-1.5 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border border-blue-200/40 dark:border-blue-900/30">
+                      <div className="flex items-center gap-1.5">
+                        <CheckSquare className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                        <span>Checklist:</span>
+                      </div>
+                      <span className="font-semibold font-mono text-[10px]">
+                        {completedSubtasksCount}/{subtasks.length} Done
+                      </span>
+                    </div>
+                  )}
+
+                  {equipmentSummary && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectEvent(event)}
+                      title={`${equipmentSummary.totalUnits} unit equipment across ${equipmentSummary.recordCount} borrow record(s)`}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer shrink-0",
+                        equipmentSummary.hasOverdue
+                          ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/50"
+                          : "bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 border-teal-200/60 dark:border-teal-800/50 hover:bg-teal-100 dark:hover:bg-teal-900/40"
+                      )}
+                    >
+                      {equipmentSummary.hasOverdue ? (
+                        <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                      ) : (
+                        <Package className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
+                      )}
+                      <span>{equipmentSummary.statusText}</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
