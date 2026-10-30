@@ -6,6 +6,11 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `feat(projects)`: Open work item detail drawer on row click in Projects list view
+  - Attached `onClick={() => onSelect?.(item)}` and `cursor-pointer` to `<tr>` in `ProjectsListRow.tsx`
+  - Added click event isolation (`e.stopPropagation()`) across all interactive cell controls (checkbox selection, title inline editing, status dropdown, date picker, PIC assignee editor, and actions button)
+  - Gates: `npm test` 588 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `feat(events)`: Add equipment logistics indicator chip to event cards
   - Created pure aggregation helper `getEventEquipmentSummary` in `src/lib/marcom/eventEquipmentHelpers.ts`
   - Integrated reactive indicator chip into `EventCardsView.tsx` with teal active state and rose overdue state

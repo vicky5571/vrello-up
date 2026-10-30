@@ -162,17 +162,24 @@ export function ProjectsListRow({
 
   return (
     <tr
+      onClick={() => onSelect?.(item)}
       className={cn(
-        "group border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 text-xs transition-colors",
+        "group border-b border-slate-100 dark:border-slate-800/60 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 text-xs transition-colors cursor-pointer",
         isSelected && "bg-blue-50/40 dark:bg-blue-950/20",
         isOverdue && "opacity-90",
       )}
     >
       {/* Checkbox */}
-      <td className="w-10 px-3 py-2 text-center">
+      <td
+        className="w-10 px-3 py-2 text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
-          onClick={() => onToggleSelect(itemKey)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect(itemKey);
+          }}
           className={cn(
             "w-4 h-4 rounded border flex items-center justify-center transition-colors cursor-pointer",
             isSelected
@@ -215,6 +222,7 @@ export function ProjectsListRow({
             type="text"
             autoFocus
             value={editTitle}
+            onClick={(e) => e.stopPropagation()}
             onChange={(e) => setEditTitle(e.target.value)}
             onBlur={handleTitleSubmit}
             onKeyDown={(e) => {
@@ -228,9 +236,11 @@ export function ProjectsListRow({
           />
         ) : (
           <div
-            onDoubleClick={() => setIsEditingTitle(true)}
-            onClick={() => onSelect?.(item)}
-            className="cursor-pointer group/title"
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setIsEditingTitle(true);
+            }}
+            className="group/title"
           >
             <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover/title:text-blue-600 transition-colors line-clamp-1">
               {title}
@@ -240,14 +250,20 @@ export function ProjectsListRow({
       </td>
 
       {/* Status (click to change dropdown) */}
-      <td className="w-36 px-3 py-2 whitespace-nowrap relative">
+      <td
+        className="w-36 px-3 py-2 whitespace-nowrap relative"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div ref={statusDropdownRef} className="relative inline-block text-left">
           {(() => {
             const sub = getWorkItemSubStatus(item);
             return (
               <button
                 type="button"
-                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsStatusDropdownOpen(!isStatusDropdownOpen);
+                }}
                 style={{
                   backgroundColor: `${sub.color}26`,
                   borderColor: `${sub.color}4D`,
@@ -270,7 +286,8 @@ export function ProjectsListRow({
                 <button
                   key={st}
                   type="button"
-                  onClick={async () => {
+                  onClick={async (e) => {
+                    e.stopPropagation();
                     setIsStatusDropdownOpen(false);
                     await onUpdateStatus(item, st);
                   }}
@@ -289,12 +306,16 @@ export function ProjectsListRow({
 
       {/* Date */}
       {visibleFields.dueDate && (
-        <td className="w-28 px-3 py-2 whitespace-nowrap">
+        <td
+          className="w-28 px-3 py-2 whitespace-nowrap"
+          onClick={(e) => e.stopPropagation()}
+        >
           {isEditingDate ? (
             <input
               type="date"
               autoFocus
               value={editDate}
+              onClick={(e) => e.stopPropagation()}
               onChange={(e) => setEditDate(e.target.value)}
               onBlur={handleDateSubmit}
               onKeyDown={(e) => {
@@ -306,7 +327,10 @@ export function ProjectsListRow({
           ) : (
             <button
               type="button"
-              onClick={() => setIsEditingDate(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditingDate(true);
+              }}
               className={cn(
                 "inline-flex items-center gap-1 font-mono text-[11px] hover:underline cursor-pointer",
                 isOverdue
@@ -330,12 +354,16 @@ export function ProjectsListRow({
 
       {/* PIC */}
       {visibleFields.assignees && (
-        <td className="w-32 px-3 py-2 whitespace-nowrap">
+        <td
+          className="w-32 px-3 py-2 whitespace-nowrap"
+          onClick={(e) => e.stopPropagation()}
+        >
           {isEditingPic ? (
             <input
               type="text"
               autoFocus
               value={editPic}
+              onClick={(e) => e.stopPropagation()}
               onChange={(e) => setEditPic(e.target.value)}
               onBlur={handlePicSubmit}
               onKeyDown={(e) => {
@@ -348,7 +376,10 @@ export function ProjectsListRow({
           ) : (
             <button
               type="button"
-              onClick={() => setIsEditingPic(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditingPic(true);
+              }}
               className="text-slate-700 dark:text-slate-300 hover:underline cursor-pointer truncate max-w-[120px] text-left"
             >
               {pic || <span className="text-slate-400 italic">Unassigned</span>}
@@ -371,10 +402,16 @@ export function ProjectsListRow({
       )}
 
       {/* Actions */}
-      <td className="w-12 px-3 py-2 text-right">
+      <td
+        className="w-12 px-3 py-2 text-right"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
-          onClick={() => onSelect?.(item)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect?.(item);
+          }}
           className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
           title="Details"
         >

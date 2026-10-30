@@ -94,6 +94,11 @@
    - Integrated reactive indicator chip into `EventCardsView.tsx` with teal active state, rose overdue state, and modal open trigger.
    - Added pre-fetch of `fetchBorrowRecords()` to `EventsView.tsx`.
 
+13. **Feature: Open Detail Drawer on Row Click in Projects List View — IMPLEMENTED & VERIFIED:**
+   - Attached `onClick={() => onSelect?.(item)}` to `<tr>` in `src/components/views/ProjectsView/ProjectsListRow.tsx` with `cursor-pointer` styling.
+   - Isolated click event propagation (`e.stopPropagation()`) across all interactive cell controls (checkbox selection toggle, inline title edit input and double-click trigger, status dropdown button and options, due date editor and date button, PIC assignee editor and button, action button).
+   - Preserved seamless row click behavior across non-control cell areas (type badge, branch, checklist, and empty cell padding) to open the domain drawer/modal (`ProjectsDetailDrawerHost`).
+
 ---
 
 ## Verification Gates (this session)
