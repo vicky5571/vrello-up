@@ -15,7 +15,7 @@ export interface Status {
   order: number;
 }
 
-export type UserRole = "admin" | "staff" | "viewer";
+export type UserRole = "admin" | "supervisor" | "staff" | "viewer";
 
 export type UserStatus = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -26,6 +26,7 @@ export interface AppUser {
   avatar: string;
   role: UserRole;
   status: UserStatus;
+  assignedBranchIds?: string[];
   createdAt: string;
   lastLoginAt: string | null;
 }

@@ -48,6 +48,8 @@ export function normalizeRole(dbRole: DbUserRole): UserRole {
   switch (dbRole) {
     case "ADMIN":
       return "admin";
+    case "SUPERVISOR":
+      return "supervisor";
     case "STAFF":
       return "staff";
     case "VIEWER":
@@ -131,6 +133,7 @@ export function toAppUser(prismaUser: PrismaUser): AppUser {
     avatar: prismaUser.avatar,
     role: normalizeRole(prismaUser.role),
     status: normalizeStatus(prismaUser.status),
+    assignedBranchIds: prismaUser.assignedBranchIds ?? [],
     createdAt: prismaUser.createdAt.toISOString(),
     lastLoginAt: prismaUser.lastLoginAt ? prismaUser.lastLoginAt.toISOString() : null,
   };

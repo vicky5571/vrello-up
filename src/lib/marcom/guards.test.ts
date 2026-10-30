@@ -205,3 +205,142 @@ test("hasScopedPermission preserves admin-only restrictions even for branch PIC"
     false,
   );
 });
+
+test("supervisor has admin-level operational capabilities in unscoped capability checks", () => {
+  assert.equal(hasPermission("supervisor", "CREATE_MOU"), true);
+  assert.equal(hasPermission("supervisor", "APPROVE_MOU"), true);
+  assert.equal(hasPermission("supervisor", "DELETE_MOU"), true);
+  assert.equal(hasPermission("supervisor", "APPROVE_OUTLET"), true);
+  assert.equal(hasPermission("supervisor", "APPROVE_BORROW"), true);
+  assert.equal(hasPermission("supervisor", "DELETE_DOCUMENT"), true);
+  assert.equal(hasPermission("supervisor", "EXPORT_REPORTS"), true);
+  assert.equal(hasPermission("supervisor", "VIEW_INVENTORY"), true);
+  // MANAGE_MASTER_DATA is forbidden for supervisor
+  assert.equal(hasPermission("supervisor", "MANAGE_MASTER_DATA"), false);
+});
+
+test("hasScopedPermission grants supervisor admin authority within assigned branches, but blocks outside", () => {
+  const supervisorBranches = ["branch-sby", "branch-mlg"];
+
+  // Permitted in assigned branch Surabaya
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "APPROVE_MOU",
+      userBranchIds: supervisorBranches,
+      targetBranchId: "branch-sby",
+    }),
+    true
+  );
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "DELETE_MOU",
+      userBranchIds: supervisorBranches,
+      targetBranchId: "branch-sby",
+    }),
+    true
+  );
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "APPROVE_OUTLET",
+      userBranchIds: supervisorBranches,
+      targetBranchId: "branch-sby",
+    }),
+    true
+  );
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "APPROVE_BORROW",
+      userBranchIds: supervisorBranches,
+      targetBranchId: "branch-sby",
+    }),
+    true
+  );
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "DELETE_DOCUMENT",
+      userBranchIds: supervisorBranches,
+      targetBranchId: "branch-sby",
+    }),
+    true
+  );
+
+  // BLOCKED in unassigned branch Jakarta
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "APPROVE_MOU",
+      userBranchIds: supervisorBranches,
+      targetBranchId: "branch-jkt",
+    }),
+    false
+  );
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "DELETE_MOU",
+      userBranchIds: supervisorBranches,
+      targetBranchId: "branch-jkt",
+    }),
+    false
+  );
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "APPROVE_OUTLET",
+      userBranchIds: supervisorBranches,
+      targetBranchId: "branch-jkt",
+    }),
+    false
+  );
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "APPROVE_BORROW",
+      userBranchIds: supervisorBranches,
+      targetBranchId: "branch-jkt",
+    }),
+    false
+  );
+
+  // MANAGE_MASTER_DATA is ALWAYS forbidden for supervisor, even in assigned branch
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "MANAGE_MASTER_DATA",
+      userBranchIds: supervisorBranches,
+      targetBranchId: "branch-sby",
+    }),
+    false
+  );
+
+  // Global reporting and inventory viewing are always permitted
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "EXPORT_REPORTS",
+      userBranchIds: supervisorBranches,
+    }),
+    true
+  );
+  assert.equal(
+    hasScopedPermission({
+      role: "supervisor",
+      action: "VIEW_INVENTORY",
+      userBranchIds: supervisorBranches,
+    }),
+    true
+  );
+});
+
+test("canAccessBranch strictly bounds supervisor to assigned branches", () => {
+  const supervisorBranches = ["branch-sby", "branch-mlg"];
+  assert.equal(canAccessBranch("supervisor", supervisorBranches, "branch-sby"), true);
+  assert.equal(canAccessBranch("supervisor", supervisorBranches, "branch-mlg"), true);
+  assert.equal(canAccessBranch("supervisor", supervisorBranches, "branch-jkt"), false);
+  assert.equal(canAccessBranch("supervisor", [], "branch-sby"), false);
+});

@@ -376,6 +376,7 @@ model MonthlyReport {
 
 enum DbUserRole {
   ADMIN
+  SUPERVISOR
   STAFF
   VIEWER
 }
@@ -387,16 +388,17 @@ enum DbUserStatus {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  name        String
-  email       String       @unique
-  password    String?
-  googleId    String?      @unique
-  avatar      String       @default("")
-  role        DbUserRole   @default(STAFF)
-  status      DbUserStatus @default(PENDING)
-  createdAt   DateTime     @default(now())
-  lastLoginAt DateTime?
+  id                String       @id @default(cuid())
+  name              String
+  email             String       @unique
+  password          String?
+  googleId          String?      @unique
+  avatar            String       @default("")
+  role              DbUserRole   @default(STAFF)
+  status            DbUserStatus @default(PENDING)
+  assignedBranchIds String[]     @default([])
+  createdAt         DateTime     @default(now())
+  lastLoginAt       DateTime?
 
   @@index([status])
   @@index([role])

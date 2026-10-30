@@ -50,6 +50,7 @@ async function seedUsers() {
     role: DbUserRole;
     status: DbUserStatus;
     avatar: string;
+    assignedBranchIds?: string[];
   }> = [
     {
       id: "user-admin",
@@ -58,6 +59,16 @@ async function seedUsers() {
       role: "ADMIN",
       status: "APPROVED",
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80",
+      assignedBranchIds: [],
+    },
+    {
+      id: "user-supervisor",
+      name: "Rian Hidayat (Area Supervisor)",
+      email: "supervisor.rian@vrelloup.dev",
+      role: "SUPERVISOR",
+      status: "APPROVED",
+      avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=120&auto=format&fit=crop&q=80",
+      assignedBranchIds: ["branch-1", "branch-2"],
     },
     {
       id: "user-staff-1",
@@ -66,6 +77,7 @@ async function seedUsers() {
       role: "STAFF",
       status: "APPROVED",
       avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
+      assignedBranchIds: ["branch-1"],
     },
     {
       id: "user-staff-2",
@@ -74,6 +86,7 @@ async function seedUsers() {
       role: "STAFF",
       status: "APPROVED",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+      assignedBranchIds: ["branch-2"],
     },
     {
       id: "user-viewer",
@@ -82,6 +95,7 @@ async function seedUsers() {
       role: "VIEWER",
       status: "APPROVED",
       avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+      assignedBranchIds: [],
     },
     {
       id: "user-pending",
@@ -90,6 +104,7 @@ async function seedUsers() {
       role: "STAFF",
       status: "PENDING",
       avatar: "",
+      assignedBranchIds: [],
     },
     {
       id: "user-rejected",
@@ -98,6 +113,7 @@ async function seedUsers() {
       role: "STAFF",
       status: "REJECTED",
       avatar: "",
+      assignedBranchIds: [],
     },
   ];
 
@@ -111,6 +127,7 @@ async function seedUsers() {
         role: u.role,
         status: u.status,
         avatar: u.avatar,
+        assignedBranchIds: u.assignedBranchIds ?? [],
         lastLoginAt: u.status === "APPROVED" ? daysAgo(1) : null,
       },
     });

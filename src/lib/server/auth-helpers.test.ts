@@ -33,6 +33,7 @@ test("verifyPassword validates correct and incorrect passwords", async () => {
 
 test("normalizeRole maps DbUserRole enum to UserRole union correctly", () => {
   assert.equal(normalizeRole("ADMIN"), "admin");
+  assert.equal(normalizeRole("SUPERVISOR"), "supervisor");
   assert.equal(normalizeRole("STAFF"), "staff");
   assert.equal(normalizeRole("VIEWER"), "viewer");
   // @ts-expect-error test fallback for unexpected values
@@ -58,6 +59,7 @@ test("toAppUser maps PrismaUser to AppUser DTO", () => {
     avatar: "https://example.com/avatar.png",
     role: "ADMIN",
     status: "APPROVED",
+    assignedBranchIds: ["branch-1", "branch-2"],
     createdAt: now,
     lastLoginAt: now,
   };
@@ -71,6 +73,7 @@ test("toAppUser maps PrismaUser to AppUser DTO", () => {
     avatar: "https://example.com/avatar.png",
     role: "admin",
     status: "APPROVED",
+    assignedBranchIds: ["branch-1", "branch-2"],
     createdAt: "2026-10-30T10:00:00.000Z",
     lastLoginAt: "2026-10-30T10:00:00.000Z",
   });
@@ -85,16 +88,18 @@ test("toAppUser handles null lastLoginAt", () => {
     password: "hashedpassword",
     googleId: null,
     avatar: "",
-    role: "STAFF",
+    role: "SUPERVISOR",
     status: "PENDING",
+    assignedBranchIds: [],
     createdAt: now,
     lastLoginAt: null,
   };
 
   const appUser = toAppUser(mockUser);
   assert.equal(appUser.lastLoginAt, null);
-  assert.equal(appUser.role, "staff");
+  assert.equal(appUser.role, "supervisor");
   assert.equal(appUser.status, "PENDING");
+  assert.deepEqual(appUser.assignedBranchIds, []);
 });
 
 test("handleGoogleSignInLogic returns false if user email is missing", async () => {

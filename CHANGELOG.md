@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `feat(auth)`: Add Supervisor role with branch-scoped operational authority
+  - Extended domain SSOT `UserRole` union with `"supervisor"` in `src/types/index.ts` and `assignedBranchIds` in `AppUser`
+  - Added `SUPERVISOR` to `DbUserRole` enum and `assignedBranchIds String[] @default([])` to `User` in `prisma/schema.prisma`
+  - Updated `src/lib/server/auth-helpers.ts` and `/api/admin/users/[id]` with role normalization, assigned branches persistence, and validation
+  - Updated `src/lib/marcom/guards.ts` giving Supervisors Admin-level authority (approving MoUs, Outlets, Equipment Borrows, deleting MoUs/documents) strictly bounded by their assigned branches (`assignedBranchIds`)
+  - Strictly blocked Supervisors from `MANAGE_MASTER_DATA` and user account management (`/admin/users`) preserving Least Privilege & Segregation of Duties
+  - Added Supervisor option to `UserRoleSelect.tsx` and custom amber role badge in `UserMenuDropdown.tsx`
+  - Gates: `npm test` 602 pass / 0 fail; `npm run test:smoke` 84 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-10-31-supervisor-role-design.md`
+  Plan: `docs/superpowers/plans/2026-10-31-supervisor-role.md`
+
 - `feat(ui)`: Implement sitewide fluid active pills animation with Framer Motion
   - Replaced static CSS active classes with Framer Motion `motion.div layoutId="..."` sliding background pill animations
   - Configured premium spring dynamics (`type: "spring" as const, stiffness: 450, damping: 35`) and tactile tap feedback (`whileTap={{ scale: 0.95 }}`)

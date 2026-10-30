@@ -8,14 +8,22 @@
 
 **Date:** 2026-10-31  
 **Active Branch:** `vicky`  
-**Active Feature:** Sitewide Active Pills Fluid Animation (`motion.div layoutId="..."`) — **IMPLEMENTED & VERIFIED**  
-**Spec:** `docs/superpowers/specs/2026-10-31-sitewide-active-pills-animation-design.md`  
-**Plan:** `docs/superpowers/plans/2026-10-31-sitewide-active-pills-animation.md`  
-**Previous Feature:** Marcom Header Stabilization (Cards Row and Pills Button Swap across 8 Headers)  
+**Active Feature:** Supervisor Role & Scoped Area Permissions (`UserRole`, Prisma schema, NextAuth, `guards.ts`, Admin User Management) — **IMPLEMENTED & VERIFIED**  
+**Spec:** `docs/superpowers/specs/2026-10-31-supervisor-role-design.md`  
+**Plan:** `docs/superpowers/plans/2026-10-31-supervisor-role.md`  
+**Previous Feature:** Sitewide Active Pills Fluid Animation (`motion.div layoutId="..."`)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Supervisor Role & Scoped Area Permissions (`guards.ts` & full stack):**
+   - Added `"supervisor"` to `UserRole` SSOT in `src/types/index.ts` and `assignedBranchIds?: string[]` to `AppUser`.
+   - Added `SUPERVISOR` to `DbUserRole` enum and `assignedBranchIds String[] @default([])` to `model User` in `prisma/schema.prisma` (`prisma db push` + `prisma generate` synchronized).
+   - Updated `normalizeRole` in `src/lib/server/auth-helpers.ts` and `roleToDbRole` in `/api/admin/users/[id]` with `assignedBranchIds` persistence.
+   - Updated `src/lib/marcom/guards.ts` allowing Supervisor full operational authority (approving MoUs, Outlets, Equipment Borrows, deleting MoUs/documents) strictly bounded by assigned branch boundaries (`assignedBranchIds`), while strictly preventing access to `MANAGE_MASTER_DATA` and user administration.
+   - Updated `UserRoleSelect.tsx` with Supervisor option and `UserMenuDropdown.tsx` with dedicated amber role badge.
+   - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (84 passed), `npm test` (602 passed, 0 failures).
 
 1. **Sitewide Active Pills Animation Upgrade (`framer-motion`):**
    - Implemented spring-animated sliding background pills using `motion.div layoutId="..."` across 10 components sitewide.

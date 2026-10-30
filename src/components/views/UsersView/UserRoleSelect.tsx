@@ -15,6 +15,7 @@ export function UserRoleSelect({ value, onChange, disabled }: UserRoleSelectProp
       disabled={disabled}
       options={[
         { value: "admin", label: "Admin" },
+        { value: "supervisor", label: "Supervisor" },
         { value: "staff", label: "Staff" },
         { value: "viewer", label: "Viewer" },
       ]}

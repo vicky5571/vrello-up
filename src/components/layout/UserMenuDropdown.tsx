@@ -59,7 +59,17 @@ export function UserMenuDropdown({ onClose }: UserMenuDropdownProps) {
               <span className="font-bold text-foreground truncate">
                 {user?.name || "Pengguna"}
               </span>
-              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+              <span
+                className={`shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                  user?.role === "admin"
+                    ? "bg-primary/10 text-primary"
+                    : user?.role === "supervisor"
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                    : user?.role === "staff"
+                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
                 {user?.role || "viewer"}
               </span>
             </div>

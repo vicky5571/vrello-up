@@ -25,5 +25,24 @@ export const SEED_USERS: User[] = [
     avatar:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
     role: "staff",
+    assignedBranchIds: ["branch-2"],
+  },
+  {
+    id: "user-4",
+    name: "Rian Hidayat",
+    email: "rian@vrelloup.dev",
+    avatar:
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80",
+    role: "supervisor",
+    assignedBranchIds: ["branch-1", "branch-2"],
+  },
+  {
+    id: "user-5",
+    name: "Hendra Gunawan",
+    email: "hendra@vrelloup.dev",
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80",
+    role: "viewer",
+    assignedBranchIds: [],
   },
 ];

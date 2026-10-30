@@ -1,4 +1,4 @@
-export type MarcomRole = "admin" | "staff" | "viewer";
+export type MarcomRole = "admin" | "supervisor" | "staff" | "viewer";
 export type PermissionAction =
   | "CREATE_MOU" | "APPROVE_MOU" | "DELETE_MOU" | "CREATE_PLACEMENT"
   | "UPDATE_PLACEMENT" | "CREATE_EVENT" | "UPLOAD_VIDEO_FOOTAGE"
@@ -18,6 +18,25 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
     "UPLOAD_DOCUMENT",
     "DELETE_DOCUMENT",
     "MANAGE_MASTER_DATA",
+    "EXPORT_REPORTS",
+    "SUBMIT_DRAFT_OUTLET",
+    "APPROVE_OUTLET",
+    "VIEW_INVENTORY",
+    "MANAGE_INVENTORY",
+    "REQUEST_BORROW",
+    "APPROVE_BORROW",
+    "PROCESS_RETURN",
+  ],
+  supervisor: [
+    "CREATE_MOU",
+    "APPROVE_MOU",
+    "DELETE_MOU",
+    "CREATE_PLACEMENT",
+    "UPDATE_PLACEMENT",
+    "CREATE_EVENT",
+    "UPLOAD_VIDEO_FOOTAGE",
+    "UPLOAD_DOCUMENT",
+    "DELETE_DOCUMENT",
     "EXPORT_REPORTS",
     "SUBMIT_DRAFT_OUTLET",
     "APPROVE_OUTLET",
@@ -66,6 +85,9 @@ export function canAccessBranch(
 ): boolean {
   if (role === "admin") return true;
   if (!targetBranchId) return true;
+  if (role === "supervisor") {
+    return userBranchIds.length > 0 && userBranchIds.includes(targetBranchId);
+  }
   if (userBranchIds.length === 0) return true;
   return userBranchIds.includes(targetBranchId);
 }
@@ -76,10 +98,15 @@ export function canAccessBranch(
  *
  * Rules:
  * - admin: full permissions across all branches.
- * - viewer: only EXPORT_REPORTS.
+ * - viewer: only EXPORT_REPORTS and VIEW_INVENTORY.
+ * - supervisor (Area Supervisor):
+ *   - Forbidden: MANAGE_MASTER_DATA (global system configuration).
+ *   - Global actions: EXPORT_REPORTS, VIEW_INVENTORY always allowed.
+ *   - Operational actions: has admin-level authority (approve MoU, approve Outlet,
+ *     approve borrow, delete MoU/document) IF targetBranchId is within userBranchIds.
  * - staff:
- *   - Forbidden: DELETE_MOU, DELETE_DOCUMENT, MANAGE_MASTER_DATA.
- *   - APPROVE_MOU & APPROVE_OUTLET: allowed only if targetBranchId is assigned to the user (userBranchIds).
+ *   - Forbidden: DELETE_MOU, DELETE_DOCUMENT, MANAGE_MASTER_DATA, APPROVE_BORROW.
+ *   - APPROVE_MOU & APPROVE_OUTLET: allowed only if targetBranchId is assigned to user.
  *   - Branch-scoped actions (CREATE/UPDATE/SUBMIT): if targetBranchId is specified and user has assignedBranchIds,
  *     it must be in userBranchIds.
  */
@@ -89,11 +116,28 @@ export function hasScopedPermission(ctx: ScopedPermissionContext): boolean {
   if (role === "admin") return true;
   if (role === "viewer") return action === "EXPORT_REPORTS" || action === "VIEW_INVENTORY";
 
+  // MANAGE_MASTER_DATA is strictly reserved for Super Admin
+  if (action === "MANAGE_MASTER_DATA") {
+    return false;
+  }
+
+  // Supervisor logic:
+  if (role === "supervisor") {
+    if (action === "EXPORT_REPORTS" || action === "VIEW_INVENTORY") {
+      return true;
+    }
+
+    if (targetBranchId) {
+      return userBranchIds.includes(targetBranchId);
+    }
+
+    return userBranchIds.length > 0 && (rolePermissions.supervisor || []).includes(action);
+  }
+
   // Role is staff
   if (
     action === "DELETE_MOU" ||
     action === "DELETE_DOCUMENT" ||
-    action === "MANAGE_MASTER_DATA" ||
     action === "APPROVE_BORROW"
   ) {
     return false;
@@ -129,7 +173,7 @@ export function resolveMarcomRole(
   currentUserId: string,
 ): MarcomRole {
   const role = members.find((m) => m.id === currentUserId)?.role;
-  return role === "admin" || role === "staff" || role === "viewer"
+  return role === "admin" || role === "supervisor" || role === "staff" || role === "viewer"
     ? role
     : "viewer";
 }
