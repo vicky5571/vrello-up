@@ -33,6 +33,7 @@ import {
   CornerDownLeft,
   Download,
   Trash2,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fuzzyFilter, fuzzyScore } from "@/lib/productivity/fuzzy";
@@ -340,6 +341,7 @@ export function CommandPalette() {
       { id: "placements", name: "Placements (Marketing)", icon: ClipboardList },
       { id: "content-planner", name: "Content Planner (Marketing)", icon: Sparkles },
       { id: "events", name: "Field Events (Marketing)", icon: Flag },
+      { id: "inventory", name: "Equipment Inventory (Marketing)", icon: Package },
       { id: "documents", name: "Documents (Marketing)", icon: Files },
       { id: "reports", name: "Reports (Marketing)", icon: BarChart3 },
       { id: "analytics", name: "Analytics (Marketing)", icon: TrendingUp },
@@ -380,6 +382,14 @@ export function CommandPalette() {
           closeCommandPalette();
           setCreateTaskModalOpen(true);
         },
+      },
+      {
+        id: "action-goto-inventory",
+        title: "Go to Equipment Inventory",
+        subtitle: "Open equipment catalog, borrowing requests & availability tracking",
+        keywords: "inventory equipment borrow loans asset field",
+        icon: Package,
+        onSelect: goTo("inventory"),
       },
       {
         id: "action-goto-mous",

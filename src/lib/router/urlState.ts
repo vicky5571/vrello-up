@@ -21,6 +21,7 @@ export const VALID_VIEW_MODES = new Set<ViewMode>([
   "placements",
   "mous",
   "events",
+  "inventory",
   "documents",
   "reports",
   "analytics",
@@ -34,6 +35,7 @@ export const MARCOM_VIEWS = new Set<ViewMode>([
   "mous",
   "branches",
   "outlets",
+  "inventory",
   "documents",
   "reports",
   "analytics",
@@ -96,6 +98,8 @@ export function parseUrlNavState(
       state.view = "documents";
     } else if (trimmedView === "report") {
       state.view = "reports";
+    } else if (trimmedView === "equipment" || trimmedView === "equipments") {
+      state.view = "inventory";
     } else if (VALID_VIEW_MODES.has(trimmedView as ViewMode)) {
       state.view = trimmedView as ViewMode;
     }

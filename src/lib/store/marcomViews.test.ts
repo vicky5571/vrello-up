@@ -68,3 +68,19 @@ test("navigateToMarcom navigates to content-planner with search query", () => {
   assert.equal(state.activeView, "content-planner");
   assert.equal(state.marcomFilters["content-planner"], "reel promo");
 });
+
+test("inventory view mode auto-syncs appMode to marcom and records lastMarcomView", () => {
+  const store = useWorkspaceStore.getState();
+
+  // Switch to tasks first
+  store.setActiveView("board");
+  assert.equal(useWorkspaceStore.getState().appMode, "tasks");
+
+  // Switch to inventory
+  store.setActiveView("inventory");
+  const state = useWorkspaceStore.getState();
+  assert.equal(state.appMode, "marcom");
+  assert.equal(state.activeView, "inventory");
+  assert.equal(state.lastMarcomView, "inventory");
+});
+

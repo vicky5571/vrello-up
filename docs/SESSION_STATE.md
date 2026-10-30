@@ -74,13 +74,20 @@
    - Restored Framer Motion animated sliding pill (`motion.div layoutId="activeAppModeIndicator"` with spring physics and reduced-motion support).
    - Extracted `AppModeSegmentedControl.tsx` (104 LOC), bringing `Sidebar.tsx` coordinator down to 182 LOC.
 
+10. **Bugfix: Equipment Inventory Mode Toggle Auto-Reversion (`createUiSlice.ts`, `urlState.ts`, `topNavConstants.ts`):**
+   - Added `"inventory"` to `MARCOM_VIEW_SET` in `createUiSlice.ts` so `setActiveView("inventory")` resolves `appMode = "marcom"`.
+   - Added `"inventory"` to `VALID_VIEW_MODES` and `MARCOM_VIEWS` in `urlState.ts`, plus `"equipment"` / `"equipments"` normalization aliases.
+   - Added `"inventory"` to `MARCOM_VIEW_LABELS` in `topNavConstants.ts`.
+   - Added Equipment Inventory view and quick action to `CommandPalette.tsx`.
+   - Added automated tests in `marcomViews.test.ts` and `urlState.test.ts`.
+
 ---
 
 ## Verification Gates (this session)
 
 - `npm run drift:check` → ✅ No drift detected (22 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ 582 passed, 0 failed (102 suites)
+- `npm test` → ✅ 584 passed, 0 failed (100 suites)
 
 ---
 

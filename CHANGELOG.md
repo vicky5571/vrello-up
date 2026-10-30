@@ -6,6 +6,14 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `fix(inventory)`: Fix equipment inventory navigation reverting appMode to projects
+  - Added `"inventory"` to `MARCOM_VIEW_SET` in `src/lib/store/slices/createUiSlice.ts` so `setActiveView("inventory")` resolves `appMode = "marcom"`
+  - Added `"inventory"` and `"equipment"`/`"equipments"` normalization aliases to `VALID_VIEW_MODES` and `MARCOM_VIEWS` in `src/lib/router/urlState.ts`
+  - Added `"inventory"` label to `MARCOM_VIEW_LABELS` in `src/components/layout/topNavConstants.ts`
+  - Registered Equipment Inventory in `CommandPalette.tsx` views list and quick actions
+  - Gates: `npm test` 584 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+
+
 - `fix(projects)`: Replace invalid nested `<tr className="contents">` with `<Fragment>` in `ProjectsListTable`
   - Fixed HTML hydration error where `<tr>` cannot be a child of `<tr>`
   - Grouped section rows (header, items, quick-add) are now direct children of `<tbody>`

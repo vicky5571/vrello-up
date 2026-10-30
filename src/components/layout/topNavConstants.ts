@@ -13,6 +13,7 @@ export const MARCOM_VIEW_LABELS: Record<string, string> = {
   mous: "MOUs",
   branches: "Branches",
   outlets: "Outlets",
+  inventory: "Equipment Inventory",
   documents: "Documents",
   reports: "Reports",
   analytics: "Analytics",

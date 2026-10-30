@@ -52,6 +52,7 @@ export const MARCOM_VIEW_SET = new Set<ViewMode>([
   "mous",
   "branches",
   "outlets",
+  "inventory",
   "documents",
   "reports",
   "analytics",

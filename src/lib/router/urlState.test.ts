@@ -102,3 +102,10 @@ test("parseUrlNavState correctly parses marcom branches deep link with space and
   assert.equal(state.listId, "list-field-ops");
 });
 
+test("parseUrlNavState parses inventory view mode and auto-assigns marcom appMode", () => {
+  const state = parseUrlNavState("?view=inventory");
+  assert.equal(state.view, "inventory");
+  assert.equal(state.appMode, "marcom");
+});
+
+
