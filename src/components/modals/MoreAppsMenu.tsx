@@ -151,7 +151,7 @@ export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer text-left"
                 >
                   <Kanban className="w-3.5 h-3.5 text-orange-500" />
-                  <span>Board</span>
+                  <span>Kanban Board</span>
                 </button>
                 <button
                   type="button"

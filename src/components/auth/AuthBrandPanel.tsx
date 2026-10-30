@@ -22,7 +22,7 @@ const FEATURES: BrandFeature[] = [
   {
     icon: LayoutGrid,
     title: "Multi-view",
-    description: "Board, list, timeline",
+    description: "Kanban board, list, calendar",
   },
 ];
 

@@ -25,7 +25,7 @@ const SHORTCUTS = [
   { key: "⌘ / Ctrl + K", label: "Open Command Palette & Global Search" },
   { key: "N / C", label: "Create New Task" },
   { key: "Space", label: "Toggle Task Slide-Over Drawer" },
-  { key: "1 - 3", label: "Quick Switch Views (List, Board, Calendar)" },
+  { key: "1 - 3", label: "Quick Switch Views (List, Kanban Board, Calendar)" },
   { key: "Marketing tabs", label: "Open Branches, Outlets, MOUs, Placements, Events, Documents, Reports, Analytics (tab bar or ⌘/Ctrl + K search)" },
   { key: "Esc", label: "Close Active Modal / Drawer" },
   { key: "?", label: "Open Help & Documentation" },

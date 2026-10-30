@@ -271,7 +271,7 @@ export function ContentDrawer({
                     title="Buka di Kanban Board Umum"
                   >
                     <ExternalLink className="w-4 h-4" />
-                    <span className="hidden sm:inline text-[11px]">Task Board</span>
+                    <span className="hidden sm:inline text-[11px]">Kanban Board</span>
                   </button>
                 )}
                 <button

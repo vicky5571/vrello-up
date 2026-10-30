@@ -209,8 +209,8 @@ export function ExportCenter() {
                     title="Selected tasks"
                     description={
                       selectedTasks.length > 0
-                        ? "Exports the current Board / List batch selection."
-                        : "Select tasks on the Board or List view first to enable this export."
+                        ? "Exports the current Kanban Board / List batch selection."
+                        : "Select tasks on the Kanban Board or List view first to enable this export."
                     }
                     count={selectedTasks.length}
                     onCsv={() => {
