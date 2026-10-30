@@ -26,7 +26,8 @@ import { summarizeReports } from "@/lib/marcom/analytics";
 import { printSingleMonthlyReport } from "@/lib/productivity/exportCenter";
 import type { ReportDraftResult, DraftActivityItem } from "@/lib/marcom/reportDraftEngine";
 import { QuarterlyPosmReportTab } from "./QuarterlyPosmReportTab";
-import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
+import { ReportsHeader } from "./ReportsHeader";
+import type { KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
 
 const MONTH_OPTIONS = [
   "January",
@@ -240,8 +241,15 @@ export function ReportsView() {
         icon: TrendingUp,
         color: rateColor,
       },
+      {
+        label: "Laporan Terkini",
+        value: reports[0] ? periodLabel(reports[0]) : "Belum ada",
+        helper: "Periode arsip terbaru",
+        icon: Sparkles,
+        color: "amber",
+      },
     ];
-  }, [summary]);
+  }, [summary, reports]);
 
   const handleAutoDraft = async () => {
     if (!month.trim()) {
@@ -406,98 +414,30 @@ export function ReportsView() {
   };
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-6">
-      {/* Top Header with Tab Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-slate-500" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-              Reports
-            </h2>
-          </div>
+    <div className="flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto">
+      {/* Unified Inventory-Style Header */}
+      <ReportsHeader
+        reportTab={reportTab}
+        setReportTab={setReportTab}
+        kpiCards={kpiCards}
+        isLoading={isLoading}
+        fetchReports={fetchReports}
+        onOpenExportCenter={() => setExportCenterOpen(true)}
+        onInstantExecutiveExport={handleInstantExecutiveExport}
+        isInstantExporting={isInstantExporting}
+        canManage={canManage}
+        showCreateForm={showCreateForm}
+        setShowCreateForm={setShowCreateForm}
+      />
 
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
-            <button
-              type="button"
-              onClick={() => setReportTab("monthly")}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                reportTab === "monthly"
-                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-              )}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Laporan Bulanan</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setReportTab("posm_quarterly")}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                reportTab === "posm_quarterly"
-                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-              )}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span>Rekap POSM Kuartalan</span>
-            </button>
-          </div>
-        </div>
-
-        {reportTab === "monthly" && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleInstantExecutiveExport}
-              disabled={isInstantExporting}
-              title="1-Klik tarik data riil & buka cetak PDF Laporan Eksekutif Bulanan"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shadow-xs bg-gradient-to-r from-violet-600 to-indigo-600 border-indigo-500 text-white hover:from-violet-700 hover:to-indigo-700 cursor-pointer disabled:opacity-50"
-            >
-              <Sparkles className={cn("w-3.5 h-3.5", isInstantExporting && "animate-spin")} />
-              <span>{isInstantExporting ? "Menyusun PDF..." : "⚡ 1-Click Executive PDF"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setExportCenterOpen(true)}
-              title="Open Export Center — PDF summaries & Excel sheets"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700 cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Export Center</span>
-            </button>
-            <button
-              type="button"
-              onClick={fetchReports}
-              disabled={isLoading}
-              title="Refresh reports"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin")} />
-              <span>Refresh</span>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {reportTab === "posm_quarterly" ? (
-        <QuarterlyPosmReportTab
-          onNavigateToPlacements={() => navigateToMarcom("placements")}
-        />
-      ) : (
-        <>
-
-      {/* Summary cards */}
-      <div className="mb-3">
-        <KpiSummaryCards
-          items={kpiCards}
-          isLoading={isLoading}
-          skeletonCount={3}
-        />
-      </div>
+      {/* Main Stage Content */}
+      <div className="p-4 sm:p-6 flex-1 min-h-0 space-y-4">
+        {reportTab === "posm_quarterly" ? (
+          <QuarterlyPosmReportTab
+            onNavigateToPlacements={() => navigateToMarcom("placements")}
+          />
+        ) : (
+          <>
 
       {/* Create form (admin only) */}
       {canManage && (

@@ -184,6 +184,14 @@
     - Updated `AnalyticsView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` and wrapped stage content in `p-4 sm:p-6 flex-1 min-h-0 space-y-6`.
     - Removed dead obsolete components `AnalyticsKpiRow.tsx` and `AnalyticsFilterBar.tsx`.
 
+26. **Reports & Exports Hub Inventory-Style Unified Header (`ReportsHeader.tsx`, `ReportsView.tsx`):**
+    - Created `ReportsHeader.tsx` following the Equipment Inventory design:
+      - Unified backdrop blur container (`p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+      - Title row with inline `BarChart3` icon (`text-orange-500`), `Executive Archive` badge, subtitle, and top-right action buttons (Refresh, Export Center, and 1-Click Executive PDF).
+      - Embedded 4 KPI Cards (Total Laporan, Total Aktivitas, Avg Completion, Laporan Terkini) with `KpiSummaryCards items={kpiCards}` within the header zone.
+      - Bottom controls row with Tab switcher (Laporan Bulanan & Rekap POSM Kuartalan) and New Monthly Report button.
+    - Updated `ReportsView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` and wrapped stage content in `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
+
 ---
 
 ## Verification Gates (this session)

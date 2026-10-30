@@ -66,6 +66,17 @@
   - Integrate `<AnalyticsHeader />` and `<AnalyticsActionableStrip />`.
   - Wrap chart area in responsive stage container `p-4 sm:p-6 flex-1 min-h-0 space-y-6`.
 
+### Phase 2.8: Reports & Exports Header Upgrade
+- **`src/components/views/ReportsView/ReportsHeader.tsx`**:
+  - Create atomic header component (`p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+  - Row 1: Inline icon (`BarChart3 text-orange-500`), Title `Reports & Exports`, badge `Executive Archive`, subtitle, and top-right action buttons (Refresh, Export Center, 1-Click Executive PDF).
+  - Row 2: 4 Embedded KPI Cards (`KpiSummaryCards items={kpiCards} skeletonCount={4}`).
+  - Row 3: Tab switcher (Laporan Bulanan & Rekap POSM Kuartalan) and New Monthly Report button.
+- **`src/components/views/ReportsView/ReportsView.tsx`**:
+  - Outer container: `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`.
+  - Replace inline header with `<ReportsHeader ... />`.
+  - Wrap content area in responsive stage container `p-4 sm:p-6 flex-1 min-h-0 space-y-6`.
+
 ### Phase 3: Verification & Gate Checks
 - [x] Run `npm run drift:check`
 - [x] Run `npm run build:check`
