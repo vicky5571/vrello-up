@@ -160,6 +160,19 @@
     - Updated `ContentPlannerView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` with content container `p-4 sm:p-6 flex-1 min-h-0`.
     - Reduced `ContentPlannerView.tsx` by ~185 LOC by decoupling header and filter logic.
 
+23. **Field Events Inventory-Style Unified Header (`EventsHeader.tsx`, `EventsView.tsx`):**
+    - Upgraded `EventsHeader.tsx` with unified backdrop blur container (`p-4 sm:p-6 pb-2 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+    - Standardized Title row with inline `CalendarDays` icon (`text-blue-500`), event count badge, and top-right Refresh & New Field Event buttons.
+    - Integrated `KpiSummaryCards` directly inside the header zone under Title row.
+    - Positioned view switcher (Cards | Table | Calendar | Timeline with `activeFieldEventsViewPill`) at the bottom controls row before the bottom border.
+    - Updated `EventsView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` with content container `p-4 sm:p-6 space-y-4 flex-1 min-h-0`.
+
+24. **Pipeline Inventory-Style Unified Header (`PipelineView.tsx`):**
+    - Upgraded header zone with unified backdrop blur container (`p-4 sm:p-6 pb-2 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+    - Standardized Title row with inline `Layers` icon (`text-indigo-500`), Cockpit 360° badge, subtitle, and top-right Refresh button (`p-2 border rounded-lg`).
+    - Integrated `KpiSummaryCards` directly within the header zone.
+    - Updated outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` and wrapped content area in `p-4 sm:p-6 space-y-4 flex-1 min-h-0`.
+
 
 ---
 

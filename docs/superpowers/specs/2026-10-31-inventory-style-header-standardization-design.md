@@ -3,7 +3,7 @@
 **Date:** 2026-10-31  
 **Author:** Critical Senior Software Engineer  
 **Status:** Approved  
-**Affected Views:** Media Placements (`PlacementsView.tsx`), Content Planner (`ContentPlannerView.tsx`)
+**Affected Views:** Media Placements (`PlacementsView.tsx`), Content Planner (`ContentPlannerView.tsx`), Field Events (`EventsView.tsx`), Pipeline (`PipelineView.tsx`)
 
 ---
 

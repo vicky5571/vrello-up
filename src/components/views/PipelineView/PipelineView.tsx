@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
+import { cn } from "@/lib/utils";
 import { Outlet360Drawer } from "@/components/views/OutletsView/Outlet360Drawer";
 import { PipelineFilterBar } from "./PipelineFilterBar";
 import { PipelineMatrixTable } from "./PipelineMatrixTable";
@@ -156,39 +157,43 @@ export function PipelineView({ className }: PipelineViewProps) {
   );
 
   return (
-    <div className={className ? className : "w-full space-y-4 p-3 sm:p-6"}>
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-slate-800">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              Pipeline Operasional Outlet
+    <div className={className ? className : "flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto"}>
+      {/* 1. Unified Top Header Zone (Equipment Inventory Style) */}
+      <div className="p-4 sm:p-6 pb-2 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Layers className="w-5 h-5 text-indigo-500" />
+              <span>Pipeline Operasional Outlet</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                Cockpit 360°
+              </span>
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
-              Cockpit 360°
-            </span>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Matrix pemantauan end-to-end Legal MoU, POSM Placements, Field Events, dan Konten Media per outlet.
+            </p>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Matrix pemantauan end-to-end Legal MoU, POSM Placements, Field Events, dan Konten Media per outlet
-          </p>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={fetchPipeline}
+              disabled={isLoading}
+              className="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+              title="Segarkan data pipeline"
+            >
+              <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin text-indigo-500")} />
+            </button>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={fetchPipeline}
-          disabled={isLoading}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
-          title="Segarkan data pipeline"
-        >
-          <RefreshCw className={isLoading ? "w-3.5 h-3.5 animate-spin text-orange-500" : "w-3.5 h-3.5"} />
-          <span>Refresh</span>
-        </button>
+        {/* KPI Metrics Banner */}
+        <KpiSummaryCards items={kpiItems} />
       </div>
 
-      {/* KPI Metrics Banner */}
-      <KpiSummaryCards items={kpiItems} />
-
-      {/* Bottleneck Alert Banner if bottleneck exists */}
+      {/* 2. Content Area */}
+      <div className="p-4 sm:p-6 space-y-4 flex-1 min-h-0">
+        {/* Bottleneck Alert Banner if bottleneck exists */}
       {kpiMetrics.bottleneckCount > 0 && (
         <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 text-xs">
           <div className="flex items-center gap-2">
@@ -315,6 +320,7 @@ export function PipelineView({ className }: PipelineViewProps) {
           </div>
         </>
       )}
+      </div>
 
       {/* Cockpit 360° Drawer */}
       <Outlet360Drawer

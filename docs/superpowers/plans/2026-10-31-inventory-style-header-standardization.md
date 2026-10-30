@@ -32,6 +32,25 @@
   - Replace inline header with `<ContentPlannerHeader ... />`.
   - Content container: `p-4 sm:p-6 flex-1 min-h-0`.
 
+### Phase 2.5: Field Events Header Upgrade
+- **`src/components/views/EventsView/EventsHeader.tsx`**:
+  - Update container styling to `p-4 sm:p-6 pb-2 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`.
+  - Row 1: Inline icon (`CalendarDays text-blue-500`), Title, count badge, subtitle; Top-right actions: Refresh button (`p-2 border rounded-lg`), `+ New Field Event` button (`px-3.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold`).
+  - Row 2: Integrated `KpiSummaryCards items={kpiItems}`.
+  - Row 3: View mode switcher (Cards | Table | Calendar | Timeline) with animated sliding pill.
+- **`src/components/views/EventsView/EventsView.tsx`**:
+  - Outer container: `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`.
+  - Pass `kpiItems={kpis}` to `<EventsHeader />`.
+  - Wrap content area in `<div className="p-4 sm:p-6 space-y-4 flex-1 min-h-0">`.
+
+### Phase 2.6: Pipeline Header Upgrade
+- **`src/components/views/PipelineView/PipelineView.tsx`**:
+  - Outer container: `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`.
+  - Top header zone: `p-4 sm:p-6 pb-2 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`.
+  - Row 1: Inline icon (`Layers text-indigo-500`), Title `Pipeline Operasional Outlet`, badge `Cockpit 360°`, subtitle, and top-right Refresh button (`p-2 border rounded-lg`).
+  - Row 2: `KpiSummaryCards items={kpiItems}` integrated in header.
+  - Content container: `p-4 sm:p-6 space-y-4 flex-1 min-h-0` housing bottleneck alerts, filter bar, and matrix table.
+
 ### Phase 3: Verification & Gate Checks
 - [x] Run `npm run drift:check`
 - [x] Run `npm run build:check`

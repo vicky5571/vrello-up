@@ -22,7 +22,7 @@ import {
   detectEventConflicts,
   calculateFieldEventsKPI,
 } from "@/lib/marcom/eventChecklist";
-import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
+import type { KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
 import { EventsHeader } from "./EventsHeader";
 import { EventsCalendarView } from "./EventsCalendarView";
 import { EventsTimelineView } from "./EventsTimelineView";
@@ -267,8 +267,8 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   ];
 
   return (
-    <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-6 pb-20">
-      {/* Top Header (Card-Banner Container) */}
+    <div className="flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto">
+      {/* 1. Unified Top Header Zone (Equipment Inventory Style) */}
       <EventsHeader
         totalEvents={events.length}
         viewMode={viewMode}
@@ -277,12 +277,12 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         onRefresh={() => fetchEvents(true)}
         canManage={can("CREATE_EVENT")}
         onAddEvent={() => openCreateModal()}
+        kpiItems={kpis}
       />
 
-      {/* KPI Cards */}
-      <KpiSummaryCards items={kpis} />
-
-      {/* Filter and Search Bar */}
+      {/* 2. Content Area */}
+      <div className="p-4 sm:p-6 space-y-4 flex-1 min-h-0">
+        {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
         {/* Status Pill Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
@@ -419,6 +419,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           onOpenFootageModal={openFootageModal}
         />
       )}
+      </div>
 
       {/* Form Modal (Create / Edit) */}
       <EventFormModal
