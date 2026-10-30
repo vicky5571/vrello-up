@@ -9,9 +9,6 @@ import {
   Upload,
   RefreshCw,
   X,
-  LayoutGrid,
-  TableProperties,
-  Search,
   HardDrive,
   CheckCircle2,
   Layers,
@@ -26,7 +23,8 @@ import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
-import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
+import { DocumentsHeader } from "./DocumentsHeader";
+import type { KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import {
@@ -452,176 +450,37 @@ export function DocumentsView() {
   }, [fetchDocuments]);
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
-      {/* 1. Header & Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400">
-              <Files className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                Documents & Asset Library
-              </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Pusat repositori brand guidelines, SOP, materi master kreatif, dan kontrak Marcom.
-              </p>
-            </div>
-          </div>
-        </div>
+    <div className="flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto">
+      {/* Unified Inventory-Style Header */}
+      <DocumentsHeader
+        documentCount={documents.length}
+        kpiCards={kpiCards}
+        isLoading={isLoading}
+        onRefresh={fetchDocuments}
+        canUpload={canUpload}
+        onAddDocument={() =>
+          setModalDocument({
+            name: "",
+            category: "Brand Guidelines",
+            branchName: branches[0]?.name || "",
+            status: "ACTIVE",
+            fileType: "PDF",
+            fileSizeMb: 0,
+            filePath: "",
+          })
+        }
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+        categoryChips={categoryChips}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+      />
 
-        <div className="flex items-center gap-2">
-          {canUpload && (
-            <button
-              type="button"
-              onClick={() =>
-                setModalDocument({
-                  name: "",
-                  category: "Brand Guidelines",
-                  branchName: branches[0]?.name || "",
-                  status: "ACTIVE",
-                  fileType: "PDF",
-                  fileSizeMb: 0,
-                  filePath: "",
-                })
-              }
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 transition-colors shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Tambah Dokumen</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* 2. Mini KPI Storage Bar */}
-      <KpiSummaryCards items={kpiCards} />
-
-      {/* 3. Filter Bar & View Switcher */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-1">
-        {/* Category Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setSelectedCategory("ALL")}
-            className={cn(
-              "px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5",
-              selectedCategory === "ALL"
-                ? "bg-teal-600 text-white shadow-xs"
-                : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-            )}
-          >
-            <span>Semua Dokumen</span>
-            <span
-              className={cn(
-                "px-1.5 py-0.2 rounded-full text-[10px]",
-                selectedCategory === "ALL"
-                  ? "bg-white/20 text-white"
-                  : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
-              )}
-            >
-              {documents.length}
-            </span>
-          </button>
-
-          {categoryChips.map((cat) => {
-            const isSelected = selectedCategory === cat.name;
-            return (
-              <button
-                key={cat.name}
-                type="button"
-                onClick={() => setSelectedCategory(cat.name)}
-                className={cn(
-                  "px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5",
-                  isSelected
-                    ? "bg-teal-600 text-white shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                )}
-              >
-                <span>{cat.name}</span>
-                <span
-                  className={cn(
-                    "px-1.5 py-0.2 rounded-full text-[10px]",
-                    isSelected
-                      ? "bg-white/20 text-white"
-                      : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
-                  )}
-                >
-                  {cat.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Right side: Search & View Mode Switcher */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="relative flex-1 sm:w-60">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Cari dokumen, PIC, branch..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
-            <button
-              type="button"
-              onClick={() => setViewMode("cards")}
-              className={cn(
-                "p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs",
-                viewMode === "cards"
-                  ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-2xs font-semibold"
-                  : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              )}
-              title="Cards Grid View"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Cards</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("table")}
-              className={cn(
-                "p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs",
-                viewMode === "table"
-                  ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-2xs font-semibold"
-                  : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              )}
-              title="Table List View"
-            >
-              <TableProperties className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Table</span>
-            </button>
-          </div>
-
-          <button
-            type="button"
-            onClick={fetchDocuments}
-            disabled={isLoading}
-            title="Refresh data"
-            className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin text-teal-500")} />
-          </button>
-        </div>
-      </div>
-
-      {/* 4. Content Area: Cards vs Table */}
+      {/* Main Stage Content */}
+      <div className="p-4 sm:p-6 flex-1 min-h-0 space-y-4">
+        {/* 4. Content Area: Cards vs Table */}
       {isLoading ? (
         <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-2">
           <RefreshCw className="w-6 h-6 animate-spin text-teal-500" />

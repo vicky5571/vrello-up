@@ -75,7 +75,18 @@
 - **`src/components/views/ReportsView/ReportsView.tsx`**:
   - Outer container: `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`.
   - Replace inline header with `<ReportsHeader ... />`.
-  - Wrap content area in responsive stage container `p-4 sm:p-6 flex-1 min-h-0 space-y-6`.
+  - Wrap content area in responsive stage container `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
+
+### Phase 2.9: Documents & Asset Library Header Upgrade
+- **`src/components/views/DocumentsView/DocumentsHeader.tsx`**:
+  - Create atomic header component (`p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+  - Row 1: Inline icon (`Files text-teal-500`), Title `Documents & Asset Library`, count badge, subtitle, and top-right action buttons (Refresh, + Tambah Dokumen).
+  - Row 2: 4 Embedded KPI Cards (`KpiSummaryCards items={kpiCards} skeletonCount={4}`).
+  - Row 3: Category chips with count badges, search input, and view mode switcher (Cards | Table).
+- **`src/components/views/DocumentsView/DocumentsView.tsx`**:
+  - Outer container: `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` (remove restrictive `max-w-7xl mx-auto`).
+  - Replace inline header, KPI cards, and filter bar with `<DocumentsHeader ... />`.
+  - Wrap content area in responsive stage container `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
 
 ### Phase 3: Verification & Gate Checks
 - [x] Run `npm run drift:check`
@@ -89,9 +100,19 @@
 
 | File | Action | LOC Impact |
 |---|---|---|
-| `docs/superpowers/specs/2026-10-31-inventory-style-header-standardization-design.md` | Create | ~60 LOC |
-| `docs/superpowers/plans/2026-10-31-inventory-style-header-standardization.md` | Create | ~55 LOC |
+| `docs/superpowers/specs/2026-10-31-inventory-style-header-standardization-design.md` | Create / Modify | ~120 LOC |
+| `docs/superpowers/plans/2026-10-31-inventory-style-header-standardization.md` | Create / Modify | ~115 LOC |
 | `src/components/views/PlacementsView/PlacementsHeader.tsx` | Modify | ~110 LOC |
 | `src/components/views/PlacementsView/PlacementsView.tsx` | Modify | ~210 LOC |
 | `src/components/views/ContentPlannerView/ContentPlannerHeader.tsx` | Create | ~160 LOC |
 | `src/components/views/ContentPlannerView/ContentPlannerView.tsx` | Modify | ~-120 LOC (reduction) |
+| `src/components/views/EventsView/EventsHeader.tsx` | Create | ~130 LOC |
+| `src/components/views/EventsView/EventsView.tsx` | Modify | ~200 LOC |
+| `src/components/views/PipelineView/PipelineView.tsx` | Modify | ~220 LOC |
+| `src/components/views/AnalyticsView/AnalyticsHeader.tsx` | Create | ~200 LOC |
+| `src/components/views/AnalyticsView/AnalyticsActionableStrip.tsx` | Create | ~110 LOC |
+| `src/components/views/AnalyticsView/AnalyticsView.tsx` | Modify | ~210 LOC |
+| `src/components/views/ReportsView/ReportsHeader.tsx` | Create | ~160 LOC |
+| `src/components/views/ReportsView/ReportsView.tsx` | Modify | ~210 LOC |
+| `src/components/views/DocumentsView/DocumentsHeader.tsx` | Create | ~209 LOC |
+| `src/components/views/DocumentsView/DocumentsView.tsx` | Modify | ~210 LOC |

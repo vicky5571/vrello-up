@@ -192,6 +192,14 @@
       - Bottom controls row with Tab switcher (Laporan Bulanan & Rekap POSM Kuartalan) and New Monthly Report button.
     - Updated `ReportsView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` and wrapped stage content in `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
 
+27. **Documents & Asset Library Hub Inventory-Style Unified Header (`DocumentsHeader.tsx`, `DocumentsView.tsx`):**
+    - Created `DocumentsHeader.tsx` (~209 LOC) following the Equipment Inventory design:
+      - Unified backdrop blur container (`p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+      - Title row with inline `Files` icon (`text-teal-500`), document count badge (`{count} dokumen`), concise subtitle, and top-right action buttons (Refresh and `+ Tambah Dokumen`).
+      - Embedded 4 KPI Cards (Total Dokumen, Kapasitas Terpakai, Dokumen Aktif, Kategori Terbanyak) with `KpiSummaryCards items={kpiCards}` within the header zone.
+      - Bottom controls row with Category filter chips (Semua Dokumen + individual categories with count badges), search input with clear button, and view mode switcher (Cards | Table).
+    - Updated `DocumentsView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` (removed restrictive `max-w-7xl mx-auto`), replaced inline headers with `<DocumentsHeader ... />`, and wrapped stage content in `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
+
 ---
 
 ## Verification Gates (this session)
@@ -213,4 +221,4 @@
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
 2. Push committed branch to remote (`git push origin vicky`).
-3. Proceed with Phase 2 of Header Standardization (Content Planner header extraction & unification) if desired.
+3. Continue standardizing any remaining views if requested by user.

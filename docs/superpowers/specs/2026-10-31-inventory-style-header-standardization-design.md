@@ -3,7 +3,7 @@
 **Date:** 2026-10-31  
 **Author:** Critical Senior Software Engineer  
 **Status:** Approved  
-**Affected Views:** Media Placements (`PlacementsView.tsx`), Content Planner (`ContentPlannerView.tsx`), Field Events (`EventsView.tsx`), Pipeline (`PipelineView.tsx`), Analytics & ROI (`AnalyticsView.tsx`), Reports & Exports (`ReportsView.tsx`)
+**Affected Views:** Media Placements (`PlacementsView.tsx`), Content Planner (`ContentPlannerView.tsx`), Field Events (`EventsView.tsx`), Pipeline (`PipelineView.tsx`), Analytics & ROI (`AnalyticsView.tsx`), Reports & Exports (`ReportsView.tsx`), Documents & Asset Library (`DocumentsView.tsx`)
 
 ---
 
@@ -11,7 +11,7 @@
 
 The header on the **Equipment Inventory & Loans** page provides a unified, cohesive top zone (`border-b bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`) integrating the title row, primary actions, 4 KPI cards, and sub-navigation controls. This contrasts with the disconnected floating card-banner pattern previously on Media Placements and Content Planner.
 
-This specification standardizes the header architecture across **Media Placements**, **Content Planner**, **Field Events**, **Pipeline**, **Analytics & ROI**, and **Reports & Exports** to mirror the **Equipment Inventory** header design language:
+This specification standardizes the header architecture across **Media Placements**, **Content Planner**, **Field Events**, **Pipeline**, **Analytics & ROI**, **Reports & Exports**, and **Documents & Asset Library** to mirror the **Equipment Inventory** header design language:
 1. Unified top header zone with backdrop blur, subtle background tint, and border bottom divider.
 2. Clean inline icon + title (unboxed, text-xl font-bold) and concise subtitle.
 3. Standardized top-right action buttons (Refresh icon button, primary action button, secondary actions).
@@ -93,6 +93,23 @@ This specification standardizes the header architecture across **Media Placement
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
+### E. Documents & Asset Library
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ Top Header Zone (bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm pb-2 border-b)│
+│  [Files] Documents & Asset Library [N dokumen]      [ ⟳ ] [ + Tambah Dokumen ] │
+│  Pusat repositori brand guidelines, SOP, materi master, dan kontrak.   │
+│                                                                        │
+│  [ Total Dokumen ]  [ Kapasitas ]  [ Dokumen Aktif ]  [ Top Kategori ] │
+│                                                                        │
+│  [ Category Chips: Semua | Brand Guidelines | ... ] [ Search ] [ Cards | Table ]│
+└────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│ Content Area (p-4 sm:p-6 flex-1 min-h-0 space-y-4)                     │
+│  [ DocumentCardsView / MarcomTableShell ]                              │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## 3. Component Architecture & Invariants
@@ -102,6 +119,7 @@ This specification standardizes the header architecture across **Media Placement
    - `ContentPlannerView.tsx` decomposes its header into `ContentPlannerHeader.tsx` to improve modularity.
    - `AnalyticsView.tsx` decomposes its header into `AnalyticsHeader.tsx` and stage telemetry into `AnalyticsActionableStrip.tsx`.
    - `ReportsView.tsx` decomposes its header into `ReportsHeader.tsx`.
+   - `DocumentsView.tsx` decomposes its header into `DocumentsHeader.tsx`.
 2. **SSOT Invariant:**
    - All entity models (`MarcomPlacement`, `ContentPostItem`, etc.) remain imported exclusively from `src/types/index.ts`.
 3. **Accessibility & Reduced Motion:**
