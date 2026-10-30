@@ -14,12 +14,16 @@ import {
   CalendarOverflowPopover,
   CalendarCreatePopover,
 } from "./CalendarPopovers";
+import { ProjectsDetailDrawerHost } from "./ProjectsDetailDrawerHost";
 
 interface ProjectsCalendarViewProps {
   onSelectItem?: (item: MarcomWorkItem) => void;
 }
 
 export function ProjectsCalendarView({ onSelectItem }: ProjectsCalendarViewProps) {
+  const [internalSelectedItem, setInternalSelectedItem] =
+    useState<MarcomWorkItem | null>(null);
+  const handleSelect = onSelectItem || setInternalSelectedItem;
   const {
     currentMonth,
     setCurrentMonth,
@@ -97,7 +101,7 @@ export function ProjectsCalendarView({ onSelectItem }: ProjectsCalendarViewProps
                 day={day}
                 currentMonth={currentMonth}
                 dayItems={itemsByDate.get(dateStr) || []}
-                onSelectItem={onSelectItem}
+                onSelectItem={handleSelect}
                 onOpenCreate={setCreateDate}
                 onOpenOverflow={setOverflowDate}
               />
@@ -112,7 +116,7 @@ export function ProjectsCalendarView({ onSelectItem }: ProjectsCalendarViewProps
           dateStr={overflowDate}
           items={itemsByDate.get(overflowDate) || []}
           onClose={() => setOverflowDate(null)}
-          onSelectItem={onSelectItem}
+          onSelectItem={handleSelect}
         />
       )}
 
@@ -122,6 +126,14 @@ export function ProjectsCalendarView({ onSelectItem }: ProjectsCalendarViewProps
           dateStr={createDate}
           onClose={() => setCreateDate(null)}
           onCreateType={handleCreateType}
+        />
+      )}
+
+      {/* Domain Detail Drawer Host */}
+      {!onSelectItem && (
+        <ProjectsDetailDrawerHost
+          selectedItem={internalSelectedItem}
+          onClose={() => setInternalSelectedItem(null)}
         />
       )}
     </div>

@@ -1,16 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import type { MarcomWorkItem } from "@/types";
 import { useProjectsList } from "./useProjectsList";
 import { ProjectsListHeader } from "./ProjectsListHeader";
 import { ProjectsListTable } from "./ProjectsListTable";
 import { ProjectsBulkActionBar } from "./ProjectsBulkActionBar";
+import { ProjectsDetailDrawerHost } from "./ProjectsDetailDrawerHost";
 
 interface ProjectsListViewProps {
   onSelectItem?: (item: MarcomWorkItem) => void;
 }
 
 export function ProjectsListView({ onSelectItem }: ProjectsListViewProps) {
+  const [internalSelectedItem, setInternalSelectedItem] =
+    useState<MarcomWorkItem | null>(null);
+  const handleSelect = onSelectItem || setInternalSelectedItem;
   const {
     isLoading,
     sortedItems,
@@ -64,7 +69,7 @@ export function ProjectsListView({ onSelectItem }: ProjectsListViewProps) {
         collapsedGroups={collapsedGroups}
         selectedKeys={selectedKeys}
         visibleFields={visibleFields}
-        onSelectItem={onSelectItem}
+        onSelectItem={handleSelect}
         onToggleSort={toggleSort}
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
@@ -84,6 +89,15 @@ export function ProjectsListView({ onSelectItem }: ProjectsListViewProps) {
         onBulkDelete={handleBulkDelete}
         onClearSelection={clearSelection}
       />
+
+      {/* Domain Detail Drawer Host */}
+      {!onSelectItem && (
+        <ProjectsDetailDrawerHost
+          selectedItem={internalSelectedItem}
+          onClose={() => setInternalSelectedItem(null)}
+          onRefresh={loadData}
+        />
+      )}
     </div>
   );
 }
