@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -18,6 +18,7 @@ import {
 import { ProjectsBoardColumn } from "./ProjectsBoardColumn";
 import { ProjectsWorkItemCard } from "./ProjectsWorkItemCard";
 import { ProjectsBulkActionBar } from "./ProjectsBulkActionBar";
+import { ProjectsDetailDrawerHost } from "./ProjectsDetailDrawerHost";
 import { useProjectsBoard } from "./useProjectsBoard";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,9 @@ interface ProjectsBoardViewProps {
 }
 
 export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
+  const [internalSelectedItem, setInternalSelectedItem] =
+    useState<MarcomWorkItem | null>(null);
+  const handleSelect = onSelectItem || setInternalSelectedItem;
   const {
     isLoading,
     allWorkItems,
@@ -136,7 +140,7 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
                 column={column}
                 className={column === "Archived" ? "opacity-60" : undefined}
                 items={itemsByColumn.get(column) || []}
-                onSelect={onSelectItem}
+                onSelect={handleSelect}
                 dropIndicator={dropIndicator?.column === column ? dropIndicator : null}
                 selectedKeys={selectedKeys}
                 onToggleSelect={handleToggleSelect}
@@ -166,6 +170,15 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
         onBulkDelete={handleBulkDelete}
         onClearSelection={handleClearSelection}
       />
+
+      {/* Domain Detail Drawer Host */}
+      {!onSelectItem && (
+        <ProjectsDetailDrawerHost
+          selectedItem={internalSelectedItem}
+          onClose={() => setInternalSelectedItem(null)}
+          onRefresh={loadData}
+        />
+      )}
     </div>
   );
 }
