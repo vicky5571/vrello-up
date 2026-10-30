@@ -3,7 +3,7 @@
 **Date:** 2026-10-31  
 **Author:** Critical Senior Software Engineer  
 **Status:** Approved  
-**Affected Views:** Media Placements (`PlacementsView.tsx`), Content Planner (`ContentPlannerView.tsx`), Field Events (`EventsView.tsx`), Pipeline (`PipelineView.tsx`), Analytics & ROI (`AnalyticsView.tsx`), Reports & Exports (`ReportsView.tsx`), Documents & Asset Library (`DocumentsView.tsx`)
+**Affected Views:** Media Placements (`PlacementsView.tsx`), Content Planner (`ContentPlannerView.tsx`), Field Events (`EventsView.tsx`), Pipeline (`PipelineView.tsx`), Analytics & ROI (`AnalyticsView.tsx`), Reports & Exports (`ReportsView.tsx`), Documents & Asset Library (`DocumentsView.tsx`), Outlets Directory (`OutletsView.tsx`)
 
 ---
 
@@ -11,7 +11,7 @@
 
 The header on the **Equipment Inventory & Loans** page provides a unified, cohesive top zone (`border-b bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`) integrating the title row, primary actions, 4 KPI cards, and sub-navigation controls. This contrasts with the disconnected floating card-banner pattern previously on Media Placements and Content Planner.
 
-This specification standardizes the header architecture across **Media Placements**, **Content Planner**, **Field Events**, **Pipeline**, **Analytics & ROI**, **Reports & Exports**, and **Documents & Asset Library** to mirror the **Equipment Inventory** header design language:
+This specification standardizes the header architecture across **Media Placements**, **Content Planner**, **Field Events**, **Pipeline**, **Analytics & ROI**, **Reports & Exports**, **Documents & Asset Library**, and **Outlets Directory** to mirror the **Equipment Inventory** header design language:
 1. Unified top header zone with backdrop blur, subtle background tint, and border bottom divider.
 2. Clean inline icon + title (unboxed, text-xl font-bold) and concise subtitle.
 3. Standardized top-right action buttons (Refresh icon button, primary action button, secondary actions).
@@ -110,6 +110,24 @@ This specification standardizes the header architecture across **Media Placement
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
+### F. Outlets Directory
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ Top Header Zone (bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm pb-2 border-b)│
+│  [Store] Outlets Directory [N outlet]         [ ⟳ ] [ + Add Outlet ]   │
+│  Pusat data jaringan outlet, integrasi MoU, riwayat branding fisik, GPS.│
+│                                                                        │
+│  [ Total ]    [ Branches ]    [ Brands ]    [ MoU Active ]  [ POSM ]   │
+│                                                                        │
+│  [ Tabel Data | Peta Sebaran | Antrean Approval (N) ]                  │
+│  [ Branch: All | Store Type: All ] [ Search... ] [ Reset Filters ]     │
+└────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│ Content Area (p-4 sm:p-6 flex-1 min-h-0 space-y-4)                     │
+│  [ MarcomTableShell / OutletMapView / OutletApprovalQueueTab ]         │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## 3. Component Architecture & Invariants
@@ -120,8 +138,9 @@ This specification standardizes the header architecture across **Media Placement
    - `AnalyticsView.tsx` decomposes its header into `AnalyticsHeader.tsx` and stage telemetry into `AnalyticsActionableStrip.tsx`.
    - `ReportsView.tsx` decomposes its header into `ReportsHeader.tsx`.
    - `DocumentsView.tsx` decomposes its header into `DocumentsHeader.tsx`.
+   - `OutletsView.tsx` decomposes its header into `OutletsHeader.tsx`.
 2. **SSOT Invariant:**
-   - All entity models (`MarcomPlacement`, `ContentPostItem`, etc.) remain imported exclusively from `src/types/index.ts`.
+   - All entity models (`MarcomPlacement`, `ContentPostItem`, `OutletItem`, etc.) remain imported exclusively from `src/types/index.ts`.
 3. **Accessibility & Reduced Motion:**
    - Animated view switchers preserve `useReducedMotion()` and Framer Motion spring physics.
 4. **Single-Tenant Invariant:**
@@ -134,4 +153,4 @@ This specification standardizes the header architecture across **Media Placement
 - [ ] Drift check passes: `npm run drift:check`
 - [ ] TypeScript compilation passes: `npm run build:check`
 - [ ] Test suite passes: `npm test` (0 failures)
-- [ ] Visual verification of Media Placements and Content Planner matches Equipment Inventory design
+- [ ] Visual verification of all updated Marcom views matches Equipment Inventory design

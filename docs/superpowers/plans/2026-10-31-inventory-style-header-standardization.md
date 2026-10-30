@@ -88,6 +88,17 @@
   - Replace inline header, KPI cards, and filter bar with `<DocumentsHeader ... />`.
   - Wrap content area in responsive stage container `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
 
+### Phase 2.10: Outlets Directory Header Upgrade
+- **`src/components/views/OutletsView/OutletsHeader.tsx`**:
+  - Create atomic header component (`p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+  - Row 1: Inline icon (`Store text-orange-500`), Title `Outlets Directory`, count badge, subtitle, and top-right action buttons (Refresh, + Add Outlet / Ajukan Toko Baru).
+  - Row 2: 5 Embedded KPI Cards (`KpiSummaryCards items={kpiItems} skeletonCount={5}`).
+  - Row 3: View mode switcher (Tabel Data, Peta Sebaran, Antrean Approval with pending count badge), Branch selector, Store Type selector, Search input, and Reset Filters button.
+- **`src/components/views/OutletsView/OutletsView.tsx`**:
+  - Outer container: `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`.
+  - Replace inline header, floating KPI strip, and inline filterBar with `<OutletsHeader ... />`.
+  - Wrap stage content area in responsive stage container `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
+
 ### Phase 3: Verification & Gate Checks
 - [x] Run `npm run drift:check`
 - [x] Run `npm run build:check`
@@ -100,8 +111,8 @@
 
 | File | Action | LOC Impact |
 |---|---|---|
-| `docs/superpowers/specs/2026-10-31-inventory-style-header-standardization-design.md` | Create / Modify | ~120 LOC |
-| `docs/superpowers/plans/2026-10-31-inventory-style-header-standardization.md` | Create / Modify | ~115 LOC |
+| `docs/superpowers/specs/2026-10-31-inventory-style-header-standardization-design.md` | Create / Modify | ~140 LOC |
+| `docs/superpowers/plans/2026-10-31-inventory-style-header-standardization.md` | Create / Modify | ~135 LOC |
 | `src/components/views/PlacementsView/PlacementsHeader.tsx` | Modify | ~110 LOC |
 | `src/components/views/PlacementsView/PlacementsView.tsx` | Modify | ~210 LOC |
 | `src/components/views/ContentPlannerView/ContentPlannerHeader.tsx` | Create | ~160 LOC |
@@ -116,3 +127,5 @@
 | `src/components/views/ReportsView/ReportsView.tsx` | Modify | ~210 LOC |
 | `src/components/views/DocumentsView/DocumentsHeader.tsx` | Create | ~209 LOC |
 | `src/components/views/DocumentsView/DocumentsView.tsx` | Modify | ~210 LOC |
+| `src/components/views/OutletsView/OutletsHeader.tsx` | Create | ~190 LOC |
+| `src/components/views/OutletsView/OutletsView.tsx` | Modify | ~-100 LOC (reduction) |

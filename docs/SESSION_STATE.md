@@ -200,6 +200,14 @@
       - Bottom controls row with Category filter chips (Semua Dokumen + individual categories with count badges), search input with clear button, and view mode switcher (Cards | Table).
     - Updated `DocumentsView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` (removed restrictive `max-w-7xl mx-auto`), replaced inline headers with `<DocumentsHeader ... />`, and wrapped stage content in `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
 
+28. **Outlets Directory Inventory-Style Unified Header (`OutletsHeader.tsx`, `OutletsView.tsx`):**
+    - Created `OutletsHeader.tsx` (~190 LOC) following the Equipment Inventory design:
+      - Unified backdrop blur container (`p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+      - Title row with inline `Store` icon (`text-orange-500`), outlet count badge (`{totalOutlets} outlet`), concise subtitle, and top-right action buttons (Refresh and `+ Add Outlet` / `Ajukan Toko Baru`).
+      - Embedded 5 KPI Cards (Total Outlets, Active Branches, Brand Portfolio, MoU Partnerships, Placements Installed) with `KpiSummaryCards items={kpiItems}` within the header zone.
+      - Bottom controls row with View mode switcher tabs (Tabel Data, Peta Sebaran, Antrean Approval with pending count badge), Branch dropdown selector, Store Type dropdown selector, search input with clear button, and Reset Filters button.
+    - Updated `OutletsView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`, replaced inline header, floating KPI cards, and inline filterBar with `<OutletsHeader ... />`, and wrapped stage content in `p-4 sm:p-6 flex-1 min-h-0 space-y-4`.
+
 ---
 
 ## Verification Gates (this session)

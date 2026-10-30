@@ -10,11 +10,9 @@ import {
   ClipboardList,
   Layers,
   MapPin,
-  Table as TableIcon,
   Compass,
   FileText,
   Eye,
-  Clock,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -26,7 +24,7 @@ import {
   MarcomTableShell,
   createMarcomColumnHelper,
 } from "@/components/views/shared/MarcomTableShell";
-import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
+import { OutletsHeader } from "./OutletsHeader";
 import { calculateEnhancedOutletKPIs } from "@/lib/marcom/outletAnalytics";
 import { Outlet360Drawer } from "./Outlet360Drawer";
 import { OutletApprovalQueueTab } from "./OutletApprovalQueueTab";
@@ -142,6 +140,7 @@ export function OutletsView() {
   const handleResetFilters = () => {
     setSelectedBranch("ALL");
     setSelectedType("ALL");
+    setMarcomFilter("outlets", "");
     fetchOutlets("ALL", "ALL");
   };
 
@@ -444,178 +443,79 @@ export function OutletsView() {
   }, [outlets]);
 
   return (
-    <>
-      <div className="flex h-full w-full min-h-0 flex-col overflow-hidden">
-        {/* View Mode Switcher Header */}
-        <div className="shrink-0 p-4 pb-0 md:p-6 md:pb-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold">
-                <Store className="w-4 h-4" />
-              </div>
-              <div>
-                <h1 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  Outlets Directory
-                </h1>
-                <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
-                  Pusat data jaringan outlet, integrasi MoU, riwayat branding fisik, dan geolokasi.
-                </p>
-              </div>
-            </div>
+    <div className="flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto">
+      {/* Unified Inventory-Style Header */}
+      <OutletsHeader
+        totalOutlets={outlets.length}
+        kpiItems={kpiItems}
+        isLoading={isLoading}
+        onRefresh={() => fetchOutlets(selectedBranch, selectedType)}
+        canAddOutlet={canAddOutlet}
+        canManage={canManage}
+        onAddOutlet={() => {
+          if (canManage) {
+            setModalOutlet({
+              code: "",
+              name: "",
+              type: "TRADITIONAL",
+              brand: "IM3",
+              branchId: branches[0]?.id || "",
+              city: "",
+              address: "",
+              picName: "",
+              picPhone: "",
+            });
+          } else {
+            setIsDraftModalOpen(true);
+          }
+        }}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        pendingCount={pendingCount}
+        selectedBranch={selectedBranch}
+        onBranchChange={handleBranchChange}
+        branches={branches}
+        selectedType={selectedType}
+        onTypeChange={handleTypeChange}
+        onResetFilters={handleResetFilters}
+        searchQuery={marcomFilters["outlets"] || ""}
+        onSearchChange={(q) => setMarcomFilter("outlets", q)}
+      />
 
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs">
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
-                  viewMode === "table"
-                    ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-                )}
-              >
-                <TableIcon className="w-3.5 h-3.5" />
-                <span>Tabel Data</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("map")}
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
-                  viewMode === "map"
-                    ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-                )}
-              >
-                <MapPin className="w-3.5 h-3.5 text-orange-500" />
-                <span>Peta Sebaran</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("approval")}
-                className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer",
-                  viewMode === "approval"
-                    ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-                )}
-              >
-                <Clock className="w-3.5 h-3.5 text-amber-500" />
-                <span>Antrean Approval</span>
-                {pendingCount > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white">
-                    {pendingCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* View Content Stage */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          {viewMode === "approval" ? (
-            <div className="h-full overflow-y-auto p-4 pt-3 md:p-6 md:pt-4 overscroll-contain">
-              <OutletApprovalQueueTab
-                outlets={outlets}
-                branches={branches}
-                onRefresh={fetchOutlets}
-              />
-            </div>
-          ) : viewMode === "map" ? (
-            <div className="h-full overflow-y-auto p-4 pt-3 md:p-6 md:pt-4 space-y-4 overscroll-contain">
-              <KpiSummaryCards items={kpiItems} mobileStrip />
-              <OutletMapView
-                outlets={outlets}
-                onSelectOutlet={(id) => setSelectedOutletIdForDrawer(id)}
-                onEditOutlet={(o) => setModalOutlet(o)}
-                canManage={canManage}
-              />
-            </div>
-          ) : (
-            <MarcomTableShell
-              fixedViewport
-              kpiBar={<KpiSummaryCards items={kpiItems} mobileStrip />}
-              data={outlets}
-              columns={columns}
-              getRowId={(row) => row.id}
-              initialSorting={[{ id: "code", desc: false }]}
-              title="Outlets"
-              titleIcon={Store}
-              entityName="outlet"
-              entityPlural="outlets"
-              isLoading={isLoading}
-              error={error}
-              onRefresh={fetchOutlets}
-              canDelete={canManage}
-              deleteRequiresMessage="Delete requires admin role"
-              onDeleteOne={deleteOne}
-              onDeleteBatch={deleteBatch}
-              canAdd={canAddOutlet}
-              onAdd={() => {
-                if (canManage) {
-                  setModalOutlet({
-                    code: "",
-                    name: "",
-                    type: "TRADITIONAL",
-                    brand: "IM3",
-                    branchId: branches[0]?.id || "",
-                    city: "",
-                    address: "",
-                    picName: "",
-                    picPhone: "",
-                  });
-                } else {
-                  setIsDraftModalOpen(true);
-                }
-              }}
-              addLabel={canManage ? "Add Outlet" : "Ajukan Toko Baru"}
-              addIcon={Plus}
-              addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
-            filterBar={
-              <div className="flex flex-wrap items-center gap-2.5 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-slate-500 dark:text-slate-400">Branch:</span>
-                  <select
-                    value={selectedBranch}
-                    onChange={(e) => handleBranchChange(e.target.value)}
-                    aria-label="Filter by branch"
-                    className="max-w-[190px] sm:max-w-[240px] px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 truncate cursor-pointer"
-                  >
-                    <option value="ALL">All Branches</option>
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name} ({b.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-slate-500 dark:text-slate-400">Store Type:</span>
-                  <select
-                    value={selectedType}
-                    onChange={(e) => handleTypeChange(e.target.value)}
-                    aria-label="Filter by store type"
-                    className="px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-orange-500 cursor-pointer"
-                  >
-                    <option value="ALL">All Store Types</option>
-                    <option value="TRADITIONAL">Traditional</option>
-                    <option value="MODERN_RETAIL">Modern Retail</option>
-                    <option value="EXCLUSIVE">Official Store / Exclusive</option>
-                    <option value="CAMPUS_OUTLET">Campus Outlet</option>
-                  </select>
-                </div>
-                {(selectedBranch !== "ALL" || selectedType !== "ALL") && (
-                  <button
-                    type="button"
-                    onClick={handleResetFilters}
-                    className="text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 underline font-medium cursor-pointer"
-                  >
-                    Reset Filters
-                  </button>
-                )}
-              </div>
-            }
+      {/* Main Stage Content */}
+      <div className="p-4 sm:p-6 flex-1 min-h-0 space-y-4">
+        {viewMode === "approval" ? (
+          <OutletApprovalQueueTab
+            outlets={outlets}
+            branches={branches}
+            onRefresh={fetchOutlets}
+          />
+        ) : viewMode === "map" ? (
+          <OutletMapView
+            outlets={outlets}
+            onSelectOutlet={(id) => setSelectedOutletIdForDrawer(id)}
+            onEditOutlet={(o) => setModalOutlet(o)}
+            canManage={canManage}
+          />
+        ) : (
+          <MarcomTableShell
+            data={outlets}
+            columns={columns}
+            getRowId={(row) => row.id}
+            initialSorting={[{ id: "code", desc: false }]}
+            title="Outlets"
+            titleIcon={Store}
+            entityName="outlet"
+            entityPlural="outlets"
+            isLoading={isLoading}
+            error={error}
+            onRefresh={fetchOutlets}
+            canDelete={canManage}
+            deleteRequiresMessage="Delete requires admin role"
+            onDeleteOne={deleteOne}
+            onDeleteBatch={deleteBatch}
+            hideHeader
+            noPadding
             renderExpanded={(outlet) => (
               <OutletExpandedRow
                 outlet={outlet}
@@ -631,7 +531,6 @@ export function OutletsView() {
             emptyLabel="No outlets found."
           />
         )}
-        </div>
       </div>
 
       {/* Outlet 360 Degree Profile Drawer */}
@@ -664,6 +563,6 @@ export function OutletsView() {
           fetchOutlets();
         }}
       />
-    </>
+    </div>
   );
 }
