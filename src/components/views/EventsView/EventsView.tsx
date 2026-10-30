@@ -6,16 +6,11 @@ import {
   Flag,
   Plus,
   RefreshCw,
-  LayoutGrid,
-  TableProperties,
-  Calendar,
-  GanttChart,
   Search,
   Coins,
   Users,
   Building2,
 } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -28,6 +23,7 @@ import {
   calculateFieldEventsKPI,
 } from "@/lib/marcom/eventChecklist";
 import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
+import { EventsHeader } from "./EventsHeader";
 import { EventsCalendarView } from "./EventsCalendarView";
 import { EventsTimelineView } from "./EventsTimelineView";
 import { EventFootageModal } from "./EventFootageModal";
@@ -44,24 +40,11 @@ export type FieldEvent = FieldEventItem;
 export type MarcomEvent = FieldEventItem;
 export type { EventStatus, EventFootage, ActivityViewMode };
 
-const VIEW_OPTIONS: Array<{
-  id: ActivityViewMode;
-  label: string;
-  icon: typeof LayoutGrid;
-  title: string;
-}> = [
-  { id: "cards", label: "Cards", icon: LayoutGrid, title: "Cards Grid View" },
-  { id: "table", label: "Table", icon: TableProperties, title: "Table View" },
-  { id: "calendar", label: "Calendar", icon: Calendar, title: "Calendar Month View" },
-  { id: "timeline", label: "Timeline", icon: GanttChart, title: "Timeline (Gantt) View" },
-];
-
 interface EventsViewProps {
   initialView?: ActivityViewMode;
 }
 
 export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
-  const shouldReduceMotion = useReducedMotion();
   const { can } = useMarcomPermissions();
   const {
     users,
@@ -285,82 +268,16 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
 
   return (
     <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-6 pb-20">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-              <Flag className="w-5 h-5" />
-            </span>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-              Field Events
-            </h1>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Manage on-ground activations, mall roadshows, venue logistics, budgets in IDR, and event footage.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {/* View switcher */}
-          <div className="relative flex items-center rounded-lg border border-slate-200 dark:border-slate-800 p-0.5 bg-slate-50 dark:bg-slate-900 select-none">
-            {VIEW_OPTIONS.map((opt) => {
-              const Icon = opt.icon;
-              const isActive = viewMode === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => setViewMode(opt.id)}
-                  className={cn(
-                    "relative p-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer",
-                    isActive
-                      ? "text-slate-900 dark:text-slate-100 font-semibold"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-                  )}
-                  title={opt.title}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeFieldEventsViewPill"
-                      className="absolute inset-0 bg-white dark:bg-slate-800 rounded-md shadow-xs border border-slate-200/80 dark:border-slate-700/80"
-                      transition={
-                        shouldReduceMotion
-                          ? { duration: 0 }
-                          : { type: "spring", stiffness: 450, damping: 35 }
-                      }
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-1.5">
-                    <Icon className="w-3.5 h-3.5" />
-                    {opt.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => fetchEvents(true)}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
-            title="Refresh Field Events"
-          >
-            <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => openCreateModal()}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold shadow-xs hover:shadow transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            New Field Event
-          </button>
-        </div>
-      </div>
+      {/* Top Header (Card-Banner Container) */}
+      <EventsHeader
+        totalEvents={events.length}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        isLoading={isLoading}
+        onRefresh={() => fetchEvents(true)}
+        canManage={can("CREATE_EVENT")}
+        onAddEvent={() => openCreateModal()}
+      />
 
       {/* KPI Cards */}
       <KpiSummaryCards items={kpis} />

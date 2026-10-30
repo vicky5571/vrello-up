@@ -122,16 +122,24 @@
     - Spec: `docs/superpowers/specs/2026-10-31-placements-persistent-header-view-switcher-design.md`
     - Plan: `docs/superpowers/plans/2026-10-31-placements-persistent-header-view-switcher.md`
     - Upgraded `PlacementViewSwitcher` with Framer Motion `motion.div layoutId="activePlacementViewPill"`, spring physics (`stiffness: 450, damping: 35`), `whileTap={{ scale: 0.95 }}`, and `useReducedMotion()`.
-    - Extracted atomic subcomponent `PlacementsHeader.tsx` (84 LOC) containing title, record badge, view switcher pills, refresh button, export trigger, and `+ Add Placement` action.
-    - Anchored `PlacementsHeader` and `KpiSummaryCards` persistently at the top across Table, Map, and Recap view modes with 0px layout jump.
-    - Streamlined `PlacementsMapTab.tsx` and `PlacementsRecapTab.tsx` by removing redundant duplicate headers and duplicate KPI bars.
-    - Kept coordinator `PlacementsView.tsx` strictly under the 250 LOC limit (213 LOC).
+    - Extracted atomic subcomponent `PlacementsHeader.tsx` (84 LOC) styled with Option B Card-Banner Container (`bg-white dark:bg-slate-900 rounded-2xl border shadow-xs p-4 sm:p-5`), containing title, record badge, view switcher pills, refresh button, export trigger, and `+ Add Placement` action.
+    - Added container padding (`p-4 sm:p-6 space-y-4 h-full overflow-y-auto`) to `PlacementsView.tsx` and aligned `MarcomTableShell` with `noPadding` and `hideRefreshButton`.
+    - Positioned `KpiSummaryCards` conditionally (`viewMode !== "map"`), hiding the KPI cards on Map View to maximize the Leaflet interactive map viewport and prevent unwanted vertical scrollbars.
+    - Streamlined `PlacementsMapTab.tsx` and `PlacementsRecapTab.tsx` by removing redundant duplicate headers.
+    - Kept coordinator `PlacementsView.tsx` strictly under the 250 LOC limit (214 LOC).
+
+18. **Field Events Card-Banner Header Architecture (`EventsView.tsx`, `EventsHeader.tsx`):**
+    - Spec: `docs/superpowers/specs/2026-10-31-events-card-header-design.md`
+    - Plan: `docs/superpowers/plans/2026-10-31-events-card-header.md`
+    - Created atomic subcomponent `EventsHeader.tsx` (129 LOC) styled with the Card-Banner container (`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs p-4 sm:p-5`), matching the design system of Media Placements.
+    - Integrated title, flag icon badge, event counter badge (`{totalEvents} events`), subtitle, animated view switcher (`layoutId="activeFieldEventsViewPill"`), refresh action, and role-guarded `+ New Field Event` action (`can("CREATE_EVENT")`).
+    - Reduced `EventsView.tsx` from 531 to 447 LOC by decomposing the coordinator header.
 
 ---
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (25 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (26 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
 - `npm test` → ✅ 591 passed, 0 failed (100 suites)
 
