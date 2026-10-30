@@ -44,6 +44,12 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-30]
 
+- `style(layout)`: Align AppModeSegmentedControl styling with original workspace version
+  - Restored track padding `px-2.5 pt-2.5 pb-1.5` and border token `border-slate-200/60`
+  - Restored two-line centered layout for `Marcom Hub` with `min-h-[38px]` button height
+  - Restored active pill border and shadow tokens matching legacy workspace UI
+  - Gates: `npm test` 582 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `style(layout)`: Restore Projects Kanban icon, Marcom Hub label, and sliding pill animation
   - Replaced `FolderKanban` with original `Kanban` icon in Projects mode button
   - Renamed `Marcom` to `Marcom Hub` in mode switcher and GlobalRail

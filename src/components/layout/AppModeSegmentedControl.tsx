@@ -33,11 +33,11 @@ export function AppModeSegmentedControl() {
   };
 
   return (
-    <div className="p-2 border-b border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/20 shrink-0">
+    <div className="px-2.5 pt-2.5 pb-1.5 shrink-0">
       <div
         role="tablist"
         aria-label="App Mode Switcher"
-        className="relative grid grid-cols-2 p-1 rounded-xl bg-slate-200/60 dark:bg-slate-800/80 text-xs font-medium select-none"
+        className="relative p-0.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 flex items-stretch gap-0.5 select-none"
       >
         {/* Projects Mode Button */}
         <button
@@ -46,16 +46,16 @@ export function AppModeSegmentedControl() {
           aria-selected={appMode === "tasks"}
           onClick={handleSelectTasks}
           className={cn(
-            "relative flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors duration-200",
+            "relative flex-1 self-stretch min-h-[38px] flex items-center justify-center py-1 px-1.5 sm:px-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors duration-200 group",
             appMode === "tasks"
               ? "text-blue-600 dark:text-blue-400"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+              : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white/40 dark:hover:bg-white/5",
           )}
         >
           {appMode === "tasks" && (
             <motion.div
               layoutId="activeAppModeIndicator"
-              className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-2xs"
+              className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-xs border border-slate-200/80 dark:border-white/10"
               transition={
                 shouldReduceMotion
                   ? { duration: 0 }
@@ -63,8 +63,15 @@ export function AppModeSegmentedControl() {
               }
             />
           )}
-          <span className="relative z-10 flex items-center justify-center gap-1.5">
-            <Kanban className="w-3.5 h-3.5 shrink-0" />
+          <span className="relative z-10 flex items-center justify-center gap-1.5 text-center leading-tight my-auto">
+            <Kanban
+              className={cn(
+                "w-3.5 h-3.5 shrink-0 transition-colors duration-200",
+                appMode === "tasks"
+                  ? "text-blue-500"
+                  : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300",
+              )}
+            />
             <span>Projects</span>
           </span>
         </button>
@@ -76,16 +83,16 @@ export function AppModeSegmentedControl() {
           aria-selected={appMode === "marcom"}
           onClick={handleSelectMarcom}
           className={cn(
-            "relative flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors duration-200",
+            "relative flex-1 self-stretch min-h-[38px] flex items-center justify-center py-1 px-1.5 sm:px-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors duration-200 group",
             appMode === "marcom"
               ? "text-pink-600 dark:text-pink-400"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+              : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white/40 dark:hover:bg-white/5",
           )}
         >
           {appMode === "marcom" && (
             <motion.div
               layoutId="activeAppModeIndicator"
-              className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-2xs"
+              className="absolute inset-0 bg-white dark:bg-slate-800 rounded-lg shadow-xs border border-slate-200/80 dark:border-white/10"
               transition={
                 shouldReduceMotion
                   ? { duration: 0 }
@@ -93,9 +100,19 @@ export function AppModeSegmentedControl() {
               }
             />
           )}
-          <span className="relative z-10 flex items-center justify-center gap-1.5">
-            <Megaphone className="w-3.5 h-3.5 shrink-0" />
-            <span>Marcom Hub</span>
+          <span className="relative z-10 flex items-center justify-center gap-1.5 text-center leading-tight my-auto">
+            <Megaphone
+              className={cn(
+                "w-3.5 h-3.5 shrink-0 transition-colors duration-200",
+                appMode === "marcom"
+                  ? "text-pink-500"
+                  : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300",
+              )}
+            />
+            <span className="flex flex-col text-center leading-tight">
+              <span>Marcom</span>
+              <span>Hub</span>
+            </span>
           </span>
         </button>
       </div>
