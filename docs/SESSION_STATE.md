@@ -8,16 +8,25 @@
 
 **Date:** 2026-10-31  
 **Active Branch:** `vicky`  
-**Active Feature:** Supervisor Role & Scoped Area Permissions (`UserRole`, Prisma schema, NextAuth, `guards.ts`, Admin User Management) — **IMPLEMENTED & VERIFIED**  
-**Spec:** `docs/superpowers/specs/2026-10-31-supervisor-role-design.md`  
-**Plan:** `docs/superpowers/plans/2026-10-31-supervisor-role.md`  
-**Previous Feature:** Sitewide Active Pills Fluid Animation (`motion.div layoutId="..."`)  
+**Active Feature:** Workspace Shell Integration for User Management (`ViewMode`, `ActiveViewStage`, `GlobalRail`, `urlState.ts`) — **IMPLEMENTED & VERIFIED**  
+**Spec:** `docs/superpowers/specs/2026-10-31-workspace-user-management-integration-design.md`  
+**Plan:** `docs/superpowers/plans/2026-10-31-workspace-user-management-integration.md`  
+**Refs:** ADR 07 (`docs/adr/0007-integrate-user-management-into-workspace-stage.md`)  
+**Previous Feature:** Supervisor Role & Scoped Area Permissions  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Supervisor Role & Scoped Area Permissions (`guards.ts` & full stack):**
+1. **Workspace Shell Integration for User Management (ADR 07):**
+   - Added `"users"` to SSOT `ViewMode` union in `src/types/index.ts` and `VALID_VIEWS` in `src/lib/router/urlState.ts`.
+   - Updated `src/components/views/ActiveViewStage.tsx` with dynamic lazy import of `<UsersView />` guarded by `isAdmin`.
+   - Updated `UsersView.tsx` with self-hydrating session defaults and removed redundant page back-link.
+   - Updated `GlobalRail.tsx` to set `activeView: "users"` and display active state (`isActive: activeView === "users"`) with 0ms transition.
+   - Replaced `/admin/users/page.tsx` with a clean 307 server redirect to `/?view=users`.
+   - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (84 passed), `npm test` (603 passed, 0 failures).
+
+2. **Supervisor Role & Scoped Area Permissions (`guards.ts` & full stack):**
    - Added `"supervisor"` to `UserRole` SSOT in `src/types/index.ts` and `assignedBranchIds?: string[]` to `AppUser`.
    - Added `SUPERVISOR` to `DbUserRole` enum and `assignedBranchIds String[] @default([])` to `model User` in `prisma/schema.prisma` (`prisma db push` + `prisma generate` synchronized).
    - Updated `normalizeRole` in `src/lib/server/auth-helpers.ts` and `roleToDbRole` in `/api/admin/users/[id]` with `assignedBranchIds` persistence.

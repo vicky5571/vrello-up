@@ -55,6 +55,11 @@ test("parseUrlNavState normalizes 'kanban' and 'kanban-board' aliases to 'board'
   assert.equal(parseUrlNavState("?v=kanban-board").view, "board");
 });
 
+test("parseUrlNavState parses users view mode", () => {
+  assert.equal(parseUrlNavState("?view=users").view, "users");
+  assert.equal(parseUrlNavState("?v=users").view, "users");
+});
+
 test("parseUrlNavState sanitizes and drops invalid/unknown view modes", () => {
   const query = "?view=malicious_eval&mode=invalid_mode";
   const state = parseUrlNavState(query);

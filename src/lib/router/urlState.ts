@@ -25,6 +25,7 @@ export const VALID_VIEW_MODES = new Set<ViewMode>([
   "documents",
   "reports",
   "analytics",
+  "users",
 ]);
 
 export const MARCOM_VIEWS = new Set<ViewMode>([

@@ -1,27 +1,32 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { ArrowLeft, Clock, Users, UserX, RefreshCw } from "lucide-react";
+import { Clock, Users, UserX, RefreshCw } from "lucide-react";
+import { useSession } from "next-auth/react";
 import type { AppUser, UserStatus } from "@/types";
 import { UsersPendingTab } from "./UsersPendingTab";
 import { UsersActiveTab } from "./UsersActiveTab";
 import { UsersRejectedTab } from "./UsersRejectedTab";
 
 interface UsersViewProps {
-  initialCounts: {
+  initialCounts?: {
     pending: number;
     active: number;
     rejected: number;
   };
-  currentUserId: string;
+  currentUserId?: string;
 }
 
-export function UsersView({ initialCounts, currentUserId }: UsersViewProps) {
+export function UsersView({ initialCounts, currentUserId: propUserId }: UsersViewProps = {}) {
+  const { data: session } = useSession();
+  const currentUserId = propUserId ?? session?.user?.id ?? "";
+
   const [activeTab, setActiveTab] = useState<UserStatus>(
-    initialCounts.pending > 0 ? "PENDING" : "APPROVED"
+    (initialCounts?.pending ?? 0) > 0 ? "PENDING" : "APPROVED"
   );
-  const [counts, setCounts] = useState(initialCounts);
+  const [counts, setCounts] = useState(
+    initialCounts ?? { pending: 0, active: 0, rejected: 0 }
+  );
   const [users, setUsers] = useState<AppUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -69,15 +74,11 @@ export function UsersView({ initialCounts, currentUserId }: UsersViewProps) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Kembali ke Workspace</span>
-              </Link>
+              <span>Workspace</span>
               <span>/</span>
               <span>Administrasi</span>
+              <span>/</span>
+              <span className="text-foreground font-semibold">Manajemen Pengguna</span>
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Manajemen Pengguna

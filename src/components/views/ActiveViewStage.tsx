@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useSession } from "next-auth/react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -68,9 +69,15 @@ const InventoryView = dynamic(
   () => import("@/components/views/InventoryView/InventoryView").then((m) => m.InventoryView),
   { ssr: false, loading: () => <ViewFallback /> },
 );
+const UsersView = dynamic(
+  () => import("@/components/views/UsersView/UsersView").then((m) => m.UsersView),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
 
 export function ActiveViewStage() {
   const activeView = useWorkspaceStore((s) => s.activeView);
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "admin";
 
   const renderActiveView = () => {
     switch (activeView as string) {
@@ -104,6 +111,8 @@ export function ActiveViewStage() {
         return <ReportsView />;
       case "analytics":
         return <AnalyticsView />;
+      case "users":
+        return isAdmin ? <UsersView /> : <ProjectsBoardView />;
       default:
         return <ProjectsBoardView />;
     }

@@ -222,7 +222,8 @@ export type ViewMode =
   | "inventory"
   | "documents"
   | "reports"
-  | "analytics";
+  | "analytics"
+  | "users";
 
 export type PostStatus =
   | "DRAFT"

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
@@ -21,7 +20,6 @@ import { useShallow } from "zustand/react/shallow";
 import { MoreAppsMenu } from "@/components/modals/MoreAppsMenu";
 
 export function GlobalRail() {
-  const router = useRouter();
   const { data: session } = useSession();
 
   const {
@@ -76,8 +74,8 @@ export function GlobalRail() {
             id: "users",
             label: "Users",
             icon: Users,
-            isActive: false,
-            onClick: () => router.push("/admin/users"),
+            isActive: activeView === "users",
+            onClick: () => setActiveView("users"),
           },
         ]
       : []),

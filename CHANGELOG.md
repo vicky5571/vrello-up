@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `feat(nav)`: Integrate User Management into central Workspace Stage Shell (ADR 07)
+  - Extended domain SSOT `ViewMode` union with `"users"` in `src/types/index.ts` and registered it in `VALID_VIEWS` in `src/lib/router/urlState.ts`
+  - Integrated dynamic `<UsersView />` loading directly into `src/components/views/ActiveViewStage.tsx` with fail-closed `isAdmin` check
+  - Updated `GlobalRail.tsx` Users button to call `setActiveView("users")` and render active pill indicator (`isActive: activeView === "users"`)
+  - Updated `UsersView.tsx` with self-hydrated session defaults and streamlined in-stage breadcrumb header
+  - Converted `/admin/users/page.tsx` into an instant 307 server redirect to `/?view=users` preserving backwards-compatibility
+  - Gates: `npm test` 603 pass / 0 fail; `npm run test:smoke` 84 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Refs: ADR 07 (`docs/adr/0007-integrate-user-management-into-workspace-stage.md`)
+  Spec: `docs/superpowers/specs/2026-10-31-workspace-user-management-integration-design.md`
+  Plan: `docs/superpowers/plans/2026-10-31-workspace-user-management-integration.md`
+
 - `feat(auth)`: Add Supervisor role with branch-scoped operational authority
   - Extended domain SSOT `UserRole` union with `"supervisor"` in `src/types/index.ts` and `assignedBranchIds` in `AppUser`
   - Added `SUPERVISOR` to `DbUserRole` enum and `assignedBranchIds String[] @default([])` to `User` in `prisma/schema.prisma`
