@@ -90,7 +90,7 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
         <div className="flex items-center gap-2">
           <Kanban className="w-5 h-5 text-blue-500" />
           <h1 className="text-base font-bold text-slate-900 dark:text-slate-100">
-            Work Items Board
+            Kanban Board
           </h1>
           <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-mono text-slate-600 dark:text-slate-400">
             {allWorkItems.length}

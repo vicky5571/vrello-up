@@ -1,7 +1,7 @@
 "use client";
 
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import { MARCOM_VIEW_LABELS } from "./topNavConstants";
+import { MARCOM_VIEW_LABELS, PROJECTS_VIEW_LABELS } from "./topNavConstants";
 import type { ViewMode } from "@/types";
 import {
   Folder as FolderIcon,
@@ -59,8 +59,8 @@ export function TopNavBreadcrumbs({
 
       <span className="text-slate-400 shrink-0">/</span>
 
-      <span className="font-medium text-slate-800 dark:text-slate-200 shrink-0 capitalize truncate">
-        {activeView}
+      <span className="font-medium text-slate-800 dark:text-slate-200 shrink-0 truncate">
+        {PROJECTS_VIEW_LABELS[activeView] || activeView}
       </span>
 
       {navigatedFromMarcom && (

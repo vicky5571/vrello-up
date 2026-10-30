@@ -24,7 +24,7 @@ export interface NavItem {
 }
 
 export const PROJECTS_NAV_ITEMS: NavItem[] = [
-  { id: "board", label: "Board", icon: Kanban, iconColor: "text-blue-500" },
+  { id: "board", label: "Kanban Board", icon: Kanban, iconColor: "text-blue-500" },
   { id: "list", label: "List", icon: List, iconColor: "text-slate-500" },
   { id: "calendar", label: "Calendar", icon: Calendar, iconColor: "text-emerald-500" },
 ];

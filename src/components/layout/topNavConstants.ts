@@ -1,3 +1,9 @@
+export const PROJECTS_VIEW_LABELS: Record<string, string> = {
+  board: "Kanban Board",
+  list: "List",
+  calendar: "Calendar",
+};
+
 export const MARCOM_VIEW_LABELS: Record<string, string> = {
   pipeline: "Pipeline 360°",
   "content-planner": "Content Planner",
@@ -11,4 +17,3 @@ export const MARCOM_VIEW_LABELS: Record<string, string> = {
   reports: "Reports",
   analytics: "Analytics",
 };
-
