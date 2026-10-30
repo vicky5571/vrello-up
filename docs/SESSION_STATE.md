@@ -173,6 +173,16 @@
     - Integrated `KpiSummaryCards` directly within the header zone.
     - Updated outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` and wrapped content area in `p-4 sm:p-6 space-y-4 flex-1 min-h-0`.
 
+25. **Analytics & ROI Hub Inventory-Style Unified Header (`AnalyticsHeader.tsx`, `AnalyticsActionableStrip.tsx`, `AnalyticsView.tsx`, `AnalyticsSkeleton.tsx`):**
+    - Created `AnalyticsHeader.tsx` (~200 LOC) following the Equipment Inventory design:
+      - Unified backdrop blur container (`p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+      - Title row with inline `BarChart3` icon (`text-indigo-500`), `Live Metrics` badge, subtitle, and top-right Refresh button (`p-2 border rounded-lg`).
+      - Embedded 4 KPI Cards (SLA Persetujuan MOU, POSM Deployment Rate, Efisiensi Event Lapangan, Reliabilitas Konten Sosmed) with drill-down routes to respective Marcom views and zero-CLS skeleton placeholders when loading.
+      - Integrated bottom filter toolbar with Branch selector, Quarter selector, Brand toggle pills, and Reset button.
+    - Extracted `AnalyticsActionableStrip.tsx` to surface unit economics and editorial turnaround in the stage content area.
+    - Updated `AnalyticsSkeleton.tsx` to mirror stage content geometry (Actionable Telemetry strip + 2×2 Chart Grid).
+    - Updated `AnalyticsView.tsx` outer container to `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto` and wrapped stage content in `p-4 sm:p-6 flex-1 min-h-0 space-y-6`.
+    - Removed dead obsolete components `AnalyticsKpiRow.tsx` and `AnalyticsFilterBar.tsx`.
 
 ---
 

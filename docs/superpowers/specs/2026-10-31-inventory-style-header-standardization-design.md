@@ -3,7 +3,7 @@
 **Date:** 2026-10-31  
 **Author:** Critical Senior Software Engineer  
 **Status:** Approved  
-**Affected Views:** Media Placements (`PlacementsView.tsx`), Content Planner (`ContentPlannerView.tsx`), Field Events (`EventsView.tsx`), Pipeline (`PipelineView.tsx`)
+**Affected Views:** Media Placements (`PlacementsView.tsx`), Content Planner (`ContentPlannerView.tsx`), Field Events (`EventsView.tsx`), Pipeline (`PipelineView.tsx`), Analytics & ROI (`AnalyticsView.tsx`)
 
 ---
 
@@ -11,7 +11,7 @@
 
 The header on the **Equipment Inventory & Loans** page provides a unified, cohesive top zone (`border-b bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`) integrating the title row, primary actions, 4 KPI cards, and sub-navigation controls. This contrasts with the disconnected floating card-banner pattern previously on Media Placements and Content Planner.
 
-This specification standardizes the header architecture of both **Media Placements** and **Content Planner** to mirror the **Equipment Inventory** header design language:
+This specification standardizes the header architecture across **Media Placements**, **Content Planner**, **Field Events**, **Pipeline**, and **Analytics & ROI** to mirror the **Equipment Inventory** header design language:
 1. Unified top header zone with backdrop blur, subtle background tint, and border bottom divider.
 2. Clean inline icon + title (unboxed, text-xl font-bold) and concise subtitle.
 3. Standardized top-right action buttons (Refresh icon button, primary action button, secondary actions).
@@ -57,6 +57,24 @@ This specification standardizes the header architecture of both **Media Placemen
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
+### C. Analytics & ROI Hub
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ Top Header Zone (bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm pb-2 border-b)│
+│  [BarChart3] Operational Intelligence & ROI [Live Metrics]       [ ⟳ ] │
+│  Metrik operasional riil: SLA perizinan, unit economics POSM, dll.    │
+│                                                                        │
+│  [ MOU SLA ]     [ POSM Rate ]     [ Event Cost ]     [ Content Cadence]│
+│                                                                        │
+│  [ Filter: Semua Branch | Kuartal | Brand Pills ]          [ Reset (N) ]│
+└────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│ Content Area (p-4 sm:p-6 flex-1 min-h-0 space-y-6)                     │
+│  [ Actionable Telemetry Mini-Strip ]                                   │
+│  [ 2×2 Atomic Charts Grid: POSM Economics, MOU Aging, Event, Content ] │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## 3. Component Architecture & Invariants
@@ -64,6 +82,7 @@ This specification standardizes the header architecture of both **Media Placemen
 1. **Coordinator File LOC Invariant:**
    - `PlacementsView.tsx` MUST remain $\le 250$ LOC. Header logic resides in `PlacementsHeader.tsx`.
    - `ContentPlannerView.tsx` decomposes its header into `ContentPlannerHeader.tsx` to improve modularity.
+   - `AnalyticsView.tsx` decomposes its header into `AnalyticsHeader.tsx` and stage telemetry into `AnalyticsActionableStrip.tsx`.
 2. **SSOT Invariant:**
    - All entity models (`MarcomPlacement`, `ContentPostItem`, etc.) remain imported exclusively from `src/types/index.ts`.
 3. **Accessibility & Reduced Motion:**

@@ -51,6 +51,21 @@
   - Row 2: `KpiSummaryCards items={kpiItems}` integrated in header.
   - Content container: `p-4 sm:p-6 space-y-4 flex-1 min-h-0` housing bottleneck alerts, filter bar, and matrix table.
 
+### Phase 2.7: Analytics & ROI Header Upgrade
+- **`src/components/views/AnalyticsView/AnalyticsHeader.tsx`**:
+  - Create atomic header component (`p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm`).
+  - Row 1: Inline icon (`BarChart3 text-indigo-500`), Title `Operational Intelligence & ROI`, badge `Live Metrics`, subtitle, and top-right Refresh button (`p-2 border rounded-lg`).
+  - Row 2: 4 KPI Cards (MOU SLA Turnaround, POSM Deployment Rate, Efisiensi Event Lapangan, Reliabilitas Konten Sosmed) with drill-down navigation and zero-CLS skeleton placeholders when loading.
+  - Row 3: Integrated Filter Toolbar (Branch selector, Quarter selector, Brand toggle pills, Reset button).
+- **`src/components/views/AnalyticsView/AnalyticsActionableStrip.tsx`**:
+  - Extract the 3-card Actionable Telemetry Mini-Strip (Cost per Outlet realization, MOU Funnel conversion rate, Critical Content aging alerts) for the stage content area.
+- **`src/components/views/AnalyticsView/AnalyticsSkeleton.tsx`**:
+  - Update skeleton to mirror the stage area (Actionable Telemetry strip + 2×2 Chart Grid).
+- **`src/components/views/AnalyticsView/AnalyticsView.tsx`**:
+  - Outer container: `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`.
+  - Integrate `<AnalyticsHeader />` and `<AnalyticsActionableStrip />`.
+  - Wrap chart area in responsive stage container `p-4 sm:p-6 flex-1 min-h-0 space-y-6`.
+
 ### Phase 3: Verification & Gate Checks
 - [x] Run `npm run drift:check`
 - [x] Run `npm run build:check`
