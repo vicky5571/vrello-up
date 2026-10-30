@@ -113,6 +113,11 @@
    - Covered edge cases: SLA critical expired MoU (45d ago), SLA warning near-expiry MoU (8d), pending legal approval aging (>60d), flagship multi-year agreement (Rp 150M), rejected MoU with finance reasons, GPS geolocation anomaly (>1.4km deviation, `isLocationValid: false`), installation blocked with `ISSUE` renovation status, permanent material without MoU warning, extreme dimensions installation (`1200 x 400 cm`), cold/orphan outlet with 0 operational records, inactive outlet, overdue borrow with event link, damaged returns (`MAJOR_DAMAGE` and `LOST` equipment condition check-in), content posts in review/revision/published states, document files up to 88.5MB, and executive Q3 report with rich JSON.
    - Standardized branch indexing (`branch-1`..`branch-12`) and preserved catalog item counts ($\ge 13$) to satisfy all downstream integration test suites.
 
+16. **Active Pills Animation on Content Planner Page (`ContentPlannerView.tsx`):**
+    - Implemented fluid animated sliding pill for the View Modes Switcher (Cards vs Table) and Platform Filter Pills.
+    - Integrated Framer Motion `motion.div` with shared `layoutId` (`activeContentPlannerViewPill` and `activeContentPlannerPlatformPill`), natural spring physics (`stiffness: 450, damping: 35`), and `useReducedMotion()` accessibility support.
+    - Added tactile tap gestures (`whileTap={{ scale: 0.95 }}`) and semantic accessibility attributes (`role="tablist"`, `role="tab"`, `aria-selected`).
+
 ---
 
 ## Verification Gates (this session)

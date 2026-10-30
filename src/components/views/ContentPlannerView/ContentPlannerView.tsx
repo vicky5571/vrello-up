@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -57,6 +58,7 @@ const columnHelper = createMarcomColumnHelper<ContentPostItem>();
 
 
 export function ContentPlannerView() {
+  const shouldReduceMotion = useReducedMotion();
   const { can } = useMarcomPermissions();
   const {
     users,
@@ -552,36 +554,70 @@ export function ContentPlannerView() {
       {/* 3. Controls Bar: Platform Pills & View Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
         {/* Platform Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          <button
+        <div
+          role="tablist"
+          aria-label="Filter by platform"
+          className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none"
+        >
+          <motion.button
             type="button"
+            role="tab"
+            aria-selected={selectedPlatform === "all"}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => setSelectedPlatform("all")}
             className={cn(
-              "px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer",
+              "relative px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer",
               selectedPlatform === "all"
-                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                ? "text-white dark:text-slate-900"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
             )}
           >
-            All Platforms
-          </button>
+            {selectedPlatform === "all" && (
+              <motion.div
+                layoutId="activeContentPlannerPlatformPill"
+                className="absolute inset-0 bg-slate-900 dark:bg-white rounded-xl shadow-xs"
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 450, damping: 35 }
+                }
+              />
+            )}
+            <span className="relative z-10">All Platforms</span>
+          </motion.button>
           {(Object.keys(PLATFORM_CONFIG) as PostPlatform[]).map((p) => {
             const isSelected = selectedPlatform === p;
             return (
-              <button
+              <motion.button
                 type="button"
+                role="tab"
+                aria-selected={isSelected}
                 key={p}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                 onClick={() => setSelectedPlatform(p)}
                 className={cn(
-                  "px-2.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer",
+                  "relative px-2.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer",
                   isSelected
-                    ? "bg-pink-500 text-white"
+                    ? "text-white"
                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
                 )}
               >
-                <PlatformIcon platform={p} className="w-3.5 h-3.5" />
-                <span>{PLATFORM_CONFIG[p].label}</span>
-              </button>
+                {isSelected && (
+                  <motion.div
+                    layoutId="activeContentPlannerPlatformPill"
+                    className="absolute inset-0 bg-pink-500 rounded-xl shadow-xs shadow-pink-500/20"
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0 }
+                        : { type: "spring", stiffness: 450, damping: 35 }
+                    }
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-1.5">
+                  <PlatformIcon platform={p} className="w-3.5 h-3.5" />
+                  <span>{PLATFORM_CONFIG[p].label}</span>
+                </span>
+              </motion.button>
             );
           })}
         </div>
@@ -602,35 +638,71 @@ export function ContentPlannerView() {
           </div>
 
           {/* 4 View Modes Switcher */}
-          <div className="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-            <button
+          <div
+            role="tablist"
+            aria-label="View Mode Switcher"
+            className="relative flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 select-none"
+          >
+            <motion.button
               type="button"
+              role="tab"
+              aria-selected={viewMode === "cards"}
+              whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
               onClick={() => setViewMode("cards")}
               className={cn(
-                "p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs",
+                "relative p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold",
                 viewMode === "cards"
-                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs font-semibold"
+                  ? "text-pink-600 dark:text-pink-400"
                   : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               )}
               title="Box / Cards View"
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Cards</span>
-            </button>
-            <button
+              {viewMode === "cards" && (
+                <motion.div
+                  layoutId="activeContentPlannerViewPill"
+                  className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                  transition={
+                    shouldReduceMotion
+                      ? { duration: 0 }
+                      : { type: "spring", stiffness: 450, damping: 35 }
+                  }
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1">
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Cards</span>
+              </span>
+            </motion.button>
+            <motion.button
               type="button"
+              role="tab"
+              aria-selected={viewMode === "table"}
+              whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
               onClick={() => setViewMode("table")}
               className={cn(
-                "p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs",
+                "relative p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold",
                 viewMode === "table"
-                  ? "bg-white dark:bg-slate-900 text-pink-600 dark:text-pink-400 shadow-2xs font-semibold"
+                  ? "text-pink-600 dark:text-pink-400"
                   : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               )}
               title="Row / Table View"
             >
-              <TableProperties className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Table</span>
-            </button>
+              {viewMode === "table" && (
+                <motion.div
+                  layoutId="activeContentPlannerViewPill"
+                  className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                  transition={
+                    shouldReduceMotion
+                      ? { duration: 0 }
+                      : { type: "spring", stiffness: 450, damping: 35 }
+                  }
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1">
+                <TableProperties className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Table</span>
+              </span>
+            </motion.button>
           </div>
 
           <button
