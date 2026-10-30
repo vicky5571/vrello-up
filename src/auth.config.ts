@@ -25,12 +25,24 @@ export default {
     process.env.AUTH_SECRET || "vrello-auth-development-secret-32-chars-long",
   trustHost: true,
   callbacks: {
-    authorized({ auth }) {
-      if (!auth?.user) return false;
+    authorized({ auth, request }) {
+      const isApproved = auth?.user?.status === "APPROVED";
+      const pathname = request?.nextUrl?.pathname;
+
+      if (pathname && pathname.startsWith("/api/")) {
+        if (!isApproved) {
+          return Response.json(
+            { error: "Unauthorized", message: "Sesi telah berakhir atau belum terautentikasi." },
+            { status: 401 }
+          );
+        }
+        return true;
+      }
+
       // The middleware runs on the Edge runtime and cannot query the database.
       // `status` is read from the JWT claims stamped at sign-in, so a user
       // demoted to PENDING/REJECTED is blocked on their next request.
-      return auth.user.status === "APPROVED";
+      return isApproved;
     },
     session({ session, token }) {
       // Required by the middleware: the default session only exposes

@@ -52,9 +52,17 @@ export function PipelineView({ className }: PipelineViewProps) {
     setError(null);
     try {
       const res = await fetch(`/api/marcom/pipeline`);
+      if (res.status === 401 || res.redirected) {
+        window.location.href = "/login";
+        return;
+      }
       if (!res.ok) {
         const errorText = await res.text().catch(() => "Gagal memuat data pipeline.");
         throw new Error(`HTTP ${res.status}: ${errorText || "Gagal memuat pipeline."}`);
+      }
+      const contentType = res.headers.get("content-type");
+      if (contentType && !contentType.includes("application/json")) {
+        throw new Error("Format respons server tidak valid (bukan JSON).");
       }
       const json = await res.json();
       const rows: OutletPipelineRow[] = Array.isArray(json.data) ? json.data : [];

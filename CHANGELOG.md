@@ -6,6 +6,13 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `fix(pipeline)`: Prevent HTML redirect response and JSON parse error in Pipeline view
+  - Fixed NextAuth edge middleware authorized callback in `src/auth.config.ts` to return 401 JSON Response for `/api/` endpoints instead of redirecting to `/login` HTML page
+  - Added defensive redirect/401 handling and content-type checking in `PipelineView.tsx` `fetchPipeline`
+  - Wrapped `src/app/api/marcom/pipeline/route.ts` GET handler in `try / catch` returning structured HTTP 500 JSON
+  - Added unit test suite in `src/auth.config.test.ts` (8 passed)
+  - Gates: `npm test` 591 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `feat(projects)`: Open work item detail drawer on row click in Projects list view
   - Attached `onClick={() => onSelect?.(item)}` and `cursor-pointer` to `<tr>` in `ProjectsListRow.tsx`
   - Added click event isolation (`e.stopPropagation()`) across all interactive cell controls (checkbox selection, title inline editing, status dropdown, date picker, PIC assignee editor, and actions button)

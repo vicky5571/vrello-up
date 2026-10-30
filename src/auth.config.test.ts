@@ -25,6 +25,36 @@ test("authorized rejects unauthenticated requests", async () => {
   assert.equal(await authorized({ auth: null, request }), false);
 });
 
+test("authorized returns 401 Response for unauthenticated /api/ requests", async () => {
+  const apiRequest = {
+    nextUrl: new URL("http://localhost:3000/api/marcom/pipeline"),
+  } as unknown as Parameters<typeof authorized>[0]["request"];
+
+  const result = await authorized({ auth: null, request: apiRequest });
+  assert.ok(result instanceof Response);
+  assert.equal(result.status, 401);
+  const json = await (result as Response).json();
+  assert.equal(json.error, "Unauthorized");
+});
+
+test("authorized returns 401 Response for PENDING sessions on /api/ requests", async () => {
+  const apiRequest = {
+    nextUrl: new URL("http://localhost:3000/api/marcom/pipeline"),
+  } as unknown as Parameters<typeof authorized>[0]["request"];
+
+  const result = await authorized({ auth: buildSession("PENDING"), request: apiRequest });
+  assert.ok(result instanceof Response);
+  assert.equal(result.status, 401);
+});
+
+test("authorized allows APPROVED sessions on /api/ requests", async () => {
+  const apiRequest = {
+    nextUrl: new URL("http://localhost:3000/api/marcom/pipeline"),
+  } as unknown as Parameters<typeof authorized>[0]["request"];
+
+  assert.equal(await authorized({ auth: buildSession("APPROVED"), request: apiRequest }), true);
+});
+
 test("authorized rejects PENDING sessions", async () => {
   assert.equal(await authorized({ auth: buildSession("PENDING"), request }), false);
 });

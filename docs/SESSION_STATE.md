@@ -99,13 +99,20 @@
    - Isolated click event propagation (`e.stopPropagation()`) across all interactive cell controls (checkbox selection toggle, inline title edit input and double-click trigger, status dropdown button and options, due date editor and date button, PIC assignee editor and button, action button).
    - Preserved seamless row click behavior across non-control cell areas (type badge, branch, checklist, and empty cell padding) to open the domain drawer/modal (`ProjectsDetailDrawerHost`).
 
+14. **Bugfix: HTML Redirect Response on Pipeline View (`SyntaxError: Unexpected token '<'`):**
+   - Root cause: NextAuth edge middleware callback in `src/auth.config.ts` was returning `false` for unauthenticated requests on `/api/...` endpoints instead of a 401 JSON Response. NextAuth edge middleware automatically generated an HTTP 307 Temporary Redirect to the `/login` HTML page. The browser's client-side `fetch('/api/marcom/pipeline')` followed the redirect and received the HTML login page with HTTP 200 OK, causing `await res.json()` to fail with `SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON`.
+   - Updated `src/auth.config.ts` `authorized` callback to inspect `request?.nextUrl?.pathname` and return an HTTP 401 JSON Response for unauthenticated/unapproved `/api/` requests, preserving page redirects only for non-API routes.
+   - Updated `PipelineView.tsx` with defensive status handling (clean redirect to `/login` if 401 or redirected) and validated `content-type: application/json` before calling `.json()`.
+   - Wrapped `src/app/api/marcom/pipeline/route.ts` GET handler in `try / catch` returning structured HTTP 500 JSON on database exceptions.
+   - Added automated unit tests in `src/auth.config.test.ts` (8 passed).
+
 ---
 
 ## Verification Gates (this session)
 
 - `npm run drift:check` → ✅ No drift detected (23 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ 588 passed, 0 failed (100 suites)
+- `npm test` → ✅ 591 passed, 0 failed (100 suites)
 
 ---
 
