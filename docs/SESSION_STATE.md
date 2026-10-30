@@ -33,6 +33,10 @@
    - Updated Help Docs keyboard shortcut description to `"Quick Switch Views (List, Kanban Board, Calendar)"`.
    - Updated Export Center and AuthBrandPanel marketing copy.
 
+
+4. **MOU View UI Polish (`MousView.tsx`):**
+   - Removed raw emojis (`⚠️` and `🔴`) from `"Expiring Soon"` and `"Expired"` urgency filter buttons for a cleaner, unified modern design.
+
 ---
 
 ## Verification Gates (this session)
@@ -45,7 +49,7 @@
 
 ## Blocked / Risks
 
-- None. Internal identifiers (`ViewMode: "board"`, `projectsBoardOrder`) remain identical, ensuring seamless persistence and backward compatibility.
+- None.
 
 ---
 

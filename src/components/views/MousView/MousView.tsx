@@ -318,7 +318,6 @@ export function MousView() {
                     : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40 hover:bg-amber-100 dark:hover:bg-amber-900/50",
                 )}
               >
-                <span>⚠️</span>
                 <span>Expiring Soon</span>
               </button>
               <button
@@ -331,7 +330,6 @@ export function MousView() {
                     : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40 hover:bg-rose-100 dark:hover:bg-rose-900/50",
                 )}
               >
-                <span>🔴</span>
                 <span>Expired</span>
               </button>
             </div>
