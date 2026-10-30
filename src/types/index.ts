@@ -218,6 +218,7 @@ export type ViewMode =
   | "placements"
   | "mous"
   | "events"
+  | "inventory"
   | "documents"
   | "reports"
   | "analytics";
@@ -693,3 +694,79 @@ export interface PosmQuarterlyKpis {
 }
 
 export type QuarterlyTargetMap = Record<string, Record<string, number>>; // theme -> materialId -> target
+
+// ============================================================================
+// FIELD EVENT INVENTORY & BORROWING SYSTEM
+// ============================================================================
+
+export type EquipmentStatus =
+  | "AVAILABLE"
+  | "BORROWED"
+  | "MAINTENANCE"
+  | "RETIRED";
+
+export type BorrowStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "ACTIVE"
+  | "RETURNED"
+  | "CANCELLED"
+  | "OVERDUE";
+
+export type EquipmentCondition =
+  | "GOOD"
+  | "MINOR_DAMAGE"
+  | "MAJOR_DAMAGE"
+  | "LOST";
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  code: string;
+  category: string;
+  brand?: string;
+  description?: string;
+  totalUnits: number;
+  availableUnits: number;
+  photoUrl?: string;
+  storageLocation?: string;
+  status: EquipmentStatus;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface BorrowItem {
+  id: string;
+  borrowRecordId: string;
+  inventoryItemId: string;
+  inventoryItem?: InventoryItem;
+  quantity: number;
+  conditionOut: EquipmentCondition;
+  conditionIn?: EquipmentCondition | null;
+  notes?: string;
+}
+
+export interface BorrowRecord {
+  id: string;
+  borrowCode: string;
+  borrowerName: string;
+  borrowerPhone?: string;
+  borrowerDivision?: string;
+  picName?: string;
+  eventId?: string | null;
+  event?: { id: string; name: string } | null;
+  eventLocation?: string;
+  borrowDate: string;
+  returnDueDate: string;
+  returnDate?: string | null;
+  status: BorrowStatus;
+  purpose?: string;
+  notes?: string;
+  approvedBy?: string;
+  approvedAt?: string | null;
+  returnNotes?: string;
+  items: BorrowItem[];
+  createdAt?: string;
+  updatedAt?: string;
+}

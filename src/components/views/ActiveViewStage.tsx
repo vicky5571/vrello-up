@@ -64,6 +64,10 @@ const ContentPlannerView = dynamic(
   () => import("@/components/views/ContentPlannerView/ContentPlannerView").then((m) => m.ContentPlannerView),
   { ssr: false, loading: () => <ViewFallback /> },
 );
+const InventoryView = dynamic(
+  () => import("@/components/views/InventoryView/InventoryView").then((m) => m.InventoryView),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
 
 export function ActiveViewStage() {
   const activeView = useWorkspaceStore((s) => s.activeView);
@@ -92,6 +96,8 @@ export function ActiveViewStage() {
         return <ContentPlannerView />;
       case "events":
         return <EventsView />;
+      case "inventory":
+        return <InventoryView />;
       case "documents":
         return <DocumentsView />;
       case "reports":

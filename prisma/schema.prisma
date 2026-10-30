@@ -73,6 +73,29 @@ enum DocFileType {
   JPG
 }
 
+enum EquipmentStatus {
+  AVAILABLE
+  BORROWED
+  MAINTENANCE
+  RETIRED
+}
+
+enum BorrowStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  RETURNED
+  CANCELLED
+  OVERDUE
+}
+
+enum EquipmentCondition {
+  GOOD
+  MINOR_DAMAGE
+  MAJOR_DAMAGE
+  LOST
+}
+
 // ============================================================================
 // GLOBAL MASTER DATA (ORGANIZATION-WIDE)
 // Entities in this section (Branch, Outlet, Material) represent physical,
@@ -239,6 +262,7 @@ model FieldEvent {
   outletId       String?
   outlet         Outlet?        @relation(fields: [outletId], references: [id], onDelete: SetNull)
   footage        EventFootage[]
+  borrowRecords  BorrowRecord[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -255,6 +279,74 @@ model EventFootage {
   title    String
   filePath String
   duration String     @default("")
+}
+
+model InventoryItem {
+  id              String          @id @default(cuid())
+  name            String
+  code            String          @unique
+  category        String
+  brand           String          @default("")
+  description     String          @default("")
+  totalUnits      Int             @default(1)
+  availableUnits  Int             @default(1)
+  photoUrl        String          @default("")
+  storageLocation String          @default("")
+  status          EquipmentStatus @default(AVAILABLE)
+  notes           String          @default("")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  borrowItems     BorrowItem[]
+
+  @@index([status])
+  @@index([category])
+}
+
+model BorrowRecord {
+  id               String       @id @default(cuid())
+  borrowCode       String       @unique
+  borrowerName     String
+  borrowerPhone    String       @default("")
+  borrowerDivision String       @default("")
+  picName          String       @default("")
+  eventId          String?
+  event            FieldEvent?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  eventLocation    String       @default("")
+  borrowDate       DateTime
+  returnDueDate    DateTime
+  returnDate       DateTime?
+  status           BorrowStatus @default(PENDING)
+  purpose          String       @default("")
+  notes            String       @default("")
+  approvedBy       String       @default("")
+  approvedAt       DateTime?
+  returnNotes      String       @default("")
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  items            BorrowItem[]
+
+  @@index([status])
+  @@index([borrowDate])
+  @@index([returnDueDate])
+  @@index([borrowerName])
+  @@index([eventId])
+}
+
+model BorrowItem {
+  id              String              @id @default(cuid())
+  borrowRecordId  String
+  borrowRecord    BorrowRecord        @relation(fields: [borrowRecordId], references: [id], onDelete: Cascade)
+  inventoryItemId String
+  inventoryItem   InventoryItem       @relation(fields: [inventoryItemId], references: [id])
+  quantity        Int                 @default(1)
+  conditionOut    EquipmentCondition  @default(GOOD)
+  conditionIn     EquipmentCondition?
+  notes           String              @default("")
+
+  @@index([borrowRecordId])
+  @@index([inventoryItemId])
 }
 
 model DocumentItem {

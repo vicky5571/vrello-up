@@ -479,6 +479,56 @@ describe("useMarcomDataStore", () => {
       assert.equal(remaining.length, 1);
       assert.equal(remaining[0].id, "rep-2");
     });
+
+    it("adds, updates, and removes cached inventory items immutably", () => {
+      useMarcomDataStore.setState({ inventoryItems: [] });
+      const store = useMarcomDataStore.getState();
+
+      const item1 = {
+        id: "inv-1",
+        name: "Tent 3x3",
+        code: "TND-001",
+        category: "Branding",
+        totalUnits: 4,
+        availableUnits: 4,
+        status: "AVAILABLE" as const,
+      };
+
+      store.addCachedInventoryItem(item1);
+      assert.equal(useMarcomDataStore.getState().inventoryItems.length, 1);
+      assert.equal(useMarcomDataStore.getState().inventoryItems[0].name, "Tent 3x3");
+
+      store.updateCachedInventoryItem({ id: "inv-1", availableUnits: 2 });
+      assert.equal(useMarcomDataStore.getState().inventoryItems[0].availableUnits, 2);
+
+      store.removeCachedInventoryItem("inv-1");
+      assert.equal(useMarcomDataStore.getState().inventoryItems.length, 0);
+    });
+
+    it("adds, updates, and removes cached borrow records immutably", () => {
+      useMarcomDataStore.setState({ borrowRecords: [] });
+      const store = useMarcomDataStore.getState();
+
+      const record1 = {
+        id: "brw-1",
+        borrowCode: "BRW-20261030-001",
+        borrowerName: "Andi",
+        borrowDate: "2026-10-30",
+        returnDueDate: "2026-11-02",
+        status: "PENDING" as const,
+        items: [],
+      };
+
+      store.addCachedBorrowRecord(record1);
+      assert.equal(useMarcomDataStore.getState().borrowRecords.length, 1);
+      assert.equal(useMarcomDataStore.getState().borrowRecords[0].borrowerName, "Andi");
+
+      store.updateCachedBorrowRecord({ id: "brw-1", status: "APPROVED" as const });
+      assert.equal(useMarcomDataStore.getState().borrowRecords[0].status, "APPROVED");
+
+      store.removeCachedBorrowRecord("brw-1");
+      assert.equal(useMarcomDataStore.getState().borrowRecords.length, 0);
+    });
   });
 });
 

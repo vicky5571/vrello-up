@@ -30,6 +30,7 @@ import {
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import { EventChecklistSection } from "./EventChecklistSection";
+import { EventBorrowedEquipmentSection } from "./EventBorrowedEquipmentSection";
 import { canTransitionEvent } from "@/lib/marcom/eventMachine";
 import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
 
@@ -898,6 +899,11 @@ export function EventFormModal({
                   </div>
                 </div>
               </div>
+
+              {/* Borrowed Equipment (Edit Mode) */}
+              {event?.id && (
+                <EventBorrowedEquipmentSection eventId={event.id} />
+              )}
 
               {/* Event Preparation Checklist (Subtasks) */}
               <EventChecklistSection

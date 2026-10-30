@@ -3,7 +3,8 @@ export type PermissionAction =
   | "CREATE_MOU" | "APPROVE_MOU" | "DELETE_MOU" | "CREATE_PLACEMENT"
   | "UPDATE_PLACEMENT" | "CREATE_EVENT" | "UPLOAD_VIDEO_FOOTAGE"
   | "UPLOAD_DOCUMENT" | "DELETE_DOCUMENT" | "MANAGE_MASTER_DATA" | "EXPORT_REPORTS"
-  | "SUBMIT_DRAFT_OUTLET" | "APPROVE_OUTLET";
+  | "SUBMIT_DRAFT_OUTLET" | "APPROVE_OUTLET"
+  | "VIEW_INVENTORY" | "MANAGE_INVENTORY" | "REQUEST_BORROW" | "APPROVE_BORROW" | "PROCESS_RETURN";
 
 const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
   admin: [
@@ -20,6 +21,11 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
     "EXPORT_REPORTS",
     "SUBMIT_DRAFT_OUTLET",
     "APPROVE_OUTLET",
+    "VIEW_INVENTORY",
+    "MANAGE_INVENTORY",
+    "REQUEST_BORROW",
+    "APPROVE_BORROW",
+    "PROCESS_RETURN",
   ],
   staff: [
     "CREATE_MOU",
@@ -30,8 +36,12 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
     "UPLOAD_DOCUMENT",
     "EXPORT_REPORTS",
     "SUBMIT_DRAFT_OUTLET",
+    "VIEW_INVENTORY",
+    "MANAGE_INVENTORY",
+    "REQUEST_BORROW",
+    "PROCESS_RETURN",
   ],
-  viewer: ["EXPORT_REPORTS"],
+  viewer: ["EXPORT_REPORTS", "VIEW_INVENTORY"],
 };
 
 export function hasPermission(role: MarcomRole, action: PermissionAction): boolean {
@@ -77,10 +87,15 @@ export function hasScopedPermission(ctx: ScopedPermissionContext): boolean {
   const { role, action, userBranchIds = [], targetBranchId } = ctx;
 
   if (role === "admin") return true;
-  if (role === "viewer") return action === "EXPORT_REPORTS";
+  if (role === "viewer") return action === "EXPORT_REPORTS" || action === "VIEW_INVENTORY";
 
   // Role is staff
-  if (action === "DELETE_MOU" || action === "DELETE_DOCUMENT" || action === "MANAGE_MASTER_DATA") {
+  if (
+    action === "DELETE_MOU" ||
+    action === "DELETE_DOCUMENT" ||
+    action === "MANAGE_MASTER_DATA" ||
+    action === "APPROVE_BORROW"
+  ) {
     return false;
   }
 

@@ -12,6 +12,7 @@ import {
   FileText,
   BarChart3,
   TrendingUp,
+  Package,
 } from "lucide-react";
 import type { ViewMode } from "@/types";
 
@@ -40,7 +41,8 @@ export const MARCOM_WORK_ITEMS: NavItem[] = [
 export const MARCOM_MASTER_DATA: NavItem[] = [
   { id: "branches", label: "Branches", icon: Building2, iconColor: "text-cyan-500" },
   { id: "outlets", label: "Outlets Directory", icon: Store, iconColor: "text-violet-500" },
-  { id: "documents", label: "Legal & Docs", icon: FileText, iconColor: "text-teal-500" },
+  { id: "inventory", label: "Equipment Inventory", icon: Package, iconColor: "text-teal-500" },
+  { id: "documents", label: "Legal & Docs", icon: FileText, iconColor: "text-slate-500" },
   { id: "reports", label: "Reports & Exports", icon: BarChart3, iconColor: "text-orange-500" },
   { id: "analytics", label: "Analytics & ROI", icon: TrendingUp, iconColor: "text-rose-500" },
 ];

@@ -9,6 +9,8 @@ import type {
   MarcomMou,
   MarcomPlacement,
   FieldEventItem,
+  InventoryItem,
+  BorrowRecord,
 } from "@/types";
 
 export interface MarcomDataState {
@@ -22,6 +24,9 @@ export interface MarcomDataState {
   outlets: OutletItem[];
   isOutletsLoaded: boolean;
   isOutletsLoading: boolean;
+  inventoryItems: InventoryItem[];
+  isInventoryLoaded: boolean;
+  isInventoryLoading: boolean;
 
   // Operational data
   posts: ContentPostItem[];
@@ -42,6 +47,9 @@ export interface MarcomDataState {
   events: FieldEventItem[];
   isEventsLoaded: boolean;
   isEventsLoading: boolean;
+  borrowRecords: BorrowRecord[];
+  isBorrowsLoaded: boolean;
+  isBorrowsLoading: boolean;
 
   // Resilient Error Tracking
   lastError: string | null;
@@ -58,6 +66,14 @@ export interface MarcomDataState {
   invalidateBranches: () => void;
   invalidateMaterials: () => void;
   invalidateOutlets: () => void;
+
+  // Inventory actions
+  fetchInventory: (force?: boolean) => Promise<InventoryItem[]>;
+  setCachedInventoryItems: (items: InventoryItem[]) => void;
+  addCachedInventoryItem: (item: InventoryItem) => void;
+  updateCachedInventoryItem: (item: Partial<InventoryItem> & { id: string }) => void;
+  removeCachedInventoryItem: (id: string) => void;
+  invalidateInventory: () => void;
 
   // Operational data actions
   fetchPosts: (force?: boolean) => Promise<ContentPostItem[]>;
@@ -101,6 +117,16 @@ export interface MarcomDataState {
   ) => void;
   removeCachedEvent: (eventId: string) => void;
   invalidateEvents: () => void;
+
+  // Borrow actions
+  fetchBorrowRecords: (force?: boolean) => Promise<BorrowRecord[]>;
+  setCachedBorrowRecords: (records: BorrowRecord[]) => void;
+  addCachedBorrowRecord: (record: BorrowRecord) => void;
+  updateCachedBorrowRecord: (
+    record: Partial<BorrowRecord> & { id: string }
+  ) => void;
+  removeCachedBorrowRecord: (recordId: string) => void;
+  invalidateBorrows: () => void;
 }
 
 export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
@@ -115,6 +141,10 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
   outlets: [],
   isOutletsLoaded: false,
   isOutletsLoading: false,
+
+  inventoryItems: [],
+  isInventoryLoaded: false,
+  isInventoryLoading: false,
 
   posts: [],
   isPostsLoaded: false,
@@ -139,6 +169,10 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
   events: [],
   isEventsLoaded: false,
   isEventsLoading: false,
+
+  borrowRecords: [],
+  isBorrowsLoaded: false,
+  isBorrowsLoading: false,
 
   lastError: null,
   clearError: () => set({ lastError: null }),
@@ -534,5 +568,109 @@ export const useMarcomDataStore = create<MarcomDataState>((set, get) => ({
 
   invalidateEvents: () => {
     set({ isEventsLoaded: false });
+  },
+
+  // Inventory actions
+  fetchInventory: async (force = false) => {
+    const state = get();
+    if (state.isInventoryLoaded && !force) {
+      return state.inventoryItems;
+    }
+    if (state.isInventoryLoading) {
+      return state.inventoryItems;
+    }
+    set({ isInventoryLoading: true });
+    try {
+      const res = await fetch("/api/marcom/inventory");
+      if (!res.ok) throw new Error(`Failed to fetch inventory (${res.status})`);
+      const json = await res.json();
+      const list: InventoryItem[] = Array.isArray(json.data) ? json.data : [];
+      set({ inventoryItems: list, isInventoryLoaded: true, isInventoryLoading: false });
+      return list;
+    } catch (err) {
+      console.error("[marcomDataStore] fetchInventory error:", err);
+      set({ isInventoryLoading: false });
+      return state.inventoryItems;
+    }
+  },
+
+  setCachedInventoryItems: (items: InventoryItem[]) => {
+    set({ inventoryItems: items, isInventoryLoaded: true });
+  },
+
+  addCachedInventoryItem: (item: InventoryItem) => {
+    set((s) => ({
+      inventoryItems: [item, ...s.inventoryItems.filter((i) => i.id !== item.id)],
+    }));
+  },
+
+  updateCachedInventoryItem: (item: Partial<InventoryItem> & { id: string }) => {
+    set((s) => ({
+      inventoryItems: s.inventoryItems.map((i) =>
+        i.id === item.id ? ({ ...i, ...item } as InventoryItem) : i
+      ),
+    }));
+  },
+
+  removeCachedInventoryItem: (id: string) => {
+    set((s) => ({
+      inventoryItems: s.inventoryItems.filter((i) => i.id !== id),
+    }));
+  },
+
+  invalidateInventory: () => {
+    set({ isInventoryLoaded: false });
+  },
+
+  // Borrow actions
+  fetchBorrowRecords: async (force = false) => {
+    const state = get();
+    if (state.isBorrowsLoaded && !force) {
+      return state.borrowRecords;
+    }
+    if (state.isBorrowsLoading) {
+      return state.borrowRecords;
+    }
+    set({ isBorrowsLoading: true });
+    try {
+      const res = await fetch("/api/marcom/inventory/borrow");
+      if (!res.ok) throw new Error(`Failed to fetch borrow records (${res.status})`);
+      const json = await res.json();
+      const list: BorrowRecord[] = Array.isArray(json.data) ? json.data : [];
+      set({ borrowRecords: list, isBorrowsLoaded: true, isBorrowsLoading: false });
+      return list;
+    } catch (err) {
+      console.error("[marcomDataStore] fetchBorrowRecords error:", err);
+      set({ isBorrowsLoading: false });
+      return state.borrowRecords;
+    }
+  },
+
+  setCachedBorrowRecords: (records: BorrowRecord[]) => {
+    set({ borrowRecords: records, isBorrowsLoaded: true });
+  },
+
+  addCachedBorrowRecord: (record: BorrowRecord) => {
+    set((s) => ({
+      borrowRecords: [record, ...s.borrowRecords.filter((r) => r.id !== record.id)],
+    }));
+  },
+
+  updateCachedBorrowRecord: (record: Partial<BorrowRecord> & { id: string }) => {
+    set((s) => ({
+      borrowRecords: s.borrowRecords.map((r) =>
+        r.id === record.id ? ({ ...r, ...record } as BorrowRecord) : r
+      ),
+    }));
+  },
+
+  removeCachedBorrowRecord: (recordId: string) => {
+    set((s) => ({
+      borrowRecords: s.borrowRecords.filter((r) => r.id !== recordId),
+    }));
+  },
+
+  invalidateBorrows: () => {
+    set({ isBorrowsLoaded: false });
   },
 }));

@@ -1083,6 +1083,43 @@ async function main() {
     await prisma.monthlyReport.upsert({ where: { id: r.id }, update: data, create: { id: r.id, ...data } });
   }
 
+  const inventoryItemsSeed = [
+    { code: "TND-001", name: "Folding Tent 3×3", category: "Branding", totalUnits: 6, storageLocation: "Warehouse A - Rack 1" },
+    { code: "TND-002", name: "Folding Tent 2×2", category: "Branding", totalUnits: 4, storageLocation: "Warehouse A - Rack 1" },
+    { code: "BNR-001", name: "Roll-up Banner Stand", category: "Branding", totalUnits: 10, storageLocation: "Warehouse A - Rack 2" },
+    { code: "XBN-001", name: "X-Banner Stand", category: "Branding", totalUnits: 8, storageLocation: "Warehouse A - Rack 2" },
+    { code: "TBL-001", name: "Folding Table (180cm)", category: "Furniture", totalUnits: 8, storageLocation: "Warehouse B - Bay 1" },
+    { code: "CHR-001", name: "Folding Chair", category: "Furniture", totalUnits: 20, storageLocation: "Warehouse B - Bay 2" },
+    { code: "SPK-001", name: "Portable Bluetooth Speaker", category: "Audio", totalUnits: 4, storageLocation: "AV Room - Shelf A" },
+    { code: "MIC-001", name: "Wireless Microphone Set", category: "Audio", totalUnits: 3, storageLocation: "AV Room - Shelf A" },
+    { code: "MIX-001", name: "Audio Mixer (4-channel)", category: "Audio", totalUnits: 2, storageLocation: "AV Room - Shelf B" },
+    { code: "TV-001", name: 'LED TV 43" + Stand', category: "Display", totalUnits: 2, storageLocation: "Display Storage - Bay 1" },
+    { code: "LPT-001", name: "Demo Laptop", category: "Display", totalUnits: 3, storageLocation: "IT Cabinet" },
+    { code: "TRP-001", name: "Waterproof Tarpaulin (4×6m)", category: "Logistics", totalUnits: 5, storageLocation: "Warehouse B - Rack 3" },
+    { code: "HND-001", name: "Hand Truck / Sack Truck", category: "Logistics", totalUnits: 3, storageLocation: "Warehouse Entrance" },
+  ];
+
+  for (const item of inventoryItemsSeed) {
+    await prisma.inventoryItem.upsert({
+      where: { code: item.code },
+      update: {
+        name: item.name,
+        category: item.category,
+        totalUnits: item.totalUnits,
+        storageLocation: item.storageLocation,
+      },
+      create: {
+        code: item.code,
+        name: item.name,
+        category: item.category,
+        totalUnits: item.totalUnits,
+        availableUnits: item.totalUnits,
+        storageLocation: item.storageLocation,
+        status: "AVAILABLE",
+      },
+    });
+  }
+
   const counts: Record<string, number> = {
     branches: await prisma.branch.count(),
     outlets: await prisma.outlet.count(),
@@ -1093,6 +1130,7 @@ async function main() {
     footage: await prisma.eventFootage.count(),
     documents: await prisma.documentItem.count(),
     monthlyReports: await prisma.monthlyReport.count(),
+    inventoryItems: await prisma.inventoryItem.count(),
   };
   for (const [model, count] of Object.entries(counts)) console.log(`${model}: ${count}`);
 }

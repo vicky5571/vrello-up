@@ -44,6 +44,19 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-30]
 
+- `feat(inventory)`: Add Field Event Equipment Inventory & Borrowing System
+  - Implemented master catalog `InventoryItem` with unique codes, category filters, and unit tracking
+  - Implemented borrow workflow `BorrowRecord` and `BorrowItem` with sequential code `BRW-YYYYMMDD-NNN` and multi-state lifecycle (`PENDING` → `APPROVED` → `ACTIVE` → `RETURNED`)
+  - Added atomic unit reservation and condition inspection on returns (`EXCELLENT` ... `DAMAGED` / `LOST`)
+  - Added read-only equipment borrowing summary and shortcut inside `EventFormModal`
+  - Added 6 API route handlers under `src/app/api/marcom/inventory/`
+  - Built modular UI coordinator under `src/components/views/InventoryView/` (223 LOC coordinator) with Card Grid, Table View, Borrow Records Table, and Kanban Tracking Board
+  - Seeded 13 items across 4 categories in `prisma/seed.ts`
+  - Gates: `npm test` 582 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-10-30-inventory-system-design.md`
+  Plan: `docs/superpowers/plans/2026-10-30-inventory-system.md`
+  Refs: `docs/inventory-system/adr.md`
+
 - `feat(auth)`: Redesign login, register, and registration-success screens
   - Split-shell layout that mirrors the product: dark `#0F1115` brand rail with
     the Sidebar's emerald→teal "V" mark, CSS kanban preview, and feature cards;

@@ -1,0 +1,205 @@
+import { NextResponse } from "next/server";
+import { Prisma, BorrowStatus, EquipmentCondition } from "@prisma/client";
+import { prisma } from "@/lib/db";
+
+const recordInclude = {
+  event: { select: { id: true, name: true } },
+  items: {
+    include: {
+      inventoryItem: true,
+    },
+  },
+} as const;
+
+function normalizeBorrowRecord(record: any) {
+  // Check if overdue
+  let currentStatus = record.status;
+  if (currentStatus === "ACTIVE" && new Date(record.returnDueDate) < new Date()) {
+    currentStatus = "OVERDUE";
+  }
+
+  return {
+    ...record,
+    status: currentStatus,
+    borrowDate: record.borrowDate ? record.borrowDate.toISOString() : null,
+    returnDueDate: record.returnDueDate ? record.returnDueDate.toISOString() : null,
+    returnDate: record.returnDate ? record.returnDate.toISOString() : null,
+    approvedAt: record.approvedAt ? record.approvedAt.toISOString() : null,
+    createdAt: record.createdAt ? record.createdAt.toISOString() : null,
+    updatedAt: record.updatedAt ? record.updatedAt.toISOString() : null,
+    items: (record.items || []).map((item: any) => ({
+      ...item,
+      inventoryItem: item.inventoryItem
+        ? {
+            ...item.inventoryItem,
+            createdAt: item.inventoryItem.createdAt?.toISOString(),
+            updatedAt: item.inventoryItem.updatedAt?.toISOString(),
+          }
+        : undefined,
+    })),
+  };
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get("q")?.toLowerCase();
+    const status = searchParams.get("status");
+    const eventId = searchParams.get("eventId");
+    const overdue = searchParams.get("overdue") === "true";
+
+    const where: Prisma.BorrowRecordWhereInput = {};
+
+    if (eventId) {
+      where.eventId = eventId;
+    }
+
+    if (overdue) {
+      where.status = { in: ["ACTIVE", "OVERDUE"] };
+      where.returnDueDate = { lt: new Date() };
+    } else if (status && status !== "ALL") {
+      if (status === "OVERDUE") {
+        where.OR = [
+          { status: "OVERDUE" },
+          { status: "ACTIVE", returnDueDate: { lt: new Date() } },
+        ];
+      } else {
+        where.status = status as BorrowStatus;
+      }
+    }
+
+    if (q) {
+      where.OR = [
+        { borrowCode: { contains: q, mode: "insensitive" } },
+        { borrowerName: { contains: q, mode: "insensitive" } },
+        { eventLocation: { contains: q, mode: "insensitive" } },
+        { borrowerDivision: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const records = await prisma.borrowRecord.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: recordInclude,
+    });
+
+    const normalized = records.map(normalizeBorrowRecord);
+
+    return NextResponse.json({ total: normalized.length, data: normalized });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to fetch borrow records";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const {
+      borrowerName,
+      borrowerPhone = "",
+      borrowerDivision = "",
+      picName = "",
+      eventId = null,
+      eventLocation = "",
+      borrowDate,
+      returnDueDate,
+      purpose = "",
+      notes = "",
+      items = [],
+    } = body;
+
+    if (!borrowerName?.trim() || !borrowDate || !returnDueDate || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json(
+        { error: "borrowerName, borrowDate, returnDueDate, and at least one item are required" },
+        { status: 400 }
+      );
+    }
+
+    const parsedBorrowDate = new Date(borrowDate);
+    const parsedReturnDueDate = new Date(returnDueDate);
+
+    if (isNaN(parsedBorrowDate.getTime()) || isNaN(parsedReturnDueDate.getTime())) {
+      return NextResponse.json({ error: "Invalid dates provided" }, { status: 400 });
+    }
+
+    if (parsedReturnDueDate < parsedBorrowDate) {
+      return NextResponse.json(
+        { error: "returnDueDate must not be earlier than borrowDate" },
+        { status: 422 }
+      );
+    }
+
+    // Validate items
+    for (const item of items) {
+      if (!item.inventoryItemId || !item.quantity || item.quantity < 1) {
+        return NextResponse.json(
+          { error: "Each item must have a valid inventoryItemId and quantity >= 1" },
+          { status: 400 }
+        );
+      }
+      const invItem = await prisma.inventoryItem.findUnique({
+        where: { id: item.inventoryItemId },
+      });
+      if (!invItem) {
+        return NextResponse.json(
+          { error: `Inventory item with ID ${item.inventoryItemId} not found` },
+          { status: 404 }
+        );
+      }
+    }
+
+    // Generate unique borrowCode: BRW-YYYYMMDD-NNN
+    const today = new Date();
+    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, "");
+    const prefix = `BRW-${dateStr}`;
+
+    const existingToday = await prisma.borrowRecord.findMany({
+      where: { borrowCode: { startsWith: prefix } },
+      select: { borrowCode: true },
+    });
+
+    let maxSeq = 0;
+    for (const r of existingToday) {
+      const parts = r.borrowCode.split("-");
+      if (parts.length === 3) {
+        const seq = parseInt(parts[2], 10);
+        if (!isNaN(seq) && seq > maxSeq) {
+          maxSeq = seq;
+        }
+      }
+    }
+    const borrowCode = `${prefix}-${String(maxSeq + 1).padStart(3, "0")}`;
+
+    const created = await prisma.borrowRecord.create({
+      data: {
+        borrowCode,
+        borrowerName: borrowerName.trim(),
+        borrowerPhone: String(borrowerPhone).trim(),
+        borrowerDivision: String(borrowerDivision).trim(),
+        picName: String(picName).trim(),
+        eventId: eventId ? String(eventId) : null,
+        eventLocation: String(eventLocation).trim(),
+        borrowDate: parsedBorrowDate,
+        returnDueDate: parsedReturnDueDate,
+        status: "PENDING",
+        purpose: String(purpose).trim(),
+        notes: String(notes).trim(),
+        items: {
+          create: items.map((it: any) => ({
+            inventoryItemId: it.inventoryItemId,
+            quantity: Math.max(1, parseInt(String(it.quantity), 10) || 1),
+            conditionOut: (it.conditionOut as EquipmentCondition) || "GOOD",
+            notes: String(it.notes || "").trim(),
+          })),
+        },
+      },
+      include: recordInclude,
+    });
+
+    return NextResponse.json(normalizeBorrowRecord(created), { status: 201 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to create borrow record";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
