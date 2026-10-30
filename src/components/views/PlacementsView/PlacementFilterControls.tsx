@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { MapPin, Sparkles, TableProperties } from "lucide-react";
 
@@ -96,6 +97,17 @@ export function PlacementStatusChips({
   );
 }
 
+const VIEW_SWITCHER_OPTIONS: {
+  id: "table" | "map" | "recap";
+  label: string;
+  icon: typeof TableProperties;
+  colorClass?: string;
+}[] = [
+  { id: "table", label: "Table", icon: TableProperties },
+  { id: "map", label: "Map View", icon: MapPin, colorClass: "text-emerald-600 dark:text-emerald-400" },
+  { id: "recap", label: "Rekap Kuartal", icon: Sparkles, colorClass: "text-blue-600 dark:text-blue-400" },
+];
+
 export function PlacementViewSwitcher({
   viewMode,
   onViewModeChange,
@@ -103,47 +115,50 @@ export function PlacementViewSwitcher({
   viewMode: "table" | "map" | "recap";
   onViewModeChange: (mode: "table" | "map" | "recap") => void;
 }) {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
-      <button
-        type="button"
-        onClick={() => onViewModeChange("table")}
-        className={cn(
-          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-          viewMode === "table"
-            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
-            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-        )}
-      >
-        <TableProperties className="w-3.5 h-3.5" />
-        <span>Table</span>
-      </button>
-      <button
-        type="button"
-        onClick={() => onViewModeChange("map")}
-        className={cn(
-          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-          viewMode === "map"
-            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
-            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-        )}
-      >
-        <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-        <span>Map View</span>
-      </button>
-      <button
-        type="button"
-        onClick={() => onViewModeChange("recap")}
-        className={cn(
-          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-          viewMode === "recap"
-            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs"
-            : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-        )}
-      >
-        <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-        <span>Rekap Kuartal</span>
-      </button>
+    <div
+      role="tablist"
+      aria-label="Placements View Switcher"
+      className="relative flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 select-none shrink-0"
+    >
+      {VIEW_SWITCHER_OPTIONS.map((opt) => {
+        const Icon = opt.icon;
+        const isActive = viewMode === opt.id;
+        return (
+          <motion.button
+            key={opt.id}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
+            onClick={() => onViewModeChange(opt.id)}
+            className={cn(
+              "relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer",
+              isActive
+                ? "text-slate-900 dark:text-slate-100"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+            )}
+          >
+            {isActive && (
+              <motion.div
+                layoutId="activePlacementViewPill"
+                className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 450, damping: 35 }
+                }
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              <Icon className={cn("w-3.5 h-3.5", opt.colorClass)} />
+              <span>{opt.label}</span>
+            </span>
+          </motion.button>
+        );
+      })}
     </div>
   );
 }

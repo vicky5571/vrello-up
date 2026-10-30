@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardList, Download, Plus } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
@@ -17,7 +17,8 @@ import { PlacementsRecapTab } from "./PlacementsRecapTab";
 import { usePlacementMutations } from "./usePlacementMutations";
 import { buildPlacementColumns } from "./placementColumns";
 import { extractPlacementSearchText, PLACEMENT_SEARCH_KEYS } from "./placementSearchHelpers";
-import { PlacementBrandChips, PlacementStatusChips, PlacementViewSwitcher } from "./PlacementFilterControls";
+import { PlacementBrandChips, PlacementStatusChips } from "./PlacementFilterControls";
+import { PlacementsHeader } from "./PlacementsHeader";
 import type { PlacementStatus, MarcomPlacement } from "@/types";
 
 export type { PlacementStatus, MarcomPlacement };
@@ -113,10 +114,24 @@ export function PlacementsView() {
       isFiltered={selectedStatus !== "ALL" || selectedBrand !== "ALL"}
     />
   );
-  const viewSwitcher = <PlacementViewSwitcher viewMode={viewMode} onViewModeChange={setViewMode} />;
-
   return (
-    <>
+    <div className="space-y-4">
+      {/* 1. Persistent Static Page Header */}
+      <PlacementsHeader
+        totalPlacements={filteredPlacements.length}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        isLoading={isLoading}
+        onRefresh={() => loadPlacements(true)}
+        onExport={() => setExportCenterOpen(true)}
+        canManage={canManage}
+        onAddPlacement={handleOpenAddPlacement}
+      />
+
+      {/* 2. Persistent Static KPI Bar */}
+      <KpiSummaryCards items={kpiItems} />
+
+      {/* 3. Dynamic Content Area */}
       {viewMode === "table" ? (
         <MarcomTableShell
           fixedViewport
@@ -128,7 +143,6 @@ export function PlacementsView() {
           titleIcon={ClipboardList}
           entityName="placement"
           entityPlural="placements"
-          kpiBar={<KpiSummaryCards items={kpiItems} />}
           isLoading={isLoading}
           error={error}
           onRefresh={() => loadPlacements(true)}
@@ -136,8 +150,7 @@ export function PlacementsView() {
           deleteRequiresMessage="Delete requires staff or admin role"
           onDeleteOne={deleteOne}
           onDeleteBatch={deleteBatch}
-          canAdd={canManage}
-          onAdd={handleOpenAddPlacement}
+          canAdd={false}
           renderFloatingBulkBar={(selectedIds, clearSelection) => (
             <PlacementBulkActionBar
               selectedIds={selectedIds}
@@ -148,24 +161,7 @@ export function PlacementsView() {
               canManage={canManage}
             />
           )}
-          addLabel="Add Placement"
-          addIcon={Plus}
-          addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-lime-600 hover:bg-lime-700 transition-colors shadow-2xs cursor-pointer"
-          headerExtra={
-            <div className="flex items-center gap-2">
-              {brandChips}
-              {viewSwitcher}
-              <button
-                type="button"
-                onClick={() => setExportCenterOpen(true)}
-                title="Open Export Center — PDF summaries & Excel sheets"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Export</span>
-              </button>
-            </div>
-          }
+          headerExtra={brandChips}
           onRowClick={(p) => setSelectedPlacement(p)}
           filterBar={statusFilterChips}
           searchKeys={PLACEMENT_SEARCH_KEYS}
@@ -177,16 +173,10 @@ export function PlacementsView() {
       ) : viewMode === "map" ? (
         <PlacementsMapTab
           placements={mapPlacements}
-          kpiItems={kpiItems}
-          viewSwitcherControls={viewSwitcher}
           brandChips={brandChips}
           statusFilterChips={statusFilterChips}
           searchTerm={searchTerm}
           onSearchChange={(q) => setMarcomFilter("placements", q)}
-          isLoading={isLoading}
-          onRefresh={() => loadPlacements(true)}
-          onExport={() => setExportCenterOpen(true)}
-          onAddPlacement={handleOpenAddPlacement}
           onEditPlacement={setModalPlacement}
           canManage={canManage}
         />
@@ -195,9 +185,6 @@ export function PlacementsView() {
           placements={placements}
           branches={storeBranches}
           materials={materialsList}
-          viewSwitcherControls={viewSwitcher}
-          isLoading={isLoading}
-          onRefresh={() => loadPlacements(true)}
           onDrillDown={handleDrillDown}
           onRecordPlacement={canManage ? handleOpenAddPlacement : undefined}
         />
@@ -221,6 +208,6 @@ export function PlacementsView() {
         mousList={storeMous}
         placements={placements}
       />
-    </>
+    </div>
   );
 }

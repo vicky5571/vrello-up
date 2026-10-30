@@ -8,10 +8,10 @@
 
 **Date:** 2026-10-31  
 **Active Branch:** `vicky`  
-**Active Feature:** Comprehensive QA Database Seeder (`prisma/seed.ts`) — **IMPLEMENTED & VERIFIED**  
-**Spec:** `docs/superpowers/specs/2026-10-31-qa-comprehensive-seeder-design.md`  
-**Plan:** `docs/superpowers/plans/2026-10-31-qa-comprehensive-seeder.md`  
-**Previous Feature:** HTML Redirect Response on Pipeline View Bugfix  
+**Active Feature:** Placements Persistent Header & Static View Switcher — **IMPLEMENTED & VERIFIED**  
+**Spec:** `docs/superpowers/specs/2026-10-31-placements-persistent-header-view-switcher-design.md`  
+**Plan:** `docs/superpowers/plans/2026-10-31-placements-persistent-header-view-switcher.md`  
+**Previous Feature:** Comprehensive QA Database Seeder (`prisma/seed.ts`)  
 
 ---
 
@@ -118,11 +118,20 @@
     - Integrated Framer Motion `motion.div` with shared `layoutId` (`activeContentPlannerViewPill` and `activeContentPlannerPlatformPill`), natural spring physics (`stiffness: 450, damping: 35`), and `useReducedMotion()` accessibility support.
     - Added tactile tap gestures (`whileTap={{ scale: 0.95 }}`) and semantic accessibility attributes (`role="tablist"`, `role="tab"`, `aria-selected`).
 
+17. **Placements Persistent Header & Static View Switcher (`PlacementsView.tsx`, `PlacementsHeader.tsx`, `PlacementFilterControls.tsx`):**
+    - Spec: `docs/superpowers/specs/2026-10-31-placements-persistent-header-view-switcher-design.md`
+    - Plan: `docs/superpowers/plans/2026-10-31-placements-persistent-header-view-switcher.md`
+    - Upgraded `PlacementViewSwitcher` with Framer Motion `motion.div layoutId="activePlacementViewPill"`, spring physics (`stiffness: 450, damping: 35`), `whileTap={{ scale: 0.95 }}`, and `useReducedMotion()`.
+    - Extracted atomic subcomponent `PlacementsHeader.tsx` (84 LOC) containing title, record badge, view switcher pills, refresh button, export trigger, and `+ Add Placement` action.
+    - Anchored `PlacementsHeader` and `KpiSummaryCards` persistently at the top across Table, Map, and Recap view modes with 0px layout jump.
+    - Streamlined `PlacementsMapTab.tsx` and `PlacementsRecapTab.tsx` by removing redundant duplicate headers and duplicate KPI bars.
+    - Kept coordinator `PlacementsView.tsx` strictly under the 250 LOC limit (213 LOC).
+
 ---
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (24 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (25 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
 - `npm test` → ✅ 591 passed, 0 failed (100 suites)
 

@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `feat(placements)`: Make placements header and view switcher persistent across tabs
+  - Extracted atomic subcomponent `PlacementsHeader.tsx` (84 LOC) with animated view switcher pills (`motion.div layoutId="activePlacementViewPill"`), refresh trigger, export center trigger, and `+ Add Placement` action
+  - Anchored `PlacementsHeader` and `KpiSummaryCards` persistently above dynamic content across Table, Map, and Recap view modes with 0px layout shift
+  - Streamlined `PlacementsMapTab.tsx` and `PlacementsRecapTab.tsx` by removing redundant duplicate headers and KPI cards
+  - Kept coordinator `PlacementsView.tsx` strictly under 250 LOC (213 LOC)
+  - Gates: `npm test` 591 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-10-31-placements-persistent-header-view-switcher-design.md`
+  Plan: `docs/superpowers/plans/2026-10-31-placements-persistent-header-view-switcher.md`
+
 - `feat(seed)`: Implement comprehensive QA edge-case database seeder
   - Rewrote `prisma/seed.ts` with clean database reset protocol (`cleanDatabase`) deleting in reverse FK topological order
   - Populated realistic Indonesian business domain data across User, Branch, Material, Outlet, MoU, Placement, InventoryItem, BorrowRecord, FieldEvent, ContentPost, DocumentItem, and MonthlyReport
