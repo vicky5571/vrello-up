@@ -6,6 +6,25 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `feat(ui)`: Implement sitewide fluid active pills animation with Framer Motion
+  - Replaced static CSS active classes with Framer Motion `motion.div layoutId="..."` sliding background pill animations
+  - Configured premium spring dynamics (`type: "spring" as const, stiffness: 450, damping: 35`) and tactile tap feedback (`whileTap={{ scale: 0.95 }}`)
+  - Added accessibility support via `useReducedMotion()` gracefully disabling layout animation for motion-sensitive users
+  - Covered 10 segmented controls, tabs, and filter pills:
+    1. Documents view switcher (Cards / Table) & Category filter chips (`DocumentsHeader.tsx`)
+    2. Outlets view switcher (Table / Map / Approval) (`OutletsHeader.tsx`)
+    3. Reports tab switcher (Monthly / Quarterly) (`ReportsHeader.tsx`)
+    4. Inventory tab switcher (Catalog / Borrowing) & Grid/Table view switchers (`InventoryHeaderKpis.tsx`)
+    5. Analytics brand filter pills (ALL / IM3 / TRI) (`AnalyticsHeader.tsx`)
+    6. Branches status filter chips (All / Active / Inactive) (`BranchesHeader.tsx`)
+    7. Projects group-by selector pills (Status / Priority / Branch / None) (`ProjectsListHeader.tsx`)
+    8. Help & Documentation modal tab switcher (Shortcuts / Guides) (`HelpDocsModal.tsx`)
+    9. Settings modal tab switcher (Backup & Data / Appearance) (`SettingsModal.tsx`)
+    10. Placements outlet search brand override pills (IM3 / TRI) (`OutletSearchCombobox.tsx`)
+  - Gates: `npm test` 599 pass / 0 fail; `npm run test:smoke` 84 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-10-31-sitewide-active-pills-animation-design.md`
+  Plan: `docs/superpowers/plans/2026-10-31-sitewide-active-pills-animation.md`
+
 - `feat(headers)`: Swap controls row and KPI cards row across all 8 Marcom headers to stabilize pills
   - Inverted vertical order across `BranchesHeader`, `ReportsHeader`, `OutletsHeader`, `DocumentsHeader`, `InventoryHeaderKpis`, `PlacementsHeader`, `EventsHeader`, and `AnalyticsHeader`
   - Positioned Controls row (view switcher pills, tab switcher pills, filter chips, CustomDropdowns, and search inputs) directly beneath Title row (Row 2)

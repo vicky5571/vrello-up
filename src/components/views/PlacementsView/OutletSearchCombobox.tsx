@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Search,
   Loader2,
@@ -97,6 +98,11 @@ export function OutletSearchCombobox({
   required = false,
   id = "outlet-search-combobox",
 }: OutletSearchComboboxProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const pillTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 450, damping: 35 };
+
   const branches = useMarcomDataStore((s) => s.branches);
   const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
   const cachedOutlets = useMarcomDataStore((s) => s.outlets);
@@ -443,33 +449,61 @@ export function OutletSearchCombobox({
                 Brand:
               </span>
               {onSetBrand ? (
-                <div className="inline-flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
-                  <button
+                <div
+                  role="radiogroup"
+                  aria-label="Brand Selector"
+                  className="inline-flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600"
+                >
+                  <motion.button
                     type="button"
+                    role="radio"
+                    aria-checked={brand === "IM3" || !brand}
+                    whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                     onClick={() => onSetBrand("IM3")}
                     className={cn(
-                      "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                      "relative inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer",
                       (brand === "IM3" || !brand)
-                        ? "bg-yellow-400 text-yellow-950 shadow-xs"
+                        ? "text-yellow-950"
                         : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
                     )}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-900" />
-                    <span>IM3</span>
-                  </button>
-                  <button
+                    {(brand === "IM3" || !brand) && (
+                      <motion.div
+                        layoutId="activeComboboxBrandPill"
+                        className="absolute inset-0 bg-yellow-400 rounded-lg shadow-xs"
+                        transition={pillTransition}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-yellow-900" />
+                      <span>IM3</span>
+                    </span>
+                  </motion.button>
+                  <motion.button
                     type="button"
+                    role="radio"
+                    aria-checked={brand === "TRI" || brand === "3"}
+                    whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                     onClick={() => onSetBrand("TRI")}
                     className={cn(
-                      "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                      "relative inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer",
                       brand === "TRI" || brand === "3"
-                        ? "bg-pink-600 text-white shadow-xs"
+                        ? "text-white"
                         : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
                     )}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                    <span>3 / Tri</span>
-                  </button>
+                    {(brand === "TRI" || brand === "3") && (
+                      <motion.div
+                        layoutId="activeComboboxBrandPill"
+                        className="absolute inset-0 bg-pink-600 rounded-lg shadow-xs"
+                        transition={pillTransition}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                      <span>3 / Tri</span>
+                    </span>
+                  </motion.button>
                 </div>
               ) : (
                 renderBrandBadge(currentOutlet.brand)

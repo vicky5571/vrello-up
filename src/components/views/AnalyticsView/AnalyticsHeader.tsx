@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   BarChart3,
   RefreshCw,
@@ -56,6 +57,11 @@ export function AnalyticsHeader({
   onRefresh,
   onNavigate,
 }: AnalyticsHeaderProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const pillTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 450, damping: 35 };
+
   const branches = useMarcomDataStore((state) => state.branches);
 
   const activeFilterCount = useMemo(() => {
@@ -139,32 +145,48 @@ export function AnalyticsHeader({
           />
 
           {/* Brand Toggle Pills */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
+          <div
+            role="radiogroup"
+            aria-label="Filter Brand"
+            className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60"
+          >
             {BRANDS.map((b) => {
               const isSelected = filters.brand === b.value;
               return (
-                <button
+                <motion.button
                   key={b.value}
                   type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                   onClick={() => onFilterChange({ ...filters, brand: b.value })}
                   className={cn(
-                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1.5",
+                    "relative px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1.5",
                     isSelected
-                      ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs font-semibold"
+                      ? "text-slate-900 dark:text-slate-100 font-semibold"
                       : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   )}
                 >
-                  {b.color && (
-                    <span
-                      className={cn(
-                        "w-1.5 h-1.5 rounded-full",
-                        b.color,
-                        !isSelected && "opacity-60"
-                      )}
+                  {isSelected && (
+                    <motion.div
+                      layoutId="activeAnalyticsBrandPill"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                      transition={pillTransition}
                     />
                   )}
-                  {b.label}
-                </button>
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    {b.color && (
+                      <span
+                        className={cn(
+                          "w-1.5 h-1.5 rounded-full",
+                          b.color,
+                          !isSelected && "opacity-60"
+                        )}
+                      />
+                    )}
+                    <span>{b.label}</span>
+                  </span>
+                </motion.button>
               );
             })}
           </div>

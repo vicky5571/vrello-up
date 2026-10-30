@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Package,
   Boxes,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { EQUIPMENT_CATEGORIES } from "./inventoryConstants";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { cn } from "@/lib/utils";
 
 interface InventoryHeaderKpisProps {
   kpis: {
@@ -63,6 +65,11 @@ export function InventoryHeaderKpis({
   onAddItem,
   onBorrowRequest,
 }: InventoryHeaderKpisProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const pillTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 450, damping: 35 };
+
   return (
     <div className="p-6 pb-2 space-y-5 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -109,29 +116,55 @@ export function InventoryHeaderKpis({
 
       {/* 2. Tab Switcher & View Mode Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
-        <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-medium">
-          <button
+        <div
+          role="tablist"
+          aria-label="Inventory Category Tabs"
+          className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-medium"
+        >
+          <motion.button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "catalog"}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => setActiveTab("catalog")}
-            className={`px-3.5 py-1.5 rounded-md transition-all ${
+            className={cn(
+              "relative px-3.5 py-1.5 rounded-md transition-colors cursor-pointer",
               activeTab === "catalog"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-            }`}
+                ? "text-slate-900 dark:text-slate-100 font-semibold"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+            )}
           >
-            Equipment Catalog ({totalCatalog})
-          </button>
-          <button
+            {activeTab === "catalog" && (
+              <motion.div
+                layoutId="activeInventoryTabPill"
+                className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs border border-slate-200/60 dark:border-slate-700/60"
+                transition={pillTransition}
+              />
+            )}
+            <span className="relative z-10">Equipment Catalog ({totalCatalog})</span>
+          </motion.button>
+          <motion.button
             type="button"
+            role="tab"
+            aria-selected={activeTab === "borrowing"}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => setActiveTab("borrowing")}
-            className={`px-3.5 py-1.5 rounded-md transition-all ${
+            className={cn(
+              "relative px-3.5 py-1.5 rounded-md transition-colors cursor-pointer",
               activeTab === "borrowing"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-            }`}
+                ? "text-slate-900 dark:text-slate-100 font-semibold"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+            )}
           >
-            Borrow Transactions ({totalBorrows})
-          </button>
+            {activeTab === "borrowing" && (
+              <motion.div
+                layoutId="activeInventoryTabPill"
+                className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs border border-slate-200/60 dark:border-slate-700/60"
+                transition={pillTransition}
+              />
+            )}
+            <span className="relative z-10">Borrow Transactions ({totalBorrows})</span>
+          </motion.button>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -160,44 +193,116 @@ export function InventoryHeaderKpis({
             />
           )}
 
-          <div className="flex items-center border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden p-0.5 bg-white dark:bg-slate-900">
+          <div
+            role="tablist"
+            aria-label="Inventory View Mode Switcher"
+            className="flex items-center border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden p-0.5 bg-white dark:bg-slate-900"
+          >
             {activeTab === "catalog" ? (
               <>
-                <button
+                <motion.button
                   type="button"
+                  role="tab"
+                  aria-selected={catalogViewMode === "grid"}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                   onClick={() => setCatalogViewMode("grid")}
-                  className={`p-1.5 rounded ${catalogViewMode === "grid" ? "bg-slate-100 dark:bg-slate-800 text-blue-600" : "text-slate-400 hover:text-slate-700"}`}
+                  className={cn(
+                    "relative p-1.5 rounded transition-colors cursor-pointer",
+                    catalogViewMode === "grid"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  )}
                   title="Grid View"
                 >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                </button>
-                <button
+                  {catalogViewMode === "grid" && (
+                    <motion.div
+                      layoutId="activeInventoryCatalogViewPill"
+                      className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded"
+                      transition={pillTransition}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center">
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                  </span>
+                </motion.button>
+                <motion.button
                   type="button"
+                  role="tab"
+                  aria-selected={catalogViewMode === "table"}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                   onClick={() => setCatalogViewMode("table")}
-                  className={`p-1.5 rounded ${catalogViewMode === "table" ? "bg-slate-100 dark:bg-slate-800 text-blue-600" : "text-slate-400 hover:text-slate-700"}`}
+                  className={cn(
+                    "relative p-1.5 rounded transition-colors cursor-pointer",
+                    catalogViewMode === "table"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  )}
                   title="Table View"
                 >
-                  <TableIcon className="w-3.5 h-3.5" />
-                </button>
+                  {catalogViewMode === "table" && (
+                    <motion.div
+                      layoutId="activeInventoryCatalogViewPill"
+                      className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded"
+                      transition={pillTransition}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center">
+                    <TableIcon className="w-3.5 h-3.5" />
+                  </span>
+                </motion.button>
               </>
             ) : (
               <>
-                <button
+                <motion.button
                   type="button"
+                  role="tab"
+                  aria-selected={borrowViewMode === "board"}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                   onClick={() => setBorrowViewMode("board")}
-                  className={`p-1.5 rounded ${borrowViewMode === "board" ? "bg-slate-100 dark:bg-slate-800 text-blue-600" : "text-slate-400 hover:text-slate-700"}`}
+                  className={cn(
+                    "relative p-1.5 rounded transition-colors cursor-pointer",
+                    borrowViewMode === "board"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  )}
                   title="Kanban Board"
                 >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                </button>
-                <button
+                  {borrowViewMode === "board" && (
+                    <motion.div
+                      layoutId="activeInventoryBorrowViewPill"
+                      className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded"
+                      transition={pillTransition}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center">
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                  </span>
+                </motion.button>
+                <motion.button
                   type="button"
+                  role="tab"
+                  aria-selected={borrowViewMode === "table"}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                   onClick={() => setBorrowViewMode("table")}
-                  className={`p-1.5 rounded ${borrowViewMode === "table" ? "bg-slate-100 dark:bg-slate-800 text-blue-600" : "text-slate-400 hover:text-slate-700"}`}
+                  className={cn(
+                    "relative p-1.5 rounded transition-colors cursor-pointer",
+                    borrowViewMode === "table"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  )}
                   title="Table View"
                 >
-                  <TableIcon className="w-3.5 h-3.5" />
-                </button>
+                  {borrowViewMode === "table" && (
+                    <motion.div
+                      layoutId="activeInventoryBorrowViewPill"
+                      className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded"
+                      transition={pillTransition}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center">
+                    <TableIcon className="w-3.5 h-3.5" />
+                  </span>
+                </motion.button>
               </>
             )}
           </div>

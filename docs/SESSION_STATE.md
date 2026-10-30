@@ -8,14 +8,32 @@
 
 **Date:** 2026-10-31  
 **Active Branch:** `vicky`  
-**Active Feature:** Marcom Header Stabilization (Cards Row and Pills Button Swap across 8 Headers) — **IMPLEMENTED & VERIFIED**  
-**Spec:** `docs/superpowers/specs/2026-10-31-header-pills-cards-swap-design.md`  
-**Plan:** `docs/superpowers/plans/2026-10-31-header-pills-cards-swap.md`  
-**Previous Feature:** Marcom UI Standardization & Sitewide CustomDropdown  
+**Active Feature:** Sitewide Active Pills Fluid Animation (`motion.div layoutId="..."`) — **IMPLEMENTED & VERIFIED**  
+**Spec:** `docs/superpowers/specs/2026-10-31-sitewide-active-pills-animation-design.md`  
+**Plan:** `docs/superpowers/plans/2026-10-31-sitewide-active-pills-animation.md`  
+**Previous Feature:** Marcom Header Stabilization (Cards Row and Pills Button Swap across 8 Headers)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Sitewide Active Pills Animation Upgrade (`framer-motion`):**
+   - Implemented spring-animated sliding background pills using `motion.div layoutId="..."` across 10 components sitewide.
+   - Configured high-performance physics: `type: "spring" as const, stiffness: 450, damping: 35` with tactile micro-interactions (`whileTap={{ scale: 0.95 }}`).
+   - Added full accessibility support via `useReducedMotion()` gracefully disabling animations if the user prefers reduced motion.
+   - Preserved text clarity and contrast with `relative z-10` on labels and icons.
+   - Verified 10 targeted locations:
+     1. `DocumentsHeader.tsx`: Cards / Table view switcher (`activeDocumentsViewPill`) & Category filter chips (`activeDocumentsCategoryPill`)
+     2. `OutletsHeader.tsx`: Table / Map / Approval view switcher (`activeOutletsViewPill`)
+     3. `ReportsHeader.tsx`: Monthly / Quarterly tab switcher (`activeReportsTabPill`)
+     4. `InventoryHeaderKpis.tsx`: Catalog / Borrowing tab switcher (`activeInventoryTabPill`), Catalog view switcher (`activeInventoryCatalogViewPill`), Borrow view switcher (`activeInventoryBorrowViewPill`)
+     5. `AnalyticsHeader.tsx`: Brand filter toggle pills: ALL / IM3 / TRI (`activeAnalyticsBrandPill`)
+     6. `BranchesHeader.tsx`: Status filter chips: All / Active / Inactive (`activeBranchesStatusPill`)
+     7. `ProjectsListHeader.tsx`: Group by selector pills: Status / Priority / Branch / None (`activeProjectsGroupByPill`)
+     8. `HelpDocsModal.tsx`: Shortcuts / Guides modal tab switcher (`activeHelpDocsTabPill`)
+     9. `SettingsModal.tsx`: Backup & Data / Appearance modal tab switcher (`activeSettingsTabPill`)
+     10. `OutletSearchCombobox.tsx`: Brand override pills: IM3 / TRI (`activeComboboxBrandPill`)
+   - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (84 passed), `npm test` (599 passed, 0 failures).
 
 1. **Database Schema & Migrations (`prisma/schema.prisma` & migration SQL):**
    - Added enums `EquipmentStatus` (`AVAILABLE`, `BORROWED`, `MAINTENANCE`, `RETIRED`), `BorrowStatus` (`PENDING`, `APPROVED`, `ACTIVE`, `RETURNED`, `CANCELLED`, `OVERDUE`), and `EquipmentCondition` (`EXCELLENT`, `GOOD`, `FAIR`, `POOR`, `DAMAGED`, `LOST`).

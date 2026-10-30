@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   X,
   Settings,
@@ -15,6 +15,7 @@ import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
+import { cn } from "@/lib/utils";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -32,6 +33,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   const importBackup = useWorkspaceStore((s) => s.importBackup);
   const { theme, setTheme } = useTheme();
+  const shouldReduceMotion = useReducedMotion();
+  const pillTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 450, damping: 35 };
+
   const [activeTab, setActiveTab] = useState<"data" | "appearance">("data");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -120,31 +126,61 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
 
             {/* Navigation Tabs */}
-            <div className="px-5 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5">
-              <button
+            <div
+              role="tablist"
+              aria-label="Settings Tabs"
+              className="px-5 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5"
+            >
+              <motion.button
                 type="button"
+                role="tab"
+                aria-selected={activeTab === "data"}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                 onClick={() => setActiveTab("data")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={cn(
+                  "relative px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer",
                   activeTab === "data"
-                    ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-2xs"
+                    ? "text-slate-900 dark:text-slate-100"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-                }`}
+                )}
               >
-                <Database className="w-3.5 h-3.5" />
-                Backup & Data
-              </button>
-              <button
+                {activeTab === "data" && (
+                  <motion.div
+                    layoutId="activeSettingsTabPill"
+                    className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded-xl shadow-2xs border border-slate-200/50 dark:border-slate-700/50"
+                    transition={pillTransition}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-1.5">
+                  <Database className="w-3.5 h-3.5" />
+                  <span>Backup & Data</span>
+                </span>
+              </motion.button>
+              <motion.button
                 type="button"
+                role="tab"
+                aria-selected={activeTab === "appearance"}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                 onClick={() => setActiveTab("appearance")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={cn(
+                  "relative px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer",
                   activeTab === "appearance"
-                    ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-2xs"
+                    ? "text-slate-900 dark:text-slate-100"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-                }`}
+                )}
               >
-                <Sun className="w-3.5 h-3.5" />
-                Appearance
-              </button>
+                {activeTab === "appearance" && (
+                  <motion.div
+                    layoutId="activeSettingsTabPill"
+                    className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded-xl shadow-2xs border border-slate-200/50 dark:border-slate-700/50"
+                    transition={pillTransition}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-1.5">
+                  <Sun className="w-3.5 h-3.5" />
+                  <span>Appearance</span>
+                </span>
+              </motion.button>
             </div>
 
             {/* Tab Body */}

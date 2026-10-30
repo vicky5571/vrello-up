@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Files,
   RefreshCw,
@@ -44,6 +45,11 @@ export function DocumentsHeader({
   viewMode,
   onViewModeChange,
 }: DocumentsHeaderProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const pillTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 450, damping: 35 };
+
   return (
     <div className="p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm">
       {/* 1. Title Row & Actions */}
@@ -89,20 +95,28 @@ export function DocumentsHeader({
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-1">
         {/* Category Chips */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full scrollbar-none">
-          <button
+          <motion.button
             type="button"
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
             onClick={() => onSelectCategory("ALL")}
             className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5",
+              "relative px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5",
               selectedCategory === "ALL"
-                ? "bg-teal-600 text-white shadow-2xs"
+                ? "text-white"
                 : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
             )}
           >
-            <span>Semua Dokumen</span>
+            {selectedCategory === "ALL" && (
+              <motion.div
+                layoutId="activeDocumentsCategoryPill"
+                className="absolute inset-0 bg-teal-600 rounded-lg shadow-2xs"
+                transition={pillTransition}
+              />
+            )}
+            <span className="relative z-10">Semua Dokumen</span>
             <span
               className={cn(
-                "px-1.5 py-0.2 rounded-full text-[10px]",
+                "relative z-10 px-1.5 py-0.2 rounded-full text-[10px]",
                 selectedCategory === "ALL"
                   ? "bg-white/20 text-white"
                   : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
@@ -110,26 +124,34 @@ export function DocumentsHeader({
             >
               {documentCount}
             </span>
-          </button>
+          </motion.button>
 
           {categoryChips.map((cat) => {
             const isSelected = selectedCategory === cat.name;
             return (
-              <button
+              <motion.button
                 key={cat.name}
                 type="button"
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
                 onClick={() => onSelectCategory(cat.name)}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5",
+                  "relative px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5",
                   isSelected
-                    ? "bg-teal-600 text-white shadow-2xs"
+                    ? "text-white"
                     : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                 )}
               >
-                <span>{cat.name}</span>
+                {isSelected && (
+                  <motion.div
+                    layoutId="activeDocumentsCategoryPill"
+                    className="absolute inset-0 bg-teal-600 rounded-lg shadow-2xs"
+                    transition={pillTransition}
+                  />
+                )}
+                <span className="relative z-10">{cat.name}</span>
                 <span
                   className={cn(
-                    "px-1.5 py-0.2 rounded-full text-[10px]",
+                    "relative z-10 px-1.5 py-0.2 rounded-full text-[10px]",
                     isSelected
                       ? "bg-white/20 text-white"
                       : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
@@ -137,7 +159,7 @@ export function DocumentsHeader({
                 >
                   {cat.count}
                 </span>
-              </button>
+              </motion.button>
             );
           })}
         </div>
@@ -164,35 +186,63 @@ export function DocumentsHeader({
             )}
           </div>
 
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80">
-            <button
+          <div
+            role="tablist"
+            aria-label="View Mode Switcher"
+            className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80"
+          >
+            <motion.button
               type="button"
+              role="tab"
+              aria-selected={viewMode === "cards"}
+              whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
               onClick={() => onViewModeChange("cards")}
               className={cn(
-                "px-2.5 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 text-xs",
+                "relative px-2.5 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold",
                 viewMode === "cards"
-                  ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-2xs font-semibold"
+                  ? "text-teal-600 dark:text-teal-400"
                   : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
               )}
               title="Cards Grid View"
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Cards</span>
-            </button>
-            <button
+              {viewMode === "cards" && (
+                <motion.div
+                  layoutId="activeDocumentsViewPill"
+                  className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                  transition={pillTransition}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Cards</span>
+              </span>
+            </motion.button>
+            <motion.button
               type="button"
+              role="tab"
+              aria-selected={viewMode === "table"}
+              whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
               onClick={() => onViewModeChange("table")}
               className={cn(
-                "px-2.5 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 text-xs",
+                "relative px-2.5 py-1 rounded-md transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold",
                 viewMode === "table"
-                  ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-2xs font-semibold"
+                  ? "text-teal-600 dark:text-teal-400"
                   : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
               )}
               title="Table View"
             >
-              <TableProperties className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Table</span>
-            </button>
+              {viewMode === "table" && (
+                <motion.div
+                  layoutId="activeDocumentsViewPill"
+                  className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                  transition={pillTransition}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <TableProperties className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Table</span>
+              </span>
+            </motion.button>
           </div>
         </div>
       </div>

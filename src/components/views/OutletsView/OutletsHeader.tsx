@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Store,
   Plus,
@@ -62,6 +63,11 @@ export function OutletsHeader({
   searchQuery,
   onSearchChange,
 }: OutletsHeaderProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const pillTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 450, damping: 35 };
+
   const isFiltered = selectedBranch !== "ALL" || selectedType !== "ALL" || Boolean(searchQuery);
 
   return (
@@ -108,51 +114,91 @@ export function OutletsHeader({
       {/* 2. Controls Row: View Switchers, Filters, Search */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 pt-1">
         {/* View Mode Switcher */}
-        <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 self-start">
-          <button
+        <div
+          role="tablist"
+          aria-label="View Mode Switcher"
+          className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 self-start"
+        >
+          <motion.button
             type="button"
+            role="tab"
+            aria-selected={viewMode === "table"}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => onViewModeChange("table")}
             className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
+              "relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
               viewMode === "table"
-                ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs font-bold"
+                ? "text-orange-600 dark:text-orange-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
             )}
           >
-            <TableIcon className="w-3.5 h-3.5" />
-            <span>Tabel Data</span>
-          </button>
-          <button
+            {viewMode === "table" && (
+              <motion.div
+                layoutId="activeOutletsViewPill"
+                className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                transition={pillTransition}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              <TableIcon className="w-3.5 h-3.5" />
+              <span>Tabel Data</span>
+            </span>
+          </motion.button>
+          <motion.button
             type="button"
+            role="tab"
+            aria-selected={viewMode === "map"}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => onViewModeChange("map")}
             className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
+              "relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
               viewMode === "map"
-                ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs font-bold"
+                ? "text-orange-600 dark:text-orange-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
             )}
           >
-            <MapPin className="w-3.5 h-3.5 text-orange-500" />
-            <span>Peta Sebaran</span>
-          </button>
-          <button
+            {viewMode === "map" && (
+              <motion.div
+                layoutId="activeOutletsViewPill"
+                className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                transition={pillTransition}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-orange-500" />
+              <span>Peta Sebaran</span>
+            </span>
+          </motion.button>
+          <motion.button
             type="button"
+            role="tab"
+            aria-selected={viewMode === "approval"}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => onViewModeChange("approval")}
             className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
+              "relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
               viewMode === "approval"
-                ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-2xs font-bold"
+                ? "text-orange-600 dark:text-orange-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
             )}
           >
-            <Clock className="w-3.5 h-3.5 text-amber-500" />
-            <span>Antrean Approval</span>
-            {pendingCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white">
-                {pendingCount}
-              </span>
+            {viewMode === "approval" && (
+              <motion.div
+                layoutId="activeOutletsViewPill"
+                className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                transition={pillTransition}
+              />
             )}
-          </button>
+            <span className="relative z-10 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <span>Antrean Approval</span>
+              {pendingCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white">
+                  {pendingCount}
+                </span>
+              )}
+            </span>
+          </motion.button>
         </div>
 
         {/* Filters & Search */}

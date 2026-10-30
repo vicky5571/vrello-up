@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Building2, Plus, RefreshCw, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
@@ -47,6 +48,11 @@ export function BranchesHeader({
   searchQuery,
   onSearchChange,
 }: BranchesHeaderProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const pillTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 450, damping: 35 };
+
   const isFiltered = selectedRegion !== "ALL" || selectedStatus !== "ALL" || Boolean(searchQuery);
 
   return (
@@ -97,21 +103,29 @@ export function BranchesHeader({
           {statusCounts.map((sc) => {
             const isSelected = selectedStatus === sc.id;
             return (
-              <button
+              <motion.button
                 key={sc.id}
                 type="button"
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
                 onClick={() => onStatusChange(sc.id)}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5",
+                  "relative px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5",
                   isSelected
-                    ? "bg-cyan-600 text-white shadow-2xs"
+                    ? "text-white"
                     : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700",
                 )}
               >
-                <span>{sc.label}</span>
+                {isSelected && (
+                  <motion.div
+                    layoutId="activeBranchesStatusPill"
+                    className="absolute inset-0 bg-cyan-600 rounded-lg shadow-2xs"
+                    transition={pillTransition}
+                  />
+                )}
+                <span className="relative z-10">{sc.label}</span>
                 <span
                   className={cn(
-                    "px-1.5 py-0.2 rounded-full text-[10px]",
+                    "relative z-10 px-1.5 py-0.2 rounded-full text-[10px]",
                     isSelected
                       ? "bg-white/20 text-white"
                       : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300",
@@ -119,7 +133,7 @@ export function BranchesHeader({
                 >
                   {sc.count}
                 </span>
-              </button>
+              </motion.button>
             );
           })}
         </div>

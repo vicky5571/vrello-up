@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   List,
   RefreshCw,
@@ -35,6 +36,11 @@ export function ProjectsListHeader({
   isLoading,
   onRefresh,
 }: ProjectsListHeaderProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const pillTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 450, damping: 35 };
+
   const [isColumnsMenuOpen, setIsColumnsMenuOpen] = useState(false);
   const columnsMenuRef = useRef<HTMLDivElement>(null);
 
@@ -64,23 +70,40 @@ export function ProjectsListHeader({
 
       <div className="flex items-center gap-2 flex-wrap text-xs">
         {/* Group By selector */}
-        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+        <div
+          role="radiogroup"
+          aria-label="Group by"
+          className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl"
+        >
           <span className="text-slate-500 text-[11px] px-1 font-medium">Group:</span>
-          {(["type", "status", "branch", "pic", "none"] as GroupByOption[]).map((g) => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => onSetGroupBy(g)}
-              className={cn(
-                "px-2.5 py-0.5 rounded-lg font-medium transition-colors cursor-pointer capitalize text-[11px]",
-                groupBy === g
-                  ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 font-bold shadow-2xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
-              )}
-            >
-              {g}
-            </button>
-          ))}
+          {(["type", "status", "branch", "pic", "none"] as GroupByOption[]).map((g) => {
+            const isSelected = groupBy === g;
+            return (
+              <motion.button
+                key={g}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
+                onClick={() => onSetGroupBy(g)}
+                className={cn(
+                  "relative px-2.5 py-0.5 rounded-lg font-medium transition-colors cursor-pointer capitalize text-[11px]",
+                  isSelected
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900",
+                )}
+              >
+                {isSelected && (
+                  <motion.div
+                    layoutId="activeProjectsGroupByPill"
+                    className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                    transition={pillTransition}
+                  />
+                )}
+                <span className="relative z-10">{g}</span>
+              </motion.button>
+            );
+          })}
         </div>
 
         {/* Columns Visibility Toggle */}

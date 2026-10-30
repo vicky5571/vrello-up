@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   X,
   BookOpen,
@@ -15,6 +15,7 @@ import {
   Bot,
   HelpCircle,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface HelpDocsModalProps {
   isOpen: boolean;
@@ -61,6 +62,11 @@ const GUIDES = [
 ];
 
 export function HelpDocsModal({ isOpen, onClose }: HelpDocsModalProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const pillTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 450, damping: 35 };
+
   const [activeTab, setActiveTab] = useState<"shortcuts" | "guides">("shortcuts");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -129,35 +135,61 @@ export function HelpDocsModal({ isOpen, onClose }: HelpDocsModalProps) {
                 />
               </div>
 
-              <div className="flex items-center gap-1 w-full sm:w-auto bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                <button
+              <div
+                role="tablist"
+                aria-label="Help Documentation Tabs"
+                className="flex items-center gap-1 w-full sm:w-auto bg-slate-100 dark:bg-slate-800 p-1 rounded-xl"
+              >
+                <motion.button
                   type="button"
+                  role="tab"
+                  aria-selected={activeTab === "shortcuts"}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                   onClick={() => setActiveTab("shortcuts")}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  className={cn(
+                    "relative px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer",
                     activeTab === "shortcuts"
-                      ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                      ? "text-indigo-600 dark:text-indigo-400"
                       : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-                  }`}
+                  )}
                 >
-                  <span className="flex items-center gap-1.5">
+                  {activeTab === "shortcuts" && (
+                    <motion.div
+                      layoutId="activeHelpDocsTabPill"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-slate-200/60 dark:border-slate-700/60"
+                      transition={pillTransition}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
                     <Keyboard className="w-3.5 h-3.5" />
-                    Shortcuts
+                    <span>Shortcuts</span>
                   </span>
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   type="button"
+                  role="tab"
+                  aria-selected={activeTab === "guides"}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                   onClick={() => setActiveTab("guides")}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  className={cn(
+                    "relative px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer",
                     activeTab === "guides"
-                      ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                      ? "text-indigo-600 dark:text-indigo-400"
                       : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-                  }`}
+                  )}
                 >
-                  <span className="flex items-center gap-1.5">
+                  {activeTab === "guides" && (
+                    <motion.div
+                      layoutId="activeHelpDocsTabPill"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-slate-200/60 dark:border-slate-700/60"
+                      transition={pillTransition}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
                     <BookOpen className="w-3.5 h-3.5" />
-                    Guides
+                    <span>Guides</span>
                   </span>
-                </button>
+                </motion.button>
               </div>
             </div>
 

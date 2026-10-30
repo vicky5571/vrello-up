@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   BarChart3,
   RefreshCw,
@@ -39,6 +40,11 @@ export function ReportsHeader({
   showCreateForm,
   setShowCreateForm,
 }: ReportsHeaderProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const pillTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 450, damping: 35 };
+
   return (
     <div className="p-4 sm:p-6 pb-3 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm">
       {/* 1. Title Row & Actions */}
@@ -92,33 +98,61 @@ export function ReportsHeader({
 
       {/* 2. Controls Row: Tab Switcher & Create Form Action */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
-        <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-medium">
-          <button
+        <div
+          role="tablist"
+          aria-label="Report Category Tabs"
+          className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-medium"
+        >
+          <motion.button
             type="button"
+            role="tab"
+            aria-selected={reportTab === "monthly"}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => setReportTab("monthly")}
             className={cn(
-              "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md transition-all cursor-pointer",
+              "relative inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md transition-colors cursor-pointer",
               reportTab === "monthly"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs font-semibold"
+                ? "text-slate-900 dark:text-slate-100 font-semibold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             )}
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Laporan Bulanan</span>
-          </button>
-          <button
+            {reportTab === "monthly" && (
+              <motion.div
+                layoutId="activeReportsTabPill"
+                className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                transition={pillTransition}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5" />
+              <span>Laporan Bulanan</span>
+            </span>
+          </motion.button>
+          <motion.button
             type="button"
+            role="tab"
+            aria-selected={reportTab === "posm_quarterly"}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => setReportTab("posm_quarterly")}
             className={cn(
-              "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md transition-all cursor-pointer",
+              "relative inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md transition-colors cursor-pointer",
               reportTab === "posm_quarterly"
-                ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs font-semibold"
+                ? "text-slate-900 dark:text-slate-100 font-semibold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             )}
           >
-            <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>Rekap POSM Kuartalan</span>
-          </button>
+            {reportTab === "posm_quarterly" && (
+              <motion.div
+                layoutId="activeReportsTabPill"
+                className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-2xs border border-slate-200/60 dark:border-slate-700/60"
+                transition={pillTransition}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>Rekap POSM Kuartalan</span>
+            </span>
+          </motion.button>
         </div>
 
         {canManage && reportTab === "monthly" && (
