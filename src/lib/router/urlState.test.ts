@@ -48,6 +48,13 @@ test("parseUrlNavState normalizes singular aliases like 'mou', 'branch', 'outlet
   assert.equal(parseUrlNavState("?view=placement").view, "placements");
 });
 
+test("parseUrlNavState normalizes 'kanban' and 'kanban-board' aliases to 'board'", () => {
+  assert.equal(parseUrlNavState("?view=kanban").view, "board");
+  assert.equal(parseUrlNavState("?view=kanban-board").view, "board");
+  assert.equal(parseUrlNavState("?v=kanban").view, "board");
+  assert.equal(parseUrlNavState("?v=kanban-board").view, "board");
+});
+
 test("parseUrlNavState sanitizes and drops invalid/unknown view modes", () => {
   const query = "?view=malicious_eval&mode=invalid_mode";
   const state = parseUrlNavState(query);

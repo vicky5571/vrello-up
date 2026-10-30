@@ -80,6 +80,8 @@ export function parseUrlNavState(
       state.view = "content-planner";
     } else if (trimmedView === "table") {
       state.view = "list";
+    } else if (trimmedView === "kanban" || trimmedView === "kanban-board") {
+      state.view = "board";
     } else if (trimmedView === "mou") {
       state.view = "mous";
     } else if (trimmedView === "branch") {
