@@ -15,6 +15,7 @@ import {
   Users,
   Building2,
 } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -43,11 +44,24 @@ export type FieldEvent = FieldEventItem;
 export type MarcomEvent = FieldEventItem;
 export type { EventStatus, EventFootage, ActivityViewMode };
 
+const VIEW_OPTIONS: Array<{
+  id: ActivityViewMode;
+  label: string;
+  icon: typeof LayoutGrid;
+  title: string;
+}> = [
+  { id: "cards", label: "Cards", icon: LayoutGrid, title: "Cards Grid View" },
+  { id: "table", label: "Table", icon: TableProperties, title: "Table View" },
+  { id: "calendar", label: "Calendar", icon: Calendar, title: "Calendar Month View" },
+  { id: "timeline", label: "Timeline", icon: GanttChart, title: "Timeline (Gantt) View" },
+];
+
 interface EventsViewProps {
   initialView?: ActivityViewMode;
 }
 
 export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
+  const shouldReduceMotion = useReducedMotion();
   const { can } = useMarcomPermissions();
   const {
     users,
@@ -289,63 +303,43 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
           {/* View switcher */}
-          <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-800 p-0.5 bg-slate-50 dark:bg-slate-900">
-            <button
-              type="button"
-              onClick={() => setViewMode("cards")}
-              className={cn(
-                "p-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer",
-                viewMode === "cards"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs"
-                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-              )}
-              title="Cards Grid View"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              Cards
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("table")}
-              className={cn(
-                "p-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer",
-                viewMode === "table"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs"
-                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-              )}
-              title="Table View"
-            >
-              <TableProperties className="w-3.5 h-3.5" />
-              Table
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("calendar")}
-              className={cn(
-                "p-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer",
-                viewMode === "calendar"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs"
-                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-              )}
-              title="Calendar Month View"
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              Calendar
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("timeline")}
-              className={cn(
-                "p-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer",
-                viewMode === "timeline"
-                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-xs"
-                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-              )}
-              title="Timeline (Gantt) View"
-            >
-              <GanttChart className="w-3.5 h-3.5" />
-              Timeline
-            </button>
+          <div className="relative flex items-center rounded-lg border border-slate-200 dark:border-slate-800 p-0.5 bg-slate-50 dark:bg-slate-900 select-none">
+            {VIEW_OPTIONS.map((opt) => {
+              const Icon = opt.icon;
+              const isActive = viewMode === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setViewMode(opt.id)}
+                  className={cn(
+                    "relative p-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer",
+                    isActive
+                      ? "text-slate-900 dark:text-slate-100 font-semibold"
+                      : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+                  )}
+                  title={opt.title}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeFieldEventsViewPill"
+                      className="absolute inset-0 bg-white dark:bg-slate-800 rounded-md shadow-xs border border-slate-200/80 dark:border-slate-700/80"
+                      transition={
+                        shouldReduceMotion
+                          ? { duration: 0 }
+                          : { type: "spring", stiffness: 450, damping: 35 }
+                      }
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <Icon className="w-3.5 h-3.5" />
+                    {opt.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           <button
