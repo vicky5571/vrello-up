@@ -79,18 +79,18 @@ export function PlacementsHeader({
         </div>
       </div>
 
-      {/* Row 2: KPI Summary Cards (hidden on Map View to maximize map viewport) */}
-      {viewMode !== "map" && kpiItems && kpiItems.length > 0 && (
-        <KpiSummaryCards items={kpiItems} />
-      )}
-
-      {/* Row 3: View Mode Switcher */}
+      {/* Row 2: View Mode Switcher */}
       <div className="flex items-center justify-between gap-3 pt-0.5">
         <PlacementViewSwitcher
           viewMode={viewMode}
           onViewModeChange={onViewModeChange}
         />
       </div>
+
+      {/* Row 3: KPI Summary Cards (hidden on Map View to maximize map viewport) */}
+      {viewMode !== "map" && kpiItems && kpiItems.length > 0 && (
+        <KpiSummaryCards items={kpiItems} />
+      )}
     </div>
   );
 }

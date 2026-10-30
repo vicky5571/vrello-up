@@ -85,14 +85,7 @@ export function DocumentsHeader({
         </div>
       </div>
 
-      {/* 2. Embedded 4 KPI Cards */}
-      <KpiSummaryCards
-        items={kpiCards}
-        isLoading={isLoading}
-        skeletonCount={4}
-      />
-
-      {/* 3. Bottom Controls Row: Category Filter Chips, Search, & View Switcher */}
+      {/* 2. Controls Row: Category Filter Chips, Search, & View Switcher */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-1">
         {/* Category Chips */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full scrollbar-none">
@@ -203,6 +196,13 @@ export function DocumentsHeader({
           </div>
         </div>
       </div>
+
+      {/* 3. Embedded 4 KPI Cards */}
+      <KpiSummaryCards
+        items={kpiCards}
+        isLoading={isLoading}
+        skeletonCount={4}
+      />
     </div>
   );
 }

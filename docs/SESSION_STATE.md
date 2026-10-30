@@ -8,10 +8,10 @@
 
 **Date:** 2026-10-31  
 **Active Branch:** `vicky`  
-**Active Feature:** Marcom UI Standardization (Placements Unified Header, Content Planner Padding, Outlets Labels) — **IMPLEMENTED & VERIFIED**  
-**Spec:** `docs/superpowers/specs/2026-10-31-inventory-style-header-standardization-design.md`  
-**Plan:** `docs/superpowers/plans/2026-10-31-inventory-style-header-standardization.md`  
-**Previous Feature:** Placements Persistent Header & Static View Switcher  
+**Active Feature:** Marcom Header Stabilization (Cards Row and Pills Button Swap across 8 Headers) — **IMPLEMENTED & VERIFIED**  
+**Spec:** `docs/superpowers/specs/2026-10-31-header-pills-cards-swap-design.md`  
+**Plan:** `docs/superpowers/plans/2026-10-31-header-pills-cards-swap.md`  
+**Previous Feature:** Marcom UI Standardization & Sitewide CustomDropdown  
 
 ---
 
@@ -245,11 +245,21 @@
       - `UserRoleSelect.tsx` (User role select)
     - Created unit tests in `src/components/ui/CustomDropdown.test.ts` (8 tests passing).
 
+31. **Header Layout Swap: Stabilize Pills Row Above KPI Cards Row (`BranchesHeader`, `ReportsHeader`, `OutletsHeader`, `DocumentsHeader`, `InventoryHeaderKpis`, `PlacementsHeader`, `EventsHeader`, `AnalyticsHeader`):**
+    - Spec: `docs/superpowers/specs/2026-10-31-header-pills-cards-swap-design.md`
+    - Plan: `docs/superpowers/plans/2026-10-31-header-pills-cards-swap.md`
+    - Inverted vertical order of Controls/Pills row and dynamic KPI Summary Cards row across all 8 Marcom headers:
+      - Row 1: Title, domain badges, primary action buttons (Add / Create / Export).
+      - Row 2: Controls & Navigation row (View switcher pills, tab pills, status filter chips, CustomDropdowns, and search inputs).
+      - Row 3: KPI Summary Cards row (`KpiSummaryCards items={kpiItems}`).
+    - Completely eliminated layout jumping (Cumulative Layout Shift) when switching tabs or views where cards are conditionally hidden (e.g. Map View in Placements, Rekap POSM tab in Reports, or during metric recalculations).
+    - Established deterministic $Y$-coordinate for all primary user interaction pills directly beneath the title bar.
+
 ---
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (28 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (29 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
 - `npm test` → ✅ 599 passed, 0 failed (103 suites)
 - `npm run test:smoke` → ✅ 83 passed, 0 failed

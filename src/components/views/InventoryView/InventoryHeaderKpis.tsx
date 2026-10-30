@@ -107,47 +107,8 @@ export function InventoryHeaderKpis({
         </div>
       </div>
 
-      {/* 4 KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs">
-            <span>Catalog Items</span>
-            <Boxes className="w-4 h-4 text-blue-500" />
-          </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{kpis.totalItems}</div>
-          <span className="text-[11px] text-slate-400">Master equipment models</span>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs">
-            <span>Available Units</span>
-            <Package className="w-4 h-4 text-emerald-500" />
-          </div>
-          <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{kpis.availableUnits}</div>
-          <span className="text-[11px] text-slate-400">Ready in warehouse stock</span>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs">
-            <span>Active Borrows</span>
-            <Clock className="w-4 h-4 text-amber-500" />
-          </div>
-          <div className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">{kpis.activeBorrows}</div>
-          <span className="text-[11px] text-slate-400">Currently deployed in field</span>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-xs">
-          <div className="flex items-center justify-between text-slate-500 text-xs">
-            <span>Overdue Returns</span>
-            <AlertTriangle className="w-4 h-4 text-rose-500" />
-          </div>
-          <div className="text-xl font-bold text-rose-600 dark:text-rose-400 mt-1">{kpis.overdueCount}</div>
-          <span className="text-[11px] text-slate-400">Past scheduled due date</span>
-        </div>
-      </div>
-
-      {/* Tab Switcher & View Mode Toolbar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+      {/* 2. Tab Switcher & View Mode Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
         <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-medium">
           <button
             type="button"
@@ -240,6 +201,45 @@ export function InventoryHeaderKpis({
               </>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* 3. 4 KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs">
+            <span>Catalog Items</span>
+            <Boxes className="w-4 h-4 text-blue-500" />
+          </div>
+          <div className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{kpis.totalItems}</div>
+          <span className="text-[11px] text-slate-400">Master equipment models</span>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs">
+            <span>Available Units</span>
+            <Package className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{kpis.availableUnits}</div>
+          <span className="text-[11px] text-slate-400">Ready in warehouse stock</span>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs">
+            <span>Active Borrows</span>
+            <Clock className="w-4 h-4 text-amber-500" />
+          </div>
+          <div className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">{kpis.activeBorrows}</div>
+          <span className="text-[11px] text-slate-400">Currently deployed in field</span>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs">
+            <span>Overdue Returns</span>
+            <AlertTriangle className="w-4 h-4 text-rose-500" />
+          </div>
+          <div className="text-xl font-bold text-rose-600 dark:text-rose-400 mt-1">{kpis.overdueCount}</div>
+          <span className="text-[11px] text-slate-400">Past scheduled due date</span>
         </div>
       </div>
     </div>

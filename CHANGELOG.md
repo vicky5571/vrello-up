@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `feat(headers)`: Swap controls row and KPI cards row across all 8 Marcom headers to stabilize pills
+  - Inverted vertical order across `BranchesHeader`, `ReportsHeader`, `OutletsHeader`, `DocumentsHeader`, `InventoryHeaderKpis`, `PlacementsHeader`, `EventsHeader`, and `AnalyticsHeader`
+  - Positioned Controls row (view switcher pills, tab switcher pills, filter chips, CustomDropdowns, and search inputs) directly beneath Title row (Row 2)
+  - Positioned dynamic KPI Summary Cards (`KpiSummaryCards`) below controls (Row 3)
+  - Completely eliminated layout jumping and Cumulative Layout Shift (CLS) when switching tabs or view modes where cards toggle visibility (e.g., Placements Map View, Reports Rekap POSM tab)
+  - Gates: `npm test` 599 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-10-31-header-pills-cards-swap-design.md`
+  Plan: `docs/superpowers/plans/2026-10-31-header-pills-cards-swap.md`
+
 - `feat(placements)`: Make placements header and view switcher persistent across tabs
   - Extracted atomic subcomponent `PlacementsHeader.tsx` (84 LOC) with animated view switcher pills (`motion.div layoutId="activePlacementViewPill"`), refresh trigger, export center trigger, and `+ Add Placement` action
   - Anchored `PlacementsHeader` and `KpiSummaryCards` persistently above dynamic content across Table, Map, and Recap view modes with 0px layout shift

@@ -90,14 +90,7 @@ export function BranchesHeader({
         </div>
       </div>
 
-      {/* 2. Embedded 4 KPI Cards */}
-      <KpiSummaryCards
-        items={kpiItems}
-        isLoading={isLoading}
-        skeletonCount={4}
-      />
-
-      {/* 3. Bottom Controls Row: Status Filter Chips, Region Selector, Search */}
+      {/* 2. Controls Row: Status Filter Chips, Region Selector, Search */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-1">
         {/* Status Filter Chips */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full scrollbar-none">
@@ -176,6 +169,13 @@ export function BranchesHeader({
           )}
         </div>
       </div>
+
+      {/* 3. Embedded 4 KPI Cards */}
+      <KpiSummaryCards
+        items={kpiItems}
+        isLoading={isLoading}
+        skeletonCount={4}
+      />
     </div>
   );
 }

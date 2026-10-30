@@ -90,16 +90,7 @@ export function ReportsHeader({
         </div>
       </div>
 
-      {/* 2. Embedded 4 KPI Cards (When on monthly tab) */}
-      {reportTab === "monthly" && (
-        <KpiSummaryCards
-          items={kpiCards}
-          isLoading={isLoading}
-          skeletonCount={4}
-        />
-      )}
-
-      {/* 3. Bottom Controls Row: Tab Switcher & Create Form Action */}
+      {/* 2. Controls Row: Tab Switcher & Create Form Action */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
         <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-medium">
           <button
@@ -141,6 +132,15 @@ export function ReportsHeader({
           </button>
         )}
       </div>
+
+      {/* 3. Embedded 4 KPI Cards (When on monthly tab) */}
+      {reportTab === "monthly" && (
+        <KpiSummaryCards
+          items={kpiCards}
+          isLoading={isLoading}
+          skeletonCount={4}
+        />
+      )}
     </div>
   );
 }

@@ -84,12 +84,7 @@ export function EventsHeader({
         </div>
       </div>
 
-      {/* Row 2: KPI Summary Cards */}
-      {kpiItems && kpiItems.length > 0 && (
-        <KpiSummaryCards items={kpiItems} />
-      )}
-
-      {/* Row 3: View Switcher */}
+      {/* Row 2: View Switcher */}
       <div className="flex items-center justify-between gap-3 pt-0.5">
         <div
           role="tablist"
@@ -135,6 +130,11 @@ export function EventsHeader({
           })}
         </div>
       </div>
+
+      {/* Row 3: KPI Summary Cards */}
+      {kpiItems && kpiItems.length > 0 && (
+        <KpiSummaryCards items={kpiItems} />
+      )}
     </div>
   );
 }

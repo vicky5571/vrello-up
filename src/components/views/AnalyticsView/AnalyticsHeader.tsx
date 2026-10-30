@@ -106,7 +106,84 @@ export function AnalyticsHeader({
         </div>
       </div>
 
-      {/* 2. Embedded 4 KPI Cards (Inventory Standard) */}
+      {/* 2. Integrated Filter Toolbar Row */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">
+            <Filter className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Filter:</span>
+          </div>
+
+          {/* Branch Selector */}
+          <CustomDropdown
+            value={filters.branchId}
+            onChange={(val) => onFilterChange({ ...filters, branchId: val })}
+            options={[
+              { value: "ALL", label: "Semua Branch" },
+              ...branches.map((b) => ({ value: b.id, label: b.name })),
+            ]}
+            ariaLabel="Filter Wilayah Branch"
+            icon={MapPin}
+            searchPlaceholder="Cari branch..."
+            className="w-36 sm:w-44 text-xs"
+          />
+
+          {/* Quarter Selector */}
+          <CustomDropdown
+            value={filters.quarter}
+            onChange={(val) => onFilterChange({ ...filters, quarter: val })}
+            options={QUARTERS}
+            ariaLabel="Filter Periode Kuartal"
+            icon={Calendar}
+            className="w-32 sm:w-36 text-xs"
+          />
+
+          {/* Brand Toggle Pills */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
+            {BRANDS.map((b) => {
+              const isSelected = filters.brand === b.value;
+              return (
+                <button
+                  key={b.value}
+                  type="button"
+                  onClick={() => onFilterChange({ ...filters, brand: b.value })}
+                  className={cn(
+                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1.5",
+                    isSelected
+                      ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs font-semibold"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  )}
+                >
+                  {b.color && (
+                    <span
+                      className={cn(
+                        "w-1.5 h-1.5 rounded-full",
+                        b.color,
+                        !isSelected && "opacity-60"
+                      )}
+                    />
+                  )}
+                  {b.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Reset Button */}
+        {activeFilterCount > 0 && (
+          <button
+            type="button"
+            onClick={onResetFilters}
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Reset ({activeFilterCount})</span>
+          </button>
+        )}
+      </div>
+
+      {/* 3. Embedded 4 KPI Cards (Inventory Standard) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         {!data || isLoading ? (
           [1, 2, 3, 4].map((i) => (
@@ -210,83 +287,6 @@ export function AnalyticsHeader({
               </div>
             </button>
           </>
-        )}
-      </div>
-
-      {/* 3. Integrated Filter Toolbar Row */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">
-            <Filter className="w-3.5 h-3.5 text-indigo-500" />
-            <span>Filter:</span>
-          </div>
-
-          {/* Branch Selector */}
-          <CustomDropdown
-            value={filters.branchId}
-            onChange={(val) => onFilterChange({ ...filters, branchId: val })}
-            options={[
-              { value: "ALL", label: "Semua Branch" },
-              ...branches.map((b) => ({ value: b.id, label: b.name })),
-            ]}
-            ariaLabel="Filter Wilayah Branch"
-            icon={MapPin}
-            searchPlaceholder="Cari branch..."
-            className="w-36 sm:w-44 text-xs"
-          />
-
-          {/* Quarter Selector */}
-          <CustomDropdown
-            value={filters.quarter}
-            onChange={(val) => onFilterChange({ ...filters, quarter: val })}
-            options={QUARTERS}
-            ariaLabel="Filter Periode Kuartal"
-            icon={Calendar}
-            className="w-32 sm:w-36 text-xs"
-          />
-
-          {/* Brand Toggle Pills */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
-            {BRANDS.map((b) => {
-              const isSelected = filters.brand === b.value;
-              return (
-                <button
-                  key={b.value}
-                  type="button"
-                  onClick={() => onFilterChange({ ...filters, brand: b.value })}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer flex items-center gap-1.5",
-                    isSelected
-                      ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xs font-semibold"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-                  )}
-                >
-                  {b.color && (
-                    <span
-                      className={cn(
-                        "w-1.5 h-1.5 rounded-full",
-                        b.color,
-                        !isSelected && "opacity-60"
-                      )}
-                    />
-                  )}
-                  {b.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Reset Button */}
-        {activeFilterCount > 0 && (
-          <button
-            type="button"
-            onClick={onResetFilters}
-            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span>Reset ({activeFilterCount})</span>
-          </button>
         )}
       </div>
     </div>

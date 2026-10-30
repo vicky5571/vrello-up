@@ -105,14 +105,7 @@ export function OutletsHeader({
         </div>
       </div>
 
-      {/* 2. Embedded 5 KPI Cards */}
-      <KpiSummaryCards
-        items={kpiItems}
-        isLoading={isLoading}
-        skeletonCount={5}
-      />
-
-      {/* 3. Bottom Controls Row: View Switchers, Filters, Search */}
+      {/* 2. Controls Row: View Switchers, Filters, Search */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 pt-1">
         {/* View Mode Switcher */}
         <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 self-start">
@@ -225,6 +218,13 @@ export function OutletsHeader({
           )}
         </div>
       </div>
+
+      {/* 3. Embedded 5 KPI Cards */}
+      <KpiSummaryCards
+        items={kpiItems}
+        isLoading={isLoading}
+        skeletonCount={5}
+      />
     </div>
   );
 }
