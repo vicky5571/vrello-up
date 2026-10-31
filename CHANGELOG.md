@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `feat(ui)`: Add unified header to MOUs & Partnerships view
+  - Extracted modular `MousHeader.tsx` (186 LOC) matching the design language of `OutletsHeader`, `DocumentsHeader`, and `PlacementsHeader`
+  - Integrated Title row with `FileText` icon, `{totalMous}` counter badge, Refresh button, Export Center trigger, and `+ New MOU` modal trigger
+  - Stabilized Filter row directly beneath Title with Framer Motion sliding pill animation (`layoutId="activeMouStatusPill"` with spring dynamics and `useReducedMotion()`), search input with clear button, searchable `CustomDropdown` selectors for Branch and MOU Type, and urgency filter chips
+  - Embedded `KpiSummaryCards` directly within `MousHeader` with zero layout shifting
+  - Refactored `MousView.tsx` from 417 down to 348 LOC and configured `MarcomTableShell` with `noPadding` and `hideHeader`
+  - Gates: `npm test` 603 pass / 0 fail; `npm run test:smoke` 84 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-10-31-mous-header-redesign-design.md`
+  Plan: `docs/superpowers/plans/2026-10-31-mous-header-redesign.md`
+
 - `feat(nav)`: Integrate User Management into central Workspace Stage Shell (ADR 07)
   - Extended domain SSOT `ViewMode` union with `"users"` in `src/types/index.ts` and registered it in `VALID_VIEWS` in `src/lib/router/urlState.ts`
   - Integrated dynamic `<UsersView />` loading directly into `src/components/views/ActiveViewStage.tsx` with fail-closed `isAdmin` check

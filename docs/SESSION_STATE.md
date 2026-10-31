@@ -8,17 +8,24 @@
 
 **Date:** 2026-10-31  
 **Active Branch:** `vicky`  
-**Active Feature:** Workspace Shell Integration for User Management (`ViewMode`, `ActiveViewStage`, `GlobalRail`, `urlState.ts`) — **IMPLEMENTED & VERIFIED**  
-**Spec:** `docs/superpowers/specs/2026-10-31-workspace-user-management-integration-design.md`  
-**Plan:** `docs/superpowers/plans/2026-10-31-workspace-user-management-integration.md`  
-**Refs:** ADR 07 (`docs/adr/0007-integrate-user-management-into-workspace-stage.md`)  
-**Previous Feature:** Supervisor Role & Scoped Area Permissions  
+**Active Feature:** MOUs & Partnerships Unified Header Component (`MousHeader.tsx`, `MousView.tsx`) — **IMPLEMENTED & VERIFIED**  
+**Spec:** `docs/superpowers/specs/2026-10-31-mous-header-redesign-design.md`  
+**Plan:** `docs/superpowers/plans/2026-10-31-mous-header-redesign.md`  
+**Previous Feature:** Workspace Shell Integration for User Management (`ViewMode`, `ActiveViewStage`, `GlobalRail`, `urlState.ts`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Workspace Shell Integration for User Management (ADR 07):**
+1. **MOUs & Partnerships Unified Header Component (`MousHeader.tsx`, `MousView.tsx`):**
+   - Extracted `src/components/views/MousView/MousHeader.tsx` (186 LOC), standardizing MOUs view with `OutletsHeader`, `DocumentsHeader`, and `PlacementsHeader`.
+   - Title Row: Icon (`FileText`), Title ("MOUs & Partnerships"), Counter badge (`totalMous`), Subtitle, Refresh button (`RefreshCw`), Export button (`Download` -> `ExportCenter`), and "+ New MOU" button (`Plus`, conditional on `canCreate`).
+   - Controls & Filter Row: Quick Search input with clear button, Status Chips with Framer Motion sliding pill animation (`layoutId="activeMouStatusPill"`, spring dynamics `stiffness: 450, damping: 35`, `whileTap={{ scale: 0.95 }}`, and `useReducedMotion()`), searchable Branch and MOU Type `CustomDropdown` selectors, Urgency chips (`Expiring Soon`, `Expired`), and dynamic Reset Filters link.
+   - KPI Row: `KpiSummaryCards` embedded directly within `MousHeader` beneath the controls row for zero layout shifting.
+   - Refactored `MousView.tsx` (reduced from 417 to 348 LOC) consuming `MousHeader` and configuring `MarcomTableShell` with `noPadding` and `hideHeader`.
+   - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (84 passed), `npm test` (603 passed, 0 failures).
+
+2. **Workspace Shell Integration for User Management (ADR 07):**
    - Added `"users"` to SSOT `ViewMode` union in `src/types/index.ts` and `VALID_VIEWS` in `src/lib/router/urlState.ts`.
    - Updated `src/components/views/ActiveViewStage.tsx` with dynamic lazy import of `<UsersView />` guarded by `isAdmin`.
    - Updated `UsersView.tsx` with self-hydrating session defaults and removed redundant page back-link.
@@ -294,10 +301,10 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (29 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (33 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ 599 passed, 0 failed (103 suites)
-- `npm run test:smoke` → ✅ 83 passed, 0 failed
+- `npm test` → ✅ 603 passed, 0 failed (103 suites)
+- `npm run test:smoke` → ✅ 84 passed, 0 failed
 
 ---
 

@@ -2,14 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { FileText, Download, Plus } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
-import { cn } from "@/lib/utils";
 import { MarcomTableShell } from "@/components/views/shared/MarcomTableShell";
-import { KpiSummaryCards } from "@/components/views/shared/KpiSummaryCards";
-import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { MousHeader } from "./MousHeader";
 import { MouDocumentViewerModal } from "./MouDocumentViewerModal";
 import { transitionMouStatus, deleteMou } from "./mouApi";
 import { buildMouKpiItems } from "./mouKpi";
@@ -211,144 +209,77 @@ export function MousView() {
   const kpiItems = useMemo(() => buildMouKpiItems(mous), [mous]);
 
   return (
-    <>
-      <MarcomTableShell
-        fixedViewport
-        searchKeys={MOU_SEARCH_KEYS}
-        data={filteredMous}
-        columns={columns}
-        getRowId={(row) => row.id}
-        initialSorting={[{ id: "partner", desc: false }]}
-        title="MOUs & Partnerships"
-        titleIcon={FileText}
-        countLabel={{ singular: "MOU", plural: "MOUs" }}
-        entityName="MOU"
-        entityPlural="MOUs"
+    <div className="flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto">
+      {/* Unified Marcom-Style Header */}
+      <MousHeader
+        totalMous={mous.length}
+        kpiItems={kpiItems}
         isLoading={isLoading}
-        error={error}
         onRefresh={() => loadMous(true)}
-        canDelete={canManage}
-        deleteRequiresMessage="Delete requires admin role"
-        onDeleteOne={deleteOne}
-        onDeleteBatch={deleteBatch}
-        canAdd={canCreate}
-        onAdd={() => {
-          setModalMou({ branchId: branches[0]?.id || "", partnerName: "", mouType: "Compensation", outletName: "", startDate: new Date().toISOString().slice(0, 10), endDate: "", picName: "", picPhone: "", docPath: "", compensationValue: undefined, notes: "", status: "DRAFT" });
+        onExport={() => setExportCenterOpen(true)}
+        canCreate={canCreate}
+        onAddMou={() => {
+          setModalMou({
+            branchId: branches[0]?.id || "",
+            partnerName: "",
+            mouType: "Compensation",
+            outletName: "",
+            startDate: new Date().toISOString().slice(0, 10),
+            endDate: "",
+            picName: "",
+            picPhone: "",
+            docPath: "",
+            compensationValue: undefined,
+            notes: "",
+            status: "DRAFT",
+          });
         }}
-        addLabel="New MOU"
-        addIcon={Plus}
-        addClassName="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-fuchsia-600 hover:bg-fuchsia-700 transition-colors shadow-2xs cursor-pointer"
-        headerExtra={
-          <button type="button" onClick={() => setExportCenterOpen(true)} title="Open Export Center — PDF summaries & Excel sheets" className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border shadow-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer">
-            <Download className="w-3.5 h-3.5" />
-            <span>Export</span>
-          </button>
-        }
-        kpiBar={<KpiSummaryCards items={kpiItems} mobileStrip />}
-        onRowClick={(mou) => setSelectedMou(mou)}
-        filterBar={
-          <div className="flex flex-wrap items-center gap-2.5 text-xs">
-            <div className="flex items-center gap-1">
-              <span className="font-semibold text-slate-500 dark:text-slate-400 mr-1">Status:</span>
-              {MOU_STATUS_CHIPS.map((chip) => {
-                const isActive = selectedStatus === chip.value;
-                return (
-                  <button
-                    key={chip.value}
-                    type="button"
-                    onClick={() => handleStatusFilter(chip.value)}
-                    className={cn(
-                      "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
-                      isActive
-                        ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-xs ring-1 ring-slate-900/10"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700",
-                    )}
-                  >
-                    {chip.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-slate-500 dark:text-slate-400">Branch:</span>
-              <CustomDropdown
-                value={filterBranchId}
-                onChange={setFilterBranchId}
-                options={[
-                  { value: "ALL", label: "All Branches" },
-                  ...branches.map((b) => ({
-                    value: b.id,
-                    label: `${b.code} - ${b.name}`,
-                  })),
-                ]}
-                ariaLabel="Filter by branch"
-                searchPlaceholder="Cari branch..."
-                className="w-36 sm:w-44 text-xs"
-              />
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-slate-500 dark:text-slate-400">Type:</span>
-              <CustomDropdown
-                value={selectedType}
-                onChange={setSelectedType}
-                options={[
-                  { value: "ALL", label: "All Types" },
-                  ...MOU_TYPES.map((t) => ({ value: t, label: t })),
-                ]}
-                ariaLabel="Filter by MOU type"
-                searchPlaceholder="Cari tipe..."
-                className="w-36 sm:w-44 text-xs"
-              />
-            </div>
-
-            <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setUrgencyFilter(urgencyFilter === "EXPIRING" ? "ALL" : "EXPIRING")}
-                className={cn(
-                  "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1",
-                  urgencyFilter === "EXPIRING"
-                    ? "bg-amber-500 text-white shadow-xs ring-1 ring-amber-600/30"
-                    : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40 hover:bg-amber-100 dark:hover:bg-amber-900/50",
-                )}
-              >
-                <span>Expiring Soon</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setUrgencyFilter(urgencyFilter === "EXPIRED" ? "ALL" : "EXPIRED")}
-                className={cn(
-                  "px-2.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer inline-flex items-center gap-1",
-                  urgencyFilter === "EXPIRED"
-                    ? "bg-rose-500 text-white shadow-xs ring-1 ring-rose-600/30"
-                    : "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40 hover:bg-rose-100 dark:hover:bg-rose-900/50",
-                )}
-              >
-                <span>Expired</span>
-              </button>
-            </div>
-
-            {isFiltered && (
-              <button
-                type="button"
-                onClick={handleResetFilters}
-                className="text-xs text-fuchsia-600 hover:text-fuchsia-700 dark:text-fuchsia-400 underline font-medium cursor-pointer ml-1"
-              >
-                Reset Filters
-              </button>
-            )}
-          </div>
-        }
-        searchTerm={marcomFilters["mous"] || ""}
+        searchQuery={marcomFilters["mous"] || ""}
         onSearchChange={(q) => setMarcomFilter("mous", q)}
-        emptyLabel="No MOUs found."
+        selectedStatus={selectedStatus}
+        onStatusChange={handleStatusFilter}
+        statusChips={MOU_STATUS_CHIPS}
+        selectedBranchId={filterBranchId}
+        onBranchChange={setFilterBranchId}
+        branches={branches}
+        selectedType={selectedType}
+        onTypeChange={setSelectedType}
+        mouTypes={MOU_TYPES}
+        urgencyFilter={urgencyFilter}
+        onUrgencyChange={setUrgencyFilter}
+        isFiltered={isFiltered}
+        onResetFilters={handleResetFilters}
       />
+
+      {/* Main Table Content */}
+      <div className="p-4 sm:p-6 flex-1 min-h-0 space-y-4">
+        <MarcomTableShell
+          noPadding
+          hideHeader
+          searchKeys={MOU_SEARCH_KEYS}
+          data={filteredMous}
+          columns={columns}
+          getRowId={(row) => row.id}
+          initialSorting={[{ id: "partner", desc: false }]}
+          title="MOUs & Partnerships"
+          titleIcon={FileText}
+          countLabel={{ singular: "MOU", plural: "MOUs" }}
+          entityName="MOU"
+          entityPlural="MOUs"
+          isLoading={isLoading}
+          error={error}
+          onRefresh={() => loadMous(true)}
+          canDelete={canManage}
+          deleteRequiresMessage="Delete requires admin role"
+          onDeleteOne={deleteOne}
+          onDeleteBatch={deleteBatch}
+          canAdd={false}
+          onRowClick={(mou) => setSelectedMou(mou)}
+          searchTerm={marcomFilters["mous"] || ""}
+          onSearchChange={(q) => setMarcomFilter("mous", q)}
+          emptyLabel="No MOUs found."
+        />
+      </div>
 
       {/* Slide-over Detail Drawer */}
       <MouDetailDrawer
@@ -411,6 +342,6 @@ export function MousView() {
         outletName={viewingDocMou?.outletName}
         branchName={viewingDocMou?.branch?.name}
       />
-    </>
+    </div>
   );
 }
