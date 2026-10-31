@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { TopNavBreadcrumbs } from "./TopNavBreadcrumbs";
@@ -8,11 +8,13 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { NotificationCenter } from "./NotificationCenter";
 import { UserMenuDropdown } from "./UserMenuDropdown";
 import { ProjectsFilterBar } from "./ProjectsFilterBar";
+import { getEffectiveProfile } from "./userProfileHelpers";
 import { Search, Download } from "lucide-react";
 
 export function TopNav() {
   const users = useWorkspaceStore((s) => s.users);
   const currentUserId = useWorkspaceStore((s) => s.currentUserId);
+  const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
   const appMode = useWorkspaceStore((s) => s.appMode);
   const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
   const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
@@ -20,7 +22,25 @@ export function TopNav() {
   const me = users.find((u) => u.id === currentUserId) ?? users[0];
   const { data: session } = useSession();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const profile = useMemo(
+    () => getEffectiveProfile({ sessionUser: session?.user, fallbackUser: me }),
+    [session?.user, me],
+  );
+
+  // Synchronize active session user ID to Zustand store if present and differing
+  useEffect(() => {
+    if (session?.user?.id && currentUserId !== session.user.id) {
+      setCurrentUserId(session.user.id);
+    }
+  }, [session?.user?.id, currentUserId, setCurrentUserId]);
+
+  // Reset image error state whenever the effective profile image URL changes
+  useEffect(() => {
+    setImageError(false);
+  }, [profile.image]);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -41,15 +61,6 @@ export function TopNav() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
-
-  const initials = me
-    ? me.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "?";
 
   return (
     <div className="relative z-30 flex flex-col shrink-0 select-none bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-slate-800">
@@ -87,18 +98,26 @@ export function TopNav() {
             <button
               type="button"
               title={
-                session?.user
-                  ? `Signed in as ${session.user.name} (${session.user.email})`
-                  : me
-                  ? `Active profile: ${me.name}`
-                  : "User Profile"
+                profile.isAuthenticated
+                  ? `Signed in as ${profile.name} (${profile.email})`
+                  : `Active profile: ${profile.name}`
               }
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="relative w-6 h-6 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-bold text-[10px] shadow-2xs cursor-pointer"
+              className="relative w-6 h-6 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-bold text-[10px] shadow-2xs cursor-pointer overflow-hidden"
             >
-              {initials}
-              {session && (
-                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white dark:ring-slate-900" />
+              {profile.image && !imageError ? (
+                <img
+                  src={profile.image}
+                  alt={profile.name}
+                  onError={() => setImageError(true)}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                <span>{profile.initials}</span>
+              )}
+
+              {profile.isAuthenticated && (
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white dark:ring-slate-900 z-10" />
               )}
             </button>
 
