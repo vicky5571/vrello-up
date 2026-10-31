@@ -41,5 +41,6 @@ YYYY-MM-DD-<feature-slug>-design.md
 | 2026-10-29 | reports-view-improvements | Done |
 | 2026-10-30 | auth-user-management | Done |
 | 2026-10-30 | inventory-system | Done |
-| 2026-10-31 | event-card-equipment-indicator | Planned |
-| 2026-10-31 | qa-comprehensive-seeder | Planned |
+| 2026-10-31 | event-card-equipment-indicator | Done |
+| 2026-10-31 | qa-comprehensive-seeder | Done |
+| 2026-11-01 | topnav-avatar-profile-sync | Done |

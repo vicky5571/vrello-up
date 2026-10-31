@@ -4,6 +4,18 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-11-01]
+
+- `fix(layout)`: Synchronize TopNav avatar and profile with active NextAuth session
+  - Extracted pure helper `getEffectiveProfile` and `getInitials` in `userProfileHelpers.ts` with comprehensive unit test suite
+  - Prioritized active NextAuth `session.user` data (name, email, image, role) over static fallback user
+  - Added real avatar image rendering (`<img>`) with graceful error fallback to initials
+  - Synchronized active session user ID to Zustand `useWorkspaceStore.currentUserId`
+  - Unified `UserMenuDropdown.tsx` profile card with `getEffectiveProfile` for 100% visual and data parity
+  - Gates: `npm test` 621 pass / 0 fail; `npm run test:smoke` 86 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-11-01-topnav-avatar-profile-sync-design.md`
+  Plan: `docs/superpowers/plans/2026-11-01-topnav-avatar-profile-sync.md`
+
 ## [2026-10-31]
 
 - `fix(theme)`: Set light theme as default for first-time visits

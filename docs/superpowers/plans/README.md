@@ -47,5 +47,6 @@ Every plan MUST have a matching spec file:
 | 2026-10-30 | auth-user-management | 22 phases | Done |
 | 2026-10-30 | auth-user-management-fixes | 4 phases | Not Started |
 | 2026-10-30 | inventory-system | 7 phases | Done |
-| 2026-10-31 | event-card-equipment-indicator | 3 phases | Planned |
-| 2026-10-31 | qa-comprehensive-seeder | 7 phases | Planned |
+| 2026-10-31 | event-card-equipment-indicator | 3 phases | Done |
+| 2026-10-31 | qa-comprehensive-seeder | 7 phases | Done |
+| 2026-11-01 | topnav-avatar-profile-sync | 4 phases | Done |

@@ -6,16 +6,23 @@
 
 ## Current Status
 
-**Date:** 2026-10-31  
+**Date:** 2026-11-01  
 **Active Branch:** `vicky`  
-**Active Feature:** Default Light Theme on First Device Visit (`layout.tsx`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** CustomDropdown Sitewide Z-Index, Stacking Context & Responsive Placement Fix (`CustomDropdown.tsx`)  
+**Active Feature:** TopNav Avatar & Profile Session Synchronization (`TopNav.tsx`, `UserMenuDropdown.tsx`, `userProfileHelpers.ts`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Default Light Theme on First Device Visit (`layout.tsx`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Default Light Theme on First Visit (`src/app/layout.tsx`):**
+1. **TopNav Avatar & Profile Session Synchronization (`TopNav.tsx`, `UserMenuDropdown.tsx`, `userProfileHelpers.ts`, `userProfileHelpers.test.ts`):**
+   - **Root Cause Evaluated:** TopNav avatar button derived initials exclusively from Zustand store `me = users.find(u => u.id === currentUserId) ?? users[0]`, which defaulted to `"user-1"` (`Alex Rivera` -> `"AR"`), completely ignoring authenticated NextAuth session data (`session.user`). TopNav trigger button also lacked profile image (`<img>`) rendering support, and `currentUserId` in Zustand was not synchronized with `session.user.id`.
+   - **Pure Helper Module (`userProfileHelpers.ts`):** Implemented `getInitials(name, email)` with robust edge-case handling (multi-word, single-word, extra whitespace, email initial fallback, safe defaults) and `getEffectiveProfile({ sessionUser, fallbackUser })` prioritizing `sessionUser` properties (`name`, `email`, `image`, `role`, `initials`, `isAuthenticated`). Created comprehensive unit test suite in `userProfileHelpers.test.ts` (9 tests passing).
+   - **TopNav Integration (`TopNav.tsx`):** Consumed `getEffectiveProfile`, rendered `profile.image` with `imageError` fallback to `profile.initials`, rendered active emerald presence dot when `isAuthenticated: true`, and added `useEffect` synchronizing `session.user.id` to `useWorkspaceStore.currentUserId`.
+   - **UserMenuDropdown Parity (`UserMenuDropdown.tsx`):** Unified profile card resolution using `getEffectiveProfile({ sessionUser: session?.user })` with `imageError` fallback, ensuring 100% visual and data parity with TopNav trigger button.
+   - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (86 passed), `npm test` (621 passed, 0 failures), coordinator LOC strictly $\le 250$ (`TopNav.tsx`: 135 LOC, `UserMenuDropdown.tsx`: 99 LOC).
+
+2. **Default Light Theme on First Visit (`src/app/layout.tsx`):**
    - **Evaluated Prior Behavior:** `<ThemeProvider>` in `src/app/layout.tsx` had `defaultTheme="dark"` and `enableSystem={true}`. In `next-themes`, when `defaultTheme="dark"`, any initial visit where `localStorage.getItem("theme")` was null defaulted to `"dark"`, bypassing the client device OS `prefers-color-scheme` and always forcing dark mode.
    - **Configured Deterministic Light Theme Default:** Changed `defaultTheme="light"` and set `enableSystem={false}`. First-time visitors and devices with no stored theme preference open in light theme.
    - **Preserved User Overrides:** User manual theme toggle actions (`ThemeToggle`, `SettingsModal`, `MoreAppsMenu`, `CommandPalette`) continue persisting to `localStorage` under key `"theme"` seamlessly.
@@ -357,10 +364,10 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (35 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (37 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ 612 passed, 0 failed (105 suites)
-- `npm run test:smoke` → ✅ 85 passed, 0 failed
+- `npm test` → ✅ 621 passed, 0 failed (107 suites)
+- `npm run test:smoke` → ✅ 86 passed, 0 failed
 
 ---
 
