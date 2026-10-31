@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { ShieldCheck, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { getEffectiveProfile } from "./userProfileHelpers";
 
 export interface UserMenuDropdownProps {
   onClose: () => void;
@@ -13,9 +14,10 @@ export interface UserMenuDropdownProps {
 export function UserMenuDropdown({ onClose }: UserMenuDropdownProps) {
   const router = useRouter();
   const { data: session } = useSession();
+  const [imageError, setImageError] = useState(false);
 
-  const user = session?.user;
-  const isGoogle = Boolean(user?.image);
+  const profile = getEffectiveProfile({ sessionUser: session?.user });
+  const isGoogle = Boolean(session?.user?.image);
 
   const handleSignOut = async () => {
     try {
@@ -29,52 +31,44 @@ export function UserMenuDropdown({ onClose }: UserMenuDropdownProps) {
     }
   };
 
-  const initials = user?.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .substring(0, 2)
-        .toUpperCase()
-    : "U";
-
   return (
     <div className="absolute right-0 top-full mt-1 w-64 rounded-xl bg-card shadow-xl border border-border p-2 z-50 text-xs">
       {/* Profile Header Card */}
       <div className="p-2.5 rounded-lg bg-muted/50 border border-border/60">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs overflow-hidden shrink-0">
-            {user?.image ? (
+            {profile.image && !imageError ? (
               <img
-                src={user.image}
-                alt={user.name || "User"}
+                src={profile.image}
+                alt={profile.name}
+                onError={() => setImageError(true)}
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span>{initials}</span>
+              <span>{profile.initials}</span>
             )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-foreground truncate">
-                {user?.name || "Pengguna"}
+                {profile.name}
               </span>
               <span
                 className={`shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                  user?.role === "admin"
+                  profile.role === "admin"
                     ? "bg-primary/10 text-primary"
-                    : user?.role === "supervisor"
+                    : profile.role === "supervisor"
                     ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                    : user?.role === "staff"
+                    : profile.role === "staff"
                     ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
-                {user?.role || "viewer"}
+                {profile.role}
               </span>
             </div>
             <div className="text-[11px] text-muted-foreground truncate mt-0.5">
-              {user?.email || ""}
+              {profile.email}
             </div>
           </div>
         </div>
