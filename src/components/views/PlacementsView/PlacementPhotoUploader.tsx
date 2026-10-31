@@ -14,6 +14,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AppImage } from "@/components/ui/AppImage";
 import {
   compressImage,
   parsePlacementPhotos,
@@ -261,13 +262,12 @@ export function PlacementPhotoUploader({
               key={`${url}-${idx}`}
               className="group relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-850 shadow-2xs"
             >
-              <img
+              <AppImage
                 src={url}
                 alt={`Bukti Pemasangan ${idx + 1}`}
+                fill
+                sizes="thumbnail"
                 className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.opacity = "0.2";
-                }}
               />
 
               {/* Counter Pill */}
@@ -308,7 +308,7 @@ export function PlacementPhotoUploader({
           onClick={() => setLightboxUrl(null)}
         >
           <div
-            className="relative max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl bg-black border border-white/10 shadow-2xl"
+            className="relative w-[90vw] max-w-3xl h-[70vh] max-h-[85vh] overflow-hidden rounded-2xl bg-black border border-white/10 shadow-2xl flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -318,10 +318,12 @@ export function PlacementPhotoUploader({
             >
               <X className="w-5 h-5" />
             </button>
-            <img
+            <AppImage
               src={lightboxUrl}
               alt="Preview bukti foto"
-              className="max-w-full max-h-[85vh] object-contain"
+              fill
+              sizes="lightbox"
+              className="object-contain"
             />
           </div>
         </div>

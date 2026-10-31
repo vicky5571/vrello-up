@@ -14,6 +14,7 @@ import {
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AppImage } from "@/components/ui/AppImage";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import type { OutletType, OutletItem } from "@/types";
 import {
@@ -399,11 +400,13 @@ export function SubmitDraftOutletModal({
             </div>
 
             {formData.photoUrl && (
-              <div className="relative mt-2 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-40 bg-slate-950 flex items-center justify-center">
-                <img
+              <div className="relative mt-2 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 h-40 max-h-40 bg-slate-950 flex items-center justify-center">
+                <AppImage
                   src={formData.photoUrl}
                   alt="Pratinjau Outlet"
-                  className="max-h-40 w-auto object-contain"
+                  fill
+                  sizes="thumbnail"
+                  className="object-contain"
                 />
                 <button
                   type="button"

@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AppImage } from "@/components/ui/AppImage";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
@@ -302,9 +303,11 @@ export function OutletApprovalQueueTab({
                       onClick={() => setEnlargedPhotoUrl(outlet.photoUrl!)}
                       className="group relative w-full h-36 rounded-xl overflow-hidden bg-slate-950 border border-slate-200 dark:border-slate-700 cursor-pointer"
                     >
-                      <img
+                      <AppImage
                         src={outlet.photoUrl}
                         alt={outlet.name}
+                        fill
+                        sizes="thumbnail"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold gap-1">
@@ -599,7 +602,7 @@ export function OutletApprovalQueueTab({
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in"
           onClick={() => setEnlargedPhotoUrl(null)}
         >
-          <div className="relative max-w-2xl max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl bg-black border border-slate-800">
+          <div className="relative w-[90vw] max-w-2xl h-[70vh] max-h-[85vh] rounded-2xl overflow-hidden shadow-2xl bg-black border border-slate-800 flex items-center justify-center">
             <button
               type="button"
               onClick={() => setEnlargedPhotoUrl(null)}
@@ -607,10 +610,12 @@ export function OutletApprovalQueueTab({
             >
               <X className="w-5 h-5" />
             </button>
-            <img
+            <AppImage
               src={enlargedPhotoUrl}
               alt="Foto Outlet Penuh"
-              className="max-h-[85vh] w-auto object-contain"
+              fill
+              sizes="lightbox"
+              className="object-contain"
             />
           </div>
         </div>

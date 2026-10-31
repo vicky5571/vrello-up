@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn, formatIDR } from "@/lib/utils";
+import { AppImage } from "@/components/ui/AppImage";
 import { parseMouDocumentSource } from "@/components/views/MousView/mouDocumentHelpers";
 import { MouDocumentViewerModal } from "@/components/views/MousView/MouDocumentViewerModal";
 import { getOutletMarkerMeta } from "@/lib/marcom/outletAnalytics";
@@ -1270,9 +1271,11 @@ export function Outlet360Drawer({
                                 onClick={() => setLightboxPhoto(src)}
                                 className="w-14 h-14 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 relative group cursor-pointer"
                               >
-                                <img
+                                <AppImage
                                   src={src}
                                   alt={`Bukti ${i + 1}`}
+                                  fill
+                                  sizes="thumbnail"
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                 />
                                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
@@ -1777,16 +1780,18 @@ export function Outlet360Drawer({
           className="fixed inset-0 z-60 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setLightboxPhoto(null)}
         >
-          <div className="relative max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl bg-black">
-            <img
+          <div className="relative w-[90vw] max-w-3xl h-[70vh] max-h-[85vh] overflow-hidden rounded-2xl bg-black flex items-center justify-center">
+            <AppImage
               src={lightboxPhoto}
               alt="Foto Pemasangan Full"
-              className="w-full h-full object-contain max-h-[80vh]"
+              fill
+              sizes="lightbox"
+              className="object-contain"
             />
             <button
               type="button"
               onClick={() => setLightboxPhoto(null)}
-              className="absolute top-3 right-3 p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+              className="absolute top-3 right-3 p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors z-10"
             >
               <X className="w-5 h-5" />
             </button>

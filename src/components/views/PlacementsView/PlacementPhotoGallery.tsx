@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight, Eye, X, Camera } from "lucide-react";
 import { parsePlacementPhotos } from "@/lib/marcom/photoUtils";
 import { cn } from "@/lib/utils";
+import { AppImage } from "@/components/ui/AppImage";
 
 interface PlacementPhotoGalleryProps {
   photoUrl?: string | null;
@@ -46,13 +47,12 @@ export function PlacementPhotoGallery({
         )}
         onClick={() => setLightboxIndex(currentIndex)}
       >
-        <img
+        <AppImage
           src={activePhoto}
           alt={`Bukti Pemasangan ${currentIndex + 1}`}
+          fill
+          sizes="card"
           className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-102"
-          onError={(e) => {
-            (e.target as HTMLElement).style.opacity = "0.2";
-          }}
         />
 
         {/* Counter Badge */}
@@ -109,9 +109,11 @@ export function PlacementPhotoGallery({
                   : "border-slate-200 dark:border-slate-800 opacity-70 hover:opacity-100",
               )}
             >
-              <img
+              <AppImage
                 src={url}
                 alt={`Thumbnail ${idx + 1}`}
+                fill
+                sizes="thumbnail"
                 className="w-full h-full object-cover"
               />
             </button>
@@ -142,11 +144,13 @@ export function PlacementPhotoGallery({
             </button>
 
             {/* Lightbox Image */}
-            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
-              <img
+            <div className="relative w-[90vw] max-w-4xl h-[70vh] max-h-[80vh] rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black flex items-center justify-center">
+              <AppImage
                 src={photos[lightboxIndex]}
                 alt={`Bukti Pemasangan ${lightboxIndex + 1}`}
-                className="max-w-full max-h-[80vh] object-contain"
+                fill
+                sizes="lightbox"
+                className="object-contain"
               />
 
               {photos.length > 1 && (
