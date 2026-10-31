@@ -44,3 +44,4 @@ YYYY-MM-DD-<feature-slug>-design.md
 | 2026-10-31 | event-card-equipment-indicator | Done |
 | 2026-10-31 | qa-comprehensive-seeder | Done |
 | 2026-11-01 | topnav-avatar-profile-sync | Done |
+| 2026-11-01 | core-web-vitals-image-optimization | Planned |

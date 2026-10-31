@@ -100,3 +100,4 @@ export function getEffectiveProfile(params: ResolveProfileParams): EffectiveUser
     isAuthenticated: false,
   };
 }
+

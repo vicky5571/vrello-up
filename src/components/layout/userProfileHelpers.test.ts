@@ -104,3 +104,4 @@ describe("userProfileHelpers: getEffectiveProfile", () => {
     assert.equal(profile.isAuthenticated, true);
   });
 });
+
