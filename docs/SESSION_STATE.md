@@ -8,16 +8,21 @@
 
 **Date:** 2026-10-31  
 **Active Branch:** `vicky`  
-**Active Feature:** MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`) — **IMPLEMENTED & VERIFIED**  
-**Spec:** `docs/superpowers/specs/2026-10-31-mou-table-rows-redesign-design.md`  
-**Plan:** `docs/superpowers/plans/2026-10-31-mou-table-rows-redesign.md`  
-**Previous Feature:** User Management Unified Header Component (`UsersHeader.tsx`, `UsersView.tsx`)  
+**Active Feature:** CustomDropdown Sitewide Z-Index, Stacking Context & Responsive Placement Fix — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`):**
+1. **CustomDropdown Sitewide Z-Index, Stacking Context & Responsive Placement Fix (`CustomDropdown.tsx`, `customDropdownHelpers.ts`, Sitewide Headers & Toolbars):**
+   - **Root Cause Evaluated:** Header containers with `backdrop-filter: blur(...)` (`backdrop-blur-sm`) create a CSS stacking context. When headers lacked explicit `relative z-20`, their stacking context fell below subsequent stage content containing positioned elements (`sticky top-0 z-20` on `MarcomTableShell` headers and `relative` row cells), causing the table headers and table rows to paint directly ON TOP of opened dropdown menus (as seen in the user's screenshot).
+   - **CustomDropdown Root & Popover Stacking Elevation:** Updated `CustomDropdown.tsx` so the root wrapper div dynamically elevates to `z-30` (`isOpen ? "z-30" : "z-auto"`) when opened, preventing sibling controls in the same row from overlapping. Popover menu styled with solid `bg-white dark:bg-slate-900` (eliminating transparency bleed) and deep `shadow-2xl`.
+   - **Responsive Viewport Collision Detection:** Added `computeDropdownPlacement` helper in `customDropdownHelpers.ts` with comprehensive unit test suite in `CustomDropdown.test.ts` (12 tests passed). Automatically detects viewport boundaries to flip direction upwards (`bottom-full mb-1 origin-bottom`) when space below < 240px and right-aligns (`right-0 left-auto`) when space to right < 220px. Added explicit `direction="up"` support for bottom-anchored bars (`PlacementBulkActionBar`, `ProjectsBulkActionBar`, and `MarcomTableShell` pagination).
+   - **Sitewide Stacking Context Normalization:** Added `relative z-20` across all 11 unified view headers and filter bars sitewide (`MousHeader`, `OutletsHeader`, `BranchesHeader`, `AnalyticsHeader`, `InventoryHeaderKpis`, `ReportsHeader`, `DocumentsHeader`, `PlacementsHeader`, `EventsHeader`, `ContentPlannerHeader`, `UsersHeader`, `PipelineView` header, `PipelineFilterBar`, `ProjectsFilterBar`, `QuarterlyRecapTab`, `QuarterlyPosmReportTab`, `OutletApprovalQueueTab`, `OutletMapView`, and `EventsTimelineView`).
+   - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (612 passed, 0 failures).
+
+2. **MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`):**
    - Consolidated standalone `Partner` (190px) and `Outlet` (170px) columns into a single unified `Partner & Outlet` column (220px), saving ~170px of horizontal table width.
    - Formatted two-line entity cell with primary partner title (filtering table on click) and secondary outlet link with store icon (jumping to Outlets view on click).
    - Replaced redundant stacked `"No period set"` and `"No expiry"` badges in Validity column with a clean, subtle `—` when no dates are configured.
