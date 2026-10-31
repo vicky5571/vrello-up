@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-01]
 
+- `perf(media)`: Core Web Vitals image optimization via Next.js Image architecture
+  - Configured `images.remotePatterns` in `next.config.ts` for Unsplash, Google User Content, and Supabase storage
+  - Built pure helper module `appImageHelpers.ts` with layout presets (`avatar`, `thumbnail`, `card`, `lightbox`) and `shouldBypassOptimization` for `blob:`, `data:`, and SVG
+  - Created resilient `<AppImage />` primitive in `src/components/ui/AppImage.tsx` handling CLS prevention, responsive width downscaling, WebP/AVIF transformations, and graceful load error recovery
+  - Migrated 22 raw `<img>` instances across 16 components to `<AppImage />` (`TopNav`, `UserMenuDropdown`, `UsersActiveTab`, `UsersPendingTab`, `UsersRejectedTab`, `OutletApprovalQueueTab`, `Outlet360Drawer`, `SubmitDraftOutletModal`, `PlacementPhotoUploader`, `PlacementPhotoGallery`, `EventTableView`, `EventCardsView`, `MouDocumentViewerModal`, `DocumentPreviewModal`, `ContentDrawer`, `ContentPlannerView`, `ProjectsWorkItemCard`)
+  - Completely eliminated all `@next/next/no-img-element` ESLint warnings
+  - Gates: `npm run lint` (0 no-img-element warnings), `npm test` 629 pass / 0 fail; `npm run test:smoke` 87 pass / 0 fail; `npm run build:check` 0 errors; `next build` 27/27 pages compiled; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-11-01-core-web-vitals-image-optimization-design.md`
+  Plan: `docs/superpowers/plans/2026-11-01-core-web-vitals-image-optimization.md`
+
 - `fix(layout)`: Synchronize TopNav avatar and profile with active NextAuth session
   - Extracted pure helper `getEffectiveProfile` and `getInitials` in `userProfileHelpers.ts` with comprehensive unit test suite
   - Prioritized active NextAuth `session.user` data (name, email, image, role) over static fallback user

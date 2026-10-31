@@ -8,14 +8,22 @@
 
 **Date:** 2026-11-01  
 **Active Branch:** `vicky`  
-**Active Feature:** TopNav Avatar & Profile Session Synchronization (`TopNav.tsx`, `UserMenuDropdown.tsx`, `userProfileHelpers.ts`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Default Light Theme on First Device Visit (`layout.tsx`)  
+**Active Feature:** Core Web Vitals Next.js Image Optimization (`AppImage.tsx`, `appImageHelpers.ts`, `next.config.ts`, 16 consuming views) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** TopNav Avatar & Profile Session Synchronization (`TopNav.tsx`, `UserMenuDropdown.tsx`, `userProfileHelpers.ts`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **TopNav Avatar & Profile Session Synchronization (`TopNav.tsx`, `UserMenuDropdown.tsx`, `userProfileHelpers.ts`, `userProfileHelpers.test.ts`):**
+1. **Core Web Vitals Next.js Image Optimization (`AppImage.tsx`, `appImageHelpers.ts`, `next.config.ts`, 16 components):**
+   - **Root Cause Evaluated:** 22 raw `<img>` instances across 16 components lacked layout sizing, leading to Cumulative Layout Shift (CLS) on high-latency field connections, excessive bandwidth consumption without modern WebP/AVIF compression or responsive srcset downscaling, and Next.js compiler warnings under `@next/next/no-img-element`.
+   - **Remote Host Whitelist (`next.config.ts`):** Configured `images.remotePatterns` for `images.unsplash.com`, `lh3.googleusercontent.com`, `*.googleusercontent.com`, and `*.supabase.co`.
+   - **Pure Layout Helpers (`appImageHelpers.ts`):** Created `shouldBypassOptimization` for `blob:`, `data:`, SVG, and empty URLs to prevent runtime crashes during client-side photo picking. Added `resolveImageSizes` mapping presets (`avatar`: 36px, `thumbnail`: 64px/96px, `card`: 100vw/50vw/33vw, `lightbox`: 100vw/1200px, `full`: 100vw). Comprehensive unit test suite in `appImageHelpers.test.ts` (8 tests passing).
+   - **Resilient Primitive (`AppImage.tsx`):** Built `<AppImage />` with automatic aspect ratio geometry (eliminating CLS), `sizes` optimization, automatic unoptimized bypass for blob/data URLs, and graceful placeholder error recovery.
+   - **Full Codebase Migration (22 instances across 16 components):** Migrated `TopNav.tsx`, `UserMenuDropdown.tsx`, `UsersActiveTab.tsx`, `UsersPendingTab.tsx`, `UsersRejectedTab.tsx`, `OutletApprovalQueueTab.tsx` (2x), `Outlet360Drawer.tsx` (2x), `SubmitDraftOutletModal.tsx`, `PlacementPhotoUploader.tsx` (2x), `PlacementPhotoGallery.tsx` (3x), `EventTableView.tsx`, `EventCardsView.tsx`, `MouDocumentViewerModal.tsx`, `DocumentPreviewModal.tsx`, `ContentDrawer.tsx`, `ContentPlannerView.tsx` (2x), `ProjectsWorkItemCard.tsx`.
+   - Gates: `npm run lint` (0 `@next/next/no-img-element` warnings), `npm run build:check` (0 errors), `npm run test:smoke` (87 passed, 0 failed), `npm test` (629 passed, 0 failures), `npm run build` (all 27/27 pages compiled), `npm run drift:check` (clean).
+
+2. **TopNav Avatar & Profile Session Synchronization (`TopNav.tsx`, `UserMenuDropdown.tsx`, `userProfileHelpers.ts`, `userProfileHelpers.test.ts`):**
    - **Root Cause Evaluated:** TopNav avatar button derived initials exclusively from Zustand store `me = users.find(u => u.id === currentUserId) ?? users[0]`, which defaulted to `"user-1"` (`Alex Rivera` -> `"AR"`), completely ignoring authenticated NextAuth session data (`session.user`). TopNav trigger button also lacked profile image (`<img>`) rendering support, and `currentUserId` in Zustand was not synchronized with `session.user.id`.
    - **Pure Helper Module (`userProfileHelpers.ts`):** Implemented `getInitials(name, email)` with robust edge-case handling (multi-word, single-word, extra whitespace, email initial fallback, safe defaults) and `getEffectiveProfile({ sessionUser, fallbackUser })` prioritizing `sessionUser` properties (`name`, `email`, `image`, `role`, `initials`, `isAuthenticated`). Created comprehensive unit test suite in `userProfileHelpers.test.ts` (9 tests passing).
    - **TopNav Integration (`TopNav.tsx`):** Consumed `getEffectiveProfile`, rendered `profile.image` with `imageError` fallback to `profile.initials`, rendered active emerald presence dot when `isAuthenticated: true`, and added `useEffect` synchronizing `session.user.id` to `useWorkspaceStore.currentUserId`.
@@ -366,8 +374,10 @@
 
 - `npm run drift:check` → ✅ No drift detected (37 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ 621 passed, 0 failed (107 suites)
-- `npm run test:smoke` → ✅ 86 passed, 0 failed
+- `npm run lint` → ✅ 0 `@next/next/no-img-element` warnings
+- `npm test` → ✅ 629 passed, 0 failed (109 suites)
+- `npm run test:smoke` → ✅ 87 passed, 0 failed
+- `npm run build` → ✅ 27/27 pages compiled cleanly
 
 ---
 
