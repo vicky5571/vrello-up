@@ -6,6 +6,12 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `fix(theme)`: Set light theme as default for first-time visits
+  - Updated `<ThemeProvider>` in `src/app/layout.tsx` to `defaultTheme="light"` and `enableSystem={false}`
+  - Prevents forcing dark theme on initial visits before user preference is stored in localStorage
+  - Preserves user manual theme toggling across sessions via localStorage
+  - Gates: `npm test` 612 pass / 0 fail; `npm run test:smoke` 85 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `feat(ui)`: Redesign MOU table rows with consolidated entity column and neutral glassmorphism
   - Consolidated standalone `Partner` and `Outlet` columns into unified `Partner & Outlet` column saving ~170px of table width
   - Formatted two-line entity cell with primary partner title and secondary outlet link with store icon

@@ -8,12 +8,18 @@
 
 **Date:** 2026-10-31  
 **Active Branch:** `vicky`  
-**Active Feature:** CustomDropdown Sitewide Z-Index, Stacking Context & Responsive Placement Fix — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`)  
+**Active Feature:** Default Light Theme on First Device Visit (`layout.tsx`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** CustomDropdown Sitewide Z-Index, Stacking Context & Responsive Placement Fix (`CustomDropdown.tsx`)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Default Light Theme on First Visit (`src/app/layout.tsx`):**
+   - **Evaluated Prior Behavior:** `<ThemeProvider>` in `src/app/layout.tsx` had `defaultTheme="dark"` and `enableSystem={true}`. In `next-themes`, when `defaultTheme="dark"`, any initial visit where `localStorage.getItem("theme")` was null defaulted to `"dark"`, bypassing the client device OS `prefers-color-scheme` and always forcing dark mode.
+   - **Configured Deterministic Light Theme Default:** Changed `defaultTheme="light"` and set `enableSystem={false}`. First-time visitors and devices with no stored theme preference open in light theme.
+   - **Preserved User Overrides:** User manual theme toggle actions (`ThemeToggle`, `SettingsModal`, `MoreAppsMenu`, `CommandPalette`) continue persisting to `localStorage` under key `"theme"` seamlessly.
+   - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (612 passed, 0 failures).
 
 1. **Vercel-Supabase Authentication & Production Database Connectivity Fix (`src/lib/db.ts`, `src/auth.ts`, `src/components/auth/LoginForm.tsx`):**
    - **Root Cause Evaluated:** Integration between Supabase and Vercel automatically exposes `POSTGRES_PRISMA_URL` and `POSTGRES_URL`, but does not populate `DATABASE_URL` or `DIRECT_URL`. Previously, `src/lib/db.ts` only read `process.env.DATABASE_URL`, causing `new PrismaClient()` in Vercel serverless environment to fail on query execution (`Environment variable not found: DATABASE_URL`). Auth.js caught this unhandled database error and redirected to `?error=Configuration`. In turn, `LoginForm.tsx` caught this error and defaulted to showing `"Email atau password tidak sesuai."`, misdiagnosing a database connectivity failure as invalid credentials.
