@@ -110,9 +110,9 @@ export function UsersHeader({
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Users className="w-5 h-5 text-indigo-500" />
-            <span>Manajemen Pengguna</span>
+            <span>User Management</span>
             <span className="px-2 py-0.5 text-[11px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 rounded-md border border-indigo-200/60 dark:border-indigo-800/60">
-              {totalUsers} Pengguna
+              {totalUsers} {totalUsers === 1 ? "User" : "Users"}
             </span>
             {counts.pending > 0 && (
               <span className="px-2 py-0.5 text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 rounded-md border border-amber-200/60 dark:border-amber-800/60">
