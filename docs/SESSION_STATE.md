@@ -22,6 +22,14 @@
    - **Sitewide Stacking Context Normalization:** Added `relative z-20` across all 11 unified view headers and filter bars sitewide (`MousHeader`, `OutletsHeader`, `BranchesHeader`, `AnalyticsHeader`, `InventoryHeaderKpis`, `ReportsHeader`, `DocumentsHeader`, `PlacementsHeader`, `EventsHeader`, `ContentPlannerHeader`, `UsersHeader`, `PipelineView` header, `PipelineFilterBar`, `ProjectsFilterBar`, `QuarterlyRecapTab`, `QuarterlyPosmReportTab`, `OutletApprovalQueueTab`, `OutletMapView`, and `EventsTimelineView`).
    - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (612 passed, 0 failures).
 
+2. **Supabase Cloud PostgreSQL Migration, Schema Synchronization & Seeding (`prisma/schema.prisma`, `.env.local`, `.env`):**
+   - **Project Integration:** Connected project `kkstcawepmqenghaqxzt` in region `aws-0-ap-southeast-1`.
+   - **Dual-URL Invariant:** Configured `directUrl = env("DIRECT_URL")` in `prisma/schema.prisma` datasource. Set `DATABASE_URL` to transaction pooler (`aws-0-ap-southeast-1.pooler.supabase.com:6543?pgbouncer=true`) and `DIRECT_URL` to direct connection (`aws-0-ap-southeast-1.pooler.supabase.com:5432`).
+   - **URI Encoding Handling:** URL-encoded leading `@` in database password (`%40...`) to prevent connection URI host delimiter corruption.
+   - **Environment Variables Sync:** Added `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` to `.env.local`.
+   - **Schema & Data Migration:** Successfully executed `npx prisma db push` synchronizing all 14 models and relations, followed by `npx tsx prisma/seed.ts` populating standard master data (7 users, 12 branches, 10 outlets, 7 materials, 6 MOUs, 6 placements, 13 inventory items, 4 events, 4 content posts, 4 documents).
+   - Gates: Direct Node query verified (`status: 'CONNECTED_SUCCESSFULLY'`), `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (612 passed, 0 failures).
+
 2. **MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`, `MarcomTableShell.tsx`, `placementColumns.tsx`):**
    - Consolidated standalone `Partner` (190px) and `Outlet` (170px) columns into a single unified `Partner & Outlet` column (220px), saving ~170px of horizontal table width.
    - Formatted two-line entity cell with primary partner title (filtering table on click) and secondary outlet link with store icon (jumping to Outlets view on click).
