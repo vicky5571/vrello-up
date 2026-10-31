@@ -443,20 +443,27 @@ export function MarcomTableShell<T extends object & { id: string }>({
                 const canSort = (header.column as any).getCanSort();
                 const isSorted = (header.column as any).getIsSorted();
                 const sortDirection = isSorted === "asc" ? "ascending" : isSorted === "desc" ? "descending" : "none";
+                const isRightAligned = (header.column.columnDef as any)?.meta?.align === "right";
                 return (
                   <div
                     key={header.id}
                     role="columnheader"
                     aria-sort={canSort ? sortDirection : undefined}
                     style={{ width: `${(header as any).getSize()}px` }}
-                    className="relative flex items-center gap-1.5 shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden"
+                    className={cn(
+                      "relative flex items-center gap-1.5 shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden",
+                      isRightAligned && "justify-end",
+                    )}
                   >
                     {canSort ? (
                       <button
                         type="button"
                         onClick={(header.column as any).getToggleSortingHandler()}
                         aria-label={`Sort by ${header.id}`}
-                        className="flex items-center gap-1.5 truncate cursor-pointer hover:text-slate-900 dark:hover:text-white focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500 rounded"
+                        className={cn(
+                          "flex items-center gap-1.5 truncate cursor-pointer hover:text-slate-900 dark:hover:text-white focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500 rounded",
+                          isRightAligned && "w-full justify-end",
+                        )}
                       >
                         <table.FlexRender header={header as any} />
                         <span className="shrink-0" aria-hidden="true">
@@ -470,7 +477,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
                         </span>
                       </button>
                     ) : (
-                      <span className="flex items-center gap-1.5 truncate">
+                      <span className={cn("flex items-center gap-1.5 truncate", isRightAligned && "w-full justify-end")}>
                         <table.FlexRender header={header as any} />
                       </span>
                     )}

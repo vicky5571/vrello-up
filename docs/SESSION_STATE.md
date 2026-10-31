@@ -22,12 +22,13 @@
    - **Sitewide Stacking Context Normalization:** Added `relative z-20` across all 11 unified view headers and filter bars sitewide (`MousHeader`, `OutletsHeader`, `BranchesHeader`, `AnalyticsHeader`, `InventoryHeaderKpis`, `ReportsHeader`, `DocumentsHeader`, `PlacementsHeader`, `EventsHeader`, `ContentPlannerHeader`, `UsersHeader`, `PipelineView` header, `PipelineFilterBar`, `ProjectsFilterBar`, `QuarterlyRecapTab`, `QuarterlyPosmReportTab`, `OutletApprovalQueueTab`, `OutletMapView`, and `EventsTimelineView`).
    - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (612 passed, 0 failures).
 
-2. **MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`):**
+2. **MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`, `MarcomTableShell.tsx`, `placementColumns.tsx`):**
    - Consolidated standalone `Partner` (190px) and `Outlet` (170px) columns into a single unified `Partner & Outlet` column (220px), saving ~170px of horizontal table width.
    - Formatted two-line entity cell with primary partner title (filtering table on click) and secondary outlet link with store icon (jumping to Outlets view on click).
    - Replaced redundant stacked `"No period set"` and `"No expiry"` badges in Validity column with a clean, subtle `—` when no dates are configured.
    - Replaced harsh fuchsia styling on MOU document buttons with neutral glassmorphic backdrop-blur chips (`bg-slate-100/80 dark:bg-slate-800/60`, border `border-slate-200/80 dark:border-slate-700/60`), subtle Drive/file icons (`FileText`, `ExternalLink`), and clean preview modal triggers.
    - Formatted `Type` column replacing raw database enum underscores with clean spaces.
+   - Implemented right-aligned (`text-right font-medium tabular-nums`) financial currency formatting for `Value` column in `mouColumns.tsx` and normalized header right-alignment in `MarcomTableShell.tsx` via `meta: { align: "right" }`.
    - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (612 passed, 0 failures).
 
 2. **User Management Unified Header Component (`UsersHeader.tsx`, `UsersView.tsx`, `usersFilterHelpers.ts`):**

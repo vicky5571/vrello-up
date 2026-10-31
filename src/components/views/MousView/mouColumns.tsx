@@ -244,13 +244,24 @@ export function buildMouColumns({
     columnHelper.accessor("compensationValue", {
       id: "value",
       header: "Value",
-      size: 150,
-      minSize: 120,
-      cell: ({ row }) => (
-        <span className="text-slate-700 dark:text-slate-300">
-          {typeof row.original.compensationValue === "number" ? formatIDR(row.original.compensationValue) : "—"}
-        </span>
-      ),
+      size: 140,
+      minSize: 110,
+      meta: {
+        align: "right",
+      },
+      cell: ({ row }) => {
+        const val = row.original.compensationValue;
+        const hasVal = typeof val === "number" && !isNaN(val);
+        return (
+          <div className="text-right w-full font-medium text-slate-800 dark:text-slate-200 tabular-nums">
+            {hasVal ? (
+              formatIDR(val)
+            ) : (
+              <span className="text-slate-400 dark:text-slate-500 font-normal">—</span>
+            )}
+          </div>
+        );
+      },
     }),
     columnHelper.display({
       id: "placements",

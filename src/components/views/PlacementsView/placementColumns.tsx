@@ -272,11 +272,14 @@ export function buildPlacementColumns({
     // 9. Cost (Right-aligned)
     columnHelper.accessor("cost", {
       id: "cost",
-      header: () => <div className="text-right w-full">Cost</div>,
+      header: "Cost",
       size: 130,
       minSize: 100,
+      meta: {
+        align: "right",
+      },
       cell: ({ row }) => (
-        <div className="text-right font-medium text-slate-800 dark:text-slate-200 tabular-nums">
+        <div className="text-right w-full font-medium text-slate-800 dark:text-slate-200 tabular-nums">
           {typeof row.original.cost === "number" ? formatIDR(row.original.cost) : "—"}
         </div>
       ),
