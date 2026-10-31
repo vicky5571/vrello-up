@@ -195,8 +195,6 @@ export function PlacementBulkActionBar({
     }
   };
 
-  const selectClass =
-    "cursor-pointer rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 shadow-2xs";
 
   return (
     <>

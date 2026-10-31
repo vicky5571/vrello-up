@@ -72,8 +72,6 @@ export function AnalyticsHeader({
     return count;
   }, [filters]);
 
-  const selectClass =
-    "text-xs font-medium pl-8 pr-7 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer";
 
   const hasMouSampleData =
     data &&

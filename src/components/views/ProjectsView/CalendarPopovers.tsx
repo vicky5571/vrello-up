@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Sparkles, CalendarDays, MapPin, X, Plus } from "lucide-react";
+import { Sparkles, CalendarDays, MapPin, X } from "lucide-react";
 import type { MarcomWorkItem, MarcomWorkItemType } from "@/types";
 import { getWorkItemTitle } from "@/lib/marcom/workItems";
-import { cn } from "@/lib/utils";
 
 export const STATUS_HEX_COLORS: Record<string, string> = {
   // Content

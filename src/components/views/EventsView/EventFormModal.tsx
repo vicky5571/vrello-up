@@ -12,7 +12,6 @@ import {
   Film,
   Video,
   Play,
-  Layers,
   Store,
   Coins,
 } from "lucide-react";

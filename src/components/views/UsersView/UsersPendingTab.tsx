@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Check, X, Loader2, Clock, UserCheck } from "lucide-react";
+import { X, Loader2, Clock, UserCheck } from "lucide-react";
 import type { AppUser } from "@/types";
 
 interface UsersPendingTabProps {

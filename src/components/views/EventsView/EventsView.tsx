@@ -18,7 +18,6 @@ import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { cn, formatIDR } from "@/lib/utils";
 import type { FieldEventItem, EventStatus, EventFootage } from "@/types";
 import {
-  findMemberForPic,
   detectEventConflicts,
   calculateFieldEventsKPI,
 } from "@/lib/marcom/eventChecklist";
@@ -56,7 +55,6 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     })),
   );
 
-  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
   const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
 
   const members = users;

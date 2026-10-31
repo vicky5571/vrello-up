@@ -11,9 +11,30 @@ const recordInclude = {
   },
 } as const;
 
-function normalizeBorrowRecord(record: any) {
+interface RawBorrowItem {
+  inventoryItem?: {
+    createdAt?: Date | null;
+    updatedAt?: Date | null;
+    [key: string]: unknown;
+  } | null;
+  [key: string]: unknown;
+}
+
+interface RawBorrowRecord {
+  status?: string;
+  borrowDate?: Date | null;
+  returnDueDate?: Date | string | null;
+  returnDate?: Date | null;
+  approvedAt?: Date | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+  items?: RawBorrowItem[];
+  [key: string]: unknown;
+}
+
+function normalizeBorrowRecord(record: RawBorrowRecord) {
   let currentStatus = record.status;
-  if (currentStatus === "ACTIVE" && new Date(record.returnDueDate) < new Date()) {
+  if (currentStatus === "ACTIVE" && record.returnDueDate && new Date(record.returnDueDate) < new Date()) {
     currentStatus = "OVERDUE";
   }
 
@@ -21,12 +42,12 @@ function normalizeBorrowRecord(record: any) {
     ...record,
     status: currentStatus,
     borrowDate: record.borrowDate ? record.borrowDate.toISOString() : null,
-    returnDueDate: record.returnDueDate ? record.returnDueDate.toISOString() : null,
+    returnDueDate: record.returnDueDate ? new Date(record.returnDueDate).toISOString() : null,
     returnDate: record.returnDate ? record.returnDate.toISOString() : null,
     approvedAt: record.approvedAt ? record.approvedAt.toISOString() : null,
     createdAt: record.createdAt ? record.createdAt.toISOString() : null,
     updatedAt: record.updatedAt ? record.updatedAt.toISOString() : null,
-    items: (record.items || []).map((item: any) => ({
+    items: (record.items || []).map((item: RawBorrowItem) => ({
       ...item,
       inventoryItem: item.inventoryItem
         ? {

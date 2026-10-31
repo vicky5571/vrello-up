@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { toAppUser } from "@/lib/server/auth-helpers";
 import { sendApprovalEmail, sendRejectionEmail } from "@/lib/server/mailer";
-import type { UserRole, UserStatus } from "@/types";
+import type { UserRole } from "@/types";
 
 const patchSchema = z.object({
   status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),

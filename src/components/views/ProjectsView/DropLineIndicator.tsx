@@ -8,6 +8,7 @@ export function DropLineIndicator({ position = "before" }: DropLineIndicatorProp
   return (
     <div
       aria-hidden="true"
+      data-position={position}
       className="relative flex items-center my-1 pointer-events-none z-20"
     >
       <div className="w-2 h-2 rounded-full bg-blue-500 shadow-xs -ml-1 shrink-0 ring-2 ring-white dark:ring-slate-900" />

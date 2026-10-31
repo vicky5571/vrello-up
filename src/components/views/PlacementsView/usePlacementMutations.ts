@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { isValidCoordinate } from "@/lib/marcom/locationUtils";
 import { type MouSummaryInfo } from "@/lib/marcom/placementMouBridge";

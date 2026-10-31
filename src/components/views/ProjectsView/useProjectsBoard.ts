@@ -23,7 +23,6 @@ import type {
   PlacementStatus,
 } from "@/types";
 import {
-  PROJECTS_COLUMN_ORDER,
   PROJECTS_COLUMN_ORDER_WITH_ARCHIVED,
   getWorkItemColumn,
   mapColumnToStatus,

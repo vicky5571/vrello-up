@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand";
 import type { WorkspaceStore, UiSlice } from "./types";
-import type { AppMode, ViewMode, ViewPreferences, ProjectsFilterState } from "@/types";
+import type { AppMode, ViewMode, ViewPreferences } from "@/types";
 import { DEFAULT_PROJECTS_FILTERS } from "@/lib/marcom/projectsFilters";
 
 export const DEFAULT_VIEW_PREFERENCES: ViewPreferences = {

@@ -9,8 +9,6 @@ import {
   AlertTriangle,
   Film,
   Users,
-  Layers,
-  Kanban,
   Edit2,
   Trash2,
 } from "lucide-react";

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Loader2, ArrowRight, ArrowLeft, Check, Package, Search } from "lucide-react";
-import type { BorrowRecord, FieldEventItem, InventoryItem } from "@/types";
+import { X, Loader2, ArrowRight, ArrowLeft, Check, Search } from "lucide-react";
+import type { BorrowRecord, InventoryItem } from "@/types";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 
 interface BorrowRequestModalProps {
@@ -142,7 +142,7 @@ export function BorrowRequestModal({
 
   const handleBack = () => {
     setError(null);
-    if (step > 1) setStep((s) => (s - 1) as any);
+    if (step > 1) setStep((s) => (s - 1) as 1 | 2 | 3);
   };
 
   const handleSubmit = async () => {

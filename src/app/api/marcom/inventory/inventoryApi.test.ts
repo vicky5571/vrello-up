@@ -1,10 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { GET as getInventory, POST as postInventory } from "./route";
-import { GET as getItem, PUT as putItem, DELETE as deleteItem } from "./[id]/route";
-import { GET as getAvailability } from "./[id]/availability/route";
-import { GET as getBorrows, POST as postBorrow } from "./borrow/route";
-import { GET as getBorrow, PUT as putBorrow } from "./borrow/[id]/route";
+import { PUT as putItem, DELETE as deleteItem } from "./[id]/route";
+import { POST as postBorrow } from "./borrow/route";
+import { PUT as putBorrow } from "./borrow/[id]/route";
 import { POST as returnBorrow } from "./borrow/[id]/return/route";
 import { prisma } from "@/lib/db";
 

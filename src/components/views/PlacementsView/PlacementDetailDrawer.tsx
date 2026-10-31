@@ -10,7 +10,6 @@ import {
   User,
   ExternalLink,
   Edit2,
-  CheckSquare,
   Copy,
   Check,
 } from "lucide-react";

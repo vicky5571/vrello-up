@@ -11,6 +11,7 @@ import {
   resolveJwtClaims,
   PendingAccountError,
   RejectedAccountError,
+  type HandleGoogleSignInParams,
 } from "./auth-helpers";
 import type { User as PrismaUser, DbUserRole, DbUserStatus } from "@prisma/client";
 
@@ -114,7 +115,7 @@ test("handleGoogleSignInLogic returns false if user email is missing", async () 
 });
 
 test("handleGoogleSignInLogic creates new user with PENDING status and redirects to /login?pending=1", async () => {
-  let createdData: any = null;
+  let createdData: Parameters<HandleGoogleSignInParams["createUser"]>[0] | null = null;
   const result = await handleGoogleSignInLogic({
     user: { name: "New User", email: "newuser@example.com", image: "https://photo.jpg" },
     account: { provider: "google", providerAccountId: "g-999" },
@@ -126,6 +127,7 @@ test("handleGoogleSignInLogic creates new user with PENDING status and redirects
   });
 
   assert.equal(result, "/login?pending=1");
+  assert.ok(createdData !== null);
   assert.equal(createdData.email, "newuser@example.com");
   assert.equal(createdData.role, "STAFF");
   assert.equal(createdData.status, "PENDING");
@@ -133,7 +135,7 @@ test("handleGoogleSignInLogic creates new user with PENDING status and redirects
 });
 
 test("handleGoogleSignInLogic auto-approves new user if matching seedAdminEmail", async () => {
-  let createdData: any = null;
+  let createdData: Parameters<HandleGoogleSignInParams["createUser"]>[0] | null = null;
   const result = await handleGoogleSignInLogic({
     user: { name: "Admin Google", email: "admin@vrelloup.dev" },
     account: { provider: "google", providerAccountId: "g-admin" },
@@ -146,6 +148,7 @@ test("handleGoogleSignInLogic auto-approves new user if matching seedAdminEmail"
   });
 
   assert.equal(result, true);
+  assert.ok(createdData !== null);
   assert.equal(createdData.role, "ADMIN");
   assert.equal(createdData.status, "APPROVED");
 });
@@ -189,7 +192,7 @@ test("handleGoogleSignInLogic redirects REJECTED existing user to /login?rejecte
 });
 
 test("handleGoogleSignInLogic updates and logs in APPROVED existing user", async () => {
-  let updatedData: any = null;
+  let updatedData: Parameters<HandleGoogleSignInParams["updateUser"]>[1] | null = null;
   const result = await handleGoogleSignInLogic({
     user: { email: "approved@example.com", image: "https://avatar.png" },
     account: { provider: "google", providerAccountId: "g-approved" },
@@ -208,6 +211,7 @@ test("handleGoogleSignInLogic updates and logs in APPROVED existing user", async
   });
 
   assert.equal(result, true);
+  assert.ok(updatedData !== null);
   assert.ok(updatedData.lastLoginAt instanceof Date);
   assert.equal(updatedData.googleId, "g-approved");
   assert.equal(updatedData.avatar, "https://avatar.png");

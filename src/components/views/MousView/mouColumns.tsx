@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Building2, Layers, AlertTriangle, Eye, Download, Clock, Check, ChevronRight, FileText, ExternalLink } from "lucide-react";
+import { Store, Building2, Layers, AlertTriangle, Download, Clock, Check, ChevronRight, FileText, ExternalLink } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
 import {
   createMarcomColumnHelper,

@@ -15,7 +15,7 @@ import {
   Play,
   AlertCircle,
 } from "lucide-react";
-import type { MarcomWorkItem, ProjectsColumn, MarcomWorkItemType } from "@/types";
+import type { MarcomWorkItem, ProjectsColumn } from "@/types";
 import {
   getWorkItemTitle,
   getWorkItemDate,

@@ -30,6 +30,12 @@
    - **Schema & Data Migration:** Successfully executed `npx prisma db push` synchronizing all 14 models and relations, followed by `npx tsx prisma/seed.ts` populating standard master data (7 users, 12 branches, 10 outlets, 7 materials, 6 MOUs, 6 placements, 13 inventory items, 4 events, 4 content posts, 4 documents).
    - Gates: Direct Node query verified (`status: 'CONNECTED_SUCCESSFULLY'`), `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (612 passed, 0 failures).
 
+3. **Production Build & ESLint Strict Cleanup (`next lint` & `next build`):**
+   - **Issue Triaged:** Vercel / local `npm run build` failed during Next.js compile step due to strict TypeScript ESLint rules (`@typescript-eslint/no-unused-vars` and `@typescript-eslint/no-explicit-any`).
+   - **Unused Imports & Variables Removed:** Cleaned up orphaned imports and variables across 28 components/routes resulting from previous atomic header extractions and dropdown standardizations (`ContentPlannerView`, `EventsView`, `DocumentsView`, `OutletsView`, `ReportsView`, `ProjectsFilterBar`, `BorrowDetailModal`, `DropLineIndicator`, etc.).
+   - **Explicit Types & Elimination of `any`:** Replaced all `any` usages in inventory borrow endpoints and `auth-helpers.test.ts` with strict typed interfaces (`RawBorrowRecord`, `Parameters<HandleGoogleSignInParams[...]>[0]`).
+   - Gates: `npm run lint` (0 errors), `npm run build` (compiled and generated all 27 static/dynamic pages with 0 errors), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (612 passed, 0 failures).
+
 2. **MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`, `MarcomTableShell.tsx`, `placementColumns.tsx`):**
    - Consolidated standalone `Partner` (190px) and `Outlet` (170px) columns into a single unified `Partner & Outlet` column (220px), saving ~170px of horizontal table width.
    - Formatted two-line entity cell with primary partner title (filtering table on click) and secondary outlet link with store icon (jumping to Outlets view on click).

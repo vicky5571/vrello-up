@@ -3,15 +3,12 @@
 import React from "react";
 import {
   X,
-  Clock,
   AlertCircle,
   CheckCircle2,
   PackageCheck,
   RotateCcw,
   Ban,
-  MapPin,
   Calendar,
-  Phone,
   User,
 } from "lucide-react";
 import type { BorrowRecord, BorrowStatus } from "@/types";

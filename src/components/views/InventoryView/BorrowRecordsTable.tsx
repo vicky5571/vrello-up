@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AlertCircle, Clock, CheckCircle2, RotateCcw, Eye, ClipboardList } from "lucide-react";
+import { AlertCircle, CheckCircle2, RotateCcw, Eye, ClipboardList } from "lucide-react";
 import type { BorrowRecord } from "@/types";
 import { BORROW_STATUS_CONFIG } from "./inventoryConstants";
 

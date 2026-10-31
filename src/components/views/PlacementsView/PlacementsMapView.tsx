@@ -6,7 +6,6 @@ import {
   Store,
   ExternalLink,
   Edit2,
-  CheckSquare,
   AlertCircle,
   Compass,
   Maximize2,
@@ -129,7 +128,6 @@ function createUserLocationIcon(leaflet: typeof L) {
 export function PlacementsMapView({
   placements,
   onEditPlacement,
-  onTrackAsTask,
   canManage,
 }: PlacementsMapViewProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);

@@ -1,24 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
 import {
   Sparkles,
-  Plus,
   Edit2,
   CheckSquare,
   RefreshCw,
   Video,
-  Layers,
   Calendar,
   Flame,
-  LayoutGrid,
-  TableProperties,
-  Search,
   ExternalLink,
   Share2,
-  Kanban,
   X,
   AlertCircle,
   Play,
@@ -58,7 +51,6 @@ const columnHelper = createMarcomColumnHelper<ContentPostItem>();
 
 
 export function ContentPlannerView() {
-  const shouldReduceMotion = useReducedMotion();
   const { can } = useMarcomPermissions();
   const {
     users,
@@ -72,7 +64,6 @@ export function ContentPlannerView() {
     })),
   );
 
-  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
   const setCreatePostModalOpen = useWorkspaceStore((s) => s.setCreatePostModalOpen);
   const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
 

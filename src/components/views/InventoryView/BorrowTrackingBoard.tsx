@@ -8,7 +8,6 @@ import {
   PackageCheck,
   RotateCcw,
   MapPin,
-  Sparkles,
 } from "lucide-react";
 import type { BorrowRecord } from "@/types";
 

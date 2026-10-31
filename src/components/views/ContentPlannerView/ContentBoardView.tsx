@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { ContentPostItem, PostStatus } from "@/types";
 import {
   canTransitionContentStatus,
-  getContentStatusMeta,
 } from "@/lib/marcom/contentWorkflow";
 import { ContentBoardColumn } from "./ContentBoardColumn";
 import { ContentBoardCard } from "./ContentBoardCard";

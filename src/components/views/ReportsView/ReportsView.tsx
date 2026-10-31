@@ -5,8 +5,6 @@ import { toast } from "sonner";
 import {
   BarChart3,
   ChevronDown,
-  Download,
-  Layers,
   Plus,
   Printer,
   RefreshCw,

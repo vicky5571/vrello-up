@@ -27,7 +27,7 @@ export const createDataSlice: StateCreator<
     set((state) => ({ users: state.users.filter((u) => u.id !== userId) }));
   },
 
-  importBackup: (_data) => {
+  importBackup: () => {
     return true;
   },
 
