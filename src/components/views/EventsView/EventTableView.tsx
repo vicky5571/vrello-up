@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
+import { AppImage } from "@/components/ui/AppImage";
 import type { FieldEventItem, User } from "@/types";
 import type { EventConflictDetail } from "@/lib/marcom/eventChecklist";
 import { formatEventDateRange, findMemberForPic } from "@/lib/marcom/eventChecklist";
@@ -227,13 +228,14 @@ export function EventTableView({
           return (
             <div className="flex items-center gap-2 text-xs">
               {member ? (
-                <img
+                <AppImage
                   src={member.avatar}
                   alt={member.name}
-                  className="w-5 h-5 rounded-full bg-slate-200 shrink-0"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = "none";
-                  }}
+                  fill
+                  sizes="avatar"
+                  containerClassName="w-5 h-5 rounded-full bg-slate-200 shrink-0"
+                  className="w-full h-full object-cover rounded-full"
+                  fallbackIcon={<Users className="w-3 h-3 text-slate-400" />}
                 />
               ) : (
                 <Users className="w-4 h-4 text-slate-400 shrink-0" />

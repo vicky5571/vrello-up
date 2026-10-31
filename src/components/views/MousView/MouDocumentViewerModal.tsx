@@ -12,6 +12,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { parseMouDocumentSource } from "./mouDocumentHelpers";
+import { AppImage } from "@/components/ui/AppImage";
 
 export interface MouDocumentViewerModalProps {
   isOpen: boolean;
@@ -175,11 +176,13 @@ export function MouDocumentViewerModal({
             </div>
           ) : parsed.type === "INTERNAL_IMAGE" ? (
             <div className="w-full h-full flex items-center justify-center p-2">
-              <div className="relative max-h-[72vh] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg">
-                <img
+              <div className="relative w-[90vw] max-w-4xl h-[72vh] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg flex items-center justify-center">
+                <AppImage
                   src={parsed.previewUrl}
                   alt={parsed.filename}
-                  className="max-h-[72vh] max-w-full object-contain mx-auto"
+                  fill
+                  sizes="lightbox"
+                  className="object-contain"
                 />
               </div>
             </div>

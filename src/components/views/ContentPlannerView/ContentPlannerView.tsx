@@ -28,6 +28,7 @@ import {
   PostStatus,
 } from "@/types";
 import { formatDate, cn } from "@/lib/utils";
+import { AppImage } from "@/components/ui/AppImage";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
@@ -664,15 +665,12 @@ export function ContentPlannerView() {
 
                         return (
                           <div className="relative w-full h-full bg-slate-100 dark:bg-slate-900">
-                            <img
+                            <AppImage
                               src={post.mediaUrl}
                               alt={post.title}
-                              loading="lazy"
-                              decoding="async"
+                              fill
+                              sizes="card"
                               className="w-full h-full object-cover group-hover/media:scale-105 transition-transform duration-300"
-                              onError={(e) => {
-                                (e.target as HTMLElement).style.display = "none";
-                              }}
                             />
                             <div className="absolute inset-0 bg-black/20 group-hover/media:bg-black/0 transition-colors flex items-center justify-center opacity-0 group-hover/media:opacity-100">
                               <span className="px-2.5 py-1 rounded-lg bg-black/70 text-white text-[10px] font-medium backdrop-blur-xs flex items-center gap-1">
@@ -991,11 +989,15 @@ export function ContentPlannerView() {
                 }
 
                 return (
-                  <img
-                    src={previewMedia.mediaUrl}
-                    alt={previewMedia.title}
-                    className="w-full h-full object-contain"
-                  />
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <AppImage
+                      src={previewMedia.mediaUrl}
+                      alt={previewMedia.title}
+                      fill
+                      sizes="lightbox"
+                      className="object-contain"
+                    />
+                  </div>
                 );
               })()}
             </div>

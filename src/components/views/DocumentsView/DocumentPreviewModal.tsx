@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AppImage } from "@/components/ui/AppImage";
 import type { MarcomDocument } from "./DocumentsView";
 import {
   getDocumentTypeMeta,
@@ -189,11 +190,15 @@ export function DocumentPreviewModal({
               if (document.fileType === "PNG" || document.fileType === "JPG") {
                 return (
                   <div className="p-4 flex items-center justify-center w-full">
-                    <img
-                      src={document.filePath}
-                      alt={document.name}
-                      className="max-h-[460px] w-auto max-w-full object-contain rounded-lg shadow-sm"
-                    />
+                    <div className="relative w-[90vw] max-w-3xl h-[460px] rounded-lg overflow-hidden shadow-sm flex items-center justify-center">
+                      <AppImage
+                        src={document.filePath}
+                        alt={document.name}
+                        fill
+                        sizes="lightbox"
+                        className="object-contain"
+                      />
+                    </div>
                   </div>
                 );
               }

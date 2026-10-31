@@ -16,6 +16,7 @@ import {
   Package,
 } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
+import { AppImage } from "@/components/ui/AppImage";
 import type { FieldEventItem, User } from "@/types";
 import type { EventConflictDetail } from "@/lib/marcom/eventChecklist";
 import { formatEventDateRange, findMemberForPic } from "@/lib/marcom/eventChecklist";
@@ -351,13 +352,14 @@ export function EventCardsView({
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1.5">
               <div className="flex items-center gap-1.5 text-[11px] text-slate-500 min-w-0 flex-1 mr-1">
                 {picMember ? (
-                  <img
+                  <AppImage
                     src={picMember.avatar}
                     alt={picMember.name}
-                    className="w-4 h-4 rounded-full bg-slate-200 shrink-0"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = "none";
-                    }}
+                    fill
+                    sizes="avatar"
+                    containerClassName="w-4 h-4 rounded-full bg-slate-200 shrink-0"
+                    className="w-full h-full object-cover rounded-full"
+                    fallbackIcon={<Users className="w-2.5 h-2.5 text-slate-400" />}
                   />
                 ) : (
                   <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />

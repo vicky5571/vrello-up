@@ -25,6 +25,7 @@ import {
   VALID_COLUMNS_BY_TYPE,
 } from "@/lib/marcom/workItems";
 import { cn } from "@/lib/utils";
+import { AppImage } from "@/components/ui/AppImage";
 
 interface ProjectsWorkItemCardProps {
   item: MarcomWorkItem;
@@ -287,11 +288,12 @@ export const ProjectsWorkItemCard = memo(function ProjectsWorkItemCard({
               </div>
             </>
           ) : (
-            <img
+            <AppImage
               src={item.mediaUrl}
               alt={title}
+              fill
+              sizes="card"
               className="w-full h-full object-cover"
-              loading="lazy"
             />
           )}
         </div>

@@ -19,6 +19,7 @@ import {
   Square,
 } from "lucide-react";
 import { PlatformIcon } from "@/components/ui/BrandIcons";
+import { AppImage } from "@/components/ui/AppImage";
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
 import {
   getContentStatusMeta,
@@ -472,13 +473,12 @@ export function ContentDrawer({
                       }
 
                       return (
-                        <img
+                        <AppImage
                           src={mediaUrl}
                           alt={title}
+                          fill
+                          sizes="card"
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = "none";
-                          }}
                         />
                       );
                     })()}
