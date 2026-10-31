@@ -8,16 +8,24 @@
 
 **Date:** 2026-10-31  
 **Active Branch:** `vicky`  
-**Active Feature:** User Management Unified Header Component (`UsersHeader.tsx`, `UsersView.tsx`, `usersFilterHelpers.ts`) — **IMPLEMENTED & VERIFIED**  
-**Spec:** `docs/superpowers/specs/2026-10-31-users-header-redesign-design.md`  
-**Plan:** `docs/superpowers/plans/2026-10-31-users-header-redesign.md`  
-**Previous Feature:** MOUs & Partnerships Unified Header Component (`MousHeader.tsx`, `MousView.tsx`)  
+**Active Feature:** MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`) — **IMPLEMENTED & VERIFIED**  
+**Spec:** `docs/superpowers/specs/2026-10-31-mou-table-rows-redesign-design.md`  
+**Plan:** `docs/superpowers/plans/2026-10-31-mou-table-rows-redesign.md`  
+**Previous Feature:** User Management Unified Header Component (`UsersHeader.tsx`, `UsersView.tsx`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **User Management Unified Header Component (`UsersHeader.tsx`, `UsersView.tsx`, `usersFilterHelpers.ts`):**
+1. **MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`):**
+   - Consolidated standalone `Partner` (190px) and `Outlet` (170px) columns into a single unified `Partner & Outlet` column (220px), saving ~170px of horizontal table width.
+   - Formatted two-line entity cell with primary partner title (filtering table on click) and secondary outlet link with store icon (jumping to Outlets view on click).
+   - Replaced redundant stacked `"No period set"` and `"No expiry"` badges in Validity column with a clean, subtle `—` when no dates are configured.
+   - Replaced harsh fuchsia styling on MOU document buttons with neutral glassmorphic backdrop-blur chips (`bg-slate-100/80 dark:bg-slate-800/60`, border `border-slate-200/80 dark:border-slate-700/60`), subtle Drive/file icons (`FileText`, `ExternalLink`), and clean preview modal triggers.
+   - Formatted `Type` column replacing raw database enum underscores with clean spaces.
+   - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (612 passed, 0 failures).
+
+2. **User Management Unified Header Component (`UsersHeader.tsx`, `UsersView.tsx`, `usersFilterHelpers.ts`):**
    - Extracted `src/components/views/UsersView/UsersHeader.tsx` (198 LOC), standardizing User Management view with `MousHeader`, `OutletsHeader`, and `DocumentsHeader`.
    - Title Row: Icon (`Users` indigo-500), Title ("Manajemen Pengguna"), Counter badge (`totalUsers` Pengguna), Alert badge (`counts.pending` Perlu Review), Subtitle, and Refresh button (`RefreshCw`).
    - Controls & Navigation Row: Segmented tab buttons with Framer Motion fluid sliding pill animation (`layoutId="activeUsersTabPill"`, spring dynamics `stiffness: 450, damping: 35`, `whileTap={{ scale: 0.95 }}`, and `useReducedMotion()`) and real-time quick search input with clear button.
@@ -310,9 +318,9 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (34 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (35 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ 608 passed, 0 failed (104 suites)
+- `npm test` → ✅ 612 passed, 0 failed (105 suites)
 - `npm run test:smoke` → ✅ 85 passed, 0 failed
 
 ---

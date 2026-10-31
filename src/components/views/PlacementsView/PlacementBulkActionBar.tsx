@@ -214,6 +214,7 @@ export function PlacementBulkActionBar({
           <CustomDropdown
             value=""
             placeholder="Ubah Status…"
+            direction="up"
             disabled={isUpdating || !canManage}
             onChange={(val) => {
               if (val) {

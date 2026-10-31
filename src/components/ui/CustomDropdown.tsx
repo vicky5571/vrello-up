@@ -2,15 +2,17 @@
 
 import React, { useState, useRef, useEffect, useId, useMemo } from "react";
 import { ChevronDown, Check, Search, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useDropdown } from "@/components/ui/useDropdown";
 import {
   type DropdownOption,
   filterDropdownOptions,
   getOptionLabel,
+  computeDropdownPlacement,
 } from "./customDropdownHelpers";
 
 export type { DropdownOption };
-export { filterDropdownOptions, getOptionLabel };
+export { filterDropdownOptions, getOptionLabel, computeDropdownPlacement };
 
 export interface CustomDropdownProps<T extends string | number = string> {
   value: T;
@@ -27,6 +29,8 @@ export interface CustomDropdownProps<T extends string | number = string> {
   id?: string;
   icon?: React.ComponentType<{ className?: string }>;
   minSearchOptions?: number;
+  direction?: "up" | "down" | "auto";
+  align?: "left" | "right" | "auto";
 }
 
 /**
@@ -34,8 +38,10 @@ export interface CustomDropdownProps<T extends string | number = string> {
  * Replaces unstyled native <select> elements across the platform with:
  * - Search filtering inside dropdown popover (auto-activates when options >= minSearchOptions or searchable=true)
  * - Click-outside and Escape key dismissal via useDropdown
- * - Dark mode / light mode theme alignment with glassmorphism
+ * - Dark mode / light mode theme alignment with solid high-contrast cards
  * - Active item checkmark indicator and keyboard arrow navigation
+ * - Responsive viewport collision detection (auto flips up or right-aligns)
+ * - Elevated z-index stacking when open to prevent clipping by sibling or stage elements
  */
 export function CustomDropdown<T extends string | number = string>({
   value,
@@ -52,10 +58,19 @@ export function CustomDropdown<T extends string | number = string>({
   id,
   icon: TriggerIcon,
   minSearchOptions = 6,
+  direction = "auto",
+  align = "auto",
 }: CustomDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+  const [placement, setPlacement] = useState<{
+    direction: "up" | "down";
+    align: "left" | "right";
+  }>({
+    direction: direction === "up" ? "up" : "down",
+    align: align === "right" ? "right" : "left",
+  });
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -81,15 +96,34 @@ export function CustomDropdown<T extends string | number = string>({
     [options, searchQuery],
   );
 
-  // Focus search input when dropdown opens
+  // Focus search input and compute responsive placement when dropdown opens
   useEffect(() => {
-    if (isOpen && shouldShowSearch) {
-      const timer = setTimeout(() => {
-        searchInputRef.current?.focus();
-      }, 30);
-      return () => clearTimeout(timer);
+    if (isOpen) {
+      if (triggerRef.current && typeof window !== "undefined") {
+        const rect = triggerRef.current.getBoundingClientRect();
+        const res = computeDropdownPlacement({
+          rect: {
+            top: rect.top,
+            bottom: rect.bottom,
+            left: rect.left,
+            right: rect.right,
+          },
+          direction,
+          align,
+          viewportHeight: window.innerHeight,
+          viewportWidth: window.innerWidth,
+        });
+        setPlacement({ direction: res.direction, align: res.align });
+      }
+
+      if (shouldShowSearch) {
+        const timer = setTimeout(() => {
+          searchInputRef.current?.focus();
+        }, 30);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [isOpen, shouldShowSearch]);
+  }, [isOpen, shouldShowSearch, direction, align]);
 
   const activeOption = options.find((opt) => opt.value === value);
   const displayLabel = activeOption ? activeOption.label : placeholder;
@@ -145,7 +179,11 @@ export function CustomDropdown<T extends string | number = string>({
   return (
     <div
       ref={containerRef}
-      className={`relative inline-block text-left ${className}`}
+      className={cn(
+        "relative inline-block text-left",
+        isOpen ? "z-30" : "z-auto",
+        className,
+      )}
       onKeyDown={handleKeyDown}
     >
       {/* Trigger Button */}
@@ -191,11 +229,23 @@ export function CustomDropdown<T extends string | number = string>({
         <div
           role="listbox"
           aria-labelledby={dropdownId}
-          className={`absolute left-0 mt-1 z-50 min-w-full sm:min-w-[190px] w-max max-w-[280px] rounded-xl border border-slate-200/90 dark:border-slate-700/90 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl py-1 text-xs animate-in fade-in-0 zoom-in-95 duration-100 origin-top ${menuClassName}`}
+          className={cn(
+            "absolute z-50 min-w-full sm:min-w-[190px] w-max max-w-[280px] rounded-xl border border-slate-200/90 dark:border-slate-700/90 bg-white dark:bg-slate-900 shadow-2xl py-1 text-xs animate-in fade-in-0 duration-100",
+            placement.direction === "up" ? "bottom-full mb-1" : "top-full mt-1",
+            placement.align === "right" ? "right-0 left-auto" : "left-0",
+            placement.direction === "up"
+              ? placement.align === "right"
+                ? "origin-bottom-right"
+                : "origin-bottom-left"
+              : placement.align === "right"
+                ? "origin-top-right"
+                : "origin-top-left",
+            menuClassName,
+          )}
         >
           {/* Sticky Search Header */}
           {shouldShowSearch && (
-            <div className="p-1.5 border-b border-slate-100 dark:border-slate-800/80 sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-10">
+            <div className="p-1.5 border-b border-slate-100 dark:border-slate-800/80 sticky top-0 bg-white dark:bg-slate-900 z-10 rounded-t-xl">
               <div className="relative">
                 <Search className="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 <input
@@ -225,9 +275,6 @@ export function CustomDropdown<T extends string | number = string>({
                   </button>
                 )}
               </div>
-            </div>
-          )}
-
           {/* Options List */}
           <div className="max-h-56 overflow-y-auto overflow-x-hidden p-1 space-y-0.5">
             {filteredOptions.length === 0 ? (

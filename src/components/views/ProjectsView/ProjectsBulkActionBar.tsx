@@ -40,6 +40,7 @@ export function ProjectsBulkActionBar({
         <CustomDropdown
           value=""
           placeholder="Move to status..."
+          direction="up"
           onChange={(val) => {
             if (val) {
               onBulkStatus(selectedKeys, val as ProjectsColumn);

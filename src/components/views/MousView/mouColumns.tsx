@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Building2, Layers, AlertTriangle, Eye, Download, Clock, Check, ChevronRight } from "lucide-react";
+import { Store, Building2, Layers, AlertTriangle, Eye, Download, Clock, Check, ChevronRight, FileText, ExternalLink } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
 import {
   createMarcomColumnHelper,
@@ -77,45 +77,42 @@ export function buildMouColumns({
     }),
     columnHelper.accessor("partnerName", {
       id: "partner",
-      header: "Partner",
-      size: 190,
-      minSize: 130,
-      cell: ({ row }) => (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setMarcomFilter("mous", row.original.partnerName);
-          }}
-          className="truncate font-semibold text-slate-900 dark:text-slate-100 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 hover:underline cursor-pointer text-left"
-          title={`Filter MOUs by partner "${row.original.partnerName}"`}
-        >
-          {row.original.partnerName}
-        </button>
-      ),
-    }),
-    columnHelper.display({
-      id: "outlet",
-      header: "Outlet",
-      size: 170,
-      minSize: 120,
-      enableSorting: false,
+      header: "Partner & Outlet",
+      size: 220,
+      minSize: 160,
       cell: ({ row }) => {
-        const name = row.original.outletName;
-        if (!name) return <span className="text-slate-400">—</span>;
+        const partner = row.original.partnerName;
+        const outlet = row.original.outletName;
         return (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToMarcom("outlets", name);
-            }}
-            className="truncate font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:underline cursor-pointer flex items-center gap-1.5 text-left"
-            title={`Jump to Outlets view for "${name}"`}
-          >
-            <Store className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{name}</span>
-          </button>
+          <div className="flex flex-col gap-0.5 min-w-0 py-0.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMarcomFilter("mous", partner);
+              }}
+              className="truncate font-semibold text-slate-900 dark:text-slate-100 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 hover:underline cursor-pointer text-left"
+              title={`Filter MOUs by partner "${partner}"`}
+            >
+              {partner}
+            </button>
+            {outlet ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToMarcom("outlets", outlet);
+                }}
+                className="truncate text-[11px] font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:underline cursor-pointer flex items-center gap-1 text-left"
+                title={`Jump to Outlets view for "${outlet}"`}
+              >
+                <Store className="w-3 h-3 shrink-0" />
+                <span className="truncate">{outlet}</span>
+              </button>
+            ) : (
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">—</span>
+            )}
+          </div>
         );
       },
     }),
@@ -143,7 +140,17 @@ export function buildMouColumns({
         );
       },
     }),
-    columnHelper.accessor("mouType", { id: "type", header: "Type", size: 160, minSize: 120 }),
+    columnHelper.accessor("mouType", {
+      id: "type",
+      header: "Type",
+      size: 160,
+      minSize: 120,
+      cell: ({ getValue }) => (
+        <span className="text-slate-700 dark:text-slate-300 text-xs">
+          {(getValue() || "").replaceAll("_", " ")}
+        </span>
+      ),
+    }),
     columnHelper.accessor("status", {
       id: "status",
       header: "Status",
@@ -193,7 +200,16 @@ export function buildMouColumns({
         return timeA - timeB;
       },
       cell: ({ row }) => {
+        const hasDates = Boolean(row.original.startDate || row.original.endDate);
+        if (!hasDates) {
+          return <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>;
+        }
+
         const validity = calculateMouValidity(row.original.startDate, row.original.endDate);
+        if (validity.status === "NO_DATE") {
+          return <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>;
+        }
+
         const periodStr = formatMouDateRange(row.original.startDate, row.original.endDate);
 
         const variantBadgeStyles: Record<string, string> = {
@@ -306,16 +322,16 @@ export function buildMouColumns({
     columnHelper.accessor("docPath", {
       id: "document",
       header: "Dokumen MOU",
-      size: 145,
-      minSize: 125,
+      size: 155,
+      minSize: 130,
       enableSorting: false,
       cell: ({ row }) => {
         const doc = row.original.docPath;
         const parsed = parseMouDocumentSource(doc, row.original.partnerName);
         if (parsed.type === "EMPTY") {
           return (
-            <span className="text-slate-400 text-xs italic">
-              Tanpa Berkas
+            <span className="text-slate-400 dark:text-slate-500 text-xs">
+              —
             </span>
           );
         }
@@ -327,18 +343,22 @@ export function buildMouColumns({
             <button
               type="button"
               onClick={() => setViewingDocMou(row.original)}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-700 dark:text-fuchsia-300 border border-fuchsia-200 dark:border-fuchsia-800 hover:bg-fuchsia-100 transition-colors cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100/80 dark:bg-slate-800/60 hover:bg-slate-200/80 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/60 backdrop-blur-xs transition-colors cursor-pointer shadow-2xs group"
               title="Lihat Pratinjau Dokumen"
             >
-              <Eye className="w-3 h-3 text-fuchsia-600 dark:text-fuchsia-400" />
-              <span>{parsed.label}</span>
+              {parsed.isExternal ? (
+                <ExternalLink className="w-3 h-3 text-blue-500 dark:text-blue-400 group-hover:scale-105 transition-transform shrink-0" />
+              ) : (
+                <FileText className="w-3 h-3 text-slate-500 dark:text-slate-400 group-hover:scale-105 transition-transform shrink-0" />
+              )}
+              <span className="truncate max-w-[85px]">{parsed.label}</span>
             </button>
             <a
               href={parsed.downloadUrl}
               download={parsed.filename || "dokumen-mou"}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Unduh Berkas Asli"
             >
               <Download className="w-3.5 h-3.5" />

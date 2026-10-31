@@ -71,7 +71,7 @@ export function InventoryHeaderKpis({
     : { type: "spring" as const, stiffness: 450, damping: 35 };
 
   return (
-    <div className="p-6 pb-2 space-y-5 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm">
+    <div className="relative z-20 p-6 pb-2 space-y-5 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">

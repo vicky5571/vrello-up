@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `feat(ui)`: Redesign MOU table rows with consolidated entity column and neutral glassmorphism
+  - Consolidated standalone `Partner` and `Outlet` columns into unified `Partner & Outlet` column saving ~170px of table width
+  - Formatted two-line entity cell with primary partner title and secondary outlet link with store icon
+  - Replaced stacked `"No period set"` and `"No expiry"` badges with a clean, subtle `—` when no dates are configured
+  - Styled MOU document chips with neutral glassmorphic backdrop blur (`bg-slate-100/80 dark:bg-slate-800/60`), subtle Drive/file icons, and clean preview modal triggers
+  - Formatted `Type` column replacing raw database enum underscores with spaces
+  - Gates: `npm test` 608 pass / 0 fail; `npm run test:smoke` 85 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-10-31-mou-table-rows-redesign-design.md`
+  Plan: `docs/superpowers/plans/2026-10-31-mou-table-rows-redesign.md`
+
 - `feat(ui)`: Add unified header to User Management view
   - Extracted modular `UsersHeader.tsx` (198 LOC) matching the design language of `MousHeader`, `OutletsHeader`, and `DocumentsHeader`
   - Integrated Title row with `Users` icon, `{totalUsers}` counter badge, `{counts.pending}` pending review badge, concise subtitle, and spinning `RefreshCw` button

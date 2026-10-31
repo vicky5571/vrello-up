@@ -587,6 +587,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
               <span>Rows</span>
               <CustomDropdown<number>
                 value={pagination.pageSize}
+                direction="up"
                 onChange={(val) => {
                   setPagination({ pageIndex: 0, pageSize: Number(val) });
                   if (fixedViewport) scrollTableToTop();
