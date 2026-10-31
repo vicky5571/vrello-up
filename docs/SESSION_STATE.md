@@ -8,16 +8,25 @@
 
 **Date:** 2026-10-31  
 **Active Branch:** `vicky`  
-**Active Feature:** MOUs & Partnerships Unified Header Component (`MousHeader.tsx`, `MousView.tsx`) — **IMPLEMENTED & VERIFIED**  
-**Spec:** `docs/superpowers/specs/2026-10-31-mous-header-redesign-design.md`  
-**Plan:** `docs/superpowers/plans/2026-10-31-mous-header-redesign.md`  
-**Previous Feature:** Workspace Shell Integration for User Management (`ViewMode`, `ActiveViewStage`, `GlobalRail`, `urlState.ts`)  
+**Active Feature:** User Management Unified Header Component (`UsersHeader.tsx`, `UsersView.tsx`, `usersFilterHelpers.ts`) — **IMPLEMENTED & VERIFIED**  
+**Spec:** `docs/superpowers/specs/2026-10-31-users-header-redesign-design.md`  
+**Plan:** `docs/superpowers/plans/2026-10-31-users-header-redesign.md`  
+**Previous Feature:** MOUs & Partnerships Unified Header Component (`MousHeader.tsx`, `MousView.tsx`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **MOUs & Partnerships Unified Header Component (`MousHeader.tsx`, `MousView.tsx`):**
+1. **User Management Unified Header Component (`UsersHeader.tsx`, `UsersView.tsx`, `usersFilterHelpers.ts`):**
+   - Extracted `src/components/views/UsersView/UsersHeader.tsx` (198 LOC), standardizing User Management view with `MousHeader`, `OutletsHeader`, and `DocumentsHeader`.
+   - Title Row: Icon (`Users` indigo-500), Title ("Manajemen Pengguna"), Counter badge (`totalUsers` Pengguna), Alert badge (`counts.pending` Perlu Review), Subtitle, and Refresh button (`RefreshCw`).
+   - Controls & Navigation Row: Segmented tab buttons with Framer Motion fluid sliding pill animation (`layoutId="activeUsersTabPill"`, spring dynamics `stiffness: 450, damping: 35`, `whileTap={{ scale: 0.95 }}`, and `useReducedMotion()`) and real-time quick search input with clear button.
+   - KPI Row: Embedded 4 `KpiSummaryCards` (Total Pengguna, Menunggu Review, Pengguna Aktif, Akun Ditolak/Nonaktif) with direct interactive click navigation to tabs.
+   - Created pure filtering helper `filterUsers` in `usersFilterHelpers.ts` with unit test suite in `usersFilterHelpers.test.ts` (5 passed).
+   - Refactored coordinator `UsersView.tsx` from 187 down to 123 LOC and applied full-bleed stage layout `flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto`.
+   - Gates: `npm run build:check` (0 errors), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (608 passed, 0 failures).
+
+2. **MOUs & Partnerships Unified Header Component (`MousHeader.tsx`, `MousView.tsx`):**
    - Extracted `src/components/views/MousView/MousHeader.tsx` (186 LOC), standardizing MOUs view with `OutletsHeader`, `DocumentsHeader`, and `PlacementsHeader`.
    - Title Row: Icon (`FileText`), Title ("MOUs & Partnerships"), Counter badge (`totalMous`), Subtitle, Refresh button (`RefreshCw`), Export button (`Download` -> `ExportCenter`), and "+ New MOU" button (`Plus`, conditional on `canCreate`).
    - Controls & Filter Row: Quick Search input with clear button, Status Chips with Framer Motion sliding pill animation (`layoutId="activeMouStatusPill"`, spring dynamics `stiffness: 450, damping: 35`, `whileTap={{ scale: 0.95 }}`, and `useReducedMotion()`), searchable Branch and MOU Type `CustomDropdown` selectors, Urgency chips (`Expiring Soon`, `Expired`), and dynamic Reset Filters link.
@@ -301,10 +310,10 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (33 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (34 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ 603 passed, 0 failed (103 suites)
-- `npm run test:smoke` → ✅ 84 passed, 0 failed
+- `npm test` → ✅ 608 passed, 0 failed (104 suites)
+- `npm run test:smoke` → ✅ 85 passed, 0 failed
 
 ---
 

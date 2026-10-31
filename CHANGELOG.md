@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-10-31]
 
+- `feat(ui)`: Add unified header to User Management view
+  - Extracted modular `UsersHeader.tsx` (198 LOC) matching the design language of `MousHeader`, `OutletsHeader`, and `DocumentsHeader`
+  - Integrated Title row with `Users` icon, `{totalUsers}` counter badge, `{counts.pending}` pending review badge, concise subtitle, and spinning `RefreshCw` button
+  - Stabilized Controls row with Framer Motion sliding pill tab switcher (`layoutId="activeUsersTabPill"` with spring dynamics and `useReducedMotion()`) and real-time quick search input with clear button
+  - Embedded 4 `KpiSummaryCards` (Total Pengguna, Menunggu Review, Pengguna Aktif, Akun Ditolak/Nonaktif) with direct interactive click navigation to tabs
+  - Created pure filtering logic `filterUsers` in `usersFilterHelpers.ts` with unit test suite
+  - Refactored `UsersView.tsx` coordinator from 187 down to 123 LOC and applied full-bleed stage layout
+  - Gates: `npm test` 608 pass / 0 fail; `npm run test:smoke` 85 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-10-31-users-header-redesign-design.md`
+  Plan: `docs/superpowers/plans/2026-10-31-users-header-redesign.md`
+
 - `feat(ui)`: Add unified header to MOUs & Partnerships view
   - Extracted modular `MousHeader.tsx` (186 LOC) matching the design language of `OutletsHeader`, `DocumentsHeader`, and `PlacementsHeader`
   - Integrated Title row with `FileText` icon, `{totalMous}` counter badge, Refresh button, Export Center trigger, and `+ New MOU` modal trigger
