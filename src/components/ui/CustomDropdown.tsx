@@ -275,6 +275,9 @@ export function CustomDropdown<T extends string | number = string>({
                   </button>
                 )}
               </div>
+            </div>
+          )}
+
           {/* Options List */}
           <div className="max-h-56 overflow-y-auto overflow-x-hidden p-1 space-y-0.5">
             {filteredOptions.length === 0 ? (
