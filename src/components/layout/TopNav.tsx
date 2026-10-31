@@ -9,6 +9,7 @@ import { NotificationCenter } from "./NotificationCenter";
 import { UserMenuDropdown } from "./UserMenuDropdown";
 import { ProjectsFilterBar } from "./ProjectsFilterBar";
 import { getEffectiveProfile } from "./userProfileHelpers";
+import { AppImage } from "@/components/ui/AppImage";
 import { Search, Download } from "lucide-react";
 
 export function TopNav() {
@@ -106,9 +107,11 @@ export function TopNav() {
               className="relative w-6 h-6 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-bold text-[10px] shadow-2xs cursor-pointer overflow-hidden"
             >
               {profile.image && !imageError ? (
-                <img
+                <AppImage
                   src={profile.image}
                   alt={profile.name}
+                  fill
+                  sizes="avatar"
                   onError={() => setImageError(true)}
                   className="w-full h-full object-cover rounded-full"
                 />

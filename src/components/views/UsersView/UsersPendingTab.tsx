@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { X, Loader2, Clock, UserCheck } from "lucide-react";
+import { AppImage } from "@/components/ui/AppImage";
 import type { AppUser } from "@/types";
 
 interface UsersPendingTabProps {
@@ -103,9 +104,9 @@ export function UsersPendingTab({ users, isLoading, onAction }: UsersPendingTabP
                 <tr key={user.id} className="hover:bg-muted/30 transition-colors">
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center text-xs overflow-hidden shrink-0">
+                      <div className="relative w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center text-xs overflow-hidden shrink-0">
                         {user.avatar ? (
-                          <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                          <AppImage src={user.avatar} alt={user.name} fill sizes="32px" className="object-cover" />
                         ) : (
                           user.name.charAt(0).toUpperCase()
                         )}

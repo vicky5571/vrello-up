@@ -6,6 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { ShieldCheck, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { getEffectiveProfile } from "./userProfileHelpers";
+import { AppImage } from "@/components/ui/AppImage";
 
 export interface UserMenuDropdownProps {
   onClose: () => void;
@@ -36,11 +37,13 @@ export function UserMenuDropdown({ onClose }: UserMenuDropdownProps) {
       {/* Profile Header Card */}
       <div className="p-2.5 rounded-lg bg-muted/50 border border-border/60">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs overflow-hidden shrink-0">
+          <div className="relative w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs overflow-hidden shrink-0">
             {profile.image && !imageError ? (
-              <img
+              <AppImage
                 src={profile.image}
                 alt={profile.name}
+                fill
+                sizes="36px"
                 onError={() => setImageError(true)}
                 className="w-full h-full object-cover"
               />
