@@ -71,7 +71,7 @@ export function ProjectsFilterBar() {
   };
 
   return (
-    <div className="w-full bg-slate-50/80 dark:bg-[#151823]/80 border-b border-slate-200/70 dark:border-slate-800/80 px-4 py-2 text-xs">
+    <div className="relative z-20 w-full bg-slate-50/80 dark:bg-[#151823]/80 border-b border-slate-200/70 dark:border-slate-800/80 px-4 py-2 text-xs">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         {/* Left: Search & Quick Type Pills */}
         <div className="flex items-center gap-2 flex-wrap">

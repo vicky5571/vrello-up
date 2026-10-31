@@ -159,7 +159,7 @@ export function PipelineView({ className }: PipelineViewProps) {
   return (
     <div className={className ? className : "flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto"}>
       {/* 1. Unified Top Header Zone (Equipment Inventory Style) */}
-      <div className="p-4 sm:p-6 pb-2 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm">
+      <div className="relative z-20 p-4 sm:p-6 pb-2 space-y-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/50 backdrop-blur-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
