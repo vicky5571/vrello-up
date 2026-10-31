@@ -61,7 +61,7 @@ export function LoginForm({ pending, rejected, error, code }: LoginFormProps) {
         return {
           tone: "error",
           message:
-            "Konfigurasi server untuk Google OAuth tidak lengkap. Pastikan kredensial telah terkonfigurasi.",
+            "Konfigurasi server database atau kredensial otentikasi belum lengkap. Pastikan variabel DATABASE_URL dan AUTH_SECRET telah dikonfigurasi di dashboard Vercel.",
         };
       case "OAuthSignin":
       case "OAuthCallbackError":
@@ -119,6 +119,10 @@ export function LoginForm({ pending, rejected, error, code }: LoginFormProps) {
           setErrorMessage(PENDING_MESSAGE);
         } else if (result.code === "rejected") {
           setErrorMessage(REJECTED_MESSAGE);
+        } else if (result.error === "Configuration") {
+          setErrorMessage(
+            "Gagal terhubung ke database atau konfigurasi server belum lengkap. Pastikan variabel lingkungan DATABASE_URL dan AUTH_SECRET telah dikonfigurasi di dashboard Vercel."
+          );
         } else {
           setErrorMessage("Email atau password tidak sesuai.");
         }

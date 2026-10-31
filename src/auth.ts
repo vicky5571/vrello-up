@@ -34,9 +34,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: normalizeEmail(parsed.data.email) },
-        });
+        let user;
+        try {
+          user = await prisma.user.findUnique({
+            where: { email: normalizeEmail(parsed.data.email) },
+          });
+        } catch (dbError) {
+          console.error("[auth] Database query failed during credentials authorize:", dbError);
+          throw dbError;
+        }
 
         if (!user || !user.password) {
           return null;
@@ -55,10 +61,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() },
-        });
+        try {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+          });
+        } catch (updateError) {
+          console.warn("[auth] Failed to update lastLoginAt:", updateError);
+        }
 
         return {
           id: user.id,
