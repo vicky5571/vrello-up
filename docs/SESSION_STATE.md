@@ -36,6 +36,12 @@
    - **Explicit Types & Elimination of `any`:** Replaced all `any` usages in inventory borrow endpoints and `auth-helpers.test.ts` with strict typed interfaces (`RawBorrowRecord`, `Parameters<HandleGoogleSignInParams[...]>[0]`).
    - Gates: `npm run lint` (0 errors), `npm run build` (compiled and generated all 27 static/dynamic pages with 0 errors), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (612 passed, 0 failures).
 
+4. **Next.js Security Patch Upgrade (`15.2.0` -> `15.2.9` for CVE-2025-66478):**
+   - **Issue Triaged:** Vercel security gate blocked deployment post-build with `Build Failed: Vulnerable version of Next.js detected, please update immediately (CVE-2025-66478)`.
+   - **Patch Upgrade:** Upgraded `next` and `eslint-config-next` to `15.2.9` (the official patched security release in the 15.2.x series, zero breaking changes).
+   - **Callback Narrowing Fix:** Fixed closure variable narrowing in `auth-helpers.test.ts` via object capture pattern (`captured.data`).
+   - Gates: `npm run build:check` (0 errors), `npm run lint` (0 errors), `npm run build` (27/27 pages compiled), `npm run drift:check` (clean), `npm run test:smoke` (85 passed), `npm test` (612 passed, 0 failures).
+
 2. **MOU Table Rows UI Redesign & Entity Consolidation (`mouColumns.tsx`, `MarcomTableShell.tsx`, `placementColumns.tsx`):**
    - Consolidated standalone `Partner` (190px) and `Outlet` (170px) columns into a single unified `Partner & Outlet` column (220px), saving ~170px of horizontal table width.
    - Formatted two-line entity cell with primary partner title (filtering table on click) and secondary outlet link with store icon (jumping to Outlets view on click).

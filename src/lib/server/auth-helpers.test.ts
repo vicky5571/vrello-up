@@ -115,42 +115,40 @@ test("handleGoogleSignInLogic returns false if user email is missing", async () 
 });
 
 test("handleGoogleSignInLogic creates new user with PENDING status and redirects to /login?pending=1", async () => {
-  let createdData: Parameters<HandleGoogleSignInParams["createUser"]>[0] | null = null;
+  const captured: { data?: Parameters<HandleGoogleSignInParams["createUser"]>[0] } = {};
   const result = await handleGoogleSignInLogic({
     user: { name: "New User", email: "newuser@example.com", image: "https://photo.jpg" },
     account: { provider: "google", providerAccountId: "g-999" },
     findUserByEmail: async () => null,
     createUser: async (data) => {
-      createdData = data;
+      captured.data = data;
     },
     updateUser: async () => {},
   });
 
   assert.equal(result, "/login?pending=1");
-  assert.ok(createdData !== null);
-  assert.equal(createdData.email, "newuser@example.com");
-  assert.equal(createdData.role, "STAFF");
-  assert.equal(createdData.status, "PENDING");
-  assert.equal(createdData.googleId, "g-999");
+  assert.equal(captured.data?.email, "newuser@example.com");
+  assert.equal(captured.data?.role, "STAFF");
+  assert.equal(captured.data?.status, "PENDING");
+  assert.equal(captured.data?.googleId, "g-999");
 });
 
 test("handleGoogleSignInLogic auto-approves new user if matching seedAdminEmail", async () => {
-  let createdData: Parameters<HandleGoogleSignInParams["createUser"]>[0] | null = null;
+  const captured: { data?: Parameters<HandleGoogleSignInParams["createUser"]>[0] } = {};
   const result = await handleGoogleSignInLogic({
     user: { name: "Admin Google", email: "admin@vrelloup.dev" },
     account: { provider: "google", providerAccountId: "g-admin" },
     seedAdminEmail: "admin@vrelloup.dev",
     findUserByEmail: async () => null,
     createUser: async (data) => {
-      createdData = data;
+      captured.data = data;
     },
     updateUser: async () => {},
   });
 
   assert.equal(result, true);
-  assert.ok(createdData !== null);
-  assert.equal(createdData.role, "ADMIN");
-  assert.equal(createdData.status, "APPROVED");
+  assert.equal(captured.data?.role, "ADMIN");
+  assert.equal(captured.data?.status, "APPROVED");
 });
 
 test("handleGoogleSignInLogic redirects PENDING existing user to /login?pending=1", async () => {
@@ -192,7 +190,7 @@ test("handleGoogleSignInLogic redirects REJECTED existing user to /login?rejecte
 });
 
 test("handleGoogleSignInLogic updates and logs in APPROVED existing user", async () => {
-  let updatedData: Parameters<HandleGoogleSignInParams["updateUser"]>[1] | null = null;
+  const captured: { data?: Parameters<HandleGoogleSignInParams["updateUser"]>[1] } = {};
   const result = await handleGoogleSignInLogic({
     user: { email: "approved@example.com", image: "https://avatar.png" },
     account: { provider: "google", providerAccountId: "g-approved" },
@@ -206,15 +204,14 @@ test("handleGoogleSignInLogic updates and logs in APPROVED existing user", async
     }),
     createUser: async () => {},
     updateUser: async (id, data) => {
-      updatedData = data;
+      captured.data = data;
     },
   });
 
   assert.equal(result, true);
-  assert.ok(updatedData !== null);
-  assert.ok(updatedData.lastLoginAt instanceof Date);
-  assert.equal(updatedData.googleId, "g-approved");
-  assert.equal(updatedData.avatar, "https://avatar.png");
+  assert.ok(captured.data?.lastLoginAt instanceof Date);
+  assert.equal(captured.data?.googleId, "g-approved");
+  assert.equal(captured.data?.avatar, "https://avatar.png");
 });
 
 test("normalizeEmail lowercases and trims email addresses", () => {
