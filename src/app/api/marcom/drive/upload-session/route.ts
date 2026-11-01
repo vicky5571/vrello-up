@@ -30,7 +30,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const folderId = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID || "";
+    const rawFolderId = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID || "";
+    const folderId = rawFolderId.split(/[?#]/)[0].trim();
     const accessToken = await getDriveAccessToken();
 
     const headers = buildResumableSessionHeaders({
