@@ -45,3 +45,4 @@ YYYY-MM-DD-<feature-slug>-design.md
 | 2026-10-31 | qa-comprehensive-seeder | Done |
 | 2026-11-01 | topnav-avatar-profile-sync | Done |
 | 2026-11-01 | core-web-vitals-image-optimization | Done |
+| 2026-11-01 | projects-work-item-create-modals | Done |

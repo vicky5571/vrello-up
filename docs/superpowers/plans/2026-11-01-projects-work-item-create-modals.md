@@ -1,6 +1,6 @@
 # Unified Projects Work Item Creation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Eliminate runtime HTTP 400 errors and corrupt dummy data during work item creation from Projects views by delegating creation to the original, official Marcom Hub creation modals (`ContentPostModal`, `EventFormModal`, `PlacementFormModal`) hosted inside a reusable `ProjectsCreateModalHost`.
 
@@ -43,7 +43,7 @@
   export function getInitialPlacementPayload(request: CreateWorkItemRequest): Partial<MarcomPlacement>;
   ```
 
-- [ ] **Step 1: Write failing test in `src/components/views/ProjectsView/createModalHelpers.test.ts`**
+- [x] **Step 1: Write failing test in `src/components/views/ProjectsView/createModalHelpers.test.ts`**
 
 ```typescript
 // src/components/views/ProjectsView/createModalHelpers.test.ts
@@ -109,12 +109,12 @@ describe("createModalHelpers: getInitialPlacementPayload", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 2: Run test to verify failure**
 
 Run: `node --test --import ./test/register-alias.mjs src/components/views/ProjectsView/createModalHelpers.test.ts`  
 Expected: FAIL with `Cannot find module './createModalHelpers'`
 
-- [ ] **Step 3: Implement `src/components/views/ProjectsView/createModalHelpers.ts`**
+- [x] **Step 3: Implement `src/components/views/ProjectsView/createModalHelpers.ts`**
 
 ```typescript
 // src/components/views/ProjectsView/createModalHelpers.ts
@@ -195,12 +195,12 @@ export function getInitialPlacementPayload(
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node --test --import ./test/register-alias.mjs src/components/views/ProjectsView/createModalHelpers.test.ts`  
 Expected: PASS (3 suites, 7 passed)
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 ```bash
 git add src/components/views/ProjectsView/createModalHelpers.ts src/components/views/ProjectsView/createModalHelpers.test.ts
@@ -230,7 +230,7 @@ git commit -m "feat(projects): create pure helpers for work item creation contex
   export function ProjectsCreateModalHost(props: ProjectsCreateModalHostProps): React.JSX.Element | null;
   ```
 
-- [ ] **Step 1: Implement `src/components/views/ProjectsView/ProjectsCreateModalHost.tsx`**
+- [x] **Step 1: Implement `src/components/views/ProjectsView/ProjectsCreateModalHost.tsx`**
 
 Ensure file stays strictly $\le 250$ LOC (~190 LOC):
 
@@ -501,17 +501,17 @@ export function ProjectsCreateModalHost({
 }
 ```
 
-- [ ] **Step 2: Run build check to verify TypeScript compilation**
+- [x] **Step 2: Run build check to verify TypeScript compilation**
 
 Run: `npm run build:check`  
 Expected: PASS (0 errors)
 
-- [ ] **Step 3: Check LOC limit of `ProjectsCreateModalHost.tsx`**
+- [x] **Step 3: Check LOC limit of `ProjectsCreateModalHost.tsx`**
 
 Run: `wc -l src/components/views/ProjectsView/ProjectsCreateModalHost.tsx`  
 Expected: $\le 250$ LOC (~220 LOC)
 
-- [ ] **Step 4: Commit Task 2**
+- [x] **Step 4: Commit Task 2**
 
 ```bash
 git add src/components/views/ProjectsView/ProjectsCreateModalHost.tsx
@@ -526,7 +526,7 @@ git commit -m "feat(projects): create ProjectsCreateModalHost integrating origin
 - Modify: `src/components/views/ProjectsView/ProjectsCalendarView.tsx`
 - Modify: `src/components/views/ProjectsView/useProjectsCalendar.ts`
 
-- [ ] **Step 1: Update `ProjectsCalendarView.tsx`**
+- [x] **Step 1: Update `ProjectsCalendarView.tsx`**
 
 In `src/components/views/ProjectsView/ProjectsCalendarView.tsx`:
 1. Add `createRequest` state: `const [createRequest, setCreateRequest] = useState<CreateWorkItemRequest | null>(null);`.
@@ -534,16 +534,16 @@ In `src/components/views/ProjectsView/ProjectsCalendarView.tsx`:
 3. Mount `<ProjectsCreateModalHost createRequest={createRequest} onClose={() => setCreateRequest(null)} onRefresh={loadData} />`.
 4. Clean up old `handleCreateType` dependency.
 
-- [ ] **Step 2: Clean up `useProjectsCalendar.ts`**
+- [x] **Step 2: Clean up `useProjectsCalendar.ts`**
 
 Remove the hacky `handleCreateType` function that made blind POST requests with dummy data and `status: "PLANNED"`.
 
-- [ ] **Step 3: Run build check and smoke tests**
+- [x] **Step 3: Run build check and smoke tests**
 
 Run: `npm run build:check && npm run test:smoke`  
 Expected: PASS
 
-- [ ] **Step 4: Commit Task 3**
+- [x] **Step 4: Commit Task 3**
 
 ```bash
 git add src/components/views/ProjectsView/ProjectsCalendarView.tsx src/components/views/ProjectsView/useProjectsCalendar.ts
@@ -559,14 +559,14 @@ git commit -m "fix(projects): wire ProjectsCalendarView to ProjectsCreateModalHo
 - Modify: `src/components/views/ProjectsView/ProjectsBoardColumn.tsx`
 - Modify: `src/components/views/ProjectsView/useProjectsBoard.ts`
 
-- [ ] **Step 1: Update `ProjectsBoardColumn.tsx`**
+- [x] **Step 1: Update `ProjectsBoardColumn.tsx`**
 
 In `src/components/views/ProjectsView/ProjectsBoardColumn.tsx`:
 Replace the inline title input form with a clean dropdown / popover menu that lets the user choose "+ Content Post", "+ Field Event", or "+ Media Placement".
 Calling `onInitiateCreate?.(type, column)` invokes the parent modal.
 This eliminates ~35 LOC from `ProjectsBoardColumn.tsx`, reducing it from 267 down to $\le 240$ LOC.
 
-- [ ] **Step 2: Update `ProjectsBoardView.tsx` and `useProjectsBoard.ts`**
+- [x] **Step 2: Update `ProjectsBoardView.tsx` and `useProjectsBoard.ts`**
 
 In `ProjectsBoardView.tsx`:
 1. Add `createRequest` state.
@@ -574,12 +574,12 @@ In `ProjectsBoardView.tsx`:
 3. Mount `<ProjectsCreateModalHost createRequest={createRequest} onClose={() => setCreateRequest(null)} onRefresh={loadData} />`.
 4. Remove defunct `handleQuickCreate` from `useProjectsBoard.ts`.
 
-- [ ] **Step 3: Run build check and smoke tests**
+- [x] **Step 3: Run build check and smoke tests**
 
 Run: `npm run build:check && npm run test:smoke`  
 Expected: PASS
 
-- [ ] **Step 4: Commit Task 4**
+- [x] **Step 4: Commit Task 4**
 
 ```bash
 git add src/components/views/ProjectsView/ProjectsBoardView.tsx src/components/views/ProjectsView/ProjectsBoardColumn.tsx src/components/views/ProjectsView/useProjectsBoard.ts
@@ -596,21 +596,21 @@ git commit -m "fix(projects): wire ProjectsBoardView to ProjectsCreateModalHost 
 - Modify: `src/components/views/ProjectsView/ProjectsListTable.tsx`
 - Modify: `src/components/views/ProjectsView/useProjectsList.ts`
 
-- [ ] **Step 1: Add "+ New Work Item" trigger to `ProjectsListHeader.tsx` and `ProjectsListTable.tsx`**
+- [x] **Step 1: Add "+ New Work Item" trigger to `ProjectsListHeader.tsx` and `ProjectsListTable.tsx`**
 
 Allow users in List View to select the work item type to add (or auto-detect type when grouped by `type`).
 
-- [ ] **Step 2: Connect `ProjectsListView.tsx` to `ProjectsCreateModalHost`**
+- [x] **Step 2: Connect `ProjectsListView.tsx` to `ProjectsCreateModalHost`**
 
 Mount `<ProjectsCreateModalHost createRequest={createRequest} onClose={() => setCreateRequest(null)} onRefresh={loadData} />`.
 Remove defunct `handleQuickAddInGroup` from `useProjectsList.ts`.
 
-- [ ] **Step 3: Run build check and smoke tests**
+- [x] **Step 3: Run build check and smoke tests**
 
 Run: `npm run build:check && npm run test:smoke`  
 Expected: PASS
 
-- [ ] **Step 4: Commit Task 5**
+- [x] **Step 4: Commit Task 5**
 
 ```bash
 git add src/components/views/ProjectsView/ProjectsListView.tsx src/components/views/ProjectsView/ProjectsListHeader.tsx src/components/views/ProjectsView/ProjectsListTable.tsx src/components/views/ProjectsView/useProjectsList.ts
@@ -626,39 +626,39 @@ git commit -m "fix(projects): wire ProjectsListView to ProjectsCreateModalHost"
 - Modify: `docs/superpowers/plans/README.md`
 - Modify: `docs/SESSION_STATE.md`
 
-- [ ] **Step 1: Run drift check**
+- [x] **Step 1: Run drift check**
 
 Run: `npm run drift:check`  
 Expected: `✅ No drift detected. All invariants pass.`
 
-- [ ] **Step 2: Run smoke tests**
+- [x] **Step 2: Run smoke tests**
 
 Run: `npm run test:smoke`  
 Expected: `ℹ pass 85, fail 0`
 
-- [ ] **Step 3: Run full test suite**
+- [x] **Step 3: Run full test suite**
 
 Run: `npm test`  
 Expected: `ℹ pass 613+ (0 failures)`
 
-- [ ] **Step 4: Run production build check**
+- [x] **Step 4: Run production build check**
 
 Run: `npm run build:check`  
 Expected: `0 TypeScript errors`
 
-- [ ] **Step 5: Verify LOC limits across all touched files**
+- [x] **Step 5: Verify LOC limits across all touched files**
 
 Run: `wc -l src/components/views/ProjectsView/ProjectsCreateModalHost.tsx src/components/views/ProjectsView/ProjectsBoardColumn.tsx src/components/views/ProjectsView/ProjectsBoardView.tsx src/components/views/ProjectsView/ProjectsListView.tsx src/components/views/ProjectsView/ProjectsCalendarView.tsx`  
 Expected: All files strictly $\le 250$ LOC.
 
-- [ ] **Step 6: Update documentation indexes and session state**
+- [x] **Step 6: Update documentation indexes and session state**
 
 Update:
 - `docs/superpowers/specs/README.md`
 - `docs/superpowers/plans/README.md`
 - `docs/SESSION_STATE.md`
 
-- [ ] **Step 7: Commit documentation updates**
+- [x] **Step 7: Commit documentation updates**
 
 ```bash
 git add docs/superpowers/specs/README.md docs/superpowers/plans/README.md docs/SESSION_STATE.md

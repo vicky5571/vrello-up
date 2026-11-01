@@ -8,14 +8,23 @@
 
 **Date:** 2026-11-01  
 **Active Branch:** `vicky`  
-**Active Feature:** Core Web Vitals Next.js Image Optimization (`AppImage.tsx`, `appImageHelpers.ts`, `next.config.ts`, 16 consuming views) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** TopNav Avatar & Profile Session Synchronization (`TopNav.tsx`, `UserMenuDropdown.tsx`, `userProfileHelpers.ts`)  
+**Active Feature:** Unified Projects Work Item Creation via Original Marcom Hub Forms (`ProjectsCreateModalHost.tsx`, `createModalHelpers.ts`, `ProjectsCalendarView`, `ProjectsBoardView`, `ProjectsListView`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Core Web Vitals Next.js Image Optimization (`AppImage.tsx`, `appImageHelpers.ts`, `next.config.ts`, 16 consuming views)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Core Web Vitals Next.js Image Optimization (`AppImage.tsx`, `appImageHelpers.ts`, `next.config.ts`, 16 components):**
+1. **Unified Projects Work Item Creation via Original Marcom Hub Forms:**
+   - **Root Cause Evaluated:** Quick creation triggers in Projects views (`useProjectsCalendar.handleCreateType`, `useProjectsBoard.handleQuickCreate`, `useProjectsList.handleQuickAddInGroup`) performed blind, minimal POST mutations with hardcoded dummy titles and invalid states (such as `status: "PLANNED"` on placements, which failed with HTTP 400). Placements bypassed the required 4-step wizard (outlet, material, geofence, photos) and field events bypassed logistics checklists.
+   - **Pure Helpers Module (`createModalHelpers.ts`):** Implemented `sanitizeDateInput` with ISO date fallback, `resolveInitialStatus` mapping target board columns to valid entity statuses, and `getInitialPlacementPayload` enforcing state machine invariants (`NOT_STARTED` default). Added comprehensive unit tests in `createModalHelpers.test.ts` (6 passing tests).
+   - **Modal Host Component (`ProjectsCreateModalHost.tsx`):** Built coordinator ($\le 250$ LOC, 238 LOC) mirroring `ProjectsDetailDrawerHost.tsx`. Dynamically imports `ContentPostModal`, `EventFormModal`, and `PlacementFormModal` via `next/dynamic` (`ssr: false`), wires Zustand data stores (`branches`, `outlets`, `materials`, `mous`, `placements`, `members`), handles submission and cache invalidation (`fetchPosts`, `fetchEvents`, `fetchPlacements`), and integrates with `GoogleDriveLinkModal`.
+   - **Calendar Integration (`ProjectsCalendarView.tsx`, `useProjectsCalendar.ts`):** Connected `CalendarCreatePopover` to trigger `ProjectsCreateModalHost` pre-filled with the selected calendar cell date. Removed legacy dummy creation endpoint calls.
+   - **Board Integration & Deconstruction (`ProjectsBoardView.tsx`, `ProjectsBoardColumn.tsx`, `useProjectsBoard.ts`):** Replaced inline title text form in `ProjectsBoardColumn.tsx` with a type picker trigger menu (`Content Post`, `Field Event`, `Media Placement`), saving ~33 LOC and bringing `ProjectsBoardColumn.tsx` safely down to 234 LOC ($\le 250$ LOC). Connected `ProjectsBoardView.tsx` with column status mapping and mounted `ProjectsCreateModalHost`.
+   - **List View Integration (`ProjectsListView.tsx`, `ProjectsListHeader.tsx`, `ProjectsListTable.tsx`, `useProjectsList.ts`):** Added "+ New Item" trigger with type selector menu in `ProjectsListHeader.tsx` and group row actions in `ProjectsListTable.tsx`. Mounted `ProjectsCreateModalHost` in `ProjectsListView.tsx` and removed defunct `handleQuickAddInGroup`.
+   - **Verification Gates:** `npm run drift:check` (clean, 0 drift), `npm run build:check` (0 errors), `npm run test:smoke` (88 passed, 0 failed), `npm test` (635 passed, 0 failures), all coordinator files strictly $\le 250$ LOC (`ProjectsCreateModalHost`: 238, `ProjectsBoardColumn`: 234, `ProjectsBoardView`: 199, `ProjectsCalendarView`: 154, `ProjectsListView`: 118).
+
+2. **Core Web Vitals Next.js Image Optimization (`AppImage.tsx`, `appImageHelpers.ts`, `next.config.ts`, 16 components):**
    - **Root Cause Evaluated:** 22 raw `<img>` instances across 16 components lacked layout sizing, leading to Cumulative Layout Shift (CLS) on high-latency field connections, excessive bandwidth consumption without modern WebP/AVIF compression or responsive srcset downscaling, and Next.js compiler warnings under `@next/next/no-img-element`.
    - **Remote Host Whitelist (`next.config.ts`):** Configured `images.remotePatterns` for `images.unsplash.com`, `lh3.googleusercontent.com`, `*.googleusercontent.com`, and `*.supabase.co`.
    - **Pure Layout Helpers (`appImageHelpers.ts`):** Created `shouldBypassOptimization` for `blob:`, `data:`, SVG, and empty URLs to prevent runtime crashes during client-side photo picking. Added `resolveImageSizes` mapping presets (`avatar`: 36px, `thumbnail`: 64px/96px, `card`: 100vw/50vw/33vw, `lightbox`: 100vw/1200px, `full`: 100vw). Comprehensive unit test suite in `appImageHelpers.test.ts` (8 tests passing).

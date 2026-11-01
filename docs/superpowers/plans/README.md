@@ -51,3 +51,4 @@ Every plan MUST have a matching spec file:
 | 2026-10-31 | qa-comprehensive-seeder | 7 phases | Done |
 | 2026-11-01 | topnav-avatar-profile-sync | 4 phases | Done |
 | 2026-11-01 | core-web-vitals-image-optimization | 6 phases | Done |
+| 2026-11-01 | projects-work-item-create-modals | 6 phases | Done |

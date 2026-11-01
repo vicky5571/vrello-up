@@ -6,6 +6,18 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-01]
 
+- `feat(projects)`: Unified Projects work item creation via original Marcom Hub modal forms
+  - Eliminated runtime HTTP 400 errors (`status: "PLANNED"` on placements) and unvalidated placeholder cards across Projects views
+  - Built pure helper module `createModalHelpers.ts` with comprehensive unit test suite (`sanitizeDateInput`, `resolveInitialStatus`, `getInitialPlacementPayload`)
+  - Created reusable `ProjectsCreateModalHost.tsx` host component (238 LOC) lazily importing `ContentPostModal`, `EventFormModal`, and `PlacementFormModal`
+  - Integrated `ProjectsCreateModalHost` into `ProjectsCalendarView.tsx` with date hydration from calendar cells
+  - Integrated `ProjectsCreateModalHost` into `ProjectsBoardView.tsx` with status mapping and replaced inline input form in `ProjectsBoardColumn.tsx` with type picker trigger menu (reduced `ProjectsBoardColumn.tsx` to 234 LOC)
+  - Integrated `ProjectsCreateModalHost` into `ProjectsListView.tsx`, `ProjectsListHeader.tsx`, and `ProjectsListTable.tsx`
+  - Removed obsolete dummy quick-create methods from `useProjectsCalendar.ts`, `useProjectsBoard.ts`, and `useProjectsList.ts`
+  - Gates: `npm test` 635 pass / 0 fail; `npm run test:smoke` 88 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean; all coordinator files $\le 250$ LOC
+  Spec: `docs/superpowers/specs/2026-11-01-projects-work-item-create-modals-design.md`
+  Plan: `docs/superpowers/plans/2026-11-01-projects-work-item-create-modals.md`
+
 - `perf(media)`: Core Web Vitals image optimization via Next.js Image architecture
   - Configured `images.remotePatterns` in `next.config.ts` for Unsplash, Google User Content, and Supabase storage
   - Built pure helper module `appImageHelpers.ts` with layout presets (`avatar`, `thumbnail`, `card`, `lightbox`) and `shouldBypassOptimization` for `blob:`, `data:`, and SVG
