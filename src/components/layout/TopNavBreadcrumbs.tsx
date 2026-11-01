@@ -2,7 +2,11 @@
 
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { MARCOM_VIEW_LABELS, PROJECTS_VIEW_LABELS } from "./topNavConstants";
-import { getGlobalBreadcrumbInfo, type GlobalBreadcrumbInfo } from "./layoutHierarchyHelpers";
+import {
+  getGlobalBreadcrumbInfo,
+  resolveWorkspaceReturnTarget,
+  type GlobalBreadcrumbInfo,
+} from "./layoutHierarchyHelpers";
 import type { ViewMode } from "@/types";
 import {
   Folder as FolderIcon,
@@ -116,8 +120,11 @@ export function TopNavBreadcrumbs({
   );
 
   const renderGlobalTrail = (info: GlobalBreadcrumbInfo) => {
-    const returnTarget = appMode === "marcom" ? lastMarcomView : (lastTaskView || "list");
-    const returnLabel = appMode === "marcom" ? "Marketing Hub" : "Workspace";
+    const { targetView, targetMode, label } = resolveWorkspaceReturnTarget({
+      appMode,
+      lastTaskView,
+      lastMarcomView,
+    });
 
     return (
       <div className="flex items-center gap-2 text-xs min-w-0 shrink-0">
@@ -136,14 +143,15 @@ export function TopNavBreadcrumbs({
           <button
             type="button"
             onClick={() => {
-              setActiveView(returnTarget);
-              toast.info(`Kembali ke ${returnLabel}`);
+              setAppMode(targetMode);
+              setActiveView(targetView);
+              toast.info(`Kembali ke ${label}`);
             }}
             className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300/60 dark:border-slate-700 text-[11px] font-medium transition-colors cursor-pointer"
-            title={`Kembali ke ${returnLabel}`}
+            title={`Kembali ke ${label}`}
           >
             <ArrowLeft className="w-3 h-3" />
-            <span>Kembali ke {returnLabel}</span>
+            <span>Kembali ke {label}</span>
           </button>
         </div>
       </div>

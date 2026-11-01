@@ -103,8 +103,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           if ((state.lastMarcomView as string) === "content") {
             state.lastMarcomView = "content-planner";
           }
+          if ((state.lastMarcomView as string) === "profile" || (state.lastMarcomView as string) === "users") {
+            state.lastMarcomView = "events";
+          }
           if ((state.lastTaskView as string) === "table" || (state.lastTaskView as string) === "gantt") {
             state.lastTaskView = "list";
+          }
+          if ((state.lastTaskView as string) === "profile" || (state.lastTaskView as string) === "users") {
+            state.lastTaskView = "board";
           }
         }
       },

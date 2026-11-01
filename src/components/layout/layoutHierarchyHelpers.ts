@@ -1,4 +1,4 @@
-import type { ViewMode } from "@/types";
+import type { ViewMode, AppMode } from "@/types";
 
 export const WORK_ITEM_VIEWS = new Set<ViewMode>([
   "board",
@@ -64,5 +64,52 @@ export function getGlobalBreadcrumbInfo(
   }
 
   return null;
+}
+
+export interface WorkspaceReturnTarget {
+  targetView: ViewMode;
+  targetMode: AppMode;
+  label: string;
+}
+
+/**
+ * Resolves a guaranteed operational workspace view to return to from a global view.
+ * Ensures the target is strictly an operational view (Projects work items or Marcom),
+ * and NEVER a global account view like 'profile' or 'users'.
+ */
+export function resolveWorkspaceReturnTarget(params: {
+  appMode?: string;
+  lastTaskView?: ViewMode | string;
+  lastMarcomView?: ViewMode | string;
+}): WorkspaceReturnTarget {
+  const isMarcom = params.appMode === "marcom";
+
+  if (isMarcom) {
+    const rawMarcom = params.lastMarcomView as ViewMode;
+    const safeMarcom =
+      rawMarcom &&
+      !GLOBAL_ACCOUNT_VIEWS.has(rawMarcom) &&
+      rawMarcom !== "profile" &&
+      rawMarcom !== "users"
+        ? rawMarcom
+        : "events";
+    return {
+      targetView: safeMarcom,
+      targetMode: "marcom",
+      label: "Marketing Hub",
+    };
+  }
+
+  const rawTask = params.lastTaskView as ViewMode;
+  const safeTask =
+    rawTask && WORK_ITEM_VIEWS.has(rawTask)
+      ? rawTask
+      : "board";
+
+  return {
+    targetView: safeTask,
+    targetMode: "tasks",
+    label: "Workspace",
+  };
 }
 

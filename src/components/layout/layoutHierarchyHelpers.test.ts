@@ -4,6 +4,7 @@ import {
   shouldRenderSidebar,
   shouldRenderProjectsFilterBar,
   getGlobalBreadcrumbInfo,
+  resolveWorkspaceReturnTarget,
   WORK_ITEM_VIEWS,
   GLOBAL_ACCOUNT_VIEWS,
 } from "./layoutHierarchyHelpers";
@@ -81,6 +82,80 @@ describe("layoutHierarchyHelpers", () => {
       assert.equal(getGlobalBreadcrumbInfo("calendar"), null);
       assert.equal(getGlobalBreadcrumbInfo("events"), null);
       assert.equal(getGlobalBreadcrumbInfo("placements"), null);
+    });
+  });
+
+  describe("resolveWorkspaceReturnTarget", () => {
+    it("returns valid project work item view when previous task view is valid", () => {
+      const result = resolveWorkspaceReturnTarget({
+        appMode: "tasks",
+        lastTaskView: "calendar",
+      });
+      assert.deepEqual(result, {
+        targetView: "calendar",
+        targetMode: "tasks",
+        label: "Workspace",
+      });
+    });
+
+    it("sanitizes corrupted profile target in tasks mode to board", () => {
+      const result = resolveWorkspaceReturnTarget({
+        appMode: "tasks",
+        lastTaskView: "profile",
+      });
+      assert.deepEqual(result, {
+        targetView: "board",
+        targetMode: "tasks",
+        label: "Workspace",
+      });
+    });
+
+    it("sanitizes corrupted users target in tasks mode to board", () => {
+      const result = resolveWorkspaceReturnTarget({
+        appMode: "tasks",
+        lastTaskView: "users",
+      });
+      assert.deepEqual(result, {
+        targetView: "board",
+        targetMode: "tasks",
+        label: "Workspace",
+      });
+    });
+
+    it("defaults to board when lastTaskView is missing or unrecognized", () => {
+      const result = resolveWorkspaceReturnTarget({
+        appMode: "tasks",
+        lastTaskView: undefined,
+      });
+      assert.deepEqual(result, {
+        targetView: "board",
+        targetMode: "tasks",
+        label: "Workspace",
+      });
+    });
+
+    it("returns valid marcom view when in marcom mode", () => {
+      const result = resolveWorkspaceReturnTarget({
+        appMode: "marcom",
+        lastMarcomView: "placements",
+      });
+      assert.deepEqual(result, {
+        targetView: "placements",
+        targetMode: "marcom",
+        label: "Marketing Hub",
+      });
+    });
+
+    it("sanitizes profile or users target in marcom mode to events", () => {
+      const result = resolveWorkspaceReturnTarget({
+        appMode: "marcom",
+        lastMarcomView: "profile",
+      });
+      assert.deepEqual(result, {
+        targetView: "events",
+        targetMode: "marcom",
+        label: "Marketing Hub",
+      });
     });
   });
 

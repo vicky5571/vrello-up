@@ -6,6 +6,14 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-01]
 
+- `fix(navigation)`: Resolve workspace return target and sanitize global view state
+  - Built pure helper `resolveWorkspaceReturnTarget` in `layoutHierarchyHelpers.ts` with 6 unit tests
+  - Guaranteed "Kembali ke Workspace" shortcut button always resolves strictly to an operational view (`board`, `list`, `calendar` or active Marcom view), eliminating false redirects to `profile` or `users`
+  - Added rehydration sanitization in `useWorkspaceStore.ts` to reset legacy persisted `profile` or `users` values in `lastTaskView` and `lastMarcomView` back to `"board"` and `"events"`
+  - Enforced strict work item whitelisting in `createUiSlice.ts` (`isWorkItem` required to update `lastTaskView`)
+  - Gates: `npm test` 680 pass / 0 fail; `npm run test:smoke` 92 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean; all coordinator files $\le 250$ LOC
+  Refs: `docs/adr/0009-global-view-layout-isolation-and-profile-hierarchy.md`, `docs/adr/0010-user-management-global-view-layout-isolation.md`
+
 - `fix(layout)`: Extend global view layout isolation to user management
   - Refactored `shouldRenderSidebar` in `layoutHierarchyHelpers.ts` to check `GLOBAL_ACCOUNT_VIEWS` (suppressing `Sidebar.tsx` on both `profile` and `users`)
   - Expanded `UsersView` table into full widescreen stage width, eliminating horizontal scrolling and badge crowding

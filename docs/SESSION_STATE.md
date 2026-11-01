@@ -8,14 +8,22 @@
 
 **Date:** 2026-11-01  
 **Active Branch:** `vicky`  
-**Active Feature:** User Management Global View Layout Isolation (`layoutHierarchyHelpers.ts`, `layoutHierarchyHelpers.test.ts`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Global View Layout Isolation & Profile Hierarchy (`layoutHierarchyHelpers.ts`, `Sidebar.tsx`, `TopNav.tsx`, `TopNavBreadcrumbs.tsx`, `createUiSlice.ts`)  
+**Active Feature:** Workspace Return Target Resolver & LocalStorage Sanitization (`layoutHierarchyHelpers.ts`, `TopNavBreadcrumbs.tsx`, `useWorkspaceStore.ts`, `createUiSlice.ts`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** User Management Global View Layout Isolation (`layoutHierarchyHelpers.ts`, `layoutHierarchyHelpers.test.ts`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **User Management Global View Layout Isolation (`layoutHierarchyHelpers.ts`, `layoutHierarchyHelpers.test.ts`):**
+1. **Workspace Return Target Resolver & LocalStorage Sanitization (`layoutHierarchyHelpers.ts`, `TopNavBreadcrumbs.tsx`, `useWorkspaceStore.ts`, `createUiSlice.ts`):**
+   - **Root Cause Evaluated:** Before Global Views were isolated, visiting `view=profile` saved `"profile"` into `lastTaskView` in client `localStorage` (`vrelloup-workspace-storage`). Consequently, clicking the shortcut button "Kembali ke Workspace" on `users` (or rehydrating from storage) navigated to the Profile page rather than an actual operational workspace view.
+   - **Pure Helper `resolveWorkspaceReturnTarget` (`layoutHierarchyHelpers.ts`):** Built fail-safe resolver ensuring return target is strictly an operational workspace view (`board`, `list`, `calendar` or active Marcom view), and rejected any global account views (`profile`, `users`). Added 6 unit tests in `layoutHierarchyHelpers.test.ts` (19 tests total passing).
+   - **Strict Whitelist in UI Slice (`createUiSlice.ts`):** Restricted `lastTaskView` mutations strictly to `isWorkItem` (`board`, `list`, `calendar`). Global views (`profile`, `users`) can never pollute `lastTaskView`.
+   - **Storage Rehydration Sanitizer (`useWorkspaceStore.ts`):** Added auto-cleanup in `onRehydrateStorage` resetting any persisted `"profile"` or `"users"` values in `lastTaskView` and `lastMarcomView` back to `"board"` and `"events"`.
+   - **TopNav Return Integration (`TopNavBreadcrumbs.tsx`):** Connected "Kembali ke Workspace" button to `resolveWorkspaceReturnTarget`, ensuring `appMode` and `activeView` are correctly restored together with instant toast feedback.
+   - **Verification Gates:** `npm run drift:check` (clean, 42 paired specs/plans), `npm run build:check` (0 errors), `npm run test:smoke` (92 passed, 0 failed), `npm test` (680 passed, 0 failures), all coordinator files strictly $\le 250$ LOC.
+
+2. **User Management Global View Layout Isolation (`layoutHierarchyHelpers.ts`, `layoutHierarchyHelpers.test.ts`):**
    - **Root Cause Evaluated:** While ADR 07 unified User Management into the SPA stage, navigating to `users` still rendered the 240px operational `Sidebar` (showing Projects/Marcom menu items). This squeezed table column widths and introduced cognitive clutter for administrators.
    - **ADR 10 & Spec:** Authored ADR 10 (`docs/adr/0010-user-management-global-view-layout-isolation.md`) and Design Spec (`docs/superpowers/specs/2026-11-01-user-management-global-layout-design.md`) extending Global Account View layout isolation to User Management (`users`).
    - **Pure Helper Refactoring (`layoutHierarchyHelpers.ts`):** Updated `shouldRenderSidebar` to evaluate `GLOBAL_ACCOUNT_VIEWS.has(activeView)`, suppressing `Sidebar.tsx` for both `profile` and `users`. Updated unit tests in `layoutHierarchyHelpers.test.ts` (13 passing tests).
