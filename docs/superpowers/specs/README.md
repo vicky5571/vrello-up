@@ -49,3 +49,4 @@ YYYY-MM-DD-<feature-slug>-design.md
 | 2026-11-01 | session-rbac-permissions-sync | Done |
 | 2026-11-01 | user-profile-view | Done |
 | 2026-11-01 | profile-layout-hierarchy | Done |
+| 2026-11-01 | user-management-global-layout | In Progress |

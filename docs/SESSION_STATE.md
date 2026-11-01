@@ -8,8 +8,8 @@
 
 **Date:** 2026-11-01  
 **Active Branch:** `vicky`  
-**Active Feature:** Global View Layout Isolation & Profile Hierarchy (`layoutHierarchyHelpers.ts`, `Sidebar.tsx`, `TopNav.tsx`, `TopNavBreadcrumbs.tsx`, `createUiSlice.ts`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Dedicated User Profile Workspace View (`ProfileView.tsx`, `ProfileHeader.tsx`, `ProfileAvatarUploader.tsx`, `ProfileAccessCard.tsx`, `ProfileSecurityCard.tsx`, `/api/user/profile`, `profileValidators.ts`, `profileHelpers.ts`)  
+**Active Feature:** User Management Global View Layout Isolation (`layoutHierarchyHelpers.ts`, `layoutHierarchyHelpers.test.ts`) — **SPEC & PLAN CREATED**  
+**Previous Feature:** Global View Layout Isolation & Profile Hierarchy (`layoutHierarchyHelpers.ts`, `Sidebar.tsx`, `TopNav.tsx`, `TopNavBreadcrumbs.tsx`, `createUiSlice.ts`)  
 
 ---
 
