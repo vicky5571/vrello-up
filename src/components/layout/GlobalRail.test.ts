@@ -73,3 +73,4 @@ describe("GlobalRail Pending Users Badge", () => {
     assert.equal(formatPendingBadgeCount(100), "99+");
   });
 });
+

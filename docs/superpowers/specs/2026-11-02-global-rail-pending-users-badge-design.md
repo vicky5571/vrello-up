@@ -140,3 +140,4 @@ Existing endpoint `/api/admin/users`:
 - [ ] Full test suite passes (`npm test`).
 - [ ] Invariant drift check passes (`npm run drift:check`).
 - [ ] Build compiles (`npm run build:check`).
+

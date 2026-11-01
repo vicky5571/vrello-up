@@ -34,3 +34,4 @@ Administrators need an immediate, persistent, and ambient notification on the `U
 - **Positive**: 0 additional network calls for non-admin users.
 - **Positive**: Immediate state update when approving/rejecting accounts.
 - **Compliance**: `GlobalRail.tsx` remains $\le 250$ LOC.
+
