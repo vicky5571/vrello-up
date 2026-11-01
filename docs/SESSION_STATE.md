@@ -8,8 +8,8 @@
 
 **Date:** 2026-11-01  
 **Active Branch:** `vicky`  
-**Active Feature:** Dedicated User Profile Workspace View (`ProfileView.tsx`, `ProfileHeader.tsx`, `ProfileAvatarUploader.tsx`, `ProfileAccessCard.tsx`, `ProfileSecurityCard.tsx`, `/api/user/profile`, `profileValidators.ts`, `profileHelpers.ts`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Session RBAC & Permissions Synchronization (`permissions.ts`, `permissionsHelpers.ts`, `auth.ts`, `auth.config.ts`, `next-auth.d.ts`, `TopNav.tsx`, `createDataSlice.ts`)  
+**Active Feature:** Global View Layout Isolation & Profile Hierarchy (`layoutHierarchyHelpers.ts`, `Sidebar.tsx`, `TopNav.tsx`, `TopNavBreadcrumbs.tsx`, `createUiSlice.ts`) — **SPEC & PLAN CREATED**  
+**Previous Feature:** Dedicated User Profile Workspace View (`ProfileView.tsx`, `ProfileHeader.tsx`, `ProfileAvatarUploader.tsx`, `ProfileAccessCard.tsx`, `ProfileSecurityCard.tsx`, `/api/user/profile`, `profileValidators.ts`, `profileHelpers.ts`)  
 
 ---
 
