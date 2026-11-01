@@ -82,3 +82,4 @@ export function resolveEffectivePermissionsUser(
     isAuthenticated: false,
   };
 }
+
