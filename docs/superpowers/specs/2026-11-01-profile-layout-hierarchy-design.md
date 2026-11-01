@@ -143,3 +143,4 @@ None. No new network APIs are created.
 3. Unit tests for `layoutHierarchyHelpers.test.ts` pass 100%.
 4. `npm test` passes with 0 failures across all test suites.
 5. Visual verification confirms `Sidebar` is hidden on `profile`, `GlobalRail` is visible, breadcrumb is direct, and `ProjectsFilterBar` is absent.
+

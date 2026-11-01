@@ -74,3 +74,4 @@ In `src/lib/store/slices/createUiSlice.ts`:
 
 ### Negative / Trade-offs
 - The sidebar transition when opening Profile is an instant conditional unmount. We will ensure this is clean and free of cumulative layout shift (CLS).
+

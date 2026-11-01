@@ -54,4 +54,4 @@ Every plan MUST have a matching spec file:
 | 2026-11-01 | projects-work-item-create-modals | 6 phases | Done |
 | 2026-11-01 | session-rbac-permissions-sync | 5 phases | Done |
 | 2026-11-01 | user-profile-view | 5 phases | Done |
-| 2026-11-01 | profile-layout-hierarchy | 4 phases | In Progress |
+| 2026-11-01 | profile-layout-hierarchy | 4 phases | Done |

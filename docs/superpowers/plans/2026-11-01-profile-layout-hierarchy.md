@@ -37,7 +37,7 @@
 
 ### Phase 1: Pure Layout Hierarchy Helpers & Unit Tests
 
-- [ ] **Task 1.1: Write Unit Test Suite for Layout Hierarchy Helpers**
+- [x] **Task 1.1: Write Unit Test Suite for Layout Hierarchy Helpers**
   - Create: `src/components/layout/layoutHierarchyHelpers.test.ts`
   - Test cases:
     - `shouldRenderSidebar`: returns `false` for `"profile"`, returns `true` for `"board"`, `"list"`, `"calendar"`, `"events"`, `"placements"`, etc.
@@ -45,7 +45,7 @@
     - `getGlobalBreadcrumbInfo`: returns proper label and icon for `"profile"` ("Profil & Keamanan Akun") and `"users"`, returns `null` for operational views.
   - Run: `node --test src/components/layout/layoutHierarchyHelpers.test.ts`.
 
-- [ ] **Task 1.2: Implement `layoutHierarchyHelpers.ts`**
+- [x] **Task 1.2: Implement `layoutHierarchyHelpers.ts`**
   - Create: `src/components/layout/layoutHierarchyHelpers.ts`
   - Implement and export:
     - `WORK_ITEM_VIEWS` and `GLOBAL_ACCOUNT_VIEWS` sets.
@@ -58,7 +58,7 @@
 
 ### Phase 2: State Preservation in UI Slice
 
-- [ ] **Task 2.1: Update `createUiSlice.ts`**
+- [x] **Task 2.1: Update `createUiSlice.ts`**
   - Edit: `src/lib/store/slices/createUiSlice.ts`
   - In `setActiveView(view)`:
     - If `canonicalView === "profile"` or is in `GLOBAL_ACCOUNT_VIEWS`, do not overwrite `lastTaskView` or `lastMarcomView`.
@@ -68,20 +68,20 @@
 
 ### Phase 3: Layout Components Refactoring
 
-- [ ] **Task 3.1: Update `Sidebar.tsx`**
+- [x] **Task 3.1: Update `Sidebar.tsx`**
   - Edit: `src/components/layout/Sidebar.tsx`
   - Import `shouldRenderSidebar` from `./layoutHierarchyHelpers`.
   - If `!shouldRenderSidebar(activeView)`, return `null` immediately.
   - Verify `Sidebar.tsx` LOC remains $\le 250$ LOC.
 
-- [ ] **Task 3.2: Update `TopNav.tsx`**
+- [x] **Task 3.2: Update `TopNav.tsx`**
   - Edit: `src/components/layout/TopNav.tsx`
   - Import `shouldRenderProjectsFilterBar` from `./layoutHierarchyHelpers`.
   - Replace `{appMode === "tasks" && <ProjectsFilterBar />}` with:
     `{shouldRenderProjectsFilterBar(appMode, activeView) && <ProjectsFilterBar />}`.
   - Verify `TopNav.tsx` LOC remains $\le 250$ LOC.
 
-- [ ] **Task 3.3: Update `TopNavBreadcrumbs.tsx`**
+- [x] **Task 3.3: Update `TopNavBreadcrumbs.tsx`**
   - Edit: `src/components/layout/TopNavBreadcrumbs.tsx`
   - Import `getGlobalBreadcrumbInfo` from `./layoutHierarchyHelpers`.
   - If `activeView === "profile"`:
@@ -95,13 +95,13 @@
 
 ### Phase 4: Verification & Documentation
 
-- [ ] **Task 4.1: Execute Verification Suite**
+- [x] **Task 4.1: Execute Verification Suite**
   - Run: `npm run drift:check` (Confirm 0 drift, 41 paired specs/plans).
   - Run: `npm run build:check` (Confirm 0 TypeScript compiler errors).
   - Run: `npm run test:smoke` (Confirm all smoke tests pass).
   - Run: `npm test` (Confirm all test suites pass with 0 failures).
 
-- [ ] **Task 4.2: Update Documentation & Session State**
+- [x] **Task 4.2: Update Documentation & Session State**
   - Update: `docs/superpowers/specs/README.md` (Add entry for `profile-layout-hierarchy`).
   - Update: `docs/superpowers/plans/README.md` (Add entry for `profile-layout-hierarchy`).
   - Update: `docs/SESSION_STATE.md`.
@@ -116,3 +116,4 @@
 | Layout shift when Sidebar unmounts | Main stage already uses `flex-1` with smooth responsive boundary. GlobalRail (52px) remains static, preventing jarring left-margin shifts. |
 | User trapped without a way back | GlobalRail icons (Home, Calendar, AI, Users) stay active; TopNavBreadcrumbs provides an explicit "Kembali ke Workspace" shortcut button. |
 | Coordinator LOC explosion | Logic extracted into `layoutHierarchyHelpers.ts` keeping `Sidebar.tsx`, `TopNav.tsx`, and `TopNavBreadcrumbs.tsx` comfortably under 250 LOC. |
+

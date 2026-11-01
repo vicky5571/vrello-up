@@ -14,6 +14,7 @@ import {
   MARCOM_MASTER_DATA,
 } from "./navConfig";
 import { AppModeSegmentedControl } from "./AppModeSegmentedControl";
+import { shouldRenderSidebar } from "./layoutHierarchyHelpers";
 import { HelpDocsModal } from "@/components/modals/HelpDocsModal";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 
@@ -37,6 +38,10 @@ export function Sidebar() {
   const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  if (!shouldRenderSidebar(activeView)) {
+    return null;
+  }
 
   return (
     <>

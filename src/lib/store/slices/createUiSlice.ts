@@ -134,11 +134,12 @@ export const createUiSlice: StateCreator<
     set((state) => {
       const canonicalView = normalizeViewMode(view);
       const isMarcom = MARCOM_VIEW_SET.has(canonicalView);
-      const newMode: AppMode = isMarcom ? "marcom" : "tasks";
+      const isGlobalAccount = canonicalView === "profile" || canonicalView === "users";
+      const newMode: AppMode = isMarcom ? "marcom" : isGlobalAccount ? state.appMode : "tasks";
       return {
         activeView: canonicalView,
         appMode: newMode,
-        lastTaskView: !isMarcom ? canonicalView : state.lastTaskView,
+        lastTaskView: !isMarcom && !isGlobalAccount ? canonicalView : state.lastTaskView,
         lastMarcomView: isMarcom ? canonicalView : state.lastMarcomView,
       };
     }),

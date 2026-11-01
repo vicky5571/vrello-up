@@ -8,14 +8,24 @@
 
 **Date:** 2026-11-01  
 **Active Branch:** `vicky`  
-**Active Feature:** Global View Layout Isolation & Profile Hierarchy (`layoutHierarchyHelpers.ts`, `Sidebar.tsx`, `TopNav.tsx`, `TopNavBreadcrumbs.tsx`, `createUiSlice.ts`) — **SPEC & PLAN CREATED**  
+**Active Feature:** Global View Layout Isolation & Profile Hierarchy (`layoutHierarchyHelpers.ts`, `Sidebar.tsx`, `TopNav.tsx`, `TopNavBreadcrumbs.tsx`, `createUiSlice.ts`) — **IMPLEMENTED & VERIFIED**  
 **Previous Feature:** Dedicated User Profile Workspace View (`ProfileView.tsx`, `ProfileHeader.tsx`, `ProfileAvatarUploader.tsx`, `ProfileAccessCard.tsx`, `ProfileSecurityCard.tsx`, `/api/user/profile`, `profileValidators.ts`, `profileHelpers.ts`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Dedicated User Profile Workspace View (`ProfileView.tsx`, `ProfileHeader.tsx`, `ProfileAvatarUploader.tsx`, `ProfileAccessCard.tsx`, `ProfileSecurityCard.tsx`, `/api/user/profile`, `profileValidators.ts`, `profileHelpers.ts`):**
+1. **Global View Layout Isolation & Profile Hierarchy (`layoutHierarchyHelpers.ts`, `Sidebar.tsx`, `TopNav.tsx`, `TopNavBreadcrumbs.tsx`, `createUiSlice.ts`):**
+   - **Root Cause Evaluated:** Placing `profile` in `appMode: "tasks"` by default caused `TopNavBreadcrumbs` to render `Vrello / Projects / profile`, leaking the task filter bar (`ProjectsFilterBar`) into the profile view and cluttering the stage with the 240px operational `Sidebar`.
+   - **ADR 09 & Spec:** Authored ADR 09 (`docs/adr/0009-global-view-layout-isolation-and-profile-hierarchy.md`) and Design Spec (`docs/superpowers/specs/2026-11-01-profile-layout-hierarchy-design.md`) establishing clear bifurcation between Operational Views and Global Account Views.
+   - **Pure Helpers Module (`layoutHierarchyHelpers.ts`):** Defined `WORK_ITEM_VIEWS` and `GLOBAL_ACCOUNT_VIEWS`. Implemented `shouldRenderSidebar`, `shouldRenderProjectsFilterBar`, and `getGlobalBreadcrumbInfo`. Added 12 unit tests in `layoutHierarchyHelpers.test.ts` (100% pass).
+   - **Sidebar Unmount on Profile (`Sidebar.tsx`):** Conditionally returned `null` when `!shouldRenderSidebar(activeView)`, freeing 240px of screen width for a clean, full-stage profile experience while keeping `GlobalRail` (52px) persistently visible.
+   - **TopNav Filter Bar Gating (`TopNav.tsx`):** Restricted `ProjectsFilterBar` strictly to task work items (`board`, `list`, `calendar`) via `shouldRenderProjectsFilterBar`.
+   - **Direct Root Breadcrumb (`TopNavBreadcrumbs.tsx`):** Rendered `Vrello / Profil & Keamanan Akun` directly after root brand anchor with `User` icon and added an accessible "Kembali ke Workspace" shortcut button.
+   - **UI Slice State Preservation (`createUiSlice.ts`):** Prevented `setActiveView("profile")` from overwriting `lastTaskView` or `lastMarcomView`.
+   - **Verification Gates:** `npm run drift:check` (clean, 41 paired specs/plans), `npm run build:check` (0 errors), `npm run test:smoke` (92 passed, 0 failed), `npm test` (673 passed, 0 failures), all coordinator files strictly $\le 250$ LOC (`Sidebar`: 187, `TopNavBreadcrumbs`: 175, `TopNav`: 151).
+
+2. **Dedicated User Profile Workspace View (`ProfileView.tsx`, `ProfileHeader.tsx`, `ProfileAvatarUploader.tsx`, `ProfileAccessCard.tsx`, `ProfileSecurityCard.tsx`, `/api/user/profile`, `profileValidators.ts`, `profileHelpers.ts`):**
    - **User Intent & Problem Statement:** Credentials users (email & password) had no self-service mechanism to change their display name, upload/change profile avatar, or update their account password. While Google OAuth users have profiles hydrated from Google, standard accounts had no profile management screen or API.
    - **Architecture & ADR 08:** Authored ADR 08 (`docs/adr/0008-dedicated-user-profile-workspace-view.md`) and Design Spec (`docs/superpowers/specs/2026-11-01-user-profile-view-design.md`) establishing Option 1 (Dedicated Workspace View `activeView: "profile"`).
    - **SSOT Domain Types (`src/types/index.ts`):** Added `"profile"` to `ViewMode` union, and declared `UserProfileResponse` and `UpdateProfilePayload` interfaces.

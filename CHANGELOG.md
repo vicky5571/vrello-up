@@ -6,6 +6,18 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-01]
 
+- `fix(layout)`: Isolate global view layout and direct profile breadcrumb hierarchy
+  - Separated Operational Views (Projects/Marcom) from Global Account Views (Profile, Users)
+  - Extracted pure helper module `layoutHierarchyHelpers.ts` with 12 unit tests verifying view categorization
+  - Conditionally suppressed contextual `Sidebar.tsx` when `activeView === "profile"` while keeping `GlobalRail` (52px) visible
+  - Restructured `TopNavBreadcrumbs.tsx` to render `Vrello / Profil & Keamanan Akun` directly with a "Kembali ke Workspace" shortcut button
+  - Gated `ProjectsFilterBar` in `TopNav.tsx` strictly to task work items (`board`, `list`, `calendar`)
+  - Preserved `lastTaskView` in `createUiSlice.ts` so navigating to Profile does not overwrite the user's prior work item view
+  - Gates: `npm test` 673 pass / 0 fail; `npm run test:smoke` 92 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean; all coordinator files $\le 250$ LOC (`Sidebar`: 187, `TopNavBreadcrumbs`: 175, `TopNav`: 151)
+  Spec: `docs/superpowers/specs/2026-11-01-profile-layout-hierarchy-design.md`
+  Plan: `docs/superpowers/plans/2026-11-01-profile-layout-hierarchy.md`
+  Refs: `docs/adr/0009-global-view-layout-isolation-and-profile-hierarchy.md`
+
 - `feat(profile)`: Implement dedicated user profile workspace view and self-service account API
   - Created first-class `ProfileView` workspace view (`view=profile`) and registered in SSOT `ViewMode` and `urlState.ts`
   - Created `/profile/page.tsx` redirecting authenticated users to `/?view=profile` (and unauthenticated to `/login`)

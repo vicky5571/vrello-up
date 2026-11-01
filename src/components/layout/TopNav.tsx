@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { NotificationCenter } from "./NotificationCenter";
 import { UserMenuDropdown } from "./UserMenuDropdown";
 import { ProjectsFilterBar } from "./ProjectsFilterBar";
+import { shouldRenderProjectsFilterBar } from "./layoutHierarchyHelpers";
 import { getEffectiveProfile } from "./userProfileHelpers";
 import { AppImage } from "@/components/ui/AppImage";
 import { Search, Download } from "lucide-react";
@@ -18,6 +19,7 @@ export function TopNav() {
   const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
   const syncSessionUser = useWorkspaceStore((s) => s.syncSessionUser);
   const appMode = useWorkspaceStore((s) => s.appMode);
+  const activeView = useWorkspaceStore((s) => s.activeView);
   const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
   const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
 
@@ -143,7 +145,7 @@ export function TopNav() {
           </div>
         </div>
       </header>
-      {appMode === "tasks" && <ProjectsFilterBar />}
+      {shouldRenderProjectsFilterBar(appMode, activeView) && <ProjectsFilterBar />}
     </div>
   );
 }
