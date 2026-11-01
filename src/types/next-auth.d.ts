@@ -7,12 +7,14 @@ declare module "next-auth" {
       id: string;
       role: UserRole;
       status: UserStatus;
+      assignedBranchIds?: string[];
     } & DefaultSession["user"];
   }
 
   interface User {
     role?: UserRole;
     status?: UserStatus;
+    assignedBranchIds?: string[];
   }
 }
 
@@ -21,6 +23,7 @@ declare module "@auth/core/jwt" {
     id: string;
     role: UserRole;
     status: UserStatus;
+    assignedBranchIds?: string[];
   }
 }
 
@@ -29,5 +32,6 @@ declare module "next-auth/jwt" {
     id: string;
     role: UserRole;
     status: UserStatus;
+    assignedBranchIds?: string[];
   }
 }

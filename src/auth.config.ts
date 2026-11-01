@@ -52,6 +52,7 @@ export default {
         session.user.id = token.id as string;
         session.user.role = token.role as UserRole;
         session.user.status = token.status as UserStatus;
+        session.user.assignedBranchIds = (token.assignedBranchIds as string[]) ?? [];
       }
       return session;
     },

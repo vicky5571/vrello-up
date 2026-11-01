@@ -1,19 +1,20 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import { SEED_USERS } from "@/lib/constants/seeds";
 import {
   hasScopedPermission,
   canAccessBranch,
-  resolveMarcomRole,
   type MarcomRole,
   type PermissionAction,
 } from "./guards";
+import { resolveEffectivePermissionsUser } from "./permissionsHelpers";
 
 /**
  * Returns the active member's marcom role, branch assignments,
  * plus a `can(action, targetBranchId?)` and `canAccessBranch(targetBranchId?)` checker.
- * UI-only gating: server routes enforce.
+ * Prioritizes authenticated NextAuth session data (`session.user`), falling back
+ * safely to the workspace store user for SSR and unauthenticated environments.
  */
 export function useMarcomPermissions(): {
   role: MarcomRole;
@@ -21,11 +22,15 @@ export function useMarcomPermissions(): {
   can: (action: PermissionAction, targetBranchId?: string) => boolean;
   canAccessBranch: (targetBranchId?: string) => boolean;
 } {
+  const { data: session } = useSession();
   const currentUserId = useWorkspaceStore((s) => s.currentUserId);
-  const members = SEED_USERS;
-  const currentMember = members.find((m) => m.id === currentUserId);
-  const role = resolveMarcomRole(members, currentUserId);
-  const assignedBranchIds = currentMember?.assignedBranchIds ?? [];
+  const users = useWorkspaceStore((s) => s.users);
+  const fallbackUser = users.find((u) => u.id === currentUserId) ?? users[0];
+
+  const { role, assignedBranchIds } = resolveEffectivePermissionsUser({
+    sessionUser: session?.user,
+    fallbackUser,
+  });
 
   return {
     role,

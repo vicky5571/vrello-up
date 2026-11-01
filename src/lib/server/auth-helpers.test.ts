@@ -236,29 +236,39 @@ test("RejectedAccountError is a client-safe CredentialsSignin with code 'rejecte
 test("resolveJwtClaims returns credentials claims without querying the database", async () => {
   let lookupCalled = false;
   const claims = await resolveJwtClaims({
-    user: { id: "u-1", role: "admin", status: "APPROVED" },
+    user: { id: "u-1", role: "admin", status: "APPROVED", assignedBranchIds: ["branch-1"] },
     findUserByEmail: async () => {
       lookupCalled = true;
       return null;
     },
   });
 
-  assert.deepEqual(claims, { id: "u-1", role: "admin", status: "APPROVED" });
+  assert.deepEqual(claims, { id: "u-1", role: "admin", status: "APPROVED", assignedBranchIds: ["branch-1"] });
   assert.equal(lookupCalled, false);
 });
 
-test("resolveJwtClaims hydrates Google users from the normalized email", async () => {
+test("resolveJwtClaims hydrates Google users from the normalized email with assignedBranchIds", async () => {
   let queriedEmail = "";
   const claims = await resolveJwtClaims({
     user: { email: " Alice@Company.COM " },
     findUserByEmail: async (email) => {
       queriedEmail = email;
-      return { id: "u-2", role: "STAFF" as DbUserRole, status: "APPROVED" as DbUserStatus };
+      return {
+        id: "u-2",
+        role: "STAFF" as DbUserRole,
+        status: "APPROVED" as DbUserStatus,
+        assignedBranchIds: ["branch-1", "branch-2"],
+      };
     },
   });
 
   assert.equal(queriedEmail, "alice@company.com");
-  assert.deepEqual(claims, { id: "u-2", role: "staff", status: "APPROVED" });
+  assert.deepEqual(claims, {
+    id: "u-2",
+    role: "staff",
+    status: "APPROVED",
+    assignedBranchIds: ["branch-1", "branch-2"],
+  });
 });
 
 test("resolveJwtClaims returns null when the database user is missing", async () => {

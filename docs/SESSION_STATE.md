@@ -8,14 +8,22 @@
 
 **Date:** 2026-11-01  
 **Active Branch:** `vicky`  
-**Active Feature:** Unified Projects Work Item Creation via Original Marcom Hub Forms (`ProjectsCreateModalHost.tsx`, `createModalHelpers.ts`, `ProjectsCalendarView`, `ProjectsBoardView`, `ProjectsListView`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Core Web Vitals Next.js Image Optimization (`AppImage.tsx`, `appImageHelpers.ts`, `next.config.ts`, 16 consuming views)  
+**Active Feature:** Session RBAC & Permissions Synchronization (`permissions.ts`, `permissionsHelpers.ts`, `auth.ts`, `auth.config.ts`, `next-auth.d.ts`, `TopNav.tsx`, `createDataSlice.ts`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Unified Projects Work Item Creation via Original Marcom Hub Forms (`ProjectsCreateModalHost.tsx`, `createModalHelpers.ts`, `ProjectsCalendarView`, `ProjectsBoardView`, `ProjectsListView`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Unified Projects Work Item Creation via Original Marcom Hub Forms:**
+1. **Session RBAC & Permissions Synchronization across All 7 Views (`permissions.ts`, `permissionsHelpers.ts`, `auth.ts`, `auth.config.ts`, `next-auth.d.ts`, `TopNav.tsx`, `createDataSlice.ts`):**
+   - **Root Cause Evaluated:** All "+ Add / New / Upload" buttons across 7 core pages (Media Placements, Field Events, MOU, Branches, Outlets, Equipment Inventory, Documents) were conditionally gated by `useMarcomPermissions()`. Previously, `useMarcomPermissions()` resolved roles against a static mock array `const members = SEED_USERS` (`user-1` to `user-5`). When a user logged in with a real database account (e.g. `user-admin` or Google OAuth), their ID was not in `SEED_USERS`, causing `resolveMarcomRole` to fail closed to `"viewer"`. As a `"viewer"`, all create and manage permissions were revoked, making Add buttons vanish across the site.
+   - **NextAuth Token & Session Claims Hydration:** Added `assignedBranchIds?: string[]` to `Session["user"]`, `User`, and `JWT` in `src/types/next-auth.d.ts`. Updated `resolveJwtClaims` in `src/lib/server/auth-helpers.ts` to propagate branch assignments, updated Credentials `authorize()` and `jwt()` callback in `src/auth.ts`, and updated `session()` callback in `src/auth.config.ts`. Added test cases in `src/lib/server/auth-helpers.test.ts` (19/19 passing).
+   - **Pure Helper Module (`permissionsHelpers.ts`):** Implemented `normalizeMarcomRole` with case-insensitive trimming and fail-closed validation, and `resolveEffectivePermissionsUser` prioritizing active `session.user` over fallback store users with automatic branch scope extraction. Created comprehensive unit test suite in `src/lib/marcom/permissionsHelpers.test.ts` (8 passing tests).
+   - **Hook Integration (`permissions.ts`):** Connected `useMarcomPermissions()` to `useSession()` from `next-auth/react`. Evaluates permissions dynamically for the authenticated user while providing resilient fallback to Zustand store for SSR, offline, and unit tests.
+   - **Zustand Store Parity:** Added `syncSessionUser` action in `createDataSlice.ts` and called it in `TopNav.tsx` to keep Zustand's active user roster synchronized with real NextAuth session users.
+   - **Verification Gates:** `npm run drift:check` (clean, 39 paired specs/plans), `npm run build:check` (0 TypeScript errors), `npm run test:smoke` (89 passed, 0 failed), `npm test` (643 passed, 0 failures), all coordinator files strictly $\le 250$ LOC.
+
+2. **Unified Projects Work Item Creation via Original Marcom Hub Forms:**
    - **Root Cause Evaluated:** Quick creation triggers in Projects views (`useProjectsCalendar.handleCreateType`, `useProjectsBoard.handleQuickCreate`, `useProjectsList.handleQuickAddInGroup`) performed blind, minimal POST mutations with hardcoded dummy titles and invalid states (such as `status: "PLANNED"` on placements, which failed with HTTP 400). Placements bypassed the required 4-step wizard (outlet, material, geofence, photos) and field events bypassed logistics checklists.
    - **Pure Helpers Module (`createModalHelpers.ts`):** Implemented `sanitizeDateInput` with ISO date fallback, `resolveInitialStatus` mapping target board columns to valid entity statuses, and `getInitialPlacementPayload` enforcing state machine invariants (`NOT_STARTED` default). Added comprehensive unit tests in `createModalHelpers.test.ts` (6 passing tests).
    - **Modal Host Component (`ProjectsCreateModalHost.tsx`):** Built coordinator ($\le 250$ LOC, 238 LOC) mirroring `ProjectsDetailDrawerHost.tsx`. Dynamically imports `ContentPostModal`, `EventFormModal`, and `PlacementFormModal` via `next/dynamic` (`ssr: false`), wires Zustand data stores (`branches`, `outlets`, `materials`, `mous`, `placements`, `members`), handles submission and cache invalidation (`fetchPosts`, `fetchEvents`, `fetchPlacements`), and integrates with `GoogleDriveLinkModal`.

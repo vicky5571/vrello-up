@@ -77,6 +77,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           image: user.avatar,
           role: normalizeRole(user.role),
           status: normalizeStatus(user.status),
+          assignedBranchIds: user.assignedBranchIds ?? [],
         };
       },
     }),
@@ -129,7 +130,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           findUserByEmail: (email) =>
             prisma.user.findUnique({
               where: { email },
-              select: { id: true, role: true, status: true },
+              select: {
+                id: true,
+                role: true,
+                status: true,
+                assignedBranchIds: true,
+              },
             }),
         });
 
@@ -140,6 +146,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = claims.id;
         token.role = claims.role;
         token.status = claims.status;
+        token.assignedBranchIds = claims.assignedBranchIds ?? [];
         return token;
       }
 

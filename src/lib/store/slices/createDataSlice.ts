@@ -27,6 +27,41 @@ export const createDataSlice: StateCreator<
     set((state) => ({ users: state.users.filter((u) => u.id !== userId) }));
   },
 
+  syncSessionUser: (user) => {
+    set((state) => {
+      const existing = state.users.find((u) => u.id === user.id);
+      if (existing) {
+        return {
+          users: state.users.map((u) =>
+            u.id === user.id
+              ? {
+                  ...u,
+                  name: user.name || u.name,
+                  email: user.email || u.email,
+                  avatar: user.avatar || u.avatar,
+                  role: user.role || u.role,
+                  assignedBranchIds: user.assignedBranchIds || u.assignedBranchIds,
+                }
+              : u,
+          ),
+        };
+      }
+      return {
+        users: [
+          ...state.users,
+          {
+            id: user.id,
+            name: user.name || "User",
+            email: user.email || "",
+            avatar: user.avatar || "",
+            role: user.role,
+            assignedBranchIds: user.assignedBranchIds ?? [],
+          },
+        ],
+      };
+    });
+  },
+
   importBackup: () => {
     return true;
   },

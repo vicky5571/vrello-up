@@ -16,6 +16,7 @@ export function TopNav() {
   const users = useWorkspaceStore((s) => s.users);
   const currentUserId = useWorkspaceStore((s) => s.currentUserId);
   const setCurrentUserId = useWorkspaceStore((s) => s.setCurrentUserId);
+  const syncSessionUser = useWorkspaceStore((s) => s.syncSessionUser);
   const appMode = useWorkspaceStore((s) => s.appMode);
   const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
   const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
@@ -31,12 +32,22 @@ export function TopNav() {
     [session?.user, me],
   );
 
-  // Synchronize active session user ID to Zustand store if present and differing
+  // Synchronize active session user ID and profile to Zustand store
   useEffect(() => {
-    if (session?.user?.id && currentUserId !== session.user.id) {
-      setCurrentUserId(session.user.id);
+    if (session?.user?.id) {
+      if (currentUserId !== session.user.id) {
+        setCurrentUserId(session.user.id);
+      }
+      syncSessionUser({
+        id: session.user.id,
+        name: session.user.name ?? undefined,
+        email: session.user.email ?? undefined,
+        avatar: session.user.image ?? undefined,
+        role: session.user.role,
+        assignedBranchIds: session.user.assignedBranchIds,
+      });
     }
-  }, [session?.user?.id, currentUserId, setCurrentUserId]);
+  }, [session?.user, currentUserId, setCurrentUserId, syncSessionUser]);
 
   // Reset image error state whenever the effective profile image URL changes
   useEffect(() => {

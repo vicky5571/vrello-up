@@ -78,12 +78,14 @@ export interface JwtClaims {
   id: string;
   role: UserRole;
   status: UserStatus;
+  assignedBranchIds: string[];
 }
 
 export interface JwtUserInput {
   id?: string;
   role?: UserRole;
   status?: UserStatus;
+  assignedBranchIds?: string[];
   email?: string | null;
 }
 
@@ -104,10 +106,16 @@ export async function resolveJwtClaims({
     id: string;
     role: DbUserRole;
     status: DbUserStatus;
+    assignedBranchIds?: string[];
   } | null>;
 }): Promise<JwtClaims | null> {
   if (user.role && user.status) {
-    return { id: user.id ?? "", role: user.role, status: user.status };
+    return {
+      id: user.id ?? "",
+      role: user.role,
+      status: user.status,
+      assignedBranchIds: user.assignedBranchIds ?? [],
+    };
   }
 
   if (!user.email) return null;
@@ -119,6 +127,7 @@ export async function resolveJwtClaims({
     id: dbUser.id,
     role: normalizeRole(dbUser.role),
     status: normalizeStatus(dbUser.status),
+    assignedBranchIds: dbUser.assignedBranchIds ?? [],
   };
 }
 

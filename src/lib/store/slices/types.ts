@@ -27,6 +27,7 @@ export interface DataSlice {
   users: User[];
   addUser: (name: string, email: string, role: User["role"]) => User;
   removeUser: (userId: string) => void;
+  syncSessionUser: (user: Partial<User> & { id: string }) => void;
   importBackup: (data: unknown) => boolean;
   fetchServerData: () => Promise<void>;
   fetchServerTasks?: () => Promise<void>;
