@@ -14,6 +14,10 @@ describe("layoutHierarchyHelpers", () => {
       assert.equal(shouldRenderSidebar("profile"), false);
     });
 
+    it("returns false for users view to suppress module sidebar", () => {
+      assert.equal(shouldRenderSidebar("users"), false);
+    });
+
     it("returns true for project work item views", () => {
       assert.equal(shouldRenderSidebar("board"), true);
       assert.equal(shouldRenderSidebar("list"), true);

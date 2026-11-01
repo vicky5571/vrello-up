@@ -8,14 +8,21 @@
 
 **Date:** 2026-11-01  
 **Active Branch:** `vicky`  
-**Active Feature:** User Management Global View Layout Isolation (`layoutHierarchyHelpers.ts`, `layoutHierarchyHelpers.test.ts`) — **SPEC & PLAN CREATED**  
+**Active Feature:** User Management Global View Layout Isolation (`layoutHierarchyHelpers.ts`, `layoutHierarchyHelpers.test.ts`) — **IMPLEMENTED & VERIFIED**  
 **Previous Feature:** Global View Layout Isolation & Profile Hierarchy (`layoutHierarchyHelpers.ts`, `Sidebar.tsx`, `TopNav.tsx`, `TopNavBreadcrumbs.tsx`, `createUiSlice.ts`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Global View Layout Isolation & Profile Hierarchy (`layoutHierarchyHelpers.ts`, `Sidebar.tsx`, `TopNav.tsx`, `TopNavBreadcrumbs.tsx`, `createUiSlice.ts`):**
+1. **User Management Global View Layout Isolation (`layoutHierarchyHelpers.ts`, `layoutHierarchyHelpers.test.ts`):**
+   - **Root Cause Evaluated:** While ADR 07 unified User Management into the SPA stage, navigating to `users` still rendered the 240px operational `Sidebar` (showing Projects/Marcom menu items). This squeezed table column widths and introduced cognitive clutter for administrators.
+   - **ADR 10 & Spec:** Authored ADR 10 (`docs/adr/0010-user-management-global-view-layout-isolation.md`) and Design Spec (`docs/superpowers/specs/2026-11-01-user-management-global-layout-design.md`) extending Global Account View layout isolation to User Management (`users`).
+   - **Pure Helper Refactoring (`layoutHierarchyHelpers.ts`):** Updated `shouldRenderSidebar` to evaluate `GLOBAL_ACCOUNT_VIEWS.has(activeView)`, suppressing `Sidebar.tsx` for both `profile` and `users`. Updated unit tests in `layoutHierarchyHelpers.test.ts` (13 passing tests).
+   - **Widescreen Table Ergonomics:** `UsersView` expands across the full remaining viewport width, eliminating horizontal scrollbars for user approvals, RBAC role selectors, and assigned branch chips.
+   - **Verification Gates:** `npm run drift:check` (clean, 42 paired specs/plans), `npm run build:check` (0 errors), `npm run test:smoke` (92 passed, 0 failed), `npm test` (674 passed, 0 failures), all coordinator files strictly $\le 250$ LOC.
+
+2. **Global View Layout Isolation & Profile Hierarchy (`layoutHierarchyHelpers.ts`, `Sidebar.tsx`, `TopNav.tsx`, `TopNavBreadcrumbs.tsx`, `createUiSlice.ts`):**
    - **Root Cause Evaluated:** Placing `profile` in `appMode: "tasks"` by default caused `TopNavBreadcrumbs` to render `Vrello / Projects / profile`, leaking the task filter bar (`ProjectsFilterBar`) into the profile view and cluttering the stage with the 240px operational `Sidebar`.
    - **ADR 09 & Spec:** Authored ADR 09 (`docs/adr/0009-global-view-layout-isolation-and-profile-hierarchy.md`) and Design Spec (`docs/superpowers/specs/2026-11-01-profile-layout-hierarchy-design.md`) establishing clear bifurcation between Operational Views and Global Account Views.
    - **Pure Helpers Module (`layoutHierarchyHelpers.ts`):** Defined `WORK_ITEM_VIEWS` and `GLOBAL_ACCOUNT_VIEWS`. Implemented `shouldRenderSidebar`, `shouldRenderProjectsFilterBar`, and `getGlobalBreadcrumbInfo`. Added 12 unit tests in `layoutHierarchyHelpers.test.ts` (100% pass).

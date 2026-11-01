@@ -32,12 +32,12 @@
 
 ### Phase 1: Pure Layout Hierarchy Helpers & Tests
 
-- [ ] **Task 1.1: Update Unit Tests for User Management Sidebar Suppression**
+- [x] **Task 1.1: Update Unit Tests for User Management Sidebar Suppression**
   - Edit: `src/components/layout/layoutHierarchyHelpers.test.ts`
   - Add assertion: `assert.equal(shouldRenderSidebar("users"), false)`
   - Run: `node --test src/components/layout/layoutHierarchyHelpers.test.ts` (verify failing test).
 
-- [ ] **Task 1.2: Refactor `shouldRenderSidebar` Implementation**
+- [x] **Task 1.2: Refactor `shouldRenderSidebar` Implementation**
   - Edit: `src/components/layout/layoutHierarchyHelpers.ts`
   - Update:
     ```typescript
@@ -54,13 +54,13 @@
 
 ### Phase 2: Verification & Documentation
 
-- [ ] **Task 2.1: Execute Verification Suite**
+- [x] **Task 2.1: Execute Verification Suite**
   - Run: `npm run drift:check` (Confirm 0 drift, 42 paired specs/plans).
   - Run: `npm run build:check` (Confirm 0 TypeScript compiler errors).
   - Run: `npm run test:smoke` (Confirm all smoke tests pass).
   - Run: `npm test` (Confirm all test suites pass with 0 failures).
 
-- [ ] **Task 2.2: Update Documentation & Session State**
+- [x] **Task 2.2: Update Documentation & Session State**
   - Update: `docs/superpowers/specs/README.md` (Add entry for `user-management-global-layout`).
   - Update: `docs/superpowers/plans/README.md` (Add entry for `user-management-global-layout`).
   - Update: `docs/SESSION_STATE.md`.
@@ -75,3 +75,4 @@
 | User trapped on User Management screen | `GlobalRail` (52px) remains active with Home, Calendar, AI, and Users buttons. `TopNavBreadcrumbs` provides "Kembali ke Workspace" shortcut button. |
 | Inadvertent sidebar suppression on operational views | Unit test suite explicitly asserts `shouldRenderSidebar` returns `true` for all board, list, calendar, and marcom views. |
 | Coordinator LOC limits exceeded | Change modifies only `layoutHierarchyHelpers.ts` (+5 LOC) without bloating `Sidebar.tsx` or `TopNav.tsx`. |
+

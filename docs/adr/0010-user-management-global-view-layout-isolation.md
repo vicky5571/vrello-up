@@ -54,3 +54,4 @@ In `TopNavBreadcrumbs.tsx`:
 
 ### Negative / Trade-offs
 - None. `layoutHierarchyHelpers.ts` and `TopNavBreadcrumbs.tsx` were already structured to support `users`; this ADR fully aligns `shouldRenderSidebar` to complete the architectural pattern.
+

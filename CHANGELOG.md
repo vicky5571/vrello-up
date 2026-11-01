@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-01]
 
+- `fix(layout)`: Extend global view layout isolation to user management
+  - Refactored `shouldRenderSidebar` in `layoutHierarchyHelpers.ts` to check `GLOBAL_ACCOUNT_VIEWS` (suppressing `Sidebar.tsx` on both `profile` and `users`)
+  - Expanded `UsersView` table into full widescreen stage width, eliminating horizontal scrolling and badge crowding
+  - Maintained persistent `GlobalRail` (52px) with active highlight on `Users` icon and root breadcrumb `Vrello / Manajemen Pengguna` with return shortcut
+  - Updated unit test suite in `layoutHierarchyHelpers.test.ts` (13 pass / 0 fail)
+  - Gates: `npm test` 674 pass / 0 fail; `npm run test:smoke` 92 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean; all coordinator files $\le 250$ LOC
+  Spec: `docs/superpowers/specs/2026-11-01-user-management-global-layout-design.md`
+  Plan: `docs/superpowers/plans/2026-11-01-user-management-global-layout.md`
+  Refs: `docs/adr/0010-user-management-global-view-layout-isolation.md`
+
 - `fix(layout)`: Isolate global view layout and direct profile breadcrumb hierarchy
   - Separated Operational Views (Projects/Marcom) from Global Account Views (Profile, Users)
   - Extracted pure helper module `layoutHierarchyHelpers.ts` with 12 unit tests verifying view categorization

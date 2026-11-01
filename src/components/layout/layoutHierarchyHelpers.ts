@@ -13,10 +13,11 @@ export const GLOBAL_ACCOUNT_VIEWS = new Set<ViewMode>([
 
 /**
  * Resolves whether the contextual module Sidebar should be rendered.
- * Personal profile management requires full stage focus without operational sidebar clutter.
+ * Global account views (personal profile and administrative user management)
+ * require full stage focus without operational module sidebar clutter.
  */
 export function shouldRenderSidebar(activeView: ViewMode | string): boolean {
-  if (activeView === "profile") {
+  if (GLOBAL_ACCOUNT_VIEWS.has(activeView as ViewMode)) {
     return false;
   }
   return true;
