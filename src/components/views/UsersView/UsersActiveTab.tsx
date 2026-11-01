@@ -13,6 +13,7 @@ interface UsersActiveTabProps {
   currentUserId: string;
   isLoading: boolean;
   onAction: () => void;
+  actorRole?: UserRole;
 }
 
 export function UsersActiveTab({
@@ -20,6 +21,7 @@ export function UsersActiveTab({
   currentUserId,
   isLoading,
   onAction,
+  actorRole,
 }: UsersActiveTabProps) {
   const [processingId, setProcessingId] = useState<string | null>(null);
 
@@ -140,6 +142,7 @@ export function UsersActiveTab({
                       value={user.role}
                       onChange={(newRole) => handleRoleChange(user, newRole)}
                       disabled={isBusy || (isCurrentUser && user.role === "admin")}
+                      actorRole={actorRole}
                     />
                   </td>
                   <td className="py-3.5 px-4">
@@ -157,20 +160,33 @@ export function UsersActiveTab({
                       : "Belum pernah"}
                   </td>
                   <td className="py-3.5 px-4 text-right">
-                    <button
-                      type="button"
-                      onClick={() => handleDeactivate(user)}
-                      disabled={isBusy || isCurrentUser}
-                      title={isCurrentUser ? "Tidak dapat menonaktifkan akun sendiri" : "Nonaktifkan akun"}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      {isBusy ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <UserX className="w-3.5 h-3.5" />
-                      )}
-                      <span>Nonaktifkan</span>
-                    </button>
+                    {(() => {
+                      const isTargetAdmin = user.role === "admin";
+                      const isSupervisorBlocked = actorRole === "supervisor" && isTargetAdmin;
+                      const isDeactivateForbidden = isCurrentUser || isSupervisorBlocked;
+                      const buttonTitle = isCurrentUser
+                        ? "Tidak dapat menonaktifkan akun sendiri"
+                        : isSupervisorBlocked
+                        ? "Supervisor tidak dapat menonaktifkan akun Admin"
+                        : "Nonaktifkan akun";
+
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => handleDeactivate(user)}
+                          disabled={isBusy || isDeactivateForbidden}
+                          title={buttonTitle}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {isBusy ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <UserX className="w-3.5 h-3.5" />
+                          )}
+                          <span>Nonaktifkan</span>
+                        </button>
+                      );
+                    })()}
                   </td>
                 </tr>
               );

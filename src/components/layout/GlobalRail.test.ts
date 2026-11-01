@@ -18,15 +18,15 @@ describe("GlobalRail Pending Users Badge", () => {
     );
   });
 
-  it("imports and invokes usePendingUsers with isAdmin", () => {
+  it("imports and invokes usePendingUsers with canManageUsers", () => {
     const globalRailPath = path.resolve(
       process.cwd(),
       "src/components/layout/GlobalRail.tsx"
     );
     const content = fs.readFileSync(globalRailPath, "utf-8");
     assert.ok(
-      content.includes("usePendingUsers({ isAdmin })"),
-      "Expected GlobalRail to call usePendingUsers with { isAdmin }"
+      content.includes("usePendingUsers({ isAdmin: canManageUsers })"),
+      "Expected GlobalRail to call usePendingUsers with { isAdmin: canManageUsers }"
     );
   });
 

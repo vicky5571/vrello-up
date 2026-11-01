@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { canAccessUserManagement } from "@/lib/marcom/guards";
 
 export default async function AdminUsersPage() {
   const session = await auth();
@@ -8,7 +9,7 @@ export default async function AdminUsersPage() {
     redirect("/login");
   }
 
-  if (session.user.role !== "admin") {
+  if (!canAccessUserManagement(session.user.role)) {
     redirect("/");
   }
 

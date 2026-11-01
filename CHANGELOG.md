@@ -6,6 +6,32 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-02]
 
+- `feat(rbac)`: Implement supervisor guarded user management access
+  - Authored ADR 13 (`docs/adr/0013-supervisor-guarded-user-management-access.md`) granting supervisors operational user management while preventing privilege escalation
+  - Implemented pure RBAC guard functions in `src/lib/marcom/guards.ts` (`canAccessUserManagement`, `canManageUserTarget`, `canAssignUserRole`) with 14 unit tests
+  - Hardened backend API endpoints (`/api/admin/users/route.ts` and `[id]/route.ts`) enforcing supervisor access while blocking tampering with admin accounts and role promotion to admin (HTTP 403)
+  - Updated navigation and routing in `GlobalRail.tsx`, `ActiveViewStage.tsx`, and `/admin/users/page.tsx`
+  - Hardened UI controls in `UserRoleSelect.tsx`, `UsersActiveTab.tsx`, `UsersRejectedTab.tsx`, and `UsersView.tsx` disabling admin deactivation, role change, and deletion for supervisors
+  - Gates: `npm test` 710+ pass / 0 fail; `npm run test:smoke` pass; `npm run build:check` 0 errors; `npm run drift:check` clean; all coordinator files $\le 250$ LOC
+  Spec: `docs/superpowers/specs/2026-11-02-supervisor-guarded-user-management-design.md`
+  Plan: `docs/superpowers/plans/2026-11-02-supervisor-guarded-user-management.md`
+  Refs: `docs/adr/0013-supervisor-guarded-user-management-access.md`
+
+- `feat(ui)`: Global Rail pending users notification badge
+  - Authored ADR 12 (`docs/adr/0012-global-rail-pending-users-badge.md`) adding real-time ambient badge on Users navigation icon
+  - Added pure helpers `formatPendingBadgeCount` and `fetchPendingUsersCountApi` in `pendingUsersHelpers.ts` with 6 unit tests
+  - Added `pendingUsersCount` and `setPendingUsersCount` to Zustand data slice and connected real-time count updates on user approval/rejection in `UsersView.tsx`
+  - Created client polling and focus-revalidation hook `usePendingUsers.ts` scoped strictly to authorized managers
+  - Rendered small red dot badge with white typography and rose-500 fill on `GlobalRail.tsx` (240 LOC $\le 250$)
+  - Gates: `npm test` pass / 0 fail; `npm run test:smoke` pass; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-11-02-global-rail-pending-users-badge-design.md`
+  Plan: `docs/superpowers/plans/2026-11-02-global-rail-pending-users-badge.md`
+  Refs: `docs/adr/0012-global-rail-pending-users-badge.md`
+
+- `fix(build)`: Clean up ESLint unused vars and React Hook dependencies for production Vercel build
+  - Resolved all `@typescript-eslint/no-unused-vars` and `react-hooks/exhaustive-deps` across 8 files (`DirectDriveUploadDropzone`, `GoogleDriveUrlForm`, `ProjectsListTable`, `useProjectsBoard`, `useProjectsList`, `MousView`, `OutletFormModal`, `MarcomTableShell`)
+  - Verified `npm run lint` exits with 0 errors and 0 warnings
+
 - `feat(gdrive)`: Centralized Google Drive storage via developer refresh token and direct resumable uploads
   - Authored ADR 11 (`docs/adr/0011-centralized-google-drive-storage-refresh-token.md`) establishing centralized developer storage ownership and zero user OAuth popups
   - Created standalone CLI helper `scripts/get-drive-refresh-token.ts` (`npm run drive:token`) for one-time developer refresh token acquisition

@@ -1,7 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-// @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { hasPermission, hasScopedPermission, canAccessBranch } from "./guards.ts";
+import {
+  hasPermission,
+  hasScopedPermission,
+  canAccessBranch,
+  canAccessUserManagement,
+  canManageUserTarget,
+  canAssignUserRole,
+} from "./guards";
 
 test("viewer can only export", () => {
   assert.equal(hasPermission("viewer", "EXPORT_REPORTS"), true);
@@ -344,3 +350,57 @@ test("canAccessBranch strictly bounds supervisor to assigned branches", () => {
   assert.equal(canAccessBranch("supervisor", supervisorBranches, "branch-jkt"), false);
   assert.equal(canAccessBranch("supervisor", [], "branch-sby"), false);
 });
+
+test("canAccessUserManagement grants access strictly to admin and supervisor", () => {
+  assert.equal(canAccessUserManagement("admin"), true);
+  assert.equal(canAccessUserManagement("ADMIN"), true);
+  assert.equal(canAccessUserManagement("supervisor"), true);
+  assert.equal(canAccessUserManagement("SUPERVISOR"), true);
+  assert.equal(canAccessUserManagement("staff"), false);
+  assert.equal(canAccessUserManagement("viewer"), false);
+  assert.equal(canAccessUserManagement(""), false);
+  assert.equal(canAccessUserManagement(null), false);
+  assert.equal(canAccessUserManagement(undefined), false);
+});
+
+test("canManageUserTarget enforces guarded protection for admin accounts", () => {
+  // Admin can manage anyone
+  assert.equal(canManageUserTarget("admin", "admin"), true);
+  assert.equal(canManageUserTarget("admin", "supervisor"), true);
+  assert.equal(canManageUserTarget("admin", "staff"), true);
+  assert.equal(canManageUserTarget("admin", "viewer"), true);
+
+  // Supervisor can manage supervisor, staff, viewer, but NEVER admin
+  assert.equal(canManageUserTarget("supervisor", "admin"), false);
+  assert.equal(canManageUserTarget("supervisor", "ADMIN"), false);
+  assert.equal(canManageUserTarget("supervisor", "supervisor"), true);
+  assert.equal(canManageUserTarget("supervisor", "staff"), true);
+  assert.equal(canManageUserTarget("supervisor", "viewer"), true);
+
+  // Staff and viewer cannot manage anyone
+  assert.equal(canManageUserTarget("staff", "staff"), false);
+  assert.equal(canManageUserTarget("viewer", "viewer"), false);
+  assert.equal(canManageUserTarget(null, "staff"), false);
+});
+
+test("canAssignUserRole prevents supervisors from assigning admin role", () => {
+  // Admin can assign any role
+  assert.equal(canAssignUserRole("admin", "admin"), true);
+  assert.equal(canAssignUserRole("admin", "supervisor"), true);
+  assert.equal(canAssignUserRole("admin", "staff"), true);
+  assert.equal(canAssignUserRole("admin", "viewer"), true);
+
+  // Supervisor can assign supervisor, staff, viewer, but CANNOT assign admin
+  assert.equal(canAssignUserRole("supervisor", "admin"), false);
+  assert.equal(canAssignUserRole("supervisor", "ADMIN"), false);
+  assert.equal(canAssignUserRole("supervisor", "supervisor"), true);
+  assert.equal(canAssignUserRole("supervisor", "staff"), true);
+  assert.equal(canAssignUserRole("supervisor", "viewer"), true);
+  assert.equal(canAssignUserRole("supervisor", "invalid"), false);
+
+  // Staff and viewer cannot assign any roles
+  assert.equal(canAssignUserRole("staff", "viewer"), false);
+  assert.equal(canAssignUserRole("viewer", "viewer"), false);
+  assert.equal(canAssignUserRole(null, "staff"), false);
+});
+

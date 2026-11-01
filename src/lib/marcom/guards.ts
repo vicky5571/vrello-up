@@ -177,3 +177,63 @@ export function resolveMarcomRole(
     ? role
     : "viewer";
 }
+
+/**
+ * Evaluates whether a role can access User Management (view users, pending badge).
+ * Returns true for "admin" and "supervisor".
+ */
+export function canAccessUserManagement(role?: string | null): boolean {
+  if (!role) return false;
+  const normalized = role.toLowerCase().trim();
+  return normalized === "admin" || normalized === "supervisor";
+}
+
+/**
+ * Evaluates whether an actor role can manage (edit status, role, branches, or delete) a target user.
+ * - Admin can manage any user.
+ * - Supervisor can manage supervisor, staff, viewer, but CANNOT manage admin.
+ */
+export function canManageUserTarget(
+  actorRole: string | null | undefined,
+  targetRole: string | null | undefined,
+): boolean {
+  if (!actorRole) return false;
+  const normalizedActor = actorRole.toLowerCase().trim();
+  if (normalizedActor === "admin") return true;
+  if (normalizedActor === "supervisor") {
+    const normalizedTarget = (targetRole || "").toLowerCase().trim();
+    return normalizedTarget !== "admin";
+  }
+  return false;
+}
+
+/**
+ * Evaluates whether an actor role can assign a specific role.
+ * - Admin can assign any role ("admin", "supervisor", "staff", "viewer").
+ * - Supervisor can assign "supervisor", "staff", "viewer", but CANNOT assign "admin".
+ */
+export function canAssignUserRole(
+  actorRole: string | null | undefined,
+  newRole: string | null | undefined,
+): boolean {
+  if (!actorRole || !newRole) return false;
+  const normalizedActor = actorRole.toLowerCase().trim();
+  const normalizedNewRole = newRole.toLowerCase().trim();
+  if (normalizedActor === "admin") {
+    return (
+      normalizedNewRole === "admin" ||
+      normalizedNewRole === "supervisor" ||
+      normalizedNewRole === "staff" ||
+      normalizedNewRole === "viewer"
+    );
+  }
+  if (normalizedActor === "supervisor") {
+    return (
+      normalizedNewRole === "supervisor" ||
+      normalizedNewRole === "staff" ||
+      normalizedNewRole === "viewer"
+    );
+  }
+  return false;
+}
+

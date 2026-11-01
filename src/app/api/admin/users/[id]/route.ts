@@ -4,6 +4,11 @@ import type { DbUserRole, DbUserStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { toAppUser } from "@/lib/server/auth-helpers";
+import {
+  canAccessUserManagement,
+  canManageUserTarget,
+  canAssignUserRole,
+} from "@/lib/marcom/guards";
 import { sendApprovalEmail, sendRejectionEmail } from "@/lib/server/mailer";
 import type { UserRole } from "@/types";
 
@@ -38,16 +43,16 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    if (session.user.role !== "admin") {
+    if (!canAccessUserManagement(session.user.role)) {
       return NextResponse.json(
-        { error: "Forbidden. Admin role required." },
+        { error: "Forbidden. Admin or Supervisor role required." },
         { status: 403 }
       );
     }
 
     const { id } = await params;
 
-    // Prevent admins from demoting or deactivating themselves through this
+    // Prevent users from demoting or deactivating themselves through this
     // endpoint (they would lose access to the admin panel immediately).
     if (id === session.user.id) {
       return NextResponse.json(
@@ -81,6 +86,22 @@ export async function PATCH(
 
     if (!targetUser) {
       return NextResponse.json({ error: "User not found." }, { status: 404 });
+    }
+
+    // Guard: Prevent supervisors from modifying admin accounts
+    if (!canManageUserTarget(session.user.role, targetUser.role)) {
+      return NextResponse.json(
+        { error: "Supervisor tidak diizinkan mengubah akun Administrator." },
+        { status: 403 }
+      );
+    }
+
+    // Guard: Prevent supervisors from assigning admin role
+    if (role && !canAssignUserRole(session.user.role, role)) {
+      return NextResponse.json(
+        { error: "Supervisor tidak diizinkan memberikan role Administrator." },
+        { status: 403 }
+      );
     }
 
     const updateData: {
@@ -133,9 +154,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    if (session.user.role !== "admin") {
+    if (!canAccessUserManagement(session.user.role)) {
       return NextResponse.json(
-        { error: "Forbidden. Admin role required." },
+        { error: "Forbidden. Admin or Supervisor role required." },
         { status: 403 }
       );
     }
@@ -155,6 +176,14 @@ export async function DELETE(
 
     if (!targetUser) {
       return NextResponse.json({ error: "User not found." }, { status: 404 });
+    }
+
+    // Guard: Prevent supervisors from deleting admin accounts
+    if (!canManageUserTarget(session.user.role, targetUser.role)) {
+      return NextResponse.json(
+        { error: "Supervisor tidak diizinkan menghapus akun Administrator." },
+        { status: 403 }
+      );
     }
 
     await prisma.user.delete({

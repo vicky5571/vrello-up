@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import type { AppUser, UserStatus } from "@/types";
+import type { AppUser, UserRole, UserStatus } from "@/types";
 import { UsersPendingTab } from "./UsersPendingTab";
 import { UsersActiveTab } from "./UsersActiveTab";
 import { UsersRejectedTab } from "./UsersRejectedTab";
@@ -22,6 +22,7 @@ interface UsersViewProps {
 export function UsersView({ initialCounts, currentUserId: propUserId }: UsersViewProps = {}) {
   const { data: session } = useSession();
   const currentUserId = propUserId ?? session?.user?.id ?? "";
+  const actorRole = (session?.user?.role as UserRole) || "viewer";
   const setPendingUsersCount = useWorkspaceStore((s) => s.setPendingUsersCount);
 
   const [activeTab, setActiveTab] = useState<UserStatus>(
@@ -109,6 +110,7 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
             currentUserId={currentUserId}
             isLoading={isLoading}
             onAction={fetchUsers}
+            actorRole={actorRole}
           />
         )}
 
@@ -117,6 +119,7 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
             users={filteredUsers}
             isLoading={isLoading}
             onAction={fetchUsers}
+            actorRole={actorRole}
           />
         )}
       </div>

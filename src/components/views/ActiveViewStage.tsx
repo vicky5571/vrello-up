@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useSession } from "next-auth/react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { canAccessUserManagement } from "@/lib/marcom/guards";
 import { motion, AnimatePresence } from "framer-motion";
 
 function ViewFallback() {
@@ -81,7 +82,7 @@ const ProfileView = dynamic(
 export function ActiveViewStage() {
   const activeView = useWorkspaceStore((s) => s.activeView);
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === "admin";
+  const canManageUsers = canAccessUserManagement(session?.user?.role);
 
   const renderActiveView = () => {
     switch (activeView as string) {
@@ -116,7 +117,7 @@ export function ActiveViewStage() {
       case "analytics":
         return <AnalyticsView />;
       case "users":
-        return isAdmin ? <UsersView /> : <ProjectsBoardView />;
+        return canManageUsers ? <UsersView /> : <ProjectsBoardView />;
       case "profile":
         return <ProfileView />;
       default:

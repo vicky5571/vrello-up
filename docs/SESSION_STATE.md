@@ -8,14 +8,42 @@
 
 **Date:** 2026-11-02  
 **Active Branch:** `vicky`  
-**Active Feature:** Global Rail Pending Users Notification Badge (`pendingUsersHelpers.ts`, `usePendingUsers.ts`, `GlobalRail.tsx`, `UsersView.tsx`, `createDataSlice.ts`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Production Build ESLint & React Hook Invariants Cleanup for Vercel Deployment  
+**Active Feature:** Supervisor Guarded User Management Access (`guards.ts`, `api/admin/users`, `GlobalRail.tsx`, `ActiveViewStage.tsx`, `UsersView.tsx`, `UserRoleSelect.tsx`, `UsersActiveTab.tsx`, `UsersRejectedTab.tsx`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Global Rail Pending Users Notification Badge & Production Build ESLint Cleanup  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Global Rail Pending Users Notification Badge (ADR 12):**
+1. **Supervisor Guarded User Management Access (ADR 13):**
+   - **User Intent & Problem Statement:** The user inquired if the system has a `supervisor` user level and requested that supervisors be granted access to the User Management page (`/?view=users`) and its operational actions like an admin.
+   - **Privilege Escalation & Hierarchy Protection:** Adopted guarded access (Option 2):
+     - Supervisors are granted access to view all registration tabs (`PENDING`, `APPROVED`, `REJECTED`), approve/reject new registrations, reassign branches, and manage roles (`supervisor`, `staff`, `viewer`).
+     - Supervisors are strictly blocked from promoting accounts to `admin` (privilege escalation prevention) and blocked from modifying, deactivating, or deleting `admin` accounts (tampering protection).
+   - **ADR 13 & Spec:** Authored ADR 13 (`docs/adr/0013-supervisor-guarded-user-management-access.md`), Design Spec (`docs/superpowers/specs/2026-11-02-supervisor-guarded-user-management-design.md`), and Plan (`docs/superpowers/plans/2026-11-02-supervisor-guarded-user-management.md`).
+   - **Pure RBAC Guards (`src/lib/marcom/guards.ts`):**
+     - `canAccessUserManagement(role)`: Returns `true` for `"admin"` and `"supervisor"`.
+     - `canManageUserTarget(actorRole, targetUserRole)`: Returns `false` if `targetUserRole === "admin"` and `actorRole !== "admin"`.
+     - `canAssignUserRole(actorRole, nextRole)`: Returns `false` if `nextRole === "admin"` and `actorRole !== "admin"`.
+     - Unit tests in `src/lib/marcom/guards.test.ts` (14 tests passed).
+   - **API Endpoint Guarding (`src/app/api/admin/users/`):**
+     - Hardened `route.ts` with `canAccessUserManagement(session.user.role)` (HTTP 403 otherwise).
+     - Hardened `[id]/route.ts`:
+       - `PATCH`: Enforces `canAccessUserManagement`, `canManageUserTarget` (blocks modifying admin accounts with 403), and `canAssignUserRole` (blocks promoting to admin with 403).
+       - `DELETE`: Enforces `canAccessUserManagement` and `canManageUserTarget` (blocks deleting admin accounts with 403).
+     - Verified with integration tests in `src/app/api/admin/users/adminUsersGuards.test.ts` (5 tests passed).
+   - **UI Navigation & View Routing:**
+     - `GlobalRail.tsx`: Authorized `users` nav item and `usePendingUsers` via `canAccessUserManagement` (240 LOC $\le 250$).
+     - `ActiveViewStage.tsx`: Authorized mounting of `UsersView` via `canAccessUserManagement` (125 LOC $\le 250$).
+     - `src/app/admin/users/page.tsx`: Updated redirect check using `canAccessUserManagement`.
+   - **UsersView Component Protections:**
+     - `UserRoleSelect.tsx`: Excludes `"admin"` option from dropdown when actor is `"supervisor"` and disables control when target is an admin.
+     - `UsersActiveTab.tsx`: Disables deactivation button on admin accounts when actor is `"supervisor"`.
+     - `UsersRejectedTab.tsx`: Disables reactivation and delete buttons on admin accounts when actor is `"supervisor"`.
+     - `UsersView.tsx`: Passes session actor role to active and rejected tabs.
+     - Verified with unit tests in `src/components/views/UsersView/userRoleSelect.test.ts` (3 tests passed).
+
+2. **Global Rail Pending Users Notification Badge (ADR 12):**
    - **User Intent & Problem Statement:** Administrators had no ambient indication of new user registrations pending approval ("Menunggu Review") unless they navigated to `/?view=users`. Needed a small red dot badge displaying the exact pending count on the `Users` icon in `GlobalRail`.
    - **ADR 12 & Spec:** Authored ADR 12 (`docs/adr/0012-global-rail-pending-users-badge.md`), Design Spec (`docs/superpowers/specs/2026-11-02-global-rail-pending-users-badge-design.md`), and Plan (`docs/superpowers/plans/2026-11-02-global-rail-pending-users-badge.md`).
    - **Pure Logic Helpers (`src/lib/marcom/pendingUsersHelpers.ts`):**

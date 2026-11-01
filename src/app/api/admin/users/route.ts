@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { toAppUser } from "@/lib/server/auth-helpers";
+import { canAccessUserManagement } from "@/lib/marcom/guards";
 import type { DbUserStatus } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
@@ -12,9 +13,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    if (session.user.role !== "admin") {
+    if (!canAccessUserManagement(session.user.role)) {
       return NextResponse.json(
-        { error: "Forbidden. Admin role required." },
+        { error: "Forbidden. Admin or Supervisor role required." },
         { status: 403 }
       );
     }

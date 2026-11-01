@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, RotateCcw, Trash2, Ban } from "lucide-react";
-import type { AppUser } from "@/types";
+import type { AppUser, UserRole } from "@/types";
 import { UserStatusBadge } from "./UserStatusBadge";
 import { AppImage } from "@/components/ui/AppImage";
 
@@ -11,9 +11,10 @@ interface UsersRejectedTabProps {
   users: AppUser[];
   isLoading: boolean;
   onAction: () => void;
+  actorRole?: UserRole;
 }
 
-export function UsersRejectedTab({ users, isLoading, onAction }: UsersRejectedTabProps) {
+export function UsersRejectedTab({ users, isLoading, onAction, actorRole }: UsersRejectedTabProps) {
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   const handleReapprove = async (user: AppUser) => {
@@ -122,30 +123,39 @@ export function UsersRejectedTab({ users, isLoading, onAction }: UsersRejectedTa
                     })}
                   </td>
                   <td className="py-3.5 px-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleReapprove(user)}
-                        disabled={isBusy}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
-                      >
-                        {isBusy ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <RotateCcw className="w-3.5 h-3.5" />
-                        )}
-                        <span>Aktifkan Kembali</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(user)}
-                        disabled={isBusy}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors disabled:opacity-50"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Hapus</span>
-                      </button>
-                    </div>
+                    {(() => {
+                      const isTargetAdmin = user.role === "admin";
+                      const isSupervisorBlocked = actorRole === "supervisor" && isTargetAdmin;
+
+                      return (
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleReapprove(user)}
+                            disabled={isBusy || isSupervisorBlocked}
+                            title={isSupervisorBlocked ? "Supervisor tidak dapat mengaktifkan akun Admin" : "Aktifkan Kembali"}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isBusy ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            )}
+                            <span>Aktifkan Kembali</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(user)}
+                            disabled={isBusy || isSupervisorBlocked}
+                            title={isSupervisorBlocked ? "Supervisor tidak dapat menghapus akun Admin" : "Hapus"}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Hapus</span>
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </td>
                 </tr>
               );

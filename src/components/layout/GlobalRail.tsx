@@ -20,6 +20,7 @@ import { useShallow } from "zustand/react/shallow";
 import { MoreAppsMenu } from "@/components/modals/MoreAppsMenu";
 import { usePendingUsers } from "@/lib/marcom/usePendingUsers";
 import { formatPendingBadgeCount } from "@/lib/marcom/pendingUsersHelpers";
+import { canAccessUserManagement } from "@/lib/marcom/guards";
 
 export function GlobalRail() {
   const { data: session } = useSession();
@@ -46,8 +47,8 @@ export function GlobalRail() {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
-  const isAdmin = session?.user?.role === "admin";
-  const { pendingUsersCount } = usePendingUsers({ isAdmin });
+  const canManageUsers = canAccessUserManagement(session?.user?.role);
+  const { pendingUsersCount } = usePendingUsers({ isAdmin: canManageUsers });
 
   const NAV_ITEMS = [
     {
@@ -71,7 +72,7 @@ export function GlobalRail() {
       isActive: isAiDrawerOpen,
       onClick: () => setAiDrawerOpen(true),
     },
-    ...(isAdmin
+    ...(canManageUsers
       ? [
           {
             id: "users",
