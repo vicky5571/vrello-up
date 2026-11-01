@@ -4,32 +4,54 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { X, Loader2, Clock, UserCheck } from "lucide-react";
 import { AppImage } from "@/components/ui/AppImage";
-import type { AppUser } from "@/types";
+import type { AppUser, UserRole } from "@/types";
+import { ApproveUserModal } from "./ApproveUserModal";
+import type { BranchLookupItem } from "@/lib/marcom/branchAssignmentHelpers";
 
 interface UsersPendingTabProps {
   users: AppUser[];
   isLoading: boolean;
   onAction: () => void;
+  branches?: BranchLookupItem[];
+  actorRole?: UserRole;
+  actorBranchIds?: string[];
 }
 
-export function UsersPendingTab({ users, isLoading, onAction }: UsersPendingTabProps) {
+export function UsersPendingTab({
+  users,
+  isLoading,
+  onAction,
+  branches = [],
+  actorRole = "admin",
+  actorBranchIds = [],
+}: UsersPendingTabProps) {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [approvingUser, setApprovingUser] = useState<AppUser | null>(null);
 
-  const handleApprove = async (user: AppUser) => {
-    setProcessingId(user.id);
+  const handleConfirmApprove = async (role: UserRole, assignedBranchIds: string[]) => {
+    if (!approvingUser) return;
+    setProcessingId(approvingUser.id);
     try {
-      const res = await fetch(`/api/admin/users/${user.id}`, {
+      const res = await fetch(`/api/admin/users/${approvingUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "APPROVED" }),
+        body: JSON.stringify({
+          status: "APPROVED",
+          role,
+          assignedBranchIds,
+        }),
       });
-      if (!res.ok) throw new Error("Failed to approve");
-      toast.success(`Akun ${user.name} berhasil disetujui`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Gagal menyetujui akun");
+      }
+      toast.success(`Akun ${approvingUser.name} berhasil disetujui`);
+      setApprovingUser(null);
       onAction();
-    } catch {
-      toast.error("Gagal menyetujui akun.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyetujui akun.");
     } finally {
       setProcessingId(null);
     }
@@ -162,7 +184,7 @@ export function UsersPendingTab({ users, isLoading, onAction }: UsersPendingTabP
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => handleApprove(user)}
+                          onClick={() => setApprovingUser(user)}
                           disabled={isBusy}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50"
                         >
@@ -194,6 +216,17 @@ export function UsersPendingTab({ users, isLoading, onAction }: UsersPendingTabP
           </tbody>
         </table>
       </div>
+
+      <ApproveUserModal
+        user={approvingUser}
+        isOpen={!!approvingUser}
+        branches={branches}
+        actorRole={actorRole}
+        actorBranchIds={actorBranchIds}
+        isBusy={!!processingId}
+        onConfirm={handleConfirmApprove}
+        onClose={() => setApprovingUser(null)}
+      />
     </div>
   );
 }

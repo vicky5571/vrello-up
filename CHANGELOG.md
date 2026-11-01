@@ -6,6 +6,18 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-02]
 
+- `feat(users)`: User management branch assignment and area supervisor scoping
+  - Authored ADR 14 (`docs/adr/0014-user-management-branch-assignment.md`) establishing approval-time branch assignment and Area Supervisor boundary scoping
+  - Implemented pure helpers in `src/lib/marcom/branchAssignmentHelpers.ts` (`getAssignableBranches`, `canAssignBranchToUser`, `formatUserBranchBadges`) with 13 unit tests
+  - Hardened `PATCH /api/admin/users/[id]` enforcing `canAssignBranchToUser` (HTTP 403 when supervisors assign branches outside their area)
+  - Created `ApproveUserModal.tsx` allowing managers to select role and branch penugasan before activating accounts in `UsersPendingTab.tsx`
+  - Created `UserBranchSelectModal.tsx` and `UserActiveRow.tsx` (Strangler Pattern) displaying branch chips and editing penugasan in `UsersActiveTab.tsx`
+  - Integrated branch fetching in `UsersView.tsx` and verified all coordinator files remain $\le 250$ LOC
+  - Gates: `npm test` 733 pass / 0 fail; `npm run test:smoke` 100 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-11-02-user-branch-assignment-design.md`
+  Plan: `docs/superpowers/plans/2026-11-02-user-branch-assignment.md`
+  Refs: `docs/adr/0014-user-management-branch-assignment.md`
+
 - `feat(rbac)`: Implement supervisor guarded user management access
   - Authored ADR 13 (`docs/adr/0013-supervisor-guarded-user-management-access.md`) granting supervisors operational user management while preventing privilege escalation
   - Implemented pure RBAC guard functions in `src/lib/marcom/guards.ts` (`canAccessUserManagement`, `canManageUserTarget`, `canAssignUserRole`) with 14 unit tests

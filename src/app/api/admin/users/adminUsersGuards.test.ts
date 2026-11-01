@@ -7,6 +7,7 @@ import {
   canManageUserTarget,
   canAssignUserRole,
 } from "@/lib/marcom/guards";
+import { canAssignBranchToUser } from "@/lib/marcom/branchAssignmentHelpers";
 
 describe("Admin Users API Guard Invariants", () => {
   it("enforces canAccessUserManagement in GET /api/admin/users", () => {
@@ -71,6 +72,29 @@ describe("Admin Users API Guard Invariants", () => {
       content.includes("Supervisor tidak diizinkan menghapus akun Administrator."),
       "Expected error message for supervisor admin deletion"
     );
+  });
+
+  it("enforces canAssignBranchToUser in PATCH /api/admin/users/[id]", () => {
+    const filePath = path.resolve(
+      process.cwd(),
+      "src/app/api/admin/users/[id]/route.ts"
+    );
+    const content = fs.readFileSync(filePath, "utf-8");
+    assert.ok(
+      content.includes("canAssignBranchToUser("),
+      "Expected PATCH to check canAssignBranchToUser"
+    );
+    assert.ok(
+      content.includes("Supervisor hanya dapat menugaskan cabang dalam wilayah binaannya."),
+      "Expected error message for supervisor out-of-scope branch assignment"
+    );
+
+    // Admin can assign any branch
+    assert.equal(canAssignBranchToUser("admin", [], ["branch-sby", "branch-jkt"]), true);
+
+    // Supervisor can assign their branches, but not external branches
+    assert.equal(canAssignBranchToUser("supervisor", ["branch-sby"], ["branch-sby"]), true);
+    assert.equal(canAssignBranchToUser("supervisor", ["branch-sby"], ["branch-jkt"]), false);
   });
 
   it("verifies supervisor role management invariants", () => {

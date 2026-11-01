@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Users, UserX } from "lucide-react";
+import { Loader2, Users } from "lucide-react";
 import type { AppUser, UserRole } from "@/types";
-import { UserStatusBadge } from "./UserStatusBadge";
-import { UserRoleSelect } from "./UserRoleSelect";
-import { AppImage } from "@/components/ui/AppImage";
+import { UserActiveRow } from "./UserActiveRow";
+import { UserBranchSelectModal } from "./UserBranchSelectModal";
+import type { BranchLookupItem } from "@/lib/marcom/branchAssignmentHelpers";
 
 interface UsersActiveTabProps {
   users: AppUser[];
@@ -14,6 +14,8 @@ interface UsersActiveTabProps {
   isLoading: boolean;
   onAction: () => void;
   actorRole?: UserRole;
+  actorBranchIds?: string[];
+  branches?: BranchLookupItem[];
 }
 
 export function UsersActiveTab({
@@ -22,8 +24,11 @@ export function UsersActiveTab({
   isLoading,
   onAction,
   actorRole,
+  actorBranchIds = [],
+  branches = [],
 }: UsersActiveTabProps) {
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [editingBranchUser, setEditingBranchUser] = useState<AppUser | null>(null);
 
   const handleRoleChange = async (user: AppUser, newRole: UserRole) => {
     if (user.role === newRole) return;
@@ -71,6 +76,29 @@ export function UsersActiveTab({
     }
   };
 
+  const handleBranchSave = async (assignedBranchIds: string[]) => {
+    if (!editingBranchUser) return;
+    setProcessingId(editingBranchUser.id);
+    try {
+      const res = await fetch(`/api/admin/users/${editingBranchUser.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignedBranchIds }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Gagal mengubah cabang");
+      }
+      toast.success(`Cabang penugasan ${editingBranchUser.name} berhasil diperbarui`);
+      setEditingBranchUser(null);
+      onAction();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengubah penugasan cabang.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-8 text-center flex flex-col items-center justify-center space-y-3">
@@ -105,96 +133,40 @@ export function UsersActiveTab({
               <th className="py-3 px-4">Pengguna</th>
               <th className="py-3 px-4">Email</th>
               <th className="py-3 px-4">Role</th>
+              <th className="py-3 px-4">Cabang</th>
               <th className="py-3 px-4">Status</th>
               <th className="py-3 px-4">Terakhir Masuk</th>
               <th className="py-3 px-4 text-right">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {users.map((user) => {
-              const isCurrentUser = user.id === currentUserId;
-              const isBusy = processingId === user.id;
-
-              return (
-                <tr key={user.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center text-xs overflow-hidden shrink-0">
-                        {user.avatar ? (
-                          <AppImage src={user.avatar} alt={user.name} fill sizes="32px" className="object-cover" />
-                        ) : (
-                          user.name.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground">{user.name}</span>
-                        {isCurrentUser && (
-                          <span className="text-[10px] font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                            Anda
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 text-muted-foreground">{user.email}</td>
-                  <td className="py-3.5 px-4">
-                    <UserRoleSelect
-                      value={user.role}
-                      onChange={(newRole) => handleRoleChange(user, newRole)}
-                      disabled={isBusy || (isCurrentUser && user.role === "admin")}
-                      actorRole={actorRole}
-                    />
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <UserStatusBadge status={user.status} />
-                  </td>
-                  <td className="py-3.5 px-4 text-muted-foreground text-xs">
-                    {user.lastLoginAt
-                      ? new Date(user.lastLoginAt).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : "Belum pernah"}
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    {(() => {
-                      const isTargetAdmin = user.role === "admin";
-                      const isSupervisorBlocked = actorRole === "supervisor" && isTargetAdmin;
-                      const isDeactivateForbidden = isCurrentUser || isSupervisorBlocked;
-                      const buttonTitle = isCurrentUser
-                        ? "Tidak dapat menonaktifkan akun sendiri"
-                        : isSupervisorBlocked
-                        ? "Supervisor tidak dapat menonaktifkan akun Admin"
-                        : "Nonaktifkan akun";
-
-                      return (
-                        <button
-                          type="button"
-                          onClick={() => handleDeactivate(user)}
-                          disabled={isBusy || isDeactivateForbidden}
-                          title={buttonTitle}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          {isBusy ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <UserX className="w-3.5 h-3.5" />
-                          )}
-                          <span>Nonaktifkan</span>
-                        </button>
-                      );
-                    })()}
-                  </td>
-                </tr>
-              );
-            })}
+            {users.map((user) => (
+              <UserActiveRow
+                key={user.id}
+                user={user}
+                currentUserId={currentUserId}
+                isBusy={processingId === user.id}
+                actorRole={actorRole}
+                branches={branches}
+                onRoleChange={handleRoleChange}
+                onDeactivate={handleDeactivate}
+                onEditBranches={setEditingBranchUser}
+              />
+            ))}
           </tbody>
         </table>
       </div>
+
+      <UserBranchSelectModal
+        user={editingBranchUser}
+        isOpen={!!editingBranchUser}
+        branches={branches}
+        actorRole={actorRole}
+        actorBranchIds={actorBranchIds}
+        isBusy={!!processingId}
+        onSave={handleBranchSave}
+        onClose={() => setEditingBranchUser(null)}
+      />
     </div>
   );
 }
-

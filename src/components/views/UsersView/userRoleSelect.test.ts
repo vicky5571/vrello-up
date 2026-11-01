@@ -13,6 +13,9 @@ describe("User Management UI & Coordinator Invariants", () => {
       "UsersPendingTab.tsx",
       "UsersHeader.tsx",
       "UserRoleSelect.tsx",
+      "UserActiveRow.tsx",
+      "ApproveUserModal.tsx",
+      "UserBranchSelectModal.tsx",
     ];
 
     for (const file of files) {
@@ -33,7 +36,12 @@ describe("User Management UI & Coordinator Invariants", () => {
     );
     assert.match(activeTabContent, /actorRole\?: UserRole/);
     assert.match(activeTabContent, /actorRole=\{actorRole\}/);
-    assert.match(activeTabContent, /isSupervisorBlocked = actorRole === "supervisor" && isTargetAdmin/);
+
+    const activeRowContent = fs.readFileSync(
+      path.join(process.cwd(), "src/components/views/UsersView/UserActiveRow.tsx"),
+      "utf-8"
+    );
+    assert.match(activeRowContent, /isSupervisorBlocked = actorRole === "supervisor" && isTargetAdmin/);
 
     const rejectedTabContent = fs.readFileSync(
       path.join(process.cwd(), "src/components/views/UsersView/UsersRejectedTab.tsx"),

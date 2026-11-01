@@ -8,14 +8,43 @@
 
 **Date:** 2026-11-02  
 **Active Branch:** `vicky`  
-**Active Feature:** Supervisor Guarded User Management Access (`guards.ts`, `api/admin/users`, `GlobalRail.tsx`, `ActiveViewStage.tsx`, `UsersView.tsx`, `UserRoleSelect.tsx`, `UsersActiveTab.tsx`, `UsersRejectedTab.tsx`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Global Rail Pending Users Notification Badge & Production Build ESLint Cleanup  
+**Active Feature:** User Management Branch Assignment & Area Supervisor Scoping (`branchAssignmentHelpers.ts`, `ApproveUserModal.tsx`, `UserBranchSelectModal.tsx`, `UserActiveRow.tsx`, `UsersActiveTab.tsx`, `UsersPendingTab.tsx`, `UsersView.tsx`, `api/admin/users/[id]`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Supervisor Guarded User Management Access & Global Rail Pending Users Notification Badge  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Supervisor Guarded User Management Access (ADR 13):**
+1. **User Management Branch Assignment & Area Supervisor Scoping (ADR 14):**
+   - **User Intent & Problem Statement:** The user observed that previously neither the registration form nor User Management asked or allowed assigning users to specific branches (`assignedBranchIds`). Confirmed that `supervisor` acts as an Area Supervisor (Model A) with multi-branch purview, and managers should assign branches in User Management upon approval or via active user management (Option 1).
+   - **ADR 14 & Spec:** Authored ADR 14 (`docs/adr/0014-user-management-branch-assignment.md`), Design Spec (`docs/superpowers/specs/2026-11-02-user-branch-assignment-design.md`), and Plan (`docs/superpowers/plans/2026-11-02-user-branch-assignment.md`).
+   - **Pure RBAC & Scoping Helpers (`src/lib/marcom/branchAssignmentHelpers.ts`):**
+     - `getAssignableBranches`: Admins can assign all branches; Supervisors can only assign from their own `assignedBranchIds`.
+     - `canAssignBranchToUser`: Prevents supervisors from assigning out-of-scope branches.
+     - `formatUserBranchBadges`: Displays "Semua Cabang (Nasional)" for Admin, "Belum Ada Cabang" for unassigned, and human-readable branch names for assigned users.
+     - 13 comprehensive unit tests passing in `branchAssignmentHelpers.test.ts`.
+   - **Backend API Hardening (`src/app/api/admin/users/[id]/route.ts`):**
+     - In `PATCH /api/admin/users/[id]`, added validation using `canAssignBranchToUser`.
+     - Rejects out-of-scope branch assignments by supervisors with HTTP 403 (`Supervisor hanya dapat menugaskan cabang dalam wilayah binaannya.`).
+     - Added API guard test cases in `adminUsersGuards.test.ts` (6 tests passing).
+     - Maintained file size at 218 LOC ($\le 250$ LOC).
+   - **Approval & Active UI Components:**
+     - `ApproveUserModal.tsx` (224 LOC $\le 250$): Modal triggered upon clicking "Setujui" in `UsersPendingTab` allowing explicit selection of role and branch penugasan before activating the account.
+     - `UserBranchSelectModal.tsx` (199 LOC $\le 250$): Dialog for updating branch penugasan for active users in `UsersActiveTab`.
+     - `UserActiveRow.tsx` (136 LOC $\le 250$): Extracted row subcomponent (Strangler Pattern) displaying user info, role select, branch chips with edit trigger, status, last login, and deactivate button.
+     - `UsersActiveTab.tsx` (172 LOC $\le 250$): Added "Cabang" column and integrated `UserBranchSelectModal`.
+     - `UsersPendingTab.tsx` (233 LOC $\le 250$): Integrated `ApproveUserModal`.
+     - `UsersView.tsx` (155 LOC $\le 250$): Fetches branches from `/api/marcom/branches` on mount and passes them to tabs.
+     - 4 unit tests passing in `userBranchAssignment.test.ts`.
+   - **Verification Gates:**
+     - `npm run drift:check`: Clean, 46 paired specs/plans, all coordinator files $\le 250$ LOC.
+     - `npm run test:smoke`: 100 passed, 0 failed.
+     - `npm test`: 733 passed, 0 failed (129 suites).
+     - `npm run build:check`: 0 errors.
+     - `npm run lint`: 0 warnings or errors.
+     - `npm run build`: Production Next.js build compiled cleanly (31/31 routes).
+
+2. **Supervisor Guarded User Management Access (ADR 13):**
    - **User Intent & Problem Statement:** The user inquired if the system has a `supervisor` user level and requested that supervisors be granted access to the User Management page (`/?view=users`) and its operational actions like an admin.
    - **Privilege Escalation & Hierarchy Protection:** Adopted guarded access (Option 2):
      - Supervisors are granted access to view all registration tabs (`PENDING`, `APPROVED`, `REJECTED`), approve/reject new registrations, reassign branches, and manage roles (`supervisor`, `staff`, `viewer`).

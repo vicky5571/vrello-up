@@ -9,6 +9,7 @@ import {
   canManageUserTarget,
   canAssignUserRole,
 } from "@/lib/marcom/guards";
+import { canAssignBranchToUser } from "@/lib/marcom/branchAssignmentHelpers";
 import { sendApprovalEmail, sendRejectionEmail } from "@/lib/server/mailer";
 import type { UserRole } from "@/types";
 
@@ -100,6 +101,21 @@ export async function PATCH(
     if (role && !canAssignUserRole(session.user.role, role)) {
       return NextResponse.json(
         { error: "Supervisor tidak diizinkan memberikan role Administrator." },
+        { status: 403 }
+      );
+    }
+
+    // Guard: Prevent supervisors from assigning branches outside their scope
+    if (
+      assignedBranchIds &&
+      !canAssignBranchToUser(
+        session.user.role,
+        session.user.assignedBranchIds,
+        assignedBranchIds
+      )
+    ) {
+      return NextResponse.json(
+        { error: "Supervisor hanya dapat menugaskan cabang dalam wilayah binaannya." },
         { status: 403 }
       );
     }

@@ -9,6 +9,7 @@ import { UsersActiveTab } from "./UsersActiveTab";
 import { UsersRejectedTab } from "./UsersRejectedTab";
 import { UsersHeader } from "./UsersHeader";
 import { filterUsers } from "./usersFilterHelpers";
+import type { BranchLookupItem } from "@/lib/marcom/branchAssignmentHelpers";
 
 interface UsersViewProps {
   initialCounts?: {
@@ -23,6 +24,7 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
   const { data: session } = useSession();
   const currentUserId = propUserId ?? session?.user?.id ?? "";
   const actorRole = (session?.user?.role as UserRole) || "viewer";
+  const actorBranchIds = session?.user?.assignedBranchIds || [];
   const setPendingUsersCount = useWorkspaceStore((s) => s.setPendingUsersCount);
 
   const [activeTab, setActiveTab] = useState<UserStatus>(
@@ -32,8 +34,27 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
     initialCounts ?? { pending: 0, active: 0, rejected: 0 }
   );
   const [users, setUsers] = useState<AppUser[]>([]);
+  const [branches, setBranches] = useState<BranchLookupItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    fetch("/api/marcom/branches")
+      .then((r) => (r.ok ? r.json() : { data: [] }))
+      .then((res) => {
+        if (Array.isArray(res.data)) {
+          setBranches(
+            res.data.map((b: { id: string; name: string; code?: string; region?: string }) => ({
+              id: b.id,
+              name: b.name,
+              code: b.code,
+              region: b.region,
+            }))
+          );
+        }
+      })
+      .catch((err) => console.error("[UsersView] Failed to fetch branches:", err));
+  }, []);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -101,6 +122,9 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
             users={filteredUsers}
             isLoading={isLoading}
             onAction={fetchUsers}
+            branches={branches}
+            actorRole={actorRole}
+            actorBranchIds={actorBranchIds}
           />
         )}
 
@@ -111,6 +135,8 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
             isLoading={isLoading}
             onAction={fetchUsers}
             actorRole={actorRole}
+            actorBranchIds={actorBranchIds}
+            branches={branches}
           />
         )}
 
