@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Camera, Trash2, Link as LinkIcon, Upload } from "lucide-react";
+import { Camera, Trash2, Upload } from "lucide-react";
 import { AppImage } from "@/components/ui/AppImage";
 import { getInitials } from "@/components/layout/userProfileHelpers";
 import { toast } from "sonner";
@@ -20,8 +20,6 @@ export function ProfileAvatarUploader({
   disabled = false,
 }: ProfileAvatarUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUrlMode, setIsUrlMode] = useState(false);
-  const [urlInput, setUrlInput] = useState("");
   const [imageError, setImageError] = useState(false);
 
   const initials = getInitials(userName);
@@ -78,25 +76,6 @@ export function ProfileAvatarUploader({
     }
   };
 
-  const handleApplyUrl = () => {
-    const clean = urlInput.trim();
-    if (!clean) return;
-    try {
-      const parsed = new URL(clean);
-      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-        toast.error("URL harus diawali dengan http:// atau https://");
-        return;
-      }
-      setImageError(false);
-      onChangeAvatar(clean);
-      setIsUrlMode(false);
-      setUrlInput("");
-      toast.success("URL foto diterapkan. Klik 'Simpan' untuk menerapkan.");
-    } catch {
-      toast.error("Format URL tidak valid.");
-    }
-  };
-
   return (
     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
       {/* Avatar Circle Preview */}
@@ -140,7 +119,7 @@ export function ProfileAvatarUploader({
             Foto Avatar
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Unggah foto PNG, JPG, atau WebP (otomatis dikompresi &lt;100KB) atau gunakan tautan gambar eksternal.
+            Unggah foto PNG, JPG, atau WebP (otomatis dikompresi &lt;100KB).
           </p>
         </div>
 
@@ -153,16 +132,6 @@ export function ProfileAvatarUploader({
           >
             <Upload className="w-3.5 h-3.5" />
             <span>Pilih File</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsUrlMode(!isUrlMode)}
-            disabled={disabled}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <LinkIcon className="w-3.5 h-3.5" />
-            <span>Tautan URL</span>
           </button>
 
           {currentAvatar && (
@@ -180,25 +149,6 @@ export function ProfileAvatarUploader({
             </button>
           )}
         </div>
-
-        {isUrlMode && (
-          <div className="flex items-center gap-2 pt-2">
-            <input
-              type="url"
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              placeholder="https://images.example.com/avatar.jpg"
-              className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-            <button
-              type="button"
-              onClick={handleApplyUrl}
-              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-90 cursor-pointer"
-            >
-              Terapkan
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
