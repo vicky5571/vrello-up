@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import type { AppUser, UserStatus } from "@/types";
 import { UsersPendingTab } from "./UsersPendingTab";
 import { UsersActiveTab } from "./UsersActiveTab";
@@ -21,6 +22,7 @@ interface UsersViewProps {
 export function UsersView({ initialCounts, currentUserId: propUserId }: UsersViewProps = {}) {
   const { data: session } = useSession();
   const currentUserId = propUserId ?? session?.user?.id ?? "";
+  const setPendingUsersCount = useWorkspaceStore((s) => s.setPendingUsersCount);
 
   const [activeTab, setActiveTab] = useState<UserStatus>(
     (initialCounts?.pending ?? 0) > 0 ? "PENDING" : "APPROVED"
@@ -53,18 +55,20 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
           activeRes.json(),
           rejectedRes.json(),
         ]);
+        const pendingTotal = pData.total || 0;
         setCounts({
-          pending: pData.total || 0,
+          pending: pendingTotal,
           active: aData.total || 0,
           rejected: rData.total || 0,
         });
+        setPendingUsersCount(pendingTotal);
       }
     } catch (error) {
       console.error("[UsersView] Failed to fetch users:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab]);
+  }, [activeTab, setPendingUsersCount]);
 
   useEffect(() => {
     fetchUsers();

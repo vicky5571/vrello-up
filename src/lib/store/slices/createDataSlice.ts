@@ -10,6 +10,9 @@ export const createDataSlice: StateCreator<
 > = (set, get) => ({
   spaces: [],
   users: SEED_USERS,
+  pendingUsersCount: 0,
+
+  setPendingUsersCount: (count) => set({ pendingUsersCount: count }),
 
   addUser: (name, email, role) => {
     const newUser = {

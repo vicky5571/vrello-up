@@ -8,14 +8,38 @@
 
 **Date:** 2026-11-02  
 **Active Branch:** `vicky`  
-**Active Feature:** Production Build ESLint & React Hook Invariants Cleanup for Vercel Deployment (`DirectDriveUploadDropzone.tsx`, `GoogleDriveUrlForm.tsx`, `ProjectsListTable.tsx`, `useProjectsBoard.ts`, `useProjectsList.ts`, `MousView.tsx`, `OutletFormModal.tsx`, `MarcomTableShell.tsx`) — **RESOLVED & VERIFIED**  
-**Previous Feature:** Centralized Google Drive Storage via Developer Refresh Token & Resumable Direct Uploads  
+**Active Feature:** Global Rail Pending Users Notification Badge (`pendingUsersHelpers.ts`, `usePendingUsers.ts`, `GlobalRail.tsx`, `UsersView.tsx`, `createDataSlice.ts`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Production Build ESLint & React Hook Invariants Cleanup for Vercel Deployment  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Production Build & ESLint Strict Invariant Resolution (Vercel Build Failure Fix):**
+1. **Global Rail Pending Users Notification Badge (ADR 12):**
+   - **User Intent & Problem Statement:** Administrators had no ambient indication of new user registrations pending approval ("Menunggu Review") unless they navigated to `/?view=users`. Needed a small red dot badge displaying the exact pending count on the `Users` icon in `GlobalRail`.
+   - **ADR 12 & Spec:** Authored ADR 12 (`docs/adr/0012-global-rail-pending-users-badge.md`), Design Spec (`docs/superpowers/specs/2026-11-02-global-rail-pending-users-badge-design.md`), and Plan (`docs/superpowers/plans/2026-11-02-global-rail-pending-users-badge.md`).
+   - **Pure Logic Helpers (`src/lib/marcom/pendingUsersHelpers.ts`):**
+     - `formatPendingBadgeCount`: Formats count, returns `null` for $\le 0$, caps at `"99+"`, and formats `1..99` as exact string.
+     - `fetchPendingUsersCountApi`: Calls `/api/admin/users?status=PENDING&limit=1`, extracts `total`, and fails safe to `0` without throwing on non-200 or network issues.
+     - 6 unit tests in `pendingUsersHelpers.test.ts` passing 100%.
+   - **Zustand Data Slice Integration (`src/lib/store/slices/types.ts`, `createDataSlice.ts`):**
+     - Added `pendingUsersCount: number` (initial 0) and `setPendingUsersCount: (count: number) => void`.
+     - In `UsersView.tsx`: Connected `setPendingUsersCount(pData.total || 0)` whenever `fetchUsers` executes so approving/rejecting a user immediately decrements the badge in real time.
+   - **Client Polling & Revalidation Hook (`src/lib/marcom/usePendingUsers.ts`):**
+     - Only queries when `isAdmin: true` (0 calls for non-admins).
+     - Fetches on mount, revalidates on window focus, and polls every 60s.
+   - **Global Rail UI Presentation (`src/components/layout/GlobalRail.tsx`):**
+     - Rendered small red dot badge (`bg-rose-500 text-white text-[9px] font-bold min-w-3.5 h-3.5 px-0.5 rounded-full ring-2 ring-[#0F1115] shadow-xs`) on top-right of the `Users` icon.
+     - `GlobalRail.tsx` LOC: 239 LOC ($\le 250$ LOC coordinator limit). Added 5 tests in `GlobalRail.test.ts`.
+   - **Verification Gates:**
+     - `npm run drift:check`: Clean, 44 paired specs/plans.
+     - `npm run lint`: `✔ No ESLint warnings or errors`.
+     - `npm run test:smoke`: 96 passed, 0 failed.
+     - `npm test`: 704 passed, 0 failures.
+     - `npm run build:check`: 0 errors.
+     - `npm run build`: Production Next.js build compiled successfully (31/31 routes).
+
+2. **Production Build & ESLint Strict Invariant Resolution (Vercel Build Failure Fix):**
    - **Root Cause Evaluated:** Vercel deployment failed during `next build` -> `next lint` ("Linting and checking validity of types") due to strict ESLint `@typescript-eslint/no-unused-vars` errors and `react-hooks/exhaustive-deps` warnings across 8 files:
      - `DirectDriveUploadDropzone.tsx`: Unused import `CheckCircle2`.
      - `GoogleDriveUrlForm.tsx`: Unused import `Info`.

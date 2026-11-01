@@ -25,6 +25,8 @@ export interface TrashedTask {
 export interface DataSlice {
   spaces: Space[];
   users: User[];
+  pendingUsersCount: number;
+  setPendingUsersCount: (count: number) => void;
   addUser: (name: string, email: string, role: User["role"]) => User;
   removeUser: (userId: string) => void;
   syncSessionUser: (user: Partial<User> & { id: string }) => void;

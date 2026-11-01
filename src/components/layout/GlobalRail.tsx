@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
 import { MoreAppsMenu } from "@/components/modals/MoreAppsMenu";
+import { usePendingUsers } from "@/lib/marcom/usePendingUsers";
+import { formatPendingBadgeCount } from "@/lib/marcom/pendingUsersHelpers";
 
 export function GlobalRail() {
   const { data: session } = useSession();
@@ -45,6 +47,7 @@ export function GlobalRail() {
   const shouldReduceMotion = useReducedMotion();
 
   const isAdmin = session?.user?.role === "admin";
+  const { pendingUsersCount } = usePendingUsers({ isAdmin });
 
   const NAV_ITEMS = [
     {
@@ -75,6 +78,7 @@ export function GlobalRail() {
             label: "Users",
             icon: Users,
             isActive: activeView === "users",
+            badge: pendingUsersCount,
             onClick: () => setActiveView("users"),
           },
         ]
@@ -186,28 +190,39 @@ export function GlobalRail() {
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = item.isActive;
+            const badgeText = "badge" in item && typeof item.badge === "number" ? formatPendingBadgeCount(item.badge) : null;
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={item.onClick}
                 className={cn(
-                  "w-11 py-1.5 flex flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer group",
+                  "relative w-11 py-1.5 flex flex-col items-center justify-center gap-0.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer group",
                   isActive
                     ? "text-white bg-white/10 shadow-xs"
                     : "text-slate-400 hover:text-slate-200 hover:bg-white/5",
                 )}
               >
-                <Icon
-                  className={cn(
-                    "w-4 h-4 transition-transform group-hover:scale-105",
-                    isActive
-                      ? "text-white"
-                      : "text-slate-400 group-hover:text-slate-200",
-                    item.id === "ai" &&
-                      "text-violet-400 group-hover:text-violet-300",
+                <div className="relative flex items-center justify-center">
+                  <Icon
+                    className={cn(
+                      "w-4 h-4 transition-transform group-hover:scale-105",
+                      isActive
+                        ? "text-white"
+                        : "text-slate-400 group-hover:text-slate-200",
+                      item.id === "ai" &&
+                        "text-violet-400 group-hover:text-violet-300",
+                    )}
+                  />
+                  {badgeText && (
+                    <span
+                      data-testid="users-pending-badge"
+                      className="absolute -top-1.5 -right-2.5 min-w-3.5 h-3.5 px-0.5 rounded-full bg-rose-500 text-white text-[9px] leading-none font-bold flex items-center justify-center ring-2 ring-[#0F1115] shadow-xs"
+                    >
+                      {badgeText}
+                    </span>
                   )}
-                />
+                </div>
                 <span className="leading-none">{item.label}</span>
               </button>
             );
