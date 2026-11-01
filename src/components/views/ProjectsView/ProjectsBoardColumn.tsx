@@ -24,11 +24,7 @@ interface ProjectsBoardColumnProps {
   onToggleSelect?: (key: string) => void;
   onToggleSelectAll?: (column: ProjectsColumn) => void;
   onMoveToColumn?: (item: MarcomWorkItem, column: ProjectsColumn) => void;
-  onQuickCreate?: (
-    type: MarcomWorkItemType,
-    column: ProjectsColumn,
-    title: string,
-  ) => Promise<void> | void;
+  onInitiateCreate?: (type: MarcomWorkItemType, column: ProjectsColumn) => void;
   density?: "compact" | "default" | "relaxed";
   className?: string;
 }
@@ -73,7 +69,7 @@ export const ProjectsBoardColumn = memo(function ProjectsBoardColumn({
   onToggleSelect,
   onToggleSelectAll,
   onMoveToColumn,
-  onQuickCreate,
+  onInitiateCreate,
   density = "default",
   className,
 }: ProjectsBoardColumnProps) {
@@ -81,27 +77,10 @@ export const ProjectsBoardColumn = memo(function ProjectsBoardColumn({
     id: column,
   });
 
-  const [isAdding, setIsAdding] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [selectedType, setSelectedType] = useState<MarcomWorkItemType>(() => {
-    if (column === "Blocked") return "placement";
-    if (column === "Cancelled") return "event";
-    if (column === "In Review") return "content";
-    if (column === "To Do") return "placement";
-    return "content";
-  });
-
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const colors = COLUMN_COLORS[column] || COLUMN_COLORS["To Do"];
   const allInColumnSelected =
     items.length > 0 && items.every((i) => selectedKeys.has(`${i._type}:${i.id}`));
-
-  const handleQuickSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim() || !onQuickCreate) return;
-    await onQuickCreate(selectedType, column, newTitle.trim());
-    setNewTitle("");
-    setIsAdding(false);
-  };
 
   return (
     <div
@@ -150,76 +129,64 @@ export const ProjectsBoardColumn = memo(function ProjectsBoardColumn({
             {items.length}
           </span>
 
-          {/* Quick Add Button */}
-          {onQuickCreate && (
-            <button
-              type="button"
-              onClick={() => setIsAdding(!isAdding)}
-              className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Quick-add card"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
+          {/* Quick Create Menu */}
+          {onInitiateCreate && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                title="Create new work item"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+              {isMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg py-1 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        onInitiateCreate("content", column);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-left cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Content Post</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        onInitiateCreate("event", column);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-left cursor-pointer"
+                    >
+                      <CalendarDays className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>Field Event</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        onInitiateCreate("placement", column);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-left cursor-pointer"
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-purple-500" />
+                      <span>Media Placement</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>
-
-      {/* Inline Quick Create Form */}
-      {isAdding && (
-        <form onSubmit={handleQuickSubmit} className="mb-2 p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs space-y-2">
-          {/* Type Picker */}
-          <div className="flex items-center gap-1">
-            {(["content", "event", "placement"] as const).map((t) => {
-              const Icon = t === "content" ? Sparkles : t === "event" ? CalendarDays : MapPin;
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setSelectedType(t)}
-                  className={cn(
-                    "flex-1 flex items-center justify-center gap-1 py-1 rounded-md text-[10px] font-semibold capitalize border cursor-pointer",
-                    selectedType === t
-                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-2xs"
-                      : "border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800",
-                  )}
-                >
-                  <Icon className="w-2.5 h-2.5" />
-                  <span>{t}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <input
-            type="text"
-            autoFocus
-            placeholder={`Enter ${selectedType} title...`}
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            className="w-full px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 focus:outline-hidden"
-          />
-
-          <div className="flex items-center justify-end gap-1.5 pt-1">
-            <button
-              type="button"
-              onClick={() => {
-                setIsAdding(false);
-                setNewTitle("");
-              }}
-              className="px-2 py-0.5 text-[11px] text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!newTitle.trim()}
-              className="px-2.5 py-0.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-[11px] font-semibold cursor-pointer"
-            >
-              Add Card
-            </button>
-          </div>
-        </form>
-      )}
 
       {/* Cards List */}
       <div className="flex-1 overflow-y-auto space-y-2 pr-0.5 scrollbar-thin">
@@ -256,7 +223,7 @@ export const ProjectsBoardColumn = memo(function ProjectsBoardColumn({
           <DropLineIndicator position="bottom" />
         )}
 
-        {items.length === 0 && !isAdding && (
+        {items.length === 0 && (
           <div className="py-8 text-center text-[11px] text-slate-400 border border-dashed border-slate-200 dark:border-slate-800/60 rounded-xl">
             Drop cards here
           </div>

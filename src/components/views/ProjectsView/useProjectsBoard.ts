@@ -424,65 +424,6 @@ export function useProjectsBoard() {
     await loadData();
   };
 
-  const handleQuickCreate = async (
-    type: MarcomWorkItemType,
-    column: ProjectsColumn,
-    title: string,
-  ) => {
-    const status = mapColumnToStatus(type, column);
-    try {
-      if (type === "content") {
-        const res = await fetch("/api/marcom/content", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title,
-            platform: "instagram",
-            format: "single",
-            status: status || "SCHEDULED",
-          }),
-        });
-        if (!res.ok) throw new Error("Failed to create content post");
-        await fetchPosts();
-      } else if (type === "event") {
-        const res = await fetch("/api/marcom/events", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: title,
-            eventType: "OTHER",
-            status: status || "UPCOMING",
-          }),
-        });
-        if (!res.ok) throw new Error("Failed to create field event");
-        await fetchEvents();
-      } else {
-        const firstOutletId = outlets[0]?.id;
-        const firstMaterialId = materials[0]?.id;
-        if (!firstOutletId || !firstMaterialId) {
-          toast.error("Memerlukan minimal 1 outlet dan 1 material untuk placement");
-          return;
-        }
-        const res = await fetch("/api/marcom/placements", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            outletId: firstOutletId,
-            materialId: firstMaterialId,
-            notes: title,
-            status: status || "PLANNED",
-          }),
-        });
-        if (!res.ok) throw new Error("Failed to create placement");
-        await fetchPlacements();
-      }
-      toast.success(`${type} "${title}" berhasil dibuat`);
-    } catch (err) {
-      console.error(err);
-      toast.error("Gagal membuat item baru");
-    }
-  };
-
   return {
     isLoading,
     allWorkItems,
@@ -505,7 +446,6 @@ export function useProjectsBoard() {
     handleClearSelection,
     handleBulkMove,
     handleBulkDelete,
-    handleQuickCreate,
   };
 }
 

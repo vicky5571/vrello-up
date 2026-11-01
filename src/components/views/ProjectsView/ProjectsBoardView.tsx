@@ -14,11 +14,14 @@ import type { MarcomWorkItem } from "@/types";
 import {
   PROJECTS_COLUMN_ORDER,
   PROJECTS_COLUMN_ORDER_WITH_ARCHIVED,
+  mapColumnToStatus,
 } from "@/lib/marcom/workItems";
 import { ProjectsBoardColumn } from "./ProjectsBoardColumn";
 import { ProjectsWorkItemCard } from "./ProjectsWorkItemCard";
 import { ProjectsBulkActionBar } from "./ProjectsBulkActionBar";
 import { ProjectsDetailDrawerHost } from "./ProjectsDetailDrawerHost";
+import { ProjectsCreateModalHost } from "./ProjectsCreateModalHost";
+import type { CreateWorkItemRequest } from "./createModalHelpers";
 import { useProjectsBoard } from "./useProjectsBoard";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +32,7 @@ interface ProjectsBoardViewProps {
 export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
   const [internalSelectedItem, setInternalSelectedItem] =
     useState<MarcomWorkItem | null>(null);
+  const [createRequest, setCreateRequest] = useState<CreateWorkItemRequest | null>(null);
   const handleSelect = onSelectItem || setInternalSelectedItem;
   const {
     isLoading,
@@ -52,7 +56,6 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
     handleClearSelection,
     handleBulkMove,
     handleBulkDelete,
-    handleQuickCreate,
   } = useProjectsBoard();
 
   const collisionDetectionStrategy: CollisionDetection = useCallback((args) => {
@@ -146,7 +149,12 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
                 onToggleSelect={handleToggleSelect}
                 onToggleSelectAll={handleToggleSelectAll}
                 onMoveToColumn={moveToColumn}
-                onQuickCreate={handleQuickCreate}
+                onInitiateCreate={(type, col) =>
+                  setCreateRequest({
+                    type,
+                    status: mapColumnToStatus(type, col) || undefined,
+                  })
+                }
                 density={density}
               />
             ))}
@@ -179,6 +187,13 @@ export function ProjectsBoardView({ onSelectItem }: ProjectsBoardViewProps) {
           onRefresh={loadData}
         />
       )}
+
+      {/* Domain Create Modal Host */}
+      <ProjectsCreateModalHost
+        createRequest={createRequest}
+        onClose={() => setCreateRequest(null)}
+        onRefresh={loadData}
+      />
     </div>
   );
 }
