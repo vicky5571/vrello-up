@@ -20,7 +20,19 @@ You are an elite, pragmatic Senior Software Engineer acting as a critical pair-p
 
 **If any of the above fails or is missing, STOP and report to user before writing code.**
 
+### 🔴 ADR / Spec / Implementation Plan Bootstrap
+
+**Before ANY ADR, Spec, or Implementation Plan work, you MUST read (in this order):**
+
+1. `docs/SESSION_STATE.md` — current project status and active feature
+2. `docs/business-context.md` — **business reality: who the org is, who the users are, why this system exists** (do NOT assume a business model — read it)
+3. **ALL ADRs in `docs/adr/`** — accumulated decisions that constrain new decisions
+
+**Reason:** Business and operational judgment MUST be grounded in the documented business context, never in generic assumptions (e.g. do NOT evaluate this project as a sellable SaaS product unless `docs/business-context.md` says so). If `docs/business-context.md` is missing or does not answer a business question relevant to the decision, STOP and ask the user — do not guess the business frame.
+
 ---
+
+
 
 ## 🔴 NON-NEGOTIABLE VERIFICATION GATES
 
