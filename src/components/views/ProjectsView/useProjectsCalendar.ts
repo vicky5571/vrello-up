@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   startOfMonth,
   endOfMonth,
@@ -10,10 +10,9 @@ import {
   parseISO,
   format,
 } from "date-fns";
-import { toast } from "sonner";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import type { MarcomWorkItem, MarcomWorkItemType } from "@/types";
+import type { MarcomWorkItem } from "@/types";
 import { getWorkItemDate } from "@/lib/marcom/workItems";
 import { applyProjectsFilters } from "@/lib/marcom/projectsFilters";
 
@@ -22,8 +21,6 @@ export function useProjectsCalendar() {
     posts,
     events,
     placements,
-    outlets,
-    materials,
     fetchPosts,
     fetchEvents,
     fetchPlacements,
@@ -34,15 +31,21 @@ export function useProjectsCalendar() {
   const projectsFilters = useWorkspaceStore((s) => s.projectsFilters);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
+  const loadData = useCallback(async () => {
+    await Promise.all([
+      fetchPosts(),
+      fetchEvents(),
+      fetchPlacements(),
+      fetchOutlets(),
+      fetchMaterials(),
+    ]);
+  }, [fetchPosts, fetchEvents, fetchPlacements, fetchOutlets, fetchMaterials]);
+
   useEffect(() => {
     if (posts.length === 0 && events.length === 0 && placements.length === 0) {
-      fetchPosts();
-      fetchEvents();
-      fetchPlacements();
-      fetchOutlets();
-      fetchMaterials();
+      loadData();
     }
-  }, [posts.length, events.length, placements.length, fetchPosts, fetchEvents, fetchPlacements, fetchOutlets, fetchMaterials]);
+  }, [posts.length, events.length, placements.length, loadData]);
 
   const allFilteredItems = useMemo<MarcomWorkItem[]>(() => {
     const list: MarcomWorkItem[] = [
@@ -97,67 +100,11 @@ export function useProjectsCalendar() {
     return map;
   }, [allFilteredItems]);
 
-  const handleCreateType = async (type: MarcomWorkItemType, dateStr: string) => {
-    try {
-      const dateIso = new Date(dateStr).toISOString();
-      if (type === "content") {
-        await fetch("/api/marcom/content", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: `New Post (${dateStr})`,
-            platform: "instagram",
-            format: "single",
-            publishDate: dateIso,
-            status: "SCHEDULED",
-          }),
-        });
-        await fetchPosts();
-      } else if (type === "event") {
-        await fetch("/api/marcom/events", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: `New Event (${dateStr})`,
-            eventType: "OTHER",
-            startDate: dateIso,
-            status: "UPCOMING",
-          }),
-        });
-        await fetchEvents();
-      } else {
-        const firstOutlet = outlets[0]?.id;
-        const firstMat = materials[0]?.id;
-        if (!firstOutlet || !firstMat) {
-          toast.error("Memerlukan minimal 1 outlet dan 1 material");
-          return;
-        }
-        await fetch("/api/marcom/placements", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            outletId: firstOutlet,
-            materialId: firstMat,
-            date: dateIso,
-            notes: `New Placement (${dateStr})`,
-            status: "PLANNED",
-          }),
-        });
-        await fetchPlacements();
-      }
-      toast.success(`${type} berhasil dijadwalkan untuk ${dateStr}`);
-    } catch (err) {
-      console.error(err);
-      toast.error("Gagal menjadwalkan item baru");
-    }
-  };
-
   return {
     currentMonth,
     setCurrentMonth,
     days,
     itemsByDate,
-    handleCreateType,
+    loadData,
   };
 }
-

@@ -15,6 +15,8 @@ import {
   CalendarCreatePopover,
 } from "./CalendarPopovers";
 import { ProjectsDetailDrawerHost } from "./ProjectsDetailDrawerHost";
+import { ProjectsCreateModalHost } from "./ProjectsCreateModalHost";
+import type { CreateWorkItemRequest } from "./createModalHelpers";
 
 interface ProjectsCalendarViewProps {
   onSelectItem?: (item: MarcomWorkItem) => void;
@@ -29,11 +31,12 @@ export function ProjectsCalendarView({ onSelectItem }: ProjectsCalendarViewProps
     setCurrentMonth,
     days,
     itemsByDate,
-    handleCreateType,
+    loadData,
   } = useProjectsCalendar();
 
   const [overflowDate, setOverflowDate] = useState<string | null>(null);
   const [createDate, setCreateDate] = useState<string | null>(null);
+  const [createRequest, setCreateRequest] = useState<CreateWorkItemRequest | null>(null);
 
   const prevMonth = () => setCurrentMonth((prev) => subMonths(prev, 1));
   const nextMonth = () => setCurrentMonth((prev) => addMonths(prev, 1));
@@ -125,7 +128,10 @@ export function ProjectsCalendarView({ onSelectItem }: ProjectsCalendarViewProps
         <CalendarCreatePopover
           dateStr={createDate}
           onClose={() => setCreateDate(null)}
-          onCreateType={handleCreateType}
+          onCreateType={(type, dateStr) => {
+            setCreateDate(null);
+            setCreateRequest({ type, date: dateStr });
+          }}
         />
       )}
 
@@ -136,6 +142,13 @@ export function ProjectsCalendarView({ onSelectItem }: ProjectsCalendarViewProps
           onClose={() => setInternalSelectedItem(null)}
         />
       )}
+
+      {/* Domain Create Modal Host */}
+      <ProjectsCreateModalHost
+        createRequest={createRequest}
+        onClose={() => setCreateRequest(null)}
+        onRefresh={loadData}
+      />
     </div>
   );
 }
