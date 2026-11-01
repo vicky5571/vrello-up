@@ -6,14 +6,36 @@
 
 ## Current Status
 
-**Date:** 2026-11-01  
+**Date:** 2026-11-02  
 **Active Branch:** `vicky`  
-**Active Feature:** Workspace Return Target Resolver & LocalStorage Sanitization (`layoutHierarchyHelpers.ts`, `TopNavBreadcrumbs.tsx`, `useWorkspaceStore.ts`, `createUiSlice.ts`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** User Management Global View Layout Isolation (`layoutHierarchyHelpers.ts`, `layoutHierarchyHelpers.test.ts`)  
+**Active Feature:** Centralized Google Drive Storage via Developer Refresh Token & Resumable Direct Uploads (`driveTokenHelpers.ts`, `driveUploadHelpers.ts`, `driveAuth.ts`, `/api/marcom/drive/upload-session`, `/api/marcom/drive/finalize`, `useDirectDriveUpload.ts`, `DirectDriveUploadDropzone.tsx`, `GoogleDriveLinkModal.tsx`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Workspace Return Target Resolver & LocalStorage Sanitization (`layoutHierarchyHelpers.ts`, `TopNavBreadcrumbs.tsx`, `useWorkspaceStore.ts`, `createUiSlice.ts`)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Centralized Google Drive Storage System via Developer Refresh Token & Direct Resumable Uploads:**
+   - **Evaluated Architectural Invariants & Root Cause:**
+     - Client-side Google Picker forced every team member to sign in to personal Google accounts and consumed individual storage quotas.
+     - Files with default "Restricted" permissions resulted in Google 403 errors on embedded iframes for other team members.
+     - Google Cloud Service Accounts on standard `@gmail.com` accounts have 0 GB quota, failing with `403 Forbidden: Storage quota exceeded`.
+     - Vercel serverless request ceiling is 4.5 MB, failing large video/footage uploads with HTTP 413.
+   - **ADR 11 (`docs/adr/0011-centralized-google-drive-storage-refresh-token.md`):** Adopted Developer OAuth2 Refresh Token architecture with browser-to-Google Resumable Upload sessions (`https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable`).
+   - **Domain SSOT Types (`src/types/index.ts`):** Added `DriveUploadSessionRequest`, `DriveUploadSessionResponse`, `DriveFinalizeRequest`, and `DriveFinalizeResponse`.
+   - **One-Time Developer CLI Helper (`scripts/get-drive-refresh-token.ts`, `npm run drive:token`):** Built standalone local tool using Node `http` to generate developer OAuth2 refresh token once with scope `https://www.googleapis.com/auth/drive.file`.
+   - **Pure Logic Modules & 100% Test Coverage (TDD):**
+     - `driveTokenHelpers.ts` + `driveTokenHelpers.test.ts`: 6 unit tests covering URLSearchParams formatting, Google OAuth response parsing, and token expiration calculations.
+     - `driveUploadHelpers.ts` + `driveUploadHelpers.test.ts`: 7 unit tests covering Google resumable upload headers (`X-Upload-Content-Type`, `X-Upload-Content-Length`), Location header extraction, file name sanitization, and canonical `TaskAttachment` formatting.
+   - **Server-Side Token Manager (`src/lib/server/driveAuth.ts`):** Lightweight in-memory access token cache with automatic renewal before expiration.
+   - **Backend API Routes (`/api/marcom/drive/`):**
+     - `upload-session/route.ts`: Validates NextAuth session and initiates a Google Drive resumable session targeting `NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID`.
+     - `finalize/route.ts`: Automates public read permission (`role: "reader", type: "anyone"`) on the uploaded file ID so all team members can preview videos/documents without authentication blocks.
+   - **Client Streaming Hook & UI Components:**
+     - `useDirectDriveUpload.ts`: Two-step client lifecycle managing chunked browser-to-Google upload via `XMLHttpRequest` with upload progress events and cancellation.
+     - `DirectDriveUploadDropzone.tsx`: Drag-and-drop zone with live percentage progress bar, cancel action, and error recovery.
+     - `GoogleDriveLinkModal.tsx`: Upgraded modal with segmented tabs for direct cloud upload vs manual link pasting via `GoogleDriveUrlForm.tsx`.
+   - **Verification Gates:** `npm run drift:check` (clean, 43 paired specs/plans), `npm run build:check` (0 errors), `npm run test:smoke` (94 passed, 0 failed), `npm test` (693 passed, 0 failures), all coordinator files strictly $\le 250$ LOC.
 
 1. **Workspace Return Target Resolver & LocalStorage Sanitization (`layoutHierarchyHelpers.ts`, `TopNavBreadcrumbs.tsx`, `useWorkspaceStore.ts`, `createUiSlice.ts`):**
    - **Root Cause Evaluated:** Before Global Views were isolated, visiting `view=profile` saved `"profile"` into `lastTaskView` in client `localStorage` (`vrelloup-workspace-storage`). Consequently, clicking the shortcut button "Kembali ke Workspace" on `users` (or rehydrating from storage) navigated to the Profile page rather than an actual operational workspace view.

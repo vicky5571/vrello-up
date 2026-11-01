@@ -4,6 +4,25 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-11-02]
+
+- `feat(gdrive)`: Centralized Google Drive storage via developer refresh token and direct resumable uploads
+  - Authored ADR 11 (`docs/adr/0011-centralized-google-drive-storage-refresh-token.md`) establishing centralized developer storage ownership and zero user OAuth popups
+  - Created standalone CLI helper `scripts/get-drive-refresh-token.ts` (`npm run drive:token`) for one-time developer refresh token acquisition
+  - Registered SSOT request/response contracts (`DriveUploadSessionRequest`, `DriveUploadSessionResponse`, `DriveFinalizeRequest`, `DriveFinalizeResponse`) in `src/types/index.ts`
+  - Built pure helper modules `driveTokenHelpers.ts` and `driveUploadHelpers.ts` with 13 comprehensive unit tests
+  - Built server-side token manager `driveAuth.ts` with in-memory caching and automatic expiration renewal
+  - Built `/api/marcom/drive/upload-session` route creating Google Drive Resumable Upload sessions targeting `NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID`
+  - Built `/api/marcom/drive/finalize` route automating public read permissions (`anyoneWithLink`) to prevent Google 403 iframe preview blocks
+  - Built client streaming hook `useDirectDriveUpload.ts` and responsive dropzone `DirectDriveUploadDropzone.tsx` streaming directly from browser to Google CDN (0 MB on Vercel)
+  - Deconstructed and upgraded `GoogleDriveLinkModal.tsx` (<150 LOC) with segmented tabs for direct cloud upload vs manual link pasting via `GoogleDriveUrlForm.tsx`
+  - Gates: `npm test` 693 pass / 0 fail; `npm run test:smoke` 94 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean; all coordinator files $\le 250$ LOC
+  Spec: `docs/superpowers/specs/2026-11-02-centralized-drive-upload-design.md`
+  Plan: `docs/superpowers/plans/2026-11-02-centralized-drive-upload.md`
+  Refs: `docs/adr/0011-centralized-google-drive-storage-refresh-token.md`
+
+---
+
 ## [2026-11-01]
 
 - `fix(navigation)`: Resolve workspace return target and sanitize global view state

@@ -56,3 +56,4 @@ Every plan MUST have a matching spec file:
 | 2026-11-01 | user-profile-view | 5 phases | Done |
 | 2026-11-01 | profile-layout-hierarchy | 4 phases | Done |
 | 2026-11-01 | user-management-global-layout | 2 phases | Done |
+| 2026-11-02 | centralized-drive-upload | 5 phases | Ready for Implementation |

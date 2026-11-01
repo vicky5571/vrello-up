@@ -17,7 +17,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:smoke": "node --test --import ./test/register-alias.mjs --test-name-pattern='smoke'",
     "build:check": "tsc --noEmit",
-    "drift:check": "tsx scripts/drift-check.ts"
+    "drift:check": "tsx scripts/drift-check.ts",
+    "drive:token": "tsx scripts/get-drive-refresh-token.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

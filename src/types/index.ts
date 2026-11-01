@@ -87,6 +87,31 @@ export interface TaskAttachment {
   embedUrl?: string;
 }
 
+export interface DriveUploadSessionRequest {
+  name: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
+export interface DriveUploadSessionResponse {
+  uploadUrl: string;
+  fileId: string;
+  name: string;
+  folderId?: string;
+}
+
+export interface DriveFinalizeRequest {
+  fileId: string;
+  name: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
+export interface DriveFinalizeResponse {
+  success: boolean;
+  attachment: TaskAttachment;
+}
+
 export interface TaskCommentAttachment {
   id: string;
   name: string;
