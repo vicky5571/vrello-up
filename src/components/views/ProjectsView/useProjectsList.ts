@@ -370,67 +370,6 @@ export function useProjectsList() {
     await loadData();
   };
 
-  const handleQuickAddInGroup = async (groupKey: string, title: string) => {
-    try {
-      if (groupBy === "type") {
-        if (groupKey === "content") {
-          await fetch("/api/marcom/content", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              title,
-              platform: "instagram",
-              format: "single",
-              status: "SCHEDULED",
-            }),
-          });
-        } else if (groupKey === "event") {
-          await fetch("/api/marcom/events", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: title,
-              eventType: "OTHER",
-              status: "UPCOMING",
-            }),
-          });
-        } else {
-          const firstOutlet = outlets[0]?.id;
-          const firstMat = materials[0]?.id;
-          if (firstOutlet && firstMat) {
-            await fetch("/api/marcom/placements", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                outletId: firstOutlet,
-                materialId: firstMat,
-                notes: title,
-                status: "PLANNED",
-              }),
-            });
-          }
-        }
-      } else {
-        // Default to content post
-        await fetch("/api/marcom/content", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title,
-            platform: "instagram",
-            format: "single",
-            status: "SCHEDULED",
-          }),
-        });
-      }
-      toast.success(`"${title}" berhasil dibuat`);
-      await loadData();
-    } catch (err) {
-      console.error(err);
-      toast.error("Gagal membuat item baru");
-    }
-  };
-
   return {
     isLoading,
     sortedItems,
@@ -455,7 +394,6 @@ export function useProjectsList() {
     updatePic,
     handleBulkMove,
     handleBulkDelete,
-    handleQuickAddInGroup,
     toggleVisibleField: (field: keyof typeof viewPreferences.visibleFields) => {
       setViewPreferences({
         visibleFields: {

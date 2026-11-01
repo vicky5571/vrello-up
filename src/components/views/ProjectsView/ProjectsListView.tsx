@@ -7,6 +7,8 @@ import { ProjectsListHeader } from "./ProjectsListHeader";
 import { ProjectsListTable } from "./ProjectsListTable";
 import { ProjectsBulkActionBar } from "./ProjectsBulkActionBar";
 import { ProjectsDetailDrawerHost } from "./ProjectsDetailDrawerHost";
+import { ProjectsCreateModalHost } from "./ProjectsCreateModalHost";
+import type { CreateWorkItemRequest } from "./createModalHelpers";
 
 interface ProjectsListViewProps {
   onSelectItem?: (item: MarcomWorkItem) => void;
@@ -15,6 +17,7 @@ interface ProjectsListViewProps {
 export function ProjectsListView({ onSelectItem }: ProjectsListViewProps) {
   const [internalSelectedItem, setInternalSelectedItem] =
     useState<MarcomWorkItem | null>(null);
+  const [createRequest, setCreateRequest] = useState<CreateWorkItemRequest | null>(null);
   const handleSelect = onSelectItem || setInternalSelectedItem;
   const {
     isLoading,
@@ -40,13 +43,12 @@ export function ProjectsListView({ onSelectItem }: ProjectsListViewProps) {
     updatePic,
     handleBulkMove,
     handleBulkDelete,
-    handleQuickAddInGroup,
     toggleVisibleField,
   } = useProjectsList();
 
   return (
     <div className="relative flex flex-col h-full min-h-0 p-4 space-y-3 overflow-hidden">
-      {/* Header with Group By, Columns, Sort clear, Refresh */}
+      {/* Header with Group By, Columns, Sort clear, Refresh, and New Item */}
       <ProjectsListHeader
         totalCount={sortedItems.length}
         groupBy={groupBy}
@@ -57,6 +59,7 @@ export function ProjectsListView({ onSelectItem }: ProjectsListViewProps) {
         onClearSort={clearSort}
         isLoading={isLoading}
         onRefresh={loadData}
+        onInitiateCreate={(type) => setCreateRequest({ type })}
       />
 
       {/* Main Table with Sortable Columns & Group Sections */}
@@ -78,7 +81,12 @@ export function ProjectsListView({ onSelectItem }: ProjectsListViewProps) {
         onUpdateStatus={updateStatus}
         onUpdateDate={updateDate}
         onUpdatePic={updatePic}
-        onQuickAddInGroup={handleQuickAddInGroup}
+        onInitiateCreate={(type, ctx) =>
+          setCreateRequest({
+            type,
+            status: ctx?.status,
+          })
+        }
       />
 
       {/* Floating Bulk Action Bar */}
@@ -98,6 +106,13 @@ export function ProjectsListView({ onSelectItem }: ProjectsListViewProps) {
           onRefresh={loadData}
         />
       )}
+
+      {/* Domain Create Modal Host */}
+      <ProjectsCreateModalHost
+        createRequest={createRequest}
+        onClose={() => setCreateRequest(null)}
+        onRefresh={loadData}
+      />
     </div>
   );
 }

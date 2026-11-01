@@ -8,8 +8,12 @@ import {
   SlidersHorizontal,
   X,
   Check,
+  Plus,
+  Sparkles,
+  CalendarDays,
+  MapPin,
 } from "lucide-react";
-import type { VisibleFields } from "@/types";
+import type { VisibleFields, MarcomWorkItemType } from "@/types";
 import type { GroupByOption, SortField } from "./useProjectsList";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +27,7 @@ interface ProjectsListHeaderProps {
   onClearSort: () => void;
   isLoading: boolean;
   onRefresh: () => void;
+  onInitiateCreate?: (type: MarcomWorkItemType) => void;
 }
 
 export function ProjectsListHeader({
@@ -35,6 +40,7 @@ export function ProjectsListHeader({
   onClearSort,
   isLoading,
   onRefresh,
+  onInitiateCreate,
 }: ProjectsListHeaderProps) {
   const shouldReduceMotion = useReducedMotion();
   const pillTransition = shouldReduceMotion
@@ -42,19 +48,24 @@ export function ProjectsListHeader({
     : { type: "spring" as const, stiffness: 450, damping: 35 };
 
   const [isColumnsMenuOpen, setIsColumnsMenuOpen] = useState(false);
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const columnsMenuRef = useRef<HTMLDivElement>(null);
+  const createMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (columnsMenuRef.current && !columnsMenuRef.current.contains(e.target as Node)) {
         setIsColumnsMenuOpen(false);
       }
+      if (createMenuRef.current && !createMenuRef.current.contains(e.target as Node)) {
+        setIsCreateMenuOpen(false);
+      }
     }
-    if (isColumnsMenuOpen) {
+    if (isColumnsMenuOpen || isCreateMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [isColumnsMenuOpen]);
+  }, [isColumnsMenuOpen, isCreateMenuOpen]);
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
@@ -164,8 +175,59 @@ export function ProjectsListHeader({
         >
           <RefreshCw className={cn("w-3.5 h-3.5", isLoading && "animate-spin text-blue-500")} />
         </button>
+
+        {/* New Item Trigger */}
+        {onInitiateCreate && (
+          <div ref={createMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer shadow-xs transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Item</span>
+            </button>
+
+            {isCreateMenuOpen && (
+              <div className="absolute right-0 mt-1 w-44 rounded-xl bg-white dark:bg-slate-900 shadow-xl border border-slate-200 dark:border-slate-800 p-1 z-50 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCreateMenuOpen(false);
+                    onInitiateCreate("content");
+                  }}
+                  className="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-left text-slate-700 dark:text-slate-200"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Content Post</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCreateMenuOpen(false);
+                    onInitiateCreate("event");
+                  }}
+                  className="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-left text-slate-700 dark:text-slate-200"
+                >
+                  <CalendarDays className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Field Event</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCreateMenuOpen(false);
+                    onInitiateCreate("placement");
+                  }}
+                  className="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-left text-slate-700 dark:text-slate-200"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-purple-500" />
+                  <span>Media Placement</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
