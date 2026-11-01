@@ -138,25 +138,28 @@ export function MousView() {
     loadMous();
   }, [loadMous]);
 
-  const handleStatusTransition = async (mou: MarcomMou, nextStatus: MouStatus) => {
-    try {
-      await transitionMouStatus(mou.id, nextStatus);
-      toast.success(`MOU status updated to ${nextStatus}`);
-      updateCachedMou({ id: mou.id, status: nextStatus });
-      invalidatePlacements();
-      if (nextStatus === "APPROVED") {
-        const triggered = await useWorkspaceStore.getState().runAutomationsForTrigger("mou:approved", {
-          mouId: mou.id,
-          partnerName: mou.partnerName,
-          branchId: mou.branchId,
-        });
-        if (triggered > 0) toast.info(`Automations triggered: created setup task for ${mou.partnerName}`);
+  const handleStatusTransition = useCallback(
+    async (mou: MarcomMou, nextStatus: MouStatus) => {
+      try {
+        await transitionMouStatus(mou.id, nextStatus);
+        toast.success(`MOU status updated to ${nextStatus}`);
+        updateCachedMou({ id: mou.id, status: nextStatus });
+        invalidatePlacements();
+        if (nextStatus === "APPROVED") {
+          const triggered = await useWorkspaceStore.getState().runAutomationsForTrigger("mou:approved", {
+            mouId: mou.id,
+            partnerName: mou.partnerName,
+            branchId: mou.branchId,
+          });
+          if (triggered > 0) toast.info(`Automations triggered: created setup task for ${mou.partnerName}`);
+        }
+        fetchMous(true);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to update status");
       }
-      fetchMous(true);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update status");
-    }
-  };
+    },
+    [updateCachedMou, invalidatePlacements, fetchMous],
+  );
 
   const handleStatusFilter = (status: string) => {
     const next = selectedStatus === status && status !== "ALL" ? "ALL" : status;

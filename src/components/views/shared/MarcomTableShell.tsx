@@ -163,10 +163,11 @@ export function MarcomTableShell<T extends object & { id: string }>({
   // Pre-compute searchable string per row only when data or search configuration changes
   const searchIndex = useMemo(() => {
     const customExtractor = getSearchableTextRef.current;
+    const resolvedKeys = searchKeysHash ? (searchKeysHash.split(",") as string[]) : undefined;
     return data.map((row) => {
       const text = customExtractor
         ? customExtractor(row).toLowerCase()
-        : extractSearchableText(row, { keys: searchKeys as string[] }).toLowerCase();
+        : extractSearchableText(row, { keys: resolvedKeys }).toLowerCase();
       return { row, text };
     });
   }, [data, searchKeysHash]);

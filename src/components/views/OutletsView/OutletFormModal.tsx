@@ -52,7 +52,7 @@ function OutletFormModalContent({
   const selectedBranch = branches.find((b) => b.id === formOutlet.branchId);
   const suggestedCode = useMemo(() => {
     if (!formOutlet.branchId || Boolean(formOutlet.code?.trim())) return "";
-    return generateSuggestedOutletCode(selectedBranch?.code);
+    return suggestionSeed >= 0 ? generateSuggestedOutletCode(selectedBranch?.code) : "";
   }, [formOutlet.branchId, formOutlet.code, selectedBranch?.code, suggestionSeed]);
 
   const handleQuickPasteCoord = (value: string) => {

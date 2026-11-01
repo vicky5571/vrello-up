@@ -187,8 +187,6 @@ export function ProjectsListTable({
             const groupSelectedCount = items.filter((i) =>
               selectedKeys.has(`${i._type}:${i.id}`),
             ).length;
-            const isGroupFullySelected =
-              items.length > 0 && groupSelectedCount === items.length;
 
             return (
               <Fragment key={key}>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { CloudUpload, AlertCircle, X, CheckCircle2 } from "lucide-react";
+import { CloudUpload, AlertCircle, X } from "lucide-react";
 import type { TaskAttachment } from "@/types";
 import { useDirectDriveUpload } from "@/lib/marcom/useDirectDriveUpload";
 import { cn } from "@/lib/utils";

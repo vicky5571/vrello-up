@@ -17,7 +17,6 @@ import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import type {
   MarcomWorkItem,
   ProjectsColumn,
-  MarcomWorkItemType,
   PostStatus,
   EventStatus,
   PlacementStatus,
@@ -35,8 +34,6 @@ export function useProjectsBoard() {
     posts,
     events,
     placements,
-    outlets,
-    materials,
     fetchPosts,
     fetchEvents,
     fetchPlacements,

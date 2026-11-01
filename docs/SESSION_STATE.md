@@ -8,14 +8,32 @@
 
 **Date:** 2026-11-02  
 **Active Branch:** `vicky`  
-**Active Feature:** Centralized Google Drive Storage via Developer Refresh Token & Resumable Direct Uploads (`driveTokenHelpers.ts`, `driveUploadHelpers.ts`, `driveAuth.ts`, `/api/marcom/drive/upload-session`, `/api/marcom/drive/finalize`, `useDirectDriveUpload.ts`, `DirectDriveUploadDropzone.tsx`, `GoogleDriveLinkModal.tsx`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Workspace Return Target Resolver & LocalStorage Sanitization (`layoutHierarchyHelpers.ts`, `TopNavBreadcrumbs.tsx`, `useWorkspaceStore.ts`, `createUiSlice.ts`)  
+**Active Feature:** Production Build ESLint & React Hook Invariants Cleanup for Vercel Deployment (`DirectDriveUploadDropzone.tsx`, `GoogleDriveUrlForm.tsx`, `ProjectsListTable.tsx`, `useProjectsBoard.ts`, `useProjectsList.ts`, `MousView.tsx`, `OutletFormModal.tsx`, `MarcomTableShell.tsx`) — **RESOLVED & VERIFIED**  
+**Previous Feature:** Centralized Google Drive Storage via Developer Refresh Token & Resumable Direct Uploads  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Centralized Google Drive Storage System via Developer Refresh Token & Direct Resumable Uploads:**
+1. **Production Build & ESLint Strict Invariant Resolution (Vercel Build Failure Fix):**
+   - **Root Cause Evaluated:** Vercel deployment failed during `next build` -> `next lint` ("Linting and checking validity of types") due to strict ESLint `@typescript-eslint/no-unused-vars` errors and `react-hooks/exhaustive-deps` warnings across 8 files:
+     - `DirectDriveUploadDropzone.tsx`: Unused import `CheckCircle2`.
+     - `GoogleDriveUrlForm.tsx`: Unused import `Info`.
+     - `ProjectsListTable.tsx`: Unused variable `isGroupFullySelected`.
+     - `useProjectsBoard.ts`: Unused type import `MarcomWorkItemType` and unused destructuring `outlets, materials`.
+     - `useProjectsList.ts`: Unused destructuring `outlets, materials`.
+     - `MousView.tsx`: `handleStatusTransition` missing `useCallback` causing unnecessary re-creation in `columns = useMemo(...)`.
+     - `OutletFormModal.tsx`: `suggestionSeed` in `useMemo` dependency array needed explicit referencing in expression `suggestionSeed >= 0 ? generateSuggestedOutletCode(selectedBranch?.code) : ""` to prevent unused/unnecessary dependency warning while satisfying unit test assertions.
+     - `MarcomTableShell.tsx`: Pre-computed `searchKeysHash` hash string derived `resolvedKeys` directly in `useMemo` callback, resolving the missing `searchKeys` dependency warning without triggering unnecessary re-indexing on every render.
+   - **Verification Gates:**
+     - `npm run lint`: `✔ No ESLint warnings or errors` (0 errors, 0 warnings).
+     - `npm run drift:check`: Clean, all architectural invariants pass.
+     - `npm run test:smoke`: 94 passed, 0 failed.
+     - `npm test`: 693 passed, 0 failures.
+     - `npm run build:check`: `tsc --noEmit` exited 0 with no type errors.
+     - `npm run build`: Production Next.js build compiled successfully, all 31/31 routes static/dynamic generated cleanly.
+
+2. **Centralized Google Drive Storage System via Developer Refresh Token & Direct Resumable Uploads:**
    - **Evaluated Architectural Invariants & Root Cause:**
      - Client-side Google Picker forced every team member to sign in to personal Google accounts and consumed individual storage quotas.
      - Files with default "Restricted" permissions resulted in Google 403 errors on embedded iframes for other team members.

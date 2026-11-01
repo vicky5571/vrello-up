@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { AlertCircle, FileText, Folder, Info, Link2, Video } from "lucide-react";
+import { AlertCircle, FileText, Folder, Link2, Video } from "lucide-react";
 import {
   parseGoogleDriveUrl,
   getGoogleDriveMimeCategory,

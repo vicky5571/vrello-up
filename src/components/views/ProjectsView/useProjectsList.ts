@@ -27,8 +27,6 @@ export function useProjectsList() {
     posts,
     events,
     placements,
-    outlets,
-    materials,
     fetchPosts,
     fetchEvents,
     fetchPlacements,
