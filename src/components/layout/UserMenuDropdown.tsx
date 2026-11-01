@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { ShieldCheck, LogOut } from "lucide-react";
+import { ShieldCheck, LogOut, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { getEffectiveProfile } from "./userProfileHelpers";
 import { AppImage } from "@/components/ui/AppImage";
 
@@ -16,9 +17,15 @@ export function UserMenuDropdown({ onClose }: UserMenuDropdownProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const [imageError, setImageError] = useState(false);
+  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
   const profile = getEffectiveProfile({ sessionUser: session?.user });
   const isGoogle = Boolean(session?.user?.image);
+
+  const handleNavigateProfile = () => {
+    setActiveView("profile");
+    onClose();
+  };
 
   const handleSignOut = async () => {
     try {
@@ -84,8 +91,19 @@ export function UserMenuDropdown({ onClose }: UserMenuDropdownProps) {
         )}
       </div>
 
-      {/* Sign Out Button */}
-      <div className="mt-2 pt-1 border-t border-border/40">
+      {/* Action Items */}
+      <div className="mt-2 pt-1 border-t border-border/40 space-y-0.5">
+        <button
+          type="button"
+          onClick={handleNavigateProfile}
+          className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-foreground hover:bg-muted font-medium text-xs transition-colors cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <UserIcon className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Lihat Profil & Akun</span>
+          </div>
+        </button>
+
         <button
           type="button"
           onClick={handleSignOut}

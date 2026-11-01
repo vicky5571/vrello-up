@@ -73,6 +73,10 @@ const UsersView = dynamic(
   () => import("@/components/views/UsersView/UsersView").then((m) => m.UsersView),
   { ssr: false, loading: () => <ViewFallback /> },
 );
+const ProfileView = dynamic(
+  () => import("@/components/views/ProfileView/ProfileView").then((m) => m.ProfileView),
+  { ssr: false, loading: () => <ViewFallback /> },
+);
 
 export function ActiveViewStage() {
   const activeView = useWorkspaceStore((s) => s.activeView);
@@ -113,6 +117,8 @@ export function ActiveViewStage() {
         return <AnalyticsView />;
       case "users":
         return isAdmin ? <UsersView /> : <ProjectsBoardView />;
+      case "profile":
+        return <ProfileView />;
       default:
         return <ProjectsBoardView />;
     }

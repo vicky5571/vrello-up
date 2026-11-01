@@ -31,6 +31,26 @@ export interface AppUser {
   lastLoginAt: string | null;
 }
 
+export interface UserProfileResponse {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+  role: UserRole;
+  status: UserStatus;
+  assignedBranchIds: string[];
+  isGoogleAccount: boolean;
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
+export interface UpdateProfilePayload {
+  name?: string;
+  avatar?: string | null;
+  currentPassword?: string;
+  newPassword?: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -223,7 +243,8 @@ export type ViewMode =
   | "documents"
   | "reports"
   | "analytics"
-  | "users";
+  | "users"
+  | "profile";
 
 export type PostStatus =
   | "DRAFT"

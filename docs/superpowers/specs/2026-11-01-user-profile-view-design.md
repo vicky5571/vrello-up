@@ -193,3 +193,4 @@ Pure, isolated utility functions covered by unit tests in `profileHelpers.test.t
    - Full test suite passes with 0 failures (`npm test`).
    - Drift check passes with 0 drift (`npm run drift:check`).
    - TypeScript build check passes (`npm run build:check`).
+

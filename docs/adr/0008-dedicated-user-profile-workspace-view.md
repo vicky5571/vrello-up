@@ -69,3 +69,4 @@ Create a dedicated route `src/app/api/user/profile/route.ts` supporting:
 ### Negative / Trade-offs
 - Expands the `ViewMode` union by 1 variant (`"profile"`).
 - Requires an image upload or avatar URL entry handler with compression to prevent excessive database/storage bloat.
+

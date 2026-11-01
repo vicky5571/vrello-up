@@ -8,14 +8,33 @@
 
 **Date:** 2026-11-01  
 **Active Branch:** `vicky`  
-**Active Feature:** Session RBAC & Permissions Synchronization (`permissions.ts`, `permissionsHelpers.ts`, `auth.ts`, `auth.config.ts`, `next-auth.d.ts`, `TopNav.tsx`, `createDataSlice.ts`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Unified Projects Work Item Creation via Original Marcom Hub Forms (`ProjectsCreateModalHost.tsx`, `createModalHelpers.ts`, `ProjectsCalendarView`, `ProjectsBoardView`, `ProjectsListView`)  
+**Active Feature:** Dedicated User Profile Workspace View (`ProfileView.tsx`, `ProfileHeader.tsx`, `ProfileAvatarUploader.tsx`, `ProfileAccessCard.tsx`, `ProfileSecurityCard.tsx`, `/api/user/profile`, `profileValidators.ts`, `profileHelpers.ts`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Session RBAC & Permissions Synchronization (`permissions.ts`, `permissionsHelpers.ts`, `auth.ts`, `auth.config.ts`, `next-auth.d.ts`, `TopNav.tsx`, `createDataSlice.ts`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Session RBAC & Permissions Synchronization across All 7 Views (`permissions.ts`, `permissionsHelpers.ts`, `auth.ts`, `auth.config.ts`, `next-auth.d.ts`, `TopNav.tsx`, `createDataSlice.ts`):**
+1. **Dedicated User Profile Workspace View (`ProfileView.tsx`, `ProfileHeader.tsx`, `ProfileAvatarUploader.tsx`, `ProfileAccessCard.tsx`, `ProfileSecurityCard.tsx`, `/api/user/profile`, `profileValidators.ts`, `profileHelpers.ts`):**
+   - **User Intent & Problem Statement:** Credentials users (email & password) had no self-service mechanism to change their display name, upload/change profile avatar, or update their account password. While Google OAuth users have profiles hydrated from Google, standard accounts had no profile management screen or API.
+   - **Architecture & ADR 08:** Authored ADR 08 (`docs/adr/0008-dedicated-user-profile-workspace-view.md`) and Design Spec (`docs/superpowers/specs/2026-11-01-user-profile-view-design.md`) establishing Option 1 (Dedicated Workspace View `activeView: "profile"`).
+   - **SSOT Domain Types (`src/types/index.ts`):** Added `"profile"` to `ViewMode` union, and declared `UserProfileResponse` and `UpdateProfilePayload` interfaces.
+   - **URL Routing & Navigation (`urlState.ts`, `src/app/profile/page.tsx`, `UserMenuDropdown.tsx`):** Registered `"profile"` in `VALID_VIEW_MODES` and `urlState.ts`. Built Next.js redirection page at `/profile/page.tsx` redirecting to `/?view=profile` (and unauthenticated users to `/login`). Added "Lihat Profil & Akun" action trigger with `UserIcon` to `UserMenuDropdown.tsx` (120 LOC $\le 250$ LOC).
+   - **Backend Security & API Route (`profileValidators.ts`, `/api/user/profile/route.ts`):**
+     - Implemented `updateProfileSchema` in `profileValidators.ts` (Zod validation for name 2-80 chars, URL/data URI avatar, password length $\ge 8$, and matching confirmation). 8 unit tests in `profileValidators.test.ts` passing.
+     - Implemented `GET` and `PATCH` endpoints in `src/app/api/user/profile/route.ts` with NextAuth session scoping.
+     - Enforced Google Account protection (blocks password change for Google accounts), verified existing passwords via bcrypt comparison, hashed new passwords (cost factor 12), and mapped nullable avatar to Prisma `String @default("")`.
+   - **Pure UI Helpers (`profileHelpers.ts`):** Implemented `formatBranchBadges`, `validatePasswordForm`, and `sanitizeAvatarUrl` with 10 unit tests in `profileHelpers.test.ts` passing.
+   - **Atomic Components & Coordinator (`ProfileView/`):**
+     - `ProfileHeader.tsx`: 73 LOC. Workspace view header with icon, title, subtitle, and account badge (`Google Verified` vs `Credentials Account`).
+     - `ProfileAvatarUploader.tsx`: 196 LOC. `<AppImage />` preview with fallback initials, client-side Canvas compression to WebP ($\le 400\times 400$), URL input, and avatar removal.
+     - `ProfileAccessCard.tsx`: 68 LOC. Displays RBAC role badge, registration date, and assigned branch chips. Extracted to protect coordinator size.
+     - `ProfileSecurityCard.tsx`: 144 LOC. Google Identity shield card for OAuth users or password change form with show/hide password toggles for Credentials users.
+     - `ProfileView.tsx`: 218 LOC ($\le 250$ LOC). Responsive two-column coordinator with Zustand store sync (`syncSessionUser`), data mutation handling, and toast feedback.
+     - Mounted dynamically in `ActiveViewStage.tsx` (`case "profile":`).
+   - **Verification Gates:** `npm run drift:check` (clean, 40 paired specs/plans), `npm run build:check` (0 errors), `npm run test:smoke` (91 passed, 0 failed), `npm test` (661 passed, 0 failures), all coordinator files strictly $\le 250$ LOC.
+
+2. **Session RBAC & Permissions Synchronization across All 7 Views (`permissions.ts`, `permissionsHelpers.ts`, `auth.ts`, `auth.config.ts`, `next-auth.d.ts`, `TopNav.tsx`, `createDataSlice.ts`):**
    - **Root Cause Evaluated:** All "+ Add / New / Upload" buttons across 7 core pages (Media Placements, Field Events, MOU, Branches, Outlets, Equipment Inventory, Documents) were conditionally gated by `useMarcomPermissions()`. Previously, `useMarcomPermissions()` resolved roles against a static mock array `const members = SEED_USERS` (`user-1` to `user-5`). When a user logged in with a real database account (e.g. `user-admin` or Google OAuth), their ID was not in `SEED_USERS`, causing `resolveMarcomRole` to fail closed to `"viewer"`. As a `"viewer"`, all create and manage permissions were revoked, making Add buttons vanish across the site.
    - **NextAuth Token & Session Claims Hydration:** Added `assignedBranchIds?: string[]` to `Session["user"]`, `User`, and `JWT` in `src/types/next-auth.d.ts`. Updated `resolveJwtClaims` in `src/lib/server/auth-helpers.ts` to propagate branch assignments, updated Credentials `authorize()` and `jwt()` callback in `src/auth.ts`, and updated `session()` callback in `src/auth.config.ts`. Added test cases in `src/lib/server/auth-helpers.test.ts` (19/19 passing).
    - **Pure Helper Module (`permissionsHelpers.ts`):** Implemented `normalizeMarcomRole` with case-insensitive trimming and fail-closed validation, and `resolveEffectivePermissionsUser` prioritizing active `session.user` over fallback store users with automatic branch scope extraction. Created comprehensive unit test suite in `src/lib/marcom/permissionsHelpers.test.ts` (8 passing tests).

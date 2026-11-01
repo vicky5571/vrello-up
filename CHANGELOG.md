@@ -6,6 +6,29 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-01]
 
+- `feat(profile)`: Implement dedicated user profile workspace view and self-service account API
+  - Created first-class `ProfileView` workspace view (`view=profile`) and registered in SSOT `ViewMode` and `urlState.ts`
+  - Created `/profile/page.tsx` redirecting authenticated users to `/?view=profile` (and unauthenticated to `/login`)
+  - Added "Lihat Profil & Akun" trigger to `UserMenuDropdown.tsx`
+  - Built secure `/api/user/profile` route (`GET`, `PATCH`) with NextAuth session scoping, Zod schema validation, and bcrypt password verification
+  - Built pure helper modules `profileValidators.ts` and `profileHelpers.ts` with 18 comprehensive unit tests
+  - Built modular UI components `ProfileHeader.tsx`, `ProfileAvatarUploader.tsx`, `ProfileAccessCard.tsx`, `ProfileSecurityCard.tsx`, and `ProfileView.tsx` coordinator (218 LOC $\le 250$ LOC)
+  - Dynamically mounted `ProfileView` in `ActiveViewStage.tsx`
+  - Gates: `npm test` 661 pass / 0 fail; `npm run test:smoke` 91 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean; all coordinator files $\le 250$ LOC
+  Spec: `docs/superpowers/specs/2026-11-01-user-profile-view-design.md`
+  Plan: `docs/superpowers/plans/2026-11-01-user-profile-view.md`
+  Refs: `docs/adr/0008-dedicated-user-profile-workspace-view.md`
+
+- `feat(rbac)`: Session RBAC and permissions synchronization across all 7 views
+  - Resolved missing "+ Add / New / Upload" buttons across 7 core pages for authenticated database & Google OAuth accounts
+  - Hydrated `assignedBranchIds` in NextAuth JWT and Session tokens in `src/auth.ts`, `src/auth.config.ts`, and `src/types/next-auth.d.ts`
+  - Built pure helper module `permissionsHelpers.ts` (`normalizeMarcomRole`, `resolveEffectivePermissionsUser`) with 8 unit tests
+  - Connected `useMarcomPermissions()` to `useSession()` with resilient fallback to Zustand store
+  - Added `syncSessionUser` action to synchronize NextAuth session profile into active user roster in `TopNav.tsx`
+  - Gates: `npm test` 643 pass / 0 fail; `npm run test:smoke` 89 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean; all coordinator files $\le 250$ LOC
+  Spec: `docs/superpowers/specs/2026-11-01-session-rbac-permissions-sync-design.md`
+  Plan: `docs/superpowers/plans/2026-11-01-session-rbac-permissions-sync.md`
+
 - `feat(projects)`: Unified Projects work item creation via original Marcom Hub modal forms
   - Eliminated runtime HTTP 400 errors (`status: "PLANNED"` on placements) and unvalidated placeholder cards across Projects views
   - Built pure helper module `createModalHelpers.ts` with comprehensive unit test suite (`sanitizeDateInput`, `resolveInitialStatus`, `getInitialPlacementPayload`)

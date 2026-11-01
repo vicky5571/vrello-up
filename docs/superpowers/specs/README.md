@@ -47,4 +47,4 @@ YYYY-MM-DD-<feature-slug>-design.md
 | 2026-11-01 | core-web-vitals-image-optimization | Done |
 | 2026-11-01 | projects-work-item-create-modals | Done |
 | 2026-11-01 | session-rbac-permissions-sync | Done |
-| 2026-11-01 | user-profile-view | In Progress |
+| 2026-11-01 | user-profile-view | Done |
