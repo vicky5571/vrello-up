@@ -8,14 +8,23 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Fix Content Format Invalid Video & Seed Data Normalization (`ContentDrawer.tsx`, `prisma/seed.ts`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Google Drive Remote Image Pattern & AppImage Resilience Fix (`next.config.ts`, `AppImage.tsx`)  
+**Active Feature:** Content Format Regression Verification & Plan (`docs/superpowers/plans/2026-11-02-fix-content-format-video-regression.md`) — **VERIFIED & CLOSED**  
+**Previous Feature:** Fix Content Format Invalid Video & Seed Data Normalization (`ContentDrawer.tsx`, `prisma/seed.ts`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Fix Invalid `format: "video"` & Seed Data Normalization (`ContentDrawer.tsx`, `prisma/seed.ts`):**
+1. **Verify Content Format Video Regression Resolution (Plan: `2026-11-02-fix-content-format-video-regression.md`):**
+   - **Diagnosis & Plan Scope:** Evaluated regression report where `format: "video"` previously failed after hard refresh due to unpatched database rows reloading into in-memory Zustand store.
+   - **Database Row Verification:** Verified database state directly via Prisma query (`ContentPost.findMany`). Zero rows contain invalid formats (`format: { notIn: ["reel", "carousel", "image", "story", "article", "thread"] }` returns 0). Zero rows contain invalid status (`REVISION_NEEDED`). All existing records (`cnt-001`, `cnt-002`, `cnt-003`, `cnt-004`, etc.) have canonical format (`reel` / `carousel` / `image`) and canonical status (`REVISION`, `PUBLISHED`, `IN_REVIEW`, `SCHEDULED`).
+   - **Client-Side Guard Verification:** Confirmed `ContentDrawer.tsx` line 108 enforces `isValidFormat(post.format) ? post.format : "reel"` and `isValidPlatform(post.platform) ? post.platform : "instagram"`.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm test`: ✅ 741 passed, 0 failed (131 suites).
+
+2. **Fix Invalid `format: "video"` & Seed Data Normalization (`ContentDrawer.tsx`, `prisma/seed.ts`):**
    - **Plan:** `docs/superpowers/plans/2026-11-02-fix-content-format-invalid-video.md`.
    - **Root Cause:** `prisma/seed.ts` originally seeded invalid `format` (`reels`, `video`, `shorts`) and invalid `status` (`REVISION_NEEDED`) directly via Prisma. When opened in `ContentDrawer`, `post.format` (`"video"`) was loaded into state and passed to `PATCH /api/marcom/content/[id]`, which failed with HTTP 400 (`Invalid format: 'video'. Must be one of: reel, carousel, image, story, article, thread`).
    - **Seed File Fix (`prisma/seed.ts`):** Corrected `cnt-001` (`"reels"` -> `"reel"`), `cnt-002` (`"video"` -> `"reel"`, `"REVISION_NEEDED"` -> `"REVISION"`), and `cnt-004` (`"shorts"` -> `"reel"`).
