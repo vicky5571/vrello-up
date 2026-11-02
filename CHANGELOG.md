@@ -6,6 +6,14 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-02]
 
+- `fix(users)`: Branch assignment UX and accessibility fixes
+  - Implemented FIX-1: Converted visual-only label checkboxes in `ApproveUserModal.tsx` and `UserBranchSelectModal.tsx` to native `<input type="checkbox" className="sr-only">` with `pointer-events-none` visual boxes for full keyboard Tab/Space navigation and screen reader support
+  - Implemented FIX-2: Isolated `isBranchSaving` state in `UsersActiveTab.tsx`, eliminating race conditions between active user row operations and branch modal saves
+  - Implemented FIX-3: Added `branchesStatus` state, memoized `fetchBranches`, and an inline error retry banner with "Coba Lagi" button in `UsersView.tsx`
+  - Maintained all coordinator and subcomponent file sizes strictly $\le 250$ LOC
+  - Gates: `npm test` 734 pass / 0 fail; `npm run test:smoke` 100 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Plan: `docs/superpowers/plans/2026-11-02-branch-assignment-ux-fixes.md`
+
 - `feat(users)`: User management branch assignment and area supervisor scoping
   - Authored ADR 14 (`docs/adr/0014-user-management-branch-assignment.md`) establishing approval-time branch assignment and Area Supervisor boundary scoping
   - Implemented pure helpers in `src/lib/marcom/branchAssignmentHelpers.ts` (`getAssignableBranches`, `canAssignBranchToUser`, `formatUserBranchBadges`) with 13 unit tests

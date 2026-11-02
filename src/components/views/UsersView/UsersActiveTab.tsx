@@ -28,6 +28,7 @@ export function UsersActiveTab({
   branches = [],
 }: UsersActiveTabProps) {
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [isBranchSaving, setIsBranchSaving] = useState(false);
   const [editingBranchUser, setEditingBranchUser] = useState<AppUser | null>(null);
 
   const handleRoleChange = async (user: AppUser, newRole: UserRole) => {
@@ -78,7 +79,7 @@ export function UsersActiveTab({
 
   const handleBranchSave = async (assignedBranchIds: string[]) => {
     if (!editingBranchUser) return;
-    setProcessingId(editingBranchUser.id);
+    setIsBranchSaving(true);
     try {
       const res = await fetch(`/api/admin/users/${editingBranchUser.id}`, {
         method: "PATCH",
@@ -95,7 +96,7 @@ export function UsersActiveTab({
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal mengubah penugasan cabang.");
     } finally {
-      setProcessingId(null);
+      setIsBranchSaving(false);
     }
   };
 
@@ -163,7 +164,7 @@ export function UsersActiveTab({
         branches={branches}
         actorRole={actorRole}
         actorBranchIds={actorBranchIds}
-        isBusy={!!processingId}
+        isBusy={isBranchSaving}
         onSave={handleBranchSave}
         onClose={() => setEditingBranchUser(null)}
       />

@@ -40,7 +40,7 @@ describe("User Branch Assignment UI & Coordinator Invariants", () => {
     assert.match(content, /assignedBranchIds/);
   });
 
-  it("verifies UsersActiveTab renders Cabang column and UserBranchSelectModal", () => {
+  it("verifies UsersActiveTab renders Cabang column and UserBranchSelectModal with isolated saving state", () => {
     const activeTabContent = fs.readFileSync(
       path.join(process.cwd(), "src/components/views/UsersView/UsersActiveTab.tsx"),
       "utf-8"
@@ -48,6 +48,8 @@ describe("User Branch Assignment UI & Coordinator Invariants", () => {
     assert.match(activeTabContent, /<th[^>]*>Cabang<\/th>/);
     assert.match(activeTabContent, /UserBranchSelectModal/);
     assert.match(activeTabContent, /handleBranchSave/);
+    assert.match(activeTabContent, /isBranchSaving/);
+    assert.match(activeTabContent, /isBusy=\{isBranchSaving\}/);
 
     const rowContent = fs.readFileSync(
       path.join(process.cwd(), "src/components/views/UsersView/UserActiveRow.tsx"),
@@ -58,12 +60,31 @@ describe("User Branch Assignment UI & Coordinator Invariants", () => {
     assert.match(rowContent, /onEditBranches/);
   });
 
-  it("verifies UsersView fetches branches and passes them to child tabs", () => {
+  it("verifies accessible native checkbox inputs in ApproveUserModal and UserBranchSelectModal", () => {
+    const approveModalContent = fs.readFileSync(
+      path.join(process.cwd(), "src/components/views/UsersView/ApproveUserModal.tsx"),
+      "utf-8"
+    );
+    assert.match(approveModalContent, /<input[\s\S]*?type="checkbox"[\s\S]*?className="sr-only"/);
+    assert.match(approveModalContent, /pointer-events-none/);
+
+    const selectModalContent = fs.readFileSync(
+      path.join(process.cwd(), "src/components/views/UsersView/UserBranchSelectModal.tsx"),
+      "utf-8"
+    );
+    assert.match(selectModalContent, /<input[\s\S]*?type="checkbox"[\s\S]*?className="sr-only"/);
+    assert.match(selectModalContent, /pointer-events-none/);
+  });
+
+  it("verifies UsersView handles branch fetch status with retry banner", () => {
     const content = fs.readFileSync(
       path.join(process.cwd(), "src/components/views/UsersView/UsersView.tsx"),
       "utf-8"
     );
     assert.match(content, /\/api\/marcom\/branches/);
+    assert.match(content, /branchesStatus/);
+    assert.match(content, /fetchBranches/);
+    assert.match(content, /Coba Lagi/);
     assert.match(content, /branches=\{branches\}/);
     assert.match(content, /actorBranchIds=\{actorBranchIds\}/);
   });

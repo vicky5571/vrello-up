@@ -20,6 +20,8 @@ interface UsersViewProps {
   currentUserId?: string;
 }
 
+type FetchStatus = "idle" | "loading" | "ok" | "error";
+
 export function UsersView({ initialCounts, currentUserId: propUserId }: UsersViewProps = {}) {
   const { data: session } = useSession();
   const currentUserId = propUserId ?? session?.user?.id ?? "";
@@ -35,12 +37,17 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
   );
   const [users, setUsers] = useState<AppUser[]>([]);
   const [branches, setBranches] = useState<BranchLookupItem[]>([]);
+  const [branchesStatus, setBranchesStatus] = useState<FetchStatus>("idle");
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
+  const fetchBranches = useCallback(() => {
+    setBranchesStatus("loading");
     fetch("/api/marcom/branches")
-      .then((r) => (r.ok ? r.json() : { data: [] }))
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((res) => {
         if (Array.isArray(res.data)) {
           setBranches(
@@ -51,10 +58,20 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
               region: b.region,
             }))
           );
+          setBranchesStatus("ok");
+        } else {
+          setBranchesStatus("error");
         }
       })
-      .catch((err) => console.error("[UsersView] Failed to fetch branches:", err));
+      .catch((err) => {
+        console.error("[UsersView] Failed to fetch branches:", err);
+        setBranchesStatus("error");
+      });
   }, []);
+
+  useEffect(() => {
+    fetchBranches();
+  }, [fetchBranches]);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -117,6 +134,21 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
       />
 
       <div className="p-4 sm:p-6 flex-1 min-h-0 space-y-4">
+        {branchesStatus === "error" && (
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-400">
+            <span>
+              Data cabang gagal dimuat. Penugasan cabang mungkin tidak tersedia.
+            </span>
+            <button
+              type="button"
+              onClick={fetchBranches}
+              className="shrink-0 font-semibold underline hover:no-underline"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        )}
+
         {activeTab === "PENDING" && (
           <UsersPendingTab
             users={filteredUsers}

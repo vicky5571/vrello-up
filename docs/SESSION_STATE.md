@@ -8,14 +8,22 @@
 
 **Date:** 2026-11-02  
 **Active Branch:** `vicky`  
-**Active Feature:** User Management Branch Assignment & Area Supervisor Scoping (`branchAssignmentHelpers.ts`, `ApproveUserModal.tsx`, `UserBranchSelectModal.tsx`, `UserActiveRow.tsx`, `UsersActiveTab.tsx`, `UsersPendingTab.tsx`, `UsersView.tsx`, `api/admin/users/[id]`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Supervisor Guarded User Management Access & Global Rail Pending Users Notification Badge  
+**Active Feature:** Branch Assignment UX Fixes (`ApproveUserModal.tsx`, `UserBranchSelectModal.tsx`, `UsersActiveTab.tsx`, `UsersView.tsx`, `userBranchAssignment.test.ts`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** User Management Branch Assignment & Area Supervisor Scoping (ADR 14)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **User Management Branch Assignment & Area Supervisor Scoping (ADR 14):**
+1. **Branch Assignment UX Fixes:**
+   - **FIX-1 (Accessibility)**: Replaced click-based `<label>` with accessible native `<input type="checkbox" className="sr-only">` and `pointer-events-none` on visual box in `ApproveUserModal.tsx` and `UserBranchSelectModal.tsx`. Ensures full keyboard Tab/Space navigation and screen reader checked state announcements.
+   - **FIX-2 (UX Race Condition)**: Isolated `isBranchSaving` state in `UsersActiveTab.tsx`, decoupling modal save state from table-row action `processingId`. Opening a branch modal while a row is deactivating no longer falsely disables the modal save button.
+   - **FIX-3 (Resilience / Error Feedback)**: Added `branchesStatus` state (`idle`, `loading`, `ok`, `error`), memoized `fetchBranches`, and an amber error notification banner with an inline "Coba Lagi" retry button in `UsersView.tsx`.
+   - Updated unit tests in `src/components/views/UsersView/userBranchAssignment.test.ts` (5 tests passing).
+   - Preserved all coordinator and modal file sizes strictly $\le 250$ LOC.
+   - Plan: `docs/superpowers/plans/2026-11-02-branch-assignment-ux-fixes.md`.
+
+2. **User Management Branch Assignment & Area Supervisor Scoping (ADR 14):**
    - **User Intent & Problem Statement:** The user observed that previously neither the registration form nor User Management asked or allowed assigning users to specific branches (`assignedBranchIds`). Confirmed that `supervisor` acts as an Area Supervisor (Model A) with multi-branch purview, and managers should assign branches in User Management upon approval or via active user management (Option 1).
    - **ADR 14 & Spec:** Authored ADR 14 (`docs/adr/0014-user-management-branch-assignment.md`), Design Spec (`docs/superpowers/specs/2026-11-02-user-branch-assignment-design.md`), and Plan (`docs/superpowers/plans/2026-11-02-user-branch-assignment.md`).
    - **Pure RBAC & Scoping Helpers (`src/lib/marcom/branchAssignmentHelpers.ts`):**

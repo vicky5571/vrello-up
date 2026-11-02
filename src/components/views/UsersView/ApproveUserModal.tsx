@@ -157,16 +157,21 @@ export function ApproveUserModal({
                   return (
                     <label
                       key={branch.id}
-                      onClick={() => toggleBranch(branch.id)}
                       className={`flex items-center justify-between p-2 rounded-md text-xs cursor-pointer transition-colors ${
                         isChecked
                           ? "bg-primary/10 text-foreground font-medium"
                           : "hover:bg-muted/50 text-muted-foreground"
                       }`}
                     >
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={isChecked}
+                        onChange={() => toggleBranch(branch.id)}
+                      />
                       <div className="flex items-center gap-2">
                         <div
-                          className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                          className={`w-4 h-4 rounded border flex items-center justify-center transition-colors pointer-events-none ${
                             isChecked
                               ? "bg-primary border-primary text-white"
                               : "border-muted-foreground/30 bg-card"
