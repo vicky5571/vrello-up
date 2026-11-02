@@ -821,7 +821,7 @@ export function ContentPlannerView() {
         setMediaUrl={setMediaUrl}
         onOpenDriveSelector={() =>
           openSelector({
-            defaultKind: "video",
+            defaultKind: "all",
             onSelect: (atts) => {
               if (atts[0]) {
                 setMediaUrl(atts[0].url);
@@ -838,7 +838,7 @@ export function ContentPlannerView() {
         isOpen={isDriveModalOpen}
         onClose={closeDriveModal}
         onAttach={handleManualAttach}
-        defaultKind="video"
+        defaultKind="all"
       />
 
       {/* Quick Revision Modal */}

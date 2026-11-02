@@ -248,18 +248,12 @@ export function useGoogleDrivePicker(): UseGoogleDrivePickerReturn {
           docsView.setParent(FOLDER_ID);
         }
 
-        const uploadView = new google.picker.DocsUploadView();
-        if (FOLDER_ID) {
-          uploadView.setParent(FOLDER_ID);
-        }
-
         const builder = new google.picker.PickerBuilder()
           .enableFeature(google.picker.Feature.SUPPORT_DRIVES)
           .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
           .setDeveloperKey(API_KEY)
           .setOAuthToken(accessToken)
           .addView(docsView)
-          .addView(uploadView)
           .setCallback((data: GooglePickerData) => {
             if (data.action === google.picker.Action.PICKED) {
               const docs = data.docs || [];

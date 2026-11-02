@@ -416,7 +416,7 @@ export function ContentDrawer({
                     type="button"
                     onClick={() =>
                       onOpenDrivePicker({
-                        defaultKind: "video",
+                        defaultKind: "all",
                         onSelect: (atts) => {
                           if (atts[0]) {
                             setMediaUrl(atts[0].url);

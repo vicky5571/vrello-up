@@ -8,14 +8,25 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Content Format Regression Verification & Plan (`docs/superpowers/plans/2026-11-02-fix-content-format-video-regression.md`) — **VERIFIED & CLOSED**  
-**Previous Feature:** Fix Content Format Invalid Video & Seed Data Normalization (`ContentDrawer.tsx`, `prisma/seed.ts`)  
+**Active Feature:** Fix Drive Picker Upload "Server rejected" & Content Media Type (`useGoogleDrivePicker.ts`, `ContentDrawer.tsx`, `ContentPlannerView.tsx`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Content Format Regression Verification & Plan (`docs/superpowers/plans/2026-11-02-fix-content-format-video-regression.md`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Verify Content Format Video Regression Resolution (Plan: `2026-11-02-fix-content-format-video-regression.md`):**
+1. **Fix Google Drive Picker "Server rejected" & Content Media Type (Plan: `2026-11-03-fix-drive-picker-upload-server-rejected.md`):**
+   - **Root Cause & Diagnosis:** Google Picker native Upload tab (`DocsUploadView`) failed with "Server rejected" when uploading images because `drive.file` OAuth scope restricts file access to app-created files and does not permit creating arbitrary files in the native Picker iframe. In addition, `defaultKind: "video"` was hardcoded for content posts, restricting Picker to video files only and blocking PNG/JPEG selections.
+   - **Fix 1 — Disable Broken Picker Native Upload Tab (`src/lib/marcom/useGoogleDrivePicker.ts`):** Removed `new google.picker.DocsUploadView()` and `.addView(uploadView)` from `createAndShowPicker`. Direct uploads are handled safely and reliably by `GoogleDriveLinkModal` via `useDirectDriveUpload` using the server-side service account.
+   - **Fix 2 — Allow All File Types for Content Posts (`ContentDrawer.tsx`, `ContentPlannerView.tsx`):** Changed `defaultKind` from `"video"` to `"all"` in `ContentDrawer.tsx` (`onOpenDrivePicker`) and `ContentPlannerView.tsx` (`onOpenDriveSelector` & `GoogleDriveLinkModal`), allowing users to pick images, carousels, videos, and documents seamlessly.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run lint`: ✅ 0 warnings or errors.
+     - `npm run test:smoke`: ✅ 100 passed, 0 failed.
+     - `npm test`: ✅ 741 passed, 0 failed (131 suites).
+
+2. **Verify Content Format Video Regression Resolution (Plan: `2026-11-02-fix-content-format-video-regression.md`):**
    - **Diagnosis & Plan Scope:** Evaluated regression report where `format: "video"` previously failed after hard refresh due to unpatched database rows reloading into in-memory Zustand store.
    - **Database Row Verification:** Verified database state directly via Prisma query (`ContentPost.findMany`). Zero rows contain invalid formats (`format: { notIn: ["reel", "carousel", "image", "story", "article", "thread"] }` returns 0). Zero rows contain invalid status (`REVISION_NEEDED`). All existing records (`cnt-001`, `cnt-002`, `cnt-003`, `cnt-004`, etc.) have canonical format (`reel` / `carousel` / `image`) and canonical status (`REVISION`, `PUBLISHED`, `IN_REVIEW`, `SCHEDULED`).
    - **Client-Side Guard Verification:** Confirmed `ContentDrawer.tsx` line 108 enforces `isValidFormat(post.format) ? post.format : "reel"` and `isValidPlatform(post.platform) ? post.platform : "instagram"`.
