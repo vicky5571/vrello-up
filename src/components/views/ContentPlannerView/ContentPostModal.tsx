@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sparkles,
   X,
@@ -8,6 +8,7 @@ import {
   Copy,
   RefreshCw,
   Store,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import type {
@@ -17,6 +18,7 @@ import type {
 } from "@/types";
 import { PLATFORM_CONFIG } from "./contentConstants";
 import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
+import { useDirectDriveUpload } from "@/lib/marcom/useDirectDriveUpload";
 
 export interface OutletOption {
   id: string;
@@ -77,6 +79,28 @@ export function ContentPostModal({
   setOutletId,
 }: ContentPostModalProps) {
   const [outlets, setOutlets] = useState<OutletOption[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isUploading, progress, uploadFile } = useDirectDriveUpload();
+
+  const handleDeviceUpload = async (file: File) => {
+    const toastId = toast.loading(`Mengunggah "${file.name}" dari perangkat...`);
+    try {
+      const attachment = await uploadFile(file);
+      if (attachment?.url) {
+        setMediaUrl(attachment.url);
+        toast.success(`"${file.name}" berhasil diunggah!`, { id: toastId });
+      } else {
+        toast.error("Gagal mengunggah file. Silakan coba lagi.", { id: toastId });
+      }
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error ? err.message : "Gagal mengunggah file.",
+        { id: toastId }
+      );
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -272,26 +296,72 @@ export function ContentPostModal({
             />
           </div>
 
-          {/* Media URL */}
-          <div>
+          {/* Media URL & Direct Upload */}
+          <div className="space-y-1.5">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleDeviceUpload(file);
+              }}
+              className="hidden"
+              disabled={isUploading}
+            />
+
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Media / Thumbnail URL (optional)
               </label>
-              <button
-                type="button"
-                onClick={onOpenDriveSelector}
-                className="text-[11px] font-semibold text-pink-600 dark:text-pink-400 hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <span>Pilih dari Google Drive</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="text-[11px] font-semibold text-pink-600 dark:text-pink-400 hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                >
+                  <Upload className="w-3 h-3" />
+                  <span>
+                    {isUploading ? `Mengunggah (${progress}%)...` : "Upload dari Perangkat"}
+                  </span>
+                </button>
+                <span className="text-slate-300 dark:text-slate-700 text-xs">|</span>
+                <button
+                  type="button"
+                  onClick={onOpenDriveSelector}
+                  className="text-[11px] font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Google Drive</span>
+                </button>
+              </div>
             </div>
+
+            {isUploading && (
+              <div className="p-2.5 rounded-xl border border-pink-200 dark:border-pink-900/50 bg-pink-50/60 dark:bg-pink-950/20 space-y-1.5">
+                <div className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-300">
+                  <span className="text-[11px] font-medium truncate">
+                    Mengunggah ke Google Drive...
+                  </span>
+                  <span className="font-bold text-pink-600 dark:text-pink-400 tabular-nums text-xs">
+                    {progress}%
+                  </span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-pink-600 to-purple-600 rounded-full transition-all duration-150"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
             <input
               type="url"
-              placeholder="https://..."
+              placeholder="https://drive.google.com/... atau upload dari perangkat"
               value={mediaUrl}
               onChange={(e) => setMediaUrl(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500"
+              className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-mono"
             />
           </div>
 

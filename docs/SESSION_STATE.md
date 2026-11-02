@@ -8,14 +8,32 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Unified "Tambah Media" Entry Point in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-fix-drive-picker-no-upload-tab.md`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Fix Drive Picker Upload "Server rejected" & Content Media Type (`useGoogleDrivePicker.ts`, `ContentDrawer.tsx`, `ContentPlannerView.tsx`)  
+**Active Feature:** Direct "Upload dari Perangkat" Button & Drag-and-Drop in ContentDrawer & ContentPostModal — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Unified "Tambah Media" Entry Point in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-fix-drive-picker-no-upload-tab.md`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Unify ContentDrawer Media Upload to Single "Tambah Media" Button (Plan: `2026-11-03-fix-drive-picker-no-upload-tab.md`):**
+1. **Direct "Upload dari Perangkat" Button & Drag-and-Drop in ContentDrawer & ContentPostModal:**
+   - **User Intent & Problem Statement:** Users requested an explicit, foolproof **"Upload dari Perangkat"** button to upload images and videos directly from their local machine into Content Planner without having to navigate modal sub-tabs or deal with Google login popups.
+   - **Direct Device File Picker (`ContentDrawer.tsx`, `ContentPostModal.tsx`):**
+     - Embedded a hidden `<input ref={fileInputRef} type="file" accept="image/*,video/*" />` triggered directly by a prominent "Upload dari Perangkat" button with `<Upload />` icon.
+     - Wired up `useDirectDriveUpload` for direct binary streaming to Google Drive via server-side resumable session (`/api/marcom/drive/upload-session` and `/api/marcom/drive/finalize`), bypassing Vercel 4.5MB payload limits and making files readable with zero user Google login.
+     - Added real-time upload progress card showing animated progress bar, live percentage (`X%`), spinning indicator, and abort/cancel control.
+   - **Interactive Dropzone Empty State (`ContentDrawer.tsx`):**
+     - When no media is attached, replaced the plain text input with an interactive dashed dropzone supporting direct drag-and-drop of video/image files.
+     - Provided two prominent actions: primary "Upload dari Perangkat" button and secondary "Link Drive" button (`onOpenUploadModal`), plus direct URL input.
+   - **Post Creation Modal Parity (`ContentPostModal.tsx`):**
+     - Added "Upload dari Perangkat" button alongside "Google Drive" picker with live upload progress bar.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run lint`: ✅ 0 warnings or errors.
+     - `npm run test:smoke`: ✅ 100 passed, 0 failed.
+     - `npm test`: ✅ 741 passed, 0 failed (131 suites).
+
+2. **Unify ContentDrawer Media Upload to Single "Tambah Media" Button (Plan: `2026-11-03-fix-drive-picker-no-upload-tab.md`):**
    - **User Intent & Problem Statement:** The native Google Picker had no upload tab and was scoped to a shared folder, showing "No documents". Having two adjacent text links ("Upload dari Perangkat" and "Pilih dari Google Drive") caused confusion and directed users back to the dead-end native Picker flow.
    - **Unified UX Entry Point (`ContentDrawer.tsx`):** Replaced the dual-link buttons with a single, prominent "Tambah Media" button that triggers `onOpenUploadModal`.
    - **Modal Integration (`ContentPlannerView.tsx`):** "Tambah Media" directly opens `GoogleDriveLinkModal` (which provides both "Unggah Langsung" via service account resumable direct stream and "Tempel Link URL" for existing Drive links). Removed `onOpenDrivePicker` invocation from `ContentDrawer`.
