@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -114,6 +114,15 @@ export function ContentPlannerView() {
     closeModal: closeDriveModal,
     handleManualAttach,
   } = useGoogleDrivePicker();
+
+  // Upload modal: imperative open from ContentDrawer
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const pendingUploadAttachRef = useRef<((url: string) => void) | null>(null);
+
+  const handleOpenUploadModal = useCallback((onAttach: (url: string) => void) => {
+    pendingUploadAttachRef.current = onAttach;
+    setIsUploadModalOpen(true);
+  }, []);
 
   // Form Fields
   const [title, setTitle] = useState("");
@@ -833,11 +842,23 @@ export function ContentPlannerView() {
           })
         }
       />
-      {/* Google Drive Link Modal */}
+      {/* Google Drive Link Modal — picker fallback */}
       <GoogleDriveLinkModal
         isOpen={isDriveModalOpen}
         onClose={closeDriveModal}
         onAttach={handleManualAttach}
+        defaultKind="all"
+      />
+
+      {/* Google Drive Upload Modal — triggered directly from ContentDrawer */}
+      <GoogleDriveLinkModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onAttach={(url) => {
+          pendingUploadAttachRef.current?.(url);
+          pendingUploadAttachRef.current = null;
+          setIsUploadModalOpen(false);
+        }}
         defaultKind="all"
       />
 
@@ -1011,7 +1032,7 @@ export function ContentPlannerView() {
         onClose={() => setSelectedDrawerPost(null)}
         onUpdatePost={handleDrawerUpdate}
         onDeletePost={handleDrawerDelete}
-        onOpenDrivePicker={openSelector}
+        onOpenUploadModal={handleOpenUploadModal}
         onPreviewMedia={setPreviewMedia}
       />
     </div>

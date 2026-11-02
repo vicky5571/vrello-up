@@ -48,6 +48,7 @@ interface ContentDrawerProps {
     onSelect: (attachments: TaskAttachment[]) => void;
     defaultKind?: "all" | "video";
   }) => void;
+  onOpenUploadModal?: (onAttach: (url: string) => void) => void;
   onPreviewMedia?: (media: { title: string; mediaUrl: string; platform?: string; format?: string }) => void;
 }
 
@@ -81,7 +82,7 @@ export function ContentDrawer({
   onUpdatePost,
   onDeletePost,
   onNavigateToTask,
-  onOpenDrivePicker,
+  onOpenUploadModal,
   onPreviewMedia,
 }: ContentDrawerProps) {
   // Form State
@@ -411,23 +412,18 @@ export function ContentDrawer({
                   <Video className="w-3.5 h-3.5 text-purple-500" />
                   <span>Aset Media / Video Footage</span>
                 </label>
-                {onOpenDrivePicker && (
+                {onOpenUploadModal && (
                   <button
                     type="button"
                     onClick={() =>
-                      onOpenDrivePicker({
-                        defaultKind: "all",
-                        onSelect: (atts) => {
-                          if (atts[0]) {
-                            setMediaUrl(atts[0].url);
-                            toast.success("Tautan Google Drive berhasil disematkan");
-                          }
-                        },
+                      onOpenUploadModal((url) => {
+                        setMediaUrl(url);
+                        toast.success("File berhasil diunggah ke Google Drive");
                       })
                     }
                     className="text-[11px] font-semibold text-pink-600 dark:text-pink-400 hover:underline cursor-pointer flex items-center gap-1"
                   >
-                    <span>Pilih dari Google Drive</span>
+                    <span>Tambah Media</span>
                   </button>
                 )}
               </div>
