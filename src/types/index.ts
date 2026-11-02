@@ -19,6 +19,8 @@ export type UserRole = "admin" | "supervisor" | "staff" | "viewer";
 
 export type UserStatus = "PENDING" | "APPROVED" | "REJECTED";
 
+export type UserTabFilter = UserStatus | "ALL";
+
 export interface AppUser {
   id: string;
   name: string;

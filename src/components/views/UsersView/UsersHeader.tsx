@@ -4,7 +4,7 @@ import React from "react";
 import { Users, ShieldCheck, Clock, UserX, RefreshCw, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KpiSummaryCards, type KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
-import type { UserStatus } from "@/types";
+import type { UserTabFilter } from "@/types";
 
 export interface UsersHeaderProps {
   counts: {
@@ -12,8 +12,8 @@ export interface UsersHeaderProps {
     active: number;
     rejected: number;
   };
-  activeTab: UserStatus;
-  onTabChange: (tab: UserStatus) => void;
+  activeTab: UserTabFilter;
+  onTabChange: (tab: UserTabFilter) => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
   isLoading: boolean;
@@ -35,9 +35,11 @@ export function UsersHeader({
     {
       label: "Total Pengguna",
       value: totalUsers,
-      helper: "Terdaftar dalam database",
+      helper: "Semua akun dalam sistem",
       icon: Users,
       color: "indigo",
+      onClick: () => onTabChange("ALL"),
+      active: activeTab === "ALL",
     },
     {
       label: "Menunggu Review",
@@ -126,7 +128,7 @@ export function UsersHeader({
       </div>
 
       {/* 3. KPI Summary Cards Bar */}
-      <KpiSummaryCards items={kpiItems} mobileStrip />
+      <KpiSummaryCards items={kpiItems} mobileStrip activeLayoutId="activeUsersKpiCard" />
     </div>
   );
 }

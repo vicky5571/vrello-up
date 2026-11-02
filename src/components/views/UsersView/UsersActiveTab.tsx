@@ -6,6 +6,7 @@ import { Loader2, Users } from "lucide-react";
 import type { AppUser, UserRole } from "@/types";
 import { UserActiveRow } from "./UserActiveRow";
 import { UserBranchSelectModal } from "./UserBranchSelectModal";
+import { ApproveUserModal } from "./ApproveUserModal";
 import type { BranchLookupItem } from "@/lib/marcom/branchAssignmentHelpers";
 
 interface UsersActiveTabProps {
@@ -30,6 +31,52 @@ export function UsersActiveTab({
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [isBranchSaving, setIsBranchSaving] = useState(false);
   const [editingBranchUser, setEditingBranchUser] = useState<AppUser | null>(null);
+  const [approvingUser, setApprovingUser] = useState<AppUser | null>(null);
+
+  const handleReactivate = async (user: AppUser) => {
+    setProcessingId(user.id);
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "APPROVED" }),
+      });
+      if (!res.ok) throw new Error("Gagal mengaktifkan kembali akun");
+      toast.success(`Akun ${user.name} berhasil diaktifkan kembali`);
+      onAction();
+    } catch {
+      toast.error("Gagal mengaktifkan kembali akun.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleConfirmApprove = async (role: UserRole, assignedBranchIds: string[]) => {
+    if (!approvingUser) return;
+    setProcessingId(approvingUser.id);
+    try {
+      const res = await fetch(`/api/admin/users/${approvingUser.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "APPROVED",
+          role,
+          assignedBranchIds,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Gagal menyetujui akun");
+      }
+      toast.success(`Akun ${approvingUser.name} berhasil disetujui`);
+      setApprovingUser(null);
+      onAction();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyetujui akun.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const handleRoleChange = async (user: AppUser, newRole: UserRole) => {
     if (user.role === newRole) return;
@@ -116,9 +163,9 @@ export function UsersActiveTab({
           <Users className="w-6 h-6" />
         </div>
         <div className="space-y-1">
-          <h3 className="font-semibold text-foreground text-sm">Tidak Ada Pengguna Aktif</h3>
+          <h3 className="font-semibold text-foreground text-sm">Tidak Ada Pengguna</h3>
           <p className="text-xs text-muted-foreground max-w-sm">
-            Belum ada pengguna yang berstatus aktif di dalam sistem.
+            Belum ada pengguna yang sesuai dengan filter yang dipilih.
           </p>
         </div>
       </div>
@@ -152,6 +199,8 @@ export function UsersActiveTab({
                 onRoleChange={handleRoleChange}
                 onDeactivate={handleDeactivate}
                 onEditBranches={setEditingBranchUser}
+                onApprove={setApprovingUser}
+                onReactivate={handleReactivate}
               />
             ))}
           </tbody>
@@ -167,6 +216,17 @@ export function UsersActiveTab({
         isBusy={isBranchSaving}
         onSave={handleBranchSave}
         onClose={() => setEditingBranchUser(null)}
+      />
+
+      <ApproveUserModal
+        user={approvingUser}
+        isOpen={!!approvingUser}
+        branches={branches}
+        actorRole={actorRole}
+        actorBranchIds={actorBranchIds}
+        isBusy={processingId === approvingUser?.id}
+        onConfirm={handleConfirmApprove}
+        onClose={() => setApprovingUser(null)}
       />
     </div>
   );

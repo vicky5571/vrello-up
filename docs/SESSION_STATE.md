@@ -15,19 +15,25 @@
 
 ## What Was Completed This Session
 
-1. **Unify Filter: Remove Pill Tabs, Promote Stat Cards (ADR 15):**
-   - **User Intent & Problem Statement:** The User Management page had two UI elements filtering the same underlying user table (the pill tab bar and the interactive KPI stat cards). The cards already provided richer context (icon, label, count, and subtitle) and were wired to `onTabChange`.
+1. **Unify Filter: Remove Pill Tabs, Promote Stat Cards & Active Card Animation (ADR 15):**
+   - **User Intent & Problem Statement:** The User Management page had two UI elements filtering the same underlying user table. The user requested removing the pill bar, wiring the "Total Pengguna" stat card to display all users (reset filter), and making the active card border more beautiful with fluid spring animation on card switch.
    - **ADR & Spec:** `docs/adr/0015-unify-filter-stat-cards-remove-pill-tabs.md` & `docs/auth-user-management/spec-unify-filter-stat-cards.md`.
-   - **Implementation in `UsersHeader.tsx`:**
-     - Removed redundant `tabs` array and `activeUsersTabPill` sliding pill markup.
-     - Removed unused `framer-motion` imports (`motion`, `useReducedMotion`).
-     - Kept interactive KPI cards (`KpiSummaryCards items={kpiItems} mobileStrip />`) as the sole filter mechanism for `PENDING`, `APPROVED`, and `REJECTED` states.
-     - Reduced `UsersHeader.tsx` from 218 LOC down to 132 LOC ($\le 250$ LOC).
+   - **"Total Pengguna" Filter Integration (`UsersView.tsx`, `UsersHeader.tsx`, `UsersActiveTab.tsx`, `UserActiveRow.tsx`, `src/types/index.ts`):**
+     - Added `UserTabFilter = UserStatus | "ALL"` to SSOT types.
+     - Wired "Total Pengguna" KPI card with `onClick: () => onTabChange("ALL")` and `active: activeTab === "ALL"`.
+     - In `UsersView.tsx`: When `activeTab === "ALL"`, fetches `/api/admin/users?limit=50` (unfiltered by status) returning all registered accounts.
+     - Enhanced `UsersActiveTab` and `UserActiveRow` to display all users with status-aware actions: approved accounts have "Nonaktifkan", pending accounts have "Setujui" (launching `ApproveUserModal`), and rejected accounts have "Aktifkan" (instant reactivate).
+   - **Animated Active KPI Card Border (`KpiSummaryCards.tsx`):**
+     - Integrated Framer Motion spring-animated sliding active indicator (`motion.div layoutId={activeLayoutId}`) across cards.
+     - Styled each card with color-matched vibrant 2px border, ambient colored glow (`shadow-[0_0_16px_rgba(...)]`), and subtle surface tint when active.
+     - Seamless, fluid glide when switching active cards with spring physics (`stiffness: 450, damping: 35`) and `useReducedMotion()` fallback.
+     - Preserved coordinator LOC ($\le 250$): `UsersView` 188 LOC, `UsersHeader` 134 LOC, `UsersActiveTab` 233 LOC, `UserActiveRow` 177 LOC, `KpiSummaryCards` 241 LOC.
    - **Verification Gates:**
      - `npm run drift:check`: ✅ No drift detected.
      - `npm run build:check`: ✅ 0 TypeScript errors.
-     - `npm test`: ✅ 734 passed, 0 failures (129 suites).
      - `npm run lint`: ✅ 0 warnings or errors.
+     - `npm run test:smoke`: ✅ 100 passed, 0 failed.
+     - `npm test`: ✅ 734 passed, 0 failures (129 suites).
      - `npm run build`: ✅ Production Next.js build compiled cleanly (31/31 routes).
 
 2. **Branch Assignment UX Fixes:**

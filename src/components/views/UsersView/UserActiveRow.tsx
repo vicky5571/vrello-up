@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, UserX, Building2 } from "lucide-react";
+import { Loader2, UserX, Building2, UserCheck, RotateCcw } from "lucide-react";
 import type { AppUser, UserRole } from "@/types";
 import { UserStatusBadge } from "./UserStatusBadge";
 import { UserRoleSelect } from "./UserRoleSelect";
@@ -19,6 +19,8 @@ interface UserActiveRowProps {
   onRoleChange: (user: AppUser, newRole: UserRole) => void;
   onDeactivate: (user: AppUser) => void;
   onEditBranches: (user: AppUser) => void;
+  onApprove?: (user: AppUser) => void;
+  onReactivate?: (user: AppUser) => void;
 }
 
 export function UserActiveRow({
@@ -30,6 +32,8 @@ export function UserActiveRow({
   onRoleChange,
   onDeactivate,
   onEditBranches,
+  onApprove,
+  onReactivate,
 }: UserActiveRowProps) {
   const isCurrentUser = user.id === currentUserId;
   const isTargetAdmin = user.role === "admin";
@@ -116,20 +120,56 @@ export function UserActiveRow({
           : "Belum pernah"}
       </td>
       <td className="py-3.5 px-4 text-right">
-        <button
-          type="button"
-          onClick={() => onDeactivate(user)}
-          disabled={isBusy || isDeactivateForbidden}
-          title={buttonTitle}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {isBusy ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <UserX className="w-3.5 h-3.5" />
-          )}
-          <span>Nonaktifkan</span>
-        </button>
+        {user.status === "PENDING" && onApprove ? (
+          <button
+            type="button"
+            onClick={() => onApprove(user)}
+            disabled={isBusy}
+            title="Setujui dan beri akses akun"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isBusy ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <UserCheck className="w-3.5 h-3.5" />
+            )}
+            <span>Setujui</span>
+          </button>
+        ) : user.status === "REJECTED" && onReactivate ? (
+          <button
+            type="button"
+            onClick={() => onReactivate(user)}
+            disabled={isBusy || isSupervisorBlocked}
+            title={
+              isSupervisorBlocked
+                ? "Supervisor tidak dapat mengaktifkan akun Admin"
+                : "Aktifkan kembali akun"
+            }
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {isBusy ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <RotateCcw className="w-3.5 h-3.5" />
+            )}
+            <span>Aktifkan</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onDeactivate(user)}
+            disabled={isBusy || isDeactivateForbidden}
+            title={buttonTitle}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {isBusy ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <UserX className="w-3.5 h-3.5" />
+            )}
+            <span>Nonaktifkan</span>
+          </button>
+        )}
       </td>
     </tr>
   );

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
-import type { AppUser, UserRole, UserStatus } from "@/types";
+import type { AppUser, UserRole, UserTabFilter } from "@/types";
 import { UsersPendingTab } from "./UsersPendingTab";
 import { UsersActiveTab } from "./UsersActiveTab";
 import { UsersRejectedTab } from "./UsersRejectedTab";
@@ -29,7 +29,7 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
   const actorBranchIds = session?.user?.assignedBranchIds || [];
   const setPendingUsersCount = useWorkspaceStore((s) => s.setPendingUsersCount);
 
-  const [activeTab, setActiveTab] = useState<UserStatus>(
+  const [activeTab, setActiveTab] = useState<UserTabFilter>(
     (initialCounts?.pending ?? 0) > 0 ? "PENDING" : "APPROVED"
   );
   const [counts, setCounts] = useState(
@@ -76,8 +76,9 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
+      const statusParam = activeTab === "ALL" ? "" : `status=${activeTab}&`;
       const [tabRes, pendingRes, activeRes, rejectedRes] = await Promise.all([
-        fetch(`/api/admin/users?status=${activeTab}&limit=50`),
+        fetch(`/api/admin/users?${statusParam}limit=50`),
         fetch("/api/admin/users?status=PENDING&limit=1"),
         fetch("/api/admin/users?status=APPROVED&limit=1"),
         fetch("/api/admin/users?status=REJECTED&limit=1"),
@@ -160,7 +161,7 @@ export function UsersView({ initialCounts, currentUserId: propUserId }: UsersVie
           />
         )}
 
-        {activeTab === "APPROVED" && (
+        {(activeTab === "APPROVED" || activeTab === "ALL") && (
           <UsersActiveTab
             users={filteredUsers}
             currentUserId={currentUserId}

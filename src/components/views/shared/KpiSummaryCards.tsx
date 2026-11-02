@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
@@ -21,43 +22,43 @@ export interface KpiCardItem {
 
 const COLOR_MAP: Record<
   NonNullable<KpiCardItem["color"]>,
-  { bg: string; text: string; ring?: string }
+  { bg: string; text: string; activeBorder: string; activeBg: string }
 > = {
   emerald: {
-    bg: "bg-emerald-500/10 dark:bg-emerald-500/20",
-    text: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-500/10 dark:bg-emerald-500/20", text: "text-emerald-600 dark:text-emerald-400",
+    activeBorder: "border-emerald-500 dark:border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.25)]", activeBg: "bg-emerald-50/50 dark:bg-emerald-950/20",
   },
   amber: {
-    bg: "bg-amber-500/10 dark:bg-amber-500/20",
-    text: "text-amber-600 dark:text-amber-400",
+    bg: "bg-amber-500/10 dark:bg-amber-500/20", text: "text-amber-600 dark:text-amber-400",
+    activeBorder: "border-amber-500 dark:border-amber-400 shadow-[0_0_16px_rgba(245,158,11,0.25)]", activeBg: "bg-amber-50/50 dark:bg-amber-950/20",
   },
   blue: {
-    bg: "bg-blue-500/10 dark:bg-blue-500/20",
-    text: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-500/10 dark:bg-blue-500/20", text: "text-blue-600 dark:text-blue-400",
+    activeBorder: "border-blue-500 dark:border-blue-400 shadow-[0_0_16px_rgba(59,130,246,0.25)]", activeBg: "bg-blue-50/50 dark:bg-blue-950/20",
   },
   violet: {
-    bg: "bg-violet-500/10 dark:bg-violet-500/20",
-    text: "text-violet-600 dark:text-violet-400",
+    bg: "bg-violet-500/10 dark:bg-violet-500/20", text: "text-violet-600 dark:text-violet-400",
+    activeBorder: "border-violet-500 dark:border-violet-400 shadow-[0_0_16px_rgba(139,92,246,0.25)]", activeBg: "bg-violet-50/50 dark:bg-violet-950/20",
   },
   teal: {
-    bg: "bg-teal-500/10 dark:bg-teal-500/20",
-    text: "text-teal-600 dark:text-teal-400",
+    bg: "bg-teal-500/10 dark:bg-teal-500/20", text: "text-teal-600 dark:text-teal-400",
+    activeBorder: "border-teal-500 dark:border-teal-400 shadow-[0_0_16px_rgba(20,184,166,0.25)]", activeBg: "bg-teal-50/50 dark:bg-teal-950/20",
   },
   orange: {
-    bg: "bg-orange-500/10 dark:bg-orange-500/20",
-    text: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-500/10 dark:bg-orange-500/20", text: "text-orange-600 dark:text-orange-400",
+    activeBorder: "border-orange-500 dark:border-orange-400 shadow-[0_0_16px_rgba(249,115,22,0.25)]", activeBg: "bg-orange-50/50 dark:bg-orange-950/20",
   },
   rose: {
-    bg: "bg-rose-500/10 dark:bg-rose-500/20",
-    text: "text-rose-600 dark:text-rose-400",
+    bg: "bg-rose-500/10 dark:bg-rose-500/20", text: "text-rose-600 dark:text-rose-400",
+    activeBorder: "border-rose-500 dark:border-rose-400 shadow-[0_0_16px_rgba(244,63,94,0.25)]", activeBg: "bg-rose-50/50 dark:bg-rose-950/20",
   },
   pink: {
-    bg: "bg-pink-500/10 dark:bg-pink-500/20",
-    text: "text-pink-600 dark:text-pink-400",
+    bg: "bg-pink-500/10 dark:bg-pink-500/20", text: "text-pink-600 dark:text-pink-400",
+    activeBorder: "border-pink-500 dark:border-pink-400 shadow-[0_0_16px_rgba(236,72,153,0.25)]", activeBg: "bg-pink-50/50 dark:bg-pink-950/20",
   },
   indigo: {
-    bg: "bg-indigo-500/10 dark:bg-indigo-500/20",
-    text: "text-indigo-600 dark:text-indigo-400",
+    bg: "bg-indigo-500/10 dark:bg-indigo-500/20", text: "text-indigo-600 dark:text-indigo-400",
+    activeBorder: "border-indigo-500 dark:border-indigo-400 shadow-[0_0_16px_rgba(99,102,241,0.25)]", activeBg: "bg-indigo-50/50 dark:bg-indigo-950/20",
   },
 };
 
@@ -109,6 +110,7 @@ export interface KpiSummaryCardsProps {
   skeletonCount?: number;
   className?: string;
   mobileStrip?: boolean;
+  activeLayoutId?: string;
 }
 
 export function KpiSummaryCards({
@@ -117,7 +119,13 @@ export function KpiSummaryCards({
   skeletonCount = 4,
   className,
   mobileStrip = false,
+  activeLayoutId = "activeKpiCardIndicator",
 }: KpiSummaryCardsProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const transition = shouldReduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 450, damping: 35 };
+
   if (isLoading) {
     return (
       <KpiSummaryCardsSkeleton
@@ -165,18 +173,29 @@ export function KpiSummaryCards({
                 : undefined
             }
             className={cn(
-              "flex items-center gap-3.5 p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs transition-all text-left",
+              "relative flex items-center gap-3.5 p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border transition-all text-left overflow-hidden",
+              item.active
+                ? cn("border-transparent shadow-xs", colorStyles.activeBg)
+                : "border-slate-200/80 dark:border-slate-800/80 shadow-2xs",
               mobileStrip && "shrink-0 min-w-[170px] sm:min-w-0 sm:shrink",
               isClickable &&
                 "cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs active:scale-[0.99] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
-              item.active &&
-                "ring-2 ring-primary/60 border-primary/40 bg-slate-50/80 dark:bg-slate-800/50",
             )}
           >
-            <div className={cn("p-2.5 rounded-xl shrink-0", colorStyles.bg)}>
+            {item.active && (
+              <motion.div
+                layoutId={activeLayoutId}
+                className={cn(
+                  "absolute inset-0 rounded-xl pointer-events-none border-2 z-10",
+                  colorStyles.activeBorder,
+                )}
+                transition={transition}
+              />
+            )}
+            <div className={cn("p-2.5 rounded-xl shrink-0 relative z-1", colorStyles.bg)}>
               <Icon className={cn("w-4 h-4", colorStyles.text)} />
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 relative z-1">
               <div className="flex items-center justify-between gap-1">
                 <div className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase truncate">
                   {item.label}
