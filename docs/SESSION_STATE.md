@@ -8,14 +8,29 @@
 
 **Date:** 2026-11-02  
 **Active Branch:** `vicky`  
-**Active Feature:** Branch Assignment UX Fixes (`ApproveUserModal.tsx`, `UserBranchSelectModal.tsx`, `UsersActiveTab.tsx`, `UsersView.tsx`, `userBranchAssignment.test.ts`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** User Management Branch Assignment & Area Supervisor Scoping (ADR 14)  
+**Active Feature:** Unify Filter: Remove Pill Tabs, Promote Stat Cards (`UsersHeader.tsx`) — **IMPLEMENTED & VERIFIED** (ADR 15)  
+**Previous Feature:** Branch Assignment UX Fixes (`ApproveUserModal.tsx`, `UserBranchSelectModal.tsx`, `UsersActiveTab.tsx`, `UsersView.tsx`, `userBranchAssignment.test.ts`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Branch Assignment UX Fixes:**
+1. **Unify Filter: Remove Pill Tabs, Promote Stat Cards (ADR 15):**
+   - **User Intent & Problem Statement:** The User Management page had two UI elements filtering the same underlying user table (the pill tab bar and the interactive KPI stat cards). The cards already provided richer context (icon, label, count, and subtitle) and were wired to `onTabChange`.
+   - **ADR & Spec:** `docs/adr/0015-unify-filter-stat-cards-remove-pill-tabs.md` & `docs/auth-user-management/spec-unify-filter-stat-cards.md`.
+   - **Implementation in `UsersHeader.tsx`:**
+     - Removed redundant `tabs` array and `activeUsersTabPill` sliding pill markup.
+     - Removed unused `framer-motion` imports (`motion`, `useReducedMotion`).
+     - Kept interactive KPI cards (`KpiSummaryCards items={kpiItems} mobileStrip />`) as the sole filter mechanism for `PENDING`, `APPROVED`, and `REJECTED` states.
+     - Reduced `UsersHeader.tsx` from 218 LOC down to 132 LOC ($\le 250$ LOC).
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm test`: ✅ 734 passed, 0 failures (129 suites).
+     - `npm run lint`: ✅ 0 warnings or errors.
+     - `npm run build`: ✅ Production Next.js build compiled cleanly (31/31 routes).
+
+2. **Branch Assignment UX Fixes:**
    - **FIX-1 (Accessibility)**: Replaced click-based `<label>` with accessible native `<input type="checkbox" className="sr-only">` and `pointer-events-none` on visual box in `ApproveUserModal.tsx` and `UserBranchSelectModal.tsx`. Ensures full keyboard Tab/Space navigation and screen reader checked state announcements.
    - **FIX-2 (UX Race Condition)**: Isolated `isBranchSaving` state in `UsersActiveTab.tsx`, decoupling modal save state from table-row action `processingId`. Opening a branch modal while a row is deactivating no longer falsely disables the modal save button.
    - **FIX-3 (Resilience / Error Feedback)**: Added `branchesStatus` state (`idle`, `loading`, `ok`, `error`), memoized `fetchBranches`, and an amber error notification banner with an inline "Coba Lagi" retry button in `UsersView.tsx`.
@@ -562,12 +577,12 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (37 specs paired, single-tenant invariant OK, coordinator files LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (all invariants pass, coordinator LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm run lint` → ✅ 0 `@next/next/no-img-element` warnings
-- `npm test` → ✅ 629 passed, 0 failed (109 suites)
-- `npm run test:smoke` → ✅ 87 passed, 0 failed
-- `npm run build` → ✅ 27/27 pages compiled cleanly
+- `npm run lint` → ✅ 0 warnings or errors
+- `npm test` → ✅ 734 passed, 0 failed (129 suites)
+- `npm run test:smoke` → ✅ 100 passed, 0 failed
+- `npm run build` → ✅ 31/31 pages compiled cleanly
 
 ---
 
