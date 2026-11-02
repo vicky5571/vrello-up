@@ -22,6 +22,11 @@ import { PlatformIcon } from "@/components/ui/BrandIcons";
 import { AppImage } from "@/components/ui/AppImage";
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
 import {
+  isValidFormat,
+  isValidPlatform,
+  VALID_POST_STATUSES,
+} from "@/lib/marcom/contentTaxonomy";
+import {
   getContentStatusMeta,
 } from "@/lib/marcom/contentWorkflow";
 import {
@@ -100,12 +105,19 @@ export function ContentDrawer({
   useEffect(() => {
     if (!post) return;
     setTitle(post.title || "");
-    setPlatform(post.platform || "instagram");
-    setFormat(post.format || "reel");
+    setPlatform(isValidPlatform(post.platform) ? post.platform : "instagram");
+    setFormat(isValidFormat(post.format) ? post.format : "reel");
     setPublishDate(
       post.publishDate ? new Date(post.publishDate).toISOString().slice(0, 10) : ""
     );
-    setStatus(post.status || "DRAFT");
+    const rawStatus = (post.status as string) || "";
+    setStatus(
+      rawStatus === "REVISION_NEEDED"
+        ? "REVISION"
+        : (VALID_POST_STATUSES as readonly string[]).includes(rawStatus)
+          ? (rawStatus as PostStatus)
+          : "DRAFT"
+    );
     setCaption(post.caption || "");
     setMediaUrl(post.mediaUrl || "");
     setRevisionNotes(post.revisionNotes || "");

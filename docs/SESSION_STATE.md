@@ -8,14 +8,31 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Unify Filter & Image Remote Pattern Hardening — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Branch Assignment UX Fixes (`ApproveUserModal.tsx`, `UserBranchSelectModal.tsx`, `UsersActiveTab.tsx`, `UsersView.tsx`, `userBranchAssignment.test.ts`)  
+**Active Feature:** Fix Content Format Invalid Video & Seed Data Normalization (`ContentDrawer.tsx`, `prisma/seed.ts`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Google Drive Remote Image Pattern & AppImage Resilience Fix (`next.config.ts`, `AppImage.tsx`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Google Drive Remote Image Pattern & AppImage Resilience Fix (`next.config.ts`, `AppImage.tsx`, `appImageHelpers.ts`, `appImageHelpers.test.ts`):**
+1. **Fix Invalid `format: "video"` & Seed Data Normalization (`ContentDrawer.tsx`, `prisma/seed.ts`):**
+   - **Plan:** `docs/superpowers/plans/2026-11-02-fix-content-format-invalid-video.md`.
+   - **Root Cause:** `prisma/seed.ts` originally seeded invalid `format` (`reels`, `video`, `shorts`) and invalid `status` (`REVISION_NEEDED`) directly via Prisma. When opened in `ContentDrawer`, `post.format` (`"video"`) was loaded into state and passed to `PATCH /api/marcom/content/[id]`, which failed with HTTP 400 (`Invalid format: 'video'. Must be one of: reel, carousel, image, story, article, thread`).
+   - **Seed File Fix (`prisma/seed.ts`):** Corrected `cnt-001` (`"reels"` -> `"reel"`), `cnt-002` (`"video"` -> `"reel"`, `"REVISION_NEEDED"` -> `"REVISION"`), and `cnt-004` (`"shorts"` -> `"reel"`).
+   - **Client-Side Fallback Guard (`ContentDrawer.tsx`):**
+     - Imported `isValidFormat`, `isValidPlatform`, and `VALID_POST_STATUSES` from `@/lib/marcom/contentTaxonomy`.
+     - Guarded `setFormat` with `isValidFormat(post.format) ? post.format : "reel"`.
+     - Guarded `setPlatform` with `isValidPlatform(post.platform) ? post.platform : "instagram"`.
+     - Guarded `setStatus` with fallback from `"REVISION_NEEDED"` to `"REVISION"` and validation against `VALID_POST_STATUSES`.
+   - **Database Row Normalization:** Migrated existing records in `ContentPost` (`format: "reel"` for `video/reels/shorts`, `status: "REVISION"` for `REVISION_NEEDED`).
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run lint`: ✅ 0 warnings or errors.
+     - `npm run test:smoke`: ✅ 100 passed, 0 failed.
+     - `npm test`: ✅ 741 passed, 0 failed (131 suites).
+
+2. **Google Drive Remote Image Pattern & AppImage Resilience Fix (`next.config.ts`, `AppImage.tsx`, `appImageHelpers.ts`, `appImageHelpers.test.ts`):**
    - **Root Cause & Problem Statement:** Next.js threw runtime error `Error: Invalid src prop (...) on next/image, hostname "drive.google.com" is not configured under images in your next.config.js` when rendering card attachments with Google Drive viewer links.
    - **next.config.ts Configuration:** Added `drive.google.com`, `docs.google.com`, and `*.google.com` to `images.remotePatterns`.
    - **Image Source Normalization (`normalizeImageSrc` in `appImageHelpers.ts`):** Converts Google Drive web viewer links (`/file/d/{id}/view`, `?id={id}`) into direct thumbnail endpoints (`https://drive.google.com/thumbnail?id={id}&sz=w800`).
