@@ -6,16 +6,25 @@
 
 ## Current Status
 
-**Date:** 2026-11-02  
+**Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Unify Filter: Remove Pill Tabs, Promote Stat Cards (`UsersHeader.tsx`) — **IMPLEMENTED & VERIFIED** (ADR 15)  
+**Active Feature:** Unify Filter & Image Remote Pattern Hardening — **IMPLEMENTED & VERIFIED**  
 **Previous Feature:** Branch Assignment UX Fixes (`ApproveUserModal.tsx`, `UserBranchSelectModal.tsx`, `UsersActiveTab.tsx`, `UsersView.tsx`, `userBranchAssignment.test.ts`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Unify Filter: Remove Pill Tabs, Promote Stat Cards & Active Card Animation (ADR 15):**
+1. **Google Drive Remote Image Pattern & AppImage Resilience Fix (`next.config.ts`, `AppImage.tsx`, `appImageHelpers.ts`, `appImageHelpers.test.ts`):**
+   - **Root Cause & Problem Statement:** Next.js threw runtime error `Error: Invalid src prop (...) on next/image, hostname "drive.google.com" is not configured under images in your next.config.js` when rendering card attachments with Google Drive viewer links.
+   - **next.config.ts Configuration:** Added `drive.google.com`, `docs.google.com`, and `*.google.com` to `images.remotePatterns`.
+   - **Image Source Normalization (`normalizeImageSrc` in `appImageHelpers.ts`):** Converts Google Drive web viewer links (`/file/d/{id}/view`, `?id={id}`) into direct thumbnail endpoints (`https://drive.google.com/thumbnail?id={id}&sz=w800`).
+   - **Unconfigured Remote Host Protection (`isConfiguredRemoteHost` in `appImageHelpers.ts` & `AppImage.tsx`):** If an image URL belongs to an unconfigured external domain, `AppImage` gracefully falls back to a native `<img>` element instead of letting Next.js throw unhandled runtime exceptions.
+   - **Bypass Image Optimization for Google Drive (`shouldBypassOptimization`):** Flags Google Drive URLs as `unoptimized` so client browsers fetch thumbnails directly with user session context rather than causing server-side image proxy failures.
+   - **Unit Tests:** Added 6 new test cases to `src/components/ui/appImageHelpers.test.ts` (15 tests passing).
+   - **Coordinator / Component LOC Check:** `AppImage.tsx` (135 LOC $\le 250$), `appImageHelpers.ts` (85 LOC $\le 250$).
+
+2. **Unify Filter: Remove Pill Tabs, Promote Stat Cards & Active Card Animation (ADR 15):**
    - **User Intent & Problem Statement:** The User Management page had two UI elements filtering the same underlying user table. The user requested removing the pill bar, wiring the "Total Pengguna" stat card to display all users (reset filter), and making the active card border more beautiful with fluid spring animation on card switch.
    - **ADR & Spec:** `docs/adr/0015-unify-filter-stat-cards-remove-pill-tabs.md` & `docs/auth-user-management/spec-unify-filter-stat-cards.md`.
    - **"Total Pengguna" Filter Integration (`UsersView.tsx`, `UsersHeader.tsx`, `UsersActiveTab.tsx`, `UserActiveRow.tsx`, `src/types/index.ts`):**

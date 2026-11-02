@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import {
   shouldBypassOptimization,
   resolveImageSizes,
+  normalizeImageSrc,
+  isConfiguredRemoteHost,
   type ImageSizePreset,
 } from "./appImageHelpers";
 
@@ -54,9 +56,11 @@ export function AppImage({
     onError?.();
   };
 
-  const isBypassed = unoptimized ?? shouldBypassOptimization(src);
+  const normalizedSrc = normalizeImageSrc(src);
+  const isBypassed = unoptimized ?? shouldBypassOptimization(normalizedSrc);
+  const isConfigured = isConfiguredRemoteHost(normalizedSrc);
 
-  if (!src || hasError) {
+  if (!normalizedSrc || hasError) {
     return (
       <div
         onClick={onClick}
@@ -74,6 +78,27 @@ export function AppImage({
 
   const resolvedSizes = resolveImageSizes(sizes);
 
+  // If the host is not configured in next.config.ts, fall back to native <img>
+  // to prevent unhandled Next.js runtime exceptions while preserving error handling.
+  if (!isConfigured) {
+    return (
+      <div
+        onClick={onClick}
+        className={cn("relative overflow-hidden", fill ? "w-full h-full" : "", containerClassName)}
+        style={!fill && width && height ? { width, height } : undefined}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={normalizedSrc}
+          alt={alt}
+          onError={handleError}
+          className={cn(fill ? "w-full h-full object-cover" : "", className)}
+          style={!fill && width && height ? { width, height } : undefined}
+        />
+      </div>
+    );
+  }
+
   if (fill) {
     return (
       <div
@@ -81,7 +106,7 @@ export function AppImage({
         className={cn("relative w-full h-full overflow-hidden", containerClassName)}
       >
         <Image
-          src={src}
+          src={normalizedSrc}
           alt={alt}
           fill
           sizes={resolvedSizes}
@@ -96,7 +121,7 @@ export function AppImage({
 
   return (
     <Image
-      src={src}
+      src={normalizedSrc}
       alt={alt}
       width={width ?? 300}
       height={height ?? 200}
