@@ -8,14 +8,21 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Decouple Cover Selection from Array Reordering in Content Planner — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Unsaved Media Indicator (New) in ContentDrawer  
+**Active Feature:** Drag-to-Reorder Attachments with 6-Dot Handle & Unsaved "New" Badge — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Decouple Cover Selection from Array Reordering in Content Planner  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Decouple Cover Selection from Array Reordering (`ContentDrawer.tsx`, `ContentPlannerView.tsx`, `ContentPostModal.tsx`):**
+1. **6-Dot Drag-to-Reorder for Media Attachments (`ContentDrawer.tsx` & `ContentPostModal.tsx`):**
+   - **6-Dot Drag Handle:** Added `GripVertical` icon (6 dots) to the left of the file icon in `ContentDrawer` and `ContentPostModal`.
+   - **Native Drag-and-Drop:** Enabled HTML5 drag-and-drop on the grip handle (`cursor-grab active:cursor-grabbing`, `draggable`, `onDragStart`, `onDragOver`, `onDrop`, `onDragEnd`) with a custom drag image (`setDragImage`) referencing the full attachment row.
+   - **Visual Feedback:** While dragging, the dragged item displays `opacity-40 border-dashed border-pink-400` and the drop target row highlights with `border-pink-500 bg-pink-50/50`.
+   - **Preserves Cover State:** Reordering items directly mutates only the sequence in `mediaAttachments`, keeping cover resolution decoupled and strictly bound to `mediaUrl`.
+   - **Badge Update:** Cleaned up badge from `"(New)"` to `"New"`.
+
+2. **Decouple Cover Selection from Array Reordering (`ContentDrawer.tsx`, `ContentPlannerView.tsx`, `ContentPostModal.tsx`):**
    - **No Array Reordering:** Clicking "Cover" on any attachment now points `mediaUrl = att.url` without mutating or reordering the `mediaAttachments` array order. Files stay in their original upload sequence.
    - **Cover State Resolution:** Cover badge and cover buttons evaluate `isCover = att.url === (mediaUrl || mediaAttachments[0]?.url)`.
    - **Drawer Preview & Card Thumbnail:** Both preview player and calendar/list/board cards resolve the active cover attachment via `mediaAttachments.find(a => a.url === mediaUrl) || mediaAttachments[0]`. Lightbox thumbnail click automatically opens directly at the chosen cover's index.

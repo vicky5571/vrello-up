@@ -19,6 +19,7 @@ import {
   CheckSquare,
   Square,
   File,
+  GripVertical,
 } from "lucide-react";
 import { PlatformIcon } from "@/components/ui/BrandIcons";
 import { AppImage } from "@/components/ui/AppImage";
@@ -158,6 +159,51 @@ export function ContentDrawer({
         await handleDeviceFileUpload(file);
       }
     })();
+  };
+
+  // Drag-and-drop attachment reordering
+  const [draggedAttachmentIndex, setDraggedAttachmentIndex] = useState<number | null>(null);
+  const [dragOverAttachmentIndex, setDragOverAttachmentIndex] = useState<number | null>(null);
+
+  const handleDragStartAttachment = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    setDraggedAttachmentIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+    const row = (e.currentTarget as HTMLElement).closest(".attachment-row") as HTMLElement | null;
+    if (row && e.dataTransfer.setDragImage) {
+      e.dataTransfer.setDragImage(row, 20, 20);
+    }
+  };
+
+  const handleDragOverAttachment = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverAttachmentIndex !== index) {
+      setDragOverAttachmentIndex(index);
+    }
+  };
+
+  const handleDropAttachment = (e: React.DragEvent<HTMLDivElement>, targetIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (draggedAttachmentIndex === null || draggedAttachmentIndex === targetIndex) {
+      setDraggedAttachmentIndex(null);
+      setDragOverAttachmentIndex(null);
+      return;
+    }
+    setMediaAttachments((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(draggedAttachmentIndex, 1);
+      updated.splice(targetIndex, 0, moved);
+      return updated;
+    });
+    setDraggedAttachmentIndex(null);
+    setDragOverAttachmentIndex(null);
+  };
+
+  const handleDragEndAttachment = () => {
+    setDraggedAttachmentIndex(null);
+    setDragOverAttachmentIndex(null);
   };
 
   // Sync state when active post changes
@@ -698,41 +744,66 @@ export function ContentDrawer({
                           return (
                             <div
                               key={att.id || i}
-                              className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs"
+                              onDragOver={(e) => handleDragOverAttachment(e, i)}
+                              onDragLeave={() => {
+                                if (dragOverAttachmentIndex === i) {
+                                  setDragOverAttachmentIndex(null);
+                                }
+                              }}
+                              onDrop={(e) => handleDropAttachment(e, i)}
+                              className={cn(
+                                "attachment-row flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs transition-colors",
+                                draggedAttachmentIndex === i && "opacity-40 border-dashed border-pink-400 dark:border-pink-500",
+                                dragOverAttachmentIndex === i &&
+                                  draggedAttachmentIndex !== i &&
+                                  "border-pink-500 dark:border-pink-400 bg-pink-50/50 dark:bg-pink-950/20"
+                              )}
                             >
-                              <div
-                                onClick={() => {
-                                  if (onPreviewMedia && att.url) {
-                                    onPreviewMedia({
-                                      title,
-                                      attachments: mediaAttachments,
-                                      currentIndex: i,
-                                      platform,
-                                      format,
-                                    });
-                                  }
-                                }}
-                                className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer hover:opacity-80"
-                                title="Klik untuk preview aset ini"
-                              >
-                                {att.type === "video" ? (
-                                  <Film className="w-4 h-4 text-purple-500 shrink-0" />
-                                ) : (
-                                  <File className="w-4 h-4 text-blue-500 shrink-0" />
-                                )}
-                                <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
-                                  {att.name}
-                                </span>
-                                {att.sizeBytes > 0 && (
-                                  <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
-                                    {(att.sizeBytes / (1024 * 1024)).toFixed(1)} MB
+                              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                <div
+                                  draggable
+                                  onDragStart={(e) => handleDragStartAttachment(e, i)}
+                                  onDragEnd={handleDragEndAttachment}
+                                  className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-0.5 -ml-0.5 shrink-0 transition-colors"
+                                  title="Tarik untuk mengubah urutan lampiran"
+                                >
+                                  <GripVertical className="w-3.5 h-3.5" />
+                                </div>
+
+                                <div
+                                  onClick={() => {
+                                    if (onPreviewMedia && att.url) {
+                                      onPreviewMedia({
+                                        title,
+                                        attachments: mediaAttachments,
+                                        currentIndex: i,
+                                        platform,
+                                        format,
+                                      });
+                                    }
+                                  }}
+                                  className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer hover:opacity-80"
+                                  title="Klik untuk preview aset ini"
+                                >
+                                  {att.type === "video" ? (
+                                    <Film className="w-4 h-4 text-purple-500 shrink-0" />
+                                  ) : (
+                                    <File className="w-4 h-4 text-blue-500 shrink-0" />
+                                  )}
+                                  <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
+                                    {att.name}
                                   </span>
-                                )}
-                                {!savedAttachmentIds.has(att.id || att.url || `saved-${i}`) && (
-                                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal shrink-0">
-                                    (New)
-                                  </span>
-                                )}
+                                  {att.sizeBytes > 0 && (
+                                    <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
+                                      {(att.sizeBytes / (1024 * 1024)).toFixed(1)} MB
+                                    </span>
+                                  )}
+                                  {!savedAttachmentIds.has(att.id || att.url || `saved-${i}`) && (
+                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal shrink-0">
+                                      New
+                                    </span>
+                                  )}
+                                </div>
                               </div>
 
                               <div className="flex items-center gap-1.5 shrink-0">
