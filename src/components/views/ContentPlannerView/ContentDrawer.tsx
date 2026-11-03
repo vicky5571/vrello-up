@@ -103,6 +103,7 @@ export function ContentDrawer({
   const [caption, setCaption] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
   const [mediaAttachments, setMediaAttachments] = useState<TaskAttachment[]>([]);
+  const [savedAttachmentIds, setSavedAttachmentIds] = useState<Set<string>>(new Set());
   const [revisionNotes, setRevisionNotes] = useState("");
   const [subtasks, setSubtasks] = useState<
     { id: string; title: string; completed?: boolean }[]
@@ -178,7 +179,13 @@ export function ContentDrawer({
     );
     setCaption(post.caption || "");
     setMediaUrl(post.mediaUrl || "");
-    setMediaAttachments(Array.isArray(post.mediaAttachments) ? post.mediaAttachments : []);
+    const initialAttachments = Array.isArray(post.mediaAttachments)
+      ? post.mediaAttachments
+      : [];
+    setMediaAttachments(initialAttachments);
+    setSavedAttachmentIds(
+      new Set(initialAttachments.map((a, idx) => a.id || a.url || `saved-${idx}`))
+    );
     setRevisionNotes(post.revisionNotes || "");
     setSubtasks(
       Array.isArray(post.subtasks)
@@ -260,6 +267,9 @@ export function ContentDrawer({
       };
 
       await onUpdatePost(updatedPost);
+      setSavedAttachmentIds(
+        new Set(mediaAttachments.map((a, idx) => a.id || a.url || `saved-${idx}`))
+      );
       toast.success("Perubahan konten berhasil disimpan");
     } catch {
       toast.error("Gagal menyimpan perubahan konten");
@@ -709,6 +719,11 @@ export function ContentDrawer({
                               {att.sizeBytes > 0 && (
                                 <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
                                   {(att.sizeBytes / (1024 * 1024)).toFixed(1)} MB
+                                </span>
+                              )}
+                              {!savedAttachmentIds.has(att.id || att.url || `saved-${i}`) && (
+                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal shrink-0">
+                                  (New)
                                 </span>
                               )}
                             </div>

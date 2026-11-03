@@ -6,6 +6,11 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-03]
 
+- `feat(content)`: Add thin green (New) indicator for unsaved uploaded media in ContentDrawer
+  - Added thin green `(New)` indicator right after the file size for media attachments uploaded in the active drawer session
+  - Synchronized `savedAttachmentIds` with drawer open state and automatically cleared `(New)` status upon clicking "Simpan Perubahan"
+  - Gates: `npm test` 743 pass / 0 fail; `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `refactor(content)`: Simplify media upload entry points in ContentDrawer
   - Simplified `GoogleDriveLinkModal` to an upload-only modal by removing the URL paste tab and segmented control
   - Routed "Upload dari Perangkat" buttons directly to the multi-file `GoogleDriveLinkModal`

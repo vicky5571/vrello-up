@@ -8,14 +8,24 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Simplify Media Upload Entry Points in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-simplify-media-upload-entry-points.md`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Thumbnail Generation via Sharp + Supabase Storage (Plan: `docs/superpowers/plans/2026-11-03-thumbnail-generation-supabase-storage.md`)  
+**Active Feature:** Unsaved Media Indicator (New) in ContentDrawer — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Simplify Media Upload Entry Points in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-simplify-media-upload-entry-points.md`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Simplify Media Upload Entry Points in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-simplify-media-upload-entry-points.md`):**
+1. **Unsaved Media Indicator (New) in ContentDrawer (`src/components/views/ContentPlannerView/ContentDrawer.tsx`):**
+   - **Feature & Visual Indicator:** Added thin green `(New)` text (`text-[10px] text-emerald-600 dark:text-emerald-400 font-normal shrink-0`) displayed right after the file size for any media attachment recently uploaded in the current drawer session that has not yet been saved to PostgreSQL.
+   - **Persistence Synchronization:** Managed `savedAttachmentIds` state initialized from `post.mediaAttachments` on drawer open. Marking newly added files as unsaved until the user clicks "Simpan Perubahan", at which point `savedAttachmentIds` is updated and the `(New)` tag is cleared.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run lint`: ✅ 0 ESLint warnings or errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+     - `npm test`: ✅ 743 passed, 0 failed (132 suites).
+
+2. **Simplify Media Upload Entry Points in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-simplify-media-upload-entry-points.md`):**
    - **Upload-Only Modal (`src/components/ui/GoogleDriveLinkModal.tsx`):**
      - Removed segmented tab control ("Unggah Langsung" vs "Tempel Link URL") and `activeTab` state.
      - Removed `GoogleDriveUrlForm`, `buildAttachmentFromManualUrl`, and `Link2` imports.
