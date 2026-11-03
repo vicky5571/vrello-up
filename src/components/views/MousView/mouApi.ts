@@ -67,7 +67,7 @@ export async function uploadMouDocument(
 ): Promise<string> {
   const file = await compressImageFile(rawFile);
   const fd = new FormData();
-  fd.append("kind", "documents");
+  fd.append("kind", "mou-documents");
   fd.append("id", mouId);
   fd.append("file", file);
   const res = await fetch("/api/marcom/uploads", {

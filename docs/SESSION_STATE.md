@@ -8,14 +8,29 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Drag-to-Reorder Attachments with 6-Dot Handle & Unsaved "New" Badge — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Decouple Cover Selection from Array Reordering in Content Planner  
+**Active Feature:** Migrate Filesystem Uploads to Supabase Storage (ADR-0019) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Drag-to-Reorder Attachments with 6-Dot Handle & Unsaved "New" Badge  
 
 ---
 
 ## What Was Completed This Session
 
-1. **6-Dot Drag-to-Reorder for Media Attachments (`ContentDrawer.tsx` & `ContentPostModal.tsx`):**
+1. **Migrate Filesystem Uploads to Supabase Storage (ADR-0019, Spec & Plan `2026-11-03-migrate-filesystem-uploads-to-supabase-storage`):**
+   - **Bucket Setup:** Created 3 public Supabase Storage buckets via Storage REST API: `mou-documents` (25MB limit), `marcom-documents` (25MB limit), and `placement-photos` (25MB limit).
+   - **Shared Storage Helper (`src/lib/server/supabaseStorage.ts`):** Lightweight `uploadToSupabase(bucket, storagePath, buffer, mimeType)` REST helper using Node native `fetch` and service role authentication without needing `@supabase/supabase-js`.
+   - **Rewrote `/api/marcom/uploads/route.ts`:** Replaced local `node:fs/promises` (`mkdir`, `writeFile`) with direct `uploadToSupabase`. Route returns public CDN URLs under `https://{project}.supabase.co/storage/v1/object/public/{bucket}/{path}`. Supported upload kinds: `documents`, `mou-documents`, `placements`.
+   - **Updated `mouApi.ts`:** Changed `kind` parameter in `uploadMouDocument()` from `"documents"` to `"mou-documents"` to route MOU contracts into the dedicated `mou-documents` bucket.
+   - **Tests Added & Passing:**
+     - `src/lib/server/supabaseStorage.test.ts`: Tests missing env vars, successful buffer uploads, and HTTP error handling.
+     - `src/app/api/marcom/uploads/uploadsApi.test.ts`: Enforces no local fs writes and verifies bucket mappings.
+     - `src/components/views/MousView/mouApi.test.ts`: Verifies `kind: "mou-documents"` dispatched to `/api/marcom/uploads`.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 103 passed, 0 failed.
+     - `npm test`: ✅ 748 passed, 0 failed (133 suites).
+
+2. **6-Dot Drag-to-Reorder for Media Attachments (`ContentDrawer.tsx` & `ContentPostModal.tsx`):**
    - **6-Dot Drag Handle:** Added `GripVertical` icon (6 dots) to the left of the file icon in `ContentDrawer` and `ContentPostModal`.
    - **Native Drag-and-Drop:** Enabled HTML5 drag-and-drop on the grip handle (`cursor-grab active:cursor-grabbing`, `draggable`, `onDragStart`, `onDragOver`, `onDrop`, `onDragEnd`) with a custom drag image (`setDragImage`) referencing the full attachment row.
    - **Visual Feedback:** While dragging, the dragged item displays `opacity-40 border-dashed border-pink-400` and the drop target row highlights with `border-pink-500 bg-pink-50/50`.

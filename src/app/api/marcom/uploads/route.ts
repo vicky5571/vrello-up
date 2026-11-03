@@ -1,18 +1,44 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { requireMember } from "@/lib/marcom/auth";
 import { hasPermission } from "@/lib/marcom/guards";
 import {
   MAX_UPLOAD_BYTES,
-  getUploadRootDir,
-  resolveUploadPath,
   sanitizeFilename,
   validateUpload,
 } from "@/lib/marcom/upload";
+import { uploadToSupabase } from "@/lib/server/supabaseStorage";
 
-const VALID_KINDS = ["documents", "events", "tasks", "placements"] as const;
+const VALID_KINDS = ["documents", "mou-documents", "placements"] as const;
+type UploadKind = (typeof VALID_KINDS)[number];
+
+const BUCKET_MAP: Record<UploadKind, string> = {
+  documents: "marcom-documents",
+  "mou-documents": "mou-documents",
+  placements: "placement-photos",
+};
+
+const KIND_PREFIX: Record<UploadKind, string> = {
+  documents: "documents",
+  "mou-documents": "mou-documents",
+  placements: "placements",
+};
+
+const PERMISSION_MAP: Record<UploadKind, string> = {
+  documents: "UPLOAD_DOCUMENT",
+  "mou-documents": "UPLOAD_DOCUMENT",
+  placements: "CREATE_PLACEMENT",
+};
+
+// Derive MIME type from file extension for storage Content-Type header
+const EXT_TO_MIME: Record<string, string> = {
+  pdf: "application/pdf",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  mp4: "video/mp4",
+};
 
 export async function POST(request: Request) {
   let role;
@@ -39,10 +65,13 @@ export async function POST(request: Request) {
     !(VALID_KINDS as readonly string[]).includes(kind)
   ) {
     return NextResponse.json(
-      { error: "Invalid kind: expected documents, events, tasks, or placements" },
+      { error: "Invalid kind: expected documents, mou-documents, or placements" },
       { status: 400 },
     );
   }
+
+  const uploadKind = kind as UploadKind;
+
   if (typeof id !== "string" || !id || id.includes("..") || id.includes("/") || id.includes("\\")) {
     return NextResponse.json({ error: "Missing or invalid field: id" }, { status: 400 });
   }
@@ -50,13 +79,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing required field: file" }, { status: 400 });
   }
 
-  const required =
-    kind === "documents"
-      ? "UPLOAD_DOCUMENT"
-      : kind === "placements"
-      ? "CREATE_PLACEMENT"
-      : "UPLOAD_VIDEO_FOOTAGE";
-  if (!hasPermission(role, required)) {
+  if (!hasPermission(role, PERMISSION_MAP[uploadKind] as Parameters<typeof hasPermission>[1])) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -71,22 +94,26 @@ export async function POST(request: Request) {
   }
 
   const stored = `${randomUUID()}-${sanitizeFilename(file.name)}`;
-  const root = getUploadRootDir();
-  const dest = resolveUploadPath(root, kind, id, stored);
-  if (!dest) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  const dir = path.join(root, kind, id);
-  await mkdir(dir, { recursive: true });
-  await writeFile(dest, bytes);
+  const storagePath = `${KIND_PREFIX[uploadKind]}/${id}/${stored}`;
+  const bucket = BUCKET_MAP[uploadKind];
 
-  return NextResponse.json(
-    {
-      filePath: `/api/marcom/files/${kind}/${id}/${stored}`,
-      filename: stored,
-      originalName: file.name,
-      sizeBytes: file.size,
-    },
-    { status: 201 },
-  );
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const mimeType = file.type || EXT_TO_MIME[ext] || "application/octet-stream";
+
+  try {
+    const { publicUrl } = await uploadToSupabase(bucket, storagePath, bytes, mimeType);
+    return NextResponse.json(
+      {
+        filePath: publicUrl,
+        filename: stored,
+        originalName: file.name,
+        sizeBytes: file.size,
+      },
+      { status: 201 },
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Storage upload failed";
+    console.error("[/api/marcom/uploads] Storage error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
