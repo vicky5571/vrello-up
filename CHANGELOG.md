@@ -6,6 +6,12 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-03]
 
+- `fix(ui)`: Relocate global toast notification stack to top-right
+  - Changed `<Toaster>` position in `src/app/layout.tsx` from `bottom-right` to `top-right`
+  - Prevents toasts from blocking primary bottom action buttons ("Simpan Perubahan", "Hapus Post") in ContentDrawer
+  - Gates: `npm test` 742 pass / 0 fail; `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Plan: `docs/superpowers/plans/2026-11-03-fix-toast-position-top-right.md`
+
 - `fix(content)`: Include mediaAttachments in ContentPlannerView handleDrawerUpdate payload
   - Resolved bug where multi-file uploads saved in ContentDrawer were omitted from the PATCH body
   - Added `mediaAttachments: updated.mediaAttachments ?? []` to PATCH payload in `ContentPlannerView.tsx`
