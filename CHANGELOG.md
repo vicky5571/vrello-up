@@ -6,6 +6,14 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-03]
 
+- `refactor(content)`: Simplify media upload entry points in ContentDrawer
+  - Simplified `GoogleDriveLinkModal` to an upload-only modal by removing the URL paste tab and segmented control
+  - Routed "Upload dari Perangkat" buttons directly to the multi-file `GoogleDriveLinkModal`
+  - Removed "Link Drive" buttons and raw URL input fields from ContentDrawer
+  - Re-wired "Ganti" button in media-set view to open the upload modal in replacement mode
+  - Gates: `npm test` 743 pass / 0 fail; `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Plan: `docs/superpowers/plans/2026-11-03-simplify-media-upload-entry-points.md`
+
 - `feat(content)`: Thumbnail generation via Sharp and Supabase Storage
   - Configured public bucket `content-thumbnails` in Supabase Storage with WebP optimization and CDN caching
   - Generated compressed WebP thumbnails (<=800px width, q=75) server-side via `sharp` during device upload

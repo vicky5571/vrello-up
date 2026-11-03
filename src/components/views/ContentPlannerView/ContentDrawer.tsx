@@ -13,7 +13,6 @@ import {
   Film,
   Video,
   Upload,
-  CloudUpload,
   AlertCircle,
   RefreshCw,
   Check,
@@ -497,34 +496,22 @@ export function ContentDrawer({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() =>
+                      onOpenUploadModal?.((attachments) => {
+                        setMediaAttachments((prev) => {
+                          const next = [...prev, ...attachments];
+                          setMediaUrl(next[0]?.url || "");
+                          return next;
+                        });
+                        toast.success(`${attachments.length} file berhasil dilampirkan`);
+                      })
+                    }
                     disabled={isUploading}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-white bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 rounded-lg shadow-xs transition-all cursor-pointer disabled:opacity-50"
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    <span>
-                      {isUploading ? `Mengunggah (${progress}%)...` : "Upload dari Perangkat"}
-                    </span>
+                    <span>Upload dari Perangkat</span>
                   </button>
-                  {onOpenUploadModal && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onOpenUploadModal((attachments) => {
-                          setMediaAttachments((prev) => {
-                            const next = [...prev, ...attachments];
-                            setMediaUrl(next[0]?.url || "");
-                            return next;
-                          });
-                          toast.success(`${attachments.length} file berhasil ditautkan`);
-                        })
-                      }
-                      className="text-[11px] font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:underline cursor-pointer flex items-center gap-1"
-                    >
-                      <CloudUpload className="w-3.5 h-3.5 text-blue-500" />
-                      <span>Link Drive</span>
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -655,18 +642,17 @@ export function ContentDrawer({
                     </div>
                   </div>
 
-                  {/* URL Input field & Actions */}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="url"
-                      value={mediaUrl}
-                      onChange={(e) => setMediaUrl(e.target.value)}
-                      placeholder="https://drive.google.com/..."
-                      className="flex-1 px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-mono"
-                    />
+                  {/* Media Actions */}
+                  <div className="flex items-center justify-end gap-2">
                     <button
                       type="button"
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={() =>
+                        onOpenUploadModal?.((attachments) => {
+                          setMediaAttachments(attachments);
+                          setMediaUrl(attachments[0]?.url ?? "");
+                          toast.success(`${attachments.length} file berhasil dilampirkan`);
+                        })
+                      }
                       disabled={isUploading}
                       className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-40"
                     >
@@ -796,43 +782,24 @@ export function ContentDrawer({
                         Mendukung MP4, MOV, PNG, JPG (langsung streaming ke Google Drive)
                       </p>
                     </div>
-                    <div className="flex items-center justify-center gap-2 pt-1">
+                    <div className="flex items-center justify-center pt-1">
                       <button
                         type="button"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() =>
+                          onOpenUploadModal?.((attachments) => {
+                            setMediaAttachments((prev) => {
+                              const next = [...prev, ...attachments];
+                              setMediaUrl(next[0]?.url || "");
+                              return next;
+                            });
+                            toast.success(`${attachments.length} file berhasil dilampirkan`);
+                          })
+                        }
                         className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 rounded-xl shadow-xs transition-all cursor-pointer"
                       >
                         <Upload className="w-3.5 h-3.5" />
                         <span>Upload dari Perangkat</span>
                       </button>
-                      {onOpenUploadModal && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onOpenUploadModal((attachments) => {
-                              setMediaAttachments((prev) => {
-                                const next = [...prev, ...attachments];
-                                setMediaUrl(next[0]?.url || "");
-                                return next;
-                              });
-                              toast.success(`${attachments.length} file berhasil ditautkan`);
-                            })
-                          }
-                          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 rounded-xl transition-all cursor-pointer"
-                        >
-                          <CloudUpload className="w-3.5 h-3.5 text-blue-500" />
-                          <span>Link Drive</span>
-                        </button>
-                      )}
-                    </div>
-                    <div className="pt-2">
-                      <input
-                        type="url"
-                        value={mediaUrl}
-                        onChange={(e) => setMediaUrl(e.target.value)}
-                        placeholder="Atau tempel URL Google Drive langsung di sini..."
-                        className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-mono text-center placeholder:text-slate-400"
-                      />
                     </div>
                   </div>
                 )

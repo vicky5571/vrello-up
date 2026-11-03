@@ -8,14 +8,34 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Thumbnail Generation via Sharp + Supabase Storage (Plan: `docs/superpowers/plans/2026-11-03-thumbnail-generation-supabase-storage.md`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Toast Notifications Timer Progress Bar (Plan: `docs/superpowers/plans/2026-11-03-toast-timer-progress-bar.md`)  
+**Active Feature:** Simplify Media Upload Entry Points in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-simplify-media-upload-entry-points.md`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Thumbnail Generation via Sharp + Supabase Storage (Plan: `docs/superpowers/plans/2026-11-03-thumbnail-generation-supabase-storage.md`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Thumbnail Generation via Sharp + Supabase Storage (ADR-0018, Spec & Plan: `2026-11-03-thumbnail-generation-supabase-storage`):**
+1. **Simplify Media Upload Entry Points in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-simplify-media-upload-entry-points.md`):**
+   - **Upload-Only Modal (`src/components/ui/GoogleDriveLinkModal.tsx`):**
+     - Removed segmented tab control ("Unggah Langsung" vs "Tempel Link URL") and `activeTab` state.
+     - Removed `GoogleDriveUrlForm`, `buildAttachmentFromManualUrl`, and `Link2` imports.
+     - Simplified header subtitle to "Unggah berkas langsung ke Google Drive."
+     - Rendered the direct upload dropzone, file list, and confirmation action directly.
+   - **Unified "Upload dari Perangkat" Entry Points (`src/components/views/ContentPlannerView/ContentDrawer.tsx`):**
+     - Updated top header "Upload dari Perangkat" button to open `onOpenUploadModal`, leading directly into the multi-file upload modal.
+     - Removed redundant "Link Drive" buttons from both top header and empty-state dropzone.
+     - Updated empty-state dropzone "Upload dari Perangkat" button to trigger `onOpenUploadModal`.
+     - Removed URL paste input from both empty-state dropzone and media-set action row.
+     - Updated "Ganti" button in media-set view to open `onOpenUploadModal` with replacement callback (`setMediaAttachments(attachments)`).
+     - Removed unused `CloudUpload` import.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run lint`: ✅ 0 ESLint warnings or errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+     - `npm test`: ✅ 743 passed, 0 failed (132 suites).
+
+2. **Thumbnail Generation via Sharp + Supabase Storage (ADR-0018, Spec & Plan: `2026-11-03-thumbnail-generation-supabase-storage`):**
    - **Pre-requisite (Supabase Storage Bucket):**
      - Initialized and configured public bucket `content-thumbnails` via Supabase REST API (file size limit 5 MB, allowed MIME type `image/webp`).
      - Verified public object URL pattern returns 404 (NoSuchKey) instead of 401/403.
