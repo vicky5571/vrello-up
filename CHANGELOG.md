@@ -6,6 +6,13 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-03]
 
+- `feat(ui)`: Add countdown timer progress bar to toast notifications
+  - Added bottom progress bar (`height: 2px; opacity: 0.45; background: currentColor`) to `[data-sonner-toast]` in `src/app/globals.css`
+  - Explicitly aligned `<Toaster duration={4000} />` in `src/app/layout.tsx` to CSS 4000ms countdown animation
+  - Added hover pause behavior (`animation-play-state: paused`) matching Sonner auto-dismiss timer pause, and respected `prefers-reduced-motion`
+  - Gates: `npm test` 742 pass / 0 fail; `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Plan: `docs/superpowers/plans/2026-11-03-toast-timer-progress-bar.md`
+
 - `fix(ui)`: Relocate global toast notification stack to top-right
   - Changed `<Toaster>` position in `src/app/layout.tsx` from `bottom-right` to `top-right`
   - Prevents toasts from blocking primary bottom action buttons ("Simpan Perubahan", "Hapus Post") in ContentDrawer

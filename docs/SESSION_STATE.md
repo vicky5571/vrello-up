@@ -8,14 +8,24 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Move Toast Notifications to top-right (Plan: `docs/superpowers/plans/2026-11-03-fix-toast-position-top-right.md`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Fix mediaAttachments Not Saving in ContentPlannerView Drawer Update (Plan: `docs/superpowers/plans/2026-11-03-fix-media-attachments-not-saving.md`)  
+**Active Feature:** Toast Notifications Timer Progress Bar (Plan: `docs/superpowers/plans/2026-11-03-toast-timer-progress-bar.md`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Move Toast Notifications to top-right (Plan: `docs/superpowers/plans/2026-11-03-fix-toast-position-top-right.md`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Move Toast Notifications to top-right (Plan: `2026-11-03-fix-toast-position-top-right.md`):**
+1. **Toast Notifications Timer Progress Bar (Plan: `2026-11-03-toast-timer-progress-bar.md`):**
+   - **Feature & UX Feedback:** Added a thin, semantic countdown timer progress bar (`height: 2px; opacity: 0.45; background: currentColor`) at the bottom of toast notifications in `src/app/globals.css`.
+   - **Synchronization:** Explicitly set `duration={4000}` on `<Toaster />` in `src/app/layout.tsx` matching the CSS linear keyframe countdown.
+   - **Interactive State:** Pauses countdown on toast hover (`animation-play-state: paused`) in sync with Sonner's hover-pause behavior; excludes loading/promise toasts and respects `prefers-reduced-motion`.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+     - `npm test`: ✅ 742 passed, 0 failed.
+
+2. **Move Toast Notifications to top-right (Plan: `2026-11-03-fix-toast-position-top-right.md`):**
    - **Root Cause & UX Collision:** Toast notifications were configured at `bottom-right`, where sequentially fired multi-file upload toasts piled up directly over `ContentDrawer` bottom CTAs ("Simpan Perubahan" and "Hapus Post"), blocking user clicks.
    - **Fix:** Updated `<Toaster richColors position="top-right" />` in `src/app/layout.tsx`.
    - **Verification Gates:**
