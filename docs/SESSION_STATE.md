@@ -8,14 +8,24 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Multi-File Media UI Adaptation for Content Planner (ADR: `docs/adr/0017-multi-file-media-ui-adaptation.md`, Spec: `docs/superpowers/specs/2026-11-03-multi-file-media-ui-adaptation.md`, Plan: `docs/superpowers/plans/2026-11-03-multi-file-media-ui-adaptation.md`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Multi-File Device Upload in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-fix-drawer-multi-file-device-upload.md`)  
+**Active Feature:** Fix mediaAttachments Not Saving in ContentPlannerView Drawer Update (Plan: `docs/superpowers/plans/2026-11-03-fix-media-attachments-not-saving.md`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Multi-File Media UI Adaptation for Content Planner (ADR: `docs/adr/0017-multi-file-media-ui-adaptation.md`, Spec: `docs/superpowers/specs/2026-11-03-multi-file-media-ui-adaptation.md`, Plan: `docs/superpowers/plans/2026-11-03-multi-file-media-ui-adaptation.md`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Multi-File Media UI Adaptation for Content Planner (Plan: `2026-11-03-multi-file-media-ui-adaptation.md`, ADR: `docs/adr/0017-multi-file-media-ui-adaptation.md`, Spec: `docs/superpowers/specs/2026-11-03-multi-file-media-ui-adaptation.md`):**
+1. **Fix mediaAttachments Not Saving in ContentPlannerView Drawer Update (Plan: `2026-11-03-fix-media-attachments-not-saving.md`):**
+   - **Root Cause:** `handleDrawerUpdate` in `ContentPlannerView.tsx` manually constructed the PATCH request payload and omitted `mediaAttachments`, causing updates from `ContentDrawer` to never persist attachments to PostgreSQL.
+   - **Fix:** Added `mediaAttachments: updated.mediaAttachments ?? []` to the PATCH request body in `ContentPlannerView.tsx`.
+   - **Impact:** Fixes both attachment persistence across drawer saves and enables the lightbox multi-attachment carousel/navigation when clicking post cards.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+     - `npm test`: ✅ 742 passed, 0 failed.
+
+2. **Multi-File Media UI Adaptation for Content Planner (Plan: `2026-11-03-multi-file-media-ui-adaptation.md`, ADR: `docs/adr/0017-multi-file-media-ui-adaptation.md`, Spec: `docs/superpowers/specs/2026-11-03-multi-file-media-ui-adaptation.md`):**
    - **`previewMedia` State Refactoring (`ContentPlannerView.tsx`):**
      - Updated shape from `{ title, mediaUrl, platform?, format? }` to `{ title, attachments: TaskAttachment[], currentIndex: number, platform?, format? }`.
      - Extended keyboard listener to handle `ArrowLeft` and `ArrowRight` navigation with boundary clamping.

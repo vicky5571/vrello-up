@@ -6,6 +6,13 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-03]
 
+- `fix(content)`: Include mediaAttachments in ContentPlannerView handleDrawerUpdate payload
+  - Resolved bug where multi-file uploads saved in ContentDrawer were omitted from the PATCH body
+  - Added `mediaAttachments: updated.mediaAttachments ?? []` to PATCH payload in `ContentPlannerView.tsx`
+  - Restored multi-file persistence in PostgreSQL and fixed card thumbnail click lightbox navigation
+  - Gates: `npm test` 742 pass / 0 fail; `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Plan: `docs/superpowers/plans/2026-11-03-fix-media-attachments-not-saving.md`
+
 - `feat(content)`: Multi-file media UI adaptation across Content Planner surfaces
   - Refactored `previewMedia` state to support `attachments: TaskAttachment[]` and `currentIndex: number`
   - Added full multi-file carousel navigation to lightbox modal: ArrowLeft/ArrowRight keyboard listeners, edge prev/next buttons, dot indicators, and file counter

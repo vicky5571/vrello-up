@@ -341,6 +341,7 @@ export function ContentPlannerView() {
           status: updated.status,
           caption: updated.caption,
           mediaUrl: updated.mediaUrl,
+          mediaAttachments: updated.mediaAttachments ?? [],
           branchName: updated.branchName,
           revisionNotes: updated.revisionNotes,
           subtasks: updated.subtasks,
