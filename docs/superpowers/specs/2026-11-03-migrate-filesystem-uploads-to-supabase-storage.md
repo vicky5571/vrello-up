@@ -1,6 +1,6 @@
 # Spec — Migrate Filesystem Uploads to Supabase Storage
 
-**Status:** Ready for Implementation  
+**Status:** Implemented (commit `ab12035`, 2026-11-03)  
 **Date:** 2026-11-03  
 **ADR:** `docs/adr/0019-migrate-filesystem-uploads-to-supabase-storage.md`  
 **Plan:** `docs/superpowers/plans/2026-11-03-migrate-filesystem-uploads-to-supabase-storage.md`

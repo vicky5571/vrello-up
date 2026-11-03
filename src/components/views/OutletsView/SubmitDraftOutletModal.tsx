@@ -33,6 +33,13 @@ export interface SubmitDraftOutletModalProps {
   onSuccess?: (newOutlet: OutletItem) => void;
 }
 
+const ALLOWED_PHOTO_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+]);
+
 export function SubmitDraftOutletModal({
   isOpen,
   onClose,
@@ -58,6 +65,8 @@ export function SubmitDraftOutletModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -66,6 +75,8 @@ export function SubmitDraftOutletModal({
         name: initialName || prev.name,
         branchId: prev.branchId || branches[0]?.id || "",
       }));
+      setPhotoFile(null);
+      setIsUploadingPhoto(false);
       setErrors({});
     }
   }, [isOpen, initialName, branches]);
@@ -103,8 +114,15 @@ export function SubmitDraftOutletModal({
     const rawFile = e.target.files?.[0];
     if (!rawFile) return;
 
-    // Optimasi ukuran foto kamera (8-15MB -> ~500KB) sebelum dikonversi
+    if (rawFile.type && !ALLOWED_PHOTO_TYPES.has(rawFile.type.toLowerCase())) {
+      toast.error("Format foto tidak didukung. Gunakan JPG, PNG, atau WebP.");
+      e.target.value = "";
+      return;
+    }
+
+    // Optimasi ukuran foto kamera (8-15MB -> ~500KB) sebelum diunggah
     const file = await compressImageFile(rawFile);
+    setPhotoFile(file);
 
     // Local file preview via FileReader
     const reader = new FileReader();
@@ -132,7 +150,42 @@ export function SubmitDraftOutletModal({
 
     setIsSubmitting(true);
     try {
-      const payload = buildDraftSubmissionPayload(formData);
+      let uploadedPhotoUrl = formData.photoUrl.trim();
+
+      // Upload the compressed file to Supabase Storage before creating the record.
+      if (photoFile) {
+        setIsUploadingPhoto(true);
+        const fd = new FormData();
+        fd.append("kind", "outlets");
+        fd.append("id", formData.branchId);
+        fd.append("file", photoFile);
+
+        const uploadRes = await fetch("/api/marcom/uploads", {
+          method: "POST",
+          body: fd,
+        });
+
+        if (!uploadRes.ok) {
+          const uploadErr = await uploadRes.json().catch(() => ({}));
+          throw new Error(
+            uploadErr.error || `Gagal mengunggah foto (${uploadRes.status})`,
+          );
+        }
+
+        const uploadData = await uploadRes.json();
+        uploadedPhotoUrl = uploadData.filePath as string;
+        setIsUploadingPhoto(false);
+      }
+
+      // Safety net: a data:/blob: URL must never reach the database.
+      if (uploadedPhotoUrl.startsWith("data:") || uploadedPhotoUrl.startsWith("blob:")) {
+        throw new Error("Foto belum selesai diunggah. Silakan coba lagi.");
+      }
+
+      const payload = buildDraftSubmissionPayload({
+        ...formData,
+        photoUrl: uploadedPhotoUrl,
+      });
       const res = await fetch("/api/marcom/outlets/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -158,6 +211,7 @@ export function SubmitDraftOutletModal({
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Terjadi kesalahan saat pengajuan outlet.");
     } finally {
+      setIsUploadingPhoto(false);
       setIsSubmitting(false);
     }
   };
@@ -391,6 +445,7 @@ export function SubmitDraftOutletModal({
                 type="url"
                 value={formData.photoUrl}
                 onChange={(e) => {
+                  setPhotoFile(null);
                   setFormData((prev) => ({ ...prev, photoUrl: e.target.value }));
                   if (errors.photoUrl) setErrors((prev) => ({ ...prev, photoUrl: "" }));
                 }}
@@ -410,7 +465,10 @@ export function SubmitDraftOutletModal({
                 />
                 <button
                   type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, photoUrl: "" }))}
+                  onClick={() => {
+                    setPhotoFile(null);
+                    setFormData((prev) => ({ ...prev, photoUrl: "" }));
+                  }}
                   className="absolute top-2 right-2 p-1 rounded-full bg-slate-900/80 text-white hover:bg-rose-600 transition-colors"
                   title="Hapus Foto"
                 >
@@ -443,7 +501,7 @@ export function SubmitDraftOutletModal({
             {isSubmitting ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Mengirim Pengajuan...</span>
+                <span>{isUploadingPhoto ? "Mengunggah Foto..." : "Mengirim Pengajuan..."}</span>
               </>
             ) : (
               <>

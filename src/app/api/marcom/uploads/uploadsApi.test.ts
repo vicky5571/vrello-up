@@ -31,20 +31,28 @@ describe("Uploads API Route Invariants (Supabase Storage Migration)", () => {
       "Must call uploadToSupabase",
     );
 
-    // Must support documents, mou-documents, placements
+    // Must support documents, mou-documents, placements, outlets
     assert.ok(
       content.includes('"documents"') &&
         content.includes('"mou-documents"') &&
-        content.includes('"placements"'),
-      "Must support documents, mou-documents, and placements kinds",
+        content.includes('"placements"') &&
+        content.includes('"outlets"'),
+      "Must support documents, mou-documents, placements, and outlets kinds",
     );
 
     // Must map to correct buckets
     assert.ok(
       content.includes('"marcom-documents"') &&
         content.includes('"mou-documents"') &&
-        content.includes('"placement-photos"'),
-      "Must map to marcom-documents, mou-documents, and placement-photos buckets",
+        content.includes('"placement-photos"') &&
+        content.includes('"outlet-photos"'),
+      "Must map to marcom-documents, mou-documents, placement-photos, and outlet-photos buckets",
+    );
+
+    // Must map permissions
+    assert.ok(
+      content.includes('"SUBMIT_DRAFT_OUTLET"'),
+      "Must require SUBMIT_DRAFT_OUTLET for outlets kind",
     );
 
     // Must return public CDN filePath

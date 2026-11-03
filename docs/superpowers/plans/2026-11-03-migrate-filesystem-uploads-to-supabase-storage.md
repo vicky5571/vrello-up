@@ -1,6 +1,6 @@
 # Plan — Migrate Filesystem Uploads to Supabase Storage
 
-**Status:** Ready to Execute  
+**Status:** ✅ Executed (commit `ab12035`, 2026-11-03 — all phases complete, 748 tests passing)  
 **Date:** 2026-11-03  
 **ADR:** `docs/adr/0019-migrate-filesystem-uploads-to-supabase-storage.md`  
 **Spec:** `docs/superpowers/specs/2026-11-03-migrate-filesystem-uploads-to-supabase-storage.md`  

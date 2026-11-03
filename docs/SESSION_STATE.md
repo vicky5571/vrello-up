@@ -8,14 +8,35 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Migrate Filesystem Uploads to Supabase Storage (ADR-0019) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Drag-to-Reorder Attachments with 6-Dot Handle & Unsaved "New" Badge  
+**Active Feature:** Outlet Draft Photo Supabase Storage Migration (ADR-0020) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Migrate Filesystem Uploads to Supabase Storage (ADR-0019)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Migrate Filesystem Uploads to Supabase Storage (ADR-0019, Spec & Plan `2026-11-03-migrate-filesystem-uploads-to-supabase-storage`):**
+1. **Outlet Draft Photo Supabase Storage Migration (ADR-0020, Spec & Plan `2026-11-03-outlet-draft-photo-supabase-storage`):**
+   - **Bucket Setup:** Created public `outlet-photos` Supabase Storage bucket with 25MB limit via Storage REST API.
+   - **Extended `/api/marcom/uploads/route.ts`:**
+     - Added `"outlets"` to `VALID_KINDS`.
+     - Mapped `outlets` to `outlet-photos` bucket and `outlets` path prefix (`outlets/{branchId}/{uuid}-{sanitizedFilename}`).
+     - Protected with `SUBMIT_DRAFT_OUTLET` permission action.
+     - Updated invalid kind error message.
+   - **Updated `SubmitDraftOutletModal.tsx`:**
+     - Added `ALLOWED_PHOTO_TYPES` (`image/jpeg`, `image/jpg`, `image/png`, `image/webp`) guard to prevent iOS HEIC payload bloat.
+     - Stored compressed `File` in `photoFile` state, keeping `formData.photoUrl` base64 preview local to the browser.
+     - Implemented upload-before-create in `handleSubmit`: uploads `photoFile` to `/api/marcom/uploads`, receives CDN public URL, asserts non-data URL safety net, and submits to `/api/marcom/outlets/draft`.
+     - Added `isUploadingPhoto` state and spinner label ("Mengunggah Foto...").
+     - Ensured `photoFile` resets on photo removal, manual URL input, and modal reopen.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 103 passed, 0 failed.
+     - `npm test`: ✅ 748 passed, 0 failed (133 suites).
+     - End-to-end smoke test verified file upload to `outlet-photos` and public CDN retrieval.
+     - Confirmed existing database rows count with `photoUrl LIKE 'data:%'` is 0 (Phase 6 backfill not needed).
+
+2. **Migrate Filesystem Uploads to Supabase Storage (ADR-0019, Spec & Plan `2026-11-03-migrate-filesystem-uploads-to-supabase-storage`):**
    - **Bucket Setup:** Created 3 public Supabase Storage buckets via Storage REST API: `mou-documents` (25MB limit), `marcom-documents` (25MB limit), and `placement-photos` (25MB limit).
    - **Shared Storage Helper (`src/lib/server/supabaseStorage.ts`):** Lightweight `uploadToSupabase(bucket, storagePath, buffer, mimeType)` REST helper using Node native `fetch` and service role authentication without needing `@supabase/supabase-js`.
    - **Rewrote `/api/marcom/uploads/route.ts`:** Replaced local `node:fs/promises` (`mkdir`, `writeFile`) with direct `uploadToSupabase`. Route returns public CDN URLs under `https://{project}.supabase.co/storage/v1/object/public/{bucket}/{path}`. Supported upload kinds: `documents`, `mou-documents`, `placements`.
