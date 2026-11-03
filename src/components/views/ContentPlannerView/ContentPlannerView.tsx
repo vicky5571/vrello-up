@@ -16,6 +16,8 @@ import {
   AlertCircle,
   Play,
   Film,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
@@ -149,7 +151,8 @@ export function ContentPlannerView() {
   // On-demand media preview state (lightbox / player modal)
   const [previewMedia, setPreviewMedia] = useState<{
     title: string;
-    mediaUrl: string;
+    attachments: TaskAttachment[];
+    currentIndex: number;
     platform?: string;
     format?: string;
   } | null>(null);
@@ -158,6 +161,20 @@ export function ContentPlannerView() {
     if (!previewMedia) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setPreviewMedia(null);
+      if (e.key === "ArrowRight") {
+        setPreviewMedia((prev) =>
+          prev && prev.currentIndex < prev.attachments.length - 1
+            ? { ...prev, currentIndex: prev.currentIndex + 1 }
+            : prev
+        );
+      }
+      if (e.key === "ArrowLeft") {
+        setPreviewMedia((prev) =>
+          prev && prev.currentIndex > 0
+            ? { ...prev, currentIndex: prev.currentIndex - 1 }
+            : prev
+        );
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -619,7 +636,19 @@ export function ContentPlannerView() {
                         e.stopPropagation();
                         setPreviewMedia({
                           title: post.title,
-                          mediaUrl: post.mediaUrl!,
+                          attachments: post.mediaAttachments?.length
+                            ? post.mediaAttachments
+                            : [
+                                {
+                                  id: "cover",
+                                  url: post.mediaUrl!,
+                                  name: post.title,
+                                  type: "image",
+                                  sizeBytes: 0,
+                                  uploadedAt: "",
+                                },
+                              ],
+                          currentIndex: 0,
                           platform: post.platform,
                           format: post.format,
                         });
@@ -693,6 +722,13 @@ export function ContentPlannerView() {
                           </div>
                         );
                       })()}
+
+                      {/* Multi-file badge */}
+                      {post.mediaAttachments && post.mediaAttachments.length > 1 && (
+                        <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded-md bg-slate-900/80 text-white text-[10px] font-bold backdrop-blur-xs border border-white/10 pointer-events-none">
+                          +{post.mediaAttachments.length - 1}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -939,101 +975,199 @@ export function ContentPlannerView() {
       )}
 
       {/* On-Demand Media Lightbox / Player Modal */}
-      {previewMedia && (
-        <div
-          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-150"
-          onClick={() => setPreviewMedia(null)}
-        >
+      {previewMedia && (() => {
+        const active =
+          previewMedia.attachments[previewMedia.currentIndex] || {
+            id: "cover",
+            url: "",
+            name: previewMedia.title,
+            type: "image",
+            sizeBytes: 0,
+            uploadedAt: "",
+          };
+
+        return (
           <div
-            className="w-full max-w-3xl rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-150"
+            onClick={() => setPreviewMedia(null)}
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/90">
-              <div className="flex items-center gap-2 min-w-0 pr-4">
-                {previewMedia.platform && (
-                  <PlatformIcon
-                    platform={previewMedia.platform as PostPlatform}
-                    className="w-4 h-4 shrink-0"
-                  />
-                )}
-                <h3 className="text-sm font-bold text-white truncate">
-                  {previewMedia.title}
-                </h3>
-                {previewMedia.format && (
-                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                    {previewMedia.format}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href={previewMedia.mediaUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                  title="Buka URL di Tab Baru"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setPreviewMedia(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Media Body (Mounted strictly on-demand) */}
-            <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
-              {(() => {
-                const parsedDrive = parseGoogleDriveUrl(previewMedia.mediaUrl);
-                const isVideoFile =
-                  previewMedia.mediaUrl.endsWith(".mp4") ||
-                  previewMedia.mediaUrl.endsWith(".mov") ||
-                  previewMedia.mediaUrl.endsWith(".webm");
-
-                if (parsedDrive.isValid && parsedDrive.embedUrl) {
-                  return (
-                    <iframe
-                      src={parsedDrive.embedUrl}
-                      title={previewMedia.title}
-                      className="w-full h-full border-0"
-                      allow="autoplay; encrypted-media; picture-in-picture"
-                      allowFullScreen
+            <div
+              className="w-full max-w-3xl rounded-2xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/90">
+                <div className="flex items-center gap-2 min-w-0 pr-4">
+                  {previewMedia.platform && (
+                    <PlatformIcon
+                      platform={previewMedia.platform as PostPlatform}
+                      className="w-4 h-4 shrink-0"
                     />
-                  );
-                }
-
-                if (isVideoFile) {
-                  return (
-                    <video
-                      src={previewMedia.mediaUrl}
-                      controls
-                      autoPlay
-                      className="w-full h-full object-contain bg-black"
-                    />
-                  );
-                }
-
-                return (
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    <AppImage
-                      src={previewMedia.mediaUrl}
-                      alt={previewMedia.title}
-                      fill
-                      sizes="lightbox"
-                      className="object-contain"
-                    />
+                  )}
+                  <div className="min-w-0 flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-white truncate">
+                        {previewMedia.title}
+                      </h3>
+                      {previewMedia.format && (
+                        <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                          {previewMedia.format}
+                        </span>
+                      )}
+                    </div>
+                    {active.name && active.name !== previewMedia.title && (
+                      <span className="text-[11px] text-slate-400 truncate">
+                        {active.name}
+                      </span>
+                    )}
                   </div>
-                );
-              })()}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {previewMedia.attachments.length > 1 && (
+                    <span className="text-xs font-semibold text-slate-400 tabular-nums px-2 py-0.5 rounded-md bg-slate-800">
+                      {previewMedia.currentIndex + 1} / {previewMedia.attachments.length}
+                    </span>
+                  )}
+                  <a
+                    href={active.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    title="Buka URL di Tab Baru"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewMedia(null)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Media Body (Mounted strictly on-demand) */}
+              <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
+                {/* Prev arrow button */}
+                {previewMedia.attachments.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewMedia((prev) =>
+                        prev && prev.currentIndex > 0
+                          ? { ...prev, currentIndex: prev.currentIndex - 1 }
+                          : prev
+                      );
+                    }}
+                    disabled={previewMedia.currentIndex === 0}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-slate-900/70 text-white hover:bg-slate-700/80 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
+                    title="Berkas sebelumnya (Panah Kiri)"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                )}
+
+                {/* Next arrow button */}
+                {previewMedia.attachments.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewMedia((prev) =>
+                        prev && prev.currentIndex < prev.attachments.length - 1
+                          ? { ...prev, currentIndex: prev.currentIndex + 1 }
+                          : prev
+                      );
+                    }}
+                    disabled={
+                      previewMedia.currentIndex ===
+                      previewMedia.attachments.length - 1
+                    }
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-slate-900/70 text-white hover:bg-slate-700/80 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
+                    title="Berkas berikutnya (Panah Kanan)"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                )}
+
+                {(() => {
+                  const parsedDrive = parseGoogleDriveUrl(active.url);
+                  const isVideoFile =
+                    active.url.endsWith(".mp4") ||
+                    active.url.endsWith(".mov") ||
+                    active.url.endsWith(".webm") ||
+                    active.type === "video";
+
+                  if (parsedDrive.isValid && parsedDrive.embedUrl) {
+                    return (
+                      <iframe
+                        key={active.url}
+                        src={parsedDrive.embedUrl}
+                        title={active.name || previewMedia.title}
+                        className="w-full h-full border-0"
+                        allow="autoplay; encrypted-media; picture-in-picture"
+                        allowFullScreen
+                      />
+                    );
+                  }
+
+                  if (isVideoFile) {
+                    return (
+                      <video
+                        key={active.url}
+                        src={active.url}
+                        controls
+                        autoPlay
+                        className="w-full h-full object-contain bg-black"
+                      />
+                    );
+                  }
+
+                  return (
+                    <div key={active.url} className="relative w-full h-full flex items-center justify-center">
+                      <AppImage
+                        src={active.url}
+                        alt={active.name || previewMedia.title}
+                        fill
+                        sizes="lightbox"
+                        className="object-contain"
+                      />
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Dots indicator */}
+              {previewMedia.attachments.length > 1 && (
+                <div className="flex items-center justify-center gap-1.5 py-2.5 bg-slate-950 border-t border-slate-900">
+                  {previewMedia.attachments.slice(0, 10).map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() =>
+                        setPreviewMedia((prev) =>
+                          prev ? { ...prev, currentIndex: i } : prev
+                        )
+                      }
+                      className={cn(
+                        "w-1.5 h-1.5 rounded-full transition-all cursor-pointer",
+                        i === previewMedia.currentIndex
+                          ? "bg-pink-500 scale-125"
+                          : "bg-slate-600 hover:bg-slate-400"
+                      )}
+                    />
+                  ))}
+                  {previewMedia.attachments.length > 10 && (
+                    <span className="text-[10px] text-slate-500 ml-1">…</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Dedicated Content Side Drawer (Option B) */}
       <ContentDrawer

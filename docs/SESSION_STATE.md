@@ -8,14 +8,37 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Multi-File Device Upload in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-fix-drawer-multi-file-device-upload.md`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Multi-File Upload in ContentPostModal Create Flow (Plan: `docs/superpowers/plans/2026-11-03-multi-file-upload-create-modal.md`)  
+**Active Feature:** Multi-File Media UI Adaptation for Content Planner (ADR: `docs/adr/0017-multi-file-media-ui-adaptation.md`, Spec: `docs/superpowers/specs/2026-11-03-multi-file-media-ui-adaptation.md`, Plan: `docs/superpowers/plans/2026-11-03-multi-file-media-ui-adaptation.md`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Multi-File Device Upload in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-fix-drawer-multi-file-device-upload.md`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Multi-File Device Upload in ContentDrawer (Plan: `2026-11-03-fix-drawer-multi-file-device-upload.md`):**
+1. **Multi-File Media UI Adaptation for Content Planner (Plan: `2026-11-03-multi-file-media-ui-adaptation.md`, ADR: `docs/adr/0017-multi-file-media-ui-adaptation.md`, Spec: `docs/superpowers/specs/2026-11-03-multi-file-media-ui-adaptation.md`):**
+   - **`previewMedia` State Refactoring (`ContentPlannerView.tsx`):**
+     - Updated shape from `{ title, mediaUrl, platform?, format? }` to `{ title, attachments: TaskAttachment[], currentIndex: number, platform?, format? }`.
+     - Extended keyboard listener to handle `ArrowLeft` and `ArrowRight` navigation with boundary clamping.
+     - Updated calendar/list card thumbnail click handler to populate `attachments` (real `mediaAttachments` or synthetic 1-item cover array) and `currentIndex: 0`.
+   - **Full Lightbox Navigation (`ContentPlannerView.tsx`):**
+     - Added active file counter (`${currentIndex + 1} / ${attachments.length}`) and truncated active filename in header.
+     - Replaced hardcoded `previewMedia.mediaUrl` with active attachment `active.url` (including external link).
+     - Added responsive prev/next navigation overlay buttons (`ChevronLeft` / `ChevronRight`) with disabled edge states.
+     - Added bottom dot indicators (capped at 10 dots with ellipsis) with direct click-to-jump navigation.
+   - **ContentDrawer Call Sites (`ContentDrawer.tsx`):**
+     - Updated `onPreviewMedia` prop contract to accept `{ title, attachments, currentIndex, platform?, format? }`.
+     - Cover thumbnail click opens lightbox at index 0.
+     - Attachment list row click opens lightbox directly at clicked item index (`currentIndex: i`).
+   - **Card Surface Indicators (`ContentPlannerView.tsx` & `ContentBoardCard.tsx`):**
+     - Calendar & list view thumbnails display `+N` badge (`+{attachments.length - 1}`) when attachments > 1.
+     - Kanban board cards display `ImageIcon` with item count badge (`🖼 N`) when attachments > 1.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected (0 errors).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+     - `npm test`: ✅ 742 passed, 0 failed.
+
+2. **Multi-File Device Upload in ContentDrawer (Plan: `2026-11-03-fix-drawer-multi-file-device-upload.md`):**
    - **Multi-File Input (`ContentDrawer.tsx`):** Added `multiple` attribute to `<input type="file">`, allowing OS file picker to select multiple files at once.
    - **Batch File Processing (`ContentDrawer.tsx`):** Updated `onChange` and `handleDrop` from single-element indexing (`files?.[0]`) to sequential `for...of` processing across `Array.from(files)`.
    - **Sequential Queue & Feedback:** Each file is streamed to Google Drive sequentially with distinct loading/success toasts, automatically appended into `mediaAttachments`, and keeps `mediaUrl` synchronized with the cover.

@@ -53,7 +53,13 @@ interface ContentDrawerProps {
     defaultKind?: "all" | "video";
   }) => void;
   onOpenUploadModal?: (onAttach: (attachments: TaskAttachment[]) => void) => void;
-  onPreviewMedia?: (media: { title: string; mediaUrl: string; platform?: string; format?: string }) => void;
+  onPreviewMedia?: (media: {
+    title: string;
+    attachments: TaskAttachment[];
+    currentIndex: number;
+    platform?: string;
+    format?: string;
+  }) => void;
 }
 
 const PLATFORM_CONFIG: Record<
@@ -561,7 +567,19 @@ export function ContentDrawer({
                       if (onPreviewMedia) {
                         onPreviewMedia({
                           title,
-                          mediaUrl,
+                          attachments: mediaAttachments.length
+                            ? mediaAttachments
+                            : [
+                                {
+                                  id: "cover",
+                                  url: mediaUrl,
+                                  name: title,
+                                  type: "image",
+                                  sizeBytes: 0,
+                                  uploadedAt: "",
+                                },
+                              ],
+                          currentIndex: 0,
                           platform,
                           format,
                         });
@@ -670,8 +688,9 @@ export function ContentDrawer({
                               onClick={() => {
                                 if (onPreviewMedia && att.url) {
                                   onPreviewMedia({
-                                    title: att.name || title,
-                                    mediaUrl: att.url,
+                                    title,
+                                    attachments: mediaAttachments,
+                                    currentIndex: i,
                                     platform,
                                     format,
                                   });

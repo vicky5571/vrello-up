@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-03]
 
+- `feat(content)`: Multi-file media UI adaptation across Content Planner surfaces
+  - Refactored `previewMedia` state to support `attachments: TaskAttachment[]` and `currentIndex: number`
+  - Added full multi-file carousel navigation to lightbox modal: ArrowLeft/ArrowRight keyboard listeners, edge prev/next buttons, dot indicators, and file counter
+  - Updated `ContentDrawer` to pass full attachment lists and jump to clicked attachment index
+  - Added `+N` badge to calendar/list post thumbnails and multi-file count indicator (`🖼 N`) on Kanban board cards
+  - Gates: `npm test` 742 pass / 0 fail; `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-11-03-multi-file-media-ui-adaptation.md`
+  Plan: `docs/superpowers/plans/2026-11-03-multi-file-media-ui-adaptation.md`
+  Refs: `docs/adr/0017-multi-file-media-ui-adaptation.md`
+
 - `fix(content)`: Enable multi-file device upload and drag-and-drop in ContentDrawer
   - Added `multiple` attribute to `<input type="file">` enabling multi-selection in OS file dialog
   - Updated `onChange` and `handleDrop` to process all dropped/selected files sequentially via `for...of` queue

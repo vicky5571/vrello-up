@@ -123,11 +123,19 @@ export const ContentBoardCard = memo(function ContentBoardCard({
               </span>
             )}
 
-            {post.mediaUrl && (
-              <span title="Has media attachment" className="text-blue-500">
+            {(post.mediaUrl || post.mediaAttachments?.length) ? (
+              <span
+                title={`${post.mediaAttachments?.length ?? 1} media file(s) attached`}
+                className="flex items-center gap-0.5 text-blue-500"
+              >
                 <ImageIcon className="w-3 h-3" />
+                {post.mediaAttachments && post.mediaAttachments.length > 1 && (
+                  <span className="text-[9px] font-bold tabular-nums leading-none">
+                    {post.mediaAttachments.length}
+                  </span>
+                )}
               </span>
-            )}
+            ) : null}
 
             {post.picName && (
               <span
