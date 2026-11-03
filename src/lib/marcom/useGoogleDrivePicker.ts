@@ -49,7 +49,10 @@ export interface UseGoogleDrivePickerReturn {
   openSelector: (options: OpenSelectorOptions) => void;
   isModalOpen: boolean;
   closeModal: () => void;
-  handleManualAttach: (url: string, customTitle?: string) => void;
+  handleManualAttach: (
+    attachmentsOrUrl: TaskAttachment[] | string,
+    customTitle?: string
+  ) => void;
 }
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
@@ -214,19 +217,30 @@ export function useGoogleDrivePicker(): UseGoogleDrivePickerReturn {
     setIsModalOpen(false);
   }, []);
 
-  const handleManualAttach = useCallback((url: string, customTitle?: string) => {
-    const attachment = buildAttachmentFromManualUrl(
-      url,
-      customTitle,
-      defaultKindRef.current
-    );
-    if (!attachment) return;
+  const handleManualAttach = useCallback(
+    (attachmentsOrUrl: TaskAttachment[] | string, customTitle?: string) => {
+      if (Array.isArray(attachmentsOrUrl)) {
+        if (onSelectRef.current && attachmentsOrUrl.length > 0) {
+          onSelectRef.current(attachmentsOrUrl);
+        }
+        setIsModalOpen(false);
+        return;
+      }
 
-    if (onSelectRef.current) {
-      onSelectRef.current([attachment]);
-    }
-    setIsModalOpen(false);
-  }, []);
+      const attachment = buildAttachmentFromManualUrl(
+        attachmentsOrUrl,
+        customTitle,
+        defaultKindRef.current
+      );
+      if (!attachment) return;
+
+      if (onSelectRef.current) {
+        onSelectRef.current([attachment]);
+      }
+      setIsModalOpen(false);
+    },
+    []
+  );
 
   const createAndShowPicker = useCallback(
     (accessToken: string, defaultKind: "all" | "video") => {

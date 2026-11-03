@@ -26,6 +26,7 @@ import {
   PostFormat,
   ContentPostItem,
   PostStatus,
+  TaskAttachment,
 } from "@/types";
 import { formatDate, cn } from "@/lib/utils";
 import { AppImage } from "@/components/ui/AppImage";
@@ -117,9 +118,9 @@ export function ContentPlannerView() {
 
   // Upload modal: imperative open from ContentDrawer
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const pendingUploadAttachRef = useRef<((url: string) => void) | null>(null);
+  const pendingUploadAttachRef = useRef<((attachments: TaskAttachment[]) => void) | null>(null);
 
-  const handleOpenUploadModal = useCallback((onAttach: (url: string) => void) => {
+  const handleOpenUploadModal = useCallback((onAttach: (attachments: TaskAttachment[]) => void) => {
     pendingUploadAttachRef.current = onAttach;
     setIsUploadModalOpen(true);
   }, []);
@@ -854,8 +855,8 @@ export function ContentPlannerView() {
       <GoogleDriveLinkModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        onAttach={(url) => {
-          pendingUploadAttachRef.current?.(url);
+        onAttach={(attachments) => {
+          pendingUploadAttachRef.current?.(attachments);
           pendingUploadAttachRef.current = null;
           setIsUploadModalOpen(false);
         }}

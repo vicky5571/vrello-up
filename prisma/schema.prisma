@@ -231,6 +231,7 @@ model ContentPost {
   status        String    @default("SCHEDULED")
   caption       String    @default("")
   mediaUrl      String    @default("")
+  mediaAttachments Json   @default("[]")
   branchName    String    @default("")
   picName       String    @default("")
   revisionNotes String    @default("")

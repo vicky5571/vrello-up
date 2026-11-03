@@ -19,6 +19,7 @@ import {
   Check,
   CheckSquare,
   Square,
+  File,
 } from "lucide-react";
 import { PlatformIcon } from "@/components/ui/BrandIcons";
 import { AppImage } from "@/components/ui/AppImage";
@@ -51,7 +52,7 @@ interface ContentDrawerProps {
     onSelect: (attachments: TaskAttachment[]) => void;
     defaultKind?: "all" | "video";
   }) => void;
-  onOpenUploadModal?: (onAttach: (url: string) => void) => void;
+  onOpenUploadModal?: (onAttach: (attachments: TaskAttachment[]) => void) => void;
   onPreviewMedia?: (media: { title: string; mediaUrl: string; platform?: string; format?: string }) => void;
 }
 
@@ -96,6 +97,7 @@ export function ContentDrawer({
   const [status, setStatus] = useState<PostStatus>("DRAFT");
   const [caption, setCaption] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaAttachments, setMediaAttachments] = useState<TaskAttachment[]>([]);
   const [revisionNotes, setRevisionNotes] = useState("");
   const [subtasks, setSubtasks] = useState<
     { id: string; title: string; completed?: boolean }[]
@@ -118,7 +120,11 @@ export function ContentDrawer({
     try {
       const attachment = await uploadFile(file);
       if (attachment?.url) {
-        setMediaUrl(attachment.url);
+        setMediaAttachments((prev) => {
+          const next = [...prev, attachment];
+          setMediaUrl(next[0]?.url || attachment.url);
+          return next;
+        });
         toast.success(`"${file.name}" berhasil diunggah!`, { id: toastId });
       } else {
         toast.error("Gagal mengunggah file. Silakan coba lagi.", { id: toastId });
@@ -164,6 +170,7 @@ export function ContentDrawer({
     );
     setCaption(post.caption || "");
     setMediaUrl(post.mediaUrl || "");
+    setMediaAttachments(Array.isArray(post.mediaAttachments) ? post.mediaAttachments : []);
     setRevisionNotes(post.revisionNotes || "");
     setSubtasks(
       Array.isArray(post.subtasks)
@@ -229,6 +236,7 @@ export function ContentDrawer({
 
     setIsSaving(true);
     try {
+      const effectiveMediaUrl = mediaAttachments[0]?.url || mediaUrl.trim();
       const updatedPost: ContentPostItem = {
         ...post,
         title: title.trim(),
@@ -237,7 +245,8 @@ export function ContentDrawer({
         publishDate: publishDate ? new Date(publishDate).toISOString() : null,
         status,
         caption: caption.trim(),
-        mediaUrl: mediaUrl.trim(),
+        mediaUrl: effectiveMediaUrl,
+        mediaAttachments,
         revisionNotes: revisionNotes.trim(),
         subtasks,
       };
@@ -483,9 +492,13 @@ export function ContentDrawer({
                     <button
                       type="button"
                       onClick={() =>
-                        onOpenUploadModal((url) => {
-                          setMediaUrl(url);
-                          toast.success("File berhasil ditautkan");
+                        onOpenUploadModal((attachments) => {
+                          setMediaAttachments((prev) => {
+                            const next = [...prev, ...attachments];
+                            setMediaUrl(next[0]?.url || "");
+                            return next;
+                          });
+                          toast.success(`${attachments.length} file berhasil ditautkan`);
                         })
                       }
                       className="text-[11px] font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:underline cursor-pointer flex items-center gap-1"
@@ -618,12 +631,82 @@ export function ContentDrawer({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setMediaUrl("")}
+                      onClick={() => {
+                        setMediaUrl("");
+                        setMediaAttachments([]);
+                      }}
                       className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                     >
                       Hapus
                     </button>
                   </div>
+
+                  {/* Multi-Attachment List */}
+                  {mediaAttachments.length > 0 && (
+                    <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                        <span>Semua Lampiran ({mediaAttachments.length})</span>
+                        <span className="text-[10px] text-slate-400">Item pertama adalah cover</span>
+                      </div>
+                      <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                        {mediaAttachments.map((att, i) => (
+                          <div
+                            key={att.id || i}
+                            className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs"
+                          >
+                            <div
+                              onClick={() => {
+                                if (onPreviewMedia && att.url) {
+                                  onPreviewMedia({
+                                    title: att.name || title,
+                                    mediaUrl: att.url,
+                                    platform,
+                                    format,
+                                  });
+                                }
+                              }}
+                              className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer hover:opacity-80"
+                              title="Klik untuk preview aset ini"
+                            >
+                              {att.type === "video" ? (
+                                <Film className="w-4 h-4 text-purple-500 shrink-0" />
+                              ) : (
+                                <File className="w-4 h-4 text-blue-500 shrink-0" />
+                              )}
+                              <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
+                                {att.name}
+                              </span>
+                              {att.sizeBytes > 0 && (
+                                <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
+                                  {(att.sizeBytes / (1024 * 1024)).toFixed(1)} MB
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {i === 0 && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-pink-100 dark:bg-pink-950/50 text-pink-600 dark:text-pink-400 font-bold uppercase tracking-wider">
+                                  Cover
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = mediaAttachments.filter((_, j) => j !== i);
+                                  setMediaAttachments(next);
+                                  setMediaUrl(next[0]?.url ?? "");
+                                }}
+                                className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                title="Hapus aset ini"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 !isUploading && (
@@ -665,9 +748,13 @@ export function ContentDrawer({
                         <button
                           type="button"
                           onClick={() =>
-                            onOpenUploadModal((url) => {
-                              setMediaUrl(url);
-                              toast.success("File berhasil ditautkan");
+                            onOpenUploadModal((attachments) => {
+                              setMediaAttachments((prev) => {
+                                const next = [...prev, ...attachments];
+                                setMediaUrl(next[0]?.url || "");
+                                return next;
+                              });
+                              toast.success(`${attachments.length} file berhasil ditautkan`);
                             })
                           }
                           className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 rounded-xl transition-all cursor-pointer"

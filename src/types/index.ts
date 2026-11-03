@@ -291,6 +291,7 @@ export interface ContentPostItem {
   status: PostStatus;
   caption?: string;
   mediaUrl?: string;
+  mediaAttachments?: TaskAttachment[];
   branchName?: string;
   picName?: string;
   revisionNotes?: string;

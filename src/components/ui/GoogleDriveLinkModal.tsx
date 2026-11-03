@@ -1,22 +1,30 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CloudUpload, Link2 } from "lucide-react";
+import { CloudUpload, Link2, Film, FileText, Check, X } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { GoogleDriveUrlForm } from "@/components/ui/GoogleDriveUrlForm";
 import { DirectDriveUploadDropzone } from "@/components/ui/DirectDriveUploadDropzone";
+import { buildAttachmentFromManualUrl } from "@/lib/marcom/useGoogleDrivePicker";
 import type { TaskAttachment } from "@/types";
 import { cn } from "@/lib/utils";
 
 export interface GoogleDriveLinkModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAttach: (url: string, customTitle?: string) => void;
+  onAttach: (attachments: TaskAttachment[]) => void;
   defaultKind?: "all" | "video";
 }
 
+function formatFileSize(bytes: number): string {
+  if (!bytes || bytes <= 0) return "0 B";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 /**
- * Google Drive modal supporting both direct browser-to-Google streaming (no Google login required)
+ * Google Drive modal supporting multi-file direct browser-to-Google streaming
  * and smart manual link pasting with regex parsing.
  */
 export function GoogleDriveLinkModal({
@@ -26,19 +34,31 @@ export function GoogleDriveLinkModal({
   defaultKind = "all",
 }: GoogleDriveLinkModalProps) {
   const [activeTab, setActiveTab] = useState<"upload" | "url">("upload");
+  const [uploadedFiles, setUploadedFiles] = useState<TaskAttachment[]>([]);
 
-  // Reset tab when modal opens
+  // Reset tab and accumulated files when modal opens
   useEffect(() => {
     if (isOpen) {
       setActiveTab("upload");
+      setUploadedFiles([]);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleUploadComplete = (attachment: TaskAttachment) => {
-    onAttach(attachment.url, attachment.name);
-    onClose();
+    setUploadedFiles((prev) => [...prev, attachment]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleConfirm = () => {
+    if (uploadedFiles.length > 0) {
+      onAttach(uploadedFiles);
+      onClose();
+    }
   };
 
   return (
@@ -121,25 +141,110 @@ export function GoogleDriveLinkModal({
       </div>
 
       {/* Tab Panels */}
-      <div className="p-5">
+      <div className="p-5 space-y-4">
         {activeTab === "upload" ? (
           <div className="space-y-3">
-            <DirectDriveUploadDropzone
-              onUploadComplete={handleUploadComplete}
-              label={
-                defaultKind === "video"
-                  ? "Unggah Video Footage ke Google Drive"
-                  : "Unggah Berkas ke Google Drive"
-              }
-              accept={defaultKind === "video" ? "video/*" : undefined}
-            />
-            <p className="text-[11px] text-center text-slate-400 dark:text-slate-500">
-              Mendukung file besar (hingga beberapa GB) langsung ke cloud developer.
-            </p>
+            {uploadedFiles.length < 10 ? (
+              <DirectDriveUploadDropzone
+                onUploadComplete={handleUploadComplete}
+                label={
+                  defaultKind === "video"
+                    ? "Unggah Video Footage ke Google Drive"
+                    : uploadedFiles.length > 0
+                      ? "Unggah File Tambahan ke Google Drive"
+                      : "Unggah Berkas ke Google Drive"
+                }
+                accept={defaultKind === "video" ? "video/*" : undefined}
+              />
+            ) : (
+              <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-xl border border-amber-200 text-center">
+                Maksimum 10 file per postingan tercapai.
+              </p>
+            )}
+
+            {/* List of successfully uploaded files in this session */}
+            {uploadedFiles.length > 0 && (
+              <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-white/10">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <span>File Siap Dilampirkan ({uploadedFiles.length})</span>
+                  <button
+                    type="button"
+                    onClick={() => setUploadedFiles([])}
+                    className="text-[10px] text-rose-500 hover:underline cursor-pointer"
+                  >
+                    Hapus Semua
+                  </button>
+                </div>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                  {uploadedFiles.map((file, idx) => (
+                    <div
+                      key={file.id || idx}
+                      className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {file.type === "video" ? (
+                          <Film className="w-4 h-4 text-purple-500 shrink-0" />
+                        ) : (
+                          <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+                        )}
+                        <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
+                          {file.name}
+                        </span>
+                        <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
+                          {formatFileSize(file.sizeBytes)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(idx)}
+                          className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                          title="Hapus dari daftar"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Action Bar */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3.5 py-1.5 text-xs rounded-xl font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={uploadedFiles.length === 0}
+                className="px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-40 transition-all shadow-xs cursor-pointer disabled:cursor-not-allowed"
+              >
+                {uploadedFiles.length > 0
+                  ? `Lampirkan ${uploadedFiles.length} File`
+                  : "Lampirkan"}
+              </button>
+            </div>
           </div>
         ) : (
           <GoogleDriveUrlForm
-            onAttach={onAttach}
+            onAttach={(url, customTitle) => {
+              const attachment = buildAttachmentFromManualUrl(
+                url,
+                customTitle,
+                defaultKind
+              );
+              if (attachment) {
+                onAttach([attachment]);
+                onClose();
+              }
+            }}
             onClose={onClose}
             defaultKind={defaultKind}
           />

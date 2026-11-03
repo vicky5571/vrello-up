@@ -83,6 +83,11 @@ export async function PATCH(
   }
   if (body.caption !== undefined) data.caption = String(body.caption).trim();
   if (body.mediaUrl !== undefined) data.mediaUrl = String(body.mediaUrl).trim();
+  if (body.mediaAttachments !== undefined) {
+    data.mediaAttachments = Array.isArray(body.mediaAttachments)
+      ? body.mediaAttachments
+      : [];
+  }
   if (body.branchName !== undefined) data.branchName = String(body.branchName).trim();
   if (body.picName !== undefined) data.picName = String(body.picName).trim();
   if (body.revisionNotes !== undefined) data.revisionNotes = String(body.revisionNotes).trim();

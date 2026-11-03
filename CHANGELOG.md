@@ -4,6 +4,21 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-11-03]
+
+- `feat(content)`: Multi-file media upload and attachments management for content posts
+  - Authored ADR 16 (`docs/adr/0016-multi-file-media-upload-content-post.md`) establishing multi-file media storage via JSON column while keeping `mediaUrl` as primary cover URL
+  - Updated Prisma schema with `ContentPost.mediaAttachments Json @default("[]")` and applied to PostgreSQL
+  - Updated domain SSOT interface `ContentPostItem` in `src/types/index.ts` with `mediaAttachments?: TaskAttachment[]`
+  - Extended API routes `POST /api/marcom/content` and `PATCH /api/marcom/content/[id]` with array validation for `mediaAttachments`
+  - Rewrote `GoogleDriveLinkModal.tsx` to support continuous multi-file uploads (up to 10 files) with file list, formatted sizes, per-item remove, and batch confirmation
+  - Preserved backward compatibility in `useGoogleDrivePicker.ts` (`TaskAttachment[] | string`)
+  - Updated `ContentDrawer.tsx` to display multi-media list with "Cover" badge, automatic cover promotion on delete, and synchronization with `mediaUrl`
+  - Gates: `npm test` 742 pass / 0 fail; `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-11-03-multi-file-media-upload-design.md`
+  Plan: `docs/superpowers/plans/2026-11-03-multi-file-media-upload.md`
+  Refs: `docs/adr/0016-multi-file-media-upload-content-post.md`
+
 ## [2026-11-02]
 
 - `fix(users)`: Branch assignment UX and accessibility fixes

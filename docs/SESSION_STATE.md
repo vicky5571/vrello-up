@@ -8,12 +8,43 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Fix Drive Upload CORS Error + Restore Picker User Drive View (Plan: `docs/superpowers/plans/2026-11-03-fix-drive-upload-cors-picker-upload-tab.md`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Direct "Upload dari Perangkat" Button & Drag-and-Drop in ContentDrawer & ContentPostModal  
+**Active Feature:** Multi-File Media Upload for Content Posts (ADR: `docs/adr/0016-multi-file-media-upload-content-post.md`, Spec: `docs/superpowers/specs/2026-11-03-multi-file-media-upload-design.md`, Plan: `docs/superpowers/plans/2026-11-03-multi-file-media-upload.md`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Fix Drive Upload CORS Error + Restore Picker User Drive View (Plan: `docs/superpowers/plans/2026-11-03-fix-drive-upload-cors-picker-upload-tab.md`)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Multi-File Media Upload for Content Posts (ADR-0016, Spec & Plan: `2026-11-03-multi-file-media-upload`):**
+   - **Database & Prisma Schema (`prisma/schema.prisma`):**
+     - Added `mediaAttachments Json @default("[]")` to `model ContentPost`.
+     - Applied Postgres schema update: `ALTER TABLE "ContentPost" ADD COLUMN IF NOT EXISTS "mediaAttachments" JSONB NOT NULL DEFAULT '[]';`.
+     - Regenerated Prisma Client (`npx prisma generate`).
+   - **SSOT Type Definitions (`src/types/index.ts`):**
+     - Updated `ContentPostItem` domain interface to include `mediaAttachments?: TaskAttachment[]`.
+   - **API Routes (`src/app/api/marcom/content/route.ts`, `src/app/api/marcom/content/[id]/route.ts`):**
+     - POST route: extracts `mediaAttachments` and enforces array validation (`Array.isArray(mediaAttachments) ? mediaAttachments : []`).
+     - PATCH route: updates `mediaAttachments` when passed in request body (`Array.isArray(body.mediaAttachments) ? body.mediaAttachments : []`).
+   - **Modal Multi-File Upload UI (`src/components/ui/GoogleDriveLinkModal.tsx`):**
+     - Rewrote to accumulate files across multiple uploads in `uploadedFiles` state array instead of auto-closing immediately.
+     - Dropzone remains available for batch uploading up to a 10-file cap.
+     - Renders scrollable file list with file type icons (`Film` vs `FileText`), filename, formatted file size (`KB`/`MB`), checkmark status, and per-item remove button.
+     - "Lampirkan X File" confirm button passes `TaskAttachment[]` to `onAttach` and closes modal.
+     - "Tempel Link URL" tab automatically constructs a valid `TaskAttachment` via `buildAttachmentFromManualUrl` and attaches it.
+   - **Callers & Hook Compatibility (`src/lib/marcom/useGoogleDrivePicker.ts`, `ContentPlannerView.tsx`):**
+     - Updated `handleManualAttach` to accept `attachmentsOrUrl: TaskAttachment[] | string`, ensuring complete backward compatibility for other views (`DocumentsView`, `EventFormModal`, `ProjectsCreateModalHost`).
+     - Updated `pendingUploadAttachRef` and `handleOpenUploadModal` in `ContentPlannerView.tsx` to handle `(attachments: TaskAttachment[]) => void`.
+   - **Drawer State & Multi-Media Presentation (`src/components/views/ContentPlannerView/ContentDrawer.tsx`):**
+     - Managed `mediaAttachments` local state, hydrated on post selection (`Array.isArray(post.mediaAttachments) ? post.mediaAttachments : []`).
+     - Kept `mediaUrl` and `mediaAttachments[0]` in strict synchronization: attaching files sets cover URL to index 0, removing index 0 automatically promotes index 1 to cover and updates `mediaUrl`.
+     - Rendered attachment list cards with "Cover" badge, preview button, and delete action.
+     - Handled device file upload and Drive modal attachment flows seamlessly.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run lint`: ✅ 0 warnings or errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+     - `npm test`: ✅ 742 passed, 0 failed (132 suites).
 
 1. **Fix Drive Upload CORS Error + Restore Picker User Drive View (Plan: `2026-11-03-fix-drive-upload-cors-picker-upload-tab.md`):**
    - **Root Cause & Diagnosis:**
