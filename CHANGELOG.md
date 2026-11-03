@@ -6,6 +6,12 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-03]
 
+- `refactor(content)`: Decouple cover selection from attachment array reordering
+  - Updated cover selection to update `mediaUrl` directly instead of mutating and reordering the `mediaAttachments` array
+  - Preserved original upload sequence in the attachment list across both `ContentDrawer` and `ContentPostModal`
+  - Resolved active cover attachment and thumbnail via URL matching (`mediaAttachments.find(a => a.url === mediaUrl) || mediaAttachments[0]`)
+  - Gates: `npm test` 743 pass / 0 fail; `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `feat(content)`: Add thin green (New) indicator for unsaved uploaded media in ContentDrawer
   - Added thin green `(New)` indicator right after the file size for media attachments uploaded in the active drawer session
   - Synchronized `savedAttachmentIds` with drawer open state and automatically cleared `(New)` status upon clicking "Simpan Perubahan"

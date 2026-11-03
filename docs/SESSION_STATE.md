@@ -8,14 +8,25 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Unsaved Media Indicator (New) in ContentDrawer — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Simplify Media Upload Entry Points in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-simplify-media-upload-entry-points.md`)  
+**Active Feature:** Decouple Cover Selection from Array Reordering in Content Planner — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Unsaved Media Indicator (New) in ContentDrawer  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Unsaved Media Indicator (New) in ContentDrawer (`src/components/views/ContentPlannerView/ContentDrawer.tsx`):**
+1. **Decouple Cover Selection from Array Reordering (`ContentDrawer.tsx`, `ContentPlannerView.tsx`, `ContentPostModal.tsx`):**
+   - **No Array Reordering:** Clicking "Cover" on any attachment now points `mediaUrl = att.url` without mutating or reordering the `mediaAttachments` array order. Files stay in their original upload sequence.
+   - **Cover State Resolution:** Cover badge and cover buttons evaluate `isCover = att.url === (mediaUrl || mediaAttachments[0]?.url)`.
+   - **Drawer Preview & Card Thumbnail:** Both preview player and calendar/list/board cards resolve the active cover attachment via `mediaAttachments.find(a => a.url === mediaUrl) || mediaAttachments[0]`. Lightbox thumbnail click automatically opens directly at the chosen cover's index.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run lint`: ✅ 0 ESLint warnings or errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+     - `npm test`: ✅ 743 passed, 0 failed (132 suites).
+
+2. **Unsaved Media Indicator (New) in ContentDrawer (`src/components/views/ContentPlannerView/ContentDrawer.tsx`):**
    - **Feature & Visual Indicator:** Added thin green `(New)` text (`text-[10px] text-emerald-600 dark:text-emerald-400 font-normal shrink-0`) displayed right after the file size for any media attachment recently uploaded in the current drawer session that has not yet been saved to PostgreSQL.
    - **Persistence Synchronization:** Managed `savedAttachmentIds` state initialized from `post.mediaAttachments` on drawer open. Marking newly added files as unsaved until the user clicks "Simpan Perubahan", at which point `savedAttachmentIds` is updated and the `(New)` tag is cleared.
    - **Verification Gates:**

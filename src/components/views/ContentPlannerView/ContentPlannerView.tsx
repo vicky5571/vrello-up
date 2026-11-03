@@ -635,6 +635,11 @@ export function ContentPlannerView() {
                     <div
                       onClick={(e) => {
                         e.stopPropagation();
+                        const coverIndex = post.mediaAttachments
+                          ? post.mediaAttachments.findIndex(
+                              (a) => a.url === post.mediaUrl
+                            )
+                          : 0;
                         setPreviewMedia({
                           title: post.title,
                           attachments: post.mediaAttachments?.length
@@ -649,7 +654,7 @@ export function ContentPlannerView() {
                                   uploadedAt: "",
                                 },
                               ],
-                          currentIndex: 0,
+                          currentIndex: coverIndex >= 0 ? coverIndex : 0,
                           platform: post.platform,
                           format: post.format,
                         });
@@ -658,7 +663,10 @@ export function ContentPlannerView() {
                       title="Klik untuk memutar / melihat media"
                     >
                       {(() => {
-                        const coverAttachment = post.mediaAttachments?.[0];
+                        const coverAttachment =
+                          post.mediaAttachments?.find(
+                            (a) => a.url === post.mediaUrl
+                          ) || post.mediaAttachments?.[0];
                         const coverThumbnailUrl = coverAttachment?.thumbnailUrl;
 
                         if (coverThumbnailUrl) {

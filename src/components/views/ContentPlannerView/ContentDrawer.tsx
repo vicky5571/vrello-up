@@ -251,7 +251,7 @@ export function ContentDrawer({
 
     setIsSaving(true);
     try {
-      const effectiveMediaUrl = mediaAttachments[0]?.url || mediaUrl.trim();
+      const effectiveMediaUrl = mediaUrl.trim() || mediaAttachments[0]?.url || "";
       const updatedPost: ContentPostItem = {
         ...post,
         title: title.trim(),
@@ -586,7 +586,10 @@ export function ContentDrawer({
                     title="Klik untuk memutar / preview media"
                   >
                     {(() => {
-                      const coverThumbnailUrl = mediaAttachments[0]?.thumbnailUrl;
+                      const coverAttachment =
+                        mediaAttachments.find((a) => a.url === mediaUrl) ||
+                        mediaAttachments[0];
+                      const coverThumbnailUrl = coverAttachment?.thumbnailUrl;
                       if (coverThumbnailUrl) {
                         return (
                           <AppImage
@@ -685,87 +688,86 @@ export function ContentDrawer({
                     <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
                       <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                         <span>Semua Lampiran ({mediaAttachments.length})</span>
-                        <span className="text-[10px] text-slate-400">Item pertama adalah cover</span>
                       </div>
                       <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
-                        {mediaAttachments.map((att, i) => (
-                          <div
-                            key={att.id || i}
-                            className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs"
-                          >
-                            <div
-                              onClick={() => {
-                                if (onPreviewMedia && att.url) {
-                                  onPreviewMedia({
-                                    title,
-                                    attachments: mediaAttachments,
-                                    currentIndex: i,
-                                    platform,
-                                    format,
-                                  });
-                                }
-                              }}
-                              className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer hover:opacity-80"
-                              title="Klik untuk preview aset ini"
-                            >
-                              {att.type === "video" ? (
-                                <Film className="w-4 h-4 text-purple-500 shrink-0" />
-                              ) : (
-                                <File className="w-4 h-4 text-blue-500 shrink-0" />
-                              )}
-                              <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
-                                {att.name}
-                              </span>
-                              {att.sizeBytes > 0 && (
-                                <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
-                                  {(att.sizeBytes / (1024 * 1024)).toFixed(1)} MB
-                                </span>
-                              )}
-                              {!savedAttachmentIds.has(att.id || att.url || `saved-${i}`) && (
-                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal shrink-0">
-                                  (New)
-                                </span>
-                              )}
-                            </div>
+                        {mediaAttachments.map((att, i) => {
+                          const currentCoverUrl = mediaUrl.trim() || mediaAttachments[0]?.url;
+                          const isCover =
+                            att.url === currentCoverUrl || (!currentCoverUrl && i === 0);
 
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {i === 0 && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-pink-100 dark:bg-pink-950/50 text-pink-600 dark:text-pink-400 font-bold uppercase tracking-wider">
-                                  Cover
+                          return (
+                            <div
+                              key={att.id || i}
+                              className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs"
+                            >
+                              <div
+                                onClick={() => {
+                                  if (onPreviewMedia && att.url) {
+                                    onPreviewMedia({
+                                      title,
+                                      attachments: mediaAttachments,
+                                      currentIndex: i,
+                                      platform,
+                                      format,
+                                    });
+                                  }
+                                }}
+                                className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer hover:opacity-80"
+                                title="Klik untuk preview aset ini"
+                              >
+                                {att.type === "video" ? (
+                                  <Film className="w-4 h-4 text-purple-500 shrink-0" />
+                                ) : (
+                                  <File className="w-4 h-4 text-blue-500 shrink-0" />
+                                )}
+                                <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
+                                  {att.name}
                                 </span>
-                              )}
-                              {i !== 0 && (
+                                {att.sizeBytes > 0 && (
+                                  <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
+                                    {(att.sizeBytes / (1024 * 1024)).toFixed(1)} MB
+                                  </span>
+                                )}
+                                {!savedAttachmentIds.has(att.id || att.url || `saved-${i}`) && (
+                                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-normal shrink-0">
+                                    (New)
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {isCover ? (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-pink-100 dark:bg-pink-950/50 text-pink-600 dark:text-pink-400 font-bold uppercase tracking-wider">
+                                    Cover
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setMediaUrl(att.url)}
+                                    className="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-pink-50 hover:text-pink-600 dark:hover:bg-pink-950/40 dark:hover:text-pink-400 font-semibold transition-colors cursor-pointer shrink-0 border border-slate-200 dark:border-slate-700"
+                                    title="Jadikan file ini sebagai thumbnail cover"
+                                  >
+                                    Cover
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    const reordered = [
-                                      mediaAttachments[i],
-                                      ...mediaAttachments.filter((_, j) => j !== i),
-                                    ];
-                                    setMediaAttachments(reordered);
-                                    setMediaUrl(reordered[0]?.url ?? "");
+                                    const next = mediaAttachments.filter((_, j) => j !== i);
+                                    setMediaAttachments(next);
+                                    if (att.url === currentCoverUrl) {
+                                      setMediaUrl(next[0]?.url ?? "");
+                                    }
                                   }}
-                                  className="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-pink-50 hover:text-pink-600 dark:hover:bg-pink-950/40 dark:hover:text-pink-400 font-semibold transition-colors cursor-pointer shrink-0 border border-slate-200 dark:border-slate-700"
-                                  title="Jadikan file ini sebagai thumbnail cover"
+                                  className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                                  title="Hapus aset ini"
                                 >
-                                  Cover
+                                  <X className="w-3.5 h-3.5" />
                                 </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const next = mediaAttachments.filter((_, j) => j !== i);
-                                  setMediaAttachments(next);
-                                  setMediaUrl(next[0]?.url ?? "");
-                                }}
-                                className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                                title="Hapus aset ini"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}

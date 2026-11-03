@@ -324,46 +324,62 @@ export function ContentPostModal({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                   <span>Lampiran ({mediaAttachments.length})</span>
-                  <span className="text-[10px] text-slate-400">Item pertama adalah cover</span>
                 </div>
                 <div className="space-y-1 max-h-44 overflow-y-auto pr-0.5">
-                  {mediaAttachments.map((att, i) => (
-                    <div
-                      key={att.id || i}
-                      className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs"
-                    >
-                      {att.type === "video" ? (
-                        <Film className="w-4 h-4 text-purple-500 shrink-0" />
-                      ) : (
-                        <File className="w-4 h-4 text-blue-500 shrink-0" />
-                      )}
-                      <span className="font-medium text-slate-800 dark:text-slate-200 truncate flex-1">
-                        {att.name}
-                      </span>
-                      {att.sizeBytes > 0 && (
-                        <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
-                          {(att.sizeBytes / (1024 * 1024)).toFixed(1)} MB
-                        </span>
-                      )}
-                      {i === 0 && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-pink-100 dark:bg-pink-950/50 text-pink-600 dark:text-pink-400 font-bold uppercase tracking-wider shrink-0">
-                          Cover
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const next = mediaAttachments.filter((_, j) => j !== i);
-                          setMediaAttachments?.(next);
-                          setMediaUrl(next[0]?.url ?? "");
-                        }}
-                        className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer shrink-0"
-                        title="Hapus lampiran ini"
+                  {mediaAttachments.map((att, i) => {
+                    const currentCoverUrl = mediaUrl.trim() || mediaAttachments[0]?.url;
+                    const isCover =
+                      att.url === currentCoverUrl || (!currentCoverUrl && i === 0);
+
+                    return (
+                      <div
+                        key={att.id || i}
+                        className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs"
                       >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
+                        {att.type === "video" ? (
+                          <Film className="w-4 h-4 text-purple-500 shrink-0" />
+                        ) : (
+                          <File className="w-4 h-4 text-blue-500 shrink-0" />
+                        )}
+                        <span className="font-medium text-slate-800 dark:text-slate-200 truncate flex-1">
+                          {att.name}
+                        </span>
+                        {att.sizeBytes > 0 && (
+                          <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
+                            {(att.sizeBytes / (1024 * 1024)).toFixed(1)} MB
+                          </span>
+                        )}
+                        {isCover ? (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-pink-100 dark:bg-pink-950/50 text-pink-600 dark:text-pink-400 font-bold uppercase tracking-wider shrink-0">
+                            Cover
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setMediaUrl(att.url)}
+                            className="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-pink-50 hover:text-pink-600 dark:hover:bg-pink-950/40 dark:hover:text-pink-400 font-semibold transition-colors cursor-pointer shrink-0 border border-slate-200 dark:border-slate-700"
+                            title="Jadikan file ini sebagai thumbnail cover"
+                          >
+                            Cover
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = mediaAttachments.filter((_, j) => j !== i);
+                            setMediaAttachments?.(next);
+                            if (att.url === currentCoverUrl) {
+                              setMediaUrl(next[0]?.url ?? "");
+                            }
+                          }}
+                          className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer shrink-0"
+                          title="Hapus lampiran ini"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ) : (
