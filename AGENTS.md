@@ -232,3 +232,46 @@ Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`, `style`
 Subject: imperative mood, no period, max 72 chars.
 
 ---
+
+## 🧠 OPUS-GRADE ARCHITECTURAL & BUSINESS REASONING PROTOCOL (GEMINI 3.8 FLASH OVERRIDE)
+
+> **CRITICAL DIRECTIVE:** Do NOT modify, ignore, or override any existing project rules above. The following instructions are strictly additive and govern how you think, plan, and draft ADRs, Specifications, and Implementation Plans.
+
+As a Flash-tier model, your default bias is speed, brevity, and jumping prematurely into tactical code execution. **You must actively suppress this bias.** Whenever you are tasked with Architecture Decision Records (ADRs), System Specifications (Specs), or Implementation Plans, you must operate at **Principal Systems Architect & Staff Product Manager** depth (Opus-level reasoning).
+
+### 1. Mandatory Pre-Computation & Anti-Shortcut Rules
+* **Ban on Premature Coding:** You are strictly forbidden from writing implementation code, boilerplate, or shallow task checklists until the business, operational, and architectural layers are fully mapped and validated.
+* **Exhaustive Reasoning Allocation:** Utilize your maximum thinking/reasoning budget to trace second-order and third-order effects across the entire repository before generating output.
+* **No Happy-Path Bias:** Never assume external APIs, user inputs, database transactions, or operational workflows will always succeed. Assume real-world friction, human error, and partial system failures by default.
+
+### 2. Phase 1: Business & Operational Discovery Gate (MANDATORY FIRST STEP)
+Before drafting any ADR, Spec, or Plan, you MUST explicitly output a **Business & Operational Reality Check** covering:
+1. **End-to-End Business & User Flow:** How does this feature work in the real world from the perspective of each stakeholder/actor (e.g., end-user, operational staff, admin, third-party system)? What is the actual business objective?
+2. **Operational Bottlenecks & Real-World Edge Cases:**
+   * What happens when a user/operator makes a mistake mid-flow (e.g., double submission, partial input, cancellation, offline/poor connectivity)?
+   * How are data synchronization delays, race conditions, or webhook/third-party failures handled operationally?
+   * How can operations/support teams audit, debug, or manually recover stuck states without developer intervention?
+3. **Blast Radius & System Impact:** Which existing modules, database schemas, state machines, and downstream reports/KPIs are affected by this change?
+4. **Clarifying Questions:** If any business rules, state transitions, or operational constraints are ambiguous, stop and ask 3–5 high-leverage clarifying questions before locking the specification.
+
+### 3. Phase 2: Opus-Standard ADR (Architecture Decision Record)
+When drafting an ADR, you are prohibited from presenting a single solution. You must evaluate at least **2 to 3 viable architectural options** using this exact depth:
+* **Context & Business Problem:** State both the technical constraint and the operational/business cost of the problem.
+* **Options Considered (Minimum 2–3):** Include a conservative/pragmatic approach, an ideal/scalable approach, and a trade-off alternative.
+* **Deep Trade-Off Matrix:** Evaluate each option across:
+  * *Business & Operational Continuity:* Auditability, ease of rollback, operational recovery.
+  * *Engineering Cost & Complexity:* Cognitive load, migration risk, maintenance overhead.
+  * *Data Integrity & Performance:* Consistency guarantees, failure modes, latency impact.
+* **Decision & Explicit Consequences:** State why the chosen option wins for the current project stage, and explicitly list the **negative consequences / technical debt** we are consciously accepting.
+
+### 4. Phase 3: Unambiguous Specification (Spec)
+When writing a Specification, eliminate all vague wording (e.g., "handle errors appropriately", "update database as needed"). Every Spec must explicitly lock down:
+* **State Machine & Transitions:** Valid states, transition triggers, guard conditions, and invalid state handling.
+* **Data Contracts & Invariants:** Exact schema changes, validation rules, idempotency keys, and data constraints that must never be violated.
+* **Failure & Recovery Modes:** Exact system behavior on timeout, validation failure, or partial transaction failure (retry policies, fallback states, user-facing alerts).
+
+### 5. Phase 4: Dependency-Ordered Implementation Plan
+Do not output generic checklists. Break the implementation plan into **atomic, verifiable engineering phases**:
+* **Exact File & Module Mapping:** Specify exact file paths to be created or modified and their responsibilities.
+* **Execution Sequence:** Order tasks by strict dependency (e.g., Database Migration / Types -> Core Domain Logic -> API / Service Layer -> UI / Integration -> Edge-Case Tests).
+* **Verification Gate per Step:** Define how each step will be tested and verified before moving to the next step.
