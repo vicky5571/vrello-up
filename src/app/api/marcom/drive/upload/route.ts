@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 import { auth } from "@/auth";
 import { getDriveAccessToken } from "@/lib/server/driveAuth";
 import {
@@ -6,6 +7,63 @@ import {
   extractUploadUrl,
   sanitizeUploadFileName,
 } from "@/lib/marcom/driveUploadHelpers";
+
+const COMPRESSIBLE_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+]);
+
+async function generateAndUploadThumbnail(
+  fileBuffer: Buffer,
+  mimeType: string,
+  fileId: string,
+  userId: string
+): Promise<string | undefined> {
+  if (!COMPRESSIBLE_IMAGE_TYPES.has(mimeType.toLowerCase())) {
+    return undefined;
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.warn("[Thumbnail] Supabase env vars not set — skipping thumbnail");
+    return undefined;
+  }
+
+  try {
+    const thumbnailBuffer = await sharp(fileBuffer)
+      .resize({ width: 800, withoutEnlargement: true })
+      .webp({ quality: 75 })
+      .toBuffer();
+
+    const storagePath = `thumbnails/${userId}/${fileId}.webp`;
+    const uploadUrl = `${supabaseUrl}/storage/v1/object/content-thumbnails/${storagePath}`;
+
+    const storageRes = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        "Content-Type": "image/webp",
+        "Cache-Control": "public, max-age=31536000",
+        "x-upsert": "true",
+      },
+      body: new Uint8Array(thumbnailBuffer),
+    });
+
+    if (!storageRes.ok) {
+      const errText = await storageRes.text().catch(() => "");
+      console.warn("[Thumbnail] Supabase Storage upload failed:", storageRes.status, errText);
+      return undefined;
+    }
+
+    return `${supabaseUrl}/storage/v1/object/public/content-thumbnails/${storagePath}`;
+  } catch (err) {
+    console.warn("[Thumbnail] Generation failed — skipping:", err);
+    return undefined;
+  }
+}
 
 /**
  * Server-side upload proxy to Google Drive.
@@ -130,10 +188,19 @@ export async function POST(request: Request) {
       );
     }
 
+    const userId = session.user.id;
+    const thumbnailUrl = await generateAndUploadThumbnail(
+      fileBuffer,
+      mimeType,
+      fileId,
+      userId
+    );
+
     return NextResponse.json({
       success: true,
       fileId,
       name,
+      thumbnailUrl,
     });
   } catch (err) {
     console.error("Drive upload error:", err);

@@ -658,6 +658,28 @@ export function ContentPlannerView() {
                       title="Klik untuk memutar / melihat media"
                     >
                       {(() => {
+                        const coverAttachment = post.mediaAttachments?.[0];
+                        const coverThumbnailUrl = coverAttachment?.thumbnailUrl;
+
+                        if (coverThumbnailUrl) {
+                          return (
+                            <div className="relative w-full h-full bg-slate-100 dark:bg-slate-900">
+                              <AppImage
+                                src={coverThumbnailUrl}
+                                alt={post.title}
+                                fill
+                                sizes="card"
+                                className="w-full h-full object-cover group-hover/media:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute inset-0 bg-black/20 group-hover/media:bg-black/0 transition-colors flex items-center justify-center opacity-0 group-hover/media:opacity-100">
+                                <span className="px-2.5 py-1 rounded-lg bg-black/70 text-white text-[10px] font-medium backdrop-blur-xs flex items-center gap-1">
+                                  <ExternalLink className="w-3 h-3" /> Preview
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        }
+
                         const parsedDrive = parseGoogleDriveUrl(post.mediaUrl);
                         const isVideoFile =
                           post.mediaUrl.endsWith(".mp4") ||

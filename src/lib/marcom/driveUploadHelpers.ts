@@ -19,6 +19,7 @@ export interface BuildDriveAttachmentParams {
   name: string;
   mimeType: string;
   sizeBytes: number;
+  thumbnailUrl?: string;
 }
 
 /**
@@ -98,5 +99,6 @@ export function buildDriveAttachment(
     source: "gdrive",
     driveFileId: fileId,
     uploadedAt: new Date().toISOString(),
+    thumbnailUrl: params.thumbnailUrl,
   };
 }

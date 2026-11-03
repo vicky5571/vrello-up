@@ -8,14 +8,43 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Toast Notifications Timer Progress Bar (Plan: `docs/superpowers/plans/2026-11-03-toast-timer-progress-bar.md`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Move Toast Notifications to top-right (Plan: `docs/superpowers/plans/2026-11-03-fix-toast-position-top-right.md`)  
+**Active Feature:** Thumbnail Generation via Sharp + Supabase Storage (Plan: `docs/superpowers/plans/2026-11-03-thumbnail-generation-supabase-storage.md`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Toast Notifications Timer Progress Bar (Plan: `docs/superpowers/plans/2026-11-03-toast-timer-progress-bar.md`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Toast Notifications Timer Progress Bar (Plan: `2026-11-03-toast-timer-progress-bar.md`):**
+1. **Thumbnail Generation via Sharp + Supabase Storage (ADR-0018, Spec & Plan: `2026-11-03-thumbnail-generation-supabase-storage`):**
+   - **Pre-requisite (Supabase Storage Bucket):**
+     - Initialized and configured public bucket `content-thumbnails` via Supabase REST API (file size limit 5 MB, allowed MIME type `image/webp`).
+     - Verified public object URL pattern returns 404 (NoSuchKey) instead of 401/403.
+   - **Attachment Model & Types (`src/lib/marcom/driveUploadHelpers.ts`, `driveUploadHelpers.test.ts`):**
+     - Extended `BuildDriveAttachmentParams` with optional `thumbnailUrl?: string`.
+     - Populated `thumbnailUrl` on canonical `TaskAttachment` objects created via `buildDriveAttachment`.
+     - Added comprehensive unit tests in `driveUploadHelpers.test.ts`.
+   - **Upload Endpoint & Image Compression (`src/app/api/marcom/drive/upload/route.ts`):**
+     - Integrated `sharp` image processor for compressible image types (`image/jpeg`, `image/jpg`, `image/png`, `image/webp`).
+     - Resizes images to max 800px width with aspect ratio preservation and converts to WebP (quality 75).
+     - Directly streams WebP buffer to Supabase Storage at `thumbnails/${userId}/${fileId}.webp` with `x-upsert: true` and public max-age caching.
+     - Preserves graceful non-fatal degradation: if Supabase upload or sharp fails, Google Drive upload still completes normally.
+     - Returns `{ success: true, fileId, name, thumbnailUrl }`.
+   - **Attachment Finalization & Hook Threading (`src/app/api/marcom/drive/finalize/route.ts`, `src/lib/marcom/useDirectDriveUpload.ts`):**
+     - Threaded `thumbnailUrl` through `useDirectDriveUpload` upload response into the `finalize` API request payload.
+     - Finalize route passes `thumbnailUrl` to `buildDriveAttachment`.
+   - **Card & Drawer Thumbnail Rendering (`ContentPlannerView.tsx`, `ContentDrawer.tsx`):**
+     - Added `thumbnailUrl` check as the primary rendering branch before the Google Drive placeholder check in `ContentPlannerView.tsx`.
+     - Renders `<AppImage src={coverThumbnailUrl} ...>` with smooth hover preview overlay.
+     - Added cover preview thumbnail rendering in `ContentDrawer.tsx`.
+     - Added "Cover" action button on non-first attachment rows in `ContentDrawer.tsx` to easily reorder attachments and set any uploaded item as cover.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run lint`: ✅ 0 ESLint warnings or errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+     - `npm test`: ✅ 743 passed, 0 failed (132 suites).
+
+2. **Toast Notifications Timer Progress Bar (Plan: `2026-11-03-toast-timer-progress-bar.md`):**
    - **Feature & UX Feedback:** Added a thin, semantic countdown timer progress bar (`height: 2px; opacity: 0.45; background: currentColor`) at the bottom of toast notifications in `src/app/globals.css`.
    - **Synchronization:** Explicitly set `duration={4000}` on `<Toaster />` in `src/app/layout.tsx` matching the CSS linear keyframe countdown.
    - **Interactive State:** Pauses countdown on toast hover (`animation-play-state: paused`) in sync with Sonner's hover-pause behavior; excludes loading/promise toasts and respects `prefers-reduced-motion`.

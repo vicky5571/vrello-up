@@ -71,6 +71,10 @@ export function useDirectDriveUpload(): UseDirectDriveUploadReturn {
 
         const uploadData = await uploadRes.json();
         const fileId = uploadData.fileId;
+        const thumbnailUrl =
+          typeof uploadData.thumbnailUrl === "string"
+            ? uploadData.thumbnailUrl
+            : undefined;
         if (!fileId) {
           throw new Error("Respon server tidak memuat Google Drive file ID.");
         }
@@ -86,6 +90,7 @@ export function useDirectDriveUpload(): UseDirectDriveUploadReturn {
             name: file.name,
             mimeType: file.type || "application/octet-stream",
             sizeBytes: file.size,
+            thumbnailUrl,
           }),
           signal: controller.signal,
         });

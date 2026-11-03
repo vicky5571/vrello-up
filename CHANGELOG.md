@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-03]
 
+- `feat(content)`: Thumbnail generation via Sharp and Supabase Storage
+  - Configured public bucket `content-thumbnails` in Supabase Storage with WebP optimization and CDN caching
+  - Generated compressed WebP thumbnails (<=800px width, q=75) server-side via `sharp` during device upload
+  - Stored thumbnail URL on `TaskAttachment.thumbnailUrl` without altering original full-resolution files in Google Drive
+  - Prioritized `thumbnailUrl` in Content Planner card previews and drawer cover player over placeholder
+  - Added "Cover" action button in `ContentDrawer` attachment list to easily reorder cover attachment
+  - Gates: `npm test` 743 pass / 0 fail; `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: `docs/superpowers/specs/2026-11-03-thumbnail-generation-supabase-storage.md`
+  Plan: `docs/superpowers/plans/2026-11-03-thumbnail-generation-supabase-storage.md`
+  Refs: `docs/adr/0018-thumbnail-generation-supabase-storage.md`
+
 - `feat(ui)`: Add countdown timer progress bar to toast notifications
   - Added bottom progress bar (`height: 2px; opacity: 0.45; background: currentColor`) to `[data-sonner-toast]` in `src/app/globals.css`
   - Explicitly aligned `<Toaster duration={4000} />` in `src/app/layout.tsx` to CSS 4000ms countdown animation

@@ -90,5 +90,22 @@ test("buildDriveAttachment detects PDF documents accurately", () => {
   });
 
   assert.equal(attachment.type, "document");
+  assert.equal(attachment.thumbnailUrl, undefined);
+});
+
+test("buildDriveAttachment includes thumbnailUrl when provided", () => {
+  const attachment = buildDriveAttachment({
+    fileId: "3ghi_Drive_Img_Id_XYZ",
+    name: "product-cover.png",
+    mimeType: "image/png",
+    sizeBytes: 1200000,
+    thumbnailUrl: "https://example.supabase.co/storage/v1/object/public/content-thumbnails/thumb.webp",
+  });
+
+  assert.equal(attachment.type, "image");
+  assert.equal(
+    attachment.thumbnailUrl,
+    "https://example.supabase.co/storage/v1/object/public/content-thumbnails/thumb.webp"
+  );
 });
 

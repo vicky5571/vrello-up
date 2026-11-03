@@ -589,6 +589,19 @@ export function ContentDrawer({
                     title="Klik untuk memutar / preview media"
                   >
                     {(() => {
+                      const coverThumbnailUrl = mediaAttachments[0]?.thumbnailUrl;
+                      if (coverThumbnailUrl) {
+                        return (
+                          <AppImage
+                            src={coverThumbnailUrl}
+                            alt={title}
+                            fill
+                            sizes="card"
+                            className="w-full h-full object-cover"
+                          />
+                        );
+                      }
+
                       const parsed = parseGoogleDriveUrl(mediaUrl);
                       const isVideo =
                         mediaUrl.endsWith(".mp4") ||
@@ -719,6 +732,23 @@ export function ContentDrawer({
                                 <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-pink-100 dark:bg-pink-950/50 text-pink-600 dark:text-pink-400 font-bold uppercase tracking-wider">
                                   Cover
                                 </span>
+                              )}
+                              {i !== 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const reordered = [
+                                      mediaAttachments[i],
+                                      ...mediaAttachments.filter((_, j) => j !== i),
+                                    ];
+                                    setMediaAttachments(reordered);
+                                    setMediaUrl(reordered[0]?.url ?? "");
+                                  }}
+                                  className="text-[9px] px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-pink-50 hover:text-pink-600 dark:hover:bg-pink-950/40 dark:hover:text-pink-400 font-semibold transition-colors cursor-pointer shrink-0 border border-slate-200 dark:border-slate-700"
+                                  title="Jadikan file ini sebagai thumbnail cover"
+                                >
+                                  Cover
+                                </button>
                               )}
                               <button
                                 type="button"

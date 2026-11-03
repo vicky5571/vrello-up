@@ -21,6 +21,10 @@ export async function POST(request: Request) {
     const rawName = typeof body.name === "string" ? body.name : "";
     const mimeType = typeof body.mimeType === "string" ? body.mimeType : "application/octet-stream";
     const sizeBytes = typeof body.sizeBytes === "number" ? body.sizeBytes : 0;
+    const thumbnailUrl =
+      typeof body.thumbnailUrl === "string" && body.thumbnailUrl.trim()
+        ? body.thumbnailUrl.trim()
+        : undefined;
 
     if (!fileId) {
       return NextResponse.json(
@@ -62,6 +66,7 @@ export async function POST(request: Request) {
       name,
       mimeType,
       sizeBytes,
+      thumbnailUrl,
     });
 
     return NextResponse.json({
