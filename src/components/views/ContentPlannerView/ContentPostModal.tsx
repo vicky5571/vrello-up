@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sparkles,
   X,
@@ -8,17 +8,19 @@ import {
   Copy,
   RefreshCw,
   Store,
-  Upload,
+  Paperclip,
+  Film,
+  File,
 } from "lucide-react";
 import { toast } from "sonner";
 import type {
   PostPlatform,
   PostFormat,
   PostStatus,
+  TaskAttachment,
 } from "@/types";
 import { PLATFORM_CONFIG } from "./contentConstants";
 import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
-import { useDirectDriveUpload } from "@/lib/marcom/useDirectDriveUpload";
 
 export interface OutletOption {
   id: string;
@@ -48,6 +50,9 @@ export interface ContentPostModalProps {
   setCaption: (val: string) => void;
   mediaUrl: string;
   setMediaUrl: (val: string) => void;
+  mediaAttachments?: TaskAttachment[];
+  setMediaAttachments?: (val: TaskAttachment[]) => void;
+  onOpenUploadModal?: (onAttach: (attachments: TaskAttachment[]) => void) => void;
   onOpenDriveSelector: () => void;
   outletId?: string;
   setOutletId?: (val: string) => void;
@@ -74,33 +79,14 @@ export function ContentPostModal({
   setCaption,
   mediaUrl,
   setMediaUrl,
+  mediaAttachments = [],
+  setMediaAttachments,
+  onOpenUploadModal,
   onOpenDriveSelector,
   outletId,
   setOutletId,
 }: ContentPostModalProps) {
   const [outlets, setOutlets] = useState<OutletOption[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { isUploading, progress, uploadFile } = useDirectDriveUpload();
-
-  const handleDeviceUpload = async (file: File) => {
-    const toastId = toast.loading(`Mengunggah "${file.name}" dari perangkat...`);
-    try {
-      const attachment = await uploadFile(file);
-      if (attachment?.url) {
-        setMediaUrl(attachment.url);
-        toast.success(`"${file.name}" berhasil diunggah!`, { id: toastId });
-      } else {
-        toast.error("Gagal mengunggah file. Silakan coba lagi.", { id: toastId });
-      }
-    } catch (err: unknown) {
-      toast.error(
-        err instanceof Error ? err.message : "Gagal mengunggah file.",
-        { id: toastId }
-      );
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -296,35 +282,31 @@ export function ContentPostModal({
             />
           </div>
 
-          {/* Media URL & Direct Upload */}
+          {/* Media Attachments */}
           <div className="space-y-1.5">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,video/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleDeviceUpload(file);
-              }}
-              className="hidden"
-              disabled={isUploading}
-            />
-
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Media / Thumbnail URL (optional)
+                Media / Aset (optional)
               </label>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="text-[11px] font-semibold text-pink-600 dark:text-pink-400 hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  onClick={() => {
+                    if (onOpenUploadModal) {
+                      onOpenUploadModal((attachments) => {
+                        const merged = [...mediaAttachments, ...attachments];
+                        setMediaAttachments?.(merged);
+                        setMediaUrl(merged[0]?.url ?? "");
+                        toast.success(`${attachments.length} file berhasil dilampirkan`);
+                      });
+                    } else {
+                      onOpenDriveSelector();
+                    }
+                  }}
+                  className="text-[11px] font-semibold text-pink-600 dark:text-pink-400 hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  <Upload className="w-3 h-3" />
-                  <span>
-                    {isUploading ? `Mengunggah (${progress}%)...` : "Upload dari Perangkat"}
-                  </span>
+                  <Paperclip className="w-3 h-3" />
+                  <span>Tambah Media</span>
                 </button>
                 <span className="text-slate-300 dark:text-slate-700 text-xs">|</span>
                 <button
@@ -337,32 +319,63 @@ export function ContentPostModal({
               </div>
             </div>
 
-            {isUploading && (
-              <div className="p-2.5 rounded-xl border border-pink-200 dark:border-pink-900/50 bg-pink-50/60 dark:bg-pink-950/20 space-y-1.5">
-                <div className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-300">
-                  <span className="text-[11px] font-medium truncate">
-                    Mengunggah ke Google Drive...
-                  </span>
-                  <span className="font-bold text-pink-600 dark:text-pink-400 tabular-nums text-xs">
-                    {progress}%
-                  </span>
+            {/* Attachment list — shown when files are attached */}
+            {mediaAttachments.length > 0 ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  <span>Lampiran ({mediaAttachments.length})</span>
+                  <span className="text-[10px] text-slate-400">Item pertama adalah cover</span>
                 </div>
-                <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-pink-600 to-purple-600 rounded-full transition-all duration-150"
-                    style={{ width: `${progress}%` }}
-                  />
+                <div className="space-y-1 max-h-44 overflow-y-auto pr-0.5">
+                  {mediaAttachments.map((att, i) => (
+                    <div
+                      key={att.id || i}
+                      className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs"
+                    >
+                      {att.type === "video" ? (
+                        <Film className="w-4 h-4 text-purple-500 shrink-0" />
+                      ) : (
+                        <File className="w-4 h-4 text-blue-500 shrink-0" />
+                      )}
+                      <span className="font-medium text-slate-800 dark:text-slate-200 truncate flex-1">
+                        {att.name}
+                      </span>
+                      {att.sizeBytes > 0 && (
+                        <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
+                          {(att.sizeBytes / (1024 * 1024)).toFixed(1)} MB
+                        </span>
+                      )}
+                      {i === 0 && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-pink-100 dark:bg-pink-950/50 text-pink-600 dark:text-pink-400 font-bold uppercase tracking-wider shrink-0">
+                          Cover
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = mediaAttachments.filter((_, j) => j !== i);
+                          setMediaAttachments?.(next);
+                          setMediaUrl(next[0]?.url ?? "");
+                        }}
+                        className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer shrink-0"
+                        title="Hapus lampiran ini"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
+            ) : (
+              /* Fallback URL input — shown when no files attached yet */
+              <input
+                type="url"
+                placeholder="https://drive.google.com/... atau klik Tambah Media"
+                value={mediaUrl}
+                onChange={(e) => setMediaUrl(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-mono"
+              />
             )}
-
-            <input
-              type="url"
-              placeholder="https://drive.google.com/... atau upload dari perangkat"
-              value={mediaUrl}
-              onChange={(e) => setMediaUrl(e.target.value)}
-              className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 font-mono"
-            />
           </div>
 
           {/* Action Buttons */}

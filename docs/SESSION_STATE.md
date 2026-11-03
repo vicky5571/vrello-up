@@ -8,14 +8,59 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Multi-File Media Upload for Content Posts (ADR: `docs/adr/0016-multi-file-media-upload-content-post.md`, Spec: `docs/superpowers/specs/2026-11-03-multi-file-media-upload-design.md`, Plan: `docs/superpowers/plans/2026-11-03-multi-file-media-upload.md`) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Fix Drive Upload CORS Error + Restore Picker User Drive View (Plan: `docs/superpowers/plans/2026-11-03-fix-drive-upload-cors-picker-upload-tab.md`)  
+**Active Feature:** Multi-File Device Upload in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-fix-drawer-multi-file-device-upload.md`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Multi-File Upload in ContentPostModal Create Flow (Plan: `docs/superpowers/plans/2026-11-03-multi-file-upload-create-modal.md`)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Multi-File Media Upload for Content Posts (ADR-0016, Spec & Plan: `2026-11-03-multi-file-media-upload`):**
+1. **Multi-File Device Upload in ContentDrawer (Plan: `2026-11-03-fix-drawer-multi-file-device-upload.md`):**
+   - **Multi-File Input (`ContentDrawer.tsx`):** Added `multiple` attribute to `<input type="file">`, allowing OS file picker to select multiple files at once.
+   - **Batch File Processing (`ContentDrawer.tsx`):** Updated `onChange` and `handleDrop` from single-element indexing (`files?.[0]`) to sequential `for...of` processing across `Array.from(files)`.
+   - **Sequential Queue & Feedback:** Each file is streamed to Google Drive sequentially with distinct loading/success toasts, automatically appended into `mediaAttachments`, and keeps `mediaUrl` synchronized with the cover.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+     - `npm test`: ✅ 742 passed, 0 failed (132 suites).
+
+2. **Multi-File Upload in ContentPostModal Create Flow (Plan: `2026-11-03-multi-file-upload-create-modal.md`):**
+   - **Modal Refactoring (`ContentPostModal.tsx`):**
+     - Replaced internal single-file `useDirectDriveUpload` and hidden input with unified `onOpenUploadModal` trigger matching `ContentDrawer`.
+     - Rendered interactive attachment list showing file type icons (`Film` vs `File`), filenames, formatted file sizes (`MB`), Cover indicator on first item, and delete actions.
+     - Preserved manual link URL input as graceful empty-state fallback.
+   - **View State & Creation Wiring (`ContentPlannerView.tsx`):**
+     - Added `mediaAttachments: TaskAttachment[]` state to creation form.
+     - Reset `mediaAttachments` to `[]` on modal open.
+     - Included `mediaAttachments` and synchronized `mediaUrl = mediaAttachments[0]?.url || mediaUrl.trim()` in POST payload.
+     - Passed `mediaAttachments`, `setMediaAttachments`, and `onOpenUploadModal` props to `<ContentPostModal>`.
+   - **Cross-Component Compatibility:**
+     - Made `mediaAttachments` props optional with default fallbacks in `ContentPostModalProps` to protect callers like `ProjectsCreateModalHost.tsx`.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+     - `npm test`: ✅ 742 passed, 0 failed (132 suites).
+
+2. **Fix Prisma Migration History Drift (Plan: `docs/superpowers/plans/2026-11-03-fix-prisma-migration-drift.md`):**
+   - **Root Cause & Diagnosis:** Live PostgreSQL database on Supabase was previously updated via direct SQL / `db push` without initializing the `_prisma_migrations` tracking table, causing `prisma migrate status` to warn that 5 existing migrations had not been applied.
+   - **Migration History Initialization:**
+     - Created `_prisma_migrations` table and resolved all 5 legacy migrations as applied using `npx prisma migrate resolve --applied`:
+       - `20260906221636_marcom_port`
+       - `20261027000000_remove_workspace_tenant`
+       - `20261029072742_add_user_auth_model`
+       - `20261029134026_drop_task_models`
+       - `20261030192500_add_inventory_system`
+     - Created new migration file `prisma/migrations/20261103000000_add_media_attachments/migration.sql` with safe idempotent SQL: `ALTER TABLE "ContentPost" ADD COLUMN IF NOT EXISTS "mediaAttachments" JSONB NOT NULL DEFAULT '[]';`.
+     - Resolved `20261103000000_add_media_attachments` as applied.
+   - **Verification:**
+     - `npx prisma migrate status`: ✅ 6 migrations found, database schema is up to date.
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+
+2. **Multi-File Media Upload for Content Posts (ADR-0016, Spec & Plan: `2026-11-03-multi-file-media-upload`):**
    - **Database & Prisma Schema (`prisma/schema.prisma`):**
      - Added `mediaAttachments Json @default("[]")` to `model ContentPost`.
      - Applied Postgres schema update: `ALTER TABLE "ContentPost" ADD COLUMN IF NOT EXISTS "mediaAttachments" JSONB NOT NULL DEFAULT '[]';`.

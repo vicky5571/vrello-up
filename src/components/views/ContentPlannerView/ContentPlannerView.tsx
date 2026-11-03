@@ -137,6 +137,7 @@ export function ContentPlannerView() {
   const [caption, setCaption] = useState("");
   const [outletId, setOutletId] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
+  const [mediaAttachments, setMediaAttachments] = useState<TaskAttachment[]>([]);
   const [revisionNotes, setRevisionNotes] = useState("");
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [postSubtasks, setPostSubtasks] = useState<
@@ -238,6 +239,7 @@ export function ContentPlannerView() {
     setCaption("");
     setOutletId("");
     setMediaUrl("");
+    setMediaAttachments([]);
     setRevisionNotes("");
     setAssigneeIds(members[0] ? [members[0].id] : []);
     setPostSubtasks(
@@ -274,7 +276,8 @@ export function ContentPlannerView() {
         publishDate: publishDate || undefined,
         status,
         caption: caption.trim(),
-        mediaUrl: mediaUrl.trim(),
+        mediaUrl: mediaAttachments[0]?.url || mediaUrl.trim(),
+        mediaAttachments,
         branchName: branchName.trim(),
         picName: assigneeIds.length
           ? members.find((m) => m.id === assigneeIds[0])?.name || undefined
@@ -829,12 +832,17 @@ export function ContentPlannerView() {
         setOutletId={setOutletId}
         mediaUrl={mediaUrl}
         setMediaUrl={setMediaUrl}
+        mediaAttachments={mediaAttachments}
+        setMediaAttachments={setMediaAttachments}
+        onOpenUploadModal={handleOpenUploadModal}
         onOpenDriveSelector={() =>
           openSelector({
             defaultKind: "all",
             onSelect: (atts) => {
               if (atts[0]) {
-                setMediaUrl(atts[0].url);
+                const merged = [...mediaAttachments, ...atts];
+                setMediaAttachments(merged);
+                setMediaUrl(merged[0]?.url || "");
                 toast.success(
                   "Tautan Google Drive berhasil disematkan ke postingan"
                 );

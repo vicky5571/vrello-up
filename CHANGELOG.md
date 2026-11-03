@@ -6,6 +6,29 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-03]
 
+- `fix(content)`: Enable multi-file device upload and drag-and-drop in ContentDrawer
+  - Added `multiple` attribute to `<input type="file">` enabling multi-selection in OS file dialog
+  - Updated `onChange` and `handleDrop` to process all dropped/selected files sequentially via `for...of` queue
+  - Ensured each uploaded file appends to `mediaAttachments` and synchronizes with cover `mediaUrl`
+  - Gates: `npm test` 742 pass / 0 fail; `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Plan: `docs/superpowers/plans/2026-11-03-fix-drawer-multi-file-device-upload.md`
+
+- `feat(content)`: Multi-file media upload in ContentPostModal creation flow
+  - Replaced isolated single-file upload hook in `ContentPostModal.tsx` with shared `onOpenUploadModal`
+  - Added attachment list preview with type icons, sizes, cover badge, and individual deletion
+  - Wired `mediaAttachments` into post creation form state and POST payload in `ContentPlannerView.tsx`
+  - Safeguarded optional prop signatures for cross-view callers (`ProjectsCreateModalHost.tsx`)
+  - Gates: `npm test` 742 pass / 0 fail; `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Plan: `docs/superpowers/plans/2026-11-03-multi-file-upload-create-modal.md`
+
+- `fix(db)`: Resolve Prisma migration history drift and reconcile schema tracking
+  - Reconciled `_prisma_migrations` tracking table on Supabase PostgreSQL
+  - Resolved and marked all 5 historical migrations as applied (`20260906221636_marcom_port`, `20261027000000_remove_workspace_tenant`, `20261029072742_add_user_auth_model`, `20261029134026_drop_task_models`, `20261030192500_add_inventory_system`)
+  - Created and resolved `20261103000000_add_media_attachments/migration.sql` for `mediaAttachments` JSONB column
+  - Verified `npx prisma migrate status` reports 6 migrations applied, schema up to date
+  - Gates: `npm run test:smoke` 101 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Plan: `docs/superpowers/plans/2026-11-03-fix-prisma-migration-drift.md`
+
 - `feat(content)`: Multi-file media upload and attachments management for content posts
   - Authored ADR 16 (`docs/adr/0016-multi-file-media-upload-content-post.md`) establishing multi-file media storage via JSON column while keeping `mediaUrl` as primary cover URL
   - Updated Prisma schema with `ContentPost.mediaAttachments Json @default("[]")` and applied to PostgreSQL

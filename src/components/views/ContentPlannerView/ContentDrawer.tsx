@@ -145,10 +145,13 @@ export function ContentDrawer({
     e.preventDefault();
     setIsDragOver(false);
     if (isUploading) return;
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      handleDeviceFileUpload(file);
-    }
+    const files = Array.from(e.dataTransfer.files ?? []);
+    if (files.length === 0) return;
+    (async () => {
+      for (const file of files) {
+        await handleDeviceFileUpload(file);
+      }
+    })();
   };
 
   // Sync state when active post changes
@@ -463,9 +466,18 @@ export function ContentDrawer({
                 ref={fileInputRef}
                 type="file"
                 accept="image/*,video/*"
+                multiple
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleDeviceFileUpload(file);
+                  const files = Array.from(e.target.files ?? []);
+                  if (files.length === 0) return;
+                  (async () => {
+                    for (const file of files) {
+                      await handleDeviceFileUpload(file);
+                    }
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
+                  })();
                 }}
                 className="hidden"
                 disabled={isUploading}
