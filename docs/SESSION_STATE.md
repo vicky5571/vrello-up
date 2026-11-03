@@ -8,14 +8,35 @@
 
 **Date:** 2026-11-03  
 **Active Branch:** `vicky`  
-**Active Feature:** Direct "Upload dari Perangkat" Button & Drag-and-Drop in ContentDrawer & ContentPostModal — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Unified "Tambah Media" Entry Point in ContentDrawer (Plan: `docs/superpowers/plans/2026-11-03-fix-drive-picker-no-upload-tab.md`)  
+**Active Feature:** Fix Drive Upload CORS Error + Restore Picker User Drive View (Plan: `docs/superpowers/plans/2026-11-03-fix-drive-upload-cors-picker-upload-tab.md`) — **IMPLEMENTED & VERIFIED**  
+**Previous Feature:** Direct "Upload dari Perangkat" Button & Drag-and-Drop in ContentDrawer & ContentPostModal  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Direct "Upload dari Perangkat" Button & Drag-and-Drop in ContentDrawer & ContentPostModal:**
+1. **Fix Drive Upload CORS Error + Restore Picker User Drive View (Plan: `2026-11-03-fix-drive-upload-cors-picker-upload-tab.md`):**
+   - **Root Cause & Diagnosis:**
+     1. Direct browser XHR `PUT` to Google's resumable session URL failed with browser CORS policy block (`No 'Access-Control-Allow-Origin' header is present`) because the resumable session URL was generated server-side with a service account token and does not authorize browser origins.
+     2. Google Picker displayed "No documents" because `docsView.setParent(FOLDER_ID)` scoped file queries to the service account's internal Drive folder which authenticated users do not own.
+   - **Server-Side Upload Proxy (`src/app/api/marcom/drive/upload/route.ts`):**
+     - Created `POST /api/marcom/drive/upload` multipart endpoint that receives file binary, initiates resumable session, and executes the PUT stream server-to-server directly to Google's CDN without CORS constraints.
+     - Enforces authentication guard and file name sanitization via `sanitizeUploadFileName`.
+     - Returns `{ success: true, fileId, name }`.
+   - **Hook Refactoring (`src/lib/marcom/useDirectDriveUpload.ts`):**
+     - Replaced browser XHR with clean `fetch()` multipart POST to `/api/marcom/drive/upload` followed by `/api/marcom/drive/finalize`.
+     - Added standard `AbortController` cancellation support (`cancelUpload()`) and progressive percentage progress indicators (20% -> 40% -> 75% -> 100%).
+   - **Google Picker Unscoping (`src/lib/marcom/useGoogleDrivePicker.ts`):**
+     - Removed `docsView.setParent(FOLDER_ID)` to let the Picker surface the authenticated user's own Drive documents and folders instead of the empty service account folder.
+   - **Verification Gates:**
+     - `npm run drift:check`: ✅ No drift detected.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run lint`: ✅ 0 warnings or errors.
+     - `npm run test:smoke`: ✅ 101 passed, 0 failed.
+     - `npm test`: ✅ 742 passed, 0 failed (132 suites).
+     - `npm run build`: ✅ Next.js production build compiled cleanly (48/48 routes).
+
+2. **Direct "Upload dari Perangkat" Button & Drag-and-Drop in ContentDrawer & ContentPostModal:**
    - **User Intent & Problem Statement:** Users requested an explicit, foolproof **"Upload dari Perangkat"** button to upload images and videos directly from their local machine into Content Planner without having to navigate modal sub-tabs or deal with Google login popups.
    - **Direct Device File Picker (`ContentDrawer.tsx`, `ContentPostModal.tsx`):**
      - Embedded a hidden `<input ref={fileInputRef} type="file" accept="image/*,video/*" />` triggered directly by a prominent "Upload dari Perangkat" button with `<Upload />` icon.

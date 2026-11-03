@@ -13,26 +13,26 @@ export interface UseDirectDriveUploadReturn {
 }
 
 /**
- * Client hook for streaming files directly to Google Drive via resumable upload session.
- * Completely bypasses Vercel's 4.5 MB serverless limit and requires zero user Google login.
+ * Client hook for uploading files to Google Drive via server-side streaming proxy.
+ * Eliminates browser-to-Google CORS issues and requires zero user Google login.
  */
 export function useDirectDriveUpload(): UseDirectDriveUploadReturn {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const activeXhrRef = useRef<XMLHttpRequest | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const reset = useCallback(() => {
     setIsUploading(false);
     setProgress(0);
     setError(null);
-    activeXhrRef.current = null;
+    abortControllerRef.current = null;
   }, []);
 
   const cancelUpload = useCallback(() => {
-    if (activeXhrRef.current) {
-      activeXhrRef.current.abort();
-      activeXhrRef.current = null;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
     setIsUploading(false);
     setProgress(0);
@@ -42,78 +42,42 @@ export function useDirectDriveUpload(): UseDirectDriveUploadReturn {
   const uploadFile = useCallback(
     async (file: File): Promise<TaskAttachment | null> => {
       setIsUploading(true);
-      setProgress(0);
+      setProgress(20);
       setError(null);
 
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       try {
-        // Step 1: Request resumable session from backend
-        const sessionRes = await fetch("/api/marcom/drive/upload-session", {
+        // Step 1: Upload file bytes via server-side proxy (bypassing CORS)
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("name", file.name);
+        formData.append("mimeType", file.type || "application/octet-stream");
+        formData.append("sizeBytes", String(file.size));
+
+        setProgress(40);
+
+        const uploadRes = await fetch("/api/marcom/drive/upload", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: file.name,
-            mimeType: file.type || "application/octet-stream",
-            sizeBytes: file.size,
-          }),
+          body: formData,
+          signal: controller.signal,
         });
 
-        if (!sessionRes.ok) {
-          const errData = await sessionRes.json().catch(() => ({}));
-          throw new Error(errData.error || `Gagal memulai sesi unggahan (${sessionRes.status})`);
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json().catch(() => ({}));
+          throw new Error(errData.error || `Gagal mengunggah file (${uploadRes.status})`);
         }
 
-        const { uploadUrl } = await sessionRes.json();
-        if (!uploadUrl) {
-          throw new Error("Respon server tidak memuat URL unggah Google Drive.");
+        const uploadData = await uploadRes.json();
+        const fileId = uploadData.fileId;
+        if (!fileId) {
+          throw new Error("Respon server tidak memuat Google Drive file ID.");
         }
 
-        // Step 2: Stream binary file directly to Google's CDN
-        const fileId = await new Promise<string>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          activeXhrRef.current = xhr;
+        setProgress(75);
 
-          xhr.open("PUT", uploadUrl, true);
-
-          xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable && e.total > 0) {
-              const percent = Math.min(99, Math.round((e.loaded / e.total) * 100));
-              setProgress(percent);
-            }
-          };
-
-          xhr.onload = () => {
-            activeXhrRef.current = null;
-            if (xhr.status === 200 || xhr.status === 201) {
-              try {
-                const resJson = JSON.parse(xhr.responseText);
-                if (resJson.id) {
-                  return resolve(resJson.id);
-                }
-                reject(new Error("Google Drive tidak mengembalikan file ID."));
-              } catch {
-                reject(new Error("Format respon Google Drive tidak valid."));
-              }
-            } else {
-              reject(new Error(`Unggahan Google Drive gagal dengan status ${xhr.status}.`));
-            }
-          };
-
-          xhr.onerror = () => {
-            activeXhrRef.current = null;
-            reject(new Error("Koneksi terputus saat mengunggah ke Google Drive."));
-          };
-
-          xhr.onabort = () => {
-            activeXhrRef.current = null;
-            reject(new Error("Unggahan dibatalkan."));
-          };
-
-          xhr.send(file);
-        });
-
-        setProgress(100);
-
-        // Step 3: Finalize attachment and set public read permissions
+        // Step 2: Finalize attachment and set public read permissions
         const finalizeRes = await fetch("/api/marcom/drive/finalize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -123,6 +87,7 @@ export function useDirectDriveUpload(): UseDirectDriveUploadReturn {
             mimeType: file.type || "application/octet-stream",
             sizeBytes: file.size,
           }),
+          signal: controller.signal,
         });
 
         if (!finalizeRes.ok) {
@@ -131,10 +96,17 @@ export function useDirectDriveUpload(): UseDirectDriveUploadReturn {
         }
 
         const finalizeData = await finalizeRes.json();
+        setProgress(100);
         setIsUploading(false);
+        abortControllerRef.current = null;
         return finalizeData.attachment as TaskAttachment;
       } catch (err) {
         setIsUploading(false);
+        abortControllerRef.current = null;
+        if (err instanceof DOMException && err.name === "AbortError") {
+          setError("Unggahan dibatalkan.");
+          return null;
+        }
         const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan unggah.";
         setError(errMsg);
         return null;
@@ -152,4 +124,3 @@ export function useDirectDriveUpload(): UseDirectDriveUploadReturn {
     reset,
   };
 }
-

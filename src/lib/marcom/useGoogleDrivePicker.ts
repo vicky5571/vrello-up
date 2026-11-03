@@ -54,7 +54,6 @@ export interface UseGoogleDrivePickerReturn {
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || "";
-const FOLDER_ID = process.env.NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID || "";
 
 function generateAttachmentId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -244,9 +243,6 @@ export function useGoogleDrivePicker(): UseGoogleDrivePickerReturn {
 
         const docsView = new google.picker.DocsView(viewId);
         docsView.setIncludeFolders(true);
-        if (FOLDER_ID) {
-          docsView.setParent(FOLDER_ID);
-        }
 
         const builder = new google.picker.PickerBuilder()
           .enableFeature(google.picker.Feature.SUPPORT_DRIVES)
