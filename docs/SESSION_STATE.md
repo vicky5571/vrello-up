@@ -6,16 +6,42 @@
 
 ## Current Status
 
-**Date:** 2026-11-03  
+**Date:** 2026-11-04  
 **Active Branch:** `vicky`  
-**Active Feature:** Outlet Draft Photo Supabase Storage Migration (ADR-0020) — **IMPLEMENTED & VERIFIED**  
-**Previous Feature:** Migrate Filesystem Uploads to Supabase Storage (ADR-0019)  
+**Active Feature:** Field Event Media Attachments via Google Drive (ADR-0021) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Outlet Draft Photo Supabase Storage Migration (ADR-0020)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Outlet Draft Photo Supabase Storage Migration (ADR-0020, Spec & Plan `2026-11-03-outlet-draft-photo-supabase-storage`):**
+1. **Field Event Media Attachments Implementation (ADR-0021, Spec & Plan `2026-11-04-field-event-media-attachments`):**
+   - **Database Schema & Migration:**
+     - Modified `prisma/schema.prisma`: Added `mediaAttachments Json @default("[]")` to `FieldEvent` model; removed `EventFootage` relation and dropped `EventFootage` model.
+     - Generated and applied migration `prisma/migrations/20261104000000_add_field_event_media_attachments/migration.sql`.
+     - Regenerated Prisma Client v6.19.3.
+     - Updated `prisma/seed.ts` to attach media attachments to `event-003` and clean up `eventFootage` references.
+   - **Domain Entity SSOT (`src/types/index.ts`):**
+     - Updated `FieldEventItem` interface to include `mediaAttachments?: TaskAttachment[]`.
+   - **API Routes Updated:**
+     - `src/app/api/marcom/events/route.ts`: Sanitizes `mediaAttachments`, validates array structure, persists directly to `prisma.fieldEvent.create`, and removed legacy `footage: true` queries.
+     - `src/app/api/marcom/events/[id]/route.ts`: Added `"mediaAttachments"` to `PATCHABLE_FIELDS`, validates array in PATCH handler, and removed legacy `EventFootage` handling.
+     - `src/app/api/marcom/outlets/[id]/route.ts` & `src/app/api/marcom/pipeline/route.ts`: Removed obsolete `include: { footage: true }`.
+   - **Component Modernization & Refactoring:**
+     - Created `src/components/views/EventsView/EventMediaSection.tsx`: Atomic subcomponent following Strangler Pattern with "Upload dari Perangkat" button, drag-and-drop zone, real-time Google Drive upload progress bar with cancellation, interactive attachment list with type icons (`Film`, `Video`, `File`, `Folder`), and Drive folder link input for raw coverage archives.
+     - Updated `src/components/views/EventsView/EventFormModal.tsx`: Integrated `EventMediaSection`, converted legacy footage/mediaUrl to `TaskAttachment[]` for backward-compatibility, removed legacy footage states, and persisted `mediaAttachments`.
+     - Updated `src/components/views/EventsView/EventFootageModal.tsx`: Adapted clips playlist to prioritize `event.mediaAttachments`, added image file previews alongside video/Google Drive iframes, and linked Drive archive folder.
+     - Updated `src/components/views/EventsView/EventCardsView.tsx`: Displays photo and video previews, dynamic media count badge, and archive folder button.
+     - Updated `src/components/views/EventsView/EventTableView.tsx`: Displays unified media count badge.
+   - **Tests & Verification:**
+     - Created `src/components/views/EventsView/eventsApi.test.ts` with 3 integration tests covering SSOT types, POST validation, and PATCH updates.
+     - Verified:
+       - `npm run drift:check`: ✅ No drift detected. All invariants pass.
+       - `npm run build:check`: ✅ TypeScript compiled with 0 errors.
+       - `npm run test:smoke`: ✅ 104 passed, 0 failed.
+       - `node --test src/components/views/EventsView/eventsApi.test.ts`: ✅ 3 passed, 0 failed.
+
+2. **Outlet Draft Photo Supabase Storage Migration (ADR-0020, Spec & Plan `2026-11-03-outlet-draft-photo-supabase-storage`):**
    - **Bucket Setup:** Created public `outlet-photos` Supabase Storage bucket with 25MB limit via Storage REST API.
    - **Extended `/api/marcom/uploads/route.ts`:**
      - Added `"outlets"` to `VALID_KINDS`.

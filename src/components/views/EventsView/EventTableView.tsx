@@ -79,17 +79,24 @@ export function EventTableView({
                 <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-medium border", typeStyle.badge)}>
                   {typeStyle.label}
                 </span>
-                {e.footage && e.footage.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => onOpenFootageModal(e, 0)}
-                    className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-[10px] cursor-pointer font-medium"
-                    title="Watch footage & B-roll video"
-                  >
-                    <Film className="w-3 h-3 text-blue-500" />
-                    <span>{e.footage.length} clips ▶</span>
-                  </button>
-                )}
+                {(() => {
+                  const mediaCount =
+                    e.mediaAttachments && e.mediaAttachments.length > 0
+                      ? e.mediaAttachments.filter((a) => !a.isSharedFolder).length || e.mediaAttachments.length
+                      : e.footage?.length ?? 0;
+                  if (mediaCount <= 0) return null;
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => onOpenFootageModal(e, 0)}
+                      className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-[10px] cursor-pointer font-medium"
+                      title="Watch footage & documentation media"
+                    >
+                      <Film className="w-3 h-3 text-blue-500" />
+                      <span>{mediaCount} media ▶</span>
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           );

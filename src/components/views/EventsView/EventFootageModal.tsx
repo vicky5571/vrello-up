@@ -52,19 +52,33 @@ export function EventFootageModal({
 
   if (!isOpen || !event) return null;
 
-  const clips: EventFootage[] = event.footage && event.footage.length > 0
-    ? event.footage
-    : event.mediaUrl
-    ? [
-        {
-          id: "primary-media",
-          eventId: event.id,
-          title: "Main Event Documentation",
-          filePath: event.mediaUrl,
-          duration: "Highlight",
-        },
-      ]
-    : [];
+  const folderAttachment = event.mediaAttachments?.find((a) => a.isSharedFolder);
+  const folderUrl = folderAttachment?.url || event.mediaUrl;
+
+  const clips: EventFootage[] =
+    event.mediaAttachments && event.mediaAttachments.length > 0
+      ? event.mediaAttachments
+          .filter((a) => !a.isSharedFolder)
+          .map((a, i) => ({
+            id: a.id || `att-${i}`,
+            eventId: event.id,
+            title: a.name,
+            filePath: a.url,
+            duration: a.sizeBytes && a.sizeBytes > 0 ? `${(a.sizeBytes / (1024 * 1024)).toFixed(1)} MB` : undefined,
+          }))
+      : event.footage && event.footage.length > 0
+      ? event.footage
+      : event.mediaUrl
+      ? [
+          {
+            id: "primary-media",
+            eventId: event.id,
+            title: "Main Event Documentation",
+            filePath: event.mediaUrl,
+            duration: "Highlight",
+          },
+        ]
+      : [];
 
   const activeClip = clips[activeClipIndex] || clips[0];
   const parsedDrive = activeClip?.filePath ? parseGoogleDriveUrl(activeClip.filePath) : null;
@@ -75,6 +89,10 @@ export function EventFootageModal({
       activeClip.filePath.endsWith(".webm") ||
       activeClip.filePath.includes("mixkit.co") ||
       activeClip.filePath.includes("assets."));
+  const isImageFile =
+    activeClip?.filePath &&
+    (/\.(jpe?g|png|webp|gif|avif)$/i.test(activeClip.filePath) ||
+      activeClip.filePath.includes("supabase.co/storage/v1/object/public"));
 
   return (
     <AnimatePresence>
@@ -143,6 +161,14 @@ export function EventFootageModal({
                     controls
                     autoPlay
                     playsInline
+                    className="w-full h-full object-contain"
+                  />
+                ) : isImageFile ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    key={activeClip.filePath}
+                    src={activeClip.filePath}
+                    alt={activeClip.title}
                     className="w-full h-full object-contain"
                   />
                 ) : (
@@ -275,13 +301,13 @@ export function EventFootageModal({
               </div>
 
               {/* Documentation Storage Archive Folder Link if provided */}
-              {event.mediaUrl && (
+              {folderUrl && (
                 <div className="mt-4 pt-3 border-t border-slate-800">
                   <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block mb-1.5">
                     Field Documentation Archive Folder
                   </span>
                   <a
-                    href={event.mediaUrl}
+                    href={folderUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full flex items-center justify-between p-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold transition-colors"

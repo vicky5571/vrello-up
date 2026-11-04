@@ -5,7 +5,6 @@ import { prisma } from "@/lib/db";
 const VALID_STATUSES = ["UPCOMING", "ON_PROGRESS", "COMPLETED", "CANCELLED"] as const;
 
 const eventInclude = {
-  footage: true,
   outlet: { select: { id: true, code: true, name: true } },
 } as const;
 
@@ -71,7 +70,7 @@ export async function POST(request: Request) {
     attendeeCount,
     targetAttendee,
     notes,
-    footage,
+    mediaAttachments,
     outletId,
   } = body ?? {};
 
@@ -88,15 +87,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "endDate cannot be earlier than startDate" }, { status: 400 });
   }
 
-  const footageData = Array.isArray(footage)
-    ? (footage as Array<{ title?: unknown; filePath?: unknown; duration?: unknown }>)
-        .filter((f) => f && (f.title || f.filePath))
-        .map((f) => ({
-          title: String(f.title || "Footage").trim(),
-          filePath: String(f.filePath || "").trim(),
-          duration: String(f.duration || "").trim(),
-        }))
-        .filter((f) => f.filePath)
+  const attachmentsData = Array.isArray(mediaAttachments)
+    ? mediaAttachments
     : [];
 
   const event = await prisma.fieldEvent.create({
@@ -114,7 +106,7 @@ export async function POST(request: Request) {
       targetAttendee,
       notes,
       outletId: outletId || null,
-      ...(footageData.length > 0 ? { footage: { create: footageData } } : {}),
+      mediaAttachments: attachmentsData,
     },
     include: eventInclude,
   });

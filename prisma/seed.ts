@@ -18,7 +18,6 @@ async function cleanDatabase() {
   console.log("🧹 Cleaning database tables in reverse foreign-key order...");
   await prisma.borrowItem.deleteMany({});
   await prisma.borrowRecord.deleteMany({});
-  await prisma.eventFootage.deleteMany({});
   await prisma.placement.deleteMany({});
   await prisma.mou.deleteMany({});
   await prisma.fieldEvent.deleteMany({});
@@ -765,24 +764,31 @@ async function seedFieldEvents() {
     await prisma.fieldEvent.create({ data: e });
   }
 
-  // Seed Event Footages for Event-003
-  await prisma.eventFootage.createMany({
-    data: [
-      {
-        id: "ftg-001",
-        eventId: "event-003",
-        title: "Video Highlight Zumba Massal & Crowd 4K",
-        filePath: "https://storage.marcom-internal.corp/events/2026/cfd_solo_highlight.mp4",
-        duration: "02:45",
-      },
-      {
-        id: "ftg-002",
-        eventId: "event-003",
-        title: "Dokumentasi Penyerahan Hadiah Doorprize",
-        filePath: "https://storage.marcom-internal.corp/events/2026/cfd_solo_doorprize.mp4",
-        duration: "01:15",
-      },
-    ],
+  // Seed Media Attachments for Event-003
+  await prisma.fieldEvent.update({
+    where: { id: "event-003" },
+    data: {
+      mediaAttachments: [
+        {
+          id: "ftg-001",
+          name: "Video Highlight Zumba Massal & Crowd 4K",
+          sizeBytes: 45000000,
+          type: "video",
+          url: "https://storage.marcom-internal.corp/events/2026/cfd_solo_highlight.mp4",
+          source: "gdrive",
+          uploadedAt: new Date().toISOString(),
+        },
+        {
+          id: "ftg-002",
+          name: "Dokumentasi Penyerahan Hadiah Doorprize",
+          sizeBytes: 18000000,
+          type: "video",
+          url: "https://storage.marcom-internal.corp/events/2026/cfd_solo_doorprize.mp4",
+          source: "gdrive",
+          uploadedAt: new Date().toISOString(),
+        },
+      ],
+    },
   });
 }
 
@@ -1169,7 +1175,6 @@ async function main() {
     placements: await prisma.placement.count(),
     inventoryItems: await prisma.inventoryItem.count(),
     fieldEvents: await prisma.fieldEvent.count(),
-    eventFootage: await prisma.eventFootage.count(),
     borrowRecords: await prisma.borrowRecord.count(),
     borrowItems: await prisma.borrowItem.count(),
     contentPosts: await prisma.contentPost.count(),

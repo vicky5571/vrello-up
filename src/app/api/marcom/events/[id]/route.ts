@@ -19,10 +19,10 @@ const PATCHABLE_FIELDS = [
   "targetAttendee",
   "notes",
   "outletId",
+  "mediaAttachments",
 ] as const;
 
 const eventInclude = {
-  footage: true,
   outlet: { select: { id: true, code: true, name: true } },
 } as const;
 
@@ -67,25 +67,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "endDate cannot be earlier than startDate" }, { status: 400 });
   }
 
-  if (body?.footage !== undefined && Array.isArray(body.footage)) {
-    const rawFootage = body.footage as Array<{
-      title?: unknown;
-      filePath?: unknown;
-      duration?: unknown;
-    }>;
-    const footageData = rawFootage
-      .filter((f) => f && (f.title || f.filePath))
-      .map((f) => ({
-        title: String(f.title || "Footage").trim(),
-        filePath: String(f.filePath || "").trim(),
-        duration: String(f.duration || "").trim(),
-      }))
-      .filter((f) => f.filePath);
-
-    data["footage"] = {
-      deleteMany: {},
-      create: footageData,
-    };
+  if (body?.mediaAttachments !== undefined) {
+    data["mediaAttachments"] = Array.isArray(body.mediaAttachments)
+      ? body.mediaAttachments
+      : [];
   }
 
   if (Object.keys(data).length === 0) {

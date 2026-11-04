@@ -331,6 +331,7 @@ export interface FieldEventItem {
   notes?: string;
   date?: string | null;
   mediaUrl?: string | null;
+  mediaAttachments?: TaskAttachment[];
   footage?: EventFootage[];
   outletId?: string | null;
   outlet?: { id: string; name: string; code: string } | null;

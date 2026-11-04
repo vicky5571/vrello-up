@@ -69,9 +69,29 @@ export function EventCardsView({
         const range = formatEventDateRange(event.startDate || event.date, event.endDate);
         const conflict = conflicts.get(event.id);
 
-        const primaryClip = event.footage?.[0];
-        const clipUrl = primaryClip?.filePath || event.mediaUrl;
-        const hasMedia = Boolean((event.footage && event.footage.length > 0) || event.mediaUrl);
+        const folderAttachment = event.mediaAttachments?.find((a) => a.isSharedFolder);
+        const folderUrl = folderAttachment?.url || event.mediaUrl;
+        const nonFolderAttachments = event.mediaAttachments?.filter((a) => !a.isSharedFolder) || [];
+        const primaryAttachment = nonFolderAttachments[0];
+
+        const primaryClip = primaryAttachment
+          ? {
+              id: primaryAttachment.id,
+              title: primaryAttachment.name,
+              filePath: primaryAttachment.url,
+              duration:
+                primaryAttachment.sizeBytes && primaryAttachment.sizeBytes > 0
+                  ? `${(primaryAttachment.sizeBytes / (1024 * 1024)).toFixed(1)} MB`
+                  : undefined,
+            }
+          : event.footage?.[0];
+
+        const clipUrl = primaryClip?.filePath || folderUrl;
+        const mediaCount =
+          nonFolderAttachments.length > 0
+            ? nonFolderAttachments.length
+            : (event.footage?.length ?? 0);
+        const hasMedia = Boolean(mediaCount > 0 || folderUrl);
         const driveInfo = clipUrl ? parseGoogleDriveUrl(clipUrl) : null;
         const isVideo =
           clipUrl &&
@@ -79,6 +99,10 @@ export function EventCardsView({
             clipUrl.endsWith(".mov") ||
             clipUrl.endsWith(".webm") ||
             clipUrl.includes("mixkit.co"));
+        const isImage =
+          clipUrl &&
+          (/\.(jpe?g|png|webp|gif|avif)$/i.test(clipUrl) ||
+            clipUrl.includes("supabase.co/storage/v1/object/public"));
 
         const equipmentSummary = getEventEquipmentSummary(borrowRecords, event.id);
 
@@ -232,6 +256,13 @@ export function EventCardsView({
                         preload="metadata"
                         className="w-full h-full object-cover opacity-80 group-hover/player:opacity-100 transition-opacity"
                       />
+                    ) : isImage ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={clipUrl}
+                        alt={primaryClip?.title || "Field Documentation"}
+                        className="w-full h-full object-cover opacity-90 group-hover/player:opacity-100 transition-opacity"
+                      />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950/40 to-slate-900 p-3 text-center">
                         <Film className="w-8 h-8 text-blue-400 mb-1 opacity-80 group-hover/player:scale-110 transition-transform" />
@@ -263,22 +294,22 @@ export function EventCardsView({
 
                   {/* Interactive Button & Links Bar */}
                   <div className="flex items-center justify-between text-[11px]">
-                    {event.footage && event.footage.length > 0 ? (
+                    {mediaCount > 0 ? (
                       <button
                         type="button"
                         onClick={() => onOpenFootageModal(event, 0)}
                         className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 font-semibold transition-colors cursor-pointer"
                       >
                         <Film className="w-3.5 h-3.5" />
-                        <span>Watch B-roll ({event.footage.length} clips) ▶</span>
+                        <span>Watch Media ({mediaCount} items) ▶</span>
                       </button>
                     ) : (
                       <span />
                     )}
 
-                    {event.mediaUrl && (
+                    {folderUrl && (
                       <a
-                        href={event.mediaUrl}
+                        href={folderUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 hover:underline"

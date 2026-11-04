@@ -263,7 +263,7 @@ model FieldEvent {
   notes          String         @default("")
   outletId       String?
   outlet         Outlet?        @relation(fields: [outletId], references: [id], onDelete: SetNull)
-  footage        EventFootage[]
+  mediaAttachments Json         @default("[]")
   borrowRecords  BorrowRecord[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -272,15 +272,6 @@ model FieldEvent {
   @@index([startDate])
   @@index([branchName])
   @@index([outletId])
-}
-
-model EventFootage {
-  id       String     @id @default(cuid())
-  eventId  String
-  event    FieldEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  title    String
-  filePath String
-  duration String     @default("")
 }
 
 model InventoryItem {

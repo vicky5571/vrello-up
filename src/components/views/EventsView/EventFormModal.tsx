@@ -8,10 +8,6 @@ import {
   Plus,
   X,
   MapPin,
-  Folder,
-  Film,
-  Video,
-  Play,
   Store,
   Coins,
 } from "lucide-react";
@@ -20,16 +16,16 @@ import type {
   EventStatus,
   EventFootage,
   User,
+  TaskAttachment,
 } from "@/types";
 import { cn, formatIDR } from "@/lib/utils";
 import {
   getEventChecklistTemplate,
   findMemberForPic,
 } from "@/lib/marcom/eventChecklist";
-import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
-import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import { EventChecklistSection } from "./EventChecklistSection";
 import { EventBorrowedEquipmentSection } from "./EventBorrowedEquipmentSection";
+import { EventMediaSection } from "./EventMediaSection";
 import { canTransitionEvent } from "@/lib/marcom/eventMachine";
 import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
 
@@ -91,12 +87,8 @@ export function EventFormModal({
     { id: string; title: string; completed?: boolean }[]
   >([]);
 
-  // Footage attachments
-  const [eventFootageList, setEventFootageList] = useState<EventFootage[]>([]);
-  const [newFootageTitle, setNewFootageTitle] = useState("");
-  const [newFootageDuration, setNewFootageDuration] = useState("");
-  const [newFootagePath, setNewFootagePath] = useState("");
-  const [eventMediaUrl, setEventMediaUrl] = useState("");
+  // Media attachments
+  const [mediaAttachments, setMediaAttachments] = useState<TaskAttachment[]>([]);
   const [eventOutletId, setEventOutletId] = useState<string>("");
   const [outlets, setOutlets] = useState<Array<{ id: string; name: string; code: string; branchId?: string; city?: string }>>([]);
 
@@ -129,14 +121,6 @@ export function EventFormModal({
     }
   };
 
-  // Google Drive Picker
-  const {
-    openSelector: openDriveSelector,
-    isModalOpen: isDriveModalOpen,
-    closeModal: closeDriveModal,
-    handleManualAttach,
-  } = useGoogleDrivePicker();
-
   // Initialize or reset form state on open / event change
   useEffect(() => {
     if (!isOpen) return;
@@ -156,11 +140,35 @@ export function EventFormModal({
       setEventTargetAttendee(String(event.targetAttendee ?? 100));
       setEventAttendeeCount(String(event.attendeeCount ?? 0));
       setEventNotes(event.notes || "");
-      setEventMediaUrl(event.mediaUrl || "");
-      setEventFootageList(event.footage || []);
-      setNewFootageTitle("");
-      setNewFootageDuration("");
-      setNewFootagePath("");
+      const existingAttachments: TaskAttachment[] =
+        Array.isArray(event.mediaAttachments) && event.mediaAttachments.length > 0
+          ? event.mediaAttachments
+          : [
+              ...(event.footage?.map((f, i) => ({
+                id: f.id || `legacy-footage-${i}`,
+                name: f.title || `Footage ${i + 1}`,
+                sizeBytes: 0,
+                type: "video" as const,
+                url: f.filePath,
+                source: "gdrive" as const,
+                uploadedAt: new Date().toISOString(),
+              })) || []),
+              ...(event.mediaUrl
+                ? [
+                    {
+                      id: `legacy-mediaUrl-${Date.now()}`,
+                      name: "Field Documentation Archive",
+                      sizeBytes: 0,
+                      type: "document" as const,
+                      url: event.mediaUrl,
+                      source: "gdrive" as const,
+                      isSharedFolder: true,
+                      uploadedAt: new Date().toISOString(),
+                    },
+                  ]
+                : []),
+            ];
+      setMediaAttachments(existingAttachments);
 
       const matched = findMemberForPic(members, event.picName);
       setPicMemberId(matched?.id || "custom");
@@ -197,11 +205,7 @@ export function EventFormModal({
       setEventTargetAttendee("250");
       setEventAttendeeCount("0");
       setEventNotes("");
-      setEventMediaUrl("");
-      setEventFootageList([]);
-      setNewFootageTitle("");
-      setNewFootageDuration("");
-      setNewFootagePath("");
+      setMediaAttachments([]);
       setEventSubtasks(
         getEventChecklistTemplate("Roadshow").map((t, i) => ({
           id: `sub-init-${i}`,
@@ -221,34 +225,6 @@ export function EventFormModal({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
-
-  // Footage management
-  const handleAddFootage = () => {
-    if (!newFootageTitle.trim()) {
-      toast.error("Footage clip title is required");
-      return;
-    }
-    if (!newFootagePath.trim()) {
-      toast.error("Video URL / Google Drive link is required");
-      return;
-    }
-    const newFootage: EventFootage = {
-      id: `vid-${Date.now()}`,
-      eventId: event?.id || "",
-      title: newFootageTitle.trim(),
-      filePath: newFootagePath.trim(),
-      duration: newFootageDuration.trim() || "01:30",
-    };
-    setEventFootageList((prev) => [...prev, newFootage]);
-    setNewFootageTitle("");
-    setNewFootageDuration("");
-    setNewFootagePath("");
-    toast.success("Footage clip added successfully");
-  };
-
-  const handleRemoveFootage = (id: string) => {
-    setEventFootageList((prev) => prev.filter((f) => f.id !== id));
-  };
 
   // Form submission
   const handleSaveEvent = async (e: React.FormEvent) => {
@@ -283,8 +259,7 @@ export function EventFormModal({
         targetAttendee: parsedTargetAttendee,
         attendeeCount: parsedAttendeeCount,
         notes: eventNotes.trim(),
-        mediaUrl: eventMediaUrl.trim() || undefined,
-        footage: eventFootageList,
+        mediaAttachments,
         checklist: eventSubtasks,
       };
 
@@ -328,8 +303,7 @@ export function EventFormModal({
         targetAttendee: parsedTargetAttendee,
         attendeeCount: parsedAttendeeCount,
         notes: eventNotes,
-        mediaUrl: eventMediaUrl.trim() || null,
-        footage: eventFootageList,
+        mediaAttachments,
         outletId: eventOutletId || null,
         checklist: eventSubtasks,
       };
@@ -725,181 +699,30 @@ export function EventFormModal({
                 />
               </div>
 
-              {/* Storage Destination & Raw Documentation Folder */}
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100">
-                    <Folder className="w-4 h-4 text-amber-500" />
-                    <span>Field Documentation Archive (Storage Destination)</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      openDriveSelector({
-                        defaultKind: "all",
-                        onSelect: (atts) => {
-                          if (atts[0]) {
-                            setEventMediaUrl(atts[0].url);
-                            toast.success("Google Drive documentation folder selected");
-                          }
-                        },
-                      })
-                    }
-                    className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>Select from Google Drive</span>
-                  </button>
-                </div>
-                <input
-                  type="url"
-                  placeholder="https://drive.google.com/drive/folders/... or cloud storage URL for raw footage archive"
-                  value={eventMediaUrl}
-                  onChange={(e) => setEventMediaUrl(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden font-mono text-[11px]"
-                />
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Folder link where the media team archives all event photos, raw footage, and coverage assets.
-                </p>
-              </div>
-
-              {/* B-roll Video Footage Manager */}
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100">
-                    <Film className="w-4 h-4 text-blue-500" />
-                    <span>B-Roll Video Clips & Highlight Documentation</span>
-                  </div>
-                  <span className="text-[11px] text-slate-400">
-                    {eventFootageList.length} clips attached
-                  </span>
-                </div>
-
-                {eventFootageList.length > 0 && (
-                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                    {eventFootageList.map((f, idx) => (
-                      <div
-                        key={f.id || idx}
-                        className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"
-                      >
-                        <div className="flex items-center gap-2 min-w-0 pr-2">
-                          <Video className="w-4 h-4 text-blue-500 shrink-0" />
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
-                                {f.title}
-                              </span>
-                              <span className="text-[10px] font-mono text-slate-400">
-                                ({f.duration || "01:30"})
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-slate-400 truncate block font-mono">
-                              {f.filePath}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {onOpenFootageModal && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onOpenFootageModal(
-                                  {
-                                    id: event?.id || "temp",
-                                    name: eventName || "Preview",
-                                    eventType,
-                                    status: eventStatus,
-                                    budget: Math.max(0, parseInt(eventBudget, 10) || 0),
-                                    targetAttendee: 0,
-                                    attendeeCount: 0,
-                                    footage: eventFootageList,
-                                    mediaUrl: eventMediaUrl,
-                                  },
-                                  idx
-                                );
-                              }}
-                              className="p-1 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
-                              title="Play / Preview video"
-                            >
-                              <Play className="w-3 h-3 fill-current" />
-                              <span>Play</span>
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveFootage(f.id)}
-                            className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer transition-colors"
-                            title="Remove clip"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Add footage input form */}
-                <div className="p-3 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/60 dark:bg-slate-800/40 space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                    <span>Add New Clip:</span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openDriveSelector({
-                          defaultKind: "video",
-                          onSelect: (atts) => {
-                            if (atts[0]) {
-                              setNewFootagePath(atts[0].url);
-                              if (!newFootageTitle.trim()) {
-                                setNewFootageTitle(atts[0].name.replace(/\.[^/.]+$/, ""));
-                              }
-                              toast.success("Google Drive video selected");
-                            }
+              {/* Media & Documentation Attachments */}
+              <EventMediaSection
+                mediaAttachments={mediaAttachments}
+                setMediaAttachments={setMediaAttachments}
+                onOpenPreview={
+                  onOpenFootageModal
+                    ? (idx) => {
+                        onOpenFootageModal(
+                          {
+                            id: event?.id || "temp",
+                            name: eventName || "Preview",
+                            eventType,
+                            status: eventStatus,
+                            budget: Math.max(0, parseInt(eventBudget, 10) || 0),
+                            targetAttendee: 0,
+                            attendeeCount: 0,
+                            mediaAttachments,
                           },
-                        })
+                          idx
+                        );
                       }
-                      className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>Select from Google Drive</span>
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <input
-                      type="text"
-                      placeholder="Clip Title (e.g. Crowd Highlights)"
-                      value={newFootageTitle}
-                      onChange={(e) => setNewFootageTitle(e.target.value)}
-                      className="sm:col-span-2 px-2.5 py-1.5 rounded-md text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Duration (e.g. 02:15)"
-                      value={newFootageDuration}
-                      onChange={(e) => setNewFootageDuration(e.target.value)}
-                      className="px-2.5 py-1.5 rounded-md text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="url"
-                      placeholder="Video URL (Google Drive / Direct MP4 / WebM / Cloud URL)"
-                      value={newFootagePath}
-                      onChange={(e) => setNewFootagePath(e.target.value)}
-                      className="flex-1 px-2.5 py-1.5 rounded-md text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono text-[11px]"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddFootage}
-                      className="px-3.5 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1 shrink-0 cursor-pointer shadow-2xs"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Add Clip
-                    </button>
-                  </div>
-                </div>
-              </div>
+                    : undefined
+                }
+              />
 
               {/* Borrowed Equipment (Edit Mode) */}
               {event?.id && (
@@ -936,14 +759,6 @@ export function EventFormModal({
           </motion.div>
         </div>
       </AnimatePresence>
-
-      {/* Google Drive Link Modal */}
-      <GoogleDriveLinkModal
-        isOpen={isDriveModalOpen}
-        onClose={closeDriveModal}
-        onAttach={handleManualAttach}
-        defaultKind="video"
-      />
     </>
   );
 }

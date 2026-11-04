@@ -46,7 +46,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       where: buildOutletEventWhere(outlet.id),
       orderBy: { startDate: "desc" },
       take: 50,
-      include: { footage: true },
     }),
     prisma.contentPost.findMany({
       where: buildOutletContentWhere(outlet.id, outlet.code),

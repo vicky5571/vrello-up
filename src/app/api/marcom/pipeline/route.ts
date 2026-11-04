@@ -68,7 +68,6 @@ export async function GET(request: Request) {
       }),
       prisma.fieldEvent.findMany({
         orderBy: { startDate: "asc" },
-        include: { footage: true },
       }),
       prisma.contentPost.findMany({
         orderBy: { publishDate: "desc" },
