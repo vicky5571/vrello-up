@@ -8,25 +8,34 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029) — **PLANNING & HANDOVER COMPLETE**  
+**Active Feature:** Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Sub-Komponen ContentMediaSection pada Modal Schedule New Post (ADR-0028)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029 — Planning & Handover):**
-   - **Checkpoints Lolos Persetujuan**:
-     - Checkpoint 1 (Decision Problem & Candidate Options): User menyetujui **Opsi A** (standarisasi penuh ke Supabase Storage, restrukturisasi form upload, dan eliminasi tautan Google Drive).
-     - Checkpoint 2 (Scope & Asumsi Spesifikasi): User menegaskan *tidak perlu memikirkan backward compatibility*, seluruh seeder diperbarui dengan dokumen internal.
-     - Checkpoint 3 (Phasing Strategy): User menyetujui 3 fase implementasi.
-   - **Dokumentasi Terbit (File-First, Content-Second)**:
-     - `docs/adr/0029-eliminate-google-drive-from-mous.md`: Keputusan arsitektur eliminasi Google Drive dan standarisasi dokumen MOU.
-     - `docs/superpowers/specs/2026-11-05-eliminate-google-drive-from-mous-design.md`: Spesifikasi detail pure logic parser, Active Document Card di `MouFormModal`, pembersihan viewer modal, dan perbaruan data seed.
-     - `docs/superpowers/plans/2026-11-05-eliminate-google-drive-from-mous.md`: Rencana eksekusi 3 fase dengan file manifest, risk mitigation, dan invariant checklist.
-     - `docs/handover-eliminate-google-drive-from-mous.md`: Handover eksekusi dengan snippet kode lengkap, instruksi perubahan, dan acceptance criteria.
-   - **Verification Gates**:
+1. **Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029 — Implementation Complete):**
+   - **Parser Sanitized (`src/components/views/MousView/mouDocumentHelpers.ts`):**
+     - Simplified `MouDocumentType` to `INTERNAL_PDF | INTERNAL_IMAGE | EMPTY`.
+     - Completely removed `isExternalUrl`, `isGoogleDrive`, and `EXTERNAL_URL`.
+     - Standardized file labels to `"Dokumen PDF"`, `"Gambar Scan"`, and `"Tidak ada berkas"`.
+   - **Form Modal Modernization (`src/components/views/MousView/MouFormModal.tsx`):**
+     - Completely eliminated raw `Document URL / Path` text input field and placeholder.
+     - Implemented clean **Active Document Card** with file icon, cleaned filename (`extractCleanFilename`), storage indicator badge ("Tersimpan di Supabase Storage"), and actions: "Pratinjau", "Ganti", and "Hapus".
+     - Implemented dashed empty upload button triggering file input directly into Supabase Storage bucket `mou-documents`.
+   - **Document Viewer Modal Cleaned (`src/components/views/MousView/MouDocumentViewerModal.tsx`):**
+     - Removed external Google Drive warning card fallback, simplifying viewer strictly to internal PDF iframe viewer and Image lightbox.
+     - Cleaned `mouColumns.tsx` document button styling and removed unused `ExternalLink` icon.
+   - **Seeder Database Re-seeded (`prisma/seed.ts`):**
+     - Replaced 4 dummy Google Drive URLs with corporate internal PDF links.
+     - Successfully executed `npx prisma db seed` with 6 seeded MOUs.
+   - **Automated Unit Testing (`mouDocumentHelpers.test.ts`):**
+     - Updated unit tests for internal PDF, internal Image, and Supabase Storage CDN URLs (10 passed, 0 failures).
+   - **Verification Gates Passed:**
      - `npm run drift:check`: ✅ No drift detected (56 spec-plan pairs).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm test`: ✅ Full test suite passed.
 
 2. **Sub-Komponen ContentMediaSection pada Modal Schedule New Post (ADR-0028 — Implementation Complete):**
    - **`ContentMediaSection.tsx` Creation:**

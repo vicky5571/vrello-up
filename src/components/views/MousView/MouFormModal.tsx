@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
 import { uploadMouDocument, saveMou } from "./mouApi";
-import { parseMouDocumentSource } from "./mouDocumentHelpers";
+import { parseMouDocumentSource, extractCleanFilename } from "./mouDocumentHelpers";
 import type { MarcomMou } from "@/types";
 
 export interface BranchOption {
@@ -99,6 +99,8 @@ export function MouFormModal({
     return branchOutlets.length > 0 ? branchOutlets : outlets;
   }, [outlets, modalMou?.branchId]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawFile = e.target.files?.[0];
     if (!rawFile || !modalMou) return;
@@ -111,6 +113,7 @@ export function MouFormModal({
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -514,85 +517,99 @@ export function MouFormModal({
               className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
             />
           </div>
-          <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3 bg-slate-50/50 dark:bg-slate-800/50 space-y-2">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="mou-file-upload"
-                className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer"
-              >
-                <Upload className="w-3.5 h-3.5 text-fuchsia-600" />
-                <span>Upload Document (PDF, Images, up to 25MB)</span>
-              </label>
-              {isUploading && (
-                <span className="text-xs text-fuchsia-600 flex items-center gap-1 font-medium">
-                  <RefreshCw className="w-3 h-3 animate-spin" />
-                  Uploading...
-                </span>
-              )}
-            </div>
-            <input
-              id="mou-file-upload"
-              type="file"
-              onChange={handleFileUpload}
-              disabled={isUploading}
-              className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-fuchsia-50 dark:file:bg-fuchsia-950/40 file:text-fuchsia-700 dark:file:text-fuchsia-300 hover:file:bg-fuchsia-100 cursor-pointer disabled:opacity-50"
-            />
-          </div>
+          {/* Dokumen MOU (Supabase Storage) */}
           <div>
-            <label
-              htmlFor="mou-doc-path"
-              className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1"
-            >
-              Document URL / Path
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Dokumen MOU (Supabase Storage)
             </label>
             <input
-              id="mou-doc-path"
-              type="text"
-              placeholder="Auto-filled from upload, or enter /api/... or Google Drive URL"
-              value={modalMou.docPath || ""}
-              onChange={(e) => setModalMou({ ...modalMou, docPath: e.target.value })}
-              className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf,image/*"
+              onChange={handleFileUpload}
+              disabled={isUploading}
+              className="hidden"
             />
-            {modalMou.docPath && (
-              <div className="mt-1.5 flex items-center gap-2">
-                {(() => {
-                  const p = parseMouDocumentSource(modalMou.docPath, modalMou.partnerName);
-                  return (
-                    <>
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-700 dark:text-fuchsia-300 border border-fuchsia-200 dark:border-fuchsia-800 font-medium">
-                        {p.label}
-                      </span>
-                      {onTestPreview && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onTestPreview({
-                              id: modalMou.id || "preview",
-                              branchId: modalMou.branchId || "",
-                              partnerName: modalMou.partnerName || "Pratinjau Dokumen",
-                              mouType: modalMou.mouType || "Compensation",
-                              outletName: modalMou.outletName || "",
-                              submissionDate: null,
-                              startDate: null,
-                              endDate: null,
-                              status: "DRAFT",
-                              picName: "",
-                              picPhone: "",
-                              docPath: modalMou.docPath || "",
-                              compensationValue: 0,
-                              notes: "",
-                            } as MarcomMou)
-                          }
-                          className="text-xs font-semibold text-fuchsia-600 hover:underline inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          <Eye className="w-3 h-3" />
-                          <span>Test Pratinjau</span>
-                        </button>
-                      )}
-                    </>
-                  );
-                })()}
+
+            {modalMou.docPath ? (
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center shrink-0 border border-fuchsia-200/50">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                      {extractCleanFilename(modalMou.docPath) || "Dokumen MOU Terunggah"}
+                    </p>
+                    <span className="text-[10px] text-fuchsia-600 dark:text-fuchsia-400 font-medium">
+                      Tersimpan di Supabase Storage
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {onTestPreview && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onTestPreview({
+                          id: modalMou.id || "preview",
+                          branchId: modalMou.branchId || "",
+                          partnerName: modalMou.partnerName || "Pratinjau Dokumen",
+                          mouType: modalMou.mouType || "Compensation",
+                          outletName: modalMou.outletName || "",
+                          submissionDate: null,
+                          startDate: null,
+                          endDate: null,
+                          status: "DRAFT",
+                          picName: "",
+                          picPhone: "",
+                          docPath: modalMou.docPath || "",
+                          compensationValue: 0,
+                          notes: "",
+                        } as MarcomMou)
+                      }
+                      className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 rounded-lg cursor-pointer transition-colors"
+                    >
+                      Pratinjau
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="px-2.5 py-1 text-xs font-semibold text-fuchsia-600 hover:bg-fuchsia-50 rounded-lg cursor-pointer transition-colors disabled:opacity-50"
+                  >
+                    Ganti
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModalMou({ ...modalMou, docPath: "" })}
+                    className="p-1 text-slate-400 hover:text-rose-500 rounded-lg cursor-pointer transition-colors"
+                    title="Hapus dokumen"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-fuchsia-500 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-fuchsia-600 hover:bg-fuchsia-50/20 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 text-fuchsia-600 animate-spin" />
+                    <span>Mengunggah dokumen...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 text-fuchsia-600" />
+                    <span>Upload Dokumen MOU (PDF atau Gambar, maks 25MB)</span>
+                  </>
+                )}
+              </button>
             )}
           </div>
           <div>

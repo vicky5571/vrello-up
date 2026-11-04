@@ -4,7 +4,6 @@ import React, { useEffect } from "react";
 import {
   X,
   Download,
-  ExternalLink,
   FileText,
   Image as ImageIcon,
   AlertCircle,
@@ -72,8 +71,6 @@ export function MouDocumentViewerModal({
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-fuchsia-100 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center shrink-0 border border-fuchsia-200 dark:border-fuchsia-800/60 shadow-2xs">
               {parsed.type === "INTERNAL_IMAGE" ? (
                 <ImageIcon className="w-5 h-5" />
-              ) : parsed.type === "EXTERNAL_URL" ? (
-                <ExternalLink className="w-5 h-5" />
               ) : (
                 <FileText className="w-5 h-5" />
               )}
@@ -152,7 +149,19 @@ export function MouDocumentViewerModal({
                 Unggah dokumen pindaian bertandatangan atau PDF melalui tombol edit MoU.
               </p>
             </div>
-          ) : parsed.type === "INTERNAL_PDF" ? (
+          ) : parsed.type === "INTERNAL_IMAGE" ? (
+            <div className="w-full h-full flex items-center justify-center p-2">
+              <div className="relative w-[90vw] max-w-4xl h-[72vh] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg flex items-center justify-center">
+                <AppImage
+                  src={parsed.previewUrl}
+                  alt={parsed.filename}
+                  fill
+                  sizes="lightbox"
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          ) : (
             <div className="w-full h-full flex flex-col flex-1 min-h-[480px]">
               <iframe
                 src={`${parsed.previewUrl}#toolbar=1`}
@@ -172,48 +181,6 @@ export function MouDocumentViewerModal({
                   </a>
                   .
                 </span>
-              </div>
-            </div>
-          ) : parsed.type === "INTERNAL_IMAGE" ? (
-            <div className="w-full h-full flex items-center justify-center p-2">
-              <div className="relative w-[90vw] max-w-4xl h-[72vh] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg flex items-center justify-center">
-                <AppImage
-                  src={parsed.previewUrl}
-                  alt={parsed.filename}
-                  fill
-                  sizes="lightbox"
-                  className="object-contain"
-                />
-              </div>
-            </div>
-          ) : (
-            // EXTERNAL_URL (e.g. Google Drive)
-            <div className="p-8 text-center max-w-lg bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md space-y-4">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200 dark:border-blue-800">
-                <ExternalLink className="w-7 h-7" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  Dokumen Disimpan di Penyimpanan Eksternal
-                </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Berkas MOU ini tersimpan di tautan digital eksternal ({parsed.label}).
-                </p>
-                <div className="mt-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-xs font-mono text-slate-700 dark:text-slate-300 break-all text-left">
-                  {parsed.rawPath}
-                </div>
-              </div>
-
-              <div className="pt-2 flex items-center justify-center gap-2">
-                <a
-                  href={parsed.previewUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-2xs inline-flex items-center gap-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Buka di Tab Baru ({parsed.label})</span>
-                </a>
               </div>
             </div>
           )}

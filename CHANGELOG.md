@@ -6,6 +6,18 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(mous)`: Eliminate Google Drive from MOUs and standardize on Supabase Storage
+  - Cleaned `mouDocumentHelpers.ts` to strictly parse internal documents (`INTERNAL_PDF`, `INTERNAL_IMAGE`, `EMPTY`), removing `isGoogleDrive`, `EXTERNAL_URL`, and `isExternalUrl`
+  - Replaced raw URL text input in `MouFormModal.tsx` with clean Active Document Card supporting Pratinjau, Ganti, and Hapus actions
+  - Cleaned external Google Drive card fallback in `MouDocumentViewerModal.tsx`
+  - Cleaned `mouColumns.tsx` document button styling
+  - Replaced all dummy Google Drive links in `prisma/seed.ts` with official corporate internal PDF URLs and re-seeded database
+  - Updated unit tests in `src/components/views/MousView/mouDocumentHelpers.test.ts` (10 passed, 0 failures)
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: docs/superpowers/specs/2026-11-05-eliminate-google-drive-from-mous-design.md
+  Plan: docs/superpowers/plans/2026-11-05-eliminate-google-drive-from-mous.md
+  Refs: docs/adr/0029-eliminate-google-drive-from-mous.md
+
 - `feat(content)`: Extract and integrate ContentMediaSection into ContentPostModal
   - Created standalone atomic `ContentMediaSection.tsx` component with Google Drive direct upload, streaming progress bar, 16:9 showcase banner, play overlay, and drag-and-drop attachment reordering
   - Replaced inline legacy media markup in `ContentPostModal.tsx`, reducing file size from 489 LOC down to 321 LOC

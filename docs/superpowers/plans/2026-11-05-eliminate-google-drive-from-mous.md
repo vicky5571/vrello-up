@@ -3,7 +3,7 @@
 **Date:** 2026-11-05  
 **Spec:** `docs/superpowers/specs/2026-11-05-eliminate-google-drive-from-mous-design.md`  
 **ADR:** `docs/adr/0029-eliminate-google-drive-from-mous.md`  
-**Status:** READY TO IMPLEMENT
+**Status:** COMPLETED
 
 ---
 
@@ -42,12 +42,12 @@ Membersihkan seluruh ketergantungan dan referensi Google Drive dari modul MOUs d
 ## 4. Phase 1: Pembersihan Core Logic & Parser Dokumen
 
 ### Tasks:
-- [ ] **1.1 Perbarui `src/components/views/MousView/mouDocumentHelpers.ts`**:
+- [x] **1.1 Perbarui `src/components/views/MousView/mouDocumentHelpers.ts`**:
   - Hapus `EXTERNAL_URL` dari `MouDocumentType`.
   - Hapus pengecekan `isExternalUrl` dan `isGoogleDrive`.
   - Logika parser mengembalikan `INTERNAL_IMAGE` untuk ekstensi gambar, atau `INTERNAL_PDF` untuk berkas lainnya.
   - Hapus penamaan berkas `(Google Drive)`.
-- [ ] **1.2 Perbarui Unit Test `src/components/views/MousView/mouDocumentHelpers.test.ts`**:
+- [x] **1.2 Perbarui Unit Test `src/components/views/MousView/mouDocumentHelpers.test.ts`**:
   - Hapus test `parses Google Drive link as EXTERNAL_URL` dan `formatDocumentLabel Google Drive`.
   - Tambahkan assertion bahwa dokumen di-parse sebagai `INTERNAL_PDF` atau `INTERNAL_IMAGE`.
   - Jalankan test: `node --test src/components/views/MousView/mouDocumentHelpers.test.ts`.
@@ -60,12 +60,12 @@ Membersihkan seluruh ketergantungan dan referensi Google Drive dari modul MOUs d
 ## 5. Phase 2: Restrukturisasi UI Modal Form & Viewer
 
 ### Tasks:
-- [ ] **2.1 Modifikasi `src/components/views/MousView/MouFormModal.tsx`**:
+- [x] **2.1 Modifikasi `src/components/views/MousView/MouFormModal.tsx`**:
   - Hapus input teks manual `Document URL / Path`.
   - Pasang **Active Document Card**:
     - Jika `modalMou.docPath`: Tampilkan kartu dengan ikon dokumen, nama file bersih (`extractCleanFilename`), badge tipe dokumen, tombol *Pratinjau*, tombol *Ganti Berkas*, dan tombol *Hapus*.
     - Jika `!modalMou.docPath`: Tampilkan area tombol upload berkas langsung ke Supabase Storage.
-- [ ] **2.2 Modifikasi `src/components/views/MousView/MouDocumentViewerModal.tsx`**:
+- [x] **2.2 Modifikasi `src/components/views/MousView/MouDocumentViewerModal.tsx`**:
   - Hapus cabang render kartu peringatan tautan Google Drive eksternal.
   - Sederhanakan viewer untuk hanya merender PDF viewer atau Image lightbox.
 
@@ -78,15 +78,15 @@ Membersihkan seluruh ketergantungan dan referensi Google Drive dari modul MOUs d
 ## 6. Phase 3: Pembaruan Seeder Database & Verifikasi Sistem
 
 ### Tasks:
-- [ ] **3.1 Perbarui `prisma/seed.ts`**:
+- [x] **3.1 Perbarui `prisma/seed.ts`**:
   - Ganti seluruh link `https://drive.google.com/file/d/...` pada `seedMous()` dengan URL internal korporat:
     - `https://storage.marcom-internal.corp/mou-documents/PKS_Warung_Berkah_Abadi_2025.pdf`
     - `https://storage.marcom-internal.corp/mou-documents/MOU_Campus_UGM_Canopy_2026.pdf`
     - `https://storage.marcom-internal.corp/mou-documents/PKS_Dewata_Selular_Flagship_2026.pdf`
     - `https://storage.marcom-internal.corp/mou-documents/MOU_Solo_Megah_Branding_2026.pdf`
-- [ ] **3.2 Jalankan Seeder Database**:
+- [x] **3.2 Jalankan Seeder Database**:
   - `npx prisma db seed`
-- [ ] **3.3 Jalankan Invariant & Test Verification**:
+- [x] **3.3 Jalankan Invariant & Test Verification**:
   - `npm run drift:check` (56 spec-plan pairs)
   - `npm run build:check` (0 error TypeScript)
   - `npm test` (0 failures)
@@ -95,10 +95,10 @@ Membersihkan seluruh ketergantungan dan referensi Google Drive dari modul MOUs d
 
 ## 7. Invariant Compliance Checklist
 
-- [ ] **Single-Tenant**: Nol workspace isolation leakage.
-- [ ] **SSOT**: Tipe `Mou` dan `MarcomMou` tetap konsisten menggunakan `docPath`.
-- [ ] **Zero Google Drive references**: Tidak ada string `drive.google.com` yang tersisa di `MousView`.
-- [ ] **Verification Gates**:
+- [x] **Single-Tenant**: Nol workspace isolation leakage.
+- [x] **SSOT**: Tipe `Mou` dan `MarcomMou` tetap konsisten menggunakan `docPath`.
+- [x] **Zero Google Drive references**: Tidak ada string `drive.google.com` yang tersisa di `MousView`.
+- [x] **Verification Gates**:
   - `npm run drift:check` PASS (56 spec-plan pairs)
   - `npm test` PASS (778+ tests, 0 failures)
   - `npm run build:check` PASS (0 TypeScript errors)

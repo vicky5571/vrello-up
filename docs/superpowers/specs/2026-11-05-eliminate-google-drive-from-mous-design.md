@@ -1,7 +1,7 @@
 # Specification: Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage
 
 ## Status
-APPROVED (ADR-0029)
+IMPLEMENTED (ADR-0029)
 
 ## Date
 2026-11-05

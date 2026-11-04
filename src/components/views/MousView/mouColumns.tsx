@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Building2, Layers, AlertTriangle, Download, Clock, Check, ChevronRight, FileText, ExternalLink } from "lucide-react";
+import { Store, Building2, Layers, AlertTriangle, Download, Clock, Check, ChevronRight, FileText } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
 import {
   createMarcomColumnHelper,
@@ -357,11 +357,7 @@ export function buildMouColumns({
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100/80 dark:bg-slate-800/60 hover:bg-slate-200/80 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/60 backdrop-blur-xs transition-colors cursor-pointer shadow-2xs group"
               title="Lihat Pratinjau Dokumen"
             >
-              {parsed.isExternal ? (
-                <ExternalLink className="w-3 h-3 text-blue-500 dark:text-blue-400 group-hover:scale-105 transition-transform shrink-0" />
-              ) : (
-                <FileText className="w-3 h-3 text-slate-500 dark:text-slate-400 group-hover:scale-105 transition-transform shrink-0" />
-              )}
+              <FileText className="w-3 h-3 text-slate-500 dark:text-slate-400 group-hover:scale-105 transition-transform shrink-0" />
               <span className="truncate max-w-[85px]">{parsed.label}</span>
             </button>
             <a

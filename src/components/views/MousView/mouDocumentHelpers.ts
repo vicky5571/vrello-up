@@ -6,7 +6,6 @@
 export type MouDocumentType =
   | "INTERNAL_PDF"
   | "INTERNAL_IMAGE"
-  | "EXTERNAL_URL"
   | "EMPTY";
 
 export interface ParsedMouDocument {
@@ -15,7 +14,6 @@ export interface ParsedMouDocument {
   previewUrl: string;
   downloadUrl: string;
   filename: string;
-  isExternal: boolean;
   label: string;
 }
 
@@ -49,15 +47,6 @@ export function getFileExtension(pathOrUrl: string): string {
 }
 
 /**
- * Memeriksa apakah URL merupakan tautan eksternal (http/https).
- */
-export function isExternalUrl(pathOrUrl: string): boolean {
-  if (!pathOrUrl) return false;
-  const trimmed = pathOrUrl.trim();
-  return /^https?:\/\//i.test(trimmed);
-}
-
-/**
  * Menganalisis path dokumen MOU dan mengembalikan metadata terstruktur untuk preview dan download.
  */
 export function parseMouDocumentSource(
@@ -71,7 +60,6 @@ export function parseMouDocumentSource(
       previewUrl: "",
       downloadUrl: "",
       filename: "",
-      isExternal: false,
       label: "Tidak ada berkas",
     };
   }
@@ -84,30 +72,7 @@ export function parseMouDocumentSource(
       previewUrl: "",
       downloadUrl: "",
       filename: "",
-      isExternal: false,
       label: "Tidak ada berkas",
-    };
-  }
-
-  const isExternal = isExternalUrl(raw);
-
-  if (isExternal) {
-    const isGoogleDrive =
-      raw.includes("drive.google.com") || raw.includes("docs.google.com");
-    const filename = isGoogleDrive
-      ? fallbackTitle
-        ? `${fallbackTitle} (Google Drive)`
-        : "Dokumen Google Drive"
-      : extractCleanFilename(raw) || fallbackTitle || "Dokumen Eksternal";
-
-    return {
-      type: "EXTERNAL_URL",
-      rawPath: raw,
-      previewUrl: raw,
-      downloadUrl: raw,
-      filename,
-      isExternal: true,
-      label: isGoogleDrive ? "Google Drive" : "Tautan Eksternal",
     };
   }
 
@@ -120,18 +85,6 @@ export function parseMouDocumentSource(
     ? `${raw}&download=1`
     : `${raw}?download=1`;
 
-  if (ext === "pdf") {
-    return {
-      type: "INTERNAL_PDF",
-      rawPath: raw,
-      previewUrl: raw,
-      downloadUrl,
-      filename: cleanName.endsWith(".pdf") ? cleanName : `${cleanName}.pdf`,
-      isExternal: false,
-      label: "Dokumen PDF",
-    };
-  }
-
   if (IMAGE_EXTENSIONS.has(ext)) {
     return {
       type: "INTERNAL_IMAGE",
@@ -139,20 +92,17 @@ export function parseMouDocumentSource(
       previewUrl: raw,
       downloadUrl,
       filename: cleanName,
-      isExternal: false,
-      label: "Foto / Pindaian Fisik",
+      label: "Gambar Scan",
     };
   }
 
-  // Berkas jenis lainnya (misal docx, zip, dsb.)
   return {
     type: "INTERNAL_PDF",
     rawPath: raw,
     previewUrl: raw,
     downloadUrl,
-    filename: cleanName,
-    isExternal: false,
-    label: "Berkas MOU",
+    filename: cleanName.endsWith(".pdf") ? cleanName : `${cleanName}.pdf`,
+    label: "Dokumen PDF",
   };
 }
 
