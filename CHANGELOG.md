@@ -6,6 +6,12 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `refactor(navigation)`: Remove redundant Quick Views section from MoreAppsMenu
+  - Eliminated Quick Views section (Home, List, Kanban Board, Calendar) from `MoreAppsMenu.tsx`
+  - Cleaned unused icon imports and `handleLaunchView`
+  - Added unit test coverage in `src/components/modals/MoreAppsMenu.test.ts`
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `feat(users)`: Make branch pills clickable to open branch assignment modal
   - Converted branch badge pills in `UserActiveRow.tsx` into interactive buttons opening `UserBranchSelectModal`
   - Added hover and focus feedback styles (`hover:bg-primary/20 hover:border-primary/30 cursor-pointer`)

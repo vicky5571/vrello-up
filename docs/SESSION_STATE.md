@@ -15,7 +15,13 @@
 
 ## What Was Completed This Session
 
-1. **Pill Cabang Interaktif di Halaman Manajemen Pengguna (`UsersView`):**
+1. **Pembersihan Menu Quick Views di MoreAppsMenu:**
+   - Menghapus bagian redundan Quick Views (Home, List, Kanban Board, Calendar) dari `src/components/modals/MoreAppsMenu.tsx`.
+   - Membersihkan impor icon dan fungsi handler yang tidak lagi digunakan.
+   - Menambahkan pengujian otomatis di `src/components/modals/MoreAppsMenu.test.ts`.
+   - Verifikasi: `npm run drift:check`, `npm run build:check`, `npm test` seluruhnya lulus 100%.
+
+2. **Pill Cabang Interaktif di Halaman Manajemen Pengguna (`UsersView`):**
    - Mengubah elemen badge/pill nama cabang di `UserActiveRow.tsx` menjadi tombol interaktif yang membuka formulir `UserBranchSelectModal` (Penugasan Cabang) ketika diklik.
    - Menambahkan visual state hover dan kursor interaktif (`cursor-pointer hover:bg-primary/20`).
    - Memperbarui pengujian otomatis di `src/components/views/UsersView/userBranchAssignment.test.ts`.

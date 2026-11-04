@@ -5,10 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   Sparkles,
-  Calendar,
-  List as ListIcon,
-  Kanban,
-  Home,
   Plus,
   Moon,
   Sun,
@@ -17,7 +13,6 @@ import {
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useTheme } from "next-themes";
-import { ViewMode } from "@/types";
 
 interface MoreAppsMenuProps {
   isOpen: boolean;
@@ -27,7 +22,6 @@ interface MoreAppsMenuProps {
 export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
   const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
   const setAiDrawerOpen = useWorkspaceStore((s) => s.setAiDrawerOpen);
-  const setActiveView = useWorkspaceStore((s) => s.setActiveView);
   const setCreateTaskModalOpen = useWorkspaceStore((s) => s.setCreateTaskModalOpen);
   const { theme, setTheme } = useTheme();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -51,11 +45,6 @@ export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen, onClose]);
-
-  const handleLaunchView = (view: ViewMode) => {
-    setActiveView(view);
-    onClose();
-  };
 
   return (
     <AnimatePresence>
@@ -121,47 +110,6 @@ export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
                   AI
                 </span>
               </button>
-            </div>
-
-            {/* Quick View Switchers */}
-            <div className="py-2.5 space-y-1 border-b border-slate-100 dark:border-slate-800">
-              <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Quick Views
-              </div>
-              <div className="grid grid-cols-2 gap-1 px-1">
-                <button
-                  type="button"
-                  onClick={() => handleLaunchView("home")}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer text-left"
-                >
-                  <Home className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Home</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleLaunchView("list")}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer text-left"
-                >
-                  <ListIcon className="w-3.5 h-3.5 text-blue-500" />
-                  <span>List</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleLaunchView("board")}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer text-left"
-                >
-                  <Kanban className="w-3.5 h-3.5 text-orange-500" />
-                  <span>Kanban Board</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleLaunchView("calendar")}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer text-left"
-                >
-                  <Calendar className="w-3.5 h-3.5 text-rose-500" />
-                  <span>Calendar</span>
-                </button>
-              </div>
             </div>
 
             {/* Quick Actions & Modals */}
