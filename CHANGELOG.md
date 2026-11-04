@@ -6,6 +6,12 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(users)`: Make branch pills clickable to open branch assignment modal
+  - Converted branch badge pills in `UserActiveRow.tsx` into interactive buttons opening `UserBranchSelectModal`
+  - Added hover and focus feedback styles (`hover:bg-primary/20 hover:border-primary/30 cursor-pointer`)
+  - Added automated unit test assertion in `src/components/views/UsersView/userBranchAssignment.test.ts`
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `style(profile)`: Remove redundant user name badge from ProfileHeader
   - Removed `{userName}` pill badge next to "Profil & Keamanan Akun" title in `ProfileHeader.tsx`
   - Cleaned unused `userName` prop from `ProfileHeaderProps` and `ProfileView.tsx`

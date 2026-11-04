@@ -58,6 +58,7 @@ describe("User Branch Assignment UI & Coordinator Invariants", () => {
     assert.match(rowContent, /formatUserBranchBadges/);
     assert.match(rowContent, /Nasional/);
     assert.match(rowContent, /onEditBranches/);
+    assert.match(rowContent, /<button[\s\S]*?onClick=\{\(\) => onEditBranches\(user\)\}[\s\S]*?\{b\}[\s\S]*?<\/button>/);
   });
 
   it("verifies accessible native checkbox inputs in ApproveUserModal and UserBranchSelectModal", () => {

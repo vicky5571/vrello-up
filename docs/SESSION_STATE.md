@@ -15,7 +15,13 @@
 
 ## What Was Completed This Session
 
-1. **Pembersihan Badge Redundan di Header Halaman Profil:**
+1. **Pill Cabang Interaktif di Halaman Manajemen Pengguna (`UsersView`):**
+   - Mengubah elemen badge/pill nama cabang di `UserActiveRow.tsx` menjadi tombol interaktif yang membuka formulir `UserBranchSelectModal` (Penugasan Cabang) ketika diklik.
+   - Menambahkan visual state hover dan kursor interaktif (`cursor-pointer hover:bg-primary/20`).
+   - Memperbarui pengujian otomatis di `src/components/views/UsersView/userBranchAssignment.test.ts`.
+   - Verifikasi: `npm run drift:check`, `npm run build:check`, `npm test` seluruhnya lulus 100%.
+
+2. **Pembersihan Badge Redundan di Header Halaman Profil:**
    - Menghapus badge/pill `{userName}` di samping judul `"Profil & Keamanan Akun"` pada `src/components/views/ProfileView/ProfileHeader.tsx`.
    - Membersihkan prop `userName` yang tidak lagi dipakai dari `ProfileHeaderProps` dan pemanggilnya di `ProfileView.tsx`.
    - Verifikasi: `npm run drift:check`, `npm run build:check`, `npm test` seluruhnya lulus 100%.

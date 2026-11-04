@@ -83,21 +83,32 @@ export function UserActiveRow({
         ) : (
           <div className="flex items-center gap-1.5 flex-wrap max-w-xs">
             {formatUserBranchBadges(user.role, user.assignedBranchIds, branches).map(
-              (b, idx) => (
-                <span
-                  key={idx}
-                  className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20"
-                >
-                  {b}
-                </span>
-              )
+              (b, idx) =>
+                !isBusy && !isSupervisorBlocked ? (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => onEditBranches(user)}
+                    title="Ubah Penugasan Cabang"
+                    className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:border-primary/30 transition-colors cursor-pointer text-left"
+                  >
+                    {b}
+                  </button>
+                ) : (
+                  <span
+                    key={idx}
+                    className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20"
+                  >
+                    {b}
+                  </span>
+                )
             )}
             {!isBusy && !isSupervisorBlocked && (
               <button
                 type="button"
                 onClick={() => onEditBranches(user)}
                 title="Ubah Penugasan Cabang"
-                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
               >
                 <Building2 className="w-3.5 h-3.5" />
               </button>
