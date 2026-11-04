@@ -6,6 +6,12 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `refactor(navigation)`: Remove redundant dark mode toggle from MoreAppsMenu
+  - Deleted dark mode toggle button and `next-themes` dependency from `src/components/modals/MoreAppsMenu.tsx`
+  - Theme toggling remains natively available via TopNav `<ThemeToggle />`
+  - Updated unit test assertions in `src/components/modals/MoreAppsMenu.test.ts`
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `refactor(modals)`: Migrate Backup & Data to More Apps Menu and eliminate SettingsModal
   - Integrated JSON Export and JSON Import into `src/components/modals/MoreAppsMenu.tsx` with hidden file picker and restore confirmation
   - Deleted redundant "New Task" button from `MoreAppsMenu.tsx`

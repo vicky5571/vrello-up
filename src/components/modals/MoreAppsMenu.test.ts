@@ -87,7 +87,7 @@ describe("MoreAppsMenu & SettingsModal YAGNI Elimination (ADR-0031)", () => {
     );
   });
 
-  it("retains core system tools and theme toggle in MoreAppsMenu", () => {
+  it("retains core system tools and eliminates dark mode toggle in MoreAppsMenu", () => {
     assert.ok(
       moreContent.includes("Command Palette"),
       "Expected MoreAppsMenu to retain Command Palette"
@@ -96,9 +96,20 @@ describe("MoreAppsMenu & SettingsModal YAGNI Elimination (ADR-0031)", () => {
       moreContent.includes("Brain² AI Assistant"),
       "Expected MoreAppsMenu to retain Brain² AI Assistant"
     );
-    assert.ok(
+    assert.strictEqual(
       moreContent.includes("Toggle"),
-      "Expected MoreAppsMenu to retain Toggle Light/Dark mode"
+      false,
+      "Expected MoreAppsMenu not to contain Toggle Light/Dark mode"
+    );
+    assert.strictEqual(
+      moreContent.includes("next-themes"),
+      false,
+      "Expected MoreAppsMenu not to import next-themes"
+    );
+    assert.strictEqual(
+      moreContent.includes("setTheme"),
+      false,
+      "Expected MoreAppsMenu not to call setTheme"
     );
   });
 

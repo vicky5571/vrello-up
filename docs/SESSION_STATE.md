@@ -15,7 +15,13 @@
 
 ## What Was Completed This Session
 
-1. **Migrasi Backup & Data ke MoreAppsMenu dan Eliminasi SettingsModal (ADR-0031 — Implementation Complete):**
+1. **Pembersihan Toggle Dark Mode di MoreAppsMenu:**
+   - Menghapus tombol toggle dark/light mode dan dependensi `next-themes` dari `src/components/modals/MoreAppsMenu.tsx`.
+   - Mengeliminasi ikon `Sun`, `Moon` yang tidak lagi digunakan dan merapikan layout section bawah.
+   - Mengubah unit test di `src/components/modals/MoreAppsMenu.test.ts` untuk memastikan tidak ada kontrol tema redundan di menu More.
+   - Verifikasi: `npm run drift:check`, `npm run build:check`, `npm test` seluruhnya lulus 100%.
+
+2. **Migrasi Backup & Data ke MoreAppsMenu dan Eliminasi SettingsModal (ADR-0031 — Implementation Complete):**
    - **`MoreAppsMenu.tsx` Enhancement:**
      - Menghubungkan Zustand store `spaces`, `tasks`, `tags`, dan `importBackup`.
      - Mengimplementasikan aksi **Export Backup (JSON)** yang langsung men-download berkas `vrello-backup-YYYY-MM-DD.json`.

@@ -8,14 +8,11 @@ import {
   Database,
   Download,
   Upload,
-  Moon,
-  Sun,
   X,
   Grid3X3,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
-import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
 interface MoreAppsMenuProps {
@@ -35,7 +32,6 @@ export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
   const setAiDrawerOpen = useWorkspaceStore((s) => s.setAiDrawerOpen);
   const importBackup = useWorkspaceStore((s) => s.importBackup);
 
-  const { theme, setTheme } = useTheme();
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -169,7 +165,7 @@ export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
             </div>
 
             {/* Data & Storage */}
-            <div className="py-2.5 space-y-1 border-b border-slate-100 dark:border-slate-800">
+            <div className="pt-2.5 space-y-1">
               <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                 <Database className="w-3 h-3 text-indigo-500" />
                 <span>Backup & Data</span>
@@ -204,24 +200,6 @@ export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
                 onChange={handleImportFile}
                 className="hidden"
               />
-            </div>
-
-            {/* System Preferences */}
-            <div className="pt-2 space-y-1">
-              <button
-                type="button"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  {theme === "dark" ? (
-                    <Sun className="w-3.5 h-3.5 text-amber-400" />
-                  ) : (
-                    <Moon className="w-3.5 h-3.5 text-slate-500" />
-                  )}
-                  <span>Toggle {theme === "dark" ? "Light" : "Dark"} Mode</span>
-                </div>
-              </button>
             </div>
           </motion.div>
         </div>
