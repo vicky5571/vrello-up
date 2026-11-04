@@ -8,14 +8,27 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Integrasi EventMediaSection ke Modal Buat Event Baru (EventCreateModal) — ADR-0027 — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026)  
+**Active Feature:** Sub-Komponen ContentMediaSection pada Modal Schedule New Post (ADR-0028) — **PLANNING & HANDOVER COMPLETE**  
+**Previous Feature:** Integrasi EventMediaSection ke Modal Buat Event Baru (EventCreateModal) — ADR-0027  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Integrasi EventMediaSection ke Modal Buat Event Baru (ADR-0027 — Implementation Complete):**
+1. **Sub-Komponen ContentMediaSection pada Modal Schedule New Post (ADR-0028 — Planning & Handover):**
+   - **Checkpoints Lolos Persetujuan**:
+     - Checkpoint 1 (Decision Problem & Candidate Options): User menyetujui **Opsi A-Lite** (buat sub-komponen `ContentMediaSection.tsx`, pasang di `ContentPostModal.tsx`, tunda refaktor `ContentDrawer.tsx` sebagai tech debt resmi demi zero-risk deadline).
+     - Checkpoint 2 (Scope & Asumsi Spesifikasi): User menyetujui scope, non-goals, dan paritas dengan `ContentDrawer`.
+     - Checkpoint 3 (Phasing Strategy): User menyetujui 3 fase implementasi.
+   - **Dokumentasi Terbit (File-First, Content-Second)**:
+     - `docs/adr/0028-content-post-modal-media-section.md`: Keputusan arsitektur Opsi A-Lite dan tracking technical debt `DEBT-CP-001`.
+     - `docs/superpowers/specs/2026-11-05-content-post-modal-media-section-design.md`: Spesifikasi detail sub-komponen `ContentMediaSection.tsx`, kontrak interface props, alur upload Google Drive, dan integrasi JSX di modal.
+     - `docs/superpowers/plans/2026-11-05-content-post-modal-media-section.md`: Rencana eksekusi 3 fase dengan file manifest, risk mitigation, dan invariant checklist.
+     - `docs/handover-content-post-modal-media-section.md`: Handover siap eksekusi dengan snippet kode lengkap, instruksi perubahan presisi, dan daftar "Do Not Touch".
+   - **Verification Gates**:
+     - `npm run drift:check`: ✅ No drift detected (55 spec-plan pairs).
+
+2. **Integrasi EventMediaSection ke Modal Buat Event Baru (ADR-0027 — Implementation Complete):**
    - **`EventCreateModal.tsx` Integration:**
      - Imported `TaskAttachment` from `@/types` and `EventMediaSection` from `./EventMediaSection`.
      - Added local states `mediaAttachments` (`TaskAttachment[]`) and `mediaUrl` (`string`).
