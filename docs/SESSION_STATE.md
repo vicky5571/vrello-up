@@ -8,14 +8,28 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Field Event Thumbnail Compression & Cover Preview (ADR-0023)  
+**Active Feature:** Complete Elimination of Document Status & Supabase Storage Focus (ADR-0025) — **PLANNING & HANDOVER COMPLETE**  
+**Previous Feature:** Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Documents Detail & Edit Drawer Implementation (ADR-0024):**
+1. **Complete Elimination of Document Status & Supabase Storage Focus (ADR-0025 — Planning Mode):**
+   - **Mode:** Strict Planning-Only session ("don't code in this session").
+   - **ADR-0025 (`docs/adr/0025-eliminate-document-status-overengineering.md`):**
+     - Evaluated `status` on `DocumentItem` as an orphaned speculative abstraction with 0 state machines, hardcoded `selectedStatus = "ALL"`, no filtering, and ad-hoc seed values.
+     - Decided on Option A (Complete Database & Full-Stack Elimination): Dropping `status` column from `model DocumentItem`, removing `DocumentStatus` types, deleting `documentTaxonomy.ts`, cleaning API routes and UI components, focusing document uploads on Supabase Storage (`marcom-documents` bucket), and re-seeding cleanly.
+   - **Specification (`docs/superpowers/specs/2026-11-05-eliminate-document-status-design.md`):**
+     - Detailed contracts: Prisma model cleanup, migration generation (`drop_document_item_status`), seeder cleanup, SSoT type updates, API endpoints update (`POST` and `PATCH /api/marcom/documents`), KPI row Card 3 conversion to "Penyimpanan Cloud", and automated verification.
+   - **Implementation Plan (`docs/superpowers/plans/2026-11-05-eliminate-document-status.md`):**
+     - 4 atomic execution phases with exact tasks, verification steps, and quality gates.
+   - **Handover (`docs/handover-eliminate-document-status.md`):**
+     - Execution-ready guide with exact code snippets, numbered execution order (Steps 1–11), explicit "Do Not Touch" list, and acceptance criteria checklist.
+   - **Storage Decoupling Clarification:**
+     - Confirmed Documents uploads utilize Supabase Storage (`marcom-documents` bucket), mitigating Google Drive personal token expiration and abuse/ban heuristics.
+
+2. **Documents Detail & Edit Drawer Implementation (ADR-0024):**
    - **Dedicated Creation Modal (`src/components/views/DocumentsView/DocumentCreateModal.tsx`):**
      - Centered kickoff modal dialog for uploading new document assets cleanly.
      - Validates name, category, fileType, and filePath. Supports local file upload (`POST /api/marcom/uploads`, `kind: "documents"`) and Google Drive file picker/URL embedding (`useGoogleDrivePicker`, `GoogleDriveLinkModal`).
@@ -1069,23 +1083,30 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (all invariants pass, coordinator LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (all 52 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm run lint` → ✅ 0 warnings or errors
-- `npm test` → ✅ 734 passed, 0 failed (129 suites)
-- `npm run test:smoke` → ✅ 100 passed, 0 failed
-- `npm run build` → ✅ 31/31 pages compiled cleanly
+- `npm test` → ✅ 775 passed, 0 failed across 138 suites
+- `npm run test:smoke` → ✅ 104 passed, 0 failed
 
 ---
 
 ## Blocked / Risks
 
-- None.
+- None. Planning complete and execution-ready.
 
 ---
 
 ## Next Step for Following Session
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. Push committed branch to remote (`git push origin vicky`).
-3. Continue standardizing any remaining views if requested by user.
+2. Execute Implementation Plan (`docs/superpowers/plans/2026-11-05-eliminate-document-status.md`) following `docs/handover-eliminate-document-status.md`:
+   - Step 1: Remove `status` from `model DocumentItem` in `prisma/schema.prisma`.
+   - Step 2: Run `npx prisma migrate dev --name drop_document_item_status`.
+   - Step 3: Remove `status` fields from `prisma/seed.ts` and run `npx prisma db seed`.
+   - Step 4: Remove `DocumentStatus` from `src/types/index.ts`.
+   - Step 5: Delete `documentTaxonomy.ts` & `documentTaxonomy.test.ts`.
+   - Step 6: Clean `/api/marcom/documents` routes.
+   - Step 7: Clean pure helpers in `documentWorkflow.ts`.
+   - Step 8: Clean UI files (`DocumentCreateModal`, `DocumentDrawer`, `DocumentCardsView`, `DocumentsView`).
+   - Step 9: Update unit tests in `documentDrawer.test.ts` & `documentWorkflow.test.ts`.
+   - Step 10: Run full verification suite (`npm run drift:check`, `npm run build:check`, `npm test`).
