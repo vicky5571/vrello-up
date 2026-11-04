@@ -8,14 +8,26 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Eliminate Legacy Drive/Cloud Storage Badges & Standardize Documents KPIs — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Complete Elimination of Document Status & Supabase Storage Focus (ADR-0025)  
+**Active Feature:** Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026) — **PLANNING & HANDOVER COMPLETE**  
+**Previous Feature:** Eliminate Legacy Drive/Cloud Storage Badges & Standardize Documents KPIs  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Eliminate Legacy Drive/Cloud Storage Badges & Standardize Documents KPIs:**
+1. **Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026 — Planning Mode):**
+   - **Mode:** Strict Planning-Only session.
+   - **ADR-0026 (`docs/adr/0026-documents-deep-linking-drawer.md`):**
+     - Formulated decision problem: Replacing raw file path copy with shareable deep-link URL opening Vrello with target document drawer open.
+     - Selected Option A: URL query parameter `docId` with bidirectional `replaceState` sync and `buildShareableDocumentUrl`.
+   - **Specification (`docs/superpowers/specs/2026-11-05-documents-deep-linking-design.md`):**
+     - Full UX flow, data contracts, coordinator auto-hydration, popstate handling, and new-tab navigation.
+   - **Implementation Plan (`docs/superpowers/plans/2026-11-05-documents-deep-linking.md`):**
+     - 4 atomic execution phases with exact tasks, verification steps, and quality gates.
+   - **Handover (`docs/handover-documents-deep-linking.md`):**
+     - Complete, execution-ready guide with line-by-line snippets for `urlState.ts`, `DocumentsView.tsx`, `DocumentCardsView.tsx`, and `DocumentDrawer.tsx`.
+
+2. **Eliminate Legacy Drive/Cloud Storage Badges & Standardize Documents KPIs:**
    - **`DocumentCardsView.tsx`:** Removed obsolete `Cloud` and `HardDrive` storage badges from the card footer, aligning actions neatly to the right. Removed `isCloud` computation and unused imports.
    - **`DocumentsView.tsx`:**
      - Removed storage icons (`Cloud` / `HardDrive`) from the "Nama Dokumen" table column.
