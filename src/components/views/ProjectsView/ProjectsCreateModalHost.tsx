@@ -21,7 +21,7 @@ import {
 } from "./createModalHelpers";
 
 const ContentPostModal = dynamic(() => import("@/components/views/ContentPlannerView/ContentPostModal").then((m) => m.ContentPostModal), { ssr: false });
-const EventFormModal = dynamic(() => import("@/components/views/EventsView/EventFormModal").then((m) => m.EventFormModal), { ssr: false });
+const EventCreateModal = dynamic(() => import("@/components/views/EventsView/EventCreateModal").then((m) => m.EventCreateModal), { ssr: false });
 const PlacementFormModal = dynamic(() => import("@/components/views/PlacementsView/PlacementFormModal").then((m) => m.PlacementFormModal), { ssr: false });
 
 export interface ProjectsCreateModalHostProps {
@@ -203,14 +203,13 @@ export function ProjectsCreateModalHost({
       )}
 
       {createRequest.type === "event" && (
-        <EventFormModal
+        <EventCreateModal
           isOpen={true}
           onClose={onClose}
-          event={null}
           defaultDate={sanitizeDateInput(createRequest.date)}
           branches={branches.map((b) => ({ id: b.id, name: b.name }))}
           members={members}
-          onSaved={handleEventSaved}
+          onCreated={handleEventSaved}
         />
       )}
 

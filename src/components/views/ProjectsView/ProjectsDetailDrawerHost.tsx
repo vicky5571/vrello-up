@@ -21,10 +21,10 @@ const ContentDrawer = dynamic(
   { ssr: false },
 );
 
-const EventFormModal = dynamic(
+const EventDrawer = dynamic(
   () =>
-    import("@/components/views/EventsView/EventFormModal").then(
-      (m) => m.EventFormModal,
+    import("@/components/views/EventsView/EventDrawer").then(
+      (m) => m.EventDrawer,
     ),
   { ssr: false },
 );
@@ -59,6 +59,7 @@ export function ProjectsDetailDrawerHost({
   const updateCachedPost = useMarcomDataStore((s) => s.updateCachedPost);
   const removeCachedPost = useMarcomDataStore((s) => s.removeCachedPost);
   const updateCachedEvent = useMarcomDataStore((s) => s.updateCachedEvent);
+  const removeCachedEvent = useMarcomDataStore((s) => s.removeCachedEvent);
   const updateCachedPlacement = useMarcomDataStore((s) => s.updateCachedPlacement);
   const branches = useMarcomDataStore((s) => s.branches);
   const outletsList = useMarcomDataStore((s) => s.outlets);
@@ -134,14 +135,32 @@ export function ProjectsDetailDrawerHost({
   );
 
   // Field Event Handlers
-  const handleEventSaved = useCallback(
-    (savedEvent: FieldEventItem) => {
+  const handleUpdateEvent = useCallback(
+    async (savedEvent: FieldEventItem) => {
       updateCachedEvent(savedEvent);
       toast.success("Field event berhasil disimpan");
-      onClose();
       if (onRefresh) onRefresh();
     },
-    [updateCachedEvent, onClose, onRefresh],
+    [updateCachedEvent, onRefresh],
+  );
+
+  const handleDeleteEvent = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        const res = await fetch(`/api/marcom/events/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Gagal menghapus event");
+        removeCachedEvent(id);
+        toast.success("Field event berhasil dihapus");
+        onClose();
+        if (onRefresh) onRefresh();
+        return true;
+      } catch (err) {
+        console.error("Failed to delete event:", err);
+        toast.error("Gagal menghapus event");
+        return false;
+      }
+    },
+    [removeCachedEvent, onClose, onRefresh],
   );
 
   // Placement Form Save Handler
@@ -191,13 +210,13 @@ export function ProjectsDetailDrawerHost({
       )}
 
       {selectedItem._type === "event" && (
-        <EventFormModal
-          isOpen={true}
+        <EventDrawer
           event={selectedItem as FieldEventItem}
           onClose={onClose}
+          onUpdateEvent={handleUpdateEvent}
+          onDeleteEvent={handleDeleteEvent}
           branches={branches.map((b) => ({ id: b.id, name: b.name }))}
           members={members}
-          onSaved={handleEventSaved}
         />
       )}
 

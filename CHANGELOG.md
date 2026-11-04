@@ -4,6 +4,20 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-11-04]
+
+- `feat(events)`: Separate Field Event edit drawer and creation modal
+  - Created `EventCreateModal.tsx` centered dialog for fast creation flow
+  - Created `EventDrawer.tsx` 560px slide-over right panel for deep inspection and editing
+  - Integrated `EventMediaSection`, `EventBorrowedEquipmentSection`, and `EventChecklistSection` inside drawer
+  - Updated `EventsView.tsx`, `ProjectsCreateModalHost.tsx`, and `ProjectsDetailDrawerHost.tsx` (maintaining <= 250 LOC)
+  - Decommissioned monolithic 950-line `EventFormModal.tsx`
+  - Added unit test suite `src/components/views/EventsView/eventDrawer.test.ts` (7 passing tests)
+  - Gates: `npm test` 758 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: docs/superpowers/specs/2026-11-04-field-event-edit-drawer-design.md
+  Plan: docs/superpowers/plans/2026-11-04-field-event-edit-drawer.md
+  Refs: docs/adr/0022-field-event-edit-drawer.md
+
 ## [2026-11-03]
 
 - `refactor(content)`: Decouple cover selection from attachment array reordering

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   Flag,
@@ -28,7 +29,8 @@ import { EventsTimelineView } from "./EventsTimelineView";
 import { EventFootageModal } from "./EventFootageModal";
 import { EventCardsView } from "./EventCardsView";
 import { EventTableView } from "./EventTableView";
-import { EventFormModal } from "./EventFormModal";
+import { EventCreateModal } from "./EventCreateModal";
+import { EventDrawer } from "./EventDrawer";
 import {
   STATUS_CONFIG,
   type ActivityViewMode,
@@ -82,9 +84,9 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
   const [selectedStatus, setSelectedStatus] = useState<EventStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState(marcomFilters["events"] || "");
 
-  // Form modal state
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<FieldEventItem | null>(null);
+  // Modal & Drawer states
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedDrawerEvent, setSelectedDrawerEvent] = useState<FieldEventItem | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>();
 
   // Video footage modal state
@@ -136,23 +138,18 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
     setMarcomFilter("events", val);
   };
 
-  // Open Create / Edit Modals
+  // Open Create Modal / Edit Drawer
   const openCreateModal = useCallback((initialDate?: string) => {
-    setEditingEvent(null);
     setDefaultDate(initialDate);
-    setIsFormModalOpen(true);
+    setIsCreateModalOpen(true);
   }, []);
 
-  const openEditModal = useCallback((event: FieldEventItem) => {
-    setEditingEvent(event);
-    setDefaultDate(undefined);
-    setIsFormModalOpen(true);
+  const openEditDrawer = useCallback((event: FieldEventItem) => {
+    setSelectedDrawerEvent(event);
   }, []);
 
-  const closeFormModal = useCallback(() => {
-    setIsFormModalOpen(false);
-    setEditingEvent(null);
-    setDefaultDate(undefined);
+  const closeDrawer = useCallback(() => {
+    setSelectedDrawerEvent(null);
   }, []);
 
   // Delete event
@@ -162,34 +159,30 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
       if (!res.ok) return false;
       toast.success("Field event deleted");
       removeCachedEvent(id);
-      if (editingEvent?.id === id) closeFormModal();
+      if (selectedDrawerEvent?.id === id) closeDrawer();
       return true;
     } catch {
       toast.error("Failed to delete event");
       return false;
     }
-  }, [editingEvent, closeFormModal, removeCachedEvent]);
+  }, [selectedDrawerEvent, closeDrawer, removeCachedEvent]);
 
-  const handleEventSaved = useCallback(
-    (savedItem: FieldEventItem) => {
-      toast.success(
-        editingEvent
-          ? "Field event updated successfully"
-          : "Field event created successfully"
-      );
-      if (editingEvent) {
-        updateCachedEvent(savedItem);
-      } else {
-        addCachedEvent(savedItem);
-      }
+  const handleEventCreated = useCallback(
+    (createdItem: FieldEventItem) => {
+      toast.success("Field event created successfully");
+      addCachedEvent(createdItem);
       storeFetchEvents(true);
     },
-    [
-      editingEvent,
-      addCachedEvent,
-      updateCachedEvent,
-      storeFetchEvents,
-    ]
+    [addCachedEvent, storeFetchEvents]
+  );
+
+  const handleEventUpdated = useCallback(
+    async (updatedItem: FieldEventItem) => {
+      updateCachedEvent(updatedItem);
+      setSelectedDrawerEvent(updatedItem);
+      await storeFetchEvents(true);
+    },
+    [updateCachedEvent, storeFetchEvents]
   );
 
   // Filtered Events
@@ -363,14 +356,14 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
         <EventsCalendarView
           events={filteredEvents}
           conflicts={conflicts}
-          onSelectEvent={openEditModal}
+          onSelectEvent={openEditDrawer}
           onOpenCreateModal={openCreateModal}
         />
       ) : viewMode === "timeline" ? (
         <EventsTimelineView
           events={filteredEvents}
           conflicts={conflicts}
-          onSelectEvent={openEditModal}
+          onSelectEvent={openEditDrawer}
         />
       ) : filteredEvents.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-center px-4">
@@ -399,7 +392,7 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           events={filteredEvents}
           conflicts={conflicts}
           members={members}
-          onSelectEvent={openEditModal}
+          onSelectEvent={openEditDrawer}
           onDeleteEvent={handleDeleteEvent}
           onOpenFootageModal={openFootageModal}
         />
@@ -412,24 +405,37 @@ export function EventsView({ initialView = "cards" }: EventsViewProps = {}) {
           error={error}
           canDelete={can("CREATE_EVENT")}
           onRefresh={() => fetchEvents(true)}
-          onSelectEvent={openEditModal}
+          onSelectEvent={openEditDrawer}
           onDeleteEvent={handleDeleteEvent}
           onOpenFootageModal={openFootageModal}
         />
       )}
       </div>
 
-      {/* Form Modal (Create / Edit) */}
-      <EventFormModal
-        isOpen={isFormModalOpen}
-        onClose={closeFormModal}
-        event={editingEvent}
+      {/* Create Modal */}
+      <EventCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
         defaultDate={defaultDate}
         branches={branches}
         members={members}
-        onSaved={handleEventSaved}
-        onOpenFootageModal={openFootageModal}
+        onCreated={handleEventCreated}
       />
+
+      {/* Edit Drawer */}
+      <AnimatePresence>
+        {selectedDrawerEvent && (
+          <EventDrawer
+            event={selectedDrawerEvent}
+            onClose={closeDrawer}
+            onUpdateEvent={handleEventUpdated}
+            onDeleteEvent={handleDeleteEvent}
+            branches={branches}
+            members={members}
+            onOpenFootageModal={openFootageModal}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Event Footage Player Modal */}
       <EventFootageModal

@@ -8,14 +8,51 @@
 
 **Date:** 2026-11-04  
 **Active Branch:** `vicky`  
-**Active Feature:** Field Event Media Attachments via Google Drive (ADR-0021) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Outlet Draft Photo Supabase Storage Migration (ADR-0020)  
+**Active Feature:** Field Event Edit Drawer & Creation Modal Separation (ADR-0022) — **COMPLETED & VERIFIED**  
+**Previous Feature:** Field Event Media Attachments via Google Drive (ADR-0021)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Field Event Media Attachments Implementation (ADR-0021, Spec & Plan `2026-11-04-field-event-media-attachments`):**
+1. **Field Event Edit Drawer and Modal Separation Implementation (ADR-0022, Spec & Plan `2026-11-04-field-event-edit-drawer`):**
+   - **Dedicated Creation Modal (`src/components/views/EventsView/EventCreateModal.tsx`):**
+     - Centered modal dialog matching Content Planner's fast kickoff paradigm.
+     - Handles event creation form fields: activation name, type (Roadshow, Launch, Booth, Exhibition, Workshop, Community), branch, location, associated outlet, schedule dates, PIC assignment, budget, target attendees, operational notes, and subtask checklist template.
+     - Dispatches `POST /api/marcom/events`, executes cache invalidation via `addCachedEvent`, and displays success toast.
+   - **Slide-Over Edit Drawer (`src/components/views/EventsView/EventDrawer.tsx`):**
+     - 560px wide slide-over right drawer container with Framer Motion spring physics (`damping: 28, stiffness: 300`) and backdrop blur overlay.
+     - Sticky Header: Dynamic event type badge, status selector dropdown (`UPCOMING`, `ON_PROGRESS`, `COMPLETED`, `CANCELLED` backed by `canTransitionEvent` state machine invariants), close (`X`) button, and inline editable title input.
+     - Scrollable Body:
+       - Logistics & Venue: Organizing branch select, venue text input with MapPin icon, and associated outlet select with clear link.
+       - Schedule & Team: Date range with multi-day validation, PIC member assignment with custom fallback, budget IDR with formatIDR, target attendees, and actual attendees.
+       - Live Unit Economics: Real-time projection of cost per attendee (target vs actual realization % badge).
+       - Logistics Notes: Auto-resizing textarea for venue permits and sound rig specifications.
+       - Media & Dokumentasi Event: Reuses `EventMediaSection` for direct device uploads via Google Drive backend, progress indicator, and raw footage archive Drive folder link.
+       - Equipment Borrowing: Reuses `EventBorrowedEquipmentSection` displaying borrowed tools and shortcuts for the event.
+       - Subtasks Checklist: Reuses `EventChecklistSection` for task subtasks.
+     - Sticky Footer:
+       - Left: "Hapus Event" button (`Trash2` icon) with confirmation alert, dispatches `DELETE /api/marcom/events/[id]`, invalidates cache, and closes drawer.
+       - Right: "Tutup" button and "Simpan Perubahan" primary button, dispatches `PATCH /api/marcom/events/[id]`, invalidates cache, and updates drawer state.
+   - **Coordinator Modernization (`src/components/views/EventsView/EventsView.tsx`):**
+     - Replaced `isFormModalOpen` and `editingEvent` with `isCreateModalOpen` and `selectedDrawerEvent`.
+     - Wired `openCreateModal` to "+ Event Baru" header button, empty state CTA, and calendar view empty date slots.
+     - Wired `openEditDrawer` to event card clicks (`EventCardsView`), table row clicks (`EventTableView`), calendar event clicks (`EventsCalendarView`), and timeline bar clicks (`EventsTimelineView`).
+     - Mounted `<EventCreateModal>` and `<AnimatePresence>{selectedDrawerEvent && <EventDrawer ... />}</AnimatePresence>`.
+   - **Projects View Host Updates (`ProjectsCreateModalHost.tsx` & `ProjectsDetailDrawerHost.tsx`):**
+     - Updated `ProjectsCreateModalHost.tsx`: Switched dynamic import to `EventCreateModal` (`onCreated={handleEventSaved}`), maintained 237 LOC (strictly $\le 250$ LOC).
+     - Updated `ProjectsDetailDrawerHost.tsx`: Switched dynamic import to `EventDrawer` (`onUpdateEvent`, `onDeleteEvent` with `removeCachedEvent`), maintained 247 LOC (strictly $\le 250$ LOC).
+   - **Decommissioned Monolithic `EventFormModal.tsx`:**
+     - Verified zero remaining references across `src/` with `git grep "EventFormModal"`.
+     - Deleted 950-line `src/components/views/EventsView/EventFormModal.tsx`.
+   - **Unit Tests Added (`src/components/views/EventsView/eventDrawer.test.ts`):**
+     - 7 unit tests covering deletion of `EventFormModal`, existence of `EventCreateModal` and `EventDrawer`, `EventsView.tsx` coordinator wiring, coordinator host file size limits ($\le 250$ LOC), dynamic import bindings, event machine transitions, and SSOT contracts.
+   - **Verification Gates Passed:**
+     - `npm run drift:check`: ✅ No drift detected. All invariants pass.
+     - `npm run build:check`: ✅ TypeScript compiled with 0 errors.
+     - `npm test`: ✅ 758 passed, 0 failed across 135 suites.
+
+2. **Field Event Media Attachments Implementation (ADR-0021, Spec & Plan `2026-11-04-field-event-media-attachments`):**
    - **Database Schema & Migration:**
      - Modified `prisma/schema.prisma`: Added `mediaAttachments Json @default("[]")` to `FieldEvent` model; removed `EventFootage` relation and dropped `EventFootage` model.
      - Generated and applied migration `prisma/migrations/20261104000000_add_field_event_media_attachments/migration.sql`.

@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   Flag,
-  Plus,
   X,
   MapPin,
   Store,
@@ -14,9 +13,7 @@ import {
 import type {
   FieldEventItem,
   EventStatus,
-  EventFootage,
   User,
-  TaskAttachment,
 } from "@/types";
 import { cn, formatIDR } from "@/lib/utils";
 import {
@@ -24,32 +21,25 @@ import {
   findMemberForPic,
 } from "@/lib/marcom/eventChecklist";
 import { EventChecklistSection } from "./EventChecklistSection";
-import { EventBorrowedEquipmentSection } from "./EventBorrowedEquipmentSection";
-import { EventMediaSection } from "./EventMediaSection";
-import { canTransitionEvent } from "@/lib/marcom/eventMachine";
 import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
 
-interface EventFormModalProps {
+export interface EventCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  event: FieldEventItem | null;
   defaultDate?: string;
   branches: { id: string; name: string }[];
   members: User[];
-  onSaved: (savedEvent: FieldEventItem, locationLabel?: string) => void;
-  onOpenFootageModal?: (event: FieldEventItem, clipIdx?: number) => void;
+  onCreated: (createdEvent: FieldEventItem) => void;
 }
 
-export function EventFormModal({
+export function EventCreateModal({
   isOpen,
   onClose,
-  event,
   defaultDate,
   branches,
   members,
-  onSaved,
-  onOpenFootageModal,
-}: EventFormModalProps) {
+  onCreated,
+}: EventCreateModalProps) {
   const [isSaving, setIsSaving] = useState(false);
 
   // Form states
@@ -64,10 +54,19 @@ export function EventFormModal({
   const [eventPicName, setEventPicName] = useState("");
   const [picMemberId, setPicMemberId] = useState<string>("");
   const [eventStatus, setEventStatus] = useState<EventStatus>("UPCOMING");
-  const [eventBudget, setEventBudget] = useState<string>("0");
-  const [eventTargetAttendee, setEventTargetAttendee] = useState<string>("100");
+  const [eventBudget, setEventBudget] = useState<string>("15000000");
+  const [eventTargetAttendee, setEventTargetAttendee] = useState<string>("250");
   const [eventAttendeeCount, setEventAttendeeCount] = useState<string>("0");
   const [eventNotes, setEventNotes] = useState("");
+  const [eventOutletId, setEventOutletId] = useState<string>("");
+  const [outlets, setOutlets] = useState<
+    Array<{ id: string; name: string; code: string; branchId?: string; city?: string }>
+  >([]);
+
+  // Subtasks checklist initialized with default template
+  const [eventSubtasks, setEventSubtasks] = useState<
+    { id: string; title: string; completed?: boolean }[]
+  >([]);
 
   const handleNumberInputChange = (
     value: string,
@@ -82,16 +81,7 @@ export function EventFormModal({
     setter(normalized);
   };
 
-  // Subtasks checklist
-  const [eventSubtasks, setEventSubtasks] = useState<
-    { id: string; title: string; completed?: boolean }[]
-  >([]);
-
-  // Media attachments
-  const [mediaAttachments, setMediaAttachments] = useState<TaskAttachment[]>([]);
-  const [eventOutletId, setEventOutletId] = useState<string>("");
-  const [outlets, setOutlets] = useState<Array<{ id: string; name: string; code: string; branchId?: string; city?: string }>>([]);
-
+  // Load outlets when modal opens
   useEffect(() => {
     if (!isOpen) return;
     fetch("/api/marcom/outlets")
@@ -108,7 +98,9 @@ export function EventFormModal({
 
   const filteredOutlets = useMemo(() => {
     if (!eventBranchName) return outlets;
-    const selectedBranchObj = branches.find((b) => b.name.toLowerCase() === eventBranchName.toLowerCase());
+    const selectedBranchObj = branches.find(
+      (b) => b.name.toLowerCase() === eventBranchName.toLowerCase()
+    );
     if (!selectedBranchObj) return outlets;
     const branchOutlets = outlets.filter((o) => o.branchId === selectedBranchObj.id);
     return branchOutlets.length > 0 ? branchOutlets : outlets;
@@ -121,100 +113,32 @@ export function EventFormModal({
     }
   };
 
-  // Initialize or reset form state on open / event change
+  // Reset form state on open
   useEffect(() => {
     if (!isOpen) return;
-
-    if (event) {
-      // Edit mode
-      setEventName(event.name || "");
-      setEventType(event.eventType || "Roadshow");
-      setEventBranchName(event.branchName || branches[0]?.name || "Jakarta Central");
-      setEventLocation(event.location || "");
-      setEventOutletId(event.outletId || "");
-      const dateVal = event.startDate || event.date;
-      setEventStartDate(dateVal ? dateVal.slice(0, 10) : "");
-      setEventEndDate(event.endDate ? event.endDate.slice(0, 10) : "");
-      setEventStatus(event.status || "UPCOMING");
-      setEventBudget(String(event.budget ?? 0));
-      setEventTargetAttendee(String(event.targetAttendee ?? 100));
-      setEventAttendeeCount(String(event.attendeeCount ?? 0));
-      setEventNotes(event.notes || "");
-      const existingAttachments: TaskAttachment[] =
-        Array.isArray(event.mediaAttachments) && event.mediaAttachments.length > 0
-          ? event.mediaAttachments
-          : [
-              ...(event.footage?.map((f, i) => ({
-                id: f.id || `legacy-footage-${i}`,
-                name: f.title || `Footage ${i + 1}`,
-                sizeBytes: 0,
-                type: "video" as const,
-                url: f.filePath,
-                source: "gdrive" as const,
-                uploadedAt: new Date().toISOString(),
-              })) || []),
-              ...(event.mediaUrl
-                ? [
-                    {
-                      id: `legacy-mediaUrl-${Date.now()}`,
-                      name: "Field Documentation Archive",
-                      sizeBytes: 0,
-                      type: "document" as const,
-                      url: event.mediaUrl,
-                      source: "gdrive" as const,
-                      isSharedFolder: true,
-                      uploadedAt: new Date().toISOString(),
-                    },
-                  ]
-                : []),
-            ];
-      setMediaAttachments(existingAttachments);
-
-      const matched = findMemberForPic(members, event.picName);
-      setPicMemberId(matched?.id || "custom");
-      setEventPicName(event.picName || "");
-
-      const checklistItems = event.checklist || event.subtasks || [];
-      setEventSubtasks(
-        checklistItems.length > 0
-          ? checklistItems.map((s, i) => ({
-              id: s.id || `sub-edit-${i}`,
-              title: s.title,
-              completed: Boolean(s.completed),
-            }))
-          : getEventChecklistTemplate(event.eventType || "Roadshow").map((t, i) => ({
-              id: `sub-edit-${i}`,
-              title: t,
-              completed: false,
-            }))
-      );
-    } else {
-      // Create mode
-      setEventName("");
-      setEventType("Roadshow");
-      setEventBranchName(branches[0]?.name || "Jakarta Central");
-      setEventLocation("");
-      setEventOutletId("");
-      setEventStartDate(defaultDate || new Date().toISOString().slice(0, 10));
-      setEventEndDate("");
-      const defaultMember = members[0];
-      setPicMemberId(defaultMember?.id || "");
-      setEventPicName(defaultMember?.name || "Field Team Lead");
-      setEventStatus("UPCOMING");
-      setEventBudget("15000000");
-      setEventTargetAttendee("250");
-      setEventAttendeeCount("0");
-      setEventNotes("");
-      setMediaAttachments([]);
-      setEventSubtasks(
-        getEventChecklistTemplate("Roadshow").map((t, i) => ({
-          id: `sub-init-${i}`,
-          title: t,
-          completed: false,
-        }))
-      );
-    }
-  }, [isOpen, event, defaultDate, branches, members]);
+    setEventName("");
+    setEventType("Roadshow");
+    setEventBranchName(branches[0]?.name || "Jakarta Central");
+    setEventLocation("");
+    setEventOutletId("");
+    setEventStartDate(defaultDate || new Date().toISOString().slice(0, 10));
+    setEventEndDate("");
+    const defaultMember = members[0];
+    setPicMemberId(defaultMember?.id || "");
+    setEventPicName(defaultMember?.name || "Field Team Lead");
+    setEventStatus("UPCOMING");
+    setEventBudget("15000000");
+    setEventTargetAttendee("250");
+    setEventAttendeeCount("0");
+    setEventNotes("");
+    setEventSubtasks(
+      getEventChecklistTemplate("Roadshow").map((t, i) => ({
+        id: `sub-init-${i}`,
+        title: t,
+        completed: false,
+      }))
+    );
+  }, [isOpen, defaultDate, branches, members]);
 
   // Keyboard escape listener
   useEffect(() => {
@@ -227,7 +151,7 @@ export function EventFormModal({
   }, [isOpen, onClose]);
 
   // Form submission
-  const handleSaveEvent = async (e: React.FormEvent) => {
+  const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!eventName.trim()) {
       toast.error("Event name is required");
@@ -259,37 +183,25 @@ export function EventFormModal({
         targetAttendee: parsedTargetAttendee,
         attendeeCount: parsedAttendeeCount,
         notes: eventNotes.trim(),
-        mediaAttachments,
         checklist: eventSubtasks,
+        mediaAttachments: [],
       };
 
-      let savedId = event?.id;
+      const res = await fetch("/api/marcom/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-      if (event?.id) {
-        const res = await fetch(`/api/marcom/events/${event.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error("Failed to update event");
-        savedId = event.id;
-      } else {
-        const res = await fetch("/api/marcom/events", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error("Failed to create event");
-        const created = await res.json();
-        savedId = created.id;
-      }
+      if (!res.ok) throw new Error("Failed to create event");
+      const created = await res.json();
 
       const picMember =
         members.find((m) => m.id === picMemberId) ||
         findMemberForPic(members, eventPicName);
 
-      const savedItem: FieldEventItem = {
-        id: savedId || "",
+      const createdItem: FieldEventItem = {
+        id: created.id,
         name: eventName.trim(),
         eventType,
         branchName: eventBranchName,
@@ -303,15 +215,15 @@ export function EventFormModal({
         targetAttendee: parsedTargetAttendee,
         attendeeCount: parsedAttendeeCount,
         notes: eventNotes,
-        mediaAttachments,
+        mediaAttachments: [],
         outletId: eventOutletId || null,
         checklist: eventSubtasks,
       };
 
-      onSaved(savedItem, "Field Event");
+      onCreated(createdItem);
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save field event");
+      toast.error(err instanceof Error ? err.message : "Failed to create field event");
     } finally {
       setIsSaving(false);
     }
@@ -320,43 +232,42 @@ export function EventFormModal({
   if (!isOpen) return null;
 
   return (
-    <>
-      <AnimatePresence>
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
-          >
-            {/* Modal Header (Sticky / Pinned) */}
-            <div className="shrink-0 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
-              <div className="flex items-center gap-2.5">
-                <span className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                  <Flag className="w-5 h-5" />
-                </span>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    {event ? "Edit Field Event" : "Create New Field Event"}
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    On-ground brand activation, venue permits, budget & logistics
-                  </p>
-                </div>
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+        >
+          {/* Modal Header */}
+          <div className="shrink-0 px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                <Flag className="w-5 h-5" />
+              </span>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  Create New Field Event
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  On-ground brand activation, venue permits, budget & logistics
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-            {/* Form */}
-            <form onSubmit={handleSaveEvent} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              {/* Scrollable Modal Body */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {/* Form */}
+          <form onSubmit={handleCreateEvent} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            {/* Scrollable Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {/* Event Name & Type */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2">
@@ -378,7 +289,17 @@ export function EventFormModal({
                   </label>
                   <select
                     value={eventType}
-                    onChange={(e) => setEventType(e.target.value)}
+                    onChange={(e) => {
+                      const newType = e.target.value;
+                      setEventType(newType);
+                      setEventSubtasks(
+                        getEventChecklistTemplate(newType).map((t, i) => ({
+                          id: `sub-init-${i}`,
+                          title: t,
+                          completed: false,
+                        }))
+                      );
+                    }}
                     className="w-full px-3 py-2 rounded-lg text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
                   >
                     <option value="Roadshow">Mall Roadshow</option>
@@ -448,7 +369,7 @@ export function EventFormModal({
                     <button
                       type="button"
                       onClick={() => setEventOutletId("")}
-                      className="text-[10px] text-rose-500 hover:underline font-normal"
+                      className="text-[10px] text-rose-500 hover:underline font-normal cursor-pointer"
                     >
                       Clear link
                     </button>
@@ -510,7 +431,7 @@ export function EventFormModal({
                   <span className="text-[10px] text-slate-400 mt-1 block">
                     {eventEndDate && eventStartDate && eventEndDate > eventStartDate
                       ? "Multi-day activation"
-                      : "Optional for multi-day events (min: start date)"}
+                      : "Optional for multi-day events"}
                   </span>
                 </div>
                 <div>
@@ -563,26 +484,10 @@ export function EventFormModal({
                     onChange={(e) => setEventStatus(e.target.value as EventStatus)}
                     className="w-full px-3 py-2 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
                   >
-                    {[
-                      { value: "UPCOMING", label: "Upcoming" },
-                      { value: "ON_PROGRESS", label: "On Progress" },
-                      { value: "COMPLETED", label: "Completed" },
-                      { value: "CANCELLED", label: "Cancelled" },
-                    ].map((opt) => {
-                      const isAllowed =
-                        !event?.id ||
-                        canTransitionEvent(event.status, opt.value as EventStatus);
-                      return (
-                        <option
-                          key={opt.value}
-                          value={opt.value}
-                          disabled={!isAllowed}
-                        >
-                          {opt.label}
-                          {!isAllowed ? " (Not allowed)" : ""}
-                        </option>
-                      );
-                    })}
+                    <option value="UPCOMING">Upcoming</option>
+                    <option value="ON_PROGRESS">On Progress</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="CANCELLED">Cancelled</option>
                   </select>
                 </div>
 
@@ -699,66 +604,35 @@ export function EventFormModal({
                 />
               </div>
 
-              {/* Media & Documentation Attachments */}
-              <EventMediaSection
-                mediaAttachments={mediaAttachments}
-                setMediaAttachments={setMediaAttachments}
-                onOpenPreview={
-                  onOpenFootageModal
-                    ? (idx) => {
-                        onOpenFootageModal(
-                          {
-                            id: event?.id || "temp",
-                            name: eventName || "Preview",
-                            eventType,
-                            status: eventStatus,
-                            budget: Math.max(0, parseInt(eventBudget, 10) || 0),
-                            targetAttendee: 0,
-                            attendeeCount: 0,
-                            mediaAttachments,
-                          },
-                          idx
-                        );
-                      }
-                    : undefined
-                }
-              />
-
-              {/* Borrowed Equipment (Edit Mode) */}
-              {event?.id && (
-                <EventBorrowedEquipmentSection eventId={event.id} />
-              )}
-
               {/* Event Preparation Checklist (Subtasks) */}
               <EventChecklistSection
                 eventType={eventType}
                 eventSubtasks={eventSubtasks}
                 setEventSubtasks={setEventSubtasks}
               />
+            </div>
 
-              </div>
-
-              {/* Action Buttons (Sticky / Pinned Footer) */}
-              <div className="shrink-0 px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-end gap-2 z-10">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
-                >
-                  {isSaving ? "Saving..." : event ? "Update Event" : "Create Field Event"}
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      </AnimatePresence>
-    </>
+            {/* Action Buttons (Sticky Footer) */}
+            <div className="shrink-0 px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-end gap-2 z-10">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+              >
+                {isSaving ? "Creating..." : "Create Field Event"}
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </div>
+    </AnimatePresence>
   );
 }
+
