@@ -159,6 +159,19 @@ describe("Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)"
     const viewPath = path.join(docsDir, "DocumentsView.tsx");
     const viewContent = fs.readFileSync(viewPath, "utf-8");
     assert.ok(!viewContent.includes("Google Drive / Cloud"), "DocumentsView table must not contain 'Google Drive / Cloud'");
+    assert.ok(!viewContent.includes("Ragam Kategori"), "DocumentsView must not contain redundant 'Ragam Kategori' card");
+    assert.ok(!viewContent.includes("Penyimpanan Cloud"), "DocumentsView must not contain redundant 'Penyimpanan Cloud' card");
+  });
+
+  it("verifies DocumentsView and cards wire buildShareableDocumentUrl", () => {
+    const viewPath = path.join(docsDir, "DocumentsView.tsx");
+    const viewContent = fs.readFileSync(viewPath, "utf-8");
+    assert.ok(viewContent.includes("buildShareableDocumentUrl"), "DocumentsView must use buildShareableDocumentUrl");
+    assert.ok(viewContent.includes("docId"), "DocumentsView must handle docId URL parameter");
+
+    const cardsPath = path.join(docsDir, "DocumentCardsView.tsx");
+    const cardsContent = fs.readFileSync(cardsPath, "utf-8");
+    assert.ok(cardsContent.includes("buildShareableDocumentUrl"), "CardsView must use buildShareableDocumentUrl");
   });
 
   it("verifies DocumentItem conforms to SSOT and helpers handle all formats", () => {

@@ -6,6 +6,7 @@ export interface UrlNavState {
   spaceId?: string;
   listId?: string;
   taskId?: string;
+  docId?: string;
 }
 
 export const VALID_VIEW_MODES = new Set<ViewMode>([
@@ -66,6 +67,7 @@ export function parseUrlNavState(
   const rawSpace = params.get("space") || params.get("s");
   const rawList = params.get("list") || params.get("l");
   const rawTask = params.get("task") || params.get("t");
+  const rawDoc = params.get("docId") || params.get("doc");
 
   if (rawSpace) {
     state.spaceId = rawSpace.trim();
@@ -75,6 +77,12 @@ export function parseUrlNavState(
   }
   if (rawTask) {
     state.taskId = rawTask.trim();
+  }
+  if (rawDoc) {
+    state.docId = rawDoc.trim();
+    if (!state.view) {
+      state.view = "documents";
+    }
   }
 
   // View validation and normalization
@@ -138,9 +146,27 @@ export function serializeUrlNavState(state: UrlNavState): string {
   if (state.taskId) {
     params.set("task", state.taskId);
   }
+  if (state.docId) {
+    params.set("docId", state.docId);
+  }
 
   const queryString = params.toString();
   return queryString ? `?${queryString}` : "";
+}
+
+/**
+ * Constructs a shareable deep-link URL for a specific document asset.
+ */
+export function buildShareableDocumentUrl(
+  docId: string,
+  origin = "",
+): string {
+  const params = new URLSearchParams();
+  params.set("mode", "marcom");
+  params.set("view", "documents");
+  params.set("docId", docId.trim());
+  const query = `?${params.toString()}`;
+  return origin ? `${origin}/${query}` : `/${query}`;
 }
 
 /**

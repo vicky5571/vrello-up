@@ -4,6 +4,7 @@ import {
   parseUrlNavState,
   serializeUrlNavState,
   buildShareableTaskUrl,
+  buildShareableDocumentUrl,
   type UrlNavState,
 } from "@/lib/router/urlState";
 
@@ -112,5 +113,21 @@ test("parseUrlNavState parses inventory view mode and auto-assigns marcom appMod
   assert.equal(state.view, "inventory");
   assert.equal(state.appMode, "marcom");
 });
+
+test("urlState: parseUrlNavState parses docId and defaults view to documents", () => {
+  const state = parseUrlNavState("?docId=doc-001");
+  assert.equal(state.docId, "doc-001");
+  assert.equal(state.view, "documents");
+  assert.equal(state.appMode, "marcom");
+});
+
+test("urlState: buildShareableDocumentUrl constructs canonical URL", () => {
+  const rel = buildShareableDocumentUrl("doc-001");
+  assert.equal(rel, "/?mode=marcom&view=documents&docId=doc-001");
+
+  const abs = buildShareableDocumentUrl("doc-001", "https://vrello.app");
+  assert.equal(abs, "https://vrello.app/?mode=marcom&view=documents&docId=doc-001");
+});
+
 
 

@@ -247,11 +247,11 @@ export function DocumentsHeader({
         </div>
       </div>
 
-      {/* 3. Embedded 4 KPI Cards */}
+      {/* 3. Embedded KPI Cards */}
       <KpiSummaryCards
         items={kpiCards}
         isLoading={isLoading}
-        skeletonCount={4}
+        skeletonCount={kpiCards.length || 3}
       />
     </div>
   );

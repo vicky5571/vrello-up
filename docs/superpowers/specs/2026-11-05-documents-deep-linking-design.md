@@ -1,7 +1,7 @@
 # Specification: Documents Side Drawer Deep Linking via URL Query Parameter (docId)
 
 ## Status
-ACCEPTED (ADR-0026)
+IMPLEMENTED (ADR-0026)
 
 ## Date
 2026-11-05

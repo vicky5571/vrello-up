@@ -24,6 +24,7 @@ import {
   getDocumentTypeMeta,
   formatFileSize,
 } from "@/lib/marcom/documentWorkflow";
+import { buildShareableDocumentUrl } from "@/lib/router/urlState";
 
 interface DocumentCardsViewProps {
   documents: MarcomDocument[];
@@ -44,7 +45,9 @@ export function DocumentCardsView({
 }: DocumentCardsViewProps) {
   const handleCopyLink = (doc: MarcomDocument, e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(doc.filePath);
+    e.preventDefault();
+    const shareUrl = buildShareableDocumentUrl(doc.id, window.location.origin);
+    navigator.clipboard.writeText(shareUrl);
     toast.success(`Tautan "${doc.name}" berhasil disalin!`);
   };
 
@@ -187,14 +190,14 @@ export function DocumentCardsView({
                   <Eye className="w-3.5 h-3.5" />
                 </button>
 
-                <button
-                  type="button"
+                <a
+                  href={buildShareableDocumentUrl(doc.id)}
                   onClick={(e) => handleCopyLink(doc, e)}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  title="Salin Tautan"
+                  title="Salin tautan dokumen (klik kanan untuk buka tab baru)"
                 >
                   <Copy className="w-3.5 h-3.5" />
-                </button>
+                </a>
 
                 {canManage && (
                   <>

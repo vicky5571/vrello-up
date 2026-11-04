@@ -3,7 +3,7 @@
 **Date:** 2026-11-05  
 **Spec:** `docs/superpowers/specs/2026-11-05-documents-deep-linking-design.md`  
 **ADR:** `docs/adr/0026-documents-deep-linking-drawer.md`  
-**Status:** DRAFT (Planning-Only Mode)
+**Status:** COMPLETED
 
 ---
 
@@ -19,7 +19,7 @@ Implement deep linking for the Marcom Documents module:
 ## 2. Phase 1: Router Helpers & Canonical URL Builder
 
 ### Tasks:
-- [ ] **1.1 Update `src/lib/router/urlState.ts`**:
+- [x] **1.1 Update `src/lib/router/urlState.ts`**:
   - Add `docId?: string;` to `UrlNavState` interface.
   - In `parseUrlNavState`:
     - Add extraction for `rawDocId = params.get("docId") || params.get("doc")`.
@@ -38,7 +38,7 @@ Implement deep linking for the Marcom Documents module:
       return origin ? `${origin}/${query}` : `/${query}`;
     }
     ```
-- [ ] **1.2 Unit Tests in `src/lib/router/urlState.test.ts`**:
+- [x] **1.2 Unit Tests in `src/lib/router/urlState.test.ts`**:
   - Add test verifying `parseUrlNavState` extracts `docId` and sets `view: "documents"`.
   - Add test verifying `buildShareableDocumentUrl` constructs correct canonical path.
 
@@ -50,7 +50,7 @@ Implement deep linking for the Marcom Documents module:
 ## 3. Phase 2: Coordinator Auto-Hydration & URL State Synchronization
 
 ### Tasks:
-- [ ] **2.1 Update `src/components/views/DocumentsView/DocumentsView.tsx`**:
+- [x] **2.1 Update `src/components/views/DocumentsView/DocumentsView.tsx`**:
   - Import `buildShareableDocumentUrl` from `@/lib/router/urlState`.
   - Add initial hydration `useEffect`:
     - Reads `window.location.search` for `docId` or `doc`.
@@ -70,7 +70,7 @@ Implement deep linking for the Marcom Documents module:
 ## 4. Phase 3: Card & Drawer Action Buttons Update
 
 ### Tasks:
-- [ ] **3.1 Update `src/components/views/DocumentsView/DocumentCardsView.tsx`**:
+- [x] **3.1 Update `src/components/views/DocumentsView/DocumentCardsView.tsx`**:
   - Import `buildShareableDocumentUrl` from `@/lib/router/urlState`.
   - In `handleCopyLink`:
     - Generate `shareUrl = buildShareableDocumentUrl(doc.id, window.location.origin)`.
@@ -88,7 +88,7 @@ Implement deep linking for the Marcom Documents module:
         <Copy className="w-3.5 h-3.5" />
       </a>
       ```
-- [ ] **3.2 Update `src/components/views/DocumentsView/DocumentDrawer.tsx`**:
+- [x] **3.2 Update `src/components/views/DocumentsView/DocumentDrawer.tsx`**:
   - Import `buildShareableDocumentUrl` from `@/lib/router/urlState`.
   - In header copy link button, generate `shareUrl = buildShareableDocumentUrl(document.id, window.location.origin)` and copy to clipboard.
 
@@ -100,11 +100,11 @@ Implement deep linking for the Marcom Documents module:
 ## 5. Phase 4: Automated Testing & Verification
 
 ### Tasks:
-- [ ] **4.1 Update `src/components/views/DocumentsView/documentDrawer.test.ts`**:
+- [x] **4.1 Update `src/components/views/DocumentsView/documentDrawer.test.ts`**:
   - Test verifying `buildShareableDocumentUrl` returns valid query format.
   - Test verifying `DocumentsView.tsx` wires `docId` parameter resolution and `replaceState`.
   - Test verifying `DocumentCardsView.tsx` and `DocumentDrawer.tsx` use `buildShareableDocumentUrl`.
-- [ ] **4.2 Non-Negotiable Quality Gates**:
+- [x] **4.2 Non-Negotiable Quality Gates**:
   - Run `npm run drift:check` → MUST pass with `✅ No drift detected`.
   - Run `npm run build:check` → MUST pass with 0 TypeScript compilation errors.
   - Run `npm test` → MUST pass with 0 failures across all test suites.
@@ -112,10 +112,10 @@ Implement deep linking for the Marcom Documents module:
 ---
 
 ## 6. Verification Checklist
-- [ ] `buildShareableDocumentUrl` creates `/?mode=marcom&view=documents&docId=...`.
-- [ ] Copy button on card copies canonical deep link.
-- [ ] Middle-clicking copy link on card opens new tab with `?mode=marcom&view=documents&docId=...`.
-- [ ] Opening `/?mode=marcom&view=documents&docId=doc-001` auto-opens side drawer for `doc-001`.
-- [ ] Closing drawer cleans `docId` from browser address bar.
-- [ ] Quality gates green: drift-check, build-check, test suite.
+- [x] `buildShareableDocumentUrl` creates `/?mode=marcom&view=documents&docId=...`.
+- [x] Copy button on card copies canonical deep link.
+- [x] Middle-clicking copy link on card opens new tab with `?mode=marcom&view=documents&docId=...`.
+- [x] Opening `/?mode=marcom&view=documents&docId=doc-001` auto-opens side drawer for `doc-001`.
+- [x] Closing drawer cleans `docId` from browser address bar.
+- [x] Quality gates green: drift-check, build-check, test suite.
 

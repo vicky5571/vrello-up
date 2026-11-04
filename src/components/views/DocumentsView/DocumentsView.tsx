@@ -30,6 +30,7 @@ import {
 import { DocumentCardsView } from "./DocumentCardsView";
 import { DocumentDrawer } from "./DocumentDrawer";
 import { DocumentCreateModal } from "./DocumentCreateModal";
+import { buildShareableDocumentUrl } from "@/lib/router/urlState";
 import type { DocumentItem, DocFileType } from "@/types";
 
 export type { DocFileType };
@@ -90,6 +91,55 @@ export function DocumentsView() {
     fetchDocuments();
   }, [fetchDocuments]);
 
+  const handleSelectDrawerDoc = useCallback((doc: MarcomDocument | null) => {
+    setSelectedDrawerDoc(doc);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (doc) {
+      url.searchParams.set("docId", doc.id);
+    } else {
+      url.searchParams.delete("docId");
+      url.searchParams.delete("doc");
+    }
+    window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  }, []);
+
+  // Auto-open document drawer from URL query parameter (docId)
+  useEffect(() => {
+    if (typeof window === "undefined" || documents.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const targetDocId = params.get("docId") || params.get("doc");
+    if (targetDocId) {
+      const matched = documents.find((d) => d.id === targetDocId);
+      if (matched) {
+        setSelectedDrawerDoc(matched);
+      } else if (!isLoading) {
+        toast.error("Dokumen tidak ditemukan");
+        const url = new URL(window.location.href);
+        url.searchParams.delete("docId");
+        url.searchParams.delete("doc");
+        window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+      }
+    }
+  }, [documents, isLoading]);
+
+  // Handle browser popstate (Back/Forward)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onPopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const targetDocId = params.get("docId") || params.get("doc");
+      if (!targetDocId) {
+        setSelectedDrawerDoc(null);
+      } else {
+        const matched = documents.find((d) => d.id === targetDocId);
+        if (matched) setSelectedDrawerDoc(matched);
+      }
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [documents]);
+
   const handleDocumentCreated = useCallback((newDoc: MarcomDocument) => {
     setDocuments((prev) => [newDoc, ...prev]);
   }, []);
@@ -107,12 +157,12 @@ export function DocumentsView() {
       if (res.ok) {
         setDocuments((prev) => prev.filter((d) => d.id !== id));
         if (selectedDrawerDoc?.id === id) {
-          setSelectedDrawerDoc(null);
+          handleSelectDrawerDoc(null);
         }
       }
       return res.ok;
     },
-    [selectedDrawerDoc]
+    [selectedDrawerDoc, handleSelectDrawerDoc]
   );
 
   // Categories for Filter Chips
@@ -150,13 +200,6 @@ export function DocumentsView() {
         color: "blue",
       },
       {
-        label: "Ragam Kategori",
-        value: categoryChips.length,
-        helper: `Dominan: ${kpiData.topCategory}`,
-        icon: Layers,
-        color: "emerald",
-      },
-      {
         label: "Kategori Terbanyak",
         value: kpiData.topCategory,
         helper: "Kategori dominan",
@@ -164,7 +207,7 @@ export function DocumentsView() {
         color: "violet",
       },
     ];
-  }, [kpiData, categoryChips.length]);
+  }, [kpiData]);
 
   // Filtered documents
   const filteredDocuments = useMemo(() => {
@@ -219,7 +262,7 @@ export function DocumentsView() {
           return (
             <div
               className="flex items-center gap-2 cursor-pointer group"
-              onClick={() => setSelectedDrawerDoc(row.original)}
+              onClick={() => handleSelectDrawerDoc(row.original)}
             >
               <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors truncate">
                 {row.original.name}
@@ -299,7 +342,8 @@ export function DocumentsView() {
             <button
               type="button"
               onClick={() => {
-                navigator.clipboard.writeText(row.original.filePath);
+                const shareUrl = buildShareableDocumentUrl(row.original.id, window.location.origin);
+                navigator.clipboard.writeText(shareUrl);
                 toast.success("Tautan file berhasil disalin ke clipboard!");
               }}
               className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
@@ -310,7 +354,7 @@ export function DocumentsView() {
             {canUpload && (
               <button
                 type="button"
-                onClick={() => setSelectedDrawerDoc(row.original)}
+                onClick={() => handleSelectDrawerDoc(row.original)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 title="Edit Dokumen"
               >
@@ -321,7 +365,7 @@ export function DocumentsView() {
         ),
       }),
     ],
-    [canUpload]
+    [canUpload, handleSelectDrawerDoc]
   );
 
   return (
@@ -348,8 +392,8 @@ export function DocumentsView() {
         {viewMode === "cards" ? (
           <DocumentCardsView
             documents={filteredDocuments}
-            onSelectDocument={(doc) => setSelectedDrawerDoc(doc)}
-            onEditDocument={(doc) => setSelectedDrawerDoc(doc)}
+            onSelectDocument={handleSelectDrawerDoc}
+            onEditDocument={handleSelectDrawerDoc}
             onDeleteDocument={deleteOne}
             onAddNewDocument={() => setIsCreateModalOpen(true)}
             canManage={canManage}
@@ -364,7 +408,7 @@ export function DocumentsView() {
             titleIcon={Files}
             entityName="document"
             entityPlural="documents"
-            onRowClick={(row) => setSelectedDrawerDoc(row)}
+            onRowClick={(row) => handleSelectDrawerDoc(row)}
             isLoading={isLoading}
             error={error}
             onRefresh={fetchDocuments}
@@ -383,7 +427,7 @@ export function DocumentsView() {
         {selectedDrawerDoc && (
           <DocumentDrawer
             document={selectedDrawerDoc}
-            onClose={() => setSelectedDrawerDoc(null)}
+            onClose={() => handleSelectDrawerDoc(null)}
             onUpdateDocument={handleUpdateDocument}
             onDeleteDocument={deleteOne}
             branches={branches}

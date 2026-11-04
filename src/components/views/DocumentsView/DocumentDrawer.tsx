@@ -38,6 +38,7 @@ import {
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
 import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
+import { buildShareableDocumentUrl } from "@/lib/router/urlState";
 
 export interface DocumentDrawerProps {
   document: MarcomDocument | null;
@@ -121,10 +122,16 @@ export function DocumentDrawer({
   const isCloud = isCloudDocumentUrl(filePath);
   const driveInfo = isCloud ? parseGoogleDriveUrl(filePath) : null;
 
-  const handleCopyLink = () => {
+  const handleCopyShareLink = () => {
+    const shareUrl = buildShareableDocumentUrl(document.id, window.location.origin);
+    navigator.clipboard.writeText(shareUrl);
+    toast.success("Tautan dokumen berhasil disalin!");
+  };
+
+  const handleCopyRawFilePath = () => {
     if (!filePath) return;
     navigator.clipboard.writeText(filePath);
-    toast.success("Tautan file berhasil disalin ke clipboard!");
+    toast.success("Path file berhasil disalin ke clipboard!");
   };
 
   const handleFileReplacement = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -305,9 +312,9 @@ export function DocumentDrawer({
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={handleCopyLink}
+                  onClick={handleCopyShareLink}
                   className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  title="Salin tautan file"
+                  title="Salin tautan dokumen"
                 >
                   <Copy className="w-4 h-4" />
                 </button>
@@ -488,7 +495,7 @@ export function DocumentDrawer({
                 <span className="truncate">{filePath}</span>
                 <button
                   type="button"
-                  onClick={handleCopyLink}
+                  onClick={handleCopyRawFilePath}
                   className="text-teal-600 dark:text-teal-400 hover:underline shrink-0 font-sans font-semibold cursor-pointer"
                 >
                   Salin

@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(documents)`: Documents side drawer deep linking via URL query parameter (docId)
+  - Added `docId` parsing, serialization, and `buildShareableDocumentUrl` in `src/lib/router/urlState.ts`
+  - Integrated auto-hydration in `DocumentsView.tsx` opening target drawer from `?docId=...`
+  - Synchronized drawer state with browser URL via `replaceState` and added `popstate` support
+  - Updated card and drawer copy buttons to share canonical deep links and wrapped card button in `<a>` tag
+  - Added unit test coverage in `urlState.test.ts` and `documentDrawer.test.ts`
+  - Gates: `npm test` 778 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: docs/superpowers/specs/2026-11-05-documents-deep-linking-design.md
+  Plan: docs/superpowers/plans/2026-11-05-documents-deep-linking.md
+  Refs: docs/adr/0026-documents-deep-linking-drawer.md
+
 - `refactor(documents)`: Eliminate legacy Drive/Cloud badges and standardize Documents KPIs
   - Removed obsolete Drive/Cloud and Server Local badges from `DocumentCardsView.tsx` footer
   - Removed Cloud/HardDrive storage icons from `DocumentsView.tsx` table rows

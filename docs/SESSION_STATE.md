@@ -8,24 +8,35 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026) — **PLANNING & HANDOVER COMPLETE**  
+**Active Feature:** Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Eliminate Legacy Drive/Cloud Storage Badges & Standardize Documents KPIs  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026 — Planning Mode):**
-   - **Mode:** Strict Planning-Only session.
-   - **ADR-0026 (`docs/adr/0026-documents-deep-linking-drawer.md`):**
-     - Formulated decision problem: Replacing raw file path copy with shareable deep-link URL opening Vrello with target document drawer open.
-     - Selected Option A: URL query parameter `docId` with bidirectional `replaceState` sync and `buildShareableDocumentUrl`.
-   - **Specification (`docs/superpowers/specs/2026-11-05-documents-deep-linking-design.md`):**
-     - Full UX flow, data contracts, coordinator auto-hydration, popstate handling, and new-tab navigation.
-   - **Implementation Plan (`docs/superpowers/plans/2026-11-05-documents-deep-linking.md`):**
-     - 4 atomic execution phases with exact tasks, verification steps, and quality gates.
-   - **Handover (`docs/handover-documents-deep-linking.md`):**
-     - Complete, execution-ready guide with line-by-line snippets for `urlState.ts`, `DocumentsView.tsx`, `DocumentCardsView.tsx`, and `DocumentDrawer.tsx`.
+1. **Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026 — Implementation):**
+   - **Router Helpers (`src/lib/router/urlState.ts` & `urlState.test.ts`):**
+     - Added `docId?: string` to `UrlNavState`.
+     - Extended `parseUrlNavState` to parse `docId` / `doc` and auto-assign `view: "documents"`, `appMode: "marcom"`.
+     - Extended `serializeUrlNavState` to serialize `docId`.
+     - Created `buildShareableDocumentUrl(docId, origin?)` returning canonical `/?mode=marcom&view=documents&docId={docId}`.
+     - Added unit tests (15 passed, 0 failures).
+   - **Coordinator Auto-Hydration & URL Sync (`src/components/views/DocumentsView/DocumentsView.tsx`):**
+     - Added auto-hydration `useEffect` opening `selectedDrawerDoc` when `docId` is detected in URL.
+     - Synchronized `handleSelectDrawerDoc` with `window.history.replaceState` (adds `docId` on drawer open, removes on drawer close).
+     - Added `popstate` event listener supporting native browser Back/Forward navigation.
+     - Wired `handleSelectDrawerDoc` to card clicks, table rows, table edit buttons, and drawer close.
+   - **Card & Drawer Deep Link Actions (`DocumentCardsView.tsx` & `DocumentDrawer.tsx`):**
+     - Updated card copy button to wrap in `<a>` tag with `href={buildShareableDocumentUrl(doc.id)}`, supporting middle-click / new tab opening and clipboard copy with origin.
+     - Updated drawer header copy button to copy canonical shareable URL via `buildShareableDocumentUrl`.
+     - Preserved raw file path copy in drawer file replacement sub-bar (`handleCopyRawFilePath`).
+   - **Unit Tests (`documentDrawer.test.ts`):**
+     - Added test assertion verifying wiring of `buildShareableDocumentUrl` and `docId` URL handling across `DocumentsView.tsx` and `DocumentCardsView.tsx` (10 passed, 0 failures).
+   - **Verification Gates Passed:**
+     - `npm run drift:check`: ✅ No drift detected (53 specs paired).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm test`: ✅ 778 passed, 0 failures across 138 suites.
 
 2. **Eliminate Legacy Drive/Cloud Storage Badges & Standardize Documents KPIs:**
    - **`DocumentCardsView.tsx`:** Removed obsolete `Cloud` and `HardDrive` storage badges from the card footer, aligning actions neatly to the right. Removed `isCloud` computation and unused imports.
