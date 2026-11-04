@@ -8,14 +8,27 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Eliminate Legacy Drive/Cloud Storage Badges & Standardize Documents KPIs  
+**Active Feature:** Integrasi EventMediaSection ke Modal Buat Event Baru (EventCreateModal) — ADR-0027 — **PLANNING & HANDOVER COMPLETE**  
+**Previous Feature:** Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026 — Implementation):**
+1. **Integrasi EventMediaSection ke Modal Buat Event Baru (ADR-0027 — Planning & Handover):**
+   - **Checkpoints Lolos Persetujuan**:
+     - Checkpoint 1 (Decision Problem & Candidate Options): User memilih Opsi A (integrasi langsung sub-komponen `EventMediaSection`).
+     - Checkpoint 2 (Scope & Asumsi Spesifikasi): User menyetujui scope, non-goals, dan paritas dengan `EventDrawer`.
+     - Checkpoint 3 (Phasing Strategy): User menyetujui 3 fase implementasi.
+   - **Dokumentasi Terbit (File-First, Content-Second)**:
+     - `docs/adr/0027-event-create-modal-media-attachments.md`: Keputusan arsitektur integrasi sub-komponen atomik `EventMediaSection` ke dalam `EventCreateModal.tsx`.
+     - `docs/superpowers/specs/2026-11-05-event-create-modal-media-attachments-design.md`: Desain spesifikasi detail, kontrak data, JSX layout positioning, dan API payload synchronization.
+     - `docs/superpowers/plans/2026-11-05-event-create-modal-media-attachments.md`: Rencana eksekusi 3 fase dengan manifest perubahan dan invariant checklist.
+     - `docs/handover-event-create-modal-media-attachments.md`: Dokumen handover eksekusi dengan snippet kode sebelum & sesudah, daftar "Do Not Touch", dan acceptance criteria.
+   - **Verification Gates**:
+     - `npm run drift:check`: ✅ No drift detected (54 spec-plan pairs).
+
+2. **Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026 — Implementation):**
    - **Router Helpers (`src/lib/router/urlState.ts` & `urlState.test.ts`):**
      - Added `docId?: string` to `UrlNavState`.
      - Extended `parseUrlNavState` to parse `docId` / `doc` and auto-assign `view: "documents"`, `appMode: "marcom"`.

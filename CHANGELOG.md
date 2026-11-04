@@ -12,6 +12,7 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
   - Synchronized drawer state with browser URL via `replaceState` and added `popstate` support
   - Updated card and drawer copy buttons to share canonical deep links and wrapped card button in `<a>` tag
   - Removed obsolete "Lokasi: Cloud / Google Drive" & "Internal Server Storage" badge from `DocumentDrawer.tsx`
+  - Restyled file replacement bar in `DocumentDrawer.tsx` to match Content Planner attachment style
   - Added unit test coverage in `urlState.test.ts` and `documentDrawer.test.ts`
   - Gates: `npm test` 778 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
   Spec: docs/superpowers/specs/2026-11-05-documents-deep-linking-design.md

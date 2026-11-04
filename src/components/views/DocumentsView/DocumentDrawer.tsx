@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -83,6 +83,7 @@ export function DocumentDrawer({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Google Drive Picker
   const {
@@ -168,6 +169,7 @@ export function DocumentDrawer({
       toast.error(err instanceof Error ? err.message : "Gagal mengunggah file");
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -448,10 +450,18 @@ export function DocumentDrawer({
               })()}
             </div>
 
-            {/* File Replacement Bar */}
-            <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-2.5">
+            {/* File Replacement Section — Content Planner Style */}
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileReplacement}
+                disabled={isUploading}
+                className="hidden"
+              />
+
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                   <Upload className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                   <span>Ganti File Dokumen</span>
                 </span>
@@ -463,13 +473,60 @@ export function DocumentDrawer({
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <input
-                  type="file"
-                  onChange={handleFileReplacement}
+              {/* Current Active File Card (Content Planner Attachment Item Style) */}
+              <div className="flex items-center justify-between gap-2.5 p-2.5 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs transition-colors shadow-2xs">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 border border-teal-200/50 dark:border-teal-900/40">
+                    {renderFileIcon("w-4 h-4")}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-mono font-medium text-slate-800 dark:text-slate-200 truncate">
+                      {filePath || "Belum ada file terpilih"}
+                    </p>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                      <span className="font-semibold text-teal-600 dark:text-teal-400">
+                        {fileType}
+                      </span>
+                      <span>•</span>
+                      <span>{formatFileSize(fileSizeMb)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleCopyRawFilePath}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors cursor-pointer"
+                    title="Salin path file"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                  {filePath && (
+                    <a
+                      href={filePath}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-1.5 rounded-lg text-teal-600 hover:text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-colors cursor-pointer"
+                      title="Buka file di tab baru"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons: Device Upload & Google Drive */}
+              <div className="flex items-center gap-2 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
-                  className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-50 dark:file:bg-teal-950/40 file:text-teal-700 dark:file:text-teal-300 hover:file:bg-teal-100 cursor-pointer flex-1"
-                />
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-500 shadow-xs transition-all cursor-pointer disabled:opacity-50 flex-1"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload dari Perangkat</span>
+                </button>
                 <button
                   type="button"
                   onClick={() =>
@@ -483,21 +540,11 @@ export function DocumentDrawer({
                       },
                     })
                   }
-                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors"
+                  disabled={isUploading}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
                 >
                   <Cloud className="w-3.5 h-3.5 text-blue-500" />
                   <span>Google Drive</span>
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between gap-2 pt-1 text-[11px] text-slate-400 font-mono truncate">
-                <span className="truncate">{filePath}</span>
-                <button
-                  type="button"
-                  onClick={handleCopyRawFilePath}
-                  className="text-teal-600 dark:text-teal-400 hover:underline shrink-0 font-sans font-semibold cursor-pointer"
-                >
-                  Salin
                 </button>
               </div>
             </div>
