@@ -1,7 +1,7 @@
 # Specification: Documents Detail & Edit Drawer with Focused Creation Modal
 
 ## Status
-ACCEPTED (ADR-0024)
+IMPLEMENTED (ADR-0024)
 
 ## Date
 2026-11-05

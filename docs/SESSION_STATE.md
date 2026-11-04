@@ -8,24 +8,36 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024) — **PLANNING COMPLETE (READY TO CODE)**  
+**Active Feature:** Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Field Event Thumbnail Compression & Cover Preview (ADR-0023)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Documents Detail & Edit Drawer Planning (ADR-0024):**
-   - **Mode:** Strict Planning-Only session ("don't code in this session").
-   - **ADR-0024 (`docs/adr/0024-documents-detail-edit-drawer.md`):**
-     - Evaluated 3 candidate options for replacing the fragmented modal preview & edit in Documents & Asset Library.
-     - Selected Option A: Unified 560px slide-over right drawer (`DocumentDrawer.tsx`) combining live media inspection and inline metadata editing, with dedicated kickoff modal dialog (`DocumentCreateModal.tsx`) for new uploads.
-   - **Specification (`docs/superpowers/specs/2026-11-05-documents-detail-edit-drawer-design.md`):**
-     - Detailed component architecture, Framer Motion spring physics, sticky header, multi-format media preview (PDF, MP4, image, ZIP/office), file replacement controls, metadata form, sticky footer, and coordinator refactoring.
-   - **Implementation Plan (`docs/superpowers/plans/2026-11-05-documents-detail-edit-drawer.md`):**
-     - 4 atomic execution phases with checklists, line estimates, and verification gates.
-   - **Handover (`docs/handover-documents-detail-edit-drawer.md`):**
-     - Execution-ready guide with exact file paths, code snippets, "do not touch" list, numbered execution order, and acceptance criteria.
+1. **Documents Detail & Edit Drawer Implementation (ADR-0024):**
+   - **Dedicated Creation Modal (`src/components/views/DocumentsView/DocumentCreateModal.tsx`):**
+     - Centered kickoff modal dialog for uploading new document assets cleanly.
+     - Validates name, category, fileType, and filePath. Supports local file upload (`POST /api/marcom/uploads`, `kind: "documents"`) and Google Drive file picker/URL embedding (`useGoogleDrivePicker`, `GoogleDriveLinkModal`).
+     - Submits `POST /api/marcom/documents`, invokes `onCreated`, and shows success toast.
+   - **Slide-Over Detail & Edit Drawer (`src/components/views/DocumentsView/DocumentDrawer.tsx`):**
+     - Unified 560px slide-over right drawer container with Framer Motion spring physics (`damping: 28, stiffness: 300`) and backdrop blur overlay.
+     - Sticky Header: Dynamic category badge, file format chip, inline editable title input (`<input />`), copy link button, external tab link button, and close (`<X />`) button.
+     - Scrollable Body:
+       - Multi-format Live Media Viewer: PDF embedded iframe, native MP4 video player, `AppImage` lightbox, or ZIP/Package download card with primary "Download / Buka Dokumen" button.
+       - File Replacement Sub-bar: Re-upload replacement files locally or attach Google Drive URLs with real-time file size and type detection.
+       - Metadata Form in standardized grey card container (`p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40`): Category (with datalist), Status (`ACTIVE`, `DRAFT`, `ARCHIVED`), Branch, Period, PIC Owner (with member suggestions), and Description textarea.
+     - Sticky Footer: "Hapus Dokumen" delete button (`<Trash2 />`, confirm guard, dispatches `DELETE`), "Tutup", and "Simpan Perubahan" primary button (dispatches `PATCH /api/marcom/documents/[id]`).
+   - **Cards & Coordinator Modernization (`DocumentCardsView.tsx` & `DocumentsView.tsx`):**
+     - Card clicks in `DocumentCardsView.tsx` and table row clicks (`onRowClick`) in `MarcomTableShell` now directly open `DocumentDrawer`.
+     - Deprecated legacy `modalDocument` and `previewDocument` states in `DocumentsView.tsx`, dropping file LOC from 809 down to ~409 lines (~400 line reduction).
+     - Decommissioned obsolete `DocumentPreviewModal.tsx`.
+   - **Automated Unit Testing (`src/components/views/DocumentsView/documentDrawer.test.ts`):**
+     - 7 unit tests asserting drawer existence, creation modal existence, `DocumentPreviewModal` elimination, coordinator wiring, and SSOT typing.
+   - **Verification Gates Passed:**
+     - `npm run drift:check`: ✅ No drift detected. All 51 specs paired and invariants pass.
+     - `npm run build:check`: ✅ TypeScript compiled with 0 errors.
+     - `npm test`: ✅ 775 passed, 0 failed across 138 suites.
 
 2. **Content Planner Media Section Grey Div Container Wrapping (UI Refinement):**
    - **Container Parity with Field Event Drawer (`src/components/views/ContentPlannerView/ContentDrawer.tsx`):**

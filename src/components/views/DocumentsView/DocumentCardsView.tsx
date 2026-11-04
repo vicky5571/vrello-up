@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { MarcomDocument } from "./DocumentsView";
+import type { MarcomDocument, DocFileType } from "./DocumentsView";
 import {
   getDocumentTypeMeta,
   formatFileSize,
@@ -31,7 +31,7 @@ import {
 interface DocumentCardsViewProps {
   documents: MarcomDocument[];
   onSelectDocument: (doc: MarcomDocument) => void;
-  onEditDocument: (doc: MarcomDocument) => void;
+  onEditDocument?: (doc: MarcomDocument) => void;
   onDeleteDocument: (id: string) => Promise<boolean>;
   onAddNewDocument?: () => void;
   canManage?: boolean;
@@ -109,7 +109,7 @@ export function DocumentCardsView({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {documents.map((doc) => {
-        const typeMeta = getDocumentTypeMeta(doc.fileType);
+        const typeMeta = getDocumentTypeMeta(doc.fileType as DocFileType);
         const isCloud = isCloudDocumentUrl(doc.filePath);
         const statusLower = (doc.status || "DRAFT").toLowerCase();
 
@@ -159,7 +159,7 @@ export function DocumentCardsView({
                   {doc.category}
                 </span>
                 <span>•</span>
-                <span>{formatFileSize(doc.fileSizeMb)}</span>
+                <span>{formatFileSize(doc.fileSizeMb || 0)}</span>
               </div>
 
               {doc.description && (
@@ -228,17 +228,19 @@ export function DocumentCardsView({
 
                 {canManage && (
                   <>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditDocument(doc);
-                      }}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                      title="Edit Dokumen"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
+                    {onEditDocument && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditDocument(doc);
+                        }}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        title="Edit Dokumen"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
 
                     <button
                       type="button"

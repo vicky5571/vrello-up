@@ -1,7 +1,7 @@
 # Implementation Plan: Documents Detail & Edit Drawer with Focused Creation Modal
 
 ## Status
-READY FOR IMPLEMENTATION
+COMPLETED
 
 ## Associated Documents
 - **ADR**: `docs/adr/0024-documents-detail-edit-drawer.md`
@@ -20,8 +20,8 @@ Replace the fragmented modal experience (`DocumentPreviewModal.tsx` and inline f
 | :--- | :---: | :---: | :--- |
 | `src/components/views/DocumentsView/DocumentCreateModal.tsx` | CREATE | ~220 | Dedicated modal dialog for uploading/registering new document assets |
 | `src/components/views/DocumentsView/DocumentDrawer.tsx` | CREATE | ~420 | Comprehensive 560px slide-over right drawer for live inspection & editing |
-| `src/components/views/DocumentsView/DocumentsView.tsx` | MODIFY | ~620 (down from 809) | Coordinator clean-up: wire `selectedDrawerDoc` & `isCreateModalOpen` |
-| `src/components/views/DocumentsView/DocumentCardsView.tsx` | MODIFY | ~180 | Wire card clicks to `onSelectDocument` and cleanup |
+| `src/components/views/DocumentsView/DocumentsView.tsx` | MODIFY | ~430 (down from 809) | Coordinator clean-up: wire `selectedDrawerDoc` & `isCreateModalOpen` |
+| `src/components/views/DocumentsView/DocumentCardsView.tsx` | MODIFY | ~260 | Wire card clicks to `onSelectDocument` and cleanup |
 | `src/components/views/DocumentsView/DocumentPreviewModal.tsx` | DELETE | -327 | Decommission obsolete preview modal dialog |
 | `src/components/views/DocumentsView/documentDrawer.test.ts` | CREATE | ~140 | Automated unit tests asserting drawer existence, wiring & invariant compliance |
 
@@ -30,31 +30,31 @@ Replace the fragmented modal experience (`DocumentPreviewModal.tsx` and inline f
 ## 2. Phased Implementation Roadmap
 
 ### Phase 1: Extract `DocumentCreateModal.tsx`
-- [ ] Create `src/components/views/DocumentsView/DocumentCreateModal.tsx`
-- [ ] Implement modal dialog with header, form inputs, local upload handler (`/api/marcom/uploads`), Google Drive picker trigger, and validation
-- [ ] Form submission dispatches `POST /api/marcom/documents`
-- [ ] Dispatches `onCreated(resJson)` callback on success and triggers toast notification
-- [ ] Verification Gate: Component compiles cleanly via `npm run build:check`
+- [x] Create `src/components/views/DocumentsView/DocumentCreateModal.tsx`
+- [x] Implement modal dialog with header, form inputs, local upload handler (`/api/marcom/uploads`), Google Drive picker trigger, and validation
+- [x] Form submission dispatches `POST /api/marcom/documents`
+- [x] Dispatches `onCreated(resJson)` callback on success and triggers toast notification
+- [x] Verification Gate: Component compiles cleanly via `npm run build:check`
 
 ### Phase 2: Implement `DocumentDrawer.tsx`
-- [ ] Create `src/components/views/DocumentsView/DocumentDrawer.tsx`
-- [ ] Implement slide-over container with Framer Motion spring (`damping: 28, stiffness: 300`) and backdrop blur overlay
-- [ ] Implement Sticky Header:
+- [x] Create `src/components/views/DocumentsView/DocumentDrawer.tsx`
+- [x] Implement slide-over container with Framer Motion spring (`damping: 28, stiffness: 300`) and backdrop blur overlay
+- [x] Implement Sticky Header:
   - Category badge & file type chip (`getDocumentTypeMeta(fileType)`)
   - Inline editable title input (`<input />`)
   - Copy link action button (`<Copy />`), open in external tab (`<ExternalLink />`), and close button (`<X />`)
-- [ ] Implement Scrollable Body:
+- [x] Implement Scrollable Body:
   - Live media viewer supporting PDF iframe, native MP4 video player, image viewer (`AppImage`), and ZIP/Office package download card
   - Direct "Download / Buka Dokumen" button
   - File replacement section supporting local upload re-attachment and Google Drive manual link attachment
   - Metadata form wrapped in styled card container: Category input, Status select (`ACTIVE`, `DRAFT`, `ARCHIVED`), Branch select, Period input, PIC Owner select, and Description textarea
-- [ ] Implement Sticky Footer:
+- [x] Implement Sticky Footer:
   - Left: "Hapus Dokumen" delete button (`<Trash2 />`) with confirmation guard, calling `onDeleteDocument(document.id)`
   - Right: "Tutup" (`onClose`) and "Simpan Perubahan" primary button with loading spinner, calling `onUpdateDocument(updatedData)`
-- [ ] Verification Gate: Drawer component compiles with 0 TypeScript errors
+- [x] Verification Gate: Drawer component compiles with 0 TypeScript errors
 
 ### Phase 3: Modernize `DocumentsView.tsx` & Decommission `DocumentPreviewModal.tsx`
-- [ ] In `src/components/views/DocumentsView/DocumentsView.tsx`:
+- [x] In `src/components/views/DocumentsView/DocumentsView.tsx`:
   - Deprecate `previewDocument` and inline `modalDocument` state
   - Introduce `selectedDrawerDoc: MarcomDocument | null` and `isCreateModalOpen: boolean`
   - Mount `<AnimatePresence>{selectedDrawerDoc && <DocumentDrawer ... />}</AnimatePresence>`
@@ -63,19 +63,19 @@ Replace the fragmented modal experience (`DocumentPreviewModal.tsx` and inline f
   - Wire table row clicks (`onRowClick`) in `MarcomTableShell` to `setSelectedDrawerDoc(doc)`
   - Wire card click in `DocumentCardsView.tsx` to `setSelectedDrawerDoc(doc)`
   - Delete legacy inline modal form markup from `DocumentsView.tsx`
-- [ ] Delete `src/components/views/DocumentsView/DocumentPreviewModal.tsx`
-- [ ] Verification Gate: `git grep "DocumentPreviewModal"` yields 0 remaining references
+- [x] Delete `src/components/views/DocumentsView/DocumentPreviewModal.tsx`
+- [x] Verification Gate: `git grep "DocumentPreviewModal"` yields 0 remaining references
 
 ### Phase 4: Unit Testing & Verification Gates
-- [ ] Create `src/components/views/DocumentsView/documentDrawer.test.ts`:
+- [x] Create `src/components/views/DocumentsView/documentDrawer.test.ts`:
   - Asserts `DocumentDrawer.tsx` exists and renders header, viewer, metadata form, and footer
   - Asserts `DocumentCreateModal.tsx` exists and renders creation form
   - Asserts `DocumentPreviewModal.tsx` is completely eliminated
   - Asserts `DocumentsView.tsx` wires `selectedDrawerDoc` and `isCreateModalOpen`
-- [ ] Run verification suite:
+- [x] Run verification suite:
   - `npm run drift:check` passes with 0 drift
   - `npm run build:check` passes with 0 compilation errors
-  - `npm test` passes with 0 test failures
+  - `npm test` passes with 0 test failures (775 passed across 138 suites)
 
 ---
 

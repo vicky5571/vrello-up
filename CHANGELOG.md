@@ -4,6 +4,20 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-11-05]
+
+- `feat(documents)`: Documents Detail & Edit Drawer with focused creation modal
+  - Created `DocumentCreateModal.tsx` centered kickoff dialog for uploading new assets cleanly
+  - Created `DocumentDrawer.tsx` 560px slide-over right drawer combining live multi-format media preview (PDF, MP4, images, office/archives), file replacement, and metadata editing
+  - Modernized `DocumentsView.tsx` coordinator, dropping LOC by ~400 lines (from 809 to 409 lines)
+  - Wired document cards in `DocumentCardsView.tsx` and table rows in `MarcomTableShell` to `onSelectDocument`
+  - Decommissioned obsolete `DocumentPreviewModal.tsx` and eliminated modal hopping
+  - Added unit test suite `src/components/views/DocumentsView/documentDrawer.test.ts` (7 passing tests)
+  - Gates: `npm test` 775 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: docs/superpowers/specs/2026-11-05-documents-detail-edit-drawer-design.md
+  Plan: docs/superpowers/plans/2026-11-05-documents-detail-edit-drawer.md
+  Refs: docs/adr/0024-documents-detail-edit-drawer.md
+
 ## [2026-11-04]
 
 - `feat(events)`: Thumbnail compression & cover preview in EventDrawer
