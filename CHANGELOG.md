@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(mous)`: Sticky right columns for MOU document and actions
+  - Added declarative `MarcomColumnMeta` support in `MarcomTableShell.tsx` with sticky right positioning, solid backgrounds, and shadow borders
+  - Configured sticky right with 85px offset and left border on MOU document column
+  - Configured sticky right with 0px offset on actions column
+  - Added automated test in `src/components/views/MousView/mouColumns.test.ts`
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: docs/superpowers/specs/2026-11-05-mou-table-sticky-right-columns-design.md
+  Plan: docs/superpowers/plans/2026-11-05-mou-table-sticky-right-columns.md
+  Refs: docs/adr/0030-mou-table-sticky-right-columns.md
+
 - `feat(mous)`: Eliminate Google Drive from MOUs and standardize on Supabase Storage
   - Cleaned `mouDocumentHelpers.ts` to strictly parse internal documents (`INTERNAL_PDF`, `INTERNAL_IMAGE`, `EMPTY`), removing `isGoogleDrive`, `EXTERNAL_URL`, and `isExternalUrl`
   - Replaced raw URL text input in `MouFormModal.tsx` with clean Active Document Card supporting Pratinjau, Ganti, and Hapus actions

@@ -8,25 +8,34 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs (ADR-0030) — **PLANNING & HANDOVER COMPLETE**  
+**Active Feature:** Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs (ADR-0030) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs (ADR-0030 — Planning & Handover):**
-   - **Checkpoints Lolos Persetujuan**:
-     - Checkpoint 1 (Decision Problem & Candidate Options): User menyetujui **Opsi 1** (dukungan deklaratif `meta.sticky: "right"` di `MarcomTableShell.tsx`).
-     - Checkpoint 2 (Scope & Asumsi Spesifikasi): User menyetujui scope, non-goals, dan isolasi sticky right untuk kolom `document` dan `actions`.
-     - Checkpoint 3 (Phasing Strategy): User menyetujui 3 fase implementasi.
-   - **Dokumentasi Terbit (File-First, Content-Second)**:
-     - `docs/adr/0030-mou-table-sticky-right-columns.md`: Keputusan arsitektur deklaratif sticky right columns via column meta di shell tabel bersama.
-     - `docs/superpowers/specs/2026-11-05-mou-table-sticky-right-columns-design.md`: Spesifikasi detail styling sticky header/cell, offset calculation, border pembatas, dan kontrak hover sinkron.
-     - `docs/superpowers/plans/2026-11-05-mou-table-sticky-right-columns.md`: Rencana eksekusi 3 fase dengan file manifest, risk mitigation, dan invariant checklist.
-     - `docs/handover-mou-table-sticky-right-columns.md`: Handover eksekusi dengan snippet kode lengkap, instruksi perubahan, dan acceptance criteria.
-   - **Verification Gates**:
+1. **Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs (ADR-0030 — Implementation Complete):**
+   - **`MarcomTableShell.tsx` Enhancement:**
+     - Exported declarative interface `MarcomColumnMeta` (`align?`, `sticky?`, `stickyOffset?`, `stickyBorder?`).
+     - Rendered sticky right header cells with `position: sticky`, `right: ...px`, `z-20`, and solid background `bg-slate-50 dark:bg-[#18191B]`.
+     - Rendered sticky right body cells with `position: sticky`, `right: ...px`, `z-10`, solid background `bg-white dark:bg-[#18191B]`, and row hover synchronization `group-hover:bg-slate-50/80 dark:group-hover:bg-slate-800/40`.
+     - Added boundary separator with left border and soft drop shadow (`border-l border-slate-200/80 dark:border-slate-800 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]`).
+     - Added `group` CSS class to data rows to ensure row-level hover states propagate to sticky cells.
+   - **`mouColumns.tsx` Configuration:**
+     - Configured `meta: { sticky: "right", stickyOffset: 85, stickyBorder: true }` on `docPath` column (`id: "document"`, width 155px).
+     - Configured `meta: { sticky: "right", stickyOffset: 0 }` on display actions column (`id: "actions"`, width 85px).
+     - Retained exact original column dimensions and exported `getMouColumns` alias.
+   - **Automated Unit Testing (`mouColumns.test.ts`):**
+     - Created `src/components/views/MousView/mouColumns.test.ts` asserting sticky properties, offsets, borders, and column widths (5 passed, 0 failures).
+   - **Documentation & Invariants:**
+     - Completed `docs/superpowers/plans/2026-11-05-mou-table-sticky-right-columns.md`.
+     - Updated `docs/superpowers/specs/2026-11-05-mou-table-sticky-right-columns-design.md` to `IMPLEMENTED (ADR-0030)`.
+     - Added changelog entry in `CHANGELOG.md`.
+   - **Verification Gates Passed:**
      - `npm run drift:check`: ✅ No drift detected (57 spec-plan pairs).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm test`: ✅ Full test suite passed.
 
 2. **Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029 — Implementation Complete):**
    - **Parser Sanitized (`src/components/views/MousView/mouDocumentHelpers.ts`):**

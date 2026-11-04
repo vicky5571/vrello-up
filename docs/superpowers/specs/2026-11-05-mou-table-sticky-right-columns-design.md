@@ -1,7 +1,7 @@
 # Specification: Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs
 
 ## Status
-APPROVED (ADR-0030)
+IMPLEMENTED (ADR-0030)
 
 ## Date
 2026-11-05

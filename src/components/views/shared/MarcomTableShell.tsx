@@ -36,6 +36,13 @@ import { cn } from "@/lib/utils";
 import { extractSearchableText } from "./searchUtils";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
+export interface MarcomColumnMeta {
+  align?: "left" | "right";
+  sticky?: "right" | "left";
+  stickyOffset?: number;
+  stickyBorder?: boolean;
+}
+
 // Shared TanStack features for all marcom tables —
 // keep columnVisibility for getVisibleCells typing, columnSizing for size/getSize.
 export const marcomFeatures = tableFeatures({
@@ -444,16 +451,26 @@ export function MarcomTableShell<T extends object & { id: string }>({
                 const canSort = (header.column as any).getCanSort();
                 const isSorted = (header.column as any).getIsSorted();
                 const sortDirection = isSorted === "asc" ? "ascending" : isSorted === "desc" ? "descending" : "none";
-                const isRightAligned = (header.column.columnDef as any)?.meta?.align === "right";
+                const meta = (header.column.columnDef as any)?.meta as MarcomColumnMeta | undefined;
+                const isRightAligned = meta?.align === "right";
+                const isRightSticky = meta?.sticky === "right";
+                const rightOffset = meta?.stickyOffset ?? 0;
+                const hasStickyBorder = meta?.stickyBorder ?? false;
+
                 return (
                   <div
                     key={header.id}
                     role="columnheader"
                     aria-sort={canSort ? sortDirection : undefined}
-                    style={{ width: `${(header as any).getSize()}px` }}
+                    style={{
+                      width: `${(header as any).getSize()}px`,
+                      ...(isRightSticky ? { position: "sticky", right: `${rightOffset}px` } : {}),
+                    }}
                     className={cn(
                       "relative flex items-center gap-1.5 shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden",
                       isRightAligned && "justify-end",
+                      isRightSticky && "z-20 bg-slate-50 dark:bg-[#18191B]",
+                      hasStickyBorder && "border-l border-slate-200/80 dark:border-slate-800 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]",
                     )}
                   >
                     {canSort ? (
@@ -534,15 +551,32 @@ export function MarcomTableShell<T extends object & { id: string }>({
                       aria-expanded={renderExpanded ? isExpanded : undefined}
                       aria-controls={renderExpanded ? `${entityName}-detail-${(row as any).original.id}` : undefined}
                       className={cn(
-                        "flex items-center px-4 py-2.5 transition-colors text-xs",
+                        "group flex items-center px-4 py-2.5 transition-colors text-xs",
                         hasRowAction && "hover:bg-slate-50/80 dark:hover:bg-slate-800/40 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500",
                         (row as any).getIsSelected() && "bg-teal-50/40 dark:bg-teal-950/20",
                       )}
                     >
                       {(row as any).getVisibleCells().map((cell: any) => {
                         const isExpander = (cell.column as any).id === "expander";
+                        const meta = (cell.column.columnDef as any)?.meta as MarcomColumnMeta | undefined;
+                        const isRightSticky = meta?.sticky === "right";
+                        const rightOffset = meta?.stickyOffset ?? 0;
+                        const hasStickyBorder = meta?.stickyBorder ?? false;
+
                         return (
-                          <div key={cell.id} role="cell" style={{ width: `${cell.column.getSize()}px` }} className="shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden">
+                          <div
+                            key={cell.id}
+                            role="cell"
+                            style={{
+                              width: `${cell.column.getSize()}px`,
+                              ...(isRightSticky ? { position: "sticky", right: `${rightOffset}px` } : {}),
+                            }}
+                            className={cn(
+                              "shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden",
+                              isRightSticky && "z-10 bg-white dark:bg-[#18191B] group-hover:bg-slate-50/80 dark:group-hover:bg-slate-800/40",
+                              hasStickyBorder && "border-l border-slate-200/80 dark:border-slate-800 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]",
+                            )}
+                          >
                             {isExpander ? (
                               <div className="flex justify-end">
                                 <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", isExpanded && "rotate-180")} />

@@ -3,7 +3,7 @@
 **Date:** 2026-11-05  
 **Spec:** `docs/superpowers/specs/2026-11-05-mou-table-sticky-right-columns-design.md`  
 **ADR:** `docs/adr/0030-mou-table-sticky-right-columns.md`  
-**Status:** READY TO IMPLEMENT
+**Status:** COMPLETED
 
 ---
 
@@ -39,7 +39,7 @@ Mengimplementasikan kolom sticky kanan (*sticky right columns*) pada tabel MOUs 
 ## 4. Phase 1: Implementasi Fitur Deklaratif Sticky Columns di `MarcomTableShell.tsx`
 
 ### Tasks:
-- [ ] **1.1 Definisikan Tipe `MarcomColumnMeta`**:
+- [x] **1.1 Definisikan Tipe `MarcomColumnMeta`**:
   - Di `src/components/views/shared/MarcomTableShell.tsx`:
     ```typescript
     export interface MarcomColumnMeta {
@@ -49,12 +49,12 @@ Mengimplementasikan kolom sticky kanan (*sticky right columns*) pada tabel MOUs 
       stickyBorder?: boolean;
     }
     ```
-- [ ] **1.2 Perbarui Rendering Header**:
+- [x] **1.2 Perbarui Rendering Header**:
   - Pada `headerGroup.headers.map`:
     - Ekstrak `meta = (header.column.columnDef as any)?.meta as MarcomColumnMeta | undefined;`
     - Jika `meta?.sticky === "right"`, terapkan style inline `position: "sticky"`, `right: `${meta.stickyOffset ?? 0}px``, dan kelas `z-20 bg-slate-50 dark:bg-[#18191B]`.
     - Jika `meta?.stickyBorder`, terapkan border kiri dan bayangan lembut `border-l border-slate-200/80 dark:border-slate-800 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]`.
-- [ ] **1.3 Perbarui Rendering Baris Data Cell**:
+- [x] **1.3 Perbarui Rendering Baris Data Cell**:
   - Pada `(row as any).getVisibleCells().map`:
     - Ekstrak `meta = (cell.column.columnDef as any)?.meta as MarcomColumnMeta | undefined;`
     - Jika `meta?.sticky === "right"`, terapkan style inline `position: "sticky"`, `right: `${meta.stickyOffset ?? 0}px``, dan kelas `z-10 bg-white dark:bg-[#18191B] group-hover:bg-slate-50/80 dark:group-hover:bg-slate-800/40`.
@@ -69,7 +69,7 @@ Mengimplementasikan kolom sticky kanan (*sticky right columns*) pada tabel MOUs 
 ## 5. Phase 2: Konfigurasi Sticky Meta di `mouColumns.tsx`
 
 ### Tasks:
-- [ ] **2.1 Tambahkan Meta pada Kolom Dokumen MOU**:
+- [x] **2.1 Tambahkan Meta pada Kolom Dokumen MOU**:
   - Di `src/components/views/MousView/mouColumns.tsx`, tambahkan pada kolom `docPath` (id: `"document"`):
     ```typescript
     meta: {
@@ -78,7 +78,7 @@ Mengimplementasikan kolom sticky kanan (*sticky right columns*) pada tabel MOUs 
       stickyBorder: true,
     },
     ```
-- [ ] **2.2 Tambahkan Meta pada Kolom Aksi**:
+- [x] **2.2 Tambahkan Meta pada Kolom Aksi**:
   - Pada kolom display aksi (id: `"actions"`):
     ```typescript
     meta: {
@@ -96,14 +96,14 @@ Mengimplementasikan kolom sticky kanan (*sticky right columns*) pada tabel MOUs 
 ## 6. Phase 3: Automated Testing & Invariant Verification
 
 ### Tasks:
-- [ ] **3.1 Buat Unit Test `src/components/views/MousView/mouColumns.test.ts`**:
+- [x] **3.1 Buat Unit Test `src/components/views/MousView/mouColumns.test.ts`**:
   - Uji bahwa `getMouColumns` menghasilkan kolom `document` dengan `meta.sticky === "right"` dan `meta.stickyOffset === 85`.
   - Uji bahwa kolom `actions` memiliki `meta.sticky === "right"` dan `meta.stickyOffset === 0`.
   - Uji bahwa kolom lain (seperti `partnerName`, `mouType`) tidak memiliki sticky right.
-- [ ] **3.2 Jalankan Unit Test Suites**:
+- [x] **3.2 Jalankan Unit Test Suites**:
   - `node --test src/components/views/MousView/mouColumns.test.ts`
   - `npm test`
-- [ ] **3.3 Jalankan Invariant & Build Checks**:
+- [x] **3.3 Jalankan Invariant & Build Checks**:
   - `npm run drift:check` (57 spec-plan pairs)
   - `npm run build:check` (0 errors)
 
@@ -111,10 +111,10 @@ Mengimplementasikan kolom sticky kanan (*sticky right columns*) pada tabel MOUs 
 
 ## 7. Invariant Compliance Checklist
 
-- [ ] **Single-Tenant**: Nol workspace isolation leakage.
-- [ ] **SSOT**: Kolom tetap mengambil data kanonik `docPath` dari model `MarcomMou`.
-- [ ] **Coordinator Bounds**: `MarcomTableShell.tsx` tetap di bawah batas god file (< 680 LOC).
-- [ ] **Verification Gates**:
+- [x] **Single-Tenant**: Nol workspace isolation leakage.
+- [x] **SSOT**: Kolom tetap mengambil data kanonik `docPath` dari model `MarcomMou`.
+- [x] **Coordinator Bounds**: `MarcomTableShell.tsx` tetap di bawah batas god file (< 680 LOC).
+- [x] **Verification Gates**:
   - `npm run drift:check` PASS (57 spec-plan pairs)
   - `npm test` PASS (778+ tests, 0 failures)
   - `npm run build:check` PASS (0 TypeScript errors)

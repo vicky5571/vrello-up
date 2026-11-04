@@ -336,6 +336,11 @@ export function buildMouColumns({
       size: 155,
       minSize: 130,
       enableSorting: false,
+      meta: {
+        sticky: "right",
+        stickyOffset: 85,
+        stickyBorder: true,
+      },
       cell: ({ row }) => {
         const doc = row.original.docPath;
         const parsed = parseMouDocumentSource(doc, row.original.partnerName);
@@ -381,6 +386,10 @@ export function buildMouColumns({
       minSize: 70,
       maxSize: 110,
       enableSorting: false,
+      meta: {
+        sticky: "right",
+        stickyOffset: 0,
+      },
       cell: ({ row }) => {
         const isSubmitted = row.original.status === "SUBMITTED";
         const canApprove = isSubmitted && can("APPROVE_MOU", row.original.branchId);
@@ -417,3 +426,5 @@ export function buildMouColumns({
     }),
   ]);
 }
+
+export const getMouColumns = buildMouColumns;
