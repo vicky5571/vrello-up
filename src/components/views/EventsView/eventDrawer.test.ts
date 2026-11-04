@@ -162,5 +162,30 @@ describe("Field Event Edit Drawer and Modal Separation (ADR-0022)", () => {
     assert.equal(mockEvent.checklist?.length, 2);
     assert.equal(mockEvent.mediaAttachments?.[0].isSharedFolder, true);
   });
+
+  it("verifies EventCardsView card item is clickable to open drawer and removes edit/delete buttons", () => {
+    const cardsPath = path.resolve(
+      process.cwd(),
+      "src/components/views/EventsView/EventCardsView.tsx"
+    );
+    const content = fs.readFileSync(cardsPath, "utf-8");
+
+    assert.ok(
+      content.includes("onClick={() => onSelectEvent(event)}"),
+      "EventCardsView root motion.div card must have onClick to open drawer"
+    );
+    assert.ok(
+      content.includes("cursor-pointer"),
+      "EventCardsView root motion.div card must have cursor-pointer style"
+    );
+    assert.ok(
+      !content.includes("<Edit2"),
+      "EventCardsView card footer must not render Edit2 button"
+    );
+    assert.ok(
+      !content.includes("<Trash2"),
+      "EventCardsView card footer must not render Trash2 button"
+    );
+  });
 });
 

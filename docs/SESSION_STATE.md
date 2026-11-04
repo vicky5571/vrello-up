@@ -15,7 +15,15 @@
 
 ## What Was Completed This Session
 
-1. **Field Event Thumbnail Compression & Cover Preview Implementation (ADR-0023, Spec & Plan `2026-11-04-field-event-thumbnails`):**
+1. **Field Event Card Clickable & Clean Footer (UI Refinement):**
+   - **Card Click Navigation (`src/components/views/EventsView/EventCardsView.tsx`):**
+     - Made entire card container clickable (`onClick={() => onSelectEvent(event)}` and `cursor-pointer`), matching Content Planner card behavior.
+     - Added `e.stopPropagation()` to internal clickable elements (footage player preview, footage count chip, and archive folder external link).
+     - Removed redundant edit (`Edit2`) and delete (`Trash2`) icon buttons from the card footer (events are edited and deleted directly via `EventDrawer.tsx`).
+   - **Unit Tests Added (`src/components/views/EventsView/eventDrawer.test.ts`):**
+     - Added assertions verifying root card `onClick`, `cursor-pointer`, and absence of `<Edit2` and `<Trash2` buttons.
+
+2. **Field Event Thumbnail Compression & Cover Preview Implementation (ADR-0023, Spec & Plan `2026-11-04-field-event-thumbnails`):**
    - **Upload Route Adaptation (`src/app/api/marcom/drive/upload/route.ts`):**
      - Added optional `context: "events" | "content"` parameter extraction from multipart `formData`.
      - Updated `generateAndUploadThumbnail` to partition WebP thumbnails cleanly into Supabase bucket path `thumbnails/${context}/${userId}/${fileId}.webp`.

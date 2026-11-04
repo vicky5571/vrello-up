@@ -11,8 +11,6 @@ import {
   Folder,
   CheckSquare,
   Users,
-  Edit2,
-  Trash2,
   Package,
 } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
@@ -118,8 +116,9 @@ export function EventCardsView({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
+            onClick={() => onSelectEvent(event)}
             className={cn(
-              "group relative flex flex-col justify-between bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs hover:shadow-md hover:border-blue-500/40 transition-all",
+              "group relative flex flex-col justify-between bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-5 shadow-xs hover:shadow-md hover:border-blue-500/40 transition-all cursor-pointer",
               event.status === "ON_PROGRESS" && "ring-1 ring-amber-500/30"
             )}
           >
@@ -251,7 +250,10 @@ export function EventCardsView({
               {hasMedia ? (
                 <div className="mt-3 space-y-2">
                   <div
-                    onClick={() => onOpenFootageModal(event, 0)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenFootageModal(event, 0);
+                    }}
                     className="group/player relative rounded-xl overflow-hidden aspect-video bg-slate-950 border border-slate-200/80 dark:border-slate-800 cursor-pointer shadow-xs hover:border-blue-500/50 transition-all"
                     title="Click to watch documentation video"
                   >
@@ -315,7 +317,10 @@ export function EventCardsView({
                     {mediaCount > 0 ? (
                       <button
                         type="button"
-                        onClick={() => onOpenFootageModal(event, 0)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenFootageModal(event, 0);
+                        }}
                         className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 font-semibold transition-colors cursor-pointer"
                       >
                         <Film className="w-3.5 h-3.5" />
@@ -330,6 +335,7 @@ export function EventCardsView({
                         href={folderUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 hover:underline"
                         title="Open field documentation archive folder"
                       >
@@ -348,13 +354,9 @@ export function EventCardsView({
                       No footage attached
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => onSelectEvent(event)}
-                    className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline shrink-0 cursor-pointer ml-2"
-                  >
+                  <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 shrink-0 ml-2">
                     + Add Clip
-                  </button>
+                  </span>
                 </div>
               )}
 
@@ -397,9 +399,9 @@ export function EventCardsView({
               )}
             </div>
 
-            {/* Card Footer Actions */}
+            {/* Card Footer */}
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1.5">
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 min-w-0 flex-1 mr-1">
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 min-w-0 flex-1">
                 {picMember ? (
                   <AppImage
                     src={picMember.avatar}
@@ -416,29 +418,6 @@ export function EventCardsView({
                 <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
                   {picMember?.name || event.picName || "Unassigned"}
                 </span>
-              </div>
-
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => onSelectEvent(event)}
-                  className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  title="Edit Event"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm("Are you sure you want to delete this field event?")) {
-                      onDeleteEvent(event.id);
-                    }
-                  }}
-                  className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
-                  title="Delete Event"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
               </div>
             </div>
           </motion.div>
