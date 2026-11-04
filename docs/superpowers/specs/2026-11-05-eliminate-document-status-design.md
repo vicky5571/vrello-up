@@ -1,7 +1,7 @@
 # Specification: Complete Elimination of Overengineered Document Status Field & Supabase Storage Focus
 
 ## Status
-ACCEPTED (ADR-0025)
+IMPLEMENTED (ADR-0025)
 
 ## Date
 2026-11-05

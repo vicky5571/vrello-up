@@ -8,26 +8,45 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Complete Elimination of Document Status & Supabase Storage Focus (ADR-0025) — **PLANNING & HANDOVER COMPLETE**  
+**Active Feature:** Complete Elimination of Document Status & Supabase Storage Focus (ADR-0025) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Complete Elimination of Document Status & Supabase Storage Focus (ADR-0025 — Planning Mode):**
-   - **Mode:** Strict Planning-Only session ("don't code in this session").
-   - **ADR-0025 (`docs/adr/0025-eliminate-document-status-overengineering.md`):**
-     - Evaluated `status` on `DocumentItem` as an orphaned speculative abstraction with 0 state machines, hardcoded `selectedStatus = "ALL"`, no filtering, and ad-hoc seed values.
-     - Decided on Option A (Complete Database & Full-Stack Elimination): Dropping `status` column from `model DocumentItem`, removing `DocumentStatus` types, deleting `documentTaxonomy.ts`, cleaning API routes and UI components, focusing document uploads on Supabase Storage (`marcom-documents` bucket), and re-seeding cleanly.
-   - **Specification (`docs/superpowers/specs/2026-11-05-eliminate-document-status-design.md`):**
-     - Detailed contracts: Prisma model cleanup, migration generation (`drop_document_item_status`), seeder cleanup, SSoT type updates, API endpoints update (`POST` and `PATCH /api/marcom/documents`), KPI row Card 3 conversion to "Penyimpanan Cloud", and automated verification.
-   - **Implementation Plan (`docs/superpowers/plans/2026-11-05-eliminate-document-status.md`):**
-     - 4 atomic execution phases with exact tasks, verification steps, and quality gates.
-   - **Handover (`docs/handover-eliminate-document-status.md`):**
-     - Execution-ready guide with exact code snippets, numbered execution order (Steps 1–11), explicit "Do Not Touch" list, and acceptance criteria checklist.
-   - **Storage Decoupling Clarification:**
-     - Confirmed Documents uploads utilize Supabase Storage (`marcom-documents` bucket), mitigating Google Drive personal token expiration and abuse/ban heuristics.
+1. **Complete Elimination of Document Status & Supabase Storage Focus (ADR-0025 — Implementation):**
+   - **Prisma Schema & Database DDL (`prisma/schema.prisma` & `prisma/migrations/20261105000000_drop_document_item_status/`):**
+     - Dropped `status` column from `model DocumentItem`.
+     - Executed raw migration SQL: `ALTER TABLE "DocumentItem" DROP COLUMN IF EXISTS "status";`.
+     - Regenerated Prisma Client v6.19.3 cleanly.
+   - **Seed Cleaned & Re-seeded (`prisma/seed.ts`):**
+     - Stripped ad-hoc status strings from all 4 document seed fixtures.
+     - Re-seeded database (`npx prisma db seed`), seeding 4 document items and reports with 0 errors.
+   - **SSoT Types Sanitized (`src/types/index.ts`):**
+     - Completely removed `export type DocumentStatus`.
+     - Removed `status?: DocumentStatus;` from `interface DocumentItem`.
+   - **Obsolete Taxonomy Helper Deleted:**
+     - Removed `src/lib/marcom/documentTaxonomy.ts` and `src/lib/marcom/documentTaxonomy.test.ts`.
+   - **API Endpoints Refactored (`/api/marcom/documents/route.ts` & `[id]/route.ts`):**
+     - Removed all taxonomy imports and status validation / field destructuring.
+     - Removed `"status"` from `PATCHABLE_FIELDS`.
+   - **Pure Domain Logic & KPIs (`src/lib/marcom/documentWorkflow.ts`):**
+     - Removed `activeCount`, `draftCount`, and `archivedCount` from `DocumentKPIs` and calculations.
+     - Removed status filter criteria from `FilterDocumentsOptions` and `filterDocuments`.
+     - Replaced KPI Card 3 with "Penyimpanan Cloud" metric (comparing Supabase cloud vs local storage).
+   - **UI Views Refactored (`DocumentsView/`):**
+     - `DocumentCreateModal.tsx`: Eliminated status state/input; optimized grid to 2 columns (Periode & PIC).
+     - `DocumentDrawer.tsx`: Eliminated status state, constants, and selector dropdown from sticky header.
+     - `DocumentCardsView.tsx`: Eliminated status badge, displaying clean category badge and file format chip.
+     - `DocumentsView.tsx`: Removed `selectedStatus` dead state, removed status table column, and updated KPI card 3.
+   - **Automated Unit Tests Updated:**
+     - `src/components/views/DocumentsView/documentDrawer.test.ts`: Added assertions verifying zero status references across all 4 document UI components.
+     - `src/lib/marcom/documentWorkflow.test.ts`: Updated fixtures and assertions for KPIs without status counts.
+   - **Verification Gates Passed:**
+     - `npm run drift:check`: ✅ No drift detected (52 specs paired).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm test`: ✅ 774 passed, 0 failures across 138 suites.
 
 2. **Documents Detail & Edit Drawer Implementation (ADR-0024):**
    - **Dedicated Creation Modal (`src/components/views/DocumentsView/DocumentCreateModal.tsx`):**

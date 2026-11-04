@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { isValidDocumentFilePath } from "@/lib/marcom/upload";
-import { VALID_DOCUMENT_STATUSES, isValidDocumentStatus } from "@/lib/marcom/documentTaxonomy";
 
 const VALID_FILE_TYPES = ["PDF", "XLSX", "DOCX", "ZIP", "CSV", "MP4", "PNG", "JPG"] as const;
 
@@ -35,7 +34,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const { name, category, period, branchName, ownerPic, status, fileType, fileSizeMb, filePath, description } = body ?? {};
+  const { name, category, period, branchName, ownerPic, fileType, fileSizeMb, filePath, description } = body ?? {};
   if (!name || !category || !fileType || !filePath) {
     return NextResponse.json({ error: "Missing required fields: name, category, fileType, filePath" }, { status: 400 });
   }
@@ -46,16 +45,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid filePath: must be served by /api/marcom/files/ or a valid https:// URL" }, { status: 400 });
   }
 
-  const rawStatus = typeof status === "string" && status.trim() !== "" ? status.trim().toUpperCase() : "DRAFT";
-  if (!isValidDocumentStatus(rawStatus)) {
-    return NextResponse.json(
-      { error: `Invalid status: '${status}'. Must be one of: ${VALID_DOCUMENT_STATUSES.join(", ")}` },
-      { status: 400 },
-    );
-  }
-
   const document = await prisma.documentItem.create({
-    data: { name, category, period, branchName, ownerPic, status: rawStatus, fileType, fileSizeMb, filePath, description },
+    data: { name, category, period, branchName, ownerPic, fileType, fileSizeMb, filePath, description },
   });
   return NextResponse.json(document, { status: 201 });
 }

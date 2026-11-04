@@ -477,8 +477,6 @@ export interface MarcomMou {
 
 export type DocFileType = "PDF" | "XLSX" | "DOCX" | "ZIP" | "CSV" | "MP4" | "PNG" | "JPG";
 
-export type DocumentStatus = "DRAFT" | "ACTIVE" | "ARCHIVED";
-
 export interface DocumentItem {
   id: string;
   name: string;
@@ -486,7 +484,6 @@ export interface DocumentItem {
   period?: string;
   branchName?: string;
   ownerPic?: string;
-  status?: DocumentStatus;
   fileType: DocFileType | string;
   fileSizeMb?: number;
   filePath: string;

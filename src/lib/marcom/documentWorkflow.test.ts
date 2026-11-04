@@ -18,7 +18,6 @@ const mockDocs: MarcomDocument[] = [
     period: "2025",
     branchName: "Semarang",
     ownerPic: "Budi Studio",
-    status: "ACTIVE",
     fileType: "PDF",
     fileSizeMb: 12.5,
     filePath: "/api/marcom/files/documents/new/brand-guide.pdf",
@@ -31,7 +30,6 @@ const mockDocs: MarcomDocument[] = [
     period: "Q1 2025",
     branchName: "Solo",
     ownerPic: "Rian Video",
-    status: "ACTIVE",
     fileType: "MP4",
     fileSizeMb: 1200.0,
     filePath: "https://drive.google.com/file/d/12345/view",
@@ -44,7 +42,6 @@ const mockDocs: MarcomDocument[] = [
     period: "2024",
     branchName: "Yogyakarta",
     ownerPic: "Ahmad Vendor",
-    status: "DRAFT",
     fileType: "DOCX",
     fileSizeMb: 4.2,
     filePath: "/api/marcom/files/documents/new/sop.docx",
@@ -57,7 +54,6 @@ const mockDocs: MarcomDocument[] = [
     period: "Q4 2024",
     branchName: "Semarang",
     ownerPic: "Siti Analyst",
-    status: "ARCHIVED",
     fileType: "XLSX",
     fileSizeMb: 8.8,
     filePath: "https://docs.google.com/spreadsheets/d/abc/edit",
@@ -90,7 +86,7 @@ test("getDocumentTypeMeta returns valid color and label", () => {
   assert.equal(mp4Meta.iconName, "film");
 });
 
-test("calculateDocumentKPIs computes storage, status, and category aggregates", () => {
+test("calculateDocumentKPIs computes storage, category, and cloud/local aggregates", () => {
   const emptyKPIs = calculateDocumentKPIs([]);
   assert.equal(emptyKPIs.totalDocuments, 0);
   assert.equal(emptyKPIs.formattedStorage, "0 MB");
@@ -98,9 +94,6 @@ test("calculateDocumentKPIs computes storage, status, and category aggregates", 
 
   const kpis = calculateDocumentKPIs(mockDocs);
   assert.equal(kpis.totalDocuments, 4);
-  assert.equal(kpis.activeCount, 2);
-  assert.equal(kpis.draftCount, 1);
-  assert.equal(kpis.archivedCount, 1);
   assert.equal(kpis.cloudDocsCount, 2);
   assert.equal(kpis.localDocsCount, 2);
   // Total MB: 12.5 + 1200 + 4.2 + 8.8 = 1225.5 MB => ~1.20 GB
@@ -108,15 +101,11 @@ test("calculateDocumentKPIs computes storage, status, and category aggregates", 
   assert.equal(kpis.formattedStorage, "1.20 GB");
 });
 
-test("filterDocuments filters correctly by category, status, fileType, and query", () => {
+test("filterDocuments filters correctly by category, fileType, and query", () => {
   // Filter category
   const brandOnly = filterDocuments(mockDocs, { category: "Brand Guidelines" });
   assert.equal(brandOnly.length, 1);
   assert.equal(brandOnly[0].id, "doc-1");
-
-  // Filter status
-  const activeOnly = filterDocuments(mockDocs, { status: "Active" });
-  assert.equal(activeOnly.length, 2);
 
   // Filter fileType
   const videoOnly = filterDocuments(mockDocs, { fileType: "MP4" });

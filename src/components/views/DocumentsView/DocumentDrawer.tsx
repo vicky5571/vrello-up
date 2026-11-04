@@ -27,7 +27,6 @@ import { AppImage } from "@/components/ui/AppImage";
 import type {
   DocumentItem as MarcomDocument,
   DocFileType,
-  DocumentStatus,
   User,
 } from "@/types";
 import {
@@ -49,28 +48,6 @@ export interface DocumentDrawerProps {
   members: User[];
   canManage?: boolean;
 }
-
-const DOCUMENT_STATUSES: {
-  value: DocumentStatus;
-  label: string;
-  badgeClass: string;
-}[] = [
-  {
-    value: "ACTIVE",
-    label: "Active",
-    badgeClass: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
-  },
-  {
-    value: "DRAFT",
-    label: "Draft",
-    badgeClass: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20",
-  },
-  {
-    value: "ARCHIVED",
-    label: "Archived",
-    badgeClass: "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20",
-  },
-];
 
 const VALID_FILE_TYPES: DocFileType[] = [
   "PDF",
@@ -98,7 +75,6 @@ export function DocumentDrawer({
   const [branchName, setBranchName] = useState("");
   const [ownerPic, setOwnerPic] = useState("");
   const [period, setPeriod] = useState("");
-  const [status, setStatus] = useState<DocumentStatus>("ACTIVE");
   const [fileType, setFileType] = useState<DocFileType>("PDF");
   const [fileSizeMb, setFileSizeMb] = useState<number>(0);
   const [filePath, setFilePath] = useState("");
@@ -124,7 +100,6 @@ export function DocumentDrawer({
     setBranchName(document.branchName || "");
     setOwnerPic(document.ownerPic || "");
     setPeriod(document.period || "");
-    setStatus(document.status || "ACTIVE");
     setFileType((document.fileType as DocFileType) || "PDF");
     setFileSizeMb(document.fileSizeMb || 0);
     setFilePath(document.filePath || "");
@@ -145,8 +120,6 @@ export function DocumentDrawer({
   const typeMeta = getDocumentTypeMeta(fileType);
   const isCloud = isCloudDocumentUrl(filePath);
   const driveInfo = isCloud ? parseGoogleDriveUrl(filePath) : null;
-  const currentStatusMeta =
-    DOCUMENT_STATUSES.find((s) => s.value === status) || DOCUMENT_STATUSES[0];
 
   const handleCopyLink = () => {
     if (!filePath) return;
@@ -218,7 +191,6 @@ export function DocumentDrawer({
         branchName: branchName.trim() || undefined,
         ownerPic: ownerPic.trim() || undefined,
         period: period.trim() || undefined,
-        status,
         fileType,
         fileSizeMb: Number(fileSizeMb) || 0,
         filePath: filePath.trim(),
@@ -323,28 +295,6 @@ export function DocumentDrawer({
                   {renderFileIcon("w-3.5 h-3.5")}
                   <span>{fileType}</span>
                 </span>
-
-                {/* Status Selector Dropdown */}
-                <div className="relative">
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as DocumentStatus)}
-                    className={cn(
-                      "px-2.5 py-1 text-xs font-bold rounded-lg border uppercase tracking-wider cursor-pointer outline-hidden transition-all",
-                      currentStatusMeta.badgeClass
-                    )}
-                  >
-                    {DOCUMENT_STATUSES.map((opt) => (
-                      <option
-                        key={opt.value}
-                        value={opt.value}
-                        className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 normal-case"
-                      >
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
                 <span className="text-[11px] text-slate-400">
                   {formatFileSize(fileSizeMb)}

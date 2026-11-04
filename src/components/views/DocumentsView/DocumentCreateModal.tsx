@@ -12,7 +12,6 @@ import {
 import type {
   DocumentItem as MarcomDocument,
   DocFileType,
-  DocumentStatus,
   User,
 } from "@/types";
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
@@ -50,7 +49,6 @@ export function DocumentCreateModal({
   const [branchName, setBranchName] = useState(branches[0]?.name || "");
   const [ownerPic, setOwnerPic] = useState("");
   const [period, setPeriod] = useState("");
-  const [status, setStatus] = useState<DocumentStatus>("ACTIVE");
   const [fileType, setFileType] = useState<DocFileType>("PDF");
   const [fileSizeMb, setFileSizeMb] = useState<number>(0);
   const [filePath, setFilePath] = useState("");
@@ -74,7 +72,6 @@ export function DocumentCreateModal({
     setBranchName(branches[0]?.name || "");
     setOwnerPic("");
     setPeriod("");
-    setStatus("ACTIVE");
     setFileType("PDF");
     setFileSizeMb(0);
     setFilePath("");
@@ -155,7 +152,6 @@ export function DocumentCreateModal({
         branchName: branchName.trim() || undefined,
         ownerPic: ownerPic.trim() || undefined,
         period: period.trim() || undefined,
-        status,
         fileType,
         fileSizeMb: Number(fileSizeMb) || 0,
         filePath: filePath.trim(),
@@ -265,8 +261,8 @@ export function DocumentCreateModal({
               </div>
             </div>
 
-            {/* Period, PIC & Status */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Period & PIC */}
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Periode
@@ -297,21 +293,6 @@ export function DocumentCreateModal({
                     <option key={m.id} value={m.name || m.email || ""} />
                   ))}
                 </datalist>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Status
-                </label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as DocumentStatus)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
-                >
-                  <option value="ACTIVE">Active</option>
-                  <option value="DRAFT">Draft</option>
-                  <option value="ARCHIVED">Archived</option>
-                </select>
               </div>
             </div>
 

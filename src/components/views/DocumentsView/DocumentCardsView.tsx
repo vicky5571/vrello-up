@@ -111,7 +111,6 @@ export function DocumentCardsView({
       {documents.map((doc) => {
         const typeMeta = getDocumentTypeMeta(doc.fileType as DocFileType);
         const isCloud = isCloudDocumentUrl(doc.filePath);
-        const statusLower = (doc.status || "DRAFT").toLowerCase();
 
         return (
           <div
@@ -121,7 +120,7 @@ export function DocumentCardsView({
             title="Klik untuk membuka pratinjau dokumen"
           >
             <div>
-              {/* Card Header: Type Badge & Status */}
+              {/* Card Header: Type Badge */}
               <div className="flex items-center justify-between gap-2 mb-3">
                 <span
                   className={cn(
@@ -133,20 +132,9 @@ export function DocumentCardsView({
                   <span>{doc.fileType}</span>
                 </span>
 
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className={cn(
-                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border",
-                      statusLower === "active"
-                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300/40"
-                        : statusLower === "draft"
-                        ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300/40"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
-                    )}
-                  >
-                    {doc.status || "DRAFT"}
-                  </span>
-                </div>
+                <span className="text-[11px] font-medium text-slate-400">
+                  {formatFileSize(doc.fileSizeMb || 0)}
+                </span>
               </div>
 
               {/* Title & Description */}

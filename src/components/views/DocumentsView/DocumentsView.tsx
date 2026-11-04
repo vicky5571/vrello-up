@@ -7,7 +7,6 @@ import {
   Files,
   Edit2,
   HardDrive,
-  CheckCircle2,
   Layers,
   Eye,
   Cloud,
@@ -33,9 +32,9 @@ import {
 import { DocumentCardsView } from "./DocumentCardsView";
 import { DocumentDrawer } from "./DocumentDrawer";
 import { DocumentCreateModal } from "./DocumentCreateModal";
-import type { DocumentItem, DocFileType, DocumentStatus } from "@/types";
+import type { DocumentItem, DocFileType } from "@/types";
 
-export type { DocFileType, DocumentStatus };
+export type { DocFileType };
 
 export type MarcomDocument = DocumentItem;
 
@@ -57,7 +56,6 @@ export function DocumentsView() {
   // View & Filter States
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-  const [selectedStatus] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Drawer & Create Modal States
@@ -139,10 +137,10 @@ export function DocumentsView() {
         color: "blue",
       },
       {
-        label: "Dokumen Aktif",
-        value: kpiData.activeCount,
-        helper: `${kpiData.draftCount} Draft · ${kpiData.archivedCount} Arsip`,
-        icon: CheckCircle2,
+        label: "Penyimpanan Cloud",
+        value: kpiData.cloudDocsCount,
+        helper: `${kpiData.localDocsCount} Berkas Server/Lokal`,
+        icon: Cloud,
         color: "emerald",
       },
       {
@@ -174,10 +172,9 @@ export function DocumentsView() {
   const filteredDocuments = useMemo(() => {
     return filterDocuments(documents, {
       category: selectedCategory,
-      status: selectedStatus,
       searchQuery: searchQuery,
     });
-  }, [documents, selectedCategory, selectedStatus, searchQuery]);
+  }, [documents, selectedCategory, searchQuery]);
 
   // Table Columns
   const columns = useMemo(
@@ -293,29 +290,6 @@ export function DocumentsView() {
             {row.original.branchName || "HQ / Global"}
           </span>
         ),
-      }),
-      columnHelper.accessor("status", {
-        id: "status",
-        header: "Status",
-        size: 100,
-        minSize: 80,
-        cell: ({ row }) => {
-          const s = (row.original.status || "DRAFT").toLowerCase();
-          return (
-            <span
-              className={cn(
-                "px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border",
-                s === "active"
-                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300/40"
-                  : s === "draft"
-                  ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300/40"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
-              )}
-            >
-              {row.original.status || "DRAFT"}
-            </span>
-          );
-        },
       }),
       columnHelper.display({
         id: "actions",

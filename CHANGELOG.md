@@ -6,6 +6,19 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `refactor(documents)`: Complete elimination of document status and Supabase Storage focus
+  - Removed `status` column from `DocumentItem` PostgreSQL schema and Prisma client
+  - Cleaned `prisma/seed.ts` removing ad-hoc status attributes from document seed catalog
+  - Removed `DocumentStatus` and `DocumentItem.status` from SSoT (`src/types/index.ts`)
+  - Deleted obsolete `src/lib/marcom/documentTaxonomy.ts` and test file
+  - Removed status handling from REST API endpoints (`/api/marcom/documents` and `[id]`)
+  - Removed status from `DocumentDrawer`, `DocumentCreateModal`, and `DocumentCardsView`
+  - Updated `DocumentsView` KPI Card 3 to "Penyimpanan Cloud" (cloud vs local metrics)
+  - Re-seeded database and verified with full test suite (774 passed, 0 failures)
+  Spec: docs/superpowers/specs/2026-11-05-eliminate-document-status-design.md
+  Plan: docs/superpowers/plans/2026-11-05-eliminate-document-status.md
+  Refs: docs/adr/0025-eliminate-document-status-overengineering.md
+
 - `feat(documents)`: Documents Detail & Edit Drawer with focused creation modal
   - Created `DocumentCreateModal.tsx` centered kickoff dialog for uploading new assets cleanly
   - Created `DocumentDrawer.tsx` 560px slide-over right drawer combining live multi-format media preview (PDF, MP4, images, office/archives), file replacement, and metadata editing

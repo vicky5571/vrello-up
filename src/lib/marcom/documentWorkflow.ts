@@ -4,9 +4,6 @@ export interface DocumentKPIs {
   totalDocuments: number;
   totalStorageMb: number;
   formattedStorage: string;
-  activeCount: number;
-  draftCount: number;
-  archivedCount: number;
   topCategory: string;
   cloudDocsCount: number;
   localDocsCount: number;
@@ -137,9 +134,6 @@ export function calculateDocumentKPIs(documents: MarcomDocument[]): DocumentKPIs
       totalDocuments: 0,
       totalStorageMb: 0,
       formattedStorage: "0 MB",
-      activeCount: 0,
-      draftCount: 0,
-      archivedCount: 0,
       topCategory: "—",
       cloudDocsCount: 0,
       localDocsCount: 0,
@@ -147,9 +141,6 @@ export function calculateDocumentKPIs(documents: MarcomDocument[]): DocumentKPIs
   }
 
   let totalStorageMb = 0;
-  let activeCount = 0;
-  let draftCount = 0;
-  let archivedCount = 0;
   let cloudDocsCount = 0;
   let localDocsCount = 0;
   const categoryCounts: Record<string, number> = {};
@@ -157,15 +148,6 @@ export function calculateDocumentKPIs(documents: MarcomDocument[]): DocumentKPIs
   for (const doc of documents) {
     const size = typeof doc.fileSizeMb === "number" && Number.isFinite(doc.fileSizeMb) ? doc.fileSizeMb : 0;
     totalStorageMb += size;
-
-    const normalizedStatus = (doc.status || "").toLowerCase();
-    if (normalizedStatus === "active") {
-      activeCount++;
-    } else if (normalizedStatus === "draft") {
-      draftCount++;
-    } else if (normalizedStatus === "archived") {
-      archivedCount++;
-    }
 
     if (isCloudDocumentUrl(doc.filePath)) {
       cloudDocsCount++;
@@ -190,9 +172,6 @@ export function calculateDocumentKPIs(documents: MarcomDocument[]): DocumentKPIs
     totalDocuments,
     totalStorageMb: Number(totalStorageMb.toFixed(2)),
     formattedStorage: formatFileSize(totalStorageMb),
-    activeCount,
-    draftCount,
-    archivedCount,
     topCategory,
     cloudDocsCount,
     localDocsCount,
@@ -201,7 +180,6 @@ export function calculateDocumentKPIs(documents: MarcomDocument[]): DocumentKPIs
 
 export interface FilterDocumentsOptions {
   category?: string;
-  status?: string;
   fileType?: string;
   searchQuery?: string;
 }
@@ -210,20 +188,13 @@ export function filterDocuments(
   documents: MarcomDocument[],
   options: FilterDocumentsOptions
 ): MarcomDocument[] {
-  const { category, status, fileType, searchQuery } = options;
+  const { category, fileType, searchQuery } = options;
   const q = searchQuery?.trim().toLowerCase() || "";
 
   return documents.filter((doc) => {
     // Category filter
     if (category && category !== "ALL") {
       if (doc.category?.trim().toLowerCase() !== category.trim().toLowerCase()) {
-        return false;
-      }
-    }
-
-    // Status filter
-    if (status && status !== "ALL") {
-      if (doc.status?.trim().toLowerCase() !== status.trim().toLowerCase()) {
         return false;
       }
     }

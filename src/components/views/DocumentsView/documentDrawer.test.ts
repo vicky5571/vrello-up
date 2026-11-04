@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import type { DocumentItem, DocFileType, DocumentStatus } from "@/types";
+import type { DocumentItem, DocFileType } from "@/types";
 import {
   getDocumentTypeMeta,
   formatFileSize,
@@ -131,6 +131,25 @@ describe("Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)"
     );
   });
 
+  it("verifies status field is completely eliminated from Documents module (ADR-0025)", () => {
+    const drawerPath = path.join(docsDir, "DocumentDrawer.tsx");
+    const drawerContent = fs.readFileSync(drawerPath, "utf-8");
+    assert.ok(!drawerContent.includes("DOCUMENT_STATUSES"), "Drawer must not have DOCUMENT_STATUSES");
+    assert.ok(!drawerContent.includes("setStatus("), "Drawer must not have setStatus");
+
+    const createPath = path.join(docsDir, "DocumentCreateModal.tsx");
+    const createContent = fs.readFileSync(createPath, "utf-8");
+    assert.ok(!createContent.includes("setStatus("), "CreateModal must not have setStatus");
+
+    const cardsPath = path.join(docsDir, "DocumentCardsView.tsx");
+    const cardsContent = fs.readFileSync(cardsPath, "utf-8");
+    assert.ok(!cardsContent.includes("doc.status"), "CardsView must not render status");
+
+    const viewPath = path.join(docsDir, "DocumentsView.tsx");
+    const viewContent = fs.readFileSync(viewPath, "utf-8");
+    assert.ok(!viewContent.includes('accessor("status"'), "Table must not have status column");
+  });
+
   it("verifies DocumentItem conforms to SSOT and helpers handle all formats", () => {
     const mockDoc: DocumentItem = {
       id: "doc-test-1",
@@ -140,7 +159,6 @@ describe("Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)"
       filePath: "/api/marcom/files/guidelines.pdf",
       fileSizeMb: 12.5,
       branchName: "HQ",
-      status: "ACTIVE" as DocumentStatus,
       description: "Official brand guidelines",
     };
 
