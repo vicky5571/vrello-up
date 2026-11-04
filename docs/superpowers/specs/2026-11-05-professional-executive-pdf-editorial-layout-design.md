@@ -1,7 +1,7 @@
 # Design Specification: Professional Executive PDF Editorial Layout & Anti-AI-Slop Redesign
 
 - **Date:** 2026-11-05
-- **Status:** APPROVED
+- **Status:** IMPLEMENTED (ADR-0034)
 - **ADR Reference:** `docs/adr/0034-professional-executive-pdf-editorial-layout.md`
 
 ## 1. Executive Summary & Goals
@@ -147,18 +147,18 @@ function formatIdDate(isoString?: string | null): string {
 
 ## 4. Acceptance Criteria & Verification
 
-- [ ] All emojis (🏆, ⚠️, 🎯, 📋) are completely absent from generated HTML.
-- [ ] Colored alert callouts (`.box-green`, `.box-amber`, `.box-blue`) are removed; replaced with clean left hairline rules.
-- [ ] Document title is "Laporan Eksekutif Bulanan", and organization name renders "Vrello Up".
-- [ ] Official document number (`No. Dokumen: VRL/MRK/REP/...`) and confidentiality badge are present.
-- [ ] Integrated Executive Scorecard renders without floating cards or rounded corners.
-- [ ] Redundant bracket prefixes (`[POSM]`, `[MOU]`, etc.) are eliminated from the table.
-- [ ] Dates in activities table strictly follow Indonesian `DD/MM/YYYY` format.
-- [ ] Zero new npm dependencies added to `package.json`.
-- [ ] `src/lib/productivity/exportCenter.test.ts` and `src/lib/marcom/reportDraftEngine.test.ts` pass with 100% assertions.
-- [ ] `npm run drift:check` passes with no drift detected.
-- [ ] `npm run build:check` compiles with 0 TypeScript errors.
-- [ ] `npm test` passes with 0 failures across the test suite.
+- [x] All emojis (🏆, ⚠️, 🎯, 📋) are completely absent from generated HTML.
+- [x] Colored alert callouts (`.box-green`, `.box-amber`, `.box-blue`) are removed; replaced with clean left hairline rules.
+- [x] Document title is "Laporan Eksekutif Bulanan", and organization name renders "Vrello Up".
+- [x] Official document number (`No. Dokumen: VRL/MRK/REP/...`) and confidentiality badge are present.
+- [x] Integrated Executive Scorecard renders without floating cards or rounded corners.
+- [x] Redundant bracket prefixes (`[POSM]`, `[MOU]`, etc.) are eliminated from the table.
+- [x] Dates in activities table strictly follow Indonesian `DD/MM/YYYY` format.
+- [x] Zero new npm dependencies added to `package.json`.
+- [x] `src/lib/productivity/exportCenter.test.ts` and `src/lib/marcom/reportDraftEngine.test.ts` pass with 100% assertions.
+- [x] `npm run drift:check` passes with no drift detected.
+- [x] `npm run build:check` compiles with 0 TypeScript errors.
+- [x] `npm test` passes with 0 failures across the test suite.
 
 
 

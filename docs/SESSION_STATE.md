@@ -8,12 +8,26 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Professional Executive PDF Editorial Layout & Anti-AI-Slop Redesign (ADR-0034) — **PLANNING COMPLETE**  
-**Previous Feature:** Integrate Export Center into More Apps Menu (ADR-0033)  
+**Active Feature:** Reports Expanded Row Modular Card Grid Styling & Atomic Extraction (ADR-0035) — **PLANNING COMPLETE**  
+**Previous Feature:** Professional Executive PDF Editorial Layout & Anti-AI-Slop Redesign (ADR-0034)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Perencanaan Penataan Grid Kartu Modular Baris Ekspansi Laporan (ADR-0035 — Planning Complete):**
+   - **Keputusan Arsitektur (ADR-0035):**
+     - Memilih Opsi 1: *Modular Card Grid with Section Badges & Atomic Extraction*.
+     - Mengekstrak markup baris ekspansi dari `ReportsView.tsx` menjadi sub-komponen atomik `MonthlyReportExpandedRow.tsx` (~130 LOC), memangkas ~80 baris dari file coordinator.
+     - Membungkus seksi *Activities*, *Achievements*, *Key Issues*, dan *Action Plans* ke dalam 4 kontainer kartu terstruktur (`shadow-2xs`, ikon tematik, count pill badge).
+     - Menguraikan teks aktivitas mentah menjadi badge kategori (`POSM`, `MOU`, `KONTEN`, `EVENT`), judul tegas, dan subteks biaya/detail terpisah.
+     - Menata dokumen pendukung menjadi strip kartu berkas horizontal dengan ekstensi file dan ikon `FileText`.
+   - **Spesifikasi & Rencana Implementasi:**
+     - Membuat dokumen spec `docs/superpowers/specs/2026-11-05-reports-expanded-row-modular-card-grid-design.md`.
+     - Membuat dokumen plan `docs/superpowers/plans/2026-11-05-reports-expanded-row-modular-card-grid.md` (62/62 pasangan spec-plan sinkron).
+   - **Dokumen Handover (Execution-Ready):**
+     - Membuat panduan eksekusi `docs/handover-reports-expanded-row-modular-card-grid.md` dengan kode komponen lengkap, diff persis untuk `ReportsView.tsx`, daftar "Do Not Touch", urutan eksekusi bernomor, dan kriteria penerimaan.
+
 
 1. **Perencanaan Tata Letak Editorial PDF Eksekutif Profesional & Anti-AI-Slop (ADR-0034 — Planning Complete):**
    - **Keputusan Arsitektur (ADR-0034):**
@@ -1310,7 +1324,7 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (all 61 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (all 62 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
 - `npm test` → ✅ Full test suite passed
 - `npm run test:smoke` → ✅ 110 passed, 0 failed
@@ -1326,10 +1340,11 @@
 ## Next Step for Following Session
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. Execute Implementation Plan (`docs/superpowers/plans/2026-11-05-professional-executive-pdf-editorial-layout.md`) following `docs/handover-professional-executive-pdf-editorial-layout.md`:
-   - Step 1: Write red tests in `src/lib/marcom/reportDraftEngine.test.ts` and `src/lib/productivity/exportCenter.test.ts`.
-   - Step 2: Implement title prefix cleaning & natural achievement phrasing in `src/lib/marcom/reportDraftEngine.ts`.
-   - Step 3: Implement Vrello Up masthead, Executive Scorecard Bar, Roman numeral sections, and clean tabular layout in `src/lib/productivity/exportCenter.ts`.
+2. Execute Implementation Plan (`docs/superpowers/plans/2026-11-05-reports-expanded-row-modular-card-grid.md`) following `docs/handover-reports-expanded-row-modular-card-grid.md`:
+   - Step 1: Write red tests in `src/components/views/ReportsView/monthlyReportExpandedRow.test.ts`.
+   - Step 2: Implement atomic subcomponent `src/components/views/ReportsView/MonthlyReportExpandedRow.tsx`.
+   - Step 3: Wire subcomponent into `src/components/views/ReportsView/ReportsView.tsx` and delete obsolete inline markup.
    - Step 4: Run full verification suite (`npm run drift:check`, `npm run build:check`, `npm test`).
    - Step 5: Update docs status to IMPLEMENTED and commit.
+
 
