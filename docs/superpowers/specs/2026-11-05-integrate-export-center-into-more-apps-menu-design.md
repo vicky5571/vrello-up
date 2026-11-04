@@ -1,6 +1,6 @@
 # Technical Specification: Integrate Export Center Action into More Apps Menu
 
-- **Status:** APPROVED (ADR-0033)
+- **Status:** IMPLEMENTED (ADR-0033)
 - **Date:** 2026-11-05
 - **Author:** Senior Software Engineer
 - **References:** `docs/adr/0033-integrate-export-center-into-more-apps-menu.md`
@@ -116,10 +116,10 @@ The `ExportCenter` modal (`src/components/layout/ExportCenter.tsx`) is a vital u
 
 ## 7. Verification Checklist
 
-- [ ] `node --test --import ./test/register-alias.mjs src/components/modals/MoreAppsMenu.test.ts` passes.
-- [ ] `npm run drift:check` passes with no drift detected.
-- [ ] `npm run build:check` passes with 0 TypeScript errors.
-- [ ] `npm test` passes with 0 failures across all test suites.
+- [x] `node --test --import ./test/register-alias.mjs src/components/modals/MoreAppsMenu.test.ts` passes.
+- [x] `npm run drift:check` passes with no drift detected.
+- [x] `npm run build:check` passes with 0 TypeScript errors.
+- [x] `npm test` passes with 0 failures across all test suites.
 
 
 

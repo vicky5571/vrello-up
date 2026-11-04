@@ -8,22 +8,25 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Integrate Export Center into More Apps Menu (ADR-0033) — **PLANNING COMPLETE**  
+**Active Feature:** Integrate Export Center into More Apps Menu (ADR-0033) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** TopNav Notification Feed Lifecycle and Proactive Window Focus Synchronization (ADR-0032)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan Integrasi Export Center ke Menu More Apps (ADR-0033 — Planning Complete):**
-   - **Keputusan Arsitektur (ADR-0033):**
-     - Memilih Opsi 2: Menempatkan tombol aksi *Export Center* di section **Main Tools** (`MoreAppsMenu.tsx`) di bawah Brain² AI Assistant.
-     - Mempertahankan tombol *Export Center* yang ada di `ReportsHeader.tsx` (sesuai arahan eksplisit pengguna agar tidak menghapusnya dari halaman Reports).
-   - **Spesifikasi & Rencana Implementasi:**
-     - Membuat dokumen spec `docs/superpowers/specs/2026-11-05-integrate-export-center-into-more-apps-menu-design.md`.
-     - Membuat dokumen plan `docs/superpowers/plans/2026-11-05-integrate-export-center-into-more-apps-menu.md` (60/60 pasangan spec-plan sinkron).
-   - **Handover Dokumen:**
-     - Membuat panduan eksekusi `docs/handover-integrate-export-center-into-more-apps-menu.md` yang memuat diff kode persis, file manifest, daftar "Do Not Touch", urutan eksekusi bernomor, dan kriteria penerimaan.
+1. **Integrasi Export Center ke Menu More Apps (ADR-0033 — Implementation Complete):**
+   - **`MoreAppsMenu.tsx` Enhancement:**
+     - Mengimpor ikon `FileSpreadsheet` dari `lucide-react`.
+     - Mengingest aksi `setExportCenterOpen` dari Zustand workspace store.
+     - Menambahkan tombol **Export Center** dengan badge `CSV / PDF` di section Main Tools tepat di bawah *Brain² AI Assistant*.
+     - Handler menutup pop-up menu (`onClose()`) dan membuka modal global `ExportCenter` (`setExportCenterOpen(true)`).
+     - Menjaga ukuran baris `MoreAppsMenu.tsx` pada 228 LOC (jauh di bawah batas 250 LOC).
+   - **Preservasi Halaman Reports:**
+     - Mempertahankan tombol *Export Center* di `src/components/views/ReportsView/ReportsHeader.tsx` tanpa modifikasi apapun sesuai persyaratan non-goal pengguna.
+   - **Automated Testing & Invariant Verification:**
+     - Menambahkan test case di `src/components/modals/MoreAppsMenu.test.ts` untuk memverifikasi render, impor, dan binding aksi `setExportCenterOpen`, serta memastikan tombol di `ReportsHeader.tsx` tetap utuh.
+     - Verifikasi: `npm run drift:check`, `npm run build:check`, `npm test` seluruhnya lulus 100%.
 
 
 1. **TopNav Notification Feed Lifecycle & Focus Sync (ADR-0032 — Implementation Complete):**

@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(navigation)`: Integrate Export Center into MoreAppsMenu
+  - Added Export Center action button with `FileSpreadsheet` icon and "CSV / PDF" badge into Main Tools in `src/components/modals/MoreAppsMenu.tsx`
+  - Ingested `setExportCenterOpen` from workspace store to launch global tabular Export Center modal
+  - Preserved contextual Export Center button in `ReportsHeader.tsx` on Reports page
+  - Added automated unit test coverage in `src/components/modals/MoreAppsMenu.test.ts`
+  - Spec: `docs/superpowers/specs/2026-11-05-integrate-export-center-into-more-apps-menu-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-integrate-export-center-into-more-apps-menu.md`
+  - Refs: `docs/adr/0033-integrate-export-center-into-more-apps-menu.md`
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `fix(notifications)`: Proactively fetch notification feed on mount and window focus
   - Created `useNotificationFeed.ts` hook providing immediate initial mount fetch, window focus synchronization, and panel refresh
   - Delegated notification data fetching in `NotificationCenter.tsx` to `useNotificationFeed`

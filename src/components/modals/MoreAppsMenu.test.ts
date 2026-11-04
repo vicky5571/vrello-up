@@ -130,4 +130,39 @@ describe("MoreAppsMenu & SettingsModal YAGNI Elimination (ADR-0031)", () => {
       "Expected Sidebar.tsx not to maintain isSettingsOpen state"
     );
   });
+
+  it("integrates Export Center into Main Tools section (ADR-0033)", () => {
+    assert.ok(
+      moreContent.includes("Export Center"),
+      "Expected MoreAppsMenu to render 'Export Center'"
+    );
+    assert.ok(
+      moreContent.includes("FileSpreadsheet"),
+      "Expected MoreAppsMenu to import FileSpreadsheet"
+    );
+    assert.ok(
+      moreContent.includes("setExportCenterOpen"),
+      "Expected MoreAppsMenu to ingest setExportCenterOpen"
+    );
+    assert.ok(
+      moreContent.includes("setExportCenterOpen(true)"),
+      "Expected MoreAppsMenu to dispatch setExportCenterOpen(true)"
+    );
+  });
+
+  it("preserves Export Center in ReportsHeader (ADR-0033 non-goal)", () => {
+    const reportsHeaderPath = path.resolve(
+      process.cwd(),
+      "src/components/views/ReportsView/ReportsHeader.tsx"
+    );
+    const reportsHeaderContent = fs.readFileSync(reportsHeaderPath, "utf-8");
+    assert.ok(
+      reportsHeaderContent.includes("onOpenExportCenter"),
+      "Expected ReportsHeader to retain onOpenExportCenter prop"
+    );
+    assert.ok(
+      reportsHeaderContent.includes("Export Center"),
+      "Expected ReportsHeader to retain Export Center button"
+    );
+  });
 });

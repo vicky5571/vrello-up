@@ -10,6 +10,7 @@ import {
   Upload,
   X,
   Grid3X3,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
@@ -30,6 +31,7 @@ export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
   );
   const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
   const setAiDrawerOpen = useWorkspaceStore((s) => s.setAiDrawerOpen);
+  const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
   const importBackup = useWorkspaceStore((s) => s.importBackup);
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -160,6 +162,23 @@ export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
                 </div>
                 <span className="text-[10px] font-bold text-violet-500 bg-violet-500/10 px-1.5 py-0.5 rounded">
                   AI
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  setExportCenterOpen(true);
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+                  <span className="font-semibold">Export Center</span>
+                </div>
+                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                  CSV / PDF
                 </span>
               </button>
             </div>
