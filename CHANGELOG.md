@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `refactor(documents)`: Eliminate legacy Drive/Cloud badges and standardize Documents KPIs
+  - Removed obsolete Drive/Cloud and Server Local badges from `DocumentCardsView.tsx` footer
+  - Removed Cloud/HardDrive storage icons from `DocumentsView.tsx` table rows
+  - Standardized KPI Card 3 to "Ragam Kategori" displaying total category diversity and dominant category
+  - Cleaned unused icon imports and helper calls
+  - Added unit test assertion in `documentDrawer.test.ts` (9 passed, 0 failures)
+  Spec: docs/superpowers/specs/2026-11-05-eliminate-document-status-design.md
+  Plan: docs/superpowers/plans/2026-11-05-eliminate-document-status.md
+  Refs: docs/adr/0025-eliminate-document-status-overengineering.md
+
 - `refactor(documents)`: Complete elimination of document status and Supabase Storage focus
   - Removed `status` column from `DocumentItem` PostgreSQL schema and Prisma client
   - Cleaned `prisma/seed.ts` removing ad-hoc status attributes from document seed catalog

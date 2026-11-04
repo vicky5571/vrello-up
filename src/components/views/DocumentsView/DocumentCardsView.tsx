@@ -14,8 +14,6 @@ import {
   Building2,
   User,
   Calendar,
-  Cloud,
-  HardDrive,
   Files,
   Plus,
 } from "lucide-react";
@@ -25,7 +23,6 @@ import type { MarcomDocument, DocFileType } from "./DocumentsView";
 import {
   getDocumentTypeMeta,
   formatFileSize,
-  isCloudDocumentUrl,
 } from "@/lib/marcom/documentWorkflow";
 
 interface DocumentCardsViewProps {
@@ -110,7 +107,6 @@ export function DocumentCardsView({
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {documents.map((doc) => {
         const typeMeta = getDocumentTypeMeta(doc.fileType as DocFileType);
-        const isCloud = isCloudDocumentUrl(doc.filePath);
 
         return (
           <div
@@ -180,21 +176,7 @@ export function DocumentCardsView({
             </div>
 
             {/* Card Footer Actions */}
-            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-              <span className="inline-flex items-center gap-1 text-[10px] text-slate-400">
-                {isCloud ? (
-                  <>
-                    <Cloud className="w-3 h-3 text-blue-500" />
-                    <span>Drive / Cloud</span>
-                  </>
-                ) : (
-                  <>
-                    <HardDrive className="w-3 h-3 text-emerald-500" />
-                    <span>Server Local</span>
-                  </>
-                )}
-              </span>
-
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-end">
               <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"

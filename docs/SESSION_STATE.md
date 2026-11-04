@@ -8,14 +8,29 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Complete Elimination of Document Status & Supabase Storage Focus (ADR-0025) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)  
+**Active Feature:** Eliminate Legacy Drive/Cloud Storage Badges & Standardize Documents KPIs — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Complete Elimination of Document Status & Supabase Storage Focus (ADR-0025)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Complete Elimination of Document Status & Supabase Storage Focus (ADR-0025 — Implementation):**
+1. **Eliminate Legacy Drive/Cloud Storage Badges & Standardize Documents KPIs:**
+   - **`DocumentCardsView.tsx`:** Removed obsolete `Cloud` and `HardDrive` storage badges from the card footer, aligning actions neatly to the right. Removed `isCloud` computation and unused imports.
+   - **`DocumentsView.tsx`:**
+     - Removed storage icons (`Cloud` / `HardDrive`) from the "Nama Dokumen" table column.
+     - Re-ordered `categoryChips` calculation before `kpiCards`.
+     - Standardized KPI Card 3 to **"Ragam Kategori"** with value `categoryChips.length` and helper `Dominan: ${kpiData.topCategory}`.
+     - Cleaned `Cloud` and `isCloudDocumentUrl` imports.
+   - **Unit Tests (`documentDrawer.test.ts`):**
+     - Added test asserting `DocumentCardsView.tsx` does not contain `Drive / Cloud` or `Server Local`, and `DocumentsView.tsx` table does not contain `Google Drive / Cloud`.
+     - 9 passed, 0 failures in `documentDrawer.test.ts`.
+   - **Verification Gates Passed:**
+     - `npm run drift:check`: ✅ All invariants pass.
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm test`: ✅ 775 passed, 0 failures across 138 suites.
+
+2. **Complete Elimination of Document Status & Supabase Storage Focus (ADR-0025 — Implementation):**
    - **Prisma Schema & Database DDL (`prisma/schema.prisma` & `prisma/migrations/20261105000000_drop_document_item_status/`):**
      - Dropped `status` column from `model DocumentItem`.
      - Executed raw migration SQL: `ALTER TABLE "DocumentItem" DROP COLUMN IF EXISTS "status";`.

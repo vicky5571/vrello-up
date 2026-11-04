@@ -150,6 +150,17 @@ describe("Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)"
     assert.ok(!viewContent.includes('accessor("status"'), "Table must not have status column");
   });
 
+  it("verifies legacy Drive/Cloud and Server Local badges are eliminated", () => {
+    const cardsPath = path.join(docsDir, "DocumentCardsView.tsx");
+    const cardsContent = fs.readFileSync(cardsPath, "utf-8");
+    assert.ok(!cardsContent.includes("Drive / Cloud"), "CardsView must not contain 'Drive / Cloud'");
+    assert.ok(!cardsContent.includes("Server Local"), "CardsView must not contain 'Server Local'");
+
+    const viewPath = path.join(docsDir, "DocumentsView.tsx");
+    const viewContent = fs.readFileSync(viewPath, "utf-8");
+    assert.ok(!viewContent.includes("Google Drive / Cloud"), "DocumentsView table must not contain 'Google Drive / Cloud'");
+  });
+
   it("verifies DocumentItem conforms to SSOT and helpers handle all formats", () => {
     const mockDoc: DocumentItem = {
       id: "doc-test-1",

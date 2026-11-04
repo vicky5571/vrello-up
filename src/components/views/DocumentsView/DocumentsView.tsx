@@ -9,7 +9,6 @@ import {
   HardDrive,
   Layers,
   Eye,
-  Cloud,
   Copy,
 } from "lucide-react";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
@@ -27,7 +26,6 @@ import {
   filterDocuments,
   formatFileSize,
   getDocumentTypeMeta,
-  isCloudDocumentUrl,
 } from "@/lib/marcom/documentWorkflow";
 import { DocumentCardsView } from "./DocumentCardsView";
 import { DocumentDrawer } from "./DocumentDrawer";
@@ -117,42 +115,6 @@ export function DocumentsView() {
     [selectedDrawerDoc]
   );
 
-  // KPIs
-  const kpiData = useMemo(() => calculateDocumentKPIs(documents), [documents]);
-
-  const kpiCards = useMemo<KpiCardItem[]>(() => {
-    return [
-      {
-        label: "Total Dokumen",
-        value: kpiData.totalDocuments,
-        helper: `${kpiData.cloudDocsCount} Cloud · ${kpiData.localDocsCount} Server`,
-        icon: Files,
-        color: "teal",
-      },
-      {
-        label: "Kapasitas Terpakai",
-        value: kpiData.formattedStorage,
-        helper: "Total file size",
-        icon: HardDrive,
-        color: "blue",
-      },
-      {
-        label: "Penyimpanan Cloud",
-        value: kpiData.cloudDocsCount,
-        helper: `${kpiData.localDocsCount} Berkas Server/Lokal`,
-        icon: Cloud,
-        color: "emerald",
-      },
-      {
-        label: "Kategori Terbanyak",
-        value: kpiData.topCategory,
-        helper: "Dominan repositori",
-        icon: Layers,
-        color: "violet",
-      },
-    ];
-  }, [kpiData]);
-
   // Categories for Filter Chips
   const categoryChips = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -167,6 +129,42 @@ export function DocumentsView() {
         count: counts[c],
       }));
   }, [documents]);
+
+  // KPIs
+  const kpiData = useMemo(() => calculateDocumentKPIs(documents), [documents]);
+
+  const kpiCards = useMemo<KpiCardItem[]>(() => {
+    return [
+      {
+        label: "Total Dokumen",
+        value: kpiData.totalDocuments,
+        helper: "Total repositori aset",
+        icon: Files,
+        color: "teal",
+      },
+      {
+        label: "Kapasitas Terpakai",
+        value: kpiData.formattedStorage,
+        helper: "Total file size",
+        icon: HardDrive,
+        color: "blue",
+      },
+      {
+        label: "Ragam Kategori",
+        value: categoryChips.length,
+        helper: `Dominan: ${kpiData.topCategory}`,
+        icon: Layers,
+        color: "emerald",
+      },
+      {
+        label: "Kategori Terbanyak",
+        value: kpiData.topCategory,
+        helper: "Kategori dominan",
+        icon: Layers,
+        color: "violet",
+      },
+    ];
+  }, [kpiData, categoryChips.length]);
 
   // Filtered documents
   const filteredDocuments = useMemo(() => {
@@ -226,15 +224,6 @@ export function DocumentsView() {
               <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors truncate">
                 {row.original.name}
               </span>
-              {isCloudDocumentUrl(row.original.filePath) ? (
-                <span title="Google Drive / Cloud">
-                  <Cloud className="w-3 h-3 text-blue-500 shrink-0" />
-                </span>
-              ) : (
-                <span title="Server Local">
-                  <HardDrive className="w-3 h-3 text-emerald-500 shrink-0" />
-                </span>
-              )}
             </div>
           );
         },
