@@ -15,7 +15,15 @@
 
 ## What Was Completed This Session
 
-1. **Content Planner Card Item Styling Parity with Field Events (UI Refinement):**
+1. **Content Planner Media Section Grey Div Container Wrapping (UI Refinement):**
+   - **Container Parity with Field Event Drawer (`src/components/views/ContentPlannerView/ContentDrawer.tsx`):**
+     - Wrapped the entire "Aset Media / Video Footage" section in `p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3`, matching `EventMediaSection.tsx`.
+     - Styled attachment row cards with `bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700` for clear visual contrast against the grey container.
+     - Updated empty upload dropzone with `bg-white/60 dark:bg-slate-800/40`.
+   - **Unit Tests Added (`src/components/views/ContentPlannerView/contentCardStyling.test.ts`):**
+     - Added test asserting that `ContentDrawer.tsx` wraps the media section in the standardized grey container.
+
+2. **Content Planner Card Item Styling Parity with Field Events (UI Refinement):**
    - **Date of Release Moved Below Title (`ContentBoardCard.tsx` & `ContentPlannerView.tsx`):**
      - Relocated publish/release date from card footer up to immediately below the title (`Calendar` icon in `text-blue-500`, formatted via `formatDate(post.publishDate)`).
    - **PIC Style with Profile Photo & Name (`ContentBoardCard.tsx` & `ContentPlannerView.tsx`):**

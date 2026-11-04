@@ -522,7 +522,7 @@ export function ContentDrawer({
             </div>
 
             {/* Sektor Aset Media & Google Drive */}
-            <div className="space-y-2.5">
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -752,7 +752,7 @@ export function ContentDrawer({
                               }}
                               onDrop={(e) => handleDropAttachment(e, i)}
                               className={cn(
-                                "attachment-row flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs transition-colors",
+                                "attachment-row flex items-center justify-between gap-2 p-2 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs transition-colors",
                                 draggedAttachmentIndex === i && "opacity-40 border-dashed border-pink-400 dark:border-pink-500",
                                 dragOverAttachmentIndex === i &&
                                   draggedAttachmentIndex !== i &&
@@ -856,7 +856,7 @@ export function ContentDrawer({
                       "p-6 rounded-2xl border-2 border-dashed transition-all duration-200 text-center space-y-3",
                       isDragOver
                         ? "border-pink-500 bg-pink-50/60 dark:bg-pink-950/20 shadow-md"
-                        : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 hover:border-pink-300 dark:hover:border-slate-700"
+                        : "border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-800/40 hover:border-pink-300 dark:hover:border-slate-700"
                     )}
                   >
                     <div className="w-12 h-12 rounded-2xl bg-pink-50 dark:bg-pink-950/50 text-pink-600 dark:text-pink-400 mx-auto flex items-center justify-center shadow-xs">

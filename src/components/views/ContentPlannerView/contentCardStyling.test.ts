@@ -12,19 +12,14 @@ describe("Content Planner Card Item Styling Parity with Field Events", () => {
       name: "Rian Maulana",
       email: "rian@example.com",
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100",
-      role: "MEMBER",
-      brand: "TRI",
-      createdAt: "2026-01-01T00:00:00Z",
-      updatedAt: "2026-01-01T00:00:00Z",
+      role: "staff",
     },
     {
       id: "u-2",
       name: "Siti Rahma",
       email: "siti@example.com",
-      role: "ADMIN",
-      brand: "IM3",
-      createdAt: "2026-01-01T00:00:00Z",
-      updatedAt: "2026-01-01T00:00:00Z",
+      avatar: "",
+      role: "admin",
     },
   ];
 
@@ -35,7 +30,7 @@ describe("Content Planner Card Item Styling Parity with Field Events", () => {
 
     const fallbackMember = findMemberForPic(mockUsers, "u-2");
     assert.ok(fallbackMember, "Member should be found by ID");
-    assert.equal(fallbackMember.avatar, undefined);
+    assert.equal(fallbackMember.avatar, "");
 
     const unknownMember = findMemberForPic(mockUsers, "Unknown");
     assert.equal(unknownMember, undefined);
@@ -102,6 +97,23 @@ describe("Content Planner Card Item Styling Parity with Field Events", () => {
     assert.ok(
       content.includes("containerClassName=\"w-4 h-4 rounded-full bg-slate-200 shrink-0\""),
       "ContentPlannerView cards view must use 16x16 circular container for avatar"
+    );
+  });
+
+  it("verifies ContentDrawer.tsx wraps Aset Media section in a grey div container matching field events", () => {
+    const drawerPath = path.resolve(
+      process.cwd(),
+      "src/components/views/ContentPlannerView/ContentDrawer.tsx"
+    );
+    const content = fs.readFileSync(drawerPath, "utf-8");
+
+    assert.ok(
+      content.includes("p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3"),
+      "ContentDrawer media section must be wrapped in grey div container matching EventMediaSection"
+    );
+    assert.ok(
+      content.includes("Aset Media / Video Footage"),
+      "ContentDrawer must render Aset Media / Video Footage label"
     );
   });
 });
