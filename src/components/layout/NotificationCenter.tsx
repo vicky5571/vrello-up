@@ -19,6 +19,7 @@ import {
   type AppNotification,
   type NotificationKind,
 } from "@/lib/productivity/notifications";
+import { useNotificationFeed } from "@/lib/productivity/useNotificationFeed";
 import { cn } from "@/lib/utils";
 
 const KIND_META: Record<
@@ -94,7 +95,7 @@ export function NotificationCenter() {
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
   const [isOpen, setIsOpen] = useState(false);
-  const [mouRows, setMouRows] = useState<{ id: string; partnerName: string; status: string }[]>([]);
+  const { mouRows } = useNotificationFeed({ isOpen });
   const panelRef = useRef<HTMLDivElement>(null);
 
   const doneStatusIds = useMemo(() => {
@@ -120,21 +121,6 @@ export function NotificationCenter() {
   const isUnread = (n: AppNotification) =>
     !lastSeenNotificationsAt ||
     new Date(n.createdAt).getTime() > new Date(lastSeenNotificationsAt).getTime();
-
-  // MOU approvals need server data: fetch lazily when the panel opens.
-  useEffect(() => {
-    if (!isOpen) return;
-    let cancelled = false;
-    fetch("/api/marcom/mous")
-      .then((r) => (r.ok ? r.json() : { data: [] }))
-      .then((json) => {
-        if (!cancelled && Array.isArray(json.data)) setMouRows(json.data);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen]);
 
   // Close on outside click / Escape.
   useEffect(() => {

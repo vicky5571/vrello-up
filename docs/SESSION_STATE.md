@@ -8,14 +8,31 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Migrate Backup & Data to More Apps Menu and Eliminate Settings Modal (ADR-0031) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs (ADR-0030)  
+**Active Feature:** TopNav Notification Feed Lifecycle and Proactive Window Focus Synchronization (ADR-0032) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Migrate Backup & Data to More Apps Menu and Eliminate Settings Modal (ADR-0031)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Pembersihan Toggle Dark Mode di MoreAppsMenu:**
+1. **TopNav Notification Feed Lifecycle & Focus Sync (ADR-0032 — Implementation Complete):**
+   - **`useNotificationFeed.ts` Creation:**
+     - Membuat custom hook `src/lib/productivity/useNotificationFeed.ts` (~55 LOC) yang menangani pemanggilan awal `/api/marcom/mous` saat halaman dimuat.
+     - Menambahkan listener `window.addEventListener("focus", onFocus)` dengan proteksi SSR (`typeof window !== "undefined"`) sehingga saat staf kembali ke tab browser, notifikasi langsung tersinkronisasi.
+     - Menyediakan fungsi `refresh()` dan re-trigger saat panel notifikasi dibuka (`isOpen === true`).
+   - **Modernisasi `NotificationCenter.tsx`:**
+     - Menghapus deklarasi state lokal `const [mouRows, setMouRows] = useState(...)`.
+     - Menghapus blok `useEffect` lama dengan guard `if (!isOpen) return;` yang sebelumnya menunda pemanggilan notifikasi MOU.
+     - Mengintegrasikan `{ mouRows } = useNotificationFeed({ isOpen })`.
+     - Jumlah baris `NotificationCenter.tsx` turun dari 289 menjadi 275 LOC.
+   - **Automated Testing & Verifikasi Invariant:**
+     - Membuat pengujian unit otomatis di `src/lib/productivity/useNotificationFeed.test.ts` (4 assertions lulus 100%).
+     - `npm run drift:check`: ✅ No drift detected (59 pasangan spec-plan sinkron).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 110/110 passed.
+     - `npm test`: ✅ Full test suite passed.
+
+2. **Pembersihan Toggle Dark Mode di MoreAppsMenu:**
    - Menghapus tombol toggle dark/light mode dan dependensi `next-themes` dari `src/components/modals/MoreAppsMenu.tsx`.
    - Mengeliminasi ikon `Sun`, `Moon` yang tidak lagi digunakan dan merapikan layout section bawah.
    - Mengubah unit test di `src/components/modals/MoreAppsMenu.test.ts` untuk memastikan tidak ada kontrol tema redundan di menu More.

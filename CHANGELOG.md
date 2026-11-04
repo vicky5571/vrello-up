@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `fix(notifications)`: Proactively fetch notification feed on mount and window focus
+  - Created `useNotificationFeed.ts` hook providing immediate initial mount fetch, window focus synchronization, and panel refresh
+  - Delegated notification data fetching in `NotificationCenter.tsx` to `useNotificationFeed`
+  - Eliminated lazy `if (!isOpen) return;` guard so unread badge renders accurately on page load
+  - Added unit test coverage in `src/lib/productivity/useNotificationFeed.test.ts`
+  - Spec: `docs/superpowers/specs/2026-11-05-top-nav-notification-feed-lifecycle-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-top-nav-notification-feed-lifecycle.md`
+  - Refs: `docs/adr/0032-top-nav-notification-feed-lifecycle.md`
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `refactor(navigation)`: Remove redundant dark mode toggle from MoreAppsMenu
   - Deleted dark mode toggle button and `next-themes` dependency from `src/components/modals/MoreAppsMenu.tsx`
   - Theme toggling remains natively available via TopNav `<ThemeToggle />`

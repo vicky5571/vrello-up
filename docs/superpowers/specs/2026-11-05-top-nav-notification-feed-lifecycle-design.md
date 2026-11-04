@@ -1,6 +1,6 @@
 # Technical Specification: TopNav Notification Feed Lifecycle and Proactive Window Focus Synchronization
 
-- **Status:** APPROVED (ADR-0032)
+- **Status:** IMPLEMENTED (ADR-0032)
 - **Date:** 2026-11-05
 - **Author:** Senior Software Engineer
 - **References:** `docs/adr/0032-top-nav-notification-feed-lifecycle.md`
@@ -109,10 +109,10 @@ export function useNotificationFeed(
 
 ## 7. Verification Checklist
 
-- [ ] `node --test --import ./test/register-alias.mjs src/lib/productivity/useNotificationFeed.test.ts` passes.
-- [ ] `npm run drift:check` passes with no drift detected.
-- [ ] `npm run build:check` passes with 0 TypeScript errors.
-- [ ] `npm test` passes with 0 failures across all test suites.
+- [x] `node --test --import ./test/register-alias.mjs src/lib/productivity/useNotificationFeed.test.ts` passes.
+- [x] `npm run drift:check` passes with no drift detected.
+- [x] `npm run build:check` passes with 0 TypeScript errors.
+- [x] `npm test` passes with 0 failures across all test suites.
 
 
 
