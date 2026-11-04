@@ -6,16 +6,28 @@
 
 ## Current Status
 
-**Date:** 2026-11-04  
+**Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Field Event Thumbnail Compression & Cover Preview (ADR-0023) — **COMPLETED & VERIFIED**  
-**Previous Feature:** Field Event Edit Drawer & Creation Modal Separation (ADR-0022)  
+**Active Feature:** Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024) — **PLANNING COMPLETE (READY TO CODE)**  
+**Previous Feature:** Field Event Thumbnail Compression & Cover Preview (ADR-0023)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Content Planner Media Section Grey Div Container Wrapping (UI Refinement):**
+1. **Documents Detail & Edit Drawer Planning (ADR-0024):**
+   - **Mode:** Strict Planning-Only session ("don't code in this session").
+   - **ADR-0024 (`docs/adr/0024-documents-detail-edit-drawer.md`):**
+     - Evaluated 3 candidate options for replacing the fragmented modal preview & edit in Documents & Asset Library.
+     - Selected Option A: Unified 560px slide-over right drawer (`DocumentDrawer.tsx`) combining live media inspection and inline metadata editing, with dedicated kickoff modal dialog (`DocumentCreateModal.tsx`) for new uploads.
+   - **Specification (`docs/superpowers/specs/2026-11-05-documents-detail-edit-drawer-design.md`):**
+     - Detailed component architecture, Framer Motion spring physics, sticky header, multi-format media preview (PDF, MP4, image, ZIP/office), file replacement controls, metadata form, sticky footer, and coordinator refactoring.
+   - **Implementation Plan (`docs/superpowers/plans/2026-11-05-documents-detail-edit-drawer.md`):**
+     - 4 atomic execution phases with checklists, line estimates, and verification gates.
+   - **Handover (`docs/handover-documents-detail-edit-drawer.md`):**
+     - Execution-ready guide with exact file paths, code snippets, "do not touch" list, numbered execution order, and acceptance criteria.
+
+2. **Content Planner Media Section Grey Div Container Wrapping (UI Refinement):**
    - **Container Parity with Field Event Drawer (`src/components/views/ContentPlannerView/ContentDrawer.tsx`):**
      - Wrapped the entire "Aset Media / Video Footage" section in `p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3`, matching `EventMediaSection.tsx`.
      - Styled attachment row cards with `bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700` for clear visual contrast against the grey container.
