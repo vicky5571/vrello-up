@@ -1,7 +1,7 @@
 # Specification: Sub-Komponen ContentMediaSection pada Modal Schedule New Post
 
 ## Status
-APPROVED (ADR-0028)
+IMPLEMENTED (ADR-0028)
 
 ## Date
 2026-11-05

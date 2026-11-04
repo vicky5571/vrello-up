@@ -116,5 +116,26 @@ describe("Content Planner Card Item Styling Parity with Field Events", () => {
       "ContentDrawer must render Aset Media / Video Footage label"
     );
   });
+
+  it("verifies ContentPostModal mounts ContentMediaSection and wires props", () => {
+    const modalPath = path.resolve(
+      process.cwd(),
+      "src/components/views/ContentPlannerView/ContentPostModal.tsx"
+    );
+    const content = fs.readFileSync(modalPath, "utf-8");
+
+    assert.ok(
+      content.includes("import { ContentMediaSection }"),
+      "ContentPostModal must import ContentMediaSection"
+    );
+    assert.ok(
+      content.includes("<ContentMediaSection"),
+      "ContentPostModal must render ContentMediaSection component"
+    );
+    assert.ok(
+      content.includes("mediaAttachments={mediaAttachments}"),
+      "ContentPostModal must pass mediaAttachments to ContentMediaSection"
+    );
+  });
 });
 

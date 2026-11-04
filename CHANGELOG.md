@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(content)`: Extract and integrate ContentMediaSection into ContentPostModal
+  - Created standalone atomic `ContentMediaSection.tsx` component with Google Drive direct upload, streaming progress bar, 16:9 showcase banner, play overlay, and drag-and-drop attachment reordering
+  - Replaced inline legacy media markup in `ContentPostModal.tsx`, reducing file size from 489 LOC down to 321 LOC
+  - Cleaned redundant drag-and-drop helpers and unused icons from `ContentPostModal.tsx`
+  - Added unit test coverage in `src/components/views/ContentPlannerView/contentCardStyling.test.ts`
+  - Recorded technical debt `DEBT-CP-001` for future drawer media alignment
+  - Gates: `npm test` 780 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: docs/superpowers/specs/2026-11-05-content-post-modal-media-section-design.md
+  Plan: docs/superpowers/plans/2026-11-05-content-post-modal-media-section.md
+  Refs: docs/adr/0028-content-post-modal-media-section.md
+
 - `feat(events)`: Integrate EventMediaSection into EventCreateModal
   - Integrated `EventMediaSection` sub-component into `EventCreateModal.tsx` between notes and checklist
   - Added `mediaAttachments` and `mediaUrl` local state management with clean form reset semantics

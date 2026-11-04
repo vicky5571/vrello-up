@@ -3,7 +3,7 @@
 **Date:** 2026-11-05  
 **Spec:** `docs/superpowers/specs/2026-11-05-content-post-modal-media-section-design.md`  
 **ADR:** `docs/adr/0028-content-post-modal-media-section.md`  
-**Status:** READY TO IMPLEMENT
+**Status:** COMPLETED
 
 ---
 
@@ -39,16 +39,16 @@ Membangun dan mengintegrasikan sub-komponen mandiri `ContentMediaSection.tsx` ke
 ## 4. Phase 1: Pembuatan Sub-Komponen `ContentMediaSection.tsx`
 
 ### Tasks:
-- [ ] **1.1 Buat Berkas `ContentMediaSection.tsx`**:
+- [x] **1.1 Buat Berkas `ContentMediaSection.tsx`**:
   - Lokasi: `src/components/views/ContentPlannerView/ContentMediaSection.tsx`.
   - Ekspor interface `ContentMediaSectionProps` (`mediaAttachments`, `setMediaAttachments`, `mediaUrl`, `setMediaUrl`, `postTitle`, `platform`, `format`, `onOpenDriveSelector`).
-- [ ] **1.2 Integrasikan Hook Upload & File Picker**:
+- [x] **1.2 Integrasikan Hook Upload & File Picker**:
   - Panggil `useDirectDriveUpload("content")` untuk upload streaming Google Drive.
   - Sediakan hidden `<input type="file" ref={fileInputRef} multiple accept="image/*,video/*" />`.
   - Tambahkan tombol *"Upload dari Perangkat"* dan *"Google Drive"*.
-- [ ] **1.3 Integrasikan 16:9 Showcase Banner & Player**:
+- [x] **1.3 Integrasikan 16:9 Showcase Banner & Player**:
   - Render banner aspect-video dengan thumbnail cover, ikon tipe video/image, overlay play button, dan judul konten.
-- [ ] **1.4 Integrasikan Daftar Lampiran & Drag-Drop Reorder**:
+- [x] **1.4 Integrasikan Daftar Lampiran & Drag-Drop Reorder**:
   - Render list lampiran dengan thumbnail 36x36, info ukuran file, badge `Cover`, tombol jadikan cover, dan tombol hapus berkas.
   - Tambahkan drag handle (`GripVertical`) untuk reorder lampiran.
 
@@ -60,9 +60,9 @@ Membangun dan mengintegrasikan sub-komponen mandiri `ContentMediaSection.tsx` ke
 ## 5. Phase 2: Integrasi ke `ContentPostModal.tsx`
 
 ### Tasks:
-- [ ] **2.1 Impor `ContentMediaSection` di `ContentPostModal.tsx`**:
+- [x] **2.1 Impor `ContentMediaSection` di `ContentPostModal.tsx`**:
   - `import { ContentMediaSection } from "./ContentMediaSection";`
-- [ ] **2.2 Ganti Blok Media Inline Lama**:
+- [x] **2.2 Ganti Blok Media Inline Lama**:
   - Hapus blok manual baris 330–462.
   - Gantikan dengan:
     ```tsx
@@ -77,7 +77,7 @@ Membangun dan mengintegrasikan sub-komponen mandiri `ContentMediaSection.tsx` ke
       onOpenDriveSelector={onOpenDriveSelector}
     />
     ```
-- [ ] **2.3 Bersihkan Helper Drag-and-Drop yang Redundan di Modal**:
+- [x] **2.3 Bersihkan Helper Drag-and-Drop yang Redundan di Modal**:
   - Hapus state `draggedAttachmentIndex`, `dragOverAttachmentIndex` serta fungsi `handleDragStartAttachment`, `handleDragOverAttachment`, `handleDropAttachment`, `handleDragEndAttachment` yang kini sudah ada di dalam `ContentMediaSection`.
 
 **Phase 2 Verification:**
@@ -89,14 +89,14 @@ Membangun dan mengintegrasikan sub-komponen mandiri `ContentMediaSection.tsx` ke
 ## 6. Phase 3: Automated Testing & Invariant Verification
 
 ### Tasks:
-- [ ] **3.1 Tambahkan Test Assertions di `contentCardStyling.test.ts`**:
+- [x] **3.1 Tambahkan Test Assertions di `contentCardStyling.test.ts`**:
   - Verifikasi bahwa `ContentMediaSection.tsx` ada.
   - Verifikasi bahwa `ContentPostModal.tsx` mengimpor dan merender `ContentMediaSection`.
   - Verifikasi prop wiring (`mediaAttachments`, `mediaUrl`, dll.).
-- [ ] **3.2 Jalankan Test Suites**:
+- [x] **3.2 Jalankan Test Suites**:
   - `node --test src/components/views/ContentPlannerView/contentCardStyling.test.ts`
   - `npm test`
-- [ ] **3.3 Jalankan Invariant Checks**:
+- [x] **3.3 Jalankan Invariant Checks**:
   - `npm run drift:check`
   - `npm run build:check`
 
@@ -112,11 +112,11 @@ Membangun dan mengintegrasikan sub-komponen mandiri `ContentMediaSection.tsx` ke
 
 ## 8. Invariant Compliance Checklist
 
-- [ ] **Coordinator Size**: `ContentPostModal.tsx` berkurang dari 489 LOC menjadi ~380 LOC (Jauh di bawah batas god file).
-- [ ] **SSOT**: Tipe `TaskAttachment` kanonik dari `@/types`.
-- [ ] **Strangler Pattern**: Mengisolasi logika media ke sub-komponen `ContentMediaSection.tsx`.
-- [ ] **Single-Tenant**: Nol workspace isolation leakage.
-- [ ] **Verification Gates**:
+- [x] **Coordinator Size**: `ContentPostModal.tsx` berkurang dari 489 LOC menjadi ~380 LOC (Jauh di bawah batas god file).
+- [x] **SSOT**: Tipe `TaskAttachment` kanonik dari `@/types`.
+- [x] **Strangler Pattern**: Mengisolasi logika media ke sub-komponen `ContentMediaSection.tsx`.
+- [x] **Single-Tenant**: Nol workspace isolation leakage.
+- [x] **Verification Gates**:
   - `npm run drift:check` PASS (55 spec-plan pairs)
   - `npm test` PASS (778+ tests, 0 failures)
   - `npm run build:check` PASS (0 TypeScript errors)
