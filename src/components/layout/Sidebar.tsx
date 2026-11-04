@@ -1,12 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
-import {
-  Settings,
-  HelpCircle,
-} from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   PROJECTS_NAV_ITEMS,
@@ -16,7 +12,6 @@ import {
 import { AppModeSegmentedControl } from "./AppModeSegmentedControl";
 import { shouldRenderSidebar } from "./layoutHierarchyHelpers";
 import { HelpDocsModal } from "@/components/modals/HelpDocsModal";
-import { SettingsModal } from "@/components/modals/SettingsModal";
 
 export function Sidebar() {
   const {
@@ -36,8 +31,6 @@ export function Sidebar() {
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
   const setHelpDocsOpen = useWorkspaceStore((s) => s.setHelpDocsOpen);
   const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
-
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   if (!shouldRenderSidebar(activeView)) {
     return null;
@@ -152,7 +145,7 @@ export function Sidebar() {
         </div>
 
         {/* Bottom Actions */}
-        <div className="p-3 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-between text-xs text-slate-500">
+        <div className="p-3 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-start text-xs text-slate-500">
           <button
             type="button"
             onClick={() => setHelpDocsOpen(true)}
@@ -160,14 +153,6 @@ export function Sidebar() {
           >
             <HelpCircle className="w-3.5 h-3.5 text-indigo-500" />
             <span>Help & Docs</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsSettingsOpen(true)}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Settings"
-          >
-            <Settings className="w-4 h-4" />
           </button>
         </div>
       </aside>
@@ -177,10 +162,6 @@ export function Sidebar() {
       <HelpDocsModal
         isOpen={isHelpDocsOpen}
         onClose={() => setHelpDocsOpen(false)}
-      />
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
       />
     </>
   );

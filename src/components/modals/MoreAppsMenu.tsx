@@ -5,14 +5,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   Sparkles,
-  Plus,
+  Database,
+  Download,
+  Upload,
   Moon,
   Sun,
   X,
   Grid3X3,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 
 interface MoreAppsMenuProps {
   isOpen: boolean;
@@ -20,11 +24,63 @@ interface MoreAppsMenuProps {
 }
 
 export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
+  const { spaces, tasks, tags } = useWorkspaceStore(
+    useShallow((s) => ({
+      spaces: s.spaces,
+      tasks: s.tasks,
+      tags: s.tags,
+    })),
+  );
   const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
   const setAiDrawerOpen = useWorkspaceStore((s) => s.setAiDrawerOpen);
-  const setCreateTaskModalOpen = useWorkspaceStore((s) => s.setCreateTaskModalOpen);
+  const importBackup = useWorkspaceStore((s) => s.importBackup);
+
   const { theme, setTheme } = useTheme();
   const menuRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExportData = () => {
+    const backupData = {
+      exportedAt: new Date().toISOString(),
+      spaces,
+      tasks,
+      tags,
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `vrello-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Backup downloaded successfully!");
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const parsed: unknown = JSON.parse(await file.text());
+      if (
+        !window.confirm(
+          `Restore backup from "${file.name}"? Spaces, tasks, and tags will be replaced.`,
+        )
+      ) {
+        return;
+      }
+      if (importBackup(parsed)) {
+        toast.success("Backup restored!");
+        onClose();
+      } else {
+        toast.error("Invalid backup file — import aborted.");
+      }
+    } catch {
+      toast.error("Could not read backup file — import aborted.");
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -112,22 +168,46 @@ export function MoreAppsMenu({ isOpen, onClose }: MoreAppsMenuProps) {
               </button>
             </div>
 
-            {/* Quick Actions & Modals */}
-            <div className="pt-2 space-y-1">
+            {/* Data & Storage */}
+            <div className="py-2.5 space-y-1 border-b border-slate-100 dark:border-slate-800">
+              <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Database className="w-3 h-3 text-indigo-500" />
+                <span>Backup & Data</span>
+              </div>
+
               <button
                 type="button"
-                onClick={() => {
-                  onClose();
-                  setCreateTaskModalOpen(true);
-                }}
+                onClick={handleExportData}
                 className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2">
-                  <Plus className="w-3.5 h-3.5 text-teal-600" />
-                  <span>New Task</span>
+                  <Download className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Export Backup (JSON)</span>
                 </div>
               </button>
 
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Upload className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Import Backup (JSON)</span>
+                </div>
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json,.json"
+                onChange={handleImportFile}
+                className="hidden"
+              />
+            </div>
+
+            {/* System Preferences */}
+            <div className="pt-2 space-y-1">
               <button
                 type="button"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}

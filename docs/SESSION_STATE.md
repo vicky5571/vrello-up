@@ -8,18 +8,31 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs (ADR-0030) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029)  
+**Active Feature:** Migrate Backup & Data to More Apps Menu and Eliminate Settings Modal (ADR-0031) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs (ADR-0030)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Pembersihan Menu Quick Views di MoreAppsMenu:**
-   - Menghapus bagian redundan Quick Views (Home, List, Kanban Board, Calendar) dari `src/components/modals/MoreAppsMenu.tsx`.
-   - Membersihkan impor icon dan fungsi handler yang tidak lagi digunakan.
-   - Menambahkan pengujian otomatis di `src/components/modals/MoreAppsMenu.test.ts`.
-   - Verifikasi: `npm run drift:check`, `npm run build:check`, `npm test` seluruhnya lulus 100%.
+1. **Migrasi Backup & Data ke MoreAppsMenu dan Eliminasi SettingsModal (ADR-0031 — Implementation Complete):**
+   - **`MoreAppsMenu.tsx` Enhancement:**
+     - Menghubungkan Zustand store `spaces`, `tasks`, `tags`, dan `importBackup`.
+     - Mengimplementasikan aksi **Export Backup (JSON)** yang langsung men-download berkas `vrello-backup-YYYY-MM-DD.json`.
+     - Mengimplementasikan aksi **Import Backup (JSON)** dengan input berkas tersembunyi, parsing aman, dan dialog konfirmasi `window.confirm`.
+     - Menghapus tombol redundan **New Task** beserta ikon `Plus` dan binding `setCreateTaskModalOpen`.
+     - Menghapus bagian redundan **Quick Views** (Home, List, Board, Calendar).
+   - **Eliminasi Total `SettingsModal.tsx`:**
+     - Menghapus berkas `src/components/modals/SettingsModal.tsx` (~279 LOC tereliminasi).
+     - Menghapus tab redundan *Appearance* (karena tema sudah ada di TopNav dan More).
+   - **Pembersihan Footer `Sidebar.tsx`:**
+     - Menghapus impor `SettingsModal`, state `isSettingsOpen`, dan tombol gear Settings.
+     - Footer kini hanya menyisakan tombol *Help & Docs* yang bersih dan minimalis.
+   - **Automated Testing & Verifikasi Invariant:**
+     - Memperbarui `src/components/modals/MoreAppsMenu.test.ts` (6 assertions lulus 100%).
+     - `npm run drift:check`: ✅ No drift detected (58 pasangan spec-plan sinkron).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm test`: ✅ 789 passed, 0 failures.
 
 2. **Pill Cabang Interaktif di Halaman Manajemen Pengguna (`UsersView`):**
    - Mengubah elemen badge/pill nama cabang di `UserActiveRow.tsx` menjadi tombol interaktif yang membuka formulir `UserBranchSelectModal` (Penugasan Cabang) ketika diklik.

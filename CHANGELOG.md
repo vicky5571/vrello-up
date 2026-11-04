@@ -6,10 +6,27 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `refactor(modals)`: Migrate Backup & Data to More Apps Menu and eliminate SettingsModal
+  - Integrated JSON Export and JSON Import into `src/components/modals/MoreAppsMenu.tsx` with hidden file picker and restore confirmation
+  - Deleted redundant "New Task" button from `MoreAppsMenu.tsx`
+  - Completely deleted `src/components/modals/SettingsModal.tsx` (~279 LOC eliminated)
+  - Removed settings gear button, `SettingsModal` import, and `isSettingsOpen` state from `src/components/layout/Sidebar.tsx`
+  - Added full test coverage in `src/components/modals/MoreAppsMenu.test.ts`
+  - Spec: `docs/superpowers/specs/2026-11-05-migrate-backup-data-to-more-and-eliminate-settings-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-migrate-backup-data-to-more-and-eliminate-settings.md`
+  - Refs: `docs/adr/0031-migrate-backup-data-to-more-and-eliminate-settings-modal.md`
+  - Gates: `npm test` (789 passed, 0 failures); `npm run build:check` (0 errors); `npm run drift:check` (clean)
+
 - `refactor(navigation)`: Remove redundant Quick Views section from MoreAppsMenu
   - Eliminated Quick Views section (Home, List, Kanban Board, Calendar) from `MoreAppsMenu.tsx`
   - Cleaned unused icon imports and `handleLaunchView`
   - Added unit test coverage in `src/components/modals/MoreAppsMenu.test.ts`
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
+
+- `feat(users)`: Make branch pills clickable to open branch assignment modal
+  - Converted branch badge pills in `UserActiveRow.tsx` into interactive buttons opening `UserBranchSelectModal`
+  - Added hover and focus feedback styles (`hover:bg-primary/20 hover:border-primary/30 cursor-pointer`)
+  - Added automated unit test assertion in `src/components/views/UsersView/userBranchAssignment.test.ts`
   - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
 
 - `feat(users)`: Make branch pills clickable to open branch assignment modal
