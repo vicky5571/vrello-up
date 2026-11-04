@@ -8,25 +8,33 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Integrasi EventMediaSection ke Modal Buat Event Baru (EventCreateModal) — ADR-0027 — **PLANNING & HANDOVER COMPLETE**  
+**Active Feature:** Integrasi EventMediaSection ke Modal Buat Event Baru (EventCreateModal) — ADR-0027 — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Integrasi EventMediaSection ke Modal Buat Event Baru (ADR-0027 — Planning & Handover):**
-   - **Checkpoints Lolos Persetujuan**:
-     - Checkpoint 1 (Decision Problem & Candidate Options): User memilih Opsi A (integrasi langsung sub-komponen `EventMediaSection`).
-     - Checkpoint 2 (Scope & Asumsi Spesifikasi): User menyetujui scope, non-goals, dan paritas dengan `EventDrawer`.
-     - Checkpoint 3 (Phasing Strategy): User menyetujui 3 fase implementasi.
-   - **Dokumentasi Terbit (File-First, Content-Second)**:
-     - `docs/adr/0027-event-create-modal-media-attachments.md`: Keputusan arsitektur integrasi sub-komponen atomik `EventMediaSection` ke dalam `EventCreateModal.tsx`.
-     - `docs/superpowers/specs/2026-11-05-event-create-modal-media-attachments-design.md`: Desain spesifikasi detail, kontrak data, JSX layout positioning, dan API payload synchronization.
-     - `docs/superpowers/plans/2026-11-05-event-create-modal-media-attachments.md`: Rencana eksekusi 3 fase dengan manifest perubahan dan invariant checklist.
-     - `docs/handover-event-create-modal-media-attachments.md`: Dokumen handover eksekusi dengan snippet kode sebelum & sesudah, daftar "Do Not Touch", dan acceptance criteria.
-   - **Verification Gates**:
+1. **Integrasi EventMediaSection ke Modal Buat Event Baru (ADR-0027 — Implementation Complete):**
+   - **`EventCreateModal.tsx` Integration:**
+     - Imported `TaskAttachment` from `@/types` and `EventMediaSection` from `./EventMediaSection`.
+     - Added local states `mediaAttachments` (`TaskAttachment[]`) and `mediaUrl` (`string`).
+     - Wired state reset (`setMediaAttachments([])`, `setMediaUrl("")`) in `resetForm` and modal open/close effect.
+     - Resolved canonical cover `resolvedMediaUrl = mediaUrl.trim() || mediaAttachments[0]?.url || ""`.
+     - Synchronized `POST /api/marcom/events` request payload with `mediaAttachments` and `mediaUrl`.
+     - Synchronized `createdItem` passed to `onCreated` with `mediaAttachments` and `mediaUrl: created.mediaUrl || resolvedMediaUrl`.
+     - Mounted `<EventMediaSection />` in the scroll body between notes and checklist.
+   - **Automated Unit Testing (`src/components/views/EventsView/eventDrawer.test.ts`):**
+     - Added test asserting `EventCreateModal.tsx` imports and renders `EventMediaSection`, wires `mediaAttachments`, and removes hardcoded `mediaAttachments: []`.
+     - Targeted test passed: 9 passed, 0 failures.
+   - **Documentation & Invariants Synchronized:**
+     - Spec `docs/superpowers/specs/2026-11-05-event-create-modal-media-attachments-design.md` updated to `IMPLEMENTED (ADR-0027)`.
+     - Plan `docs/superpowers/plans/2026-11-05-event-create-modal-media-attachments.md` tasks fully checked off.
+     - `CHANGELOG.md` updated with feature entry.
+   - **Verification Gates Passed:**
      - `npm run drift:check`: ✅ No drift detected (54 spec-plan pairs).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm test`: ✅ 778 passed, 0 failures across 138 suites.
 
 2. **Documents Side Drawer Deep Linking via URL Query Parameter (ADR-0026 — Implementation):**
    - **Router Helpers (`src/lib/router/urlState.ts` & `urlState.test.ts`):**

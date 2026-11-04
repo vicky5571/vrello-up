@@ -3,7 +3,7 @@
 **Date:** 2026-11-05  
 **Spec:** `docs/superpowers/specs/2026-11-05-event-create-modal-media-attachments-design.md`  
 **ADR:** `docs/adr/0027-event-create-modal-media-attachments.md`  
-**Status:** READY TO IMPLEMENT
+**Status:** COMPLETED
 
 ---
 
@@ -38,21 +38,21 @@ Mengintegrasikan sub-komponen `EventMediaSection` ke dalam modal pembuatan event
 ## 4. Phase 1: State Management & JSX Mounting di `EventCreateModal.tsx`
 
 ### Tasks:
-- [ ] **1.1 Import Sub-Komponen dan Tipe**:
+- [x] **1.1 Import Sub-Komponen dan Tipe**:
   - Di `src/components/views/EventsView/EventCreateModal.tsx`:
     - Import `TaskAttachment` dari `@/types`.
     - Import `EventMediaSection` dari `./EventMediaSection`.
-- [ ] **1.2 Deklarasikan State Lokal**:
+- [x] **1.2 Deklarasikan State Lokal**:
   - Tambahkan hooks state:
     ```typescript
     const [mediaAttachments, setMediaAttachments] = useState<TaskAttachment[]>([]);
     const [mediaUrl, setMediaUrl] = useState<string>("");
     ```
-- [ ] **1.3 Perluas Reset Semantics**:
+- [x] **1.3 Perluas Reset Semantics**:
   - Di dalam fungsi `resetForm`:
     - Tambahkan `setMediaAttachments([]);`
     - Tambahkan `setMediaUrl("");`
-- [ ] **1.4 Mount Sub-Komponen di JSX**:
+- [x] **1.4 Mount Sub-Komponen di JSX**:
   - Letakkan komponen `<EventMediaSection />` tepat di antara field `textarea` (`eventNotes`) dan `<EventChecklistSection />`:
     ```tsx
     {/* Media Attachments & Documentation Section */}
@@ -74,14 +74,14 @@ Mengintegrasikan sub-komponen `EventMediaSection` ke dalam modal pembuatan event
 ## 5. Phase 2: Payload Synchronization & OnCreated Wiring
 
 ### Tasks:
-- [ ] **2.1 Sinkronkan Payload di `handleSubmit`**:
+- [x] **2.1 Sinkronkan Payload di `handleSubmit`**:
   - Hitung `resolvedMediaUrl = mediaUrl.trim() || mediaAttachments[0]?.url || ""`.
   - Ganti `mediaAttachments: []` pada payload POST dengan `mediaAttachments: mediaAttachments`.
   - Tambahkan `mediaUrl: resolvedMediaUrl` ke payload POST.
-- [ ] **2.2 Sinkronkan Konstruksi `createdItem`**:
+- [x] **2.2 Sinkronkan Konstruksi `createdItem`**:
   - Ganti `mediaAttachments: []` pada objek `createdItem` dengan `mediaAttachments: mediaAttachments`.
   - Tambahkan `mediaUrl: created.mediaUrl || resolvedMediaUrl` ke `createdItem`.
-- [ ] **2.3 Panggil `resetForm()`**:
+- [x] **2.3 Panggil `resetForm()`**:
   - Pastikan `resetForm()` dipanggil saat modal ditutup atau setelah submit sukses.
 
 **Phase 2 Verification:**
@@ -93,14 +93,14 @@ Mengintegrasikan sub-komponen `EventMediaSection` ke dalam modal pembuatan event
 ## 6. Phase 3: Automated Testing & Invariant Verification
 
 ### Tasks:
-- [ ] **3.1 Tambahkan Test Assertion di `src/components/views/EventsView/eventDrawer.test.ts`**:
+- [x] **3.1 Tambahkan Test Assertion di `src/components/views/EventsView/eventDrawer.test.ts`**:
   - Verifikasi bahwa `EventCreateModal.tsx` mengimpor dan merender `EventMediaSection`.
   - Verifikasi bahwa `EventCreateModal.tsx` mengikat prop `mediaAttachments` dan `setMediaAttachments`.
   - Verifikasi bahwa `EventCreateModal.tsx` mengirimkan `mediaAttachments` riil (bukan hardcoded `mediaAttachments: []`).
-- [ ] **3.2 Run Test Suites**:
+- [x] **3.2 Run Test Suites**:
   - `node --test src/components/views/EventsView/eventDrawer.test.ts`
   - `npm test`
-- [ ] **3.3 Run Drift & Build Checks**:
+- [x] **3.3 Run Drift & Build Checks**:
   - `npm run drift:check`
   - `npm run build:check`
 
@@ -108,11 +108,11 @@ Mengintegrasikan sub-komponen `EventMediaSection` ke dalam modal pembuatan event
 
 ## 7. Invariant Compliance Checklist
 
-- [ ] **Coordinator Size**: `EventCreateModal.tsx` tetap di bawah batas god-file (< 650 LOC; ekspektasi ~660 LOC).
-- [ ] **SSOT**: Tipe `TaskAttachment` dan `FieldEventItem` diimpor dari `@/types`.
-- [ ] **Strangler Pattern**: Tidak ada kode inline upload baru, memanfaatkan kembali `EventMediaSection.tsx`.
-- [ ] **Single-Tenant**: Nol workspace isolation leakage.
-- [ ] **Verification Gates**:
+- [x] **Coordinator Size**: `EventCreateModal.tsx` tetap di bawah batas god-file (< 650 LOC; ekspektasi ~660 LOC).
+- [x] **SSOT**: Tipe `TaskAttachment` dan `FieldEventItem` diimpor dari `@/types`.
+- [x] **Strangler Pattern**: Tidak ada kode inline upload baru, memanfaatkan kembali `EventMediaSection.tsx`.
+- [x] **Single-Tenant**: Nol workspace isolation leakage.
+- [x] **Verification Gates**:
   - `npm run drift:check` PASS (54 spec-plan pairs)
   - `npm test` PASS (778+ tests, 0 failures)
   - `npm run build:check` PASS (0 TypeScript errors)

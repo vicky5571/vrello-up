@@ -187,5 +187,30 @@ describe("Field Event Edit Drawer and Modal Separation (ADR-0022)", () => {
       "EventCardsView card footer must not render Trash2 button"
     );
   });
+
+  it("verifies EventCreateModal integrates EventMediaSection and supports mediaAttachments", () => {
+    const modalPath = path.resolve(
+      process.cwd(),
+      "src/components/views/EventsView/EventCreateModal.tsx"
+    );
+    const content = fs.readFileSync(modalPath, "utf-8");
+
+    assert.ok(
+      content.includes("import { EventMediaSection }"),
+      "EventCreateModal must import EventMediaSection"
+    );
+    assert.ok(
+      content.includes("<EventMediaSection"),
+      "EventCreateModal must render EventMediaSection component"
+    );
+    assert.ok(
+      content.includes("mediaAttachments={mediaAttachments}"),
+      "EventCreateModal must wire mediaAttachments prop to EventMediaSection"
+    );
+    assert.ok(
+      !content.includes("mediaAttachments: [],"),
+      "EventCreateModal must not hardcode mediaAttachments as empty array in payload or createdItem"
+    );
+  });
 });
 

@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(events)`: Integrate EventMediaSection into EventCreateModal
+  - Integrated `EventMediaSection` sub-component into `EventCreateModal.tsx` between notes and checklist
+  - Added `mediaAttachments` and `mediaUrl` local state management with clean form reset semantics
+  - Synchronized `mediaAttachments` and `mediaUrl` with `POST /api/marcom/events` payload and `onCreated` callback
+  - Added unit test coverage in `src/components/views/EventsView/eventDrawer.test.ts`
+  - Gates: `npm test` 778 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: docs/superpowers/specs/2026-11-05-event-create-modal-media-attachments-design.md
+  Plan: docs/superpowers/plans/2026-11-05-event-create-modal-media-attachments.md
+  Refs: docs/adr/0027-event-create-modal-media-attachments.md
+
 - `feat(documents)`: Documents side drawer deep linking via URL query parameter (docId)
   - Added `docId` parsing, serialization, and `buildShareableDocumentUrl` in `src/lib/router/urlState.ts`
   - Integrated auto-hydration in `DocumentsView.tsx` opening target drawer from `?docId=...`

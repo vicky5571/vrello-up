@@ -1,7 +1,7 @@
 # Specification: Field Event Create Modal Media Attachments Integration
 
 ## Status
-APPROVED (ADR-0027)
+IMPLEMENTED (ADR-0027)
 
 ## Date
 2026-11-05

@@ -14,6 +14,7 @@ import type {
   FieldEventItem,
   EventStatus,
   User,
+  TaskAttachment,
 } from "@/types";
 import { cn, formatIDR } from "@/lib/utils";
 import {
@@ -21,6 +22,7 @@ import {
   findMemberForPic,
 } from "@/lib/marcom/eventChecklist";
 import { EventChecklistSection } from "./EventChecklistSection";
+import { EventMediaSection } from "./EventMediaSection";
 import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
 
 export interface EventCreateModalProps {
@@ -59,6 +61,8 @@ export function EventCreateModal({
   const [eventAttendeeCount, setEventAttendeeCount] = useState<string>("0");
   const [eventNotes, setEventNotes] = useState("");
   const [eventOutletId, setEventOutletId] = useState<string>("");
+  const [mediaAttachments, setMediaAttachments] = useState<TaskAttachment[]>([]);
+  const [mediaUrl, setMediaUrl] = useState<string>("");
   const [outlets, setOutlets] = useState<
     Array<{ id: string; name: string; code: string; branchId?: string; city?: string }>
   >([]);
@@ -138,6 +142,8 @@ export function EventCreateModal({
         completed: false,
       }))
     );
+    setMediaAttachments([]);
+    setMediaUrl("");
   }, [isOpen, defaultDate, branches, members]);
 
   // Keyboard escape listener
@@ -169,6 +175,8 @@ export function EventCreateModal({
 
     setIsSaving(true);
     try {
+      const resolvedMediaUrl = mediaUrl.trim() || mediaAttachments[0]?.url || "";
+
       const payload = {
         name: eventName.trim(),
         eventType,
@@ -184,7 +192,8 @@ export function EventCreateModal({
         attendeeCount: parsedAttendeeCount,
         notes: eventNotes.trim(),
         checklist: eventSubtasks,
-        mediaAttachments: [],
+        mediaAttachments,
+        mediaUrl: resolvedMediaUrl,
       };
 
       const res = await fetch("/api/marcom/events", {
@@ -215,7 +224,8 @@ export function EventCreateModal({
         targetAttendee: parsedTargetAttendee,
         attendeeCount: parsedAttendeeCount,
         notes: eventNotes,
-        mediaAttachments: [],
+        mediaAttachments,
+        mediaUrl: created.mediaUrl || resolvedMediaUrl,
         outletId: eventOutletId || null,
         checklist: eventSubtasks,
       };
@@ -603,6 +613,15 @@ export function EventCreateModal({
                   className="w-full px-3 py-2 rounded-lg text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden resize-y"
                 />
               </div>
+
+              {/* Event Media & Documentation Section */}
+              <EventMediaSection
+                mediaAttachments={mediaAttachments}
+                setMediaAttachments={setMediaAttachments}
+                mediaUrl={mediaUrl}
+                setMediaUrl={setMediaUrl}
+                eventName={eventName}
+              />
 
               {/* Event Preparation Checklist (Subtasks) */}
               <EventChecklistSection
