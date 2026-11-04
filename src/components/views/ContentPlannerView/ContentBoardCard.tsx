@@ -3,9 +3,12 @@
 import { memo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Calendar, CheckSquare, Image as ImageIcon, MapPin, User as UserIcon } from "lucide-react";
+import { Calendar, CheckSquare, Image as ImageIcon, MapPin, Users } from "lucide-react";
 import { ContentPostItem } from "@/types";
 import { PlatformIcon } from "@/components/ui/BrandIcons";
+import { AppImage } from "@/components/ui/AppImage";
+import { findMemberForPic } from "@/lib/marcom/eventChecklist";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { PLATFORM_CONFIG } from "./contentConstants";
 import { formatDate, cn } from "@/lib/utils";
 
@@ -49,6 +52,9 @@ export const ContentBoardCard = memo(function ContentBoardCard({
   const subtasks = post.subtasks || [];
   const completedSubtasks = subtasks.filter((s) => s.completed).length;
 
+  const users = useWorkspaceStore((s) => s.users);
+  const picMember = findMemberForPic(users, post.picName);
+
   return (
     <div
       ref={setNodeRef}
@@ -90,24 +96,44 @@ export const ContentBoardCard = memo(function ContentBoardCard({
           {post.title}
         </h4>
 
+        {/* Release Date moved up below title */}
+        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 min-w-0">
+          <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+          <span className="truncate">
+            {post.publishDate ? formatDate(post.publishDate) : "Belum terjadwal"}
+          </span>
+        </div>
+
         {/* Branch / Outlet */}
         {(post.branchName || post.outlet?.name) && (
-          <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-            <MapPin className="w-3 h-3 shrink-0 opacity-70" />
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+            <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
             <span className="truncate">{post.branchName || post.outlet?.name}</span>
           </div>
         )}
 
-        {/* Footer Meta: Date, PIC, Subtasks, Media */}
-        <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800/70">
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            <span className="text-[10px]">
-              {post.publishDate ? formatDate(post.publishDate) : "No date"}
+        {/* Card Footer: PIC, Subtasks, Media */}
+        <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/70 flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 min-w-0 flex-1">
+            {picMember ? (
+              <AppImage
+                src={picMember.avatar}
+                alt={picMember.name}
+                fill
+                sizes="avatar"
+                containerClassName="w-4 h-4 rounded-full bg-slate-200 shrink-0"
+                className="w-full h-full object-cover rounded-full"
+                fallbackIcon={<Users className="w-2.5 h-2.5 text-slate-400" />}
+              />
+            ) : (
+              <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            )}
+            <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
+              {picMember?.name || post.picName || "Unassigned"}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {subtasks.length > 0 && (
               <span
                 className={cn(
@@ -136,16 +162,6 @@ export const ContentBoardCard = memo(function ContentBoardCard({
                 )}
               </span>
             ) : null}
-
-            {post.picName && (
-              <span
-                className="flex items-center gap-1 max-w-[90px] truncate text-[10px] text-slate-600 dark:text-slate-300 font-medium"
-                title={`PIC: ${post.picName}`}
-              >
-                <UserIcon className="w-2.5 h-2.5 opacity-60 shrink-0" />
-                <span className="truncate">{post.picName}</span>
-              </span>
-            )}
           </div>
         </div>
       </div>

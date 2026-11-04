@@ -15,7 +15,17 @@
 
 ## What Was Completed This Session
 
-1. **Field Event Card Clickable & Clean Footer (UI Refinement):**
+1. **Content Planner Card Item Styling Parity with Field Events (UI Refinement):**
+   - **Date of Release Moved Below Title (`ContentBoardCard.tsx` & `ContentPlannerView.tsx`):**
+     - Relocated publish/release date from card footer up to immediately below the title (`Calendar` icon in `text-blue-500`, formatted via `formatDate(post.publishDate)`).
+   - **PIC Style with Profile Photo & Name (`ContentBoardCard.tsx` & `ContentPlannerView.tsx`):**
+     - Replaced plain text `PIC: {post.picName}` and icon-only badge with circular profile avatar (`AppImage`, 16×16 `rounded-full`, sizes="avatar") and name (`font-medium text-slate-700 dark:text-slate-300`).
+     - Resolved `picMember` using `findMemberForPic` across both Kanban board cards and grid card views.
+     - Single-row footer neatly aligns PIC profile photo and name on the left, with quick approval transition buttons or subtask/media chips on the right.
+   - **Unit Tests Added (`src/components/views/ContentPlannerView/contentCardStyling.test.ts`):**
+     - 3 tests validating `findMemberForPic` avatar resolution, `ContentBoardCard.tsx` date positioning and AppImage avatar, and `ContentPlannerView.tsx` cards view parity.
+
+2. **Field Event Card Clickable & Clean Footer (UI Refinement):**
    - **Card Click Navigation (`src/components/views/EventsView/EventCardsView.tsx`):**
      - Made entire card container clickable (`onClick={() => onSelectEvent(event)}` and `cursor-pointer`), matching Content Planner card behavior.
      - Added `e.stopPropagation()` to internal clickable elements (footage player preview, footage count chip, and archive folder external link).

@@ -18,6 +18,7 @@ import {
   Film,
   ChevronLeft,
   ChevronRight,
+  Users,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
@@ -32,6 +33,7 @@ import {
 } from "@/types";
 import { formatDate, cn } from "@/lib/utils";
 import { AppImage } from "@/components/ui/AppImage";
+import { findMemberForPic } from "@/lib/marcom/eventChecklist";
 import {
   MarcomTableShell,
   createMarcomColumnHelper,
@@ -574,6 +576,7 @@ export function ContentPlannerView() {
               PLATFORM_CONFIG[post.platform as PostPlatform] ||
               PLATFORM_CONFIG.instagram;
             const statusMeta = getContentStatusMeta(post.status);
+            const picMember = findMemberForPic(members, post.picName);
 
             return (
               <div
@@ -614,8 +617,16 @@ export function ContentPlannerView() {
                     {post.title}
                   </h3>
 
+                  {/* Release Date moved up below title */}
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 min-w-0">
+                    <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span className="truncate">
+                      {post.publishDate ? formatDate(post.publishDate) : "Belum terjadwal"}
+                    </span>
+                  </div>
+
                   {post.caption && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1 italic">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-2 italic">
                       &ldquo;{post.caption}&rdquo;
                     </p>
                   )}
@@ -765,70 +776,73 @@ export function ContentPlannerView() {
 
                 </div>
 
-                {/* Quick Approval Action Bar & Metadata Footer */}
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-2.5">
-                  <div className="flex items-center justify-between gap-1 flex-wrap">
-                    {/* Quick Approval Transitions */}
-                    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                      {(post.status === "DRAFT" || post.status === "REVISION") && (
-                        <button
-                          type="button"
-                          onClick={() => handleQuickTransition(post, "IN_REVIEW")}
-                          className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300/40 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors cursor-pointer"
-                          title="Kirim ke Lead untuk ditinjau"
-                        >
-                          Ajukan Review
-                        </button>
-                      )}
-                      {post.status === "IN_REVIEW" && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => handleQuickTransition(post, "APPROVED")}
-                            className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-300/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors cursor-pointer flex items-center gap-1"
-                            title="Setujui konten"
-                          >
-                            <CheckSquare className="w-3 h-3 text-blue-600" />
-                            <span>Setujui</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRevisionModalPost(post);
-                              setRevisionInput(post.revisionNotes || "");
-                            }}
-                            className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-300/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors cursor-pointer"
-                            title="Minta revisi"
-                          >
-                            Revisi
-                          </button>
-                        </>
-                      )}
-                      {(post.status === "APPROVED" || post.status === "SCHEDULED") && (
-                        <button
-                          type="button"
-                          onClick={() => handleQuickTransition(post, "PUBLISHED")}
-                          className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer flex items-center gap-1"
-                          title="Tandai konten sudah tayang live"
-                        >
-                          <Sparkles className="w-3 h-3 text-emerald-600" />
-                          <span>Tandai Tayang</span>
-                        </button>
-                      )}
-                    </div>
+                {/* Card Footer */}
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-1.5">
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500 min-w-0 flex-1">
+                    {picMember ? (
+                      <AppImage
+                        src={picMember.avatar}
+                        alt={picMember.name}
+                        fill
+                        sizes="avatar"
+                        containerClassName="w-4 h-4 rounded-full bg-slate-200 shrink-0"
+                        className="w-full h-full object-cover rounded-full"
+                        fallbackIcon={<Users className="w-2.5 h-2.5 text-slate-400" />}
+                      />
+                    ) : (
+                      <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    )}
+                    <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
+                      {picMember?.name || post.picName || "Unassigned"}
+                    </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>
-                        {post.publishDate ? formatDate(post.publishDate) : "Belum terjadwal"}
-                      </span>
-                    </div>
-                    {post.picName && (
-                      <span className="text-[11px] text-slate-500 truncate max-w-[120px]">
-                        PIC: {post.picName}
-                      </span>
+                  {/* Quick Approval Transitions */}
+                  <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    {(post.status === "DRAFT" || post.status === "REVISION") && (
+                      <button
+                        type="button"
+                        onClick={() => handleQuickTransition(post, "IN_REVIEW")}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300/40 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors cursor-pointer"
+                        title="Kirim ke Lead untuk ditinjau"
+                      >
+                        Ajukan Review
+                      </button>
+                    )}
+                    {post.status === "IN_REVIEW" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleQuickTransition(post, "APPROVED")}
+                          className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-300/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors cursor-pointer flex items-center gap-1"
+                          title="Setujui konten"
+                        >
+                          <CheckSquare className="w-3 h-3 text-blue-600" />
+                          <span>Setujui</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRevisionModalPost(post);
+                            setRevisionInput(post.revisionNotes || "");
+                          }}
+                          className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-300/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors cursor-pointer"
+                          title="Minta revisi"
+                        >
+                          Revisi
+                        </button>
+                      </>
+                    )}
+                    {(post.status === "APPROVED" || post.status === "SCHEDULED") && (
+                      <button
+                        type="button"
+                        onClick={() => handleQuickTransition(post, "PUBLISHED")}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors cursor-pointer flex items-center gap-1"
+                        title="Tandai konten sudah tayang live"
+                      >
+                        <Sparkles className="w-3 h-3 text-emerald-600" />
+                        <span>Tandai Tayang</span>
+                      </button>
                     )}
                   </div>
                 </div>
