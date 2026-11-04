@@ -29,18 +29,19 @@
      - Membuat panduan eksekusi `docs/handover-reports-expanded-row-modular-card-grid.md` dengan kode komponen lengkap, diff persis untuk `ReportsView.tsx`, daftar "Do Not Touch", urutan eksekusi bernomor, dan kriteria penerimaan.
 
 
-1. **Perencanaan Tata Letak Editorial PDF Eksekutif Profesional & Anti-AI-Slop (ADR-0034 — Planning Complete):**
-   - **Keputusan Arsitektur (ADR-0034):**
-     - Memilih Opsi 2: *Modern Editorial Annual-Report Style (Deep Navy & Refined Muted Accents)*.
-     - Menghapus seluruh emoji (🏆, ⚠️, 🎯, 📋) dan kotak pastel (`.box-green`, `.box-amber`, `.box-blue`) dari dokumen cetak PDF.
-     - Mengganti 4 kartu metrik mengambang (`.kpi-card`) menjadi **Executive Scorecard Bar** terintegrasi bergaris hairline.
-     - Memasang kop resmi **Vrello Up**, nomor registrasi dokumen resmi (`No. Dokumen: VRL/MRK/REP/...`), dan indikator kerahasiaan (*DOKUMEN INTERNAL & RAHASIA*).
-     - Menghapus prefix bracket redundant (`[POSM]`, `[MOU]`, dsb.) dari tabel kegiatan, menstandarkan tanggal ke `DD/MM/YYYY`, dan menyempurnakan sintesis bahasa narasi agar tidak menghasilkan kalimat robotik saat capaian nol.
-   - **Spesifikasi & Rencana Implementasi:**
-     - Membuat dokumen spec `docs/superpowers/specs/2026-11-05-professional-executive-pdf-editorial-layout-design.md`.
-     - Membuat dokumen plan `docs/superpowers/plans/2026-11-05-professional-executive-pdf-editorial-layout.md` (61/61 pasangan spec-plan sinkron).
-   - **Dokumen Handover (Execution-Ready):**
-     - Membuat panduan eksekusi `docs/handover-professional-executive-pdf-editorial-layout.md` dengan diff kode persis, file manifest, daftar "Do Not Touch", urutan eksekusi bernomor, dan kriteria penerimaan.
+1. **Tata Letak Editorial PDF Eksekutif Profesional & Anti-AI-Slop (ADR-0034 — Implementation Complete):**
+   - **`exportCenter.ts` Overhaul:**
+     - Menghapus seluruh emoji kasual (🏆, ⚠️, 🎯, 📋) dan kotak alert pastel (`.box-green`, `.box-amber`, `.box-blue`).
+     - Mengganti kartu metrik mengambang dengan **Executive Scorecard Bar** terintegrasi bergaris hairline slate.
+     - Memasang kop resmi organisasi **Vrello Up**, nomor registrasi dokumen resmi (`No. Dokumen: VRL/MRK/REP/...`), dan badge kerahasiaan (*DOKUMEN INTERNAL & RAHASIA*).
+     - Menata seksi narasi dengan angka Romawi (*I. RINGKASAN CAPAIAN UTAMA*, *II. EVALUASI KENDALA*, *III. RENCANA TINDAK LANJUT*, *IV. MATRIKS RINCIAN KEGIATAN*) beraksen garis vertikal 2px slate.
+     - Menstandarkan seluruh tanggal kegiatan ke format Indonesia `DD/MM/YYYY`.
+   - **`reportDraftEngine.ts` Refinement:**
+     - Membersihkan prefix bracket redundant (`[POSM]`, `[MOU]`, `[KONTEN]`, `[EVENT]`) dari judul kegiatan.
+     - Menyempurnakan generator narasi capaian ketika belum ada item terealisasi menjadi bahasa operasional profesional (menghilangkan kalimat kaku *"Berhasil menyelesaikan 0 dari N"*).
+   - **Automated Testing & Invariant Verification:**
+     - Menambahkan pengujian otomatis di `src/lib/marcom/reportDraftEngine.test.ts` dan `src/lib/productivity/exportCenter.test.ts`.
+     - Verifikasi: `npm run drift:check`, `npm run build:check`, `npm run test:smoke`, dan `npm test` seluruhnya lulus 100%.
 
 
 1. **Integrasi Export Center ke Menu More Apps (ADR-0033 — Implementation Complete):**
