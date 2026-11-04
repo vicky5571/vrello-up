@@ -280,23 +280,54 @@ rm src/lib/marcom/documentTaxonomy.test.ts
 **Instruction:**
 - In lines 114-149, delete `const statusLower = (doc.status || "DRAFT").toLowerCase();` and delete the `<span className={...}>{doc.status || "DRAFT"}</span>` pill badge from the card header.
 - Card header cleanly renders Category and File Type chip.
+- In lines 184-196, delete the bottom-left storage indicator container:
+  ```tsx
+  // DELETE THIS STORAGE BADGE:
+  <span className="inline-flex items-center gap-1 text-[10px] text-slate-400">
+    {isCloud ? (
+      <>
+        <Cloud className="w-3 h-3 text-blue-500" />
+        <span>Drive / Cloud</span>
+      </>
+    ) : (
+      <>
+        <HardDrive className="w-3 h-3 text-emerald-500" />
+        <span>Server Local</span>
+      </>
+    )}
+  </span>
+  ```
+- Footer cleanly houses the action buttons (`Eye`, `Copy`, `Edit2`, `Trash2`).
 
 #### 5. `src/components/views/DocumentsView/DocumentsView.tsx`
 **Instruction:**
 - Remove `DocumentStatus` from imports (line 36) and re-exports (line 38).
 - Delete dead state line 60: `const [selectedStatus] = useState<string>("ALL");`
 - In `filteredDocuments` useMemo, delete `status: selectedStatus,` from `filterDocuments` call and remove `selectedStatus` from dependency array.
-- In `kpiCards` (lines 141-147), update Card 3 from "Dokumen Aktif" to "Penyimpanan Cloud":
+- In lines 229-237, remove the Cloud / HardDrive storage icon next to the document title:
+  ```tsx
+  // DELETE THESE 9 LINES:
+  {isCloudDocumentUrl(row.original.filePath) ? (
+    <span title="Google Drive / Cloud">
+      <Cloud className="w-3 h-3 text-blue-500 shrink-0" />
+    </span>
+  ) : (
+    <span title="Server Local">
+      <HardDrive className="w-3 h-3 text-emerald-500 shrink-0" />
+    </span>
+  )}
+  ```
+- In `kpiCards` (lines 141-147), update Card 3 from "Dokumen Aktif" to "Ragam Kategori":
   ```typescript
   {
-    label: "Penyimpanan Cloud",
-    value: kpiData.cloudDocsCount,
-    helper: `${kpiData.localDocsCount} Berkas Server/Lokal`,
-    icon: Cloud,
+    label: "Ragam Kategori",
+    value: categoryChips.length,
+    helper: `Dominan: ${kpiData.topCategory}`,
+    icon: Layers,
     color: "emerald",
   },
   ```
-  *(Import `Cloud` from `lucide-react`)*
+  *(Import `Layers` from `lucide-react`)*
 - In `columns` (lines 297-317), delete the `columnHelper.accessor("status", ...)` definition.
 
 ---

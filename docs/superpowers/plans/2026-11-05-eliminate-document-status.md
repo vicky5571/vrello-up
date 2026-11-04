@@ -105,20 +105,22 @@ Completely remove the orphaned and speculative `status` field from the Marcom Do
   - Remove `status` from `handleSave` PATCH payload.
   - Remove Status Selector `<select>` from the standardized grey container JSX.
   - Ensure file replacement streams directly to `/api/marcom/uploads` (Supabase Storage).
-- [x] **3.4 `DocumentCardsView.tsx`**:
+- [ ] **3.4 `DocumentCardsView.tsx`**:
   - Remove lines computing `statusLower`.
   - Remove status pill badge from the card header, leaving clean Category badge and File Type chip.
-- [x] **3.5 `DocumentsView.tsx`**:
+  - Remove bottom-left storage indicator badge (`<span>Drive / Cloud</span>` and `<span>Server Local</span>`).
+- [ ] **3.5 `DocumentsView.tsx`**:
   - Remove `DocumentStatus` from import and re-export.
   - Remove dead state `const [selectedStatus] = useState<string>("ALL");`.
   - Remove `status: selectedStatus` from `filterDocuments` call.
-  - In `kpiCards`, update card 3:
+  - Remove storage icon (`Cloud` / `HardDrive`) from document title cell.
+  - In `kpiCards`, update card 3 from "Dokumen Aktif" to "Ragam Kategori":
     ```typescript
     {
-      label: "Penyimpanan Cloud",
-      value: kpiData.cloudDocsCount,
-      helper: `${kpiData.localDocsCount} Berkas Server/Lokal`,
-      icon: Cloud,
+      label: "Ragam Kategori",
+      value: categoryChips.length,
+      helper: `Dominan: ${kpiData.topCategory}`,
+      icon: Layers,
       color: "emerald",
     }
     ```

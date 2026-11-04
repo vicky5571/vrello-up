@@ -29,9 +29,14 @@ Because this project is in active development and not yet used operationally in 
 - Delete obsolete helper `src/lib/marcom/documentTaxonomy.ts` and its test `src/lib/marcom/documentTaxonomy.test.ts`.
 - Clean API routes: Remove `status` from POST create, PATCH update, and validation checks.
 - Clean SSoT types: Remove `DocumentStatus` and `status` from `src/types/index.ts`.
-- Clean UI: Remove status controls from `DocumentDrawer.tsx` and `DocumentCreateModal.tsx`, remove status badge from `DocumentCardsView.tsx`, remove status column and dead `selectedStatus` state from `DocumentsView.tsx`, and convert the 3rd KPI card ("Dokumen Aktif") to "Penyimpanan Cloud".
+- Clean UI:
+  - Remove status controls from `DocumentDrawer.tsx` and `DocumentCreateModal.tsx`.
+  - Remove status badge from `DocumentCardsView.tsx`.
+  - Remove status column and dead `selectedStatus` state from `DocumentsView.tsx`.
+  - Convert the 3rd KPI card from "Dokumen Aktif" to "Ragam Kategori" (`categoryCount`).
+  - Eliminate confusing legacy `Drive / Cloud` and `Server Local` storage indicator badges from card footers and table rows (all files stream to Supabase Storage; internal storage mechanics are irrelevant to end users).
 - **Trade-off Summary**:
-  - *Engineering Cleanliness*: Maximum. 100% debt-free. Eliminates dead code, unused types, and phantom DB columns.
+  - *Engineering Cleanliness*: Maximum. 100% debt-free. Eliminates dead code, unused types, phantom DB columns, and misleading legacy storage labels.
   - *Data Integrity*: 100% consistency across Prisma schema, TypeScript SSoT types, API contracts, seed data, and UI.
   - *Operational Complexity*: Requires running `npx prisma migrate dev` and `npx prisma db seed`. Safe because the system has no production operational traffic.
 
