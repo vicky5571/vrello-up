@@ -16,7 +16,7 @@ describe("mouColumns and MarcomTableShell sticky right configuration (ADR-0030)"
   const mouColumnsContent = fs.readFileSync(mouColumnsPath, "utf-8");
   const tableShellContent = fs.readFileSync(tableShellPath, "utf-8");
 
-  it("verifies mouColumns document column has sticky right with offset 85 and stickyBorder", () => {
+  it("verifies mouColumns document column has sticky right with offset 130 and stickyBorder", () => {
     assert.ok(
       mouColumnsContent.includes('id: "document"'),
       "mouColumns must have document column"
@@ -26,8 +26,8 @@ describe("mouColumns and MarcomTableShell sticky right configuration (ADR-0030)"
       "mouColumns must define sticky right"
     );
     assert.ok(
-      mouColumnsContent.includes("stickyOffset: 85"),
-      "document column must have stickyOffset 85"
+      mouColumnsContent.includes("stickyOffset: 130"),
+      "document column must have stickyOffset 130"
     );
     assert.ok(
       mouColumnsContent.includes("stickyBorder: true"),
@@ -46,14 +46,14 @@ describe("mouColumns and MarcomTableShell sticky right configuration (ADR-0030)"
     );
   });
 
-  it("verifies mouColumns retains column widths", () => {
+  it("verifies mouColumns retains column widths and provides ample space for actions", () => {
     assert.ok(
-      mouColumnsContent.includes("size: 155"),
-      "document column must retain size: 155"
+      mouColumnsContent.includes("size: 165"),
+      "document column must have size: 165"
     );
     assert.ok(
-      mouColumnsContent.includes("size: 85"),
-      "actions column must retain size: 85"
+      mouColumnsContent.includes("size: 130"),
+      "actions column must have size: 130 to prevent clipping"
     );
   });
 

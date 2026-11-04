@@ -24,8 +24,8 @@ Ketika pengguna menggeser tabel ke kanan untuk melihat dokumen dan aksi, mereka 
 ### Opsi 1: Dukungan Meta Kolom Deklaratif di `MarcomTableShell` (TERPILIH)
 - Memperluas `MarcomTableShell.tsx` untuk membaca konfigurasi `meta?: { sticky?: "right"; stickyOffset?: number; stickyBorder?: boolean }` pada header dan baris data.
 - Di `mouColumns.tsx`:
-  - Kolom `actions` (lebar 85px): `meta: { sticky: "right", stickyOffset: 0 }`.
-  - Kolom `document` (lebar 155px): `meta: { sticky: "right", stickyOffset: 85, stickyBorder: true }`.
+  - Kolom `actions` (lebar 130px): `meta: { sticky: "right", stickyOffset: 0 }`.
+  - Kolom `document` (lebar 165px): `meta: { sticky: "right", stickyOffset: 130, stickyBorder: true }`.
 - Shell menerapkan `position: sticky`, offset `right`, z-index bertingkat (`z-20` untuk header, `z-10` untuk data rows), dan background solid (`bg-slate-50 dark:bg-[#18191B]` di header, `bg-white dark:bg-[#18191B]` di baris dengan dukungan hover).
 - **Trade-off Summary**:
   - *Engineering Cleanliness*: Sangat tinggi. Menggunakan CSS standar tanpa overhead TanStack plugin.

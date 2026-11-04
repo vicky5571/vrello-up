@@ -8,10 +8,10 @@
 ---
 
 ## 1. Plan Overview & Objectives
-Mengimplementasikan kolom sticky kanan (*sticky right columns*) pada tabel MOUs untuk kolom **"Dokumen MOU"** (lebar 155px) dan **"Aksi"** (lebar 85px):
+Mengimplementasikan kolom sticky kanan (*sticky right columns*) pada tabel MOUs untuk kolom **"Dokumen MOU"** (lebar 165px) dan **"Aksi"** (lebar 130px):
 1. **Dukungan Shell Deklaratif**: Perluas `MarcomTableShell.tsx` agar mengenali `meta: { sticky?: "right", stickyOffset?: number, stickyBorder?: boolean }` untuk styling header dan data cells secara murni via CSS standard `position: sticky`.
 2. **Konfigurasi Kolom MOU**: Tambahkan `meta` pada kolom `document` dan `actions` di `src/components/views/MousView/mouColumns.tsx`.
-3. **Automated Unit Testing**: Buat pengujian otomatis di `src/components/views/MousView/mouColumns.test.ts` untuk memastikan konfigurasi `sticky: "right"` dan offset 85px/0px terpasang dengan presisi.
+3. **Automated Unit Testing**: Buat pengujian otomatis di `src/components/views/MousView/mouColumns.test.ts` untuk memastikan konfigurasi `sticky: "right"` dan offset 130px/0px terpasang dengan presisi.
 4. **Verifikasi Kualitas**: Jalankan `npm run drift:check` (57 spec-plan pairs), `npm run build:check`, dan `npm test`.
 
 ---
@@ -74,7 +74,7 @@ Mengimplementasikan kolom sticky kanan (*sticky right columns*) pada tabel MOUs 
     ```typescript
     meta: {
       sticky: "right",
-      stickyOffset: 85,
+      stickyOffset: 130,
       stickyBorder: true,
     },
     ```
@@ -97,7 +97,7 @@ Mengimplementasikan kolom sticky kanan (*sticky right columns*) pada tabel MOUs 
 
 ### Tasks:
 - [x] **3.1 Buat Unit Test `src/components/views/MousView/mouColumns.test.ts`**:
-  - Uji bahwa `getMouColumns` menghasilkan kolom `document` dengan `meta.sticky === "right"` dan `meta.stickyOffset === 85`.
+  - Uji bahwa `getMouColumns` menghasilkan kolom `document` dengan `meta.sticky === "right"` dan `meta.stickyOffset === 130`.
   - Uji bahwa kolom `actions` memiliki `meta.sticky === "right"` dan `meta.stickyOffset === 0`.
   - Uji bahwa kolom lain (seperti `partnerName`, `mouType`) tidak memiliki sticky right.
 - [x] **3.2 Jalankan Unit Test Suites**:

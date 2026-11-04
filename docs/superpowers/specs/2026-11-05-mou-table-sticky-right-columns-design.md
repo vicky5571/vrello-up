@@ -7,7 +7,7 @@ IMPLEMENTED (ADR-0030)
 2026-11-05
 
 ## 1. Executive Summary
-Spesifikasi ini mendefinisikan implementasi deklaratif *sticky right columns* pada tabel modul Marcom MOUs (`MousView`). Kolom **"Dokumen MOU"** (id: `"document"`, lebar 155px) dan kolom setelahnya **"Aksi"** (id: `"actions"`, lebar 85px) dibuat menempel (*pinned / sticky*) di sisi kanan tabel kontainer saat pengguna melakukan *scroll* horizontal. Dengan fitur ini, tombol preview dokumen MOU, download file, quick approval, dan navigasi detail drawer selalu terlihat dan dapat diakses seketika tanpa harus menggeser tabel bolak-balik.
+Spesifikasi ini mendefinisikan implementasi deklaratif *sticky right columns* pada tabel modul Marcom MOUs (`MousView`). Kolom **"Dokumen MOU"** (id: `"document"`, lebar 165px) dan kolom setelahnya **"Aksi"** (id: `"actions"`, lebar 130px) dibuat menempel (*pinned / sticky*) di sisi kanan tabel kontainer saat pengguna melakukan *scroll* horizontal. Dengan fitur ini, tombol preview dokumen MOU, download file, quick approval, dan navigasi detail drawer selalu terlihat dan dapat diakses seketika tanpa harus menggeser tabel bolak-balik. Lebar kolom aksi disetel 130px (offset dokumen 130px) guna memastikan tombol Quick Approve dan Chevron Drawer dapat berdampingan tanpa clipping visual.
 
 ---
 
@@ -31,7 +31,7 @@ Tabel MOUs memiliki 10 kolom dengan total lebar 1.240px. Pada viewport desktop u
 | Komponen / Modul | Path File | Tanggung Jawab |
 |---|---|---|
 | `MarcomTableShell.tsx` | `src/components/views/shared/MarcomTableShell.tsx` | Koordinator tabel bersama. Membaca `meta.sticky`, `meta.stickyOffset`, dan `meta.stickyBorder`, lalu merender style sticky pada header dan cell secara generik. |
-| `mouColumns.tsx` | `src/components/views/MousView/mouColumns.tsx` | Konfigurasi kolom tabel MOUs. Mendefinisikan meta sticky pada kolom `document` (offset 85px) dan `actions` (offset 0px). |
+| `mouColumns.tsx` | `src/components/views/MousView/mouColumns.tsx` | Konfigurasi kolom tabel MOUs. Mendefinisikan meta sticky pada kolom `document` (offset 130px) dan `actions` (offset 0px). |
 | `mouColumns.test.ts` | `src/components/views/MousView/mouColumns.test.ts` | Unit test suite untuk memastikan konfigurasi meta sticky pada kolom MOU valid dan persisten. |
 
 ---
@@ -55,12 +55,13 @@ export interface MarcomColumnMeta {
     columnHelper.accessor("docPath", {
       id: "document",
       header: "Dokumen MOU",
-      size: 155,
-      minSize: 130,
+      size: 165,
+      minSize: 150,
+      maxSize: 185,
       enableSorting: false,
       meta: {
         sticky: "right",
-        stickyOffset: 85,
+        stickyOffset: 130,
         stickyBorder: true,
       },
       cell: ({ row }) => { ... },
@@ -70,9 +71,9 @@ export interface MarcomColumnMeta {
     columnHelper.display({
       id: "actions",
       header: () => null,
-      size: 85,
-      minSize: 70,
-      maxSize: 110,
+      size: 130,
+      minSize: 115,
+      maxSize: 150,
       enableSorting: false,
       meta: {
         sticky: "right",
@@ -139,7 +140,7 @@ const hasStickyBorder = meta?.stickyBorder ?? false;
 
 ## 6. Acceptance Criteria
 - [ ] `MarcomTableShell.tsx` mendukung konfigurasi `meta?: MarcomColumnMeta` secara deklaratif.
-- [ ] Kolom `document` pada tabel MOUs memiliki `position: sticky` dengan offset kanan 85px dan pembatas border kiri.
+- [ ] Kolom `document` pada tabel MOUs memiliki `position: sticky` dengan offset kanan 130px dan pembatas border kiri.
 - [ ] Kolom `actions` pada tabel MOUs memiliki `position: sticky` dengan offset kanan 0px.
 - [ ] Header dan cell data pada kolom `document` dan `actions` menempel secara konsisten saat tabel di-scroll secara horizontal.
 - [ ] Latar belakang kolom sticky solid dan tidak tembus pandang terhadap kolom yang bergeser di bawahnya.

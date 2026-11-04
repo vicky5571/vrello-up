@@ -333,12 +333,13 @@ export function buildMouColumns({
     columnHelper.accessor("docPath", {
       id: "document",
       header: "Dokumen MOU",
-      size: 155,
-      minSize: 130,
+      size: 165,
+      minSize: 150,
+      maxSize: 185,
       enableSorting: false,
       meta: {
         sticky: "right",
-        stickyOffset: 85,
+        stickyOffset: 130,
         stickyBorder: true,
       },
       cell: ({ row }) => {
@@ -359,7 +360,7 @@ export function buildMouColumns({
             <button
               type="button"
               onClick={() => setViewingDocMou(row.original)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100/80 dark:bg-slate-800/60 hover:bg-slate-200/80 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/60 backdrop-blur-xs transition-colors cursor-pointer shadow-2xs group"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100/80 dark:bg-slate-800/60 hover:bg-slate-200/80 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/60 backdrop-blur-xs transition-colors cursor-pointer shadow-2xs group shrink-0"
               title="Lihat Pratinjau Dokumen"
             >
               <FileText className="w-3 h-3 text-slate-500 dark:text-slate-400 group-hover:scale-105 transition-transform shrink-0" />
@@ -370,7 +371,7 @@ export function buildMouColumns({
               download={parsed.filename || "dokumen-mou"}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
               title="Unduh Berkas Asli"
             >
               <Download className="w-3.5 h-3.5" />
@@ -382,9 +383,9 @@ export function buildMouColumns({
     columnHelper.display({
       id: "actions",
       header: () => null,
-      size: 85,
-      minSize: 70,
-      maxSize: 110,
+      size: 130,
+      minSize: 115,
+      maxSize: 150,
       enableSorting: false,
       meta: {
         sticky: "right",
@@ -396,7 +397,7 @@ export function buildMouColumns({
 
         return (
           <div
-            className="flex items-center justify-end gap-1.5"
+            className="w-full flex items-center justify-end gap-1.5"
             onClick={(e) => e.stopPropagation()}
           >
             {canApprove && onQuickApprove && (
@@ -404,10 +405,10 @@ export function buildMouColumns({
                 type="button"
                 onClick={() => onQuickApprove(row.original)}
                 aria-label={`Quick Approve MOU ${row.original.partnerName}`}
-                className="inline-flex items-center gap-1 px-2 py-1 min-h-[30px] rounded-md text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-2xs transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-2 py-1 min-h-[30px] rounded-md text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-2xs transition-colors cursor-pointer shrink-0 whitespace-nowrap"
                 title="Quick Approve MOU (PIC Cabang / Admin)"
               >
-                <Check className="w-3.5 h-3.5" />
+                <Check className="w-3.5 h-3.5 shrink-0" />
                 <span className="hidden xl:inline">Approve</span>
               </button>
             )}
@@ -415,7 +416,7 @@ export function buildMouColumns({
               type="button"
               onClick={() => onOpenDrawer?.(row.original)}
               aria-label={`Buka detail MOU ${row.original.partnerName}`}
-              className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-slate-400 hover:text-fuchsia-600 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-950/40 transition-colors cursor-pointer"
+              className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-slate-400 hover:text-fuchsia-600 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-950/40 transition-colors cursor-pointer shrink-0"
               title="Buka Panel Detail MOU"
             >
               <ChevronRight className="w-4 h-4" />

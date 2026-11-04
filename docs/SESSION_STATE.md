@@ -22,10 +22,10 @@
      - Rendered sticky right body cells with `position: sticky`, `right: ...px`, `z-10`, solid background `bg-white dark:bg-[#18191B]`, and row hover synchronization `group-hover:bg-slate-50/80 dark:group-hover:bg-slate-800/40`.
      - Added boundary separator with left border and soft drop shadow (`border-l border-slate-200/80 dark:border-slate-800 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]`).
      - Added `group` CSS class to data rows to ensure row-level hover states propagate to sticky cells.
-   - **`mouColumns.tsx` Configuration:**
-     - Configured `meta: { sticky: "right", stickyOffset: 85, stickyBorder: true }` on `docPath` column (`id: "document"`, width 155px).
-     - Configured `meta: { sticky: "right", stickyOffset: 0 }` on display actions column (`id: "actions"`, width 85px).
-     - Retained exact original column dimensions and exported `getMouColumns` alias.
+   - **`mouColumns.tsx` Configuration & Visual Alignment:**
+     - Configured `meta: { sticky: "right", stickyOffset: 130, stickyBorder: true }` on `docPath` column (`id: "document"`, width 165px).
+     - Configured `meta: { sticky: "right", stickyOffset: 0 }` on display actions column (`id: "actions"`, width 130px) ensuring Quick Approve button (`[✓ Approve]`) and drawer chevron fit comfortably without clipping visual artifacts or overlapping.
+     - Added edge breathing room (`pr-3`) on rightmost sticky cell and integrated selection highlight sync (`bg-teal-50/70 dark:bg-teal-950/40`).
    - **Automated Unit Testing (`mouColumns.test.ts`):**
      - Created `src/components/views/MousView/mouColumns.test.ts` asserting sticky properties, offsets, borders, and column widths (5 passed, 0 failures).
    - **Documentation & Invariants:**
