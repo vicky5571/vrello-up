@@ -64,13 +64,14 @@ This targeted handover removes the misleading legacy storage indicator badges (`
 - If `Cloud` is only used in KPI card 3, keep or replace with `FolderKanban` or `Layers`.
 - Remove `isCloudDocumentUrl` from `@/lib/marcom/documentWorkflow` import if no longer needed.
 
-#### B. Update KPI Card 3 (lines ~125–155)
-**Current Code:**
+#### B. Clean KPI Cards to 3 Cards (lines ~125–155)
+Delete the redundant "Penyimpanan Cloud" card completely. The KPI header now has 3 clear, non-redundant cards:
 ```typescript
+    return [
       {
         label: "Total Dokumen",
         value: kpiData.totalDocuments,
-        helper: `${kpiData.cloudDocsCount} Cloud · ${kpiData.localDocsCount} Server`,
+        helper: "Total repositori aktif",
         icon: Files,
         color: "teal",
       },
@@ -80,13 +81,6 @@ This targeted handover removes the misleading legacy storage indicator badges (`
         helper: "Total file size",
         icon: HardDrive,
         color: "blue",
-      },
-      {
-        label: "Penyimpanan Cloud",
-        value: kpiData.cloudDocsCount,
-        helper: `${kpiData.localDocsCount} Berkas Server/Lokal`,
-        icon: Cloud,
-        color: "emerald",
       },
       {
         label: "Kategori Terbanyak",
@@ -95,39 +89,9 @@ This targeted handover removes the misleading legacy storage indicator badges (`
         icon: Layers,
         color: "violet",
       },
+    ];
 ```
-
-**Replace With:**
-```typescript
-      {
-        label: "Total Dokumen",
-        value: kpiData.totalDocuments,
-        helper: "Total repositori aset",
-        icon: Files,
-        color: "teal",
-      },
-      {
-        label: "Kapasitas Terpakai",
-        value: kpiData.formattedStorage,
-        helper: "Total file size",
-        icon: HardDrive,
-        color: "blue",
-      },
-      {
-        label: "Ragam Kategori",
-        value: categoryChips.length,
-        helper: `Dominan: ${kpiData.topCategory}`,
-        icon: Layers,
-        color: "emerald",
-      },
-      {
-        label: "Kategori Terbanyak",
-        value: kpiData.topCategory,
-        helper: "Kategori dominan",
-        icon: Layers,
-        color: "violet",
-      },
-```
+*(Catatan: `KpiSummaryCards` secara otomatis menangani 3 card dengan layout `sm:grid-cols-3` yang rapi dan simetris).*
 
 #### C. Remove storage icon from table row title (lines ~226–238)
 **Current Code:**
@@ -152,6 +116,11 @@ This targeted handover removes the misleading legacy storage indicator badges (`
                 {row.original.name}
               </span>
 ```
+
+---
+
+#### C. Update Skeleton Count in `DocumentsHeader.tsx` (line 254)
+Update `skeletonCount={4}` to `skeletonCount={kpiCards.length || 3}` so loading skeleton matches the 3-column layout.
 
 ---
 
@@ -180,3 +149,4 @@ npm run build:check
 node --test src/components/views/DocumentsView/documentDrawer.test.ts
 npm test
 ```
+
