@@ -14,7 +14,6 @@ import {
   FileText,
   Activity,
   TrendingUp,
-  Trash2,
 } from "lucide-react";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
@@ -25,6 +24,7 @@ import { printSingleMonthlyReport } from "@/lib/productivity/exportCenter";
 import type { ReportDraftResult, DraftActivityItem } from "@/lib/marcom/reportDraftEngine";
 import { QuarterlyPosmReportTab } from "./QuarterlyPosmReportTab";
 import { ReportsHeader } from "./ReportsHeader";
+import { MonthlyReportExpandedRow } from "./MonthlyReportExpandedRow";
 import type { KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
 
 const MONTH_OPTIONS = [
@@ -100,28 +100,6 @@ function completionBarColor(rate: number): string {
   if (rate >= 50) return "bg-amber-400";
   return "bg-rose-500";
 }
-
-function ReportSection({ title, items }: { title: string; items: unknown[] }) {
-  return (
-    <div>
-      <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
-        {title} ({items.length})
-      </div>
-      {items.length === 0 ? (
-        <div className="text-slate-400 dark:text-slate-500">—</div>
-      ) : (
-        <ul className="list-disc pl-4 space-y-0.5">
-          {items.map((item, i) => (
-            <li key={i} className="text-slate-700 dark:text-slate-300 break-words">
-              {renderJsonItem(item, "—")}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
 
 export function ReportsView() {
   const { can } = useMarcomPermissions();
@@ -725,81 +703,19 @@ export function ReportsView() {
                     </div>
                   </div>
                   {isExpanded && (
-                    <div className="px-4 py-3 bg-slate-50/60 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800/60">
-                      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-3 border-b border-slate-200/60 dark:border-slate-800">
-                        <div>
-                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                            Rincian Dokumen Laporan — {periodLabel(report)}
-                          </span>
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                            Dokumen resmi siap cetak atau simpan sebagai PDF eksekutif
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {canManage && (
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteReport(report)}
-                              disabled={isDeletingId === report.id}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer disabled:opacity-50"
-                            >
-                              {isDeletingId === report.id
-                                ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                : <Trash2 className="w-3.5 h-3.5" />
-                              }
-                              <span>{isDeletingId === report.id ? "Menghapus..." : "Hapus Laporan"}</span>
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              printSingleMonthlyReport(report, {
-                                workspaceName: "Vrello Marcom Operations",
-                              })
-                            }
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer"
-                          >
-                            <Printer className="w-3.5 h-3.5" />
-                            <span>Cetak Dokumen Resmi (Save as PDF)</span>
-                          </button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <ReportSection title="Activities" items={report.activities ?? []} />
-                        <ReportSection title="Achievements" items={report.achievements ?? []} />
-                        <ReportSection title="Key issues" items={report.keyIssues ?? []} />
-                        <ReportSection title="Action plans" items={report.actionPlans ?? []} />
-                      </div>
-                      <div className="mt-3">
-                        <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
-                          Supporting documents ({supporting.length})
-                        </div>
-                        {supporting.length === 0 ? (
-                          <div className="text-xs text-slate-400 dark:text-slate-500">
-                            No documents filed under this period.
-                          </div>
-                        ) : (
-                          <ul className="space-y-1">
-                            {supporting.map((doc) => (
-                              <li key={doc.id} className="text-xs">
-                                <a
-                                  href={doc.filePath}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-blue-600 dark:text-blue-400 hover:underline break-all"
-                                >
-                                  {doc.name}
-                                </a>
-                                <span className="text-slate-400 dark:text-slate-500">
-                                  {" "}· {doc.fileType}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    </div>
+                    <MonthlyReportExpandedRow
+                      report={report}
+                      periodLabel={periodLabel(report)}
+                      supporting={supporting}
+                      canManage={canManage}
+                      isDeletingId={isDeletingId}
+                      onDeleteReport={handleDeleteReport}
+                      onPrintReport={(r) =>
+                        printSingleMonthlyReport(r, {
+                          workspaceName: "Vrello Marcom Operations",
+                        })
+                      }
+                    />
                   )}
                 </div>
               );

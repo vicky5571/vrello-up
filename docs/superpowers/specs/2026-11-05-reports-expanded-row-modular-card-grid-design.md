@@ -1,7 +1,7 @@
 # Design Specification: Reports Expanded Row Modular Card Grid Styling & Atomic Extraction
 
 - **Date:** 2026-11-05
-- **Status:** APPROVED
+- **Status:** IMPLEMENTED (ADR-0035)
 - **ADR Reference:** `docs/adr/0035-reports-expanded-row-modular-card-grid.md`
 
 ## 1. Executive Summary & Goals
@@ -122,15 +122,15 @@ The expanded section features a 2-column responsive grid (`grid grid-cols-1 md:g
 
 ## 4. Acceptance Criteria & Verification Checklist
 
-- [ ] `MonthlyReportExpandedRow.tsx` exists as a dedicated subcomponent in `src/components/views/ReportsView/`.
-- [ ] `ReportsView.tsx` imports and renders `<MonthlyReportExpandedRow ... />` inside the expanded row branch.
-- [ ] 4 modular cards render cleanly with themed icons, titles, and count badges.
-- [ ] Raw concatenated activity strings are parsed cleanly with category badges (`POSM`, `MOU`, `CONTENT`, `EVENT`) instead of raw bracket text.
-- [ ] Supporting documents render as clean file card chips with icons and file format badges.
-- [ ] `ReportsView.tsx` LOC decreases by $\ge 60$ lines.
-- [ ] Automated tests in `src/components/views/ReportsView/monthlyReportExpandedRow.test.ts` pass 100%.
-- [ ] `npm run drift:check` passes with no drift detected.
-- [ ] `npm run build:check` compiles with 0 TypeScript errors.
-- [ ] `npm test` passes with 0 failures across all test suites.
+- [x] `MonthlyReportExpandedRow.tsx` exists as a dedicated subcomponent in `src/components/views/ReportsView/`.
+- [x] `ReportsView.tsx` imports and renders `<MonthlyReportExpandedRow ... />` inside the expanded row branch.
+- [x] 4 modular cards render cleanly with themed icons, titles, and count badges.
+- [x] Raw concatenated activity strings are parsed cleanly with category badges (`POSM`, `MOU`, `CONTENT`, `EVENT`) instead of raw bracket text.
+- [x] Supporting documents render as clean file card chips with icons and file format badges.
+- [x] `ReportsView.tsx` LOC decreases by $\ge 60$ lines.
+- [x] Automated tests in `src/components/views/ReportsView/monthlyReportExpandedRow.test.ts` pass 100%.
+- [x] `npm run drift:check` passes with no drift detected.
+- [x] `npm run build:check` compiles with 0 TypeScript errors.
+- [x] `npm test` passes with 0 failures across all test suites.
 
 

@@ -8,25 +8,22 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Reports Expanded Row Modular Card Grid Styling & Atomic Extraction (ADR-0035) — **PLANNING COMPLETE**  
+**Active Feature:** Reports Expanded Row Modular Card Grid Styling & Atomic Extraction (ADR-0035) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Professional Executive PDF Editorial Layout & Anti-AI-Slop Redesign (ADR-0034)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan Penataan Grid Kartu Modular Baris Ekspansi Laporan (ADR-0035 — Planning Complete):**
-   - **Keputusan Arsitektur (ADR-0035):**
-     - Memilih Opsi 1: *Modular Card Grid with Section Badges & Atomic Extraction*.
-     - Mengekstrak markup baris ekspansi dari `ReportsView.tsx` menjadi sub-komponen atomik `MonthlyReportExpandedRow.tsx` (~130 LOC), memangkas ~80 baris dari file coordinator.
-     - Membungkus seksi *Activities*, *Achievements*, *Key Issues*, dan *Action Plans* ke dalam 4 kontainer kartu terstruktur (`shadow-2xs`, ikon tematik, count pill badge).
-     - Menguraikan teks aktivitas mentah menjadi badge kategori (`POSM`, `MOU`, `KONTEN`, `EVENT`), judul tegas, dan subteks biaya/detail terpisah.
-     - Menata dokumen pendukung menjadi strip kartu berkas horizontal dengan ekstensi file dan ikon `FileText`.
-   - **Spesifikasi & Rencana Implementasi:**
-     - Membuat dokumen spec `docs/superpowers/specs/2026-11-05-reports-expanded-row-modular-card-grid-design.md`.
-     - Membuat dokumen plan `docs/superpowers/plans/2026-11-05-reports-expanded-row-modular-card-grid.md` (62/62 pasangan spec-plan sinkron).
-   - **Dokumen Handover (Execution-Ready):**
-     - Membuat panduan eksekusi `docs/handover-reports-expanded-row-modular-card-grid.md` dengan kode komponen lengkap, diff persis untuk `ReportsView.tsx`, daftar "Do Not Touch", urutan eksekusi bernomor, dan kriteria penerimaan.
+1. **Penataan Grid Kartu Modular Baris Ekspansi Laporan (ADR-0035 — Implementation Complete):**
+   - **`MonthlyReportExpandedRow.tsx` Extraction:**
+     - Mengekstrak markup baris ekspansi dari `ReportsView.tsx` menjadi sub-komponen atomik `MonthlyReportExpandedRow.tsx`, memangkas 84 baris kode dari file coordinator (755 LOC).
+     - Menata 4 kontainer kartu modular 2x2 (`Aktivitas Operasional`, `Capaian Utama`, `Kendala & Isu Lapangan`, `Rencana Tindak Lanjut`) dengan latar `bg-white dark:bg-slate-900/60`, border halus, `shadow-2xs`, ikon tematik (`Layers`, `CheckCircle2`, `AlertTriangle`, `ArrowUpRight`), dan count pill badge.
+     - Mengimplementasikan `parseActivityDisplay` murni untuk mem-parsing string aktivitas menjadi badge kategori berkode warna (`POSM`, `MOU`, `CONTENT`, `EVENT`), judul tegas, dan subteks biaya/detail terpisah.
+     - Menata dokumen pendukung menjadi strip kartu berkas horizontal interaktif dengan ekstensi file uppercase dan tautan langsung.
+   - **Automated Testing & Invariant Verification:**
+     - Menambahkan pengujian otomatis di `src/components/views/ReportsView/monthlyReportExpandedRow.test.ts`.
+     - Verifikasi: `npm run drift:check`, `npm run build:check`, dan `npm test` seluruhnya lulus 100% (806/806 tests passed).
 
 
 1. **Tata Letak Editorial PDF Eksekutif Profesional & Anti-AI-Slop (ADR-0034 — Implementation Complete):**

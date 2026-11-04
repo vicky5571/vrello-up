@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(reports)`: Reports expanded row modular card grid styling & atomic extraction
+  - Extracted inline expanded row markup from coordinator `ReportsView.tsx` into atomic subcomponent `MonthlyReportExpandedRow.tsx` (reduced coordinator file size by 84 LOC)
+  - Designed responsive 2x2 modular card grid (`Aktivitas Operasional`, `Capaian Utama`, `Kendala & Isu Lapangan`, `Rencana Tindak Lanjut`) with themed icons (`Layers`, `CheckCircle2`, `AlertTriangle`, `ArrowUpRight`) and count pill badges
+  - Implemented `parseActivityDisplay` to parse concatenated activity strings into structured category pills (`POSM`, `MOU`, `CONTENT`, `EVENT`), clean titles, and distinct subtext
+  - Styled supporting documents strip as elevated file cards with `FileText` icons, truncated titles, uppercase format badges, and direct external links
+  - Added unit test coverage in `src/components/views/ReportsView/monthlyReportExpandedRow.test.ts`
+  - Spec: `docs/superpowers/specs/2026-11-05-reports-expanded-row-modular-card-grid-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-reports-expanded-row-modular-card-grid.md`
+  - Refs: `docs/adr/0035-reports-expanded-row-modular-card-grid.md`
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `feat(reports)`: Professional executive PDF editorial layout and anti-AI-slop redesign
   - Removed all emojis (🏆, ⚠️, 🎯, 📋) and pastel alert callout boxes (`.box-green`, `.box-amber`, `.box-blue`)
   - Integrated high-density Executive Scorecard Bar bordered by hairline rules
