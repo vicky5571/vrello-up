@@ -8,14 +8,27 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Sub-Komponen ContentMediaSection pada Modal Schedule New Post (ADR-0028)  
+**Active Feature:** Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs (ADR-0030) — **PLANNING & HANDOVER COMPLETE**  
+**Previous Feature:** Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029 — Implementation Complete):**
+1. **Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs (ADR-0030 — Planning & Handover):**
+   - **Checkpoints Lolos Persetujuan**:
+     - Checkpoint 1 (Decision Problem & Candidate Options): User menyetujui **Opsi 1** (dukungan deklaratif `meta.sticky: "right"` di `MarcomTableShell.tsx`).
+     - Checkpoint 2 (Scope & Asumsi Spesifikasi): User menyetujui scope, non-goals, dan isolasi sticky right untuk kolom `document` dan `actions`.
+     - Checkpoint 3 (Phasing Strategy): User menyetujui 3 fase implementasi.
+   - **Dokumentasi Terbit (File-First, Content-Second)**:
+     - `docs/adr/0030-mou-table-sticky-right-columns.md`: Keputusan arsitektur deklaratif sticky right columns via column meta di shell tabel bersama.
+     - `docs/superpowers/specs/2026-11-05-mou-table-sticky-right-columns-design.md`: Spesifikasi detail styling sticky header/cell, offset calculation, border pembatas, dan kontrak hover sinkron.
+     - `docs/superpowers/plans/2026-11-05-mou-table-sticky-right-columns.md`: Rencana eksekusi 3 fase dengan file manifest, risk mitigation, dan invariant checklist.
+     - `docs/handover-mou-table-sticky-right-columns.md`: Handover eksekusi dengan snippet kode lengkap, instruksi perubahan, dan acceptance criteria.
+   - **Verification Gates**:
+     - `npm run drift:check`: ✅ No drift detected (57 spec-plan pairs).
+
+2. **Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029 — Implementation Complete):**
    - **Parser Sanitized (`src/components/views/MousView/mouDocumentHelpers.ts`):**
      - Simplified `MouDocumentType` to `INTERNAL_PDF | INTERNAL_IMAGE | EMPTY`.
      - Completely removed `isExternalUrl`, `isGoogleDrive`, and `EXTERNAL_URL`.
