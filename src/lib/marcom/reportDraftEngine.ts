@@ -164,7 +164,7 @@ export function generateReportDraft(input: GenerateReportDraftInput): ReportDraf
     const materialName = p.material?.name || "Materi POSM";
     activities.push({
       type: "PLACEMENT",
-      title: `[POSM] ${materialName} di ${outletName}`,
+      title: `${materialName} di ${outletName}`,
       status: p.status,
       date: p.date ? new Date(p.date).toISOString().slice(0, 10) : null,
       detail: p.cost ? `Biaya: ${formatIDR(p.cost)}` : undefined,
@@ -174,7 +174,7 @@ export function generateReportDraft(input: GenerateReportDraftInput): ReportDraf
   for (const m of mous) {
     activities.push({
       type: "MOU",
-      title: `[MOU] Kemitraan ${m.partnerName}${m.outletName ? ` (${m.outletName})` : ""}`,
+      title: `Kemitraan ${m.partnerName}${m.outletName ? ` (${m.outletName})` : ""}`,
       status: m.status,
       date: m.startDate ? new Date(m.startDate).toISOString().slice(0, 10) : null,
       detail: m.compensationValue ? `Kompensasi: ${formatIDR(m.compensationValue)}` : undefined,
@@ -184,7 +184,7 @@ export function generateReportDraft(input: GenerateReportDraftInput): ReportDraf
   for (const c of contents) {
     activities.push({
       type: "CONTENT",
-      title: `[KONTEN] ${c.title} (${c.platform || "Media"})`,
+      title: `${c.title} (${c.platform || "Media"})`,
       status: c.status || "DRAFT",
       date: c.publishDate ? new Date(c.publishDate).toISOString().slice(0, 10) : null,
       detail: c.format ? `Format: ${c.format}` : undefined,
@@ -194,7 +194,7 @@ export function generateReportDraft(input: GenerateReportDraftInput): ReportDraf
   for (const e of events) {
     activities.push({
       type: "EVENT",
-      title: `[EVENT] ${e.name}${e.branchName ? ` (${e.branchName})` : ""}`,
+      title: `${e.name}${e.branchName ? ` (${e.branchName})` : ""}`,
       status: e.status,
       date: e.startDate ? new Date(e.startDate).toISOString().slice(0, 10) : null,
       detail: `Audiens: ${e.attendeeCount || 0} orang${e.budget ? ` | Anggaran: ${formatIDR(e.budget)}` : ""}`,
@@ -205,9 +205,15 @@ export function generateReportDraft(input: GenerateReportDraftInput): ReportDraf
   const achievements: string[] = [];
   if (placementsTotal > 0) {
     const rate = Math.round((placementsDone / placementsTotal) * 100);
-    achievements.push(
-      `Realisasi Materi POSM: Berhasil menyelesaikan pemasangan ${placementsDone} dari ${placementsTotal} titik (${rate}%) dengan total serapan biaya materi ${formatIDR(placementTotalCost)}.`,
-    );
+    if (placementsDone > 0) {
+      achievements.push(
+        `Realisasi Materi POSM: Menyelesaikan pemasangan ${placementsDone} dari ${placementsTotal} titik (${rate}%) dengan serapan anggaran materi ${formatIDR(placementTotalCost)}.`,
+      );
+    } else {
+      achievements.push(
+        `Distribusi POSM: Sebanyak ${placementsTotal} titik penempatan materi dalam persiapan operasional lapangan.`,
+      );
+    }
   }
   if (eventsCompleted > 0) {
     achievements.push(

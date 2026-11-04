@@ -114,3 +114,50 @@ test("generateReportDraft handles empty period data gracefully without NaN", () 
   assert.equal(draft.keyIssues.length, 1);
   assert.ok(draft.actionPlans.length > 0);
 });
+
+test("generateReportDraft eliminates bracket prefixes from activity titles (ADR-0034)", () => {
+  const draft = generateReportDraft({
+    month: "September",
+    year: 2026,
+    placements: [{ id: "p1", status: "DONE", outlet: { name: "Outlet A" }, material: { name: "Neon Box" } }],
+    mous: [{ id: "m1", partnerName: "Mitra A", status: "APPROVED" }],
+    contents: [{ id: "c1", title: "Konten IG", status: "PUBLISHED", platform: "Instagram" }],
+    events: [{ id: "e1", name: "Pameran", status: "COMPLETED" }],
+  });
+
+  for (const act of draft.activities) {
+    assert.strictEqual(
+      /^\[(POSM|MOU|KONTEN|EVENT)\]/.test(act.title),
+      false,
+      `Expected activity title "${act.title}" not to start with bracket prefix`
+    );
+  }
+  assert.equal(draft.activities[0].title, "Neon Box di Outlet A");
+  assert.equal(draft.activities[1].title, "Kemitraan Mitra A");
+  assert.equal(draft.activities[2].title, "Konten IG (Instagram)");
+  assert.equal(draft.activities[3].title, "Pameran");
+});
+
+test("generateReportDraft uses dignified phrasing when zero placements completed (ADR-0034)", () => {
+  const draft = generateReportDraft({
+    month: "September",
+    year: 2026,
+    placements: [{ id: "p1", status: "NOT_STARTED", outlet: { name: "Outlet A" }, material: { name: "Neon Box" } }],
+    mous: [],
+    contents: [],
+    events: [],
+  });
+
+  const posmAchievement = draft.achievements.find((a) => a.toLowerCase().includes("posm"));
+  assert.ok(posmAchievement, "Expected POSM narrative to be present");
+  assert.strictEqual(
+    posmAchievement.includes("Berhasil menyelesaikan pemasangan 0"),
+    false,
+    "Expected narrative not to contain robotic failure phrase 'Berhasil menyelesaikan pemasangan 0'"
+  );
+  assert.ok(
+    posmAchievement.includes("persiapan operasional"),
+    "Expected narrative to describe operational preparation"
+  );
+});
+
