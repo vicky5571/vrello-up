@@ -8,14 +8,27 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Sub-Komponen ContentMediaSection pada Modal Schedule New Post (ADR-0028) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Integrasi EventMediaSection ke Modal Buat Event Baru (EventCreateModal) — ADR-0027  
+**Active Feature:** Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029) — **PLANNING & HANDOVER COMPLETE**  
+**Previous Feature:** Sub-Komponen ContentMediaSection pada Modal Schedule New Post (ADR-0028)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Sub-Komponen ContentMediaSection pada Modal Schedule New Post (ADR-0028 — Implementation Complete):**
+1. **Eliminasi Total Google Drive & Standarisasi Dokumen MOU ke Internal Storage (ADR-0029 — Planning & Handover):**
+   - **Checkpoints Lolos Persetujuan**:
+     - Checkpoint 1 (Decision Problem & Candidate Options): User menyetujui **Opsi A** (standarisasi penuh ke Supabase Storage, restrukturisasi form upload, dan eliminasi tautan Google Drive).
+     - Checkpoint 2 (Scope & Asumsi Spesifikasi): User menegaskan *tidak perlu memikirkan backward compatibility*, seluruh seeder diperbarui dengan dokumen internal.
+     - Checkpoint 3 (Phasing Strategy): User menyetujui 3 fase implementasi.
+   - **Dokumentasi Terbit (File-First, Content-Second)**:
+     - `docs/adr/0029-eliminate-google-drive-from-mous.md`: Keputusan arsitektur eliminasi Google Drive dan standarisasi dokumen MOU.
+     - `docs/superpowers/specs/2026-11-05-eliminate-google-drive-from-mous-design.md`: Spesifikasi detail pure logic parser, Active Document Card di `MouFormModal`, pembersihan viewer modal, dan perbaruan data seed.
+     - `docs/superpowers/plans/2026-11-05-eliminate-google-drive-from-mous.md`: Rencana eksekusi 3 fase dengan file manifest, risk mitigation, dan invariant checklist.
+     - `docs/handover-eliminate-google-drive-from-mous.md`: Handover eksekusi dengan snippet kode lengkap, instruksi perubahan, dan acceptance criteria.
+   - **Verification Gates**:
+     - `npm run drift:check`: ✅ No drift detected (56 spec-plan pairs).
+
+2. **Sub-Komponen ContentMediaSection pada Modal Schedule New Post (ADR-0028 — Implementation Complete):**
    - **`ContentMediaSection.tsx` Creation:**
      - Created standalone atomic component `src/components/views/ContentPlannerView/ContentMediaSection.tsx` (~313 LOC).
      - Integrated `useDirectDriveUpload("content")` with real-time streaming progress bar and cancel button.
