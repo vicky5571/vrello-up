@@ -43,7 +43,7 @@ test("API: POST /api/marcom/inventory validates input and enforces unique code",
 
 test("API: Full Borrow & Return Lifecycle", async () => {
   // 1. Create a test item
-  const testCode = `TEST-${Date.now().toString().slice(-4)}`;
+  const testCode = `TEST-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
   const createItemReq = new Request("http://localhost:3000/api/marcom/inventory", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

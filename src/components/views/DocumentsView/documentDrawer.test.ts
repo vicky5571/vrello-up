@@ -159,6 +159,11 @@ describe("Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)"
     const viewPath = path.join(docsDir, "DocumentsView.tsx");
     const viewContent = fs.readFileSync(viewPath, "utf-8");
     assert.ok(!viewContent.includes("Google Drive / Cloud"), "DocumentsView table must not contain 'Google Drive / Cloud'");
+
+    const drawerPath = path.join(docsDir, "DocumentDrawer.tsx");
+    const drawerContent = fs.readFileSync(drawerPath, "utf-8");
+    assert.ok(!drawerContent.includes("Internal Server Storage"), "Drawer must not contain 'Internal Server Storage'");
+    assert.ok(!drawerContent.includes("Lokasi:"), "Drawer must not contain 'Lokasi:'");
     assert.ok(!viewContent.includes("Ragam Kategori"), "DocumentsView must not contain redundant 'Ragam Kategori' card");
     assert.ok(!viewContent.includes("Penyimpanan Cloud"), "DocumentsView must not contain redundant 'Penyimpanan Cloud' card");
   });

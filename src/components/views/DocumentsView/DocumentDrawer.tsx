@@ -17,7 +17,6 @@ import {
   User as UserIcon,
   Calendar,
   Cloud,
-  HardDrive,
   Download,
   Upload,
   RefreshCw,
@@ -642,21 +641,6 @@ export function DocumentDrawer({
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 resize-none"
                 />
-              </div>
-
-              {/* Storage Info Badge */}
-              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-white dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 text-xs">
-                {isCloud ? (
-                  <Cloud className="w-4 h-4 text-blue-500 shrink-0" />
-                ) : (
-                  <HardDrive className="w-4 h-4 text-emerald-500 shrink-0" />
-                )}
-                <span className="text-slate-600 dark:text-slate-300">
-                  Lokasi:{" "}
-                  <strong>
-                    {isCloud ? "Cloud / Google Drive" : "Internal Server Storage"}
-                  </strong>
-                </span>
               </div>
             </div>
           </div>

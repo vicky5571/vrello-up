@@ -31,6 +31,7 @@
      - Updated card copy button to wrap in `<a>` tag with `href={buildShareableDocumentUrl(doc.id)}`, supporting middle-click / new tab opening and clipboard copy with origin.
      - Updated drawer header copy button to copy canonical shareable URL via `buildShareableDocumentUrl`.
      - Preserved raw file path copy in drawer file replacement sub-bar (`handleCopyRawFilePath`).
+     - Eliminated obsolete "Lokasi: Cloud / Google Drive" & "Internal Server Storage" badge from the bottom of metadata container in `DocumentDrawer.tsx`.
    - **Unit Tests (`documentDrawer.test.ts`):**
      - Added test assertion verifying wiring of `buildShareableDocumentUrl` and `docId` URL handling across `DocumentsView.tsx` and `DocumentCardsView.tsx` (10 passed, 0 failures).
    - **Verification Gates Passed:**
