@@ -122,7 +122,6 @@ export function ProfileView() {
   return (
     <div className="flex flex-col h-full bg-[#FAFBFC] dark:bg-[#121316] overflow-y-auto">
       <ProfileHeader
-        userName={profile?.name}
         isGoogleAccount={profile?.isGoogleAccount}
         isLoading={isLoading}
         onRefresh={fetchProfileData}

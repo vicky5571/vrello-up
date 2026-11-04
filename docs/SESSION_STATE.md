@@ -15,7 +15,12 @@
 
 ## What Was Completed This Session
 
-1. **Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs (ADR-0030 — Implementation Complete):**
+1. **Pembersihan Badge Redundan di Header Halaman Profil:**
+   - Menghapus badge/pill `{userName}` di samping judul `"Profil & Keamanan Akun"` pada `src/components/views/ProfileView/ProfileHeader.tsx`.
+   - Membersihkan prop `userName` yang tidak lagi dipakai dari `ProfileHeaderProps` dan pemanggilnya di `ProfileView.tsx`.
+   - Verifikasi: `npm run drift:check`, `npm run build:check`, `npm test` seluruhnya lulus 100%.
+
+2. **Sticky Right Columns untuk Kolom Dokumen MOU dan Aksi pada Tabel MOUs (ADR-0030 — Implementation Complete):**
    - **`MarcomTableShell.tsx` Enhancement:**
      - Exported declarative interface `MarcomColumnMeta` (`align?`, `sticky?`, `stickyOffset?`, `stickyBorder?`).
      - Rendered sticky right header cells with `position: sticky`, `right: ...px`, `z-20`, and solid background `bg-slate-50 dark:bg-[#18191B]`.

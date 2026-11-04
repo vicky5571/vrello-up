@@ -5,14 +5,12 @@ import { User, RefreshCw, ShieldCheck, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface ProfileHeaderProps {
-  userName?: string;
   isGoogleAccount?: boolean;
   isLoading: boolean;
   onRefresh: () => void;
 }
 
 export function ProfileHeader({
-  userName,
   isGoogleAccount = false,
   isLoading,
   onRefresh,
@@ -26,11 +24,6 @@ export function ProfileHeader({
               <User className="w-4 h-4" />
             </div>
             <span>Profil & Keamanan Akun</span>
-            {userName && (
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                {userName}
-              </span>
-            )}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Kelola foto profil personal, nama tampilan, penugasan cabang, dan kredensial keamanan akun Anda.

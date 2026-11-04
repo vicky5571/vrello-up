@@ -6,6 +6,11 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `style(profile)`: Remove redundant user name badge from ProfileHeader
+  - Removed `{userName}` pill badge next to "Profil & Keamanan Akun" title in `ProfileHeader.tsx`
+  - Cleaned unused `userName` prop from `ProfileHeaderProps` and `ProfileView.tsx`
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `feat(mous)`: Sticky right columns for MOU document and actions
   - Added declarative `MarcomColumnMeta` support in `MarcomTableShell.tsx` with sticky right positioning, solid backgrounds, right padding, and shadow borders
   - Configured sticky right with 130px offset and left border on MOU document column (size: 165px)
