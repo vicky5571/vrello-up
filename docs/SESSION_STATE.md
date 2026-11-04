@@ -8,14 +8,26 @@
 
 **Date:** 2026-11-04  
 **Active Branch:** `vicky`  
-**Active Feature:** Field Event Edit Drawer & Creation Modal Separation (ADR-0022) — **COMPLETED & VERIFIED**  
-**Previous Feature:** Field Event Media Attachments via Google Drive (ADR-0021)  
+**Active Feature:** Field Event Thumbnail Compression & Cover Preview (ADR-0023) — **PLANNING COMPLETE (Execution Ready)**  
+**Previous Feature:** Field Event Edit Drawer & Creation Modal Separation (ADR-0022)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Field Event Edit Drawer and Modal Separation Implementation (ADR-0022, Spec & Plan `2026-11-04-field-event-edit-drawer`):**
+1. **Field Event Thumbnail Compression & Cover Preview Planning (ADR-0023, Spec & Plan `2026-11-04-field-event-thumbnails`):**
+   - **Mode:** Strict Planning-Only session ("don't code in this session").
+   - **ADR-0023 (`docs/adr/0023-field-event-thumbnail-generation-cover-preview.md`):**
+     - Addressed media presentation disparity between Content Planner (16:9 banner, WebP thumbnail CDN, cover toggle) and Field Events.
+     - Decided on Option A: Re-use unified `/api/marcom/drive/upload` endpoint with optional `context: "events"`, explicitly avoid flaky Google Drive thumbnail embeds, and serve edge-cached WebP thumbnails for images with stylized gradient cards for videos.
+   - **Specification (`docs/superpowers/specs/2026-11-04-field-event-thumbnails-design.md`):**
+     - Detailed data flow: Sharp WebP compression (800px width, q75), Supabase Storage `content-thumbnails`, 16:9 cover preview banner with play overlay in `EventDrawer`, 36×36 square thumbnails in attachment rows, one-click "Cover" selector, and card thumbnail rendering in `EventCardsView`.
+   - **Implementation Plan (`docs/superpowers/plans/2026-11-04-field-event-thumbnails.md`):**
+     - 5 atomic execution phases with exact code snippets, line mappings, checklists, and verification gates.
+   - **Handover (`docs/handover-field-event-thumbnails.md`):**
+     - Execution-ready guide with exact code modifications and numbered order for the next session.
+
+2. **Field Event Edit Drawer and Modal Separation Implementation (ADR-0022, Spec & Plan `2026-11-04-field-event-edit-drawer`):**
    - **Dedicated Creation Modal (`src/components/views/EventsView/EventCreateModal.tsx`):**
      - Centered modal dialog matching Content Planner's fast kickoff paradigm.
      - Handles event creation form fields: activation name, type (Roadshow, Launch, Booth, Exhibition, Workshop, Community), branch, location, associated outlet, schedule dates, PIC assignment, budget, target attendees, operational notes, and subtask checklist template.
