@@ -1,7 +1,7 @@
 # Spec — Field Event Thumbnail Compression & Cover Preview in Edit Drawer
 
 **ADR:** `docs/adr/0023-field-event-thumbnail-generation-cover-preview.md`  
-**Status:** Proposed  
+**Status:** Implemented  
 **Date:** 2026-11-04  
 **Author:** AI Pair Programmer & Lead Systems Architect  
 

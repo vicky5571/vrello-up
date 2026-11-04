@@ -7,7 +7,10 @@ export interface UseDirectDriveUploadReturn {
   isUploading: boolean;
   progress: number;
   error: string | null;
-  uploadFile: (file: File) => Promise<TaskAttachment | null>;
+  uploadFile: (
+    file: File,
+    options?: { context?: "events" | "content" }
+  ) => Promise<TaskAttachment | null>;
   cancelUpload: () => void;
   reset: () => void;
 }
@@ -16,7 +19,9 @@ export interface UseDirectDriveUploadReturn {
  * Client hook for uploading files to Google Drive via server-side streaming proxy.
  * Eliminates browser-to-Google CORS issues and requires zero user Google login.
  */
-export function useDirectDriveUpload(): UseDirectDriveUploadReturn {
+export function useDirectDriveUpload(
+  defaultContext: "events" | "content" = "content"
+): UseDirectDriveUploadReturn {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +45,10 @@ export function useDirectDriveUpload(): UseDirectDriveUploadReturn {
   }, []);
 
   const uploadFile = useCallback(
-    async (file: File): Promise<TaskAttachment | null> => {
+    async (
+      file: File,
+      options?: { context?: "events" | "content" }
+    ): Promise<TaskAttachment | null> => {
       setIsUploading(true);
       setProgress(20);
       setError(null);
@@ -55,6 +63,10 @@ export function useDirectDriveUpload(): UseDirectDriveUploadReturn {
         formData.append("name", file.name);
         formData.append("mimeType", file.type || "application/octet-stream");
         formData.append("sizeBytes", String(file.size));
+        const effectiveContext = options?.context || defaultContext;
+        if (effectiveContext) {
+          formData.append("context", effectiveContext);
+        }
 
         setProgress(40);
 

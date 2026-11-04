@@ -19,7 +19,8 @@ async function generateAndUploadThumbnail(
   fileBuffer: Buffer,
   mimeType: string,
   fileId: string,
-  userId: string
+  userId: string,
+  context: "events" | "content" = "content"
 ): Promise<string | undefined> {
   if (!COMPRESSIBLE_IMAGE_TYPES.has(mimeType.toLowerCase())) {
     return undefined;
@@ -38,7 +39,7 @@ async function generateAndUploadThumbnail(
       .webp({ quality: 75 })
       .toBuffer();
 
-    const storagePath = `thumbnails/${userId}/${fileId}.webp`;
+    const storagePath = `thumbnails/${context}/${userId}/${fileId}.webp`;
     const uploadUrl = `${supabaseUrl}/storage/v1/object/content-thumbnails/${storagePath}`;
 
     const storageRes = await fetch(uploadUrl, {
@@ -189,11 +190,14 @@ export async function POST(request: Request) {
     }
 
     const userId = session.user.id;
+    const rawContext = formData.get("context");
+    const context = rawContext === "events" ? "events" : "content";
     const thumbnailUrl = await generateAndUploadThumbnail(
       fileBuffer,
       mimeType,
       fileId,
-      userId
+      userId,
+      context
     );
 
     return NextResponse.json({

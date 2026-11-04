@@ -1,6 +1,6 @@
 # Plan — Field Event Thumbnail Compression & Cover Preview in Edit Drawer
 
-**Status:** Proposed  
+**Status:** Completed  
 **Date:** 2026-11-04  
 **ADR:** `docs/adr/0023-field-event-thumbnail-generation-cover-preview.md`  
 **Spec:** `docs/superpowers/specs/2026-11-04-field-event-thumbnails-design.md`  
@@ -56,9 +56,9 @@ async function generateAndUploadThumbnail(
 ```
 
 **Checklist:**
-- [ ] Add `context` parameter extraction in `src/app/api/marcom/drive/upload/route.ts`
-- [ ] Update `generateAndUploadThumbnail` to use `thumbnails/${context}/${userId}/${fileId}.webp`
-- [ ] Run `npm run build:check`
+- [x] Add `context` parameter extraction in `src/app/api/marcom/drive/upload/route.ts`
+- [x] Update `generateAndUploadThumbnail` to use `thumbnails/${context}/${userId}/${fileId}.webp`
+- [x] Run `npm run build:check`
 
 ---
 
@@ -129,9 +129,9 @@ const coverThumbnailUrl = coverAttachment?.thumbnailUrl;
 ```
 
 **Checklist:**
-- [ ] Embed 16:9 banner in `EventDrawer.tsx`
-- [ ] Connect click action to open full-screen `EventFootageModal`
-- [ ] Enforce zero Google Drive thumbnail embed URLs
+- [x] Embed 16:9 banner in `EventDrawer.tsx`
+- [x] Connect click action to open full-screen `EventFootageModal`
+- [x] Enforce zero Google Drive thumbnail embed URLs
 
 ---
 
@@ -217,10 +217,10 @@ const handleRemoveAttachment = (id: string, url: string) => {
 ```
 
 **Checklist:**
-- [ ] Add 36×36 square thumbnail to attachment rows
-- [ ] Add "Cover" badge/button on rows
-- [ ] Implement `handleRemoveAttachment` with cover fallback
-- [ ] Run `npm run build:check`
+- [x] Add 36×36 square thumbnail to attachment rows
+- [x] Add "Cover" badge/button on rows
+- [x] Implement `handleRemoveAttachment` with cover fallback
+- [x] Run `npm run build:check`
 
 ---
 
@@ -263,9 +263,9 @@ const isVideo =
 ```
 
 **Checklist:**
-- [ ] Update `EventCardsView.tsx` card media rendering
-- [ ] Eliminate Google Drive thumbnail URLs
-- [ ] Run `npm run build:check`
+- [x] Update `EventCardsView.tsx` card media rendering
+- [x] Eliminate Google Drive thumbnail URLs
+- [x] Run `npm run build:check`
 
 ---
 
@@ -287,9 +287,9 @@ npm test                  # Full test suite, 0 failures required
 Update `docs/SESSION_STATE.md`.
 
 **Checklist:**
-- [ ] Create `src/components/views/EventsView/eventThumbnails.test.ts`
-- [ ] Run `node --test src/components/views/EventsView/eventThumbnails.test.ts`
-- [ ] `npm run drift:check` passes with `✅ No drift detected`
-- [ ] `npm run build:check` passes with `0 errors`
-- [ ] `npm test` passes with `0 failures`
-- [ ] Update `docs/SESSION_STATE.md`
+- [x] Create `src/components/views/EventsView/eventThumbnails.test.ts`
+- [x] Run `node --test src/components/views/EventsView/eventThumbnails.test.ts`
+- [x] `npm run drift:check` passes with `✅ No drift detected`
+- [x] `npm run build:check` passes with `0 errors`
+- [x] `npm test` passes with `0 failures`
+- [x] Update `docs/SESSION_STATE.md`

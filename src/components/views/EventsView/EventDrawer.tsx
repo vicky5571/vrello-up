@@ -86,6 +86,7 @@ export function EventDrawer({
   const [eventTargetAttendee, setEventTargetAttendee] = useState<string>("100");
   const [eventAttendeeCount, setEventAttendeeCount] = useState<string>("0");
   const [eventNotes, setEventNotes] = useState("");
+  const [mediaUrl, setMediaUrl] = useState("");
   const [mediaAttachments, setMediaAttachments] = useState<TaskAttachment[]>([]);
   const [eventSubtasks, setEventSubtasks] = useState<
     { id: string; title: string; completed?: boolean }[]
@@ -182,6 +183,7 @@ export function EventDrawer({
               : []),
           ];
     setMediaAttachments(existingAttachments);
+    setMediaUrl(event.mediaUrl || existingAttachments[0]?.url || "");
 
     const matched = findMemberForPic(members, event.picName);
     setPicMemberId(matched?.id || "custom");
@@ -231,6 +233,7 @@ export function EventDrawer({
     const parsedBudget = Math.max(0, parseInt(eventBudget, 10) || 0);
     const parsedTargetAttendee = Math.max(0, parseInt(eventTargetAttendee, 10) || 0);
     const parsedAttendeeCount = Math.max(0, parseInt(eventAttendeeCount, 10) || 0);
+    const effectiveMediaUrl = mediaUrl.trim() || mediaAttachments[0]?.url || "";
 
     setIsSaving(true);
     try {
@@ -248,6 +251,7 @@ export function EventDrawer({
         targetAttendee: parsedTargetAttendee,
         attendeeCount: parsedAttendeeCount,
         notes: eventNotes.trim(),
+        mediaUrl: effectiveMediaUrl,
         mediaAttachments,
         checklist: eventSubtasks,
       };
@@ -279,6 +283,7 @@ export function EventDrawer({
         targetAttendee: parsedTargetAttendee,
         attendeeCount: parsedAttendeeCount,
         notes: eventNotes,
+        mediaUrl: effectiveMediaUrl,
         mediaAttachments,
         outletId: eventOutletId || null,
         checklist: eventSubtasks,
@@ -713,6 +718,9 @@ export function EventDrawer({
           <EventMediaSection
             mediaAttachments={mediaAttachments}
             setMediaAttachments={setMediaAttachments}
+            mediaUrl={mediaUrl}
+            setMediaUrl={setMediaUrl}
+            eventName={eventName}
             onOpenPreview={
               onOpenFootageModal
                 ? (idx) => {
@@ -722,6 +730,7 @@ export function EventDrawer({
                         name: eventName || event.name,
                         eventType,
                         status: eventStatus,
+                        mediaUrl: mediaUrl.trim() || mediaAttachments[0]?.url || "",
                         mediaAttachments,
                       },
                       idx

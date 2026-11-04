@@ -72,7 +72,12 @@ export function EventCardsView({
         const folderAttachment = event.mediaAttachments?.find((a) => a.isSharedFolder);
         const folderUrl = folderAttachment?.url || event.mediaUrl;
         const nonFolderAttachments = event.mediaAttachments?.filter((a) => !a.isSharedFolder) || [];
-        const primaryAttachment = nonFolderAttachments[0];
+        const primaryAttachment =
+          event.mediaAttachments?.find((a) => a.url === event.mediaUrl) ||
+          nonFolderAttachments[0] ||
+          event.mediaAttachments?.[0];
+
+        const coverThumbnailUrl = primaryAttachment?.thumbnailUrl;
 
         const primaryClip = primaryAttachment
           ? {
@@ -250,17 +255,30 @@ export function EventCardsView({
                     className="group/player relative rounded-xl overflow-hidden aspect-video bg-slate-950 border border-slate-200/80 dark:border-slate-800 cursor-pointer shadow-xs hover:border-blue-500/50 transition-all"
                     title="Click to watch documentation video"
                   >
-                    {isVideo ? (
-                      <video
-                        src={clipUrl}
-                        preload="metadata"
-                        className="w-full h-full object-cover opacity-80 group-hover/player:opacity-100 transition-opacity"
+                    {coverThumbnailUrl ? (
+                      <AppImage
+                        src={coverThumbnailUrl}
+                        alt={event.name}
+                        fill
+                        sizes="card"
+                        className="w-full h-full object-cover group-hover/player:scale-105 transition-transform duration-300"
                       />
+                    ) : isVideo ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-purple-950/40 to-slate-900 p-3 text-center">
+                        <Film className="w-8 h-8 text-purple-400 mb-1 opacity-80 group-hover/player:scale-110 transition-transform" />
+                        <span className="text-xs text-slate-200 font-medium truncate max-w-[90%]">
+                          {primaryClip?.title || event.name}
+                        </span>
+                        <span className="text-[10px] text-purple-400/90 mt-0.5 font-medium">
+                          Video Dokumentasi Event
+                        </span>
+                      </div>
                     ) : isImage ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
+                      <AppImage
                         src={clipUrl}
-                        alt={primaryClip?.title || "Field Documentation"}
+                        alt={primaryClip?.title || event.name}
+                        fill
+                        sizes="card"
                         className="w-full h-full object-cover opacity-90 group-hover/player:opacity-100 transition-opacity"
                       />
                     ) : (

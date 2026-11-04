@@ -6,6 +6,18 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-04]
 
+- `feat(events)`: Thumbnail compression & cover preview in EventDrawer
+  - Added optional `context: "events"` parameter in `/api/marcom/drive/upload` to store thumbnails in `thumbnails/events/...`
+  - Integrated 16:9 aspect-video cover preview showcase banner with play overlay
+  - Added 36x36 square WebP thumbnails, 6-dot drag reordering, and one-click "Cover" selector
+  - Replaced unoptimized `<img>` and raw `<video>` in `EventCardsView` with edge-cached WebP thumbnails and video poster cards
+  - Enforced zero Google Drive thumbnail embeds across Field Events UI
+  - Added unit test suite `src/components/views/EventsView/eventThumbnails.test.ts` (5 passing tests)
+  - Gates: `npm test` 763 pass / 0 fail; `npm run build:check` 0 errors; `npm run drift:check` clean
+  Spec: docs/superpowers/specs/2026-11-04-field-event-thumbnails-design.md
+  Plan: docs/superpowers/plans/2026-11-04-field-event-thumbnails.md
+  Refs: docs/adr/0023-field-event-thumbnail-generation-cover-preview.md
+
 - `feat(events)`: Separate Field Event edit drawer and creation modal
   - Created `EventCreateModal.tsx` centered dialog for fast creation flow
   - Created `EventDrawer.tsx` 560px slide-over right panel for deep inspection and editing

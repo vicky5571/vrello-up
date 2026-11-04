@@ -8,14 +8,38 @@
 
 **Date:** 2026-11-04  
 **Active Branch:** `vicky`  
-**Active Feature:** Field Event Thumbnail Compression & Cover Preview (ADR-0023) — **PLANNING COMPLETE (Execution Ready)**  
+**Active Feature:** Field Event Thumbnail Compression & Cover Preview (ADR-0023) — **COMPLETED & VERIFIED**  
 **Previous Feature:** Field Event Edit Drawer & Creation Modal Separation (ADR-0022)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Field Event Thumbnail Compression & Cover Preview Planning (ADR-0023, Spec & Plan `2026-11-04-field-event-thumbnails`):**
+1. **Field Event Thumbnail Compression & Cover Preview Implementation (ADR-0023, Spec & Plan `2026-11-04-field-event-thumbnails`):**
+   - **Upload Route Adaptation (`src/app/api/marcom/drive/upload/route.ts`):**
+     - Added optional `context: "events" | "content"` parameter extraction from multipart `formData`.
+     - Updated `generateAndUploadThumbnail` to partition WebP thumbnails cleanly into Supabase bucket path `thumbnails/${context}/${userId}/${fileId}.webp`.
+   - **Direct Drive Upload Hook (`src/lib/marcom/useDirectDriveUpload.ts`):**
+     - Updated hook to support `defaultContext: "events" | "content"` and forward `context` in multipart form payload.
+   - **Cover Showcase & Row Thumbnails (`src/components/views/EventsView/EventMediaSection.tsx` & `EventDrawer.tsx`):**
+     - Integrated 16:9 aspect-video cover preview banner with ambient hover glow and play overlay (`<Play />`) opening full-screen lightbox.
+     - Enforced zero Google Drive thumbnail embed URLs: images render via `<AppImage src={coverThumbnailUrl}>`, and videos render a stylized gradient card with `<Video />` icon.
+     - Added 36×36 square thumbnail (`<AppImage src={att.thumbnailUrl}>` for images) in each attachment row.
+     - Added 6-dot drag reordering handle (`<GripVertical />`) for intuitive arrangement.
+     - Implemented single-click "Cover" selector badge/button to designate the active cover without array mutation.
+     - Implemented safe removal fallback: reassigns cover to the next available attachment if active cover is deleted.
+     - Synchronized `mediaUrl` state and persistence across `EventDrawer.tsx`.
+   - **Card Thumbnail Optimization (`src/components/views/EventsView/EventCardsView.tsx`):**
+     - Resolved `coverThumbnailUrl` prioritizing `mediaUrl` selection.
+     - Replaced unoptimized `<img>` and raw `<video>` tags with edge-cached `<AppImage src={coverThumbnailUrl}>` and stylized video poster cards.
+   - **Unit Tests Added (`src/components/views/EventsView/eventThumbnails.test.ts`):**
+     - 5 targeted tests covering context parameter handling, 16:9 banner resolution, 36×36 row thumbnails, cover fallback logic, and elimination of raw Google Drive thumbnail URLs.
+   - **Verification Gates Passed:**
+     - `npm run drift:check`: ✅ No drift detected. All 50 specs paired and invariants pass.
+     - `npm run build:check`: ✅ TypeScript compiled with 0 errors.
+     - `npm test`: ✅ 763 passed, 0 failed across 136 suites.
+
+2. **Field Event Thumbnail Compression & Cover Preview Planning (ADR-0023):**
    - **Mode:** Strict Planning-Only session ("don't code in this session").
    - **ADR-0023 (`docs/adr/0023-field-event-thumbnail-generation-cover-preview.md`):**
      - Addressed media presentation disparity between Content Planner (16:9 banner, WebP thumbnail CDN, cover toggle) and Field Events.
