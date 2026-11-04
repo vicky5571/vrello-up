@@ -8,12 +8,23 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** TopNav Notification Feed Lifecycle and Proactive Window Focus Synchronization (ADR-0032) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Migrate Backup & Data to More Apps Menu and Eliminate Settings Modal (ADR-0031)  
+**Active Feature:** Integrate Export Center into More Apps Menu (ADR-0033) — **PLANNING COMPLETE**  
+**Previous Feature:** TopNav Notification Feed Lifecycle and Proactive Window Focus Synchronization (ADR-0032)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Perencanaan Integrasi Export Center ke Menu More Apps (ADR-0033 — Planning Complete):**
+   - **Keputusan Arsitektur (ADR-0033):**
+     - Memilih Opsi 2: Menempatkan tombol aksi *Export Center* di section **Main Tools** (`MoreAppsMenu.tsx`) di bawah Brain² AI Assistant.
+     - Mempertahankan tombol *Export Center* yang ada di `ReportsHeader.tsx` (sesuai arahan eksplisit pengguna agar tidak menghapusnya dari halaman Reports).
+   - **Spesifikasi & Rencana Implementasi:**
+     - Membuat dokumen spec `docs/superpowers/specs/2026-11-05-integrate-export-center-into-more-apps-menu-design.md`.
+     - Membuat dokumen plan `docs/superpowers/plans/2026-11-05-integrate-export-center-into-more-apps-menu.md` (60/60 pasangan spec-plan sinkron).
+   - **Handover Dokumen:**
+     - Membuat panduan eksekusi `docs/handover-integrate-export-center-into-more-apps-menu.md` yang memuat diff kode persis, file manifest, daftar "Do Not Touch", urutan eksekusi bernomor, dan kriteria penerimaan.
+
 
 1. **TopNav Notification Feed Lifecycle & Focus Sync (ADR-0032 — Implementation Complete):**
    - **`useNotificationFeed.ts` Creation:**
@@ -1282,10 +1293,10 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (all 52 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (all 60 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ 775 passed, 0 failed across 138 suites
-- `npm run test:smoke` → ✅ 104 passed, 0 failed
+- `npm test` → ✅ Full test suite passed
+- `npm run test:smoke` → ✅ 110 passed, 0 failed
 
 ---
 
@@ -1298,14 +1309,9 @@
 ## Next Step for Following Session
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. Execute Implementation Plan (`docs/superpowers/plans/2026-11-05-eliminate-document-status.md`) following `docs/handover-eliminate-document-status.md`:
-   - Step 1: Remove `status` from `model DocumentItem` in `prisma/schema.prisma`.
-   - Step 2: Run `npx prisma migrate dev --name drop_document_item_status`.
-   - Step 3: Remove `status` fields from `prisma/seed.ts` and run `npx prisma db seed`.
-   - Step 4: Remove `DocumentStatus` from `src/types/index.ts`.
-   - Step 5: Delete `documentTaxonomy.ts` & `documentTaxonomy.test.ts`.
-   - Step 6: Clean `/api/marcom/documents` routes.
-   - Step 7: Clean pure helpers in `documentWorkflow.ts`.
-   - Step 8: Clean UI files (`DocumentCreateModal`, `DocumentDrawer`, `DocumentCardsView`, `DocumentsView`).
-   - Step 9: Update unit tests in `documentDrawer.test.ts` & `documentWorkflow.test.ts`.
-   - Step 10: Run full verification suite (`npm run drift:check`, `npm run build:check`, `npm test`).
+2. Execute Implementation Plan (`docs/superpowers/plans/2026-11-05-integrate-export-center-into-more-apps-menu.md`) following `docs/handover-integrate-export-center-into-more-apps-menu.md`:
+   - Step 1: Update unit tests in `src/components/modals/MoreAppsMenu.test.ts`.
+   - Step 2: Update `src/components/modals/MoreAppsMenu.tsx` (import `FileSpreadsheet`, ingest `setExportCenterOpen`, render Export Center button in Main Tools).
+   - Step 3: Verify zero modifications made to `ReportsHeader.tsx` or `ReportsView.tsx`.
+   - Step 4: Run full verification suite (`npm run drift:check`, `npm run build:check`, `npm test`).
+   - Step 5: Update docs status to IMPLEMENTED and commit.
