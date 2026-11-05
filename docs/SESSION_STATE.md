@@ -1622,9 +1622,7 @@
 ## Next Step for Following Session
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. Execute implementation of ADR-0049 using `docs/handover-filter-approved-outlets-in-operational-forms.md`.
-3. Alternative pending implementation handovers:
-   - `docs/handover-borrow-request-modal-comprehensive-polish.md` (ADR-0042)
-   - `docs/handover-centralize-outlet-approval-to-super-admin.md` (ADR-0046)
+2. Discuss and plan the next manual attention item from human evaluation list (e.g. Return Inspection & Damaged Equipment Workflow, or MoU PDF Document Attachment).
+3. If desired, adopt `CustomDropdown` in `src/components/views/ContentPlannerView/ContentDrawer.tsx` (edit post drawer) for Platform and Format to complete Content Planner symmetry.
 
 
