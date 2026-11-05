@@ -8,14 +8,27 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Revoke Outlet Creation Access from Staff Role (ADR-0045) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Auth Page Transition Loading Feedback via React useTransition (ADR-0044)  
+**Active Feature:** Centralize Outlet Approval to Super Admin Role (ADR-0046) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Previous Feature:** Revoke Outlet Creation Access from Staff Role (ADR-0045)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Pencabutan Izin Tambah Outlet dari Role Staff (ADR-0045 — Implementation Complete):**
+1. **Sentralisasi Wewenang Persetujuan Outlet ke Super Admin (ADR-0046 — Planning Complete):**
+   - **Analisis & Tata Kelola Master Data**:
+     - Mendiagnosis kebutuhan bisnis agar persetujuan outlet baru disentralisasi sepenuhnya di tangan Super Admin (`admin`).
+     - Menghapus risiko *self-approval* di mana Area Supervisor menyetujui outlet yang diajukan oleh dirinya sendiri.
+     - Mengunci `APPROVE_OUTLET` di `hasScopedPermission` sebagai izin eksklusif Super Admin (fail-closed untuk semua role lain).
+   - **Pembuatan Dokumen Perencanaan (Checkpoints 1–3 Terverifikasi):**
+     - ADR: `docs/adr/0046-centralize-outlet-approval-to-super-admin.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-05-centralize-outlet-approval-to-super-admin-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-05-centralize-outlet-approval-to-super-admin.md` (APPROVED).
+     - Handover: `docs/handover-centralize-outlet-approval-to-super-admin.md` (READY FOR EXECUTION).
+   - **Verifikasi Invarian & Drift:**
+     - `npm run drift:check` ✅ (73/73 spec-plan pairs valid, 0 drift).
+
+2. **Pencabutan Izin Tambah Outlet dari Role Staff (ADR-0045 — Implementation Complete):**
    - **Pembaruan Guard RBAC Terpusat (`src/lib/marcom/guards.ts`):**
      - Menghapus izin `"SUBMIT_DRAFT_OUTLET"` dari daftar perizinan `rolePermissions.staff`.
      - Memastikan endpoint backend `POST /api/marcom/outlets/draft` dan upload foto outlet `POST /api/marcom/uploads?kind=outlets` menolak eksekusi oleh staff dengan respons HTTP 403 Forbidden.
