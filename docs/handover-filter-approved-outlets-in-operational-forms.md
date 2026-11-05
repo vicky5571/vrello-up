@@ -265,14 +265,14 @@ test("Operational forms outlet filtering structural invariants", async (t) => {
 
 ## 6. Acceptance Criteria Checklist
 
-- [ ] `OutletSearchCombobox` queries `/api/marcom/outlets?q=...&status=APPROVED` and omits draft/pending/rejected stores.
-- [ ] `EventCreateModal` and `EventDrawer` load only approved stores in their outlet pickers.
-- [ ] `ContentPostModal` loads only approved stores.
-- [ ] `MouFormModal` in `MousView` receives strictly approved stores.
-- [ ] Direct `POST /api/marcom/placements` with a `PENDING_APPROVAL` or `REJECTED` outlet returns `HTTP 400 Bad Request`.
-- [ ] `OutletsView` catalog retains full multi-status visibility for administrative tasks.
-- [ ] `npm run drift:check` passes with 0 drift.
-- [ ] `npm test` passes with 0 failures across all 152 test suites.
-- [ ] `npm run build:check` compiles with 0 TypeScript errors.
+- [x] `OutletSearchCombobox` queries `/api/marcom/outlets?q=...&status=APPROVED` and omits draft/pending/rejected stores.
+- [x] `EventCreateModal` and `EventDrawer` load only approved stores in their outlet pickers.
+- [x] `ContentPostModal` loads only approved stores.
+- [x] `MouFormModal` in `MousView` receives strictly approved stores.
+- [x] Direct `POST /api/marcom/placements` with a `PENDING_APPROVAL` or `REJECTED` outlet returns `HTTP 400 Bad Request`.
+- [x] `OutletsView` catalog retains full multi-status visibility for administrative tasks.
+- [x] `npm run drift:check` passes with 0 drift.
+- [x] `npm test` passes with 0 failures across all 152 test suites.
+- [x] `npm run build:check` compiles with 0 TypeScript errors.
 
 

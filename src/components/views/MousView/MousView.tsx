@@ -71,7 +71,10 @@ export function MousView() {
     [storeBranches]
   );
   const outletsList = useMemo(
-    () => storeOutlets.map((o) => ({ id: o.id, name: o.name, code: o.code, branchId: o.branchId })),
+    () =>
+      storeOutlets
+        .filter((o) => o.status === "APPROVED")
+        .map((o) => ({ id: o.id, name: o.name, code: o.code, branchId: o.branchId })),
     [storeOutlets]
   );
   const [modalMou, setModalMou] = useState<Partial<MarcomMou> | null>(null);

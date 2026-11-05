@@ -8,28 +8,36 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Filter Approved Outlets in Operational Work Item Forms (ADR-0049) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Active Feature:** Filter Approved Outlets in Operational Work Item Forms (ADR-0049) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Hard Browser Redirect on User Sign-Out (ADR-0048)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan Filter Toko Terverifikasi pada Form Operasional POSM & Event (ADR-0049 — Planning Complete):**
-   - **Analisis Root Cause & Blast Radius:**
-     - Mengidentifikasi bahwa query outlet pada modal/drawer operasional (`OutletSearchCombobox`, `EventCreateModal`, `EventDrawer`, `ContentPostModal`, dan `MousView`) tidak memfilter `status=APPROVED`, sehingga outlet DRAFT, PENDING_APPROVAL, dan REJECTED bocor ke pilihan operasional.
-     - Mengidentifikasi celah pada endpoint `POST /api/marcom/placements` yang belum memvalidasi `outlet.status === "APPROVED"` sebelum membuat relasi placement baru.
-   - **Solusi Arsitektural Terpilih (Opsi 1):**
-     - Memfilter `status=APPROVED` di level form operasional (UI combobox & drawers).
-     - Menambahkan guard validasi `outlet.status === "APPROVED"` pada `POST /api/marcom/placements` (HTTP 400).
-     - Mempertahankan backward compatibility untuk `OutletsView` (yang memerlukan semua status untuk approval queue) dan `PipelineView`.
+1. **Pembatasan Pemilihan Toko Hanya untuk Outlet Terverifikasi (APPROVED) pada Form Operasional (ADR-0049 — Implementation Complete):**
+   - **Backend Mutation Guard (`src/app/api/marcom/placements/route.ts`):**
+     - Menambahkan verifikasi status toko sebelum membuat penempatan POSM baru (`prisma.placement.create`).
+     - Menolak penempatan pada outlet berstatus `PENDING_APPROVAL`, `DRAFT`, atau `REJECTED` dengan respons `HTTP 400 Bad Request` ("Hanya outlet berstatus APPROVED yang dapat dipasangi materi promosi.").
+     - Menolak outlet yang tidak ditemukan dengan `HTTP 404 Not Found`.
+   - **Penyelarasan Form & Drawer Operasional:**
+     - `src/components/views/PlacementsView/OutletSearchCombobox.tsx`: Menambahkan parameter `status: "APPROVED"` pada query pencarian outlet.
+     - `src/components/views/EventsView/EventCreateModal.tsx`: Memperbarui request fetch ke `/api/marcom/outlets?status=APPROVED`.
+     - `src/components/views/EventsView/EventDrawer.tsx`: Memperbarui request fetch ke `/api/marcom/outlets?status=APPROVED`.
+     - `src/components/views/ContentPlannerView/ContentPostModal.tsx`: Memperbarui request fetch ke `/api/marcom/outlets?status=APPROVED`.
+     - `src/components/views/MousView/MousView.tsx`: Memfilter `storeOutlets.filter(o => o.status === "APPROVED")` sebelum memetakan ke pilihan `MouFormModal`.
+   - **Otomatisasi Pengujian Regresi & Invarian:**
+     - Dibuat unit test guard backend di `src/app/api/marcom/placements/placementOutletGuard.test.ts` (3/3 tests pass).
+     - Dibuat structural invariant test di `src/components/views/PlacementsView/operationalOutletFilter.test.ts` (6/6 tests pass).
    - **Penyusunan Dokumen Perencanaan & Handover:**
      - ADR: `docs/adr/0049-filter-approved-outlets-in-operational-forms.md` (APPROVED).
      - Spec: `docs/superpowers/specs/2026-11-05-filter-approved-outlets-in-operational-forms-design.md` (APPROVED).
      - Plan: `docs/superpowers/plans/2026-11-05-filter-approved-outlets-in-operational-forms.md` (COMPLETE).
-     - Handover: `docs/handover-filter-approved-outlets-in-operational-forms.md` (READY FOR EXECUTION).
+     - Handover: `docs/handover-filter-approved-outlets-in-operational-forms.md` (COMPLETE).
    - **Non-Negotiable Gates:**
      - `npm run drift:check` ✅ (76/76 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm test` ✅ (869/869 tests pass across 154 test suites, 0 failures).
 
 2. **Perbaikan Bug Logout Redirection via Hard Browser Navigation (ADR-0048 — Implementation Complete):**
    - **Eliminasi Soft Navigation & Cache Purge (`src/components/layout/UserMenuDropdown.tsx`):**

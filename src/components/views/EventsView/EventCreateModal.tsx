@@ -89,7 +89,7 @@ export function EventCreateModal({
   // Load outlets when modal opens
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/marcom/outlets")
+    fetch("/api/marcom/outlets?status=APPROVED")
       .then((res) => (res.ok ? res.json() : []))
       .then((json) => {
         if (Array.isArray(json)) {

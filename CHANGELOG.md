@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `fix(marcom)`: Restrict operational form outlet selection to approved stores
+  - Added pre-insert verification in `POST /api/marcom/placements` rejecting unapproved/rejected stores with HTTP 400
+  - Scoped `OutletSearchCombobox` to query `/api/marcom/outlets?status=APPROVED`
+  - Restricted `EventCreateModal`, `EventDrawer`, and `ContentPostModal` to fetch `/api/marcom/outlets?status=APPROVED`
+  - Filtered `outletsList` in `MousView.tsx` to `status === "APPROVED"` before passing to `MouFormModal`
+  - Added automated unit and structural tests in `placementOutletGuard.test.ts` and `operationalOutletFilter.test.ts`
+  - Spec: `docs/superpowers/specs/2026-11-05-filter-approved-outlets-in-operational-forms-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-filter-approved-outlets-in-operational-forms.md`
+  - Refs: `docs/adr/0049-filter-approved-outlets-in-operational-forms.md` (ADR-0049)
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean (76/76 specs paired)
+
 - `fix(auth)`: Hard browser redirect to login page on sign-out
   - Replaced Next.js soft navigation (`router.push('/login')` + `router.refresh()`) with `window.location.href = "/login"` in `UserMenuDropdown.tsx`
   - Flushed client-side in-memory Zustand and RSC caches, preventing fallback "Pengguna VIEWER" state on sign-out

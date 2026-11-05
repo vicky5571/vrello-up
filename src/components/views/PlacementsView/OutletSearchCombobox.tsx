@@ -192,6 +192,7 @@ export function OutletSearchCombobox({
         const params = new URLSearchParams({
           q: trimmed,
           limit: "15",
+          status: "APPROVED",
         });
         if (brand && brand !== "ALL") {
           params.set("brand", brand);

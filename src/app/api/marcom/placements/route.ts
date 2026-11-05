@@ -108,6 +108,22 @@ export async function POST(request: Request) {
   const normalizedBrand = typeof brand === "string" && (brand.toUpperCase() === "3" || brand.toUpperCase() === "TRI") ? "TRI" : "IM3";
   const targetMouId = typeof mouId === "string" && mouId.trim() && mouId !== "NONE" ? mouId.trim() : null;
 
+  const targetOutlet = await prisma.outlet.findUnique({
+    where: { id: outletId },
+    select: { id: true, status: true },
+  });
+
+  if (!targetOutlet) {
+    return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
+  }
+
+  if (targetOutlet.status !== "APPROVED") {
+    return NextResponse.json(
+      { error: "Hanya outlet berstatus APPROVED yang dapat dipasangi materi promosi." },
+      { status: 400 }
+    );
+  }
+
   try {
     const placement = await prisma.placement.create({
       data: {
