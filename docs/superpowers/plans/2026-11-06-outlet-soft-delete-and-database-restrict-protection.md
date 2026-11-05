@@ -30,45 +30,45 @@ This plan implements enterprise-grade soft-delete architecture for partner retai
 ## 2. Phased Implementation Roadmap
 
 ### Phase 1: Database Schema & Foreign Key Hardening
-- [ ] **Step 1.1: Update Prisma Schema (`prisma/schema.prisma`)**
+- [x] **Step 1.1: Update Prisma Schema (`prisma/schema.prisma`)**
   - Add `deletedAt DateTime?` to `model Outlet`.
   - Add `@@index([deletedAt])` to `model Outlet`.
   - Update `model Placement`: change `outlet Outlet @relation(..., onDelete: Restrict)`.
-- [ ] **Step 1.2: Synchronize PostgreSQL Schema**
+- [x] **Step 1.2: Synchronize PostgreSQL Schema**
   - Execute `npx prisma db push` to push schema changes and update foreign key constraints in PostgreSQL.
-- [ ] **Step 1.3: Update SSOT Domain Types (`src/types/index.ts`)**
+- [x] **Step 1.3: Update SSOT Domain Types (`src/types/index.ts`)**
   - Add `deletedAt?: string | null` to `Outlet` interface.
-- [ ] **Verification Gate Phase 1**: Run `npm run build:check` (must pass with 0 errors).
+- [x] **Verification Gate Phase 1**: Run `npm run build:check` (must pass with 0 errors).
 
 ---
 
 ### Phase 2: Backend Mutation Handlers & Query Filter Invariants
-- [ ] **Step 2.1: Update Single-Delete Route (`src/app/api/marcom/outlets/[id]/route.ts`)**
+- [x] **Step 2.1: Update Single-Delete Route (`src/app/api/marcom/outlets/[id]/route.ts`)**
   - Check existence: if outlet not found or `deletedAt !== null`, return `HTTP 404 Not Found`.
   - Perform soft-delete: `prisma.outlet.update({ where: { id }, data: { deletedAt: new Date(), active: false } })`.
-- [ ] **Step 2.2: Update Batch-Delete Route (`src/app/api/marcom/outlets/route.ts`)**
+- [x] **Step 2.2: Update Batch-Delete Route (`src/app/api/marcom/outlets/route.ts`)**
   - Perform batch soft-delete: `prisma.outlet.updateMany({ where: { id: { in: ids }, deletedAt: null }, data: { deletedAt: new Date(), active: false } })`.
-- [ ] **Step 2.3: Update Search Filter Helper (`src/app/api/marcom/outlets/outletsSearchFilter.ts`)**
+- [x] **Step 2.3: Update Search Filter Helper (`src/app/api/marcom/outlets/outletsSearchFilter.ts`)**
   - In `buildOutletSearchWhere`:
     - Default `where.deletedAt = null`.
     - If `status === "APPROVED"` (operational forms), enforce `where.active = true` and `where.deletedAt = null`.
-- [ ] **Step 2.4: Add Automated Integration Test Suite (`src/app/api/marcom/outlets/outletSoftDelete.test.ts`)**
+- [x] **Step 2.4: Add Automated Integration Test Suite (`src/app/api/marcom/outlets/outletSoftDelete.test.ts`)**
   - Test 1: Single delete marks `deletedAt` and sets `active: false`.
   - Test 2: Linked `Placement` records remain physically present and unaffected.
   - Test 3: Normal search queries automatically omit soft-deleted stores.
   - Test 4: Operational form query with `status=APPROVED` omits inactive and soft-deleted stores.
-- [ ] **Verification Gate Phase 2**: Run `node --test src/app/api/marcom/outlets/outletSoftDelete.test.ts`.
+- [x] **Verification Gate Phase 2**: Run `node --test src/app/api/marcom/outlets/outletSoftDelete.test.ts`.
 
 ---
 
 ### Phase 3: Database Seed Fixtures & Non-Negotiable Gates
-- [ ] **Step 3.1: Update Database Seed (`prisma/seed.ts`)**
+- [x] **Step 3.1: Update Database Seed (`prisma/seed.ts`)**
   - In `seedOutlets()`: ensure all active seed outlets have `deletedAt: null`.
   - Add soft-deleted outlet fixture: `outlet-del-999` (`name: "Toko Almarhum (Soft-Deleted)"`, `active: false`, `deletedAt: daysAgo(30)`).
   - Attach historical placement: `plc-hist-999` (`cost: 750000`, `status: "DONE"`) to demonstrate historical cost preservation.
-- [ ] **Step 3.2: Execute Re-Seed**
+- [x] **Step 3.2: Execute Re-Seed**
   - Run `npx prisma db seed`.
-- [ ] **Step 3.3: Execute Non-Negotiable Verification Gates**
+- [x] **Step 3.3: Execute Non-Negotiable Verification Gates**
   - Run `npm run drift:check` (80/80 spec-plan pairs valid, 0 drift).
   - Run `npm run build:check` (0 errors).
   - Run `npm test` (100% tests pass).

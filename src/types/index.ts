@@ -639,6 +639,7 @@ export interface OutletItem {
   rejectionReason?: string;
   approvedBy?: string;
   approvedAt?: string | Date | null;
+  deletedAt?: string | Date | null;
 }
 
 export type Outlet = OutletItem;

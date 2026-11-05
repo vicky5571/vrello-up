@@ -9,6 +9,7 @@ export interface OutletSearchFilterOptions {
   type?: string | OutletType | null;
   status?: string | OutletStatus | null;
   brand?: string | Brand | null;
+  includeDeleted?: boolean | null;
 }
 
 
@@ -55,6 +56,7 @@ export function buildOutletSearchWhere(
   let type: string | OutletType | null | undefined = undefined;
   let status: string | OutletStatus | null | undefined = undefined;
   let brand: string | Brand | null | undefined = undefined;
+  let includeDeleted: boolean | null | undefined = undefined;
 
   if (typeof queryOrOptions === "object" && queryOrOptions !== null) {
     q = queryOrOptions.q;
@@ -62,6 +64,7 @@ export function buildOutletSearchWhere(
     type = queryOrOptions.type;
     status = queryOrOptions.status;
     brand = queryOrOptions.brand;
+    includeDeleted = queryOrOptions.includeDeleted;
   } else {
     q = queryOrOptions;
     if (typeof options === "object" && options !== null) {
@@ -69,15 +72,22 @@ export function buildOutletSearchWhere(
       type = options.type;
       status = options.status;
       brand = options.brand;
+      includeDeleted = options.includeDeleted;
     } else if (typeof extraOptions === "object" && extraOptions !== null) {
       branchId = extraOptions.branchId;
       type = extraOptions.type;
       status = extraOptions.status;
       brand = extraOptions.brand;
+      includeDeleted = extraOptions.includeDeleted;
     }
   }
 
   const where: Prisma.OutletWhereInput = {};
+
+  // Soft-Delete Default Filter: hide deleted stores unless explicitly requested
+  if (!includeDeleted) {
+    where.deletedAt = null;
+  }
 
   if (branchId && branchId !== "ALL") {
     where.branchId = branchId;
@@ -101,7 +111,11 @@ export function buildOutletSearchWhere(
     where.type = normalizedType as OutletType;
   }
 
-  if (
+  // Operational Form Guard: Approved stores selectable in forms must also be active
+  if (status === "APPROVED") {
+    where.status = "APPROVED";
+    where.active = true;
+  } else if (
     status &&
     status !== "ALL" &&
     VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])

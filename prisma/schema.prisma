@@ -147,8 +147,12 @@ model Outlet {
   approvedBy      String        @default("")
   approvedAt      DateTime?
 
+  // Soft-Delete Field (ADR-0053)
+  deletedAt       DateTime?
+
   @@index([status])
   @@index([branchId])
+  @@index([deletedAt])
 }
 
 model Material {
@@ -168,7 +172,7 @@ model Material {
 model Placement {
   id         String          @id @default(cuid())
   outletId   String
-  outlet     Outlet          @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  outlet     Outlet          @relation(fields: [outletId], references: [id], onDelete: Restrict)
   materialId String
   material   Material        @relation(fields: [materialId], references: [id])
   mouId      String?

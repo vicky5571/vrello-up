@@ -8,14 +8,39 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Outlet Soft-Delete Architecture and Database Restrict Protection (ADR-0053) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Active Feature:** Outlet Soft-Delete Architecture and Database Restrict Protection (ADR-0053) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Inventory Compensation Settlement and Stock Restoration Workflow (ADR-0052)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Outlet Soft-Delete & Database Restrict Protection (ADR-0053 — Planning Complete):**
+1. **Implementasi Outlet Soft-Delete Architecture & Database Restrict Protection (ADR-0053 — Implementation Complete):**
+   - **Database & Prisma Schema Hardening:**
+     - Menambahkan kolom `deletedAt DateTime?` dan index `@@index([deletedAt])` pada model `Outlet` di `prisma/schema.prisma`.
+     - Mengubah relasi `Placement.outlet` dari cascade delete menjadi `onDelete: Restrict` di Prisma schema dan mengeksekusi DDL constraint `Placement_outletId_fkey ON DELETE RESTRICT ON UPDATE CASCADE` di Supabase Postgres.
+     - Melakukan sinkronisasi schema client via `npx prisma generate`.
+   - **SSOT Domain Entities (`src/types/index.ts`):**
+     - Menambahkan field `deletedAt?: string | Date | null` pada domain interface `OutletItem` (dan `Outlet`).
+   - **Query Filtering & Operational Form Guard (`outletsSearchFilter.ts`):**
+     - Menambahkan opsi `includeDeleted?: boolean | null` pada `OutletSearchFilterOptions`.
+     - Mengisolasi kueri direktori toko default dengan klausul `where.deletedAt = null` (kecuali jika eksplisit diminta via `includeDeleted: true`).
+     - Menegakkan operational form guard: menambahkan klausul `where.active = true` saat kueri difilter dengan `status === "APPROVED"` agar form operasional POSM/MoU/Event terlindung dari toko non-aktif maupun toko soft-deleted.
+   - **API Mutation Endpoints (Single & Batch Soft-Delete):**
+     - Memperbarui `GET /api/marcom/outlets/[id]/route.ts`: mengembalikan HTTP 404 jika toko berstatus soft-deleted (`deletedAt !== null`), kecuali jika `includeDeleted=true`.
+     - Memperbarui `DELETE /api/marcom/outlets/[id]/route.ts`: mengganti penghapusan fisik dengan soft-delete murni (`prisma.outlet.update` menyetel `{ deletedAt: new Date(), active: false }`). Menolak penghapusan berulang dengan HTTP 404 jika toko sudah dalam status soft-deleted.
+     - Memperbarui `GET /api/marcom/outlets/route.ts`: mengekstrak parameter `includeDeleted` dari search params.
+     - Memperbarui `DELETE /api/marcom/outlets/route.ts`: mengganti `deleteMany` fisik dengan batch soft-delete `prisma.outlet.updateMany` pada toko yang belum terhapus (`where: { id: { in: ids }, deletedAt: null }`).
+   - **Otomatisasi Pengujian & Seed Data Fixture:**
+     - Membuat test suite `src/app/api/marcom/outlets/outletSoftDelete.test.ts` (6/6 tests passed) menguji default filter exclusion, `includeDeleted` bypass, operational form active guard, single soft-delete, placement preservation, pencegahan repeat delete (404), dan batch soft-delete.
+     - Memperbarui deterministic seed di `prisma/seed.ts` dengan fixture toko soft-deleted `outlet-del-999` ("Toko Legend Era Tutup (Soft-Deleted)") dan placement historis `plc-hist-999` bernilai `1500000` status `DONE`.
+   - **Non-Negotiable Verification Gates:**
+     - `npm run drift:check` ✅ (80/80 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm test` ✅ (892/892 tests passed across 155 suites, 0 failures).
+     - `npm run test:smoke` ✅ (133/133 tests passed, 0 failures).
+
+2. **Perencanaan Arsitektur Outlet Soft-Delete & Database Restrict Protection (ADR-0053 — Planning Complete):**
    - **Analisis Risiko Finansial & Master Data Invariants:**
      - Mengidentifikasi kerentanan kritis *cascade deletion* pada skema Prisma di mana penghapusan `Outlet` menghapus permanen seluruh riwayat pemasangan materi promosi (`Placement`), foto bukti fisik di toko, dan realisasi anggaran promosi (`cost`), menyebabkan distorsi retrospektif pada Laporan Triwulanan Eksekutif.
      - Merumuskan arsitektur soft-delete murni sesuai mandat bisnis: **"Meskipun tertulis hapus permanen, tetap tidak boleh ada hard delete."**

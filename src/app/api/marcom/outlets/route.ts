@@ -27,6 +27,7 @@ export async function GET(request: Request) {
   const rawBrand = searchParams.get("brand");
   const query = searchParams.get("q");
   const rawLimit = searchParams.get("limit");
+  const includeDeleted = searchParams.get("includeDeleted") === "true";
 
   if (type && type !== "ALL" && !VALID_TYPES.includes(type as (typeof VALID_TYPES)[number])) {
     return Response.json({ error: "Invalid type" }, { status: 400 });
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
     type,
     status: rawStatus,
     brand: rawBrand,
+    includeDeleted,
   });
 
   const take = parseOutletSearchLimit(rawLimit, query);
@@ -137,9 +139,14 @@ export async function DELETE(request: Request) {
       return Response.json({ error: "No outlet IDs provided" }, { status: 400 });
     }
 
-    const result = await prisma.outlet.deleteMany({
+    const result = await prisma.outlet.updateMany({
       where: {
         id: { in: ids },
+        deletedAt: null,
+      },
+      data: {
+        deletedAt: new Date(),
+        active: false,
       },
     });
 

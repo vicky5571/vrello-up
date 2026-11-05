@@ -379,6 +379,27 @@ async function seedOutlets() {
       approvedBy: "System Admin",
       approvedAt: daysAgo(300),
     },
+    // 11. Soft-Deleted Historical Outlet (ADR-0053)
+    {
+      id: "outlet-del-999",
+      code: "OUT-DEL-999",
+      name: "Toko Legend Era Tutup (Soft-Deleted)",
+      type: "TRADITIONAL" as OutletType,
+      city: "Surabaya",
+      address: "Jl. Veteran No. 99, Pasar Lama",
+      picName: "Pak Legendaris",
+      picPhone: "+62 819-9999-9999",
+      active: false,
+      brand: "IM3" as Brand,
+      latitude: -7.2575,
+      longitude: 112.7521,
+      branchId: "branch-7",
+      status: "APPROVED" as OutletStatus,
+      photoUrl: "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600&auto=format&fit=crop&q=80",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(360),
+      deletedAt: daysAgo(30),
+    },
   ];
 
   for (const o of outletsData) {
@@ -681,6 +702,29 @@ async function seedPlacements() {
       campaignTheme: "Ekspansi Gerai Magelang",
       isLocationValid: true,
       locationDeviation: null,
+    },
+    // 7. Historical Placement on Soft-Deleted Outlet (ADR-0053 - Financial Preservation)
+    {
+      id: "plc-hist-999",
+      outletId: "outlet-del-999",
+      materialId: "material-shopblind",
+      mouId: null,
+      status: "DONE" as PlacementStatus,
+      brand: "IM3" as Brand,
+      date: daysAgo(180),
+      picName: "Vendor Jawa Timur",
+      photoUrl: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=600&auto=format&fit=crop&q=80",
+      dimensions: "300 x 100 cm",
+      cost: 1500000,
+      notes: "Dokumentasi POSM historis tetap tersimpan utuh meskipun gerai telah dinonaktifkan.",
+      latitude: -7.2575,
+      longitude: 112.7521,
+      shareLocationUrl: "https://maps.google.com/?q=-7.2575,112.7521",
+      locationNotes: "Pemasangan selesai di gerai pasar lama.",
+      quarter: "Q1 2026",
+      campaignTheme: "Pesta Retensi Awal Tahun",
+      isLocationValid: true,
+      locationDeviation: 0,
     },
   ];
 

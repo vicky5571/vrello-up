@@ -6,6 +6,20 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-06]
 
+- `feat(outlets)`: Outlet soft-delete architecture and database restrict protection
+  - Added `deletedAt DateTime?` and index `@@index([deletedAt])` to `Outlet` model in Prisma schema and SSOT types (`src/types/index.ts`)
+  - Hardened database foreign key `Placement_outletId_fkey` to `ON DELETE RESTRICT ON UPDATE CASCADE` to prevent raw cascade deletions from destroying historical advertising expenditure, photos, and compliance audit trails
+  - Updated `outletsSearchFilter.ts` to isolate active directories by defaulting `where.deletedAt = null` (unless `includeDeleted: true`) and enforcing `where.active = true` when `status === "APPROVED"` (operational form guard)
+  - Updated `DELETE /api/marcom/outlets/[id]/route.ts` to perform pure soft-delete (`update` with `{ deletedAt: new Date(), active: false }`) and return HTTP 404 if already soft-deleted or non-existent
+  - Updated `GET /api/marcom/outlets/[id]/route.ts` to return HTTP 404 for soft-deleted outlets unless `includeDeleted=true`
+  - Updated `DELETE /api/marcom/outlets/route.ts` to perform batch soft-delete via `updateMany` for non-deleted records (`deletedAt: null`)
+  - Added automated test suite `src/app/api/marcom/outlets/outletSoftDelete.test.ts` (6/6 tests passing) verifying single soft-delete, placement preservation, repeat delete 404, batch soft-delete, and search filter invariants
+  - Updated deterministic seed in `prisma/seed.ts` with soft-deleted outlet fixture `outlet-del-999` and historical placement `plc-hist-999`
+  - Spec: `docs/superpowers/specs/2026-11-06-outlet-soft-delete-and-database-restrict-protection-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-outlet-soft-delete-and-database-restrict-protection.md`
+  - Refs: `docs/adr/0053-outlet-soft-delete-and-database-restrict-protection.md` (ADR-0053)
+  - Gates: `npm test` 892/892 passed across 155 suites (0 failures); `npm run build:check` 0 errors; `npm run drift:check` clean (80/80 specs paired); `npm run test:smoke` 133/133 passed
+
 - `feat(inventory)`: Inventory compensation settlement and stock restoration workflow
   - Added 6 settlement fields to `BorrowRecord` in Prisma schema & SSOT domain types (`src/types/index.ts`): `settlementType`, `settledAmount`, `settledAt`, `settledBy`, `settlementNotes`, `settlementProofUrls`
   - Exported `CompensationSettlementType` enum (`"NONE" | "CASH_TRANSFER" | "ITEM_REPLACEMENT"`) in `src/types/index.ts`

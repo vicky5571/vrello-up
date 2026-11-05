@@ -8,13 +8,16 @@ const VALID_TYPES = ["TRADITIONAL", "MODERN_RETAIL", "EXCLUSIVE", "CAMPUS_OUTLET
 const VALID_BRANDS = ["IM3", "TRI"] as const;
 const PATCHABLE_FIELDS = ["code", "name", "type", "brand", "branchId", "address", "city", "picName", "picPhone", "active", "latitude", "longitude"] as const;
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireMember();
   } catch (e) {
     if (e instanceof Response) return e;
     throw e;
   }
+
+  const { searchParams } = new URL(request.url);
+  const includeDeleted = searchParams.get("includeDeleted") === "true";
 
   const { id } = await params;
   const outlet = await prisma.outlet.findUnique({
@@ -37,7 +40,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     },
   });
 
-  if (!outlet) {
+  if (!outlet || (!includeDeleted && outlet.deletedAt !== null)) {
     return Response.json({ error: "Outlet not found" }, { status: 404 });
   }
 
@@ -124,9 +127,25 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   }
 
   const { id } = await params;
+
+  const existing = await prisma.outlet.findUnique({
+    where: { id },
+    select: { id: true, deletedAt: true },
+  });
+
+  if (!existing || existing.deletedAt !== null) {
+    return Response.json({ error: "Outlet not found" }, { status: 404 });
+  }
+
   try {
-    await prisma.outlet.delete({ where: { id } });
-    return Response.json({ ok: true });
+    const updated = await prisma.outlet.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        active: false,
+      },
+    });
+    return Response.json({ ok: true, id: updated.id });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
       return Response.json({ error: "Outlet not found" }, { status: 404 });
