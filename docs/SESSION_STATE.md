@@ -8,14 +8,29 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Automated Daily Rolling Sync & Monthly Report Creation via Vercel Cron (ADR-0036) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Reports Expanded Row Modular Card Grid Styling & Atomic Extraction (ADR-0035)  
+**Active Feature:** Standardize Event & Content Modal/Drawer Form CustomDropdowns (ADR-0037) — **PLANNING COMPLETE**  
+**Previous Feature:** Automated Daily Rolling Sync & Monthly Report Creation via Vercel Cron (ADR-0036)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Sinkronisasi Harian Berjalan & Inisiasi Otomatis Laporan Bulanan via Vercel Cron (ADR-0036 — Implementation Complete):**
+1. **Standardisasi CustomDropdown pada Form Modal & Drawer Event dan Content (ADR-0037 — Planning Complete):**
+   - **Eliminasi OS Aqua Native Popover:**
+     - Menggantikan seluruh elemen native `<select>` yang memunculkan popover tidak bergaya bawaan OS (khususnya Aqua macOS) pada `EventDrawer.tsx`, `EventCreateModal.tsx`, dan `ContentPostModal.tsx` menggunakan komponen terstandarisasi `CustomDropdown` (`src/components/ui/CustomDropdown.tsx`).
+   - **Dukungan Pencarian Data Master Terintegrasi:**
+     - Mengaktifkan `searchable={true}` pada dropdown pemilihan *Outlet Terkait* dan *Person in Charge (PIC)* untuk mempercepat operasional pemilihan outlet toko dari ratusan data master.
+   - **Harmonisasi Dimensi & Sizing:**
+     - Menstandarkan properti `size="md"` (`min-h-[36px]`) agar tinggi dropdown sejajar sempurna dengan input teks sekitarnya.
+   - **Preservasi Side-Effects & Safety:**
+     - Menjaga fungsi autofill lokasi dari outlet yang dipilih, generate template checklist subtasks aktivasi, dan input teks kondisional untuk `Custom PIC Name...`.
+   - **Dokumentasi & Handover:**
+     - ADR: `docs/adr/0037-standardize-event-and-content-modal-drawer-custom-dropdowns.md`
+     - Spec: `docs/superpowers/specs/2026-11-05-standardize-event-and-content-modal-drawer-custom-dropdowns-design.md`
+     - Plan: `docs/superpowers/plans/2026-11-05-standardize-event-and-content-modal-drawer-custom-dropdowns.md`
+     - Handover: `docs/handover-standardize-event-and-content-modal-drawer-custom-dropdowns.md` (386 baris panduan eksekusi presisi dengan kode lengkap).
+
+2. **Sinkronisasi Harian Berjalan & Inisiasi Otomatis Laporan Bulanan via Vercel Cron (ADR-0036 — Implementation Complete):**
    - **Vercel Cron Configuration (`vercel.json`):**
      - Dikonfigurasi jadwal cron harian `0 17 * * *` (00:00 WIB) yang memicu endpoint serverless `/api/cron/reports-sync` tanpa memerlukan server VPS ataupun daemon container permanen.
    - **Endpoint Terproteksi (`/api/cron/reports-sync/route.ts`):**
@@ -1335,9 +1350,9 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (all 63 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (all 64 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ Full test suite passed (806/806 tests passed)
+- `npm test` → ✅ Full test suite passed (814/814 tests passed)
 - `npm run test:smoke` → ✅ 110 passed, 0 failed
 
 ---
@@ -1351,11 +1366,12 @@
 ## Next Step for Following Session
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. Execute Implementation Plan (`docs/superpowers/plans/2026-11-05-automated-daily-sync-and-monthly-report-creation-cron.md`) following `docs/handover-automated-daily-sync-and-monthly-report-creation-cron.md`:
-   - Step 1 (TDD Red): Implement failing tests in `src/lib/marcom/monthlyReportSync.test.ts` and `src/app/api/cron/reportsSyncRoute.test.ts`.
-   - Step 2 (Domain Logic Green): Implement `src/lib/marcom/monthlyReportSync.ts` (`syncMonthlyReport`, `hasCustomNarratives`). Verify tests pass.
-   - Step 3 (Vercel Cron & Route Green): Create `vercel.json` and `src/app/api/cron/reports-sync/route.ts` with `CRON_SECRET` validation. Verify route tests pass.
-   - Step 4 (Verification Gates): Run `npm run drift:check`, `npm run build:check`, `npm test`.
-   - Step 5 (Docs & Commit): Update `CHANGELOG.md`, update spec/plan to `IMPLEMENTED`, commit feature.
+2. Execute Implementation Plan (`docs/superpowers/plans/2026-11-05-standardize-event-and-content-modal-drawer-custom-dropdowns.md`) following `docs/handover-standardize-event-and-content-modal-drawer-custom-dropdowns.md`:
+   - Step 1 (TDD Red): Create test suite `src/components/views/EventsView/eventDrawerCustomDropdown.test.ts` and verify failure.
+   - Step 2: Update `src/components/views/EventsView/EventDrawer.tsx` to use `CustomDropdown` for activation type, branch, outlet, and PIC.
+   - Step 3: Update `src/components/views/EventsView/EventCreateModal.tsx` to use `CustomDropdown` for activation type, branch, outlet, and PIC.
+   - Step 4: Update `src/components/views/ContentPlannerView/ContentPostModal.tsx` to use `CustomDropdown` for platform, format, status, and outlet.
+   - Step 5 (Verification Gates): Run `npm run drift:check`, `npm run build:check`, and `npm test`.
+   - Step 6 (Docs & Commit): Update `CHANGELOG.md`, update spec/plan to `IMPLEMENTED`, commit feature.
 
 
