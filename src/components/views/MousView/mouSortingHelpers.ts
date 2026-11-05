@@ -3,9 +3,10 @@ import type { MouStatus, MarcomMou } from "@/types";
 export const MOU_STATUS_ORDER: Record<MouStatus, number> = {
   DRAFT: 1,
   SUBMITTED: 2,
-  APPROVED: 3,
-  DONE: 4,
-  REJECTED: 5,
+  REVISION: 3,
+  APPROVED: 4,
+  DONE: 5,
+  REJECTED: 6,
 };
 
 export function compareMouStatus(statusA: MouStatus, statusB: MouStatus): number {

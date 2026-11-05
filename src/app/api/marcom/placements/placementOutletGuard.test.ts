@@ -55,12 +55,12 @@ test("POST /api/marcom/placements outlet status validation guard", async (t) => 
   });
 
   await t.test("permits placement creation when outlet status is APPROVED", async () => {
-    // outlet-yog-002 has status: APPROVED
+    // outlet-yog-001 has status: APPROVED
     const req = new Request("http://localhost:3000/api/marcom/placements", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        outletId: "outlet-yog-002",
+        outletId: "outlet-yog-001",
         materialId: "material-poster",
         status: "NOT_STARTED",
         notes: "Automated test placement",
@@ -71,7 +71,7 @@ test("POST /api/marcom/placements outlet status validation guard", async (t) => 
     assert.equal(res.status, 201);
     const data = await res.json();
     assert.ok(data.id, "Expected created placement ID");
-    assert.equal(data.outletId, "outlet-yog-002");
+    assert.equal(data.outletId, "outlet-yog-001");
 
     // Clean up created test placement
     await prisma.placement.delete({

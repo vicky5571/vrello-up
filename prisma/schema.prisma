@@ -17,6 +17,7 @@ enum BranchStatus {
 enum MouStatus {
   DRAFT
   SUBMITTED
+  REVISION
   DONE
   REJECTED
   APPROVED
@@ -213,6 +214,7 @@ model Mou {
   picName           String     @default("")
   picPhone          String     @default("")
   docPath           String     @default("")
+  docPaths          String[]   @default([])
   compensationValue Float      @default(0)
   notes             String     @default("")
 

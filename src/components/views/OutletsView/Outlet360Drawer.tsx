@@ -76,6 +76,7 @@ export interface Outlet360Mou {
   startDate?: string | Date | null;
   endDate?: string | Date | null;
   docPath?: string | null;
+  docPaths?: string[] | null;
   branch?: {
     id: string;
     code: string;
@@ -1804,6 +1805,7 @@ export function Outlet360Drawer({
         isOpen={Boolean(viewingDocMou)}
         onClose={() => setViewingDocMou(null)}
         docPath={viewingDocMou?.docPath}
+        docPaths={viewingDocMou?.docPaths}
         partnerName={viewingDocMou?.partnerName}
         mouType={viewingDocMou?.mouType}
         outletName={data?.name}

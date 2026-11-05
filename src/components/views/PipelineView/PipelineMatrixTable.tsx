@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import { cn, formatIDR, formatDate } from "@/lib/utils";
 import type {
@@ -60,6 +61,13 @@ function renderMouBadge(status?: string) {
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
           <Clock className="w-2.5 h-2.5" />
           Diajukan
+        </span>
+      );
+    case "REVISION":
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-500/20">
+          <RotateCcw className="w-2.5 h-2.5 text-orange-500" />
+          Perlu Revisi
         </span>
       );
     case "DRAFT":

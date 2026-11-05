@@ -12,6 +12,7 @@ export interface MouSavePayload {
   picName?: string;
   picPhone?: string;
   docPath?: string;
+  docPaths?: string[];
   compensationValue?: number;
   notes?: string;
 }

@@ -423,7 +423,7 @@ export interface MarcomPlacement {
   } | null;
 }
 
-export type MouStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REJECTED" | "DONE";
+export type MouStatus = "DRAFT" | "SUBMITTED" | "REVISION" | "APPROVED" | "REJECTED" | "DONE";
 
 export interface Mou {
   id: string;
@@ -439,6 +439,7 @@ export interface Mou {
   picName?: string;
   picPhone?: string;
   docPath?: string;
+  docPaths?: string[];
   compensationValue?: number;
   notes?: string;
   branch?: { id: string; code: string; name: string };
@@ -461,6 +462,7 @@ export interface MarcomMou {
   picName: string;
   picPhone: string;
   docPath: string;
+  docPaths?: string[];
   compensationValue: number;
   notes: string;
   branch?: { id: string; code: string; name: string };
@@ -656,7 +658,7 @@ export interface OutletPipelineRow {
   branch: { id: string; name: string; code: string };
   mouSummary: {
     total: number;
-    latestStatus: "APPROVED" | "DONE" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE" | "UNKNOWN";
+    latestStatus: "APPROVED" | "DONE" | "SUBMITTED" | "REVISION" | "DRAFT" | "REJECTED" | "NONE" | "UNKNOWN";
     compensationValue: number;
     isHealthy: boolean;
     daysLeft?: number;

@@ -11,6 +11,8 @@ import {
   Layers,
   ShieldAlert,
   Edit2,
+  RotateCcw,
+  XCircle,
 } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
 import { calculateMouPlacementRealization } from "@/lib/marcom/placementMouBridge";
@@ -45,6 +47,11 @@ export function MouExpandedRow({
     mou.status !== "DONE" &&
     mou.status !== "REJECTED"
   );
+
+  const docPaths = Array.isArray(mou.docPaths) ? mou.docPaths.filter(Boolean) : [];
+  const primaryDoc = mou.docPath || docPaths[0] || "";
+  const totalDocs = Math.max(docPaths.length, primaryDoc ? 1 : 0);
+  const hasDoc = totalDocs > 0;
 
   return (
     <>
@@ -131,8 +138,8 @@ export function MouExpandedRow({
             Dokumen Asli Perjanjian
           </div>
           {(() => {
-            const parsed = parseMouDocumentSource(mou.docPath, mou.partnerName);
-            if (parsed.type === "EMPTY") {
+            const parsed = parseMouDocumentSource(primaryDoc, mou.partnerName);
+            if (parsed.type === "EMPTY" && !hasDoc) {
               return (
                 <div className="text-slate-400 text-xs italic">
                   Belum ada berkas terunggah
@@ -147,7 +154,7 @@ export function MouExpandedRow({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-700 dark:text-fuchsia-300 border border-fuchsia-200 dark:border-fuchsia-800 hover:bg-fuchsia-100 transition-colors shadow-2xs cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5" />
-                  <span>Pratinjau ({parsed.label})</span>
+                  <span>Pratinjau ({parsed.label}{totalDocs > 1 ? ` +${totalDocs - 1}` : ""})</span>
                 </button>
                 <a
                   href={parsed.downloadUrl}
@@ -160,7 +167,7 @@ export function MouExpandedRow({
                   <span>Unduh Berkas</span>
                 </a>
                 <span className="text-[11px] text-slate-400 font-mono truncate max-w-xs">
-                  {parsed.filename}
+                  {totalDocs > 1 ? `${totalDocs} berkas terlampir` : parsed.filename}
                 </span>
               </div>
             );
@@ -280,17 +287,56 @@ export function MouExpandedRow({
           )}
           {mou.status === "SUBMITTED" && (
             can("APPROVE_MOU", mou.branchId) ? (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStatusTransition(mou, "APPROVED");
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer"
-              >
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Approve MOU</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusTransition(mou, "REVISION");
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 hover:bg-orange-100 transition-colors shadow-2xs cursor-pointer"
+                  title="Minta PIC/tim lapangan melakukan revisi berkas/data MOU"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-orange-600" />
+                  <span>Minta Revisi</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusTransition(mou, "REJECTED");
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 transition-colors shadow-2xs cursor-pointer"
+                  title="Tolak pengajuan MOU"
+                >
+                  <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Tolak</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (hasDoc) {
+                      onStatusTransition(mou, "APPROVED");
+                    }
+                  }}
+                  disabled={!hasDoc}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-white shadow-2xs transition-colors",
+                    !hasDoc
+                      ? "bg-slate-400 dark:bg-slate-700 opacity-60 cursor-not-allowed"
+                      : "bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+                  )}
+                  title={
+                    !hasDoc
+                      ? "Unggah dokumen bertanda tangan terlebih dahulu sebelum menyetujui"
+                      : "Approve MOU (PIC Cabang / Admin)"
+                  }
+                >
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span>Approve MOU</span>
+                </button>
+              </>
             ) : (
               <span
                 title="Persetujuan MOU memerlukan wewenang Admin atau PIC resmi Cabang terkait (userBranchIds). Hubungi Admin untuk penugasan cabang."
@@ -301,15 +347,69 @@ export function MouExpandedRow({
               </span>
             )
           )}
+          {mou.status === "REVISION" && can("CREATE_MOU", mou.branchId) && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusTransition(mou, "DRAFT");
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
+                title="Tarik kembali status ke DRAFT untuk penyuntingan menyeluruh"
+              >
+                <span>Kembalikan ke Draft</span>
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusTransition(mou, "SUBMITTED");
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 transition-colors shadow-2xs cursor-pointer"
+                title="Kirim ulang berkas hasil revisi untuk persetujuan PIC Cabang"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Submit Ulang</span>
+              </button>
+            </>
+          )}
+          {mou.status === "REJECTED" && can("CREATE_MOU", mou.branchId) && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusTransition(mou, "DRAFT");
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-2xs cursor-pointer"
+              title="Kembalikan ke DRAFT untuk direvisi dan diajukan ulang"
+            >
+              <span>Kembalikan ke Draft</span>
+            </button>
+          )}
           {mou.status === "APPROVED" && can("CREATE_MOU", mou.branchId) && (
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onStatusTransition(mou, "DONE");
+                if (hasDoc) {
+                  onStatusTransition(mou, "DONE");
+                }
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition-colors shadow-2xs cursor-pointer"
+              disabled={!hasDoc}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 transition-colors shadow-2xs",
+                !hasDoc
+                  ? "opacity-60 cursor-not-allowed"
+                  : "hover:bg-blue-100 cursor-pointer"
+              )}
+              title={
+                !hasDoc
+                  ? "Unggah dokumen bertanda tangan terlebih dahulu sebelum menyelesaikan MOU"
+                  : "Tandai MOU Selesai (DONE)"
+              }
             >
+              <CheckCircle className="w-3.5 h-3.5 text-blue-500" />
               <span>Mark Done</span>
             </button>
           )}

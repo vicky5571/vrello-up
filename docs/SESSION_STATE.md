@@ -8,14 +8,43 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** MoU Multi-Document Upload, Mandatory Approval Guard, and Revision Lifecycle (ADR-0051) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Active Feature:** MoU Multi-Document Upload, Mandatory Approval Guard, and Revision Lifecycle (ADR-0051) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Warehouse Role and Return Inspection Compensation Workflow (ADR-0050)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur MoU Multi-Document Upload, Mandatory Approval Guard & Revision Lifecycle (ADR-0051 — Planning Complete):**
+1. **Implementasi MoU Multi-Document Upload, Mandatory Approval Guard & Revision Lifecycle (ADR-0051 — Implementation Complete):**
+   - **Database & SSOT Domain Entities:**
+     - Menambahkan nilai `REVISION` pada enum `MouStatus` dan kolom array `docPaths String[] @default([])` pada model `Mou` di `prisma/schema.prisma` serta SSOT types `src/types/index.ts`.
+     - Migrasi skema database Postgres via raw DDL SQL dan sinkronisasi client dengan `npx prisma generate`.
+     - Mempertahankan kolom skalar `docPath` untuk backward-compatibility dan secara otomatis menyinkronkannya dengan berkas pertama (`docPaths[0]`).
+   - **State Machine & Backend Fail-Closed Guard:**
+     - Memperbarui state machine `src/lib/marcom/mouMachine.ts`: mengizinkan transisi `SUBMITTED -> APPROVED | REVISION | REJECTED | DRAFT`, `REVISION -> SUBMITTED | DRAFT`, dan `REJECTED -> DRAFT`.
+     - Menambahkan backend fail-closed guard pada `PATCH /api/marcom/mous/[id]/route.ts`: menolak permohonan transisi ke status `APPROVED` atau `DONE` apabila tidak terdapat dokumen fisik/digital yang diunggah (`docPaths.length === 0` dan `docPath` kosong) dengan status `HTTP 422 Unprocessable Entity`.
+     - Memperbarui `POST /api/marcom/mous/route.ts` untuk menerima `docPaths`, membersihkan array string, dan menyinkronkan berkas utama ke `docPath`.
+     - Memperbarui `src/components/views/MousView/mouApi.ts` dan menambahkan unit test pada `mouApi.test.ts` (5/5 passed) & `mouMachine.test.ts` (3/3 passed).
+   - **Pipeline View & Cockpit Integration:**
+     - Memperbarui `src/lib/marcom/pipelineEngine.ts` untuk mengenali status `REVISION` dalam `normalizeMouStatus`.
+     - Menjaga invarian kesehatan pipeline: `isHealthy` tetap `false` saat status `REVISION`, dan materi promosi permanen yang belum memiliki MoU disetujui otomatis ditandai sebagai `isBlockedItem` (Bottleneck POSM).
+     - Menambahkan badge oranye dengan ikon `RotateCcw` ("Perlu Revisi" dan "Revisi") pada `PipelineMatrixTable.tsx` dan `PipelineCockpitCardList.tsx`.
+     - Menambahkan unit test pipeline engine pada `src/lib/marcom/pipelineEngine.test.ts` (10/10 passed).
+   - **MousView UI Multi-File & In-Place Revision Controls:**
+     - `mouSortingHelpers.ts`: Menambahkan bobot urutan operasional `REVISION: 3`.
+     - `mouColumns.tsx`: Menambahkan styling status `REVISION` (oranye), indikator jumlah berkas tambahan (`+N`), dan state guard tooltip pada tombol quick approve jika dokumen belum diunggah.
+     - `MousView.tsx`: Menambahkan opsi filter chip "Revision" pada tab status.
+     - `MouExpandedRow.tsx` & `MouDetailDrawer.tsx`: Menambahkan kontrol alur revisi in-place: tombol "Minta Revisi", "Tolak", "Submit Ulang", dan "Kembalikan ke Draft", serta disable guard bertooltip pada tombol approval jika berkas belum diunggah.
+     - `MouFormModal.tsx`: Mendukung multi-file upload (`<input multiple accept="application/pdf,image/*">`), proses upload paralel via Supabase Storage, deck attachment list per berkas dengan tombol hapus individual, dan tombol "+ Tambah Berkas / Lembar Tambahan".
+     - `MouDocumentViewerModal.tsx`: Mendukung paginasi multi-lembar (*"Berkas X dari Y"*), tombol navigasi Prev/Next, dot indicator interaktif, serta keyboard shortcut panah kiri/kanan.
+   - **Seed Fixtures & Non-Negotiable Gates:**
+     - Memperbarui fixture `prisma/seed.ts`: MoU `mou-hlth-004` dengan 3 lembar foto lampiran fisik dan menambahkan MoU `mou-rev-007` berstatus `REVISION`.
+     - Menjalankan seed ulang dengan sukses (`npx tsx prisma/seed.ts`).
+     - `npm run drift:check` ✅ (78/78 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm test` ✅ (881/881 tests passed across 153 test suites, 0 failures).
+
+2. **Perencanaan Arsitektur MoU Multi-Document Upload, Mandatory Approval Guard & Revision Lifecycle (ADR-0051 — Planning Complete):**
    - **Discovery & Analisis Akar Masalah:**
      - Mengidentifikasi celah tata kelola di mana status MoU dapat disetujui (`APPROVED`) atau diselesaikan (`DONE`) tanpa adanya dokumen fisik/digital kontrak yang sah.
      - Mengidentifikasi batasan format lampiran berkas tunggal yang memaksa staf di lapangan menggabungkan foto kamera smartphone secara manual menjadi PDF sebelum mengunggah.

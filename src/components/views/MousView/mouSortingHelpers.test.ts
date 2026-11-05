@@ -6,15 +6,16 @@ import type { MouStatus } from "@/types";
 test("MOU_STATUS_ORDER prioritizes workflow lifecycle", () => {
   assert.equal(MOU_STATUS_ORDER["DRAFT"], 1);
   assert.equal(MOU_STATUS_ORDER["SUBMITTED"], 2);
-  assert.equal(MOU_STATUS_ORDER["APPROVED"], 3);
-  assert.equal(MOU_STATUS_ORDER["DONE"], 4);
-  assert.equal(MOU_STATUS_ORDER["REJECTED"], 5);
+  assert.equal(MOU_STATUS_ORDER["REVISION"], 3);
+  assert.equal(MOU_STATUS_ORDER["APPROVED"], 4);
+  assert.equal(MOU_STATUS_ORDER["DONE"], 5);
+  assert.equal(MOU_STATUS_ORDER["REJECTED"], 6);
 });
 
 test("compareMouStatus sorts statuses by operational lifecycle, not alphabetically", () => {
-  const statuses: MouStatus[] = ["REJECTED", "APPROVED", "DRAFT", "DONE", "SUBMITTED"];
+  const statuses: MouStatus[] = ["REJECTED", "APPROVED", "DRAFT", "DONE", "SUBMITTED", "REVISION"];
   statuses.sort(compareMouStatus);
-  assert.deepEqual(statuses, ["DRAFT", "SUBMITTED", "APPROVED", "DONE", "REJECTED"]);
+  assert.deepEqual(statuses, ["DRAFT", "SUBMITTED", "REVISION", "APPROVED", "DONE", "REJECTED"]);
 });
 
 test("MOU_SEARCH_KEYS includes critical operational search fields", () => {

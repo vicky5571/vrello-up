@@ -8,18 +8,21 @@ export type { MouStatus };
 export const MOU_STATUSES: readonly MouStatus[] = [
   "DRAFT",
   "SUBMITTED",
+  "REVISION",
   "APPROVED",
   "REJECTED",
   "DONE",
 ];
 
 // Reconciled transitions with revision loop:
-// - SUBMITTED can be APPROVED, REJECTED, or pulled back to DRAFT for corrections
+// - SUBMITTED can be APPROVED, REVISION, REJECTED, or pulled back to DRAFT for corrections
+// - REVISION can transition back to SUBMITTED or DRAFT
 // - REJECTED can transition back to DRAFT so field staff can amend documents/details and resubmit
 // - DONE is terminal
 const ALLOWED_TRANSITIONS: Record<MouStatus, readonly MouStatus[]> = {
   DRAFT: ["SUBMITTED"],
-  SUBMITTED: ["APPROVED", "REJECTED", "DRAFT"],
+  SUBMITTED: ["APPROVED", "REVISION", "REJECTED", "DRAFT"],
+  REVISION: ["SUBMITTED", "DRAFT"],
   APPROVED: ["DONE"],
   REJECTED: ["DRAFT"],
   DONE: [],

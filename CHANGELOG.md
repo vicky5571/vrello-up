@@ -6,6 +6,20 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-06]
 
+- `feat(mou)`: MoU multi-document upload, mandatory approval guard, and revision lifecycle
+  - Added `REVISION` to `MouStatus` enum and `docPaths String[] @default([])` to `Mou` in Prisma schema & SSOT domain types (`src/types/index.ts`)
+  - Updated state machine (`mouMachine.ts`): allowed `SUBMITTED -> APPROVED | REVISION | REJECTED | DRAFT`, `REVISION -> SUBMITTED | DRAFT`, and `REJECTED -> DRAFT`
+  - Added fail-closed mandatory document guard in `PATCH /api/marcom/mous/[id]`: rejects approvals (`APPROVED` or `DONE`) without document proof with HTTP 422
+  - Multi-file upload support with attachment deck and individual remove buttons in `MouFormModal.tsx`
+  - Multi-sheet pager modal viewer (*"Berkas X dari Y"*) with previous/next navigation and keyboard arrows in `MouDocumentViewerModal.tsx`
+  - Integrated in-place revision lifecycle actions (Minta Revisi, Submit Ulang, Kembalikan ke Draft) and disabled tooltips on unapproved buttons in `MouExpandedRow.tsx` and `MouDetailDrawer.tsx`
+  - Elevated Pipeline View and Cockpit with `RotateCcw` orange badge ("Perlu Revisi" / "Revisi") and pipelineEngine strict unapproved bottleneck detection
+  - Updated deterministic seed fixtures in `prisma/seed.ts` with multi-page demonstration (`mou-hlth-004`) and revision status (`mou-rev-007`)
+  - Spec: `docs/superpowers/specs/2026-11-06-mou-multi-document-upload-mandatory-approval-guard-and-revision-lifecycle-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-mou-multi-document-upload-mandatory-approval-guard-and-revision-lifecycle.md`
+  - Refs: `docs/adr/0051-mou-multi-document-upload-mandatory-approval-guard-and-revision-lifecycle.md` (ADR-0051)
+  - Gates: `npm test` 881/881 passed across 153 suites (0 failures); `npm run build:check` 0 errors; `npm run drift:check` clean (78/78 specs paired)
+
 - `feat(inventory)`: Warehouse role and return inspection compensation workflow
   - Added `WAREHOUSE` to `DbUserRole` and `UserRole` SSOT union with CUD authority over inventory and zero-write in other modules
   - Enforced Four-Eyes Principle: revoked `PROCESS_RETURN` and `MANAGE_INVENTORY` permissions from `staff`

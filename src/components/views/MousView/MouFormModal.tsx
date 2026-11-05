@@ -101,20 +101,74 @@ export function MouFormModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const currentDocs = useMemo(() => {
+    const list: string[] = [];
+    if (Array.isArray(modalMou.docPaths)) {
+      for (const p of modalMou.docPaths) {
+        if (typeof p === "string" && p.trim()) list.push(p.trim());
+      }
+    }
+    if (
+      modalMou.docPath &&
+      typeof modalMou.docPath === "string" &&
+      modalMou.docPath.trim() &&
+      !list.includes(modalMou.docPath.trim())
+    ) {
+      list.unshift(modalMou.docPath.trim());
+    }
+    return list;
+  }, [modalMou.docPath, modalMou.docPaths]);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawFile = e.target.files?.[0];
-    if (!rawFile || !modalMou) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0 || !modalMou) return;
     setIsUploading(true);
     try {
-      const filePath = await uploadMouDocument(rawFile, modalMou.id || "new");
-      setModalMou((prev) => ({ ...prev, docPath: filePath }));
-      toast.success("Document uploaded successfully");
+      const uploadedPaths = await Promise.all(
+        files.map((file) => uploadMouDocument(file, modalMou.id || "new"))
+      );
+      setModalMou((prev) => {
+        const existingDocs = Array.isArray(prev?.docPaths)
+          ? [...prev.docPaths]
+          : prev?.docPath
+          ? [prev.docPath]
+          : [];
+        const nextDocs = [...existingDocs, ...uploadedPaths].filter(
+          (p, idx, arr) => p && arr.indexOf(p) === idx
+        );
+        return {
+          ...prev,
+          docPaths: nextDocs,
+          docPath: nextDocs[0] || "",
+        };
+      });
+      toast.success(
+        files.length === 1
+          ? "Document uploaded successfully"
+          : `${files.length} documents uploaded successfully`
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  const handleRemoveDoc = (indexToRemove: number) => {
+    setModalMou((prev) => {
+      const existingDocs = Array.isArray(prev?.docPaths)
+        ? [...prev.docPaths]
+        : prev?.docPath
+        ? [prev.docPath]
+        : [];
+      const nextDocs = existingDocs.filter((_, idx) => idx !== indexToRemove);
+      return {
+        ...prev,
+        docPaths: nextDocs,
+        docPath: nextDocs[0] || "",
+      };
+    });
   };
 
   const handleSaveMou = async (e: React.FormEvent) => {
@@ -130,7 +184,6 @@ export function MouFormModal({
       endDate,
       picName,
       picPhone,
-      docPath,
       compensationValue,
       notes,
     } = modalMou;
@@ -147,6 +200,7 @@ export function MouFormModal({
     setIsSaving(true);
     try {
       const isEdit = Boolean(id);
+      const primaryDoc = currentDocs[0] || "";
       const savedMou = await saveMou(
         {
           branchId,
@@ -158,7 +212,8 @@ export function MouFormModal({
           endDate: endDate || undefined,
           picName: picName || "",
           picPhone: picPhone || "",
-          docPath: docPath || "",
+          docPath: primaryDoc,
+          docPaths: currentDocs,
           compensationValue:
             compensationValue != null ? Math.max(0, Number(compensationValue)) : 0,
           notes: notes || "",
@@ -517,79 +572,108 @@ export function MouFormModal({
               className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-fuchsia-500"
             />
           </div>
-          {/* Dokumen MOU (Supabase Storage) */}
+          {/* Dokumen MOU (Supabase Storage Multi-Document) */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Dokumen MOU (Supabase Storage)
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Dokumen MOU (Multi-Berkas / Lembar)
+              </label>
+              {currentDocs.length > 0 && (
+                <span className="text-[11px] font-medium text-slate-500">
+                  {currentDocs.length} berkas terlampir
+                </span>
+              )}
+            </div>
             <input
               ref={fileInputRef}
               type="file"
+              multiple
               accept="application/pdf,image/*"
               onChange={handleFileUpload}
               disabled={isUploading}
               className="hidden"
             />
 
-            {modalMou.docPath ? (
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center shrink-0 border border-fuchsia-200/50">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-                      {extractCleanFilename(modalMou.docPath) || "Dokumen MOU Terunggah"}
-                    </p>
-                    <span className="text-[10px] text-fuchsia-600 dark:text-fuchsia-400 font-medium">
-                      Tersimpan di Supabase Storage
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {onTestPreview && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onTestPreview({
-                          id: modalMou.id || "preview",
-                          branchId: modalMou.branchId || "",
-                          partnerName: modalMou.partnerName || "Pratinjau Dokumen",
-                          mouType: modalMou.mouType || "Compensation",
-                          outletName: modalMou.outletName || "",
-                          submissionDate: null,
-                          startDate: null,
-                          endDate: null,
-                          status: "DRAFT",
-                          picName: "",
-                          picPhone: "",
-                          docPath: modalMou.docPath || "",
-                          compensationValue: 0,
-                          notes: "",
-                        } as MarcomMou)
-                      }
-                      className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 rounded-lg cursor-pointer transition-colors"
+            {currentDocs.length > 0 ? (
+              <div className="space-y-2">
+                <div className="space-y-1.5 max-h-44 overflow-y-auto pr-0.5">
+                  {currentDocs.map((doc, idx) => (
+                    <div
+                      key={`${doc}-${idx}`}
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700"
                     >
-                      Pratinjau
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="px-2.5 py-1 text-xs font-semibold text-fuchsia-600 hover:bg-fuchsia-50 rounded-lg cursor-pointer transition-colors disabled:opacity-50"
-                  >
-                    Ganti
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setModalMou({ ...modalMou, docPath: "" })}
-                    className="p-1 text-slate-400 hover:text-rose-500 rounded-lg cursor-pointer transition-colors"
-                    title="Hapus dokumen"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center shrink-0 border border-fuchsia-200/50">
+                          <FileText className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                            {extractCleanFilename(doc) || `Dokumen MOU #${idx + 1}`}
+                          </p>
+                          <span className="text-[10px] text-fuchsia-600 dark:text-fuchsia-400 font-medium">
+                            Berkas {idx + 1}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {onTestPreview && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onTestPreview({
+                                id: modalMou.id || "preview",
+                                branchId: modalMou.branchId || "",
+                                partnerName: modalMou.partnerName || "Pratinjau Dokumen",
+                                mouType: modalMou.mouType || "Compensation",
+                                outletName: modalMou.outletName || "",
+                                submissionDate: null,
+                                startDate: null,
+                                endDate: null,
+                                status: "DRAFT",
+                                picName: "",
+                                picPhone: "",
+                                docPath: doc,
+                                docPaths: currentDocs,
+                                compensationValue: 0,
+                                notes: "",
+                              } as MarcomMou)
+                            }
+                            className="px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 rounded-md cursor-pointer transition-colors"
+                          >
+                            Lihat
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDoc(idx)}
+                          className="p-1 text-slate-400 hover:text-rose-500 rounded-md cursor-pointer transition-colors"
+                          title="Hapus berkas ini"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-fuchsia-500 text-xs font-semibold text-fuchsia-600 hover:bg-fuchsia-50/20 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isUploading ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 text-fuchsia-600 animate-spin" />
+                      <span>Mengunggah dokumen...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-3.5 h-3.5 text-fuchsia-600" />
+                      <span>+ Tambah Berkas / Lembar Tambahan</span>
+                    </>
+                  )}
+                </button>
               </div>
             ) : (
               <button
@@ -606,7 +690,7 @@ export function MouFormModal({
                 ) : (
                   <>
                     <Upload className="w-4 h-4 text-fuchsia-600" />
-                    <span>Upload Dokumen MOU (PDF atau Gambar, maks 25MB)</span>
+                    <span>Upload Dokumen MOU (Pilih satu/banyak PDF atau Foto, maks 25MB)</span>
                   </>
                 )}
               </button>

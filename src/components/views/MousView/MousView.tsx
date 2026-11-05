@@ -34,6 +34,7 @@ const MOU_STATUS_CHIPS: { label: string; value: string }[] = [
   { label: "All", value: "ALL" },
   { label: "Draft", value: "DRAFT" },
   { label: "Submitted", value: "SUBMITTED" },
+  { label: "Revision", value: "REVISION" },
   { label: "Approved", value: "APPROVED" },
   { label: "Done", value: "DONE" },
   { label: "Rejected", value: "REJECTED" },
@@ -350,6 +351,7 @@ export function MousView() {
         isOpen={Boolean(viewingDocMou)}
         onClose={() => setViewingDocMou(null)}
         docPath={viewingDocMou?.docPath}
+        docPaths={viewingDocMou?.docPaths}
         partnerName={viewingDocMou?.partnerName}
         mouType={viewingDocMou?.mouType}
         outletName={viewingDocMou?.outletName}

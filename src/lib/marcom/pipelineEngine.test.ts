@@ -420,3 +420,28 @@ test("pipelineEngine: preserves DONE as terminal MoU status and flags unrecogniz
   assert.equal(rowCorrupt.mouSummary.isHealthy, false);
 });
 
+test("pipelineEngine: handles REVISION status correctly with isHealthy=false and bottleneck flagging on permanent POSM", () => {
+  const outlets = [
+    {
+      id: "outlet-rev",
+      code: "OUT-REV",
+      name: "Toko Perlu Revisi",
+      branch: { id: "b1", name: "Solo" },
+      mous: [
+        { id: "mou-rev", status: "REVISION", compensationValue: 4000000 },
+      ],
+      placements: [
+        { id: "plc-p", status: "PENDING", cost: 1500000, material: { name: "Signboard", type: "PERMANENT" } },
+      ],
+    },
+  ];
+
+  const result = buildOutletPipelineRows(outlets, [], []);
+  assert.equal(result.length, 1);
+  const row = result[0];
+  assert.equal(row.mouSummary.latestStatus, "REVISION");
+  assert.equal(row.mouSummary.isHealthy, false);
+  // Permanent placement is blocked because there is no APPROVED MoU
+  assert.equal(row.placementSummary.hasBlockedItems, true);
+});
+

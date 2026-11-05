@@ -308,6 +308,7 @@ function PlacementFormModalContent({
         isOpen={Boolean(viewingDocMou)}
         onClose={() => setViewingDocMou(null)}
         docPath={viewingDocMou?.docPath}
+        docPaths={viewingDocMou?.docPaths}
         partnerName={viewingDocMou?.partnerName}
         mouType={viewingDocMou?.mouType}
         outletName={selOutlet?.name || placement.outlet?.name}

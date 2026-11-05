@@ -11,6 +11,7 @@ import {
   Navigation,
   CheckCircle2,
   Clock,
+  RotateCcw,
 } from "lucide-react";
 import { cn, formatIDR, formatDate } from "@/lib/utils";
 import { buildGoogleMapsUrl } from "@/lib/marcom/locationUtils";
@@ -39,6 +40,13 @@ function renderMouBadge(status?: string) {
         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-700 dark:text-blue-400">
           <Clock className="w-2.5 h-2.5" />
           Review
+        </span>
+      );
+    case "REVISION":
+      return (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-500/10 text-orange-700 dark:text-orange-400">
+          <RotateCcw className="w-2.5 h-2.5 text-orange-500" />
+          Revisi
         </span>
       );
     case "DRAFT":

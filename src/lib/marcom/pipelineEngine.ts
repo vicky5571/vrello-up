@@ -61,14 +61,15 @@ export interface PipelineContentInput extends Omit<Partial<ContentPost>, "platfo
 
 /**
  * Normalizes MouStatus into the pipeline status union:
- * "APPROVED" | "DONE" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE" | "UNKNOWN"
+ * "APPROVED" | "DONE" | "SUBMITTED" | "REVISION" | "DRAFT" | "REJECTED" | "NONE" | "UNKNOWN"
  */
-function normalizeMouStatus(status?: string | null): "APPROVED" | "DONE" | "SUBMITTED" | "DRAFT" | "REJECTED" | "NONE" | "UNKNOWN" {
+function normalizeMouStatus(status?: string | null): "APPROVED" | "DONE" | "SUBMITTED" | "REVISION" | "DRAFT" | "REJECTED" | "NONE" | "UNKNOWN" {
   if (!status) return "NONE";
   const upper = status.trim().toUpperCase();
   if (upper === "APPROVED") return "APPROVED";
   if (upper === "DONE") return "DONE";
   if (upper === "SUBMITTED") return "SUBMITTED";
+  if (upper === "REVISION") return "REVISION";
   if (upper === "REJECTED") return "REJECTED";
   if (upper === "DRAFT") return "DRAFT";
 

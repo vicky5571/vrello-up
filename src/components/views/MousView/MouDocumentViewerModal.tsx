@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   X,
   Download,
@@ -9,7 +9,10 @@ import {
   AlertCircle,
   FileQuestion,
   ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { parseMouDocumentSource } from "./mouDocumentHelpers";
 import { AppImage } from "@/components/ui/AppImage";
 
@@ -17,6 +20,7 @@ export interface MouDocumentViewerModalProps {
   isOpen: boolean;
   onClose: () => void;
   docPath: string | null | undefined;
+  docPaths?: string[] | null;
   title?: string;
   partnerName?: string;
   mouType?: string;
@@ -28,13 +32,41 @@ export function MouDocumentViewerModal({
   isOpen,
   onClose,
   docPath,
+  docPaths,
   title,
   partnerName,
   mouType,
   outletName,
   branchName,
 }: MouDocumentViewerModalProps) {
-  const parsed = parseMouDocumentSource(docPath, partnerName || title);
+  const docs = useMemo(() => {
+    const list: string[] = [];
+    if (Array.isArray(docPaths)) {
+      for (const p of docPaths) {
+        if (typeof p === "string" && p.trim()) list.push(p.trim());
+      }
+    }
+    if (
+      docPath &&
+      typeof docPath === "string" &&
+      docPath.trim() &&
+      !list.includes(docPath.trim())
+    ) {
+      list.unshift(docPath.trim());
+    }
+    return list;
+  }, [docPath, docPaths]);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIndex(0);
+    }
+  }, [isOpen, docs.length]);
+
+  const activeDoc = docs[currentIndex] || docs[0] || docPath;
+  const parsed = parseMouDocumentSource(activeDoc, partnerName || title);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -42,12 +74,18 @@ export function MouDocumentViewerModal({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
+      } else if (e.key === "ArrowLeft") {
+        setCurrentIndex((prev) => Math.max(0, prev - 1));
+      } else if (e.key === "ArrowRight") {
+        setCurrentIndex((prev) =>
+          Math.min(Math.max(0, docs.length - 1), prev + 1)
+        );
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, docs.length]);
 
   if (!isOpen) return null;
 
@@ -110,6 +148,35 @@ export function MouDocumentViewerModal({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {docs.length > 1 && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+                  disabled={currentIndex === 0}
+                  className="p-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  title="Berkas Sebelumnya (Arrow Left)"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 px-1 text-center select-none whitespace-nowrap">
+                  Berkas {currentIndex + 1} dari {docs.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentIndex((prev) =>
+                      Math.min(docs.length - 1, prev + 1)
+                    )
+                  }
+                  disabled={currentIndex === docs.length - 1}
+                  className="p-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  title="Berkas Berikutnya (Arrow Right)"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
             {parsed.type !== "EMPTY" && (
               <a
                 href={parsed.downloadUrl}
@@ -120,7 +187,7 @@ export function MouDocumentViewerModal({
                 title="Unduh berkas asli ke komputer/perangkat"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Unduh Berkas</span>
+                <span className="hidden sm:inline">Unduh</span>
               </a>
             )}
             <button
@@ -187,18 +254,34 @@ export function MouDocumentViewerModal({
         </div>
 
         {/* Footer */}
-        <div className="p-3 sm:p-3.5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900">
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[60%]">
-            {parsed.rawPath ? (
-              <span className="font-mono truncate">{parsed.rawPath}</span>
-            ) : (
-              <span>Tidak ada URL berkas</span>
+        <div className="p-3 sm:p-3.5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 bg-white dark:bg-slate-900">
+          <div className="flex items-center gap-3 truncate max-w-[60%]">
+            {docs.length > 1 && (
+              <div className="flex items-center gap-1 shrink-0">
+                {docs.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setCurrentIndex(i)}
+                    className={cn(
+                      "h-2 rounded-full transition-all cursor-pointer",
+                      i === currentIndex
+                        ? "w-5 bg-fuchsia-600"
+                        : "w-2 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400"
+                    )}
+                    title={`Lihat berkas ke-${i + 1}`}
+                  />
+                ))}
+              </div>
             )}
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-mono">
+              {parsed.rawPath || "Tidak ada URL berkas"}
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer shrink-0"
           >
             Tutup
           </button>

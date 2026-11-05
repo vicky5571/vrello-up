@@ -407,6 +407,7 @@ async function seedMous() {
       picName: "Agus Prasetyo",
       picPhone: "+62 813-9876-5432",
       docPath: "https://storage.marcom-internal.corp/mou-documents/PKS_Warung_Berkah_Abadi_2025.pdf",
+      docPaths: ["https://storage.marcom-internal.corp/mou-documents/PKS_Warung_Berkah_Abadi_2025.pdf"],
       compensationValue: 24000000,
       notes: "Kontrak telah habis masa berlakunya 45 hari lalu. Menunggu pengajuan perpanjangan sewa fascia toko.",
     },
@@ -425,6 +426,7 @@ async function seedMous() {
       picName: "Dimas Anggara",
       picPhone: "+62 813-1122-3344",
       docPath: "https://storage.marcom-internal.corp/mou-documents/MOU_Campus_UGM_Canopy_2026.pdf",
+      docPaths: ["https://storage.marcom-internal.corp/mou-documents/MOU_Campus_UGM_Canopy_2026.pdf"],
       compensationValue: 36000000,
       notes: "Sisa masa berlaku kontrak kurang dari 14 hari. Perlu follow up addendum perpanjangan display kanopi.",
     },
@@ -443,10 +445,11 @@ async function seedMous() {
       picName: "Wayan Sudarma",
       picPhone: "+62 821-4433-2211",
       docPath: "https://storage.marcom-internal.corp/mou-documents/PKS_Dewata_Selular_Flagship_2026.pdf",
+      docPaths: ["https://storage.marcom-internal.corp/mou-documents/PKS_Dewata_Selular_Flagship_2026.pdf"],
       compensationValue: 48000000,
       notes: "Dokumen MoU tertahan di meja legal regional selama lebih dari 60 hari karena revisi klausul termin pembayaran.",
     },
-    // 4. Healthy Flagship Multi-Year Contract
+    // 4. Healthy Flagship Multi-Year Contract (Multi-Sheet Demonstration)
     {
       id: "mou-hlth-004",
       branchId: "branch-3",
@@ -460,9 +463,14 @@ async function seedMous() {
       status: "APPROVED" as MouStatus,
       picName: "Rina Wijaya",
       picPhone: "+62 812-7788-9900",
-      docPath: "https://storage.marcom-internal.corp/mou-documents/MOU_Solo_Megah_Branding_2026.pdf",
+      docPath: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=1000&auto=format&fit=crop&q=80",
+      docPaths: [
+        "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=1000&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=1000&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1000&auto=format&fit=crop&q=80",
+      ],
       compensationValue: 150000000, // High-value IDR 150 Jt
-      notes: "Kontrak kemitraan flagship 1 tahun penuh dengan hak eksklusif branding neon box dan shopblind.",
+      notes: "Kontrak kemitraan flagship 1 tahun penuh dengan hak eksklusif branding neon box dan shopblind. Dilengkapi 3 lembar lampiran fisik.",
     },
     // 5. Rejected MoU with Finance Disapproval Notes
     {
@@ -479,6 +487,7 @@ async function seedMous() {
       picName: "Budi Santoso",
       picPhone: "+62 812-3456-7890",
       docPath: "",
+      docPaths: [],
       compensationValue: 12000000,
       notes: "Ditolak oleh Manager Keuangan: Nilai kompensasi melebihi batas plafon regional untuk material display sekunder.",
     },
@@ -497,8 +506,30 @@ async function seedMous() {
       picName: "Citra Kirana",
       picPhone: "+62 815-1234-5678",
       docPath: "",
+      docPaths: [],
       compensationValue: 0,
       notes: "Draf awal perjanjian sedang disusun oleh tim operasional Magelang.",
+    },
+    // 7. Revision MoU (Under Review, Needs Correction)
+    {
+      id: "mou-rev-007",
+      branchId: "branch-2",
+      outletId: "outlet-smg-002",
+      outletName: "Warung Berkah Abadi Ponsel",
+      partnerName: "H. Sudirman Santoso (Perpanjangan)",
+      mouType: "EXCLUSIVE_BRANDING",
+      submissionDate: daysAgo(12),
+      startDate: null,
+      endDate: null,
+      status: "REVISION" as MouStatus,
+      picName: "Agus Prasetyo",
+      picPhone: "+62 813-9876-5432",
+      docPath: "https://storage.marcom-internal.corp/mou-documents/Draft_Addendum_Warung_Berkah_2026.pdf",
+      docPaths: [
+        "https://storage.marcom-internal.corp/mou-documents/Draft_Addendum_Warung_Berkah_2026.pdf",
+      ],
+      compensationValue: 28000000,
+      notes: "Perlu revisi klausul termin pembayaran dari 3 termin menjadi 2 termin sesuai arahan PIC Cabang.",
     },
   ];
 

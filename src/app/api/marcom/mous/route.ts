@@ -59,12 +59,39 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
 
-  const { branchId, outletId, outletName, partnerName, mouType, submissionDate, startDate, endDate, status, picName, picPhone, docPath, compensationValue, notes } = body ?? {};
+  const {
+    branchId,
+    outletId,
+    outletName,
+    partnerName,
+    mouType,
+    submissionDate,
+    startDate,
+    endDate,
+    status,
+    picName,
+    picPhone,
+    docPath,
+    docPaths,
+    compensationValue,
+    notes,
+  } = body ?? {};
   if (!branchId || !partnerName || !mouType) {
     return NextResponse.json({ error: "Missing required fields: branchId, partnerName, mouType" }, { status: 400 });
   }
   if (status !== undefined && !(CREATABLE_STATUSES as readonly string[]).includes(status)) {
     return NextResponse.json({ error: "Invalid status: only DRAFT or SUBMITTED can be set on creation" }, { status: 400 });
+  }
+
+  const cleanDocPaths: string[] = Array.isArray(docPaths)
+    ? docPaths.filter((p: unknown) => typeof p === "string" && p.trim() !== "").map((p: string) => p.trim())
+    : [];
+  const primaryDocPath =
+    typeof docPath === "string" && docPath.trim()
+      ? docPath.trim()
+      : cleanDocPaths[0] || "";
+  if (primaryDocPath && !cleanDocPaths.includes(primaryDocPath)) {
+    cleanDocPaths.unshift(primaryDocPath);
   }
 
   const targetOutletId = typeof outletId === "string" && outletId.trim() && outletId !== "NONE" ? outletId.trim() : null;
@@ -84,7 +111,8 @@ export async function POST(request: Request) {
         status,
         picName: picName ?? "",
         picPhone: picPhone ?? "",
-        docPath,
+        docPath: primaryDocPath,
+        docPaths: cleanDocPaths,
         compensationValue,
         notes,
       },

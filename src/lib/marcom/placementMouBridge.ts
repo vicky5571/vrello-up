@@ -10,6 +10,7 @@ export interface MouSummaryInfo {
   mouType?: string;
   compensationValue?: number;
   docPath?: string | null;
+  docPaths?: string[] | null;
 }
 
 export interface OutletSearchCriteria {
