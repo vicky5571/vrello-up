@@ -1,6 +1,6 @@
 # Plan: Hard Browser Redirect on User Sign-Out
 
-- **Status:** APPROVED
+- **Status:** IMPLEMENTATION COMPLETE
 - **Date:** 2026-11-05
 - **Spec:** `docs/superpowers/specs/2026-11-05-hard-browser-redirect-on-signout-design.md`
 - **Refs:** `docs/adr/0048-hard-browser-redirect-on-signout.md`
@@ -27,15 +27,15 @@ Resolve the sign-out redirection defect in `UserMenuDropdown.tsx` by replacing s
 ## 3. Phased Implementation Roadmap
 
 ### Phase 1: Test Scaffold & Structural Invariants (TDD)
-- [ ] Create `src/components/layout/userMenuSignOut.test.ts`.
-- [ ] Implement test cases:
+- [x] Create `src/components/layout/userMenuSignOut.test.ts`.
+- [x] Implement test cases:
   - `uses hard browser redirect to /login on sign-out`
   - `does not use router.push for sign-out navigation`
   - `renders Loader2 spinning indicator during active signout`
-- [ ] Run test: `node --test src/components/layout/userMenuSignOut.test.ts` (verifying contract expectations).
+- [x] Run test: `node --test src/components/layout/userMenuSignOut.test.ts` (verifying contract expectations).
 
 ### Phase 2: Component Hardening in `UserMenuDropdown.tsx`
-- [ ] In `src/components/layout/UserMenuDropdown.tsx`:
+- [x] In `src/components/layout/UserMenuDropdown.tsx`:
   - Import `Loader2` from `'lucide-react'`.
   - Remove `useRouter` import and `const router = useRouter();`.
   - Declare state: `const [isLoggingOut, setIsLoggingOut] = useState(false);`.
@@ -60,12 +60,12 @@ Resolve the sign-out redirection defect in `UserMenuDropdown.tsx` by replacing s
     - Render `"Keluar..."` when `isLoggingOut` is true, otherwise `"Keluar (Sign Out)"`.
 
 ### Phase 3: Non-Negotiable Verification & Handover Documentation
-- [ ] Run full test suite: `npm test` across all 152 test suites (0 failures required).
-- [ ] Run build check: `npm run build:check` (`tsc --noEmit`, 0 errors required).
-- [ ] Run drift check: `npm run drift:check` (verify 75/75 spec-plan pairs and invariants).
-- [ ] Create execution handover guide: `docs/handover-hard-browser-redirect-on-signout.md`.
-- [ ] Update `docs/SESSION_STATE.md`.
-- [ ] Commit planning artifacts with standard git convention.
+- [x] Run full test suite: `npm test` across all 152 test suites (0 failures required).
+- [x] Run build check: `npm run build:check` (`tsc --noEmit`, 0 errors required).
+- [x] Run drift check: `npm run drift:check` (verify 75/75 spec-plan pairs and invariants).
+- [x] Create execution handover guide: `docs/handover-hard-browser-redirect-on-signout.md`.
+- [x] Update `docs/SESSION_STATE.md`.
+- [x] Commit planning artifacts with standard git convention.
 
 ---
 

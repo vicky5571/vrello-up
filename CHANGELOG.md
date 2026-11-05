@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `fix(auth)`: Hard browser redirect to login page on sign-out
+  - Replaced Next.js soft navigation (`router.push('/login')` + `router.refresh()`) with `window.location.href = "/login"` in `UserMenuDropdown.tsx`
+  - Flushed client-side in-memory Zustand and RSC caches, preventing fallback "Pengguna VIEWER" state on sign-out
+  - Added tactile `Loader2` spinning indicator and "Keluar..." label with click protection (`disabled`, `pointer-events-none`)
+  - Added automated unit test contract in `src/components/layout/userMenuSignOut.test.ts` (4/4 passed)
+  - Spec: `docs/superpowers/specs/2026-11-05-hard-browser-redirect-on-signout-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-hard-browser-redirect-on-signout.md`
+  - Refs: `docs/adr/0048-hard-browser-redirect-on-signout.md` (ADR-0048)
+  - Gates: `npm test` 860/860 passed; `npm run build:check` 0 errors; `npm run drift:check` clean (75/75 specs paired)
+
 - `style(layout)`: Relocate export center button from top nav to more apps menu
   - Removed redundant Export Center download button from `src/components/layout/TopNav.tsx` to declutter the top bar
   - Removed unused `Download` icon import and `setExportCenterOpen` selector from `TopNav.tsx`

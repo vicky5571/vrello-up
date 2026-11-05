@@ -219,14 +219,14 @@ export function UserMenuDropdown({ onClose }: UserMenuDropdownProps) {
 
 ## 6. Acceptance Criteria Checklist
 
-- [ ] Clicking "Keluar (Sign Out)" triggers `handleSignOut`.
-- [ ] Button immediately renders spinning `Loader2` and text changes to "Keluar...".
-- [ ] Duplicate clicks are blocked via `disabled` and `pointer-events-none`.
-- [ ] Session cookies are deleted via `await signOut({ redirect: false })`.
-- [ ] Hard browser navigation `window.location.href = "/login"` runs, cleanly destroying memory/store caches.
-- [ ] The user is never left stuck on the dashboard as a fallback "Pengguna VIEWER".
-- [ ] `npm run drift:check` passes with 0 drift.
-- [ ] `npm test` passes with 0 failures across all 152 test suites.
-- [ ] `npm run build:check` compiles with 0 TypeScript errors.
+- [x] Clicking "Keluar (Sign Out)" triggers `handleSignOut`.
+- [x] Button immediately renders spinning `Loader2` and text changes to "Keluar...".
+- [x] Duplicate clicks are blocked via `disabled` and `pointer-events-none`.
+- [x] Session cookies are deleted via `await signOut({ redirect: false })`.
+- [x] Hard browser navigation `window.location.href = "/login"` runs, cleanly destroying memory/store caches.
+- [x] The user is never left stuck on the dashboard as a fallback "Pengguna VIEWER".
+- [x] `npm run drift:check` passes with 0 drift.
+- [x] `npm test` passes with 0 failures across all 152 test suites.
+- [x] `npm run build:check` compiles with 0 TypeScript errors.
 
 

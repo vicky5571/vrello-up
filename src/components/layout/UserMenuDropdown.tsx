@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { ShieldCheck, LogOut, User as UserIcon } from "lucide-react";
+import { ShieldCheck, LogOut, User as UserIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { getEffectiveProfile } from "./userProfileHelpers";
@@ -14,9 +13,9 @@ export interface UserMenuDropdownProps {
 }
 
 export function UserMenuDropdown({ onClose }: UserMenuDropdownProps) {
-  const router = useRouter();
   const { data: session } = useSession();
   const [imageError, setImageError] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
   const profile = getEffectiveProfile({ sessionUser: session?.user });
@@ -28,13 +27,14 @@ export function UserMenuDropdown({ onClose }: UserMenuDropdownProps) {
   };
 
   const handleSignOut = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
     try {
       await signOut({ redirect: false });
-      toast.success("Berhasil keluar dari akun.");
-      router.push("/login");
-      router.refresh();
-      onClose();
+      window.location.href = "/login";
     } catch {
+      setIsLoggingOut(false);
       toast.error("Gagal keluar. Silakan coba lagi.");
     }
   };
@@ -107,11 +107,18 @@ export function UserMenuDropdown({ onClose }: UserMenuDropdownProps) {
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-destructive hover:bg-destructive/10 font-medium text-xs transition-colors cursor-pointer"
+          disabled={isLoggingOut}
+          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-destructive hover:bg-destructive/10 font-medium text-xs transition-colors cursor-pointer ${
+            isLoggingOut ? "pointer-events-none opacity-70 cursor-wait" : ""
+          }`}
         >
           <div className="flex items-center gap-2">
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Keluar (Sign Out)</span>
+            {isLoggingOut ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0 text-destructive" />
+            ) : (
+              <LogOut className="w-3.5 h-3.5" />
+            )}
+            <span>{isLoggingOut ? "Keluar..." : "Keluar (Sign Out)"}</span>
           </div>
         </button>
       </div>
