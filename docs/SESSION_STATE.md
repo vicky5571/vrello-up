@@ -8,14 +8,30 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** MoU Multi-Document Upload, Mandatory Approval Guard, and Revision Lifecycle (ADR-0051) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Warehouse Role and Return Inspection Compensation Workflow (ADR-0050)  
+**Active Feature:** Inventory Compensation Settlement and Stock Restoration Workflow (ADR-0052) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Previous Feature:** MoU Multi-Document Upload, Mandatory Approval Guard, and Revision Lifecycle (ADR-0051)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Implementasi MoU Multi-Document Upload, Mandatory Approval Guard & Revision Lifecycle (ADR-0051 — Implementation Complete):**
+1. **Perencanaan Arsitektur Pelunasan Ganti Rugi Inventaris & Pemulihan Stok (ADR-0052 — Planning Complete):**
+   - **Analisis Kebutuhan Bisnis & Tata Kelola Operasional:**
+     - Mengidentifikasi celah siklus ganti rugi di mana liabilitas kerusakan/kehilangan inventaris tertahan pada status `PENDING_SETTLEMENT` tanpa alur atau tombol pelunasan.
+     - Merancang dua mode pelunasan dalam satu modal terpadu:
+       1. `CASH_TRANSFER`: Pembayaran tunai/transfer penuh; stok master inventaris tetap afkir (uang masuk kas perusahaan).
+       2. `ITEM_REPLACEMENT`: Penggantian unit fisik baru; transaksi atomik (`$transaction`) secara otomatis memulihkan `totalUnits` dan `availableUnits` pada `InventoryItem`.
+     - Menyediakan dukungan upload multi-berkas bukti pembayaran / serah terima barang (`settlementProofUrls: String[]`).
+     - Menegakkan *Four-Eyes Principle*: melarang staf peminjam melunasi liabilitasnya sendiri; membatasi wewenang mutasi pelunasan hanya untuk role `warehouse` dan `admin`.
+   - **Penyusunan Dokumen Perencanaan & Handover:**
+     - ADR: `docs/adr/0052-inventory-compensation-settlement-and-restoration-workflow.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-06-inventory-compensation-settlement-and-restoration-workflow-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-06-inventory-compensation-settlement-and-restoration-workflow.md` (APPROVED).
+     - Handover: `docs/handover-inventory-compensation-settlement-and-restoration-workflow.md` (READY FOR EXECUTION).
+   - **Non-Negotiable Gates:**
+     - `npm run drift:check` ✅ (79/79 spec-plan pairs valid, 0 drift).
+
+2. **Implementasi MoU Multi-Document Upload, Mandatory Approval Guard & Revision Lifecycle (ADR-0051 — Implementation Complete):**
    - **Database & SSOT Domain Entities:**
      - Menambahkan nilai `REVISION` pada enum `MouStatus` dan kolom array `docPaths String[] @default([])` pada model `Mou` di `prisma/schema.prisma` serta SSOT types `src/types/index.ts`.
      - Migrasi skema database Postgres via raw DDL SQL dan sinkronisasi client dengan `npx prisma generate`.
