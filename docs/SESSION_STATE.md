@@ -8,14 +8,26 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Centralize Outlet Approval to Super Admin Role (ADR-0046) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Revoke Outlet Creation Access from Staff Role (ADR-0045)  
+**Active Feature:** Relocate Export Center from TopNav to More Apps Menu (ADR-0047) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Previous Feature:** Centralize Outlet Approval to Super Admin Role (ADR-0046)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Sentralisasi Wewenang Persetujuan Outlet ke Super Admin (ADR-0046 — Implementation Complete):**
+1. **Relokasi Tombol Export Center dari TopNav ke Menu Pop-up More (ADR-0047 — Planning Complete):**
+   - **Analisis & Optimasi Tampilan Header**:
+     - Mendiagnosis kebutuhan eliminasi tombol redundan *Export Center* di bilah atas (*TopNav*) setelah utilitas tersebut terintegrasi di menu pop-up *More* (`MoreAppsMenu.tsx`).
+     - Menghemat ruang horizontal *TopNav* agar lebih lega bagi *Breadcrumbs*, *Command Palette*, *Notification Center*, *Theme Toggle*, dan *User Profile Avatar*.
+   - **Pembuatan Dokumen Perencanaan (Checkpoints 1–3 Terverifikasi):**
+     - ADR: `docs/adr/0047-relocate-export-center-to-more-apps-menu.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-05-relocate-export-center-to-more-apps-menu-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-05-relocate-export-center-to-more-apps-menu.md` (APPROVED).
+     - Handover: `docs/handover-relocate-export-center-to-more-apps-menu.md` (READY FOR EXECUTION).
+   - **Verifikasi Invarian & Drift:**
+     - `npm run drift:check` ✅ (74/74 spec-plan pairs valid, 0 drift).
+
+2. **Sentralisasi Wewenang Persetujuan Outlet ke Super Admin (ADR-0046 — Implementation Complete):**
    - **Pembaruan Guard RBAC Terpusat (`src/lib/marcom/guards.ts`):**
      - Menghapus izin `"APPROVE_OUTLET"` dari daftar perizinan `rolePermissions.supervisor`.
      - Menambahkan batasan `APPROVE_OUTLET` fail-closed bersama `MANAGE_MASTER_DATA` pada `hasScopedPermission`, memastikan hanya Super Admin (`role === "admin"`) yang dapat menyetujui outlet di tingkat sistem dan endpoint `PATCH /api/marcom/outlets/[id]/approval`.
