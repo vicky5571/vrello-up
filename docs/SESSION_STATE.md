@@ -8,14 +8,26 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Registration Branch Selection via Server-Rendered CustomDropdown (ADR-0043) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Comprehensive UX Polish and CustomDropdown Integration for BorrowRequestModal (ADR-0042)  
+**Active Feature:** Auth Page Transition Loading Feedback via React useTransition (ADR-0044) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Previous Feature:** Registration Branch Selection via Server-Rendered CustomDropdown (ADR-0043)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Pilihan Cabang pada Pendaftaran Akun via CustomDropdown (ADR-0043 — Implementation Complete):**
+1. **Perencanaan Indikator Loading Alih Halaman Auth via React useTransition (ADR-0044 — Planning Complete):**
+   - **Analisis & Pembatasan Arsitektur:**
+     - Mendiagnosis masalah UX hilangnya feedback visual saat beralih antara `/login` ("Daftar sekarang") dan `/register` ("Masuk sekarang").
+     - Memilih pendekatan native zero-dependency React 19 `useTransition` + Next.js 15 `useRouter` untuk state `isPending` instan (<16ms) tanpa library eksternal.
+   - **Pembuatan Seluruh Dokumen Perencanaan (Checkpoints 1–3 Terverifikasi):**
+     - ADR: `docs/adr/0044-auth-page-transition-loading-feedback.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-05-auth-page-transition-loading-feedback-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-05-auth-page-transition-loading-feedback.md` (APPROVED).
+     - Handover: `docs/handover-auth-page-transition-loading-feedback.md` (READY FOR EXECUTION).
+   - **Verifikasi Invarian & Drift:**
+     - `npm run drift:check` ✅ (71/71 spec-plan pairs valid, 0 drift).
+
+2. **Pilihan Cabang pada Pendaftaran Akun via CustomDropdown (ADR-0043 — Implementation Complete):**
    - **Pre-fetching Cabang Server-Side (RSC Zero-Waterfall):**
      - Memperbarui `src/app/(auth)/register/page.tsx` untuk melakukan query daftar cabang aktif langsung ke Prisma (`findMany` terurut abjad) dan mengopernya sebagai props ke `RegisterForm`.
    - **Integrasi `CustomDropdown` pada Formulir Registrasi:**
