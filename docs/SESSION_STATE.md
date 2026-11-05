@@ -15,7 +15,12 @@
 
 ## What Was Completed This Session
 
-1. **Indikator Loading Alih Halaman Auth via React useTransition (ADR-0044 — Implementation Complete):**
+1. **Eliminasi Banner Bottleneck Redundan pada PipelineView:**
+   - Menghapus banner peringatan bottleneck berulang (*"Terdapat N outlet mengalami hambatan pemasangan POSM permanen..."*) dari `src/components/views/PipelineView/PipelineView.tsx`.
+   - Menghemat ruang vertikal layar karena metrik dan tombol filter bottleneck telah tersedia secara elegan pada kartu ringkasan KPI (`KpiSummaryCards`) dan bilah filter (`PipelineFilterBar`).
+   - Verifikasi: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (855/855 tests passed).
+
+2. **Indikator Loading Alih Halaman Auth via React useTransition (ADR-0044 — Implementation Complete):**
    - **Komponen Atomik Reusable `AuthSwitchLink.tsx`:**
      - Dibuat komponen terpusat di `src/components/auth/AuthSwitchLink.tsx` memanfaatkan `useTransition` (React 19) dan `useRouter` (Next.js 15).
      - Menampilkan spinner `Loader2` berputar dan label transisi dinamis (*Membuka pendaftaran...* / *Membuka halaman masuk...*) seketika saat link diklik (<16ms).

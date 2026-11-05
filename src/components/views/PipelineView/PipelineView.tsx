@@ -193,32 +193,8 @@ export function PipelineView({ className }: PipelineViewProps) {
 
       {/* 2. Content Area */}
       <div className="p-4 sm:p-6 space-y-4 flex-1 min-h-0">
-        {/* Bottleneck Alert Banner if bottleneck exists */}
-      {kpiMetrics.bottleneckCount > 0 && (
-        <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-800 dark:text-rose-200 text-xs">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
-            <span>
-              Terdapat <strong>{kpiMetrics.bottleneckCount} outlet</strong> mengalami hambatan pemasangan POSM permanen tanpa MoU aktif atau terkendala kendala lapangan.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              setFilters((prev) => ({
-                ...prev,
-                bottleneckOnly: !prev.bottleneckOnly,
-              }))
-            }
-            className="shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer"
-          >
-            {filters.bottleneckOnly ? "Tampilkan Semua" : "Filter Bottleneck"}
-          </button>
-        </div>
-      )}
-
-      {/* Filter Bar */}
-      <PipelineFilterBar
+        {/* Filter Bar */}
+        <PipelineFilterBar
         filters={filters}
         onChange={setFilters}
         branches={branches}
