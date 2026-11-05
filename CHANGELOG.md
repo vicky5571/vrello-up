@@ -6,6 +6,12 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `fix(mous)`: Eliminate transparency on hovered sticky columns in MarcomTableShell
+  - Replaced semi-transparent background hover classes (`group-hover:bg-slate-50/80`, `dark:group-hover:bg-slate-800/40`) with 100% solid opaque backgrounds (`group-hover:bg-slate-50`, `dark:group-hover:bg-[#202124]`)
+  - Replaced semi-transparent selected row backgrounds with solid opaque teal fills to prevent horizontally scrolled content from bleeding through sticky columns
+  - Added test assertion in `src/components/views/MousView/mouColumns.test.ts`
+  - Refs: ADR-0030
+
 - `style(documents)`: Remove redundant preview eye icon button from document cards
   - Cleaned up footer action bar in `DocumentCardsView.tsx` by removing redundant `Eye` button
   - Preserved root card clickability opening document preview drawer

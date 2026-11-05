@@ -91,6 +91,11 @@ describe("mouColumns and MarcomTableShell sticky right configuration (ADR-0030)"
       "Body sticky cell must have solid background"
     );
     assert.ok(
+      tableShellContent.includes("group-hover:bg-slate-50 dark:group-hover:bg-[#202124]") &&
+      !tableShellContent.includes("group-hover:bg-slate-50/80"),
+      "Body sticky cell must have 100% opaque solid background on hover to prevent bleed-through"
+    );
+    assert.ok(
       tableShellContent.includes("shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)]"),
       "Sticky border must apply soft drop-shadow"
     );

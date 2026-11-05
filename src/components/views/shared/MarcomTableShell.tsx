@@ -553,8 +553,8 @@ export function MarcomTableShell<T extends object & { id: string }>({
                       aria-controls={renderExpanded ? `${entityName}-detail-${(row as any).original.id}` : undefined}
                       className={cn(
                         "group flex items-center px-4 py-2.5 transition-colors text-xs",
-                        hasRowAction && "hover:bg-slate-50/80 dark:hover:bg-slate-800/40 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500",
-                        (row as any).getIsSelected() && "bg-teal-50/40 dark:bg-teal-950/20",
+                        hasRowAction && "hover:bg-slate-50 dark:hover:bg-[#202124] cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-indigo-500",
+                        (row as any).getIsSelected() && "bg-teal-50 dark:bg-[#042f2e]",
                       )}
                     >
                       {(row as any).getVisibleCells().map((cell: any) => {
@@ -578,8 +578,8 @@ export function MarcomTableShell<T extends object & { id: string }>({
                               "shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden",
                               isRightSticky && (
                                 isSelected
-                                  ? "z-10 bg-teal-50/70 dark:bg-teal-950/40 group-hover:bg-teal-100/70 dark:group-hover:bg-teal-900/40"
-                                  : "z-10 bg-white dark:bg-[#18191B] group-hover:bg-slate-50/80 dark:group-hover:bg-slate-800/40"
+                                  ? "z-10 bg-teal-50 dark:bg-[#042f2e] group-hover:bg-teal-100 dark:group-hover:bg-[#0f3d3b]"
+                                  : "z-10 bg-white dark:bg-[#18191B] group-hover:bg-slate-50 dark:group-hover:bg-[#202124]"
                               ),
                               isRightSticky && rightOffset === 0 && "pr-3",
                               hasStickyBorder && "border-l border-slate-200/80 dark:border-slate-800 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]",
