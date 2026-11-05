@@ -8,12 +8,27 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Z-Index Stacking Context Standardization & Table Shell Isolation (ADR-0039) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Row-Scoped Loading Animation & State Guard for MOU Quick Approve (ADR-0038)  
+**Active Feature:** Standardized ConfirmDialog Component & Inventory Deletion Integration (ADR-0040) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** View Mode Switcher Alignment & Default Table View (Equipment Inventory)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Standardized ConfirmDialog Component & Inventory Deletion Integration (ADR-0040 — Implementation Complete):**
+   - **Komponen Reusable `ConfirmDialog.tsx`:**
+     - Dibuat komponen terpusat di `src/components/ui/ConfirmDialog.tsx` yang membungkus native HTML `<dialog>` `Modal` primitive.
+     - Mendukung varian visual `danger` (tombol konfirmasi `destructive`, ikon peringatan merah dengan latar lembut `bg-red-50 dark:bg-red-950/40`), `warning`, dan `info`.
+     - Mendukung slot `itemDetails` kustom untuk preview ringkas objek yang akan dihapus.
+     - Proteksi loading state (`isLoading`) dengan ikon `Loader2` berputar dan `disabled` pada seluruh tombol aksi untuk mencegah double-submission.
+   - **Integrasi Penuh pada `InventoryView.tsx`:**
+     - Menggantikan dialog bawaan browser `window.confirm` dengan state-driven `<ConfirmDialog />`.
+     - Menampilkan detail item: kode inventaris, nama barang, dan pill kategori.
+     - Mutasi penghapusan dibungkus dalam blok `try ... finally { setIsDeleting(false); }` agar tombol selalu pulih jika request gagal (misal jika barang sedang dalam status dipinjam).
+   - **Automated Testing & Verifikasi Invariant:**
+     - Dibuat unit test `src/components/ui/confirmDialog.test.ts` (3/3 passing) untuk menguji wrapping `Modal`, varian warna, dan proteksi disable.
+     - Dibuat integration test `src/components/views/InventoryView/inventoryDeleteConfirm.test.ts` (3/3 passing) untuk memastikan eliminasi `confirm()` dan penggunaan `try...finally`.
+     - Verifikasi non-negotiable gates: `npm run drift:check` (67/67 specs paired), `npm run build:check` (0 errors), `npm test` (0 failures).
 
 1. **Penataan Switcher Tampilan & Default Table View pada Equipment Inventory:**
    - **Pertukaran Posisi Tombol (Table di Kiri, Card di Kanan):**

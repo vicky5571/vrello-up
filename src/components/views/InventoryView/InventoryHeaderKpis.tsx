@@ -196,35 +196,10 @@ export function InventoryHeaderKpis({
           <div
             role="tablist"
             aria-label="Inventory View Mode Switcher"
-            className="flex items-center border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden p-0.5 bg-white dark:bg-slate-900"
+            className="flex items-center border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden p-0.5 bg-slate-100 dark:bg-slate-800"
           >
             {activeTab === "catalog" ? (
               <>
-                <motion.button
-                  type="button"
-                  role="tab"
-                  aria-selected={catalogViewMode === "grid"}
-                  whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
-                  onClick={() => setCatalogViewMode("grid")}
-                  className={cn(
-                    "relative p-1.5 rounded transition-colors cursor-pointer",
-                    catalogViewMode === "grid"
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                  )}
-                  title="Grid View"
-                >
-                  {catalogViewMode === "grid" && (
-                    <motion.div
-                      layoutId="activeInventoryCatalogViewPill"
-                      className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded"
-                      transition={pillTransition}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center">
-                    <LayoutGrid className="w-3.5 h-3.5" />
-                  </span>
-                </motion.button>
                 <motion.button
                   type="button"
                   role="tab"
@@ -242,7 +217,7 @@ export function InventoryHeaderKpis({
                   {catalogViewMode === "table" && (
                     <motion.div
                       layoutId="activeInventoryCatalogViewPill"
-                      className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded shadow-xs"
                       transition={pillTransition}
                     />
                   )}
@@ -250,27 +225,24 @@ export function InventoryHeaderKpis({
                     <TableIcon className="w-3.5 h-3.5" />
                   </span>
                 </motion.button>
-              </>
-            ) : (
-              <>
                 <motion.button
                   type="button"
                   role="tab"
-                  aria-selected={borrowViewMode === "board"}
+                  aria-selected={catalogViewMode === "grid"}
                   whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
-                  onClick={() => setBorrowViewMode("board")}
+                  onClick={() => setCatalogViewMode("grid")}
                   className={cn(
                     "relative p-1.5 rounded transition-colors cursor-pointer",
-                    borrowViewMode === "board"
+                    catalogViewMode === "grid"
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                   )}
-                  title="Kanban Board"
+                  title="Grid View"
                 >
-                  {borrowViewMode === "board" && (
+                  {catalogViewMode === "grid" && (
                     <motion.div
-                      layoutId="activeInventoryBorrowViewPill"
-                      className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded"
+                      layoutId="activeInventoryCatalogViewPill"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded shadow-xs"
                       transition={pillTransition}
                     />
                   )}
@@ -278,6 +250,9 @@ export function InventoryHeaderKpis({
                     <LayoutGrid className="w-3.5 h-3.5" />
                   </span>
                 </motion.button>
+              </>
+            ) : (
+              <>
                 <motion.button
                   type="button"
                   role="tab"
@@ -295,12 +270,37 @@ export function InventoryHeaderKpis({
                   {borrowViewMode === "table" && (
                     <motion.div
                       layoutId="activeInventoryBorrowViewPill"
-                      className="absolute inset-0 bg-slate-100 dark:bg-slate-800 rounded"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded shadow-xs"
                       transition={pillTransition}
                     />
                   )}
                   <span className="relative z-10 flex items-center">
                     <TableIcon className="w-3.5 h-3.5" />
+                  </span>
+                </motion.button>
+                <motion.button
+                  type="button"
+                  role="tab"
+                  aria-selected={borrowViewMode === "board"}
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
+                  onClick={() => setBorrowViewMode("board")}
+                  className={cn(
+                    "relative p-1.5 rounded transition-colors cursor-pointer",
+                    borrowViewMode === "board"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  )}
+                  title="Kanban Board"
+                >
+                  {borrowViewMode === "board" && (
+                    <motion.div
+                      layoutId="activeInventoryBorrowViewPill"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded shadow-xs"
+                      transition={pillTransition}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center">
+                    <LayoutGrid className="w-3.5 h-3.5" />
                   </span>
                 </motion.button>
               </>

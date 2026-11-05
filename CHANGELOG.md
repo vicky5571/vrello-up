@@ -6,6 +6,18 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(ui)`: Standardized ConfirmDialog component and inventory deletion integration
+  - Created reusable `src/components/ui/ConfirmDialog.tsx` wrapping the native HTML `<dialog>` `Modal` primitive
+  - Integrated `ConfirmDialog` into `InventoryView.tsx`, completely eliminating browser-native `window.confirm`
+  - Added danger styling (`destructive` confirm button, red alert icon, soft red icon backdrop) and cancel fallback
+  - Added contextual `itemDetails` preview card showing item code, equipment name, and category badge
+  - Added loading indicator (`Loader2` spinner) with double-submission lock during async deletion
+  - Added automated unit tests in `src/components/ui/confirmDialog.test.ts` (3/3 passing) and `src/components/views/InventoryView/inventoryDeleteConfirm.test.ts` (3/3 passing)
+  - Spec: `docs/superpowers/specs/2026-11-05-standardized-confirm-dialog-component-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-standardized-confirm-dialog-component.md`
+  - Refs: `docs/adr/0040-standardized-confirm-dialog-component.md`
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean (67/67 specs paired)
+
 - `style(inventory)`: Swap table and card view switcher positions and default to table
   - Swapped view switcher button order: Table View on the left, Card / Grid View on the right in `InventoryHeaderKpis.tsx`
   - Swapped switcher container and active pill styling: container uses `bg-slate-100 dark:bg-slate-800`, active pill uses `bg-white dark:bg-slate-900 rounded shadow-xs`

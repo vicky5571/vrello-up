@@ -11,6 +11,7 @@ import { InventoryTableView } from "./InventoryTableView";
 import { BorrowRecordsTable } from "./BorrowRecordsTable";
 import { BorrowTrackingBoard } from "./BorrowTrackingBoard";
 import { InventoryViewModals } from "./InventoryViewModals";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export function InventoryView() {
   const { can } = useMarcomPermissions();
@@ -34,6 +35,8 @@ export function InventoryView() {
   const [isBorrowModalOpen, setIsBorrowModalOpen] = useState(false);
   const [selectedBorrow, setSelectedBorrow] = useState<BorrowRecord | null>(null);
   const [returningRecord, setReturningRecord] = useState<BorrowRecord | null>(null);
+  const [deletingItem, setDeletingItem] = useState<InventoryItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Store data
   const {
@@ -88,16 +91,25 @@ export function InventoryView() {
     );
   }, [borrowRecords, searchQuery]);
 
-  const handleDeleteItem = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this equipment item?")) return;
+  const handleDeleteItem = (target: InventoryItem | string) => {
+    const item = typeof target === "string" ? inventoryItems.find((i) => i.id === target) : target;
+    if (item) setDeletingItem(item);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingItem) return;
+    setIsDeleting(true);
     try {
-      const res = await fetch(`/api/marcom/inventory/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/marcom/inventory/${deletingItem.id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete item");
-      removeCachedInventoryItem(id);
-      toast.success("Equipment item deleted");
+      removeCachedInventoryItem(deletingItem.id);
+      toast.success(`Equipment item "${deletingItem.name}" deleted`);
+      setDeletingItem(null);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to delete");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -217,6 +229,28 @@ export function InventoryView() {
           fetchInventory(true);
           toast.success(`Equipment return recorded for ${r.borrowCode}!`);
         }}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(deletingItem)}
+        onClose={() => !isDeleting && setDeletingItem(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Equipment Item"
+        description="Are you sure you want to permanently delete this equipment item from the master catalog? This action cannot be undone."
+        confirmLabel={isDeleting ? "Deleting..." : "Delete Item"}
+        cancelLabel="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+        itemDetails={
+          deletingItem
+            ? {
+                name: deletingItem.name,
+                code: deletingItem.code,
+                badgeText: deletingItem.category,
+              }
+            : undefined
+        }
       />
     </div>
   );
