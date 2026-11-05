@@ -8,14 +8,30 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Hard Browser Redirect on User Sign-Out (ADR-0048) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Relocate Export Center from TopNav to More Apps Menu (ADR-0047)  
+**Active Feature:** Filter Approved Outlets in Operational Work Item Forms (ADR-0049) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Previous Feature:** Hard Browser Redirect on User Sign-Out (ADR-0048)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perbaikan Bug Logout Redirection via Hard Browser Navigation (ADR-0048 — Implementation Complete):**
+1. **Perencanaan Filter Toko Terverifikasi pada Form Operasional POSM & Event (ADR-0049 — Planning Complete):**
+   - **Analisis Root Cause & Blast Radius:**
+     - Mengidentifikasi bahwa query outlet pada modal/drawer operasional (`OutletSearchCombobox`, `EventCreateModal`, `EventDrawer`, `ContentPostModal`, dan `MousView`) tidak memfilter `status=APPROVED`, sehingga outlet DRAFT, PENDING_APPROVAL, dan REJECTED bocor ke pilihan operasional.
+     - Mengidentifikasi celah pada endpoint `POST /api/marcom/placements` yang belum memvalidasi `outlet.status === "APPROVED"` sebelum membuat relasi placement baru.
+   - **Solusi Arsitektural Terpilih (Opsi 1):**
+     - Memfilter `status=APPROVED` di level form operasional (UI combobox & drawers).
+     - Menambahkan guard validasi `outlet.status === "APPROVED"` pada `POST /api/marcom/placements` (HTTP 400).
+     - Mempertahankan backward compatibility untuk `OutletsView` (yang memerlukan semua status untuk approval queue) dan `PipelineView`.
+   - **Penyusunan Dokumen Perencanaan & Handover:**
+     - ADR: `docs/adr/0049-filter-approved-outlets-in-operational-forms.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-05-filter-approved-outlets-in-operational-forms-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-05-filter-approved-outlets-in-operational-forms.md` (COMPLETE).
+     - Handover: `docs/handover-filter-approved-outlets-in-operational-forms.md` (READY FOR EXECUTION).
+   - **Non-Negotiable Gates:**
+     - `npm run drift:check` ✅ (76/76 spec-plan pairs valid, 0 drift).
+
+2. **Perbaikan Bug Logout Redirection via Hard Browser Navigation (ADR-0048 — Implementation Complete):**
    - **Eliminasi Soft Navigation & Cache Purge (`src/components/layout/UserMenuDropdown.tsx`):**
      - Menggantikan `router.push("/login")` dan `router.refresh()` dengan `window.location.href = "/login"`.
      - Menghancurkan seluruh in-memory state Zustand dan RSC caches, menjamin pengguna keluar secara instan ke layar login tanpa tersisa sebagai "Pengguna VIEWER".
@@ -1598,6 +1614,9 @@
 ## Next Step for Following Session
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. If desired, adopt `CustomDropdown` in `src/components/views/ContentPlannerView/ContentDrawer.tsx` (edit post drawer) for Platform and Format to complete Content Planner symmetry.
+2. Execute implementation of ADR-0049 using `docs/handover-filter-approved-outlets-in-operational-forms.md`.
+3. Alternative pending implementation handovers:
+   - `docs/handover-borrow-request-modal-comprehensive-polish.md` (ADR-0042)
+   - `docs/handover-centralize-outlet-approval-to-super-admin.md` (ADR-0046)
 
 
