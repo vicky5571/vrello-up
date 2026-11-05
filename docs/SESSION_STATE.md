@@ -8,14 +8,27 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Relocate Export Center from TopNav to More Apps Menu (ADR-0047) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Centralize Outlet Approval to Super Admin Role (ADR-0046)  
+**Active Feature:** Hard Browser Redirect on User Sign-Out (ADR-0048) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Previous Feature:** Relocate Export Center from TopNav to More Apps Menu (ADR-0047)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Relokasi Tombol Export Center dari TopNav ke Menu Pop-up More (ADR-0047 — Implementation Complete):**
+1. **Perbaikan Bug Logout Redirection via Hard Browser Navigation (ADR-0048 — Planning Complete):**
+   - **Root Cause & Architectural Diagnosis**:
+     - Mendiagnosis bug logout di mana pengguna tidak teralihkan ke `/login` melainkan terjebak di dashboard sebagai akun fallback "Pengguna VIEWER".
+     - Menemukan penyebab berupa soft-navigation Next.js (`router.push`) yang terinterupsi oleh hook sinkronisasi URL (`useUrlStateSync`) dan in-memory Zustand store yang tidak dibersihkan.
+     - Merancang solusi standar industri berupa *hard browser redirect* via `window.location.href = "/login"` yang menjamin penghancuran total cache memori klien.
+   - **Pembuatan Dokumen Perencanaan (Checkpoints 1–3 Terverifikasi):**
+     - ADR: `docs/adr/0048-hard-browser-redirect-on-signout.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-05-hard-browser-redirect-on-signout-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-05-hard-browser-redirect-on-signout.md` (APPROVED).
+     - Handover: `docs/handover-hard-browser-redirect-on-signout.md` (READY FOR EXECUTION).
+   - **Verifikasi Invarian & Drift:**
+     - `npm run drift:check` ✅ (75/75 spec-plan pairs valid, 0 drift).
+
+2. **Relokasi Tombol Export Center dari TopNav ke Menu Pop-up More (ADR-0047 — Implementation Complete):**
    - **Pembersihan Komponen TopNav (`src/components/layout/TopNav.tsx`):**
      - Menghapus tombol trigger *Export Center* (`<button title="Export Center">`) dari kluster aksi kanan.
      - Menghapus impor ikon `Download` dari `lucide-react`.
