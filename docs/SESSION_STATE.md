@@ -8,14 +8,27 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Auth Page Transition Loading Feedback via React useTransition (ADR-0044) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Registration Branch Selection via Server-Rendered CustomDropdown (ADR-0043)  
+**Active Feature:** Revoke Outlet Creation Access from Staff Role (ADR-0045) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Previous Feature:** Auth Page Transition Loading Feedback via React useTransition (ADR-0044)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Eliminasi Banner Bottleneck Redundan pada PipelineView:**
+1. **Pencabutan Izin Tambah Outlet dari Role Staff (ADR-0045 — Planning Complete):**
+   - **Analisis & Pembatasan RBAC**:
+     - Mendiagnosis kebutuhan pencabutan wewenang penambahan outlet (`SUBMIT_DRAFT_OUTLET`) dari role `staff`.
+     - Mengidentifikasi celah kalkulasi UI di `OutletsView.tsx` (`role !== "viewer"`) dan memetakan standardisasi ke `can("SUBMIT_DRAFT_OUTLET")`.
+     - Menyelaraskan tombol "Edit Outlet" di `OutletExpandedRow.tsx` agar menggunakan `canManage` (Admin only).
+   - **Pembuatan Dokumen Perencanaan (Checkpoints 1–3 Terverifikasi):**
+     - ADR: `docs/adr/0045-revoke-outlet-creation-access-from-staff.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-05-revoke-outlet-creation-access-from-staff-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-05-revoke-outlet-creation-access-from-staff.md` (APPROVED).
+     - Handover: `docs/handover-revoke-outlet-creation-access-from-staff.md` (READY FOR EXECUTION).
+   - **Verifikasi Invarian & Drift:**
+     - `npm run drift:check` ✅ (72/72 spec-plan pairs valid, 0 drift).
+
+2. **Eliminasi Banner Bottleneck Redundan pada PipelineView:**
    - Menghapus banner peringatan bottleneck berulang (*"Terdapat N outlet mengalami hambatan pemasangan POSM permanen..."*) dari `src/components/views/PipelineView/PipelineView.tsx`.
    - Menghemat ruang vertikal layar karena metrik dan tombol filter bottleneck telah tersedia secara elegan pada kartu ringkasan KPI (`KpiSummaryCards`) dan bilah filter (`PipelineFilterBar`).
    - Verifikasi: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (855/855 tests passed).
