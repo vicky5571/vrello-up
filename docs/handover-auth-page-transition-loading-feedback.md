@@ -243,12 +243,12 @@ import { AuthSwitchLink } from "./AuthSwitchLink";
 
 ## 7. Acceptance Criteria Checklist
 
-- [ ] Clicking "Daftar sekarang" on `/login` immediately changes the link to show a spinning `Loader2` and "Membuka pendaftaran...".
-- [ ] Clicking "Masuk sekarang" on `/register` immediately changes the link to show a spinning `Loader2` and "Membuka halaman masuk...".
-- [ ] During transition, the link is disabled with `pointer-events-none` preventing duplicate clicks.
-- [ ] Visual design perfectly matches existing teal typography tokens and focus rings.
-- [ ] `npm run drift:check` passes with 0 drift.
-- [ ] `npm test` passes with 0 failures.
-- [ ] `npm run build:check` passes with 0 TypeScript/build errors.
+- [x] Clicking "Daftar sekarang" on `/login` immediately changes the link to show a spinning `Loader2` and "Membuka pendaftaran...".
+- [x] Clicking "Masuk sekarang" on `/register` immediately changes the link to show a spinning `Loader2` and "Membuka halaman masuk...".
+- [x] During transition, the link is disabled with `pointer-events-none` preventing duplicate clicks.
+- [x] Visual design perfectly matches existing teal typography tokens and focus rings.
+- [x] `npm run drift:check` passes with 0 drift.
+- [x] `npm test` passes with 0 failures.
+- [x] `npm run build:check` passes with 0 TypeScript/build errors.
 
 

@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(auth)`: Add loading spinner transition to auth switch links
+  - Created reusable `AuthSwitchLink` component wrapping React 19 `useTransition` and Next.js 15 `useRouter`
+  - Rendered inline spinning `Loader2` and transition text ("Membuka pendaftaran..." / "Membuka halaman masuk...") immediately upon click
+  - Blocked repeated clicks and double navigations via `disabled={isPending}` and `pointer-events-none`
+  - Integrated `AuthSwitchLink` into `LoginForm` and `RegisterForm`, matching existing teal typography and focus ring design tokens
+  - Added automated unit & integration tests in `src/components/auth/authSwitchLink.test.ts` (7/7 passing)
+  - Spec: `docs/superpowers/specs/2026-11-05-auth-page-transition-loading-feedback-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-auth-page-transition-loading-feedback.md`
+  - Refs: `docs/adr/0044-auth-page-transition-loading-feedback.md` (ADR-0044)
+  - Gates: `npm test` 855/855 passed; `npm run build:check` 0 errors; `npm run drift:check` clean (71/71 specs paired)
+
 - `feat(auth)`: Add operational branch selection via CustomDropdown on register
   - Pre-fetched active branches during SSR in `RegisterPage` Server Component via Prisma (`findMany`)
   - Rendered searchable `CustomDropdown<string>` (`size="md"`, `direction="auto"`) for branch assignment in `RegisterForm`

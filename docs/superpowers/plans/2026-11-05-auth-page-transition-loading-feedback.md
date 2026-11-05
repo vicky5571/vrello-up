@@ -1,6 +1,6 @@
 # Plan: Auth Page Transition Loading Feedback via React useTransition
 
-- **Status:** APPROVED
+- **Status:** IMPLEMENTATION COMPLETE
 - **Date:** 2026-11-05
 - **Spec:** `docs/superpowers/specs/2026-11-05-auth-page-transition-loading-feedback-design.md`
 - **Refs:** `docs/adr/0044-auth-page-transition-loading-feedback.md`
@@ -34,18 +34,18 @@ Provide tactile, zero-delay visual loading feedback when users switch between th
 ## 3. Phased Implementation Roadmap
 
 ### Phase 1: Test Scaffold & Behavioral Contract (TDD)
-- [ ] Create `src/components/auth/authSwitchLink.test.ts`.
-- [ ] Define test cases:
+- [x] Create `src/components/auth/authSwitchLink.test.ts`.
+- [x] Define test cases:
   - `renders default state with proper text and link styling`
   - `renders pending loading state with spinner and loading label`
   - `disables interaction when transition is active`
   - `invokes router.push inside startTransition callback`
-- [ ] Run test with `npx tsx --test src/components/auth/authSwitchLink.test.ts` (verifying contract setup).
+- [x] Run test with `node --test --import ./test/register-alias.mjs src/components/auth/authSwitchLink.test.ts` (verifying contract setup).
 
 ### Phase 2: Atomic `AuthSwitchLink` Implementation
-- [ ] Create `src/components/auth/AuthSwitchLink.tsx` with `'use client'`.
-- [ ] Import `useTransition` from `'react'`, `useRouter` from `'next/navigation'`, and `Loader2` from `'lucide-react'`.
-- [ ] Define `AuthSwitchLinkProps`:
+- [x] Create `src/components/auth/AuthSwitchLink.tsx` with `'use client'`.
+- [x] Import `useTransition` from `'react'`, `useRouter` from `'next/navigation'`, and `Loader2` from `'lucide-react'`.
+- [x] Define `AuthSwitchLinkProps`:
   ```tsx
   export interface AuthSwitchLinkProps {
     href: string;
@@ -54,7 +54,7 @@ Provide tactile, zero-delay visual loading feedback when users switch between th
     className?: string;
   }
   ```
-- [ ] Implement transition logic:
+- [x] Implement transition logic:
   ```tsx
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -67,11 +67,11 @@ Provide tactile, zero-delay visual loading feedback when users switch between th
     });
   };
   ```
-- [ ] Implement conditional rendering for normal label vs. `Loader2` + `loadingLabel`.
-- [ ] Ensure accessible keyboard interaction and styling consistent with existing auth link design.
+- [x] Implement conditional rendering for normal label vs. `Loader2` + `loadingLabel`.
+- [x] Ensure accessible keyboard interaction and styling consistent with existing auth link design.
 
 ### Phase 3: Integration into LoginForm & RegisterForm
-- [ ] Update `src/components/auth/LoginForm.tsx`:
+- [x] Update `src/components/auth/LoginForm.tsx`:
   - Import `AuthSwitchLink`.
   - Replace `<Link href="/register">Daftar sekarang</Link>` with:
     ```tsx
@@ -81,7 +81,7 @@ Provide tactile, zero-delay visual loading feedback when users switch between th
       loadingLabel="Membuka pendaftaran..."
     />
     ```
-- [ ] Update `src/components/auth/RegisterForm.tsx`:
+- [x] Update `src/components/auth/RegisterForm.tsx`:
   - Import `AuthSwitchLink`.
   - Replace `<Link href="/login">Masuk sekarang</Link>` with:
     ```tsx
@@ -93,11 +93,11 @@ Provide tactile, zero-delay visual loading feedback when users switch between th
     ```
 
 ### Phase 4: Non-Negotiable Verification & Handover Documentation
-- [ ] Run drift check: `npm run drift:check` (must pass 0 errors).
-- [ ] Run full test suite: `npm test` (all suites must pass).
-- [ ] Run typescript & build check: `npm run build:check`.
-- [ ] Create execution handover artifact: `docs/handover-auth-page-transition-loading-feedback.md`.
-- [ ] Update `docs/SESSION_STATE.md` with completed plan and ready-for-execution status.
+- [x] Run drift check: `npm run drift:check` (must pass 0 errors).
+- [x] Run full test suite: `npm test` (all suites must pass).
+- [x] Run typescript & build check: `npm run build:check`.
+- [x] Create execution handover artifact: `docs/handover-auth-page-transition-loading-feedback.md`.
+- [x] Update `docs/SESSION_STATE.md` with completed plan and ready-for-execution status.
 - [ ] Commit all planning artifacts.
 
 ---

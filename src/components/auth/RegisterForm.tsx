@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import { signIn } from "next-auth/react";
 import {
   CheckCircle2,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { AuthSwitchLink } from "./AuthSwitchLink";
 import { AuthAlert } from "./AuthAlert";
 import { AuthCard, AuthDivider, AuthHeader } from "./AuthCard";
 import { AuthField } from "./AuthField";
@@ -339,12 +339,11 @@ export function RegisterForm({ branches = [] }: RegisterFormProps) {
 
       <p className="mt-6 text-center text-[13px] text-slate-500 dark:text-slate-400">
         Sudah memiliki akun?{" "}
-        <Link
+        <AuthSwitchLink
           href="/login"
-          className="rounded font-semibold text-teal-700 underline-offset-4 transition hover:text-teal-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-teal-400 dark:hover:text-teal-300 dark:focus-visible:ring-offset-[#18191B]"
-        >
-          Masuk sekarang
-        </Link>
+          label="Masuk sekarang"
+          loadingLabel="Membuka halaman masuk..."
+        />
       </p>
     </AuthCard>
   );

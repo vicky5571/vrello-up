@@ -8,24 +8,28 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Auth Page Transition Loading Feedback via React useTransition (ADR-0044) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Active Feature:** Auth Page Transition Loading Feedback via React useTransition (ADR-0044) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Registration Branch Selection via Server-Rendered CustomDropdown (ADR-0043)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan Indikator Loading Alih Halaman Auth via React useTransition (ADR-0044 — Planning Complete):**
-   - **Analisis & Pembatasan Arsitektur:**
-     - Mendiagnosis masalah UX hilangnya feedback visual saat beralih antara `/login` ("Daftar sekarang") dan `/register` ("Masuk sekarang").
-     - Memilih pendekatan native zero-dependency React 19 `useTransition` + Next.js 15 `useRouter` untuk state `isPending` instan (<16ms) tanpa library eksternal.
-   - **Pembuatan Seluruh Dokumen Perencanaan (Checkpoints 1–3 Terverifikasi):**
-     - ADR: `docs/adr/0044-auth-page-transition-loading-feedback.md` (APPROVED).
-     - Spec: `docs/superpowers/specs/2026-11-05-auth-page-transition-loading-feedback-design.md` (APPROVED).
-     - Plan: `docs/superpowers/plans/2026-11-05-auth-page-transition-loading-feedback.md` (APPROVED).
-     - Handover: `docs/handover-auth-page-transition-loading-feedback.md` (READY FOR EXECUTION).
-   - **Verifikasi Invarian & Drift:**
-     - `npm run drift:check` ✅ (71/71 spec-plan pairs valid, 0 drift).
+1. **Indikator Loading Alih Halaman Auth via React useTransition (ADR-0044 — Implementation Complete):**
+   - **Komponen Atomik Reusable `AuthSwitchLink.tsx`:**
+     - Dibuat komponen terpusat di `src/components/auth/AuthSwitchLink.tsx` memanfaatkan `useTransition` (React 19) dan `useRouter` (Next.js 15).
+     - Menampilkan spinner `Loader2` berputar dan label transisi dinamis (*Membuka pendaftaran...* / *Membuka halaman masuk...*) seketika saat link diklik (<16ms).
+     - Mencegah klik ganda (*double navigation*) dengan `disabled={isPending}` dan kelas `pointer-events-none`.
+   - **Integrasi pada `LoginForm` dan `RegisterForm`:**
+     - Menggantikan elemen `<Link href="/register">` pada `src/components/auth/LoginForm.tsx` dengan `<AuthSwitchLink />`.
+     - Menggantikan elemen `<Link href="/login">` pada `src/components/auth/RegisterForm.tsx` dengan `<AuthSwitchLink />`.
+     - Menjaga keselarasan desain token tipografi teal, hover effect, dan focus ring bawaan.
+   - **Automated Testing & Invariant Verification:**
+     - Dibuat unit & integration test di `src/components/auth/authSwitchLink.test.ts` (7/7 tests pass).
+     - Verifikasi non-negotiable gates:
+       - `npm run drift:check` ✅ (71/71 spec-plan pairs valid, 0 drift)
+       - `npm run build:check` ✅ (`tsc --noEmit` 0 errors)
+       - `npm test` ✅ (855/855 tests pass across 152 test suites, 0 failures)
 
 2. **Pilihan Cabang pada Pendaftaran Akun via CustomDropdown (ADR-0043 — Implementation Complete):**
    - **Pre-fetching Cabang Server-Side (RSC Zero-Waterfall):**

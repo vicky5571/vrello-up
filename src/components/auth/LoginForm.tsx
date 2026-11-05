@@ -2,9 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Lock, Mail, ShieldCheck } from "lucide-react";
+import { AuthSwitchLink } from "./AuthSwitchLink";
 import { AuthAlert, type AuthAlertTone } from "./AuthAlert";
 import { AuthCard, AuthDivider, AuthHeader } from "./AuthCard";
 import { AuthField } from "./AuthField";
@@ -223,12 +223,11 @@ export function LoginForm({ pending, rejected, error, code }: LoginFormProps) {
 
       <p className="mt-6 text-center text-[13px] text-slate-500 dark:text-slate-400">
         Belum memiliki akun?{" "}
-        <Link
+        <AuthSwitchLink
           href="/register"
-          className="rounded font-semibold text-teal-700 underline-offset-4 transition hover:text-teal-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-teal-400 dark:hover:text-teal-300 dark:focus-visible:ring-offset-[#18191B]"
-        >
-          Daftar sekarang
-        </Link>
+          label="Daftar sekarang"
+          loadingLabel="Membuka pendaftaran..."
+        />
       </p>
 
       <div className="mt-4 flex items-center justify-center gap-1.5 border-t border-slate-100 pt-4 text-[11px] text-slate-400 dark:border-white/[0.06] dark:text-slate-500">
