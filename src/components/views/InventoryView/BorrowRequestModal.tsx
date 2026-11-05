@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   X,
   Loader2,
@@ -21,6 +21,11 @@ import type { BorrowRecord, InventoryItem } from "@/types";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { EQUIPMENT_CATEGORIES } from "./inventoryConstants";
+import { BorrowStepperHeader } from "./wizard/BorrowStepperHeader";
+import {
+  getBorrowStepCompletionStatus,
+  type BorrowWizardStepId,
+} from "./wizard/borrowWizardHelpers";
 
 interface BorrowRequestModalProps {
   isOpen: boolean;
@@ -206,6 +211,18 @@ export function BorrowRequestModal({
     }
   };
 
+  const completionStatus = useMemo(
+    () =>
+      getBorrowStepCompletionStatus({
+        borrowerName,
+        borrowerPhone,
+        borrowDate,
+        returnDueDate,
+        selectedItems,
+      }),
+    [borrowerName, borrowerPhone, borrowDate, returnDueDate, selectedItems]
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div
@@ -213,30 +230,34 @@ export function BorrowRequestModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
-                Step {step} of 4
-              </span>
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between pb-2">
+            <div>
               <h3 className="font-semibold text-base text-slate-900 dark:text-slate-100">
                 New Equipment Borrow Request
               </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {step === 1 && "Enter borrower identity and contact details."}
+                {step === 2 && "Specify execution schedule and target event location."}
+                {step === 3 && "Select equipment and units needed from available stock."}
+                {step === 4 && "Review your request summary before submission."}
+              </p>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {step === 1 && "Enter borrower identity and contact details."}
-              {step === 2 && "Specify execution schedule and target event location."}
-              {step === 3 && "Select equipment and units needed from available stock."}
-              {step === 4 && "Review your request summary before submission."}
-            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          {/* Stepper Header */}
+          <BorrowStepperHeader
+            currentStep={step as BorrowWizardStepId}
+            onSelectStep={(nextStep) => setStep(nextStep)}
+            completionStatus={completionStatus}
+          />
         </div>
 
         {/* Modal Body */}

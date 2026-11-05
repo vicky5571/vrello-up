@@ -8,14 +8,33 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054) & Modular 4-Step Stepper Header (ADR-0055) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Active Feature:** Modular 4-Step Wizard Stepper Header for BorrowRequestModal (ADR-0055) — **IMPLEMENTATION COMPLETE**  
+**Parallel Feature Ready:** Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054) — **PLAN & SPEC READY (EXECUTION-READY)**  
 **Previous Feature:** Outlet Soft-Delete Architecture and Database Restrict Protection (ADR-0053) — **IMPLEMENTATION COMPLETE**  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Peringatan Penutupan Event dengan Alat Inventaris Belum Kembali (ADR-0054 — Planning Complete):**
+1. **Implementasi Modular 4-Step Wizard Stepper Header untuk BorrowRequestModal (ADR-0055 — Implementation Complete):**
+   - **Modular Helper & Validation Logic (`src/components/views/InventoryView/wizard/borrowWizardHelpers.ts`):**
+     - Mendefinisikan metadata 4 langkah (`BORROW_WIZARD_STEPS`): *Peminjam* (Langkah 1), *Jadwal & Event* (Langkah 2), *Pilih Alat* (Langkah 3), *Review & Submit* (Langkah 4).
+     - Mengekspor pure logic guard `canAdvanceFromBorrowStep` untuk memvalidasi syarat input tiap langkah dan `getBorrowStepCompletionStatus` untuk status centang (*completed*).
+   - **Komponen Visual Stepper (`src/components/views/InventoryView/wizard/BorrowStepperHeader.tsx`):**
+     - Menghadirkan 4 kartu langkah responsif dengan sequensial nomor lingkaran, label utama, sub-label (*Langkah 1..4*), dan ikon mobile responsif (`User`, `Calendar`, `Package`, `ClipboardCheck`).
+     - Menerapkan styling status token Tailwind: *Current* (Blue-600 ring highlight & bg-tint), *Completed* (ikon centang `Check` berlatar emerald-500), dan *Inactive* (slate disabled).
+     - Menambahkan progress track bar horizontal animasi `(currentStep / 4) * 100%`.
+     - Mengimplementasikan handler klik selektif: melompat kembali ke langkah sebelumnya yang sudah selesai/tervalidasi, dan memblokir lompatan ke langkah depan yang belum memenuhi syarat.
+   - **Integrasi Host Modal (`src/components/views/InventoryView/BorrowRequestModal.tsx`):**
+     - Memasang `<BorrowStepperHeader />` di bawah baris judul modal dan mengaitkan `completionStatus` secara reaktif via `useMemo`.
+   - **Otomatisasi Pengujian & Non-Negotiable Gates:**
+     - Menambahkan unit tests komprehensif pada `src/components/views/InventoryView/borrowRequestModal.test.ts` (10/10 tests pass).
+     - `npm run drift:check` ✅ (82/82 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm run test:smoke` ✅ (137/137 tests pass, 0 failures).
+     - `npm test` ✅ (897/897 tests pass across 155 suites, 0 failures).
+
+2. **Perencanaan Arsitektur Peringatan Penutupan Event dengan Alat Inventaris Belum Kembali (ADR-0054 — Planning Complete):**
    - **Analisis Kebutuhan Bisnis & Tata Kelola Operasional:**
      - Mengidentifikasi celah di mana PIC dapat langsung menutup acara (`COMPLETED`) di `PATCH /api/marcom/events/[id]` dan `EventDrawer.tsx` saat peralatan bernilai tinggi masih tercecer/berstatus `ACTIVE`/`OVERDUE` di lapangan.
      - Merancang pendekatan pragmatis (Opsi 2 dengan Operational Debt): backend tetap permisif (zero hard blocker), namun di UI dilakukan intersepsi seketika saat memilih opsi "Completed" (Opsi B) via `EventCompleteWarningModal.tsx`.

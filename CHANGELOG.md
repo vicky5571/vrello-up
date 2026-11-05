@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-06]
 
+- `feat(inventory)`: Modular 4-step wizard stepper header for borrow request modal
+  - Created modular helper `src/components/views/InventoryView/wizard/borrowWizardHelpers.ts` with SSOT step metadata (`BORROW_WIZARD_STEPS`), `BorrowWizardStepId`, pure logic guard `canAdvanceFromBorrowStep`, and reactive status calculator `getBorrowStepCompletionStatus`
+  - Created visual stepper header `src/components/views/InventoryView/wizard/BorrowStepperHeader.tsx` adapting Media Placement's 4-column card design with Inventory blue tokens, sequence circles, short labels, step sub-labels (*Langkah 1..4*), completion checkmarks (`Check`), and animated horizontal progress track (`(step / 4) * 100%`)
+  - Mounted `<BorrowStepperHeader />` in `BorrowRequestModal.tsx` under modal title row, replacing static text badge with reactive step progress and selective backward step jumping
+  - Added automated unit tests in `src/components/views/InventoryView/borrowRequestModal.test.ts` (10/10 tests passing) asserting step metadata, validation guards, completion status calculation, and host modal integration
+  - Spec: `docs/superpowers/specs/2026-11-06-borrow-request-modal-stepper-header-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-borrow-request-modal-stepper-header.md`
+  - Refs: `docs/adr/0055-borrow-request-modal-stepper-header.md` (ADR-0055)
+  - Gates: `npm test` 897/897 passed across 155 suites (0 failures); `npm run build:check` 0 errors; `npm run drift:check` clean (82/82 specs paired); `npm run test:smoke` 137/137 passed
+
 - `feat(outlets)`: Outlet soft-delete architecture and database restrict protection
   - Added `deletedAt DateTime?` and index `@@index([deletedAt])` to `Outlet` model in Prisma schema and SSOT types (`src/types/index.ts`)
   - Hardened database foreign key `Placement_outletId_fkey` to `ON DELETE RESTRICT ON UPDATE CASCADE` to prevent raw cascade deletions from destroying historical advertising expenditure, photos, and compliance audit trails

@@ -75,3 +75,114 @@ test("Borrow Request Modal Comprehensive Polish Invariants (ADR-0042)", async (t
   });
 });
 
+test("Borrow Request Modal Stepper Header Invariants (ADR-0055 smoke)", async (t) => {
+  const helpersPath = path.join(
+    process.cwd(),
+    "src/components/views/InventoryView/wizard/borrowWizardHelpers.ts"
+  );
+  const headerPath = path.join(
+    process.cwd(),
+    "src/components/views/InventoryView/wizard/BorrowStepperHeader.tsx"
+  );
+  const modalPath = path.join(
+    process.cwd(),
+    "src/components/views/InventoryView/BorrowRequestModal.tsx"
+  );
+
+  assert.ok(fs.existsSync(helpersPath), "borrowWizardHelpers.ts must exist");
+  assert.ok(fs.existsSync(headerPath), "BorrowStepperHeader.tsx must exist");
+
+  const {
+    BORROW_WIZARD_STEPS,
+    canAdvanceFromBorrowStep,
+    getBorrowStepCompletionStatus,
+  } = await import("@/components/views/InventoryView/wizard/borrowWizardHelpers");
+
+  await t.test("verifies 4 distinct borrow wizard steps metadata", () => {
+    assert.equal(BORROW_WIZARD_STEPS.length, 4);
+    assert.deepEqual(
+      BORROW_WIZARD_STEPS.map((s: { step: number; shortLabel: string }) => ({ step: s.step, shortLabel: s.shortLabel })),
+      [
+        { step: 1, shortLabel: "Peminjam" },
+        { step: 2, shortLabel: "Jadwal" },
+        { step: 3, shortLabel: "Alat" },
+        { step: 4, shortLabel: "Review" },
+      ]
+    );
+  });
+
+  await t.test("verifies canAdvanceFromBorrowStep validation guards", () => {
+    // Step 1: Requester name guard
+    assert.equal(canAdvanceFromBorrowStep(1, {}), false);
+    assert.equal(canAdvanceFromBorrowStep(1, { borrowerName: "   " }), false);
+    assert.equal(canAdvanceFromBorrowStep(1, { borrowerName: "Budi Pratama" }), true);
+
+    // Step 2: Schedule dates guard
+    assert.equal(canAdvanceFromBorrowStep(2, {}), false);
+    assert.equal(
+      canAdvanceFromBorrowStep(2, { borrowDate: "2026-11-10", returnDueDate: "2026-11-09" }),
+      false
+    );
+    assert.equal(
+      canAdvanceFromBorrowStep(2, { borrowDate: "2026-11-10", returnDueDate: "2026-11-12" }),
+      true
+    );
+
+    // Step 3: Equipment items guard
+    assert.equal(canAdvanceFromBorrowStep(3, {}), false);
+    assert.equal(canAdvanceFromBorrowStep(3, { selectedItems: [] }), false);
+    assert.equal(
+      canAdvanceFromBorrowStep(3, { selectedItems: [{ inventoryItemId: "it-1", quantity: 0 }] }),
+      false
+    );
+    assert.equal(
+      canAdvanceFromBorrowStep(3, { selectedItems: [{ inventoryItemId: "it-1", quantity: 2 }] }),
+      true
+    );
+
+    // Step 4: Overall completion guard
+    assert.equal(canAdvanceFromBorrowStep(4, { borrowerName: "Budi" }), false);
+    assert.equal(
+      canAdvanceFromBorrowStep(4, {
+        borrowerName: "Budi",
+        borrowDate: "2026-11-10",
+        returnDueDate: "2026-11-12",
+        selectedItems: [{ inventoryItemId: "it-1", quantity: 1 }],
+      }),
+      true
+    );
+  });
+
+  await t.test("verifies getBorrowStepCompletionStatus computes statuses correctly", () => {
+    const statuses = getBorrowStepCompletionStatus({
+      borrowerName: "Budi",
+      borrowDate: "2026-11-10",
+      returnDueDate: "2026-11-12",
+      selectedItems: [],
+    });
+    assert.equal(statuses[1], true);
+    assert.equal(statuses[2], true);
+    assert.equal(statuses[3], false);
+    assert.equal(statuses[4], false);
+  });
+
+  await t.test("verifies BorrowRequestModal imports and mounts BorrowStepperHeader", () => {
+    const modalContent = fs.readFileSync(modalPath, "utf-8");
+    assert.match(
+      modalContent,
+      /import\s*\{\s*BorrowStepperHeader\s*\}\s*from\s*["']\.\/wizard\/BorrowStepperHeader["']/,
+      "BorrowRequestModal must import BorrowStepperHeader"
+    );
+    assert.match(
+      modalContent,
+      /<BorrowStepperHeader/,
+      "BorrowRequestModal must mount BorrowStepperHeader in header"
+    );
+    assert.match(
+      modalContent,
+      /getBorrowStepCompletionStatus/,
+      "BorrowRequestModal must compute reactive completionStatus"
+    );
+  });
+});
+
