@@ -77,6 +77,7 @@ export function MousView() {
   const [modalMou, setModalMou] = useState<Partial<MarcomMou> | null>(null);
   const [viewingDocMou, setViewingDocMou] = useState<MarcomMou | null>(null);
   const [selectedMou, setSelectedMou] = useState<MarcomMou | null>(null);
+  const [approvingMouId, setApprovingMouId] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedMou) {
@@ -140,6 +141,9 @@ export function MousView() {
 
   const handleStatusTransition = useCallback(
     async (mou: MarcomMou, nextStatus: MouStatus) => {
+      if (nextStatus === "APPROVED") {
+        setApprovingMouId(mou.id);
+      }
       try {
         await transitionMouStatus(mou.id, nextStatus);
         toast.success(`MOU status updated to ${nextStatus}`);
@@ -156,6 +160,8 @@ export function MousView() {
         fetchMous(true);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to update status");
+      } finally {
+        setApprovingMouId(null);
       }
     },
     [updateCachedMou, invalidatePlacements, fetchMous],
@@ -174,10 +180,11 @@ export function MousView() {
         setSelectedBranchId,
         setViewingDocMou,
         onQuickApprove: (mou) => handleStatusTransition(mou, "APPROVED"),
+        approvingMouId,
         onOpenDrawer: (mou) => setSelectedMou(mou),
         can,
       }),
-    [navigateToMarcom, setMarcomFilter, setSelectedBranchId, setViewingDocMou, handleStatusTransition, can],
+    [navigateToMarcom, setMarcomFilter, setSelectedBranchId, setViewingDocMou, handleStatusTransition, approvingMouId, can],
   );
   const deleteOne = useCallback(
     async (id: string) => {

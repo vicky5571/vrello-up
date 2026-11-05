@@ -104,4 +104,50 @@ describe("mouColumns and MarcomTableShell sticky right configuration (ADR-0030)"
       "Sticky cells must have appropriate z-indices"
     );
   });
+
+  it("verifies row-scoped loading animation and state guard for quick approve (ADR-0038)", () => {
+    const mousViewPath = path.resolve(
+      process.cwd(),
+      "src/components/views/MousView/MousView.tsx"
+    );
+    const mousViewContent = fs.readFileSync(mousViewPath, "utf-8");
+
+    // 1. Column contract imports and interface
+    assert.ok(
+      mouColumnsContent.includes("RefreshCw"),
+      "mouColumns must import RefreshCw icon from lucide-react"
+    );
+    assert.ok(
+      mouColumnsContent.includes("approvingMouId?: string | null"),
+      "MouColumnDeps must define approvingMouId optional prop"
+    );
+
+    // 2. Row-scoped loading logic in actions column
+    assert.ok(
+      mouColumnsContent.includes("approvingMouId === row.original.id"),
+      "mouColumns must compute isApproving based on row.original.id"
+    );
+    assert.ok(
+      mouColumnsContent.includes("animate-spin"),
+      "mouColumns must apply animate-spin class to RefreshCw when isApproving is true"
+    );
+    assert.ok(
+      mouColumnsContent.includes("Menyetujui..."),
+      "mouColumns must show Menyetujui... text when isApproving is true"
+    );
+    assert.ok(
+      mouColumnsContent.includes("disabled={isApproving}"),
+      "Quick approve button must have disabled={isApproving}"
+    );
+
+    // 3. MousView coordinator state and resilient recovery
+    assert.ok(
+      mousViewContent.includes("approvingMouId"),
+      "MousView must declare and pass approvingMouId state"
+    );
+    assert.ok(
+      mousViewContent.includes("finally") && mousViewContent.includes("setApprovingMouId(null)"),
+      "MousView must reset approvingMouId to null inside a finally block"
+    );
+  });
 });

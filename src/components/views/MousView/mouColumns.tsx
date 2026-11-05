@@ -1,6 +1,6 @@
 "use client";
 
-import { Store, Building2, Layers, AlertTriangle, Download, Clock, Check, ChevronRight, FileText } from "lucide-react";
+import { Store, Building2, Layers, AlertTriangle, Download, Clock, Check, ChevronRight, FileText, RefreshCw } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
 import {
   createMarcomColumnHelper,
@@ -28,6 +28,7 @@ export interface MouColumnDeps {
   setSelectedBranchId: (id: string | null) => void;
   setViewingDocMou: (mou: MarcomMou) => void;
   onQuickApprove?: (mou: MarcomMou) => void;
+  approvingMouId?: string | null;
   onOpenDrawer?: (mou: MarcomMou) => void;
   can: (action: PermissionAction, targetBranchId?: string) => boolean;
 }
@@ -38,6 +39,7 @@ export function buildMouColumns({
   setSelectedBranchId,
   setViewingDocMou,
   onQuickApprove,
+  approvingMouId,
   onOpenDrawer,
   can,
 }: MouColumnDeps) {
@@ -394,6 +396,7 @@ export function buildMouColumns({
       cell: ({ row }) => {
         const isSubmitted = row.original.status === "SUBMITTED";
         const canApprove = isSubmitted && can("APPROVE_MOU", row.original.branchId);
+        const isApproving = approvingMouId === row.original.id;
 
         return (
           <div
@@ -403,13 +406,25 @@ export function buildMouColumns({
             {canApprove && onQuickApprove && (
               <button
                 type="button"
-                onClick={() => onQuickApprove(row.original)}
+                onClick={() => !isApproving && onQuickApprove(row.original)}
+                disabled={isApproving}
                 aria-label={`Quick Approve MOU ${row.original.partnerName}`}
-                className="inline-flex items-center gap-1 px-2 py-1 min-h-[30px] rounded-md text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-2xs transition-colors cursor-pointer shrink-0 whitespace-nowrap"
-                title="Quick Approve MOU (PIC Cabang / Admin)"
+                className={cn(
+                  "inline-flex items-center gap-1 px-2 py-1 min-h-[30px] rounded-md text-[11px] font-bold text-white shadow-2xs transition-colors shrink-0 whitespace-nowrap",
+                  isApproving
+                    ? "bg-emerald-600/70 cursor-not-allowed opacity-80"
+                    : "bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+                )}
+                title={isApproving ? "Sedang memproses persetujuan..." : "Quick Approve MOU (PIC Cabang / Admin)"}
               >
-                <Check className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden xl:inline">Approve</span>
+                {isApproving ? (
+                  <RefreshCw className="w-3.5 h-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <Check className="w-3.5 h-3.5 shrink-0" />
+                )}
+                <span className="hidden xl:inline">
+                  {isApproving ? "Menyetujui..." : "Approve"}
+                </span>
               </button>
             )}
             <button

@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(mous)`: Row-scoped loading animation & state guard for MOU quick approve
+  - Added visual loading feedback (`<RefreshCw className="animate-spin" />` and `"Menyetujui..."`) to the Quick Approve button in the MOUs table
+  - Introduced double-submission protection (`disabled={isApproving}`) to eliminate duplicate approval requests and race conditions
+  - Wrapped status transition in `try ... finally { setApprovingMouId(null); }` to guarantee immediate UI recovery on network failure or automation exception
+  - Added unit test in `src/components/views/MousView/mouColumns.test.ts` (6/6 tests passing)
+  - Spec: `docs/superpowers/specs/2026-11-05-mou-table-quick-approve-loading-animation-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-mou-table-quick-approve-loading-animation.md`
+  - Refs: `docs/adr/0038-mou-table-quick-approve-loading-animation.md`
+  - Gates: `npm test` passed (818/818 tests); `npm run build:check` 0 errors; `npm run drift:check` clean (65/65 specs paired)
+
+
 - `fix(mous)`: Eliminate transparency on hovered sticky columns in MarcomTableShell
   - Replaced semi-transparent background hover classes (`group-hover:bg-slate-50/80`, `dark:group-hover:bg-slate-800/40`) with 100% solid opaque backgrounds (`group-hover:bg-slate-50`, `dark:group-hover:bg-[#202124]`)
   - Replaced semi-transparent selected row backgrounds with solid opaque teal fills to prevent horizontally scrolled content from bleeding through sticky columns

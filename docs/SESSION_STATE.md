@@ -8,12 +8,27 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Standardize Event & Content Modal/Drawer Form CustomDropdowns (ADR-0037) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Automated Daily Rolling Sync & Monthly Report Creation via Vercel Cron (ADR-0036)  
+**Active Feature:** Row-Scoped Loading Animation & State Guard for MOU Quick Approve (ADR-0038) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Standardize Event & Content Modal/Drawer Form CustomDropdowns (ADR-0037)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Row-Scoped Loading Animation & State Guard for MOU Quick Approve (ADR-0038 — Implementation Complete):**
+   - **Visual Feedback & Spinner Indikator:**
+     - Mengubah tombol *Quick Approve* pada baris tabel MOU (`src/components/views/MousView/mouColumns.tsx`) agar langsung menampilkan ikon spinner berputar (`<RefreshCw className="w-3.5 h-3.5 shrink-0 animate-spin" />`) dan teks status `"Menyetujui..."` (pada breakpoint `xl:inline`) saat proses persetujuan berlangsung.
+   - **Proteksi Double-Submission & State Guard:**
+     - Menambahkan state lokal `approvingMouId: string | null` di `MousView.tsx` dan meneruskannya ke `MouColumnDeps`.
+     - Tombol diberi atribut `disabled={isApproving}` serta styling `disabled:opacity-80 cursor-not-allowed` untuk mencegah double click/race condition pada koneksi latensi tinggi.
+     - Handler `onClick` dijaga dengan guard `if (!isApproving)` untuk memblokir pemicuan konkuren.
+   - **Pemulihan Status Resilien (Resilient State Recovery):**
+     - Membungkus alur mutasi `handleStatusTransition` di `MousView.tsx` dalam blok `try ... finally { setApprovingMouId(null); }` sehingga tombol selalu pulih ke kondisi normal baik saat mutasi berhasil maupun jika server/automasi melempar error.
+   - **Automated Testing & Invariant Verification:**
+     - Menambahkan pengujian otomatis di `src/components/views/MousView/mouColumns.test.ts` (6/6 tests passing).
+     - Verifikasi: `npm run drift:check` (65/65 paired specs), `npm run build:check` (0 errors), `npm run test:smoke` (114/114 passed), dan `npm test` seluruhnya lulus 100% (818/818 tests passed).
+
+
 
 1. **Pembersihan Ikon Mata Pratinjau pada Kartu Dokumen:**
    - Menghapus tombol tindakan `<Eye />` dari footer `DocumentCardsView.tsx`.
