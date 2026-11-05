@@ -8,14 +8,42 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Outlet Soft-Delete Architecture and Database Restrict Protection (ADR-0053) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Inventory Compensation Settlement and Stock Restoration Workflow (ADR-0052)  
+**Active Feature:** Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054) & Modular 4-Step Stepper Header (ADR-0055) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Previous Feature:** Outlet Soft-Delete Architecture and Database Restrict Protection (ADR-0053) — **IMPLEMENTATION COMPLETE**  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Implementasi Outlet Soft-Delete Architecture & Database Restrict Protection (ADR-0053 — Implementation Complete):**
+1. **Perencanaan Arsitektur Peringatan Penutupan Event dengan Alat Inventaris Belum Kembali (ADR-0054 — Planning Complete):**
+   - **Analisis Kebutuhan Bisnis & Tata Kelola Operasional:**
+     - Mengidentifikasi celah di mana PIC dapat langsung menutup acara (`COMPLETED`) di `PATCH /api/marcom/events/[id]` dan `EventDrawer.tsx` saat peralatan bernilai tinggi masih tercecer/berstatus `ACTIVE`/`OVERDUE` di lapangan.
+     - Merancang pendekatan pragmatis (Opsi 2 dengan Operational Debt): backend tetap permisif (zero hard blocker), namun di UI dilakukan intersepsi seketika saat memilih opsi "Completed" (Opsi B) via `EventCompleteWarningModal.tsx`.
+     - Menyebarkan sinyal peringatan visual di multi-permukaan: kartu event (`EventCardsView`), baris tabel event (`EventTableView`), sub-drawer field events di Cockpit 360° (`Outlet360Drawer`), dan baris tabel pipeline (`PipelineMatrixTable`).
+     - Mencatat utang operasional `DEBT-EVENT-LOGISTICS-001` dengan kriteria migrasi yang jelas ke fail-closed blocker Opsi 1.
+   - **Penyusunan Dokumen Perencanaan & Handover:**
+     - ADR: `docs/adr/0054-field-event-completion-unreturned-equipment-warning-workflow.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-06-field-event-completion-unreturned-equipment-warning-workflow-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-06-field-event-completion-unreturned-equipment-warning-workflow.md` (APPROVED).
+     - Handover: `docs/handover-field-event-completion-unreturned-equipment-warning-workflow.md` (EXECUTION-READY).
+   - **Non-Negotiable Gates:**
+     - `npm run drift:check` ✅ (82/82 spec-plan pairs valid, 0 drift).
+
+2. **Perencanaan Arsitektur Modular 4-Step Wizard Stepper Header untuk BorrowRequestModal (ADR-0055 — Planning Complete):**
+   - **Analisis Kebutuhan & UX Alignment:**
+     - Menganalisis modal permohonan pinjam alat (`BorrowRequestModal.tsx`) yang saat ini hanya menampilkan badge teks polos (*Step 1 of 4*).
+     - Menyelaraskan desain visual horizontal stepper dengan modal eksekusi POSM Lapangan (`PlacementFormModal.tsx`), menghadirkan 4 kartu langkah (*Peminjam, Jadwal & Event, Pilih Alat, Review*), nomor lingkaran, label langkah, sub-label (*Langkah 1..4*), ikon mobile responsif, status centang hijau saat selesai, dan progress track bar animasi `(step / 4) * 100%`.
+     - Menetapkan aturan navigasi selektif: pengguna dapat melompat kembali ke langkah sebelumnya atau langkah yang telah tervalidasi, namun diblokir melompat ke langkah depan yang belum memenuhi guard validasi.
+     - Mengadopsi token warna biru khas Inventory (`blue-600`, `ring-blue-500/20`) agar konsisten dengan tombol dan kartu di modul inventaris.
+   - **Penyusunan Dokumen Perencanaan & Handover:**
+     - ADR: `docs/adr/0055-borrow-request-modal-stepper-header.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-06-borrow-request-modal-stepper-header-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-06-borrow-request-modal-stepper-header.md` (APPROVED).
+     - Handover: `docs/handover-borrow-request-modal-stepper-header.md` (EXECUTION-READY).
+   - **Non-Negotiable Gates:**
+     - `npm run drift:check` ✅ (82/82 spec-plan pairs valid, 0 drift).
+
+2. **Implementasi Outlet Soft-Delete Architecture & Database Restrict Protection (ADR-0053 — Implementation Complete):**
    - **Database & Prisma Schema Hardening:**
      - Menambahkan kolom `deletedAt DateTime?` dan index `@@index([deletedAt])` pada model `Outlet` di `prisma/schema.prisma`.
      - Mengubah relasi `Placement.outlet` dari cascade delete menjadi `onDelete: Restrict` di Prisma schema dan mengeksekusi DDL constraint `Placement_outletId_fkey ON DELETE RESTRICT ON UPDATE CASCADE` di Supabase Postgres.
