@@ -8,12 +8,19 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Comprehensive UX Polish and CustomDropdown Integration for BorrowRequestModal (ADR-0042) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Standardize Inventory Item Form CustomDropdowns (ADR-0041)  
+**Active Feature:** Registration Branch Selection via Server-Rendered CustomDropdown (ADR-0043) — **PLAN & SPEC READY**  
+**Previous Feature:** Comprehensive UX Polish and CustomDropdown Integration for BorrowRequestModal (ADR-0042)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Perencanaan Arsitektur: Pilihan Cabang pada Pendaftaran Akun via CustomDropdown (ADR-0043 — Planning Complete):**
+   - **Penerbitan ADR-0043:** Didokumentasikan dan disetujui di `docs/adr/0043-registration-branch-selection-custom-dropdown.md` memilih Opsi 1 (Server-Rendered Branch Props via Next.js RSC data pre-fetching + `CustomDropdown`).
+   - **Penyusunan Spesifikasi Lengkap:** Disusun di `docs/superpowers/specs/2026-11-05-registration-branch-selection-custom-dropdown-design.md` memuat alur registrasi, skema payload API `POST /api/auth/register`, aturan validasi Zod (`branchId`), dan kontrak UI dropdown.
+   - **Penyusunan Implementation Plan:** Disusun di `docs/superpowers/plans/2026-11-05-registration-branch-selection-custom-dropdown.md` membagi eksekusi ke dalam 5 fase atomik berbasis test-first.
+   - **Penyusunan Dokumen Handover Siap Eksekusi:** Dibuat di `docs/handover-registration-branch-selection-custom-dropdown.md` dengan instruksi kode *verbatim*, file test otomatis `registerRoute.test.ts`, proteksi *Do Not Touch*, dan acceptance criteria.
+   - **Verifikasi Invariant:** `npm run drift:check` ✅ *All 70 spec(s) have matching plan files. No drift detected.*
 
 1. **Comprehensive UX Polish & CustomDropdown Integration pada BorrowRequestModal (ADR-0042 — Implementation Complete):**
    - **Eliminasi Total Native `<select>` pada Step 2:**
