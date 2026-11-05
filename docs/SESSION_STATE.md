@@ -1365,6 +1365,15 @@
 
 ---
 
+## Known Technical Debt (Recorded for Future Refactoring)
+
+- **TD-001 (Legacy Stubs in Store):** ~60 baris stub fungsi kosong di `src/lib/store/useWorkspaceStore.ts` dan tipe slice di `src/lib/store/slices/types.ts` (`createSpace`, `addDependency`, `emptyTrash`, `addChannelMessage`, dll.) dari era klon ClickUp lama. Tidak menyebabkan bug maupun penurunan performa (murni no-op dan array kosong di memori).
+- **TD-002 (Vestigial Workspace ID):** Kolom `workspaceId String @default("ws-main")` di tabel-tabel operasional Prisma (`Placement`, `Mou`, `FieldEvent`, `ContentPost`, `MonthlyReport`, `DocumentItem`). Aman karena Postgres memberikan nilai default otomatis.
+- **TD-003 (Dualitas Naming AppMode):** Penggunaan nilai internal `appMode: "tasks"` yang dilabeli "Projects" di UI, padahal isinya adalah tampilan Board dari entitas Marcom.
+- **TD-004 (Dead Domain Types):** Definisi interface di `src/types/index.ts` untuk fitur yang tidak pernah aktif (`CustomAutomationRule`, `ChannelMessage`, `Space`, `Folder`, `List`, `Task`). Tipe ini di-strip saat kompilasi TypeScript sehingga tidak menambah ukuran bundle JS produksi.
+
+---
+
 ## Next Step for Following Session
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
