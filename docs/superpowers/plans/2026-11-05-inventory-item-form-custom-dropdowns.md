@@ -28,15 +28,15 @@ This plan outlines the atomic, test-driven steps to migrate `Category` and `Equi
 ## 3. Phased Implementation Roadmap
 
 ### Phase 1: Test Scaffold & Invariant Suite (Test-First)
-- [ ] Create `src/components/views/InventoryView/inventoryItemFormModal.test.ts` using Node.js native test runner (`node:test`, `node:assert/strict`).
-- [ ] Write Test 1: Assert `InventoryItemFormModal.tsx` imports `CustomDropdown` from `@/components/ui/CustomDropdown`.
-- [ ] Write Test 2: Assert `InventoryItemFormModal.tsx` completely eliminates raw `<select>` tags.
-- [ ] Write Test 3: Assert `CustomDropdown` for Category maps all 8 `EQUIPMENT_CATEGORIES` with `size="md"`.
-- [ ] Write Test 4: Assert `CustomDropdown` for Status in edit mode maps all `EQUIPMENT_STATUS_CONFIG` keys with `size="md"`.
+- [x] Create `src/components/views/InventoryView/inventoryItemFormModal.test.ts` using Node.js native test runner (`node:test`, `node:assert/strict`).
+- [x] Write Test 1: Assert `InventoryItemFormModal.tsx` imports `CustomDropdown` from `@/components/ui/CustomDropdown`.
+- [x] Write Test 2: Assert `InventoryItemFormModal.tsx` completely eliminates raw `<select>` tags.
+- [x] Write Test 3: Assert `CustomDropdown` for Category maps all 8 `EQUIPMENT_CATEGORIES` with `size="md"`.
+- [x] Write Test 4: Assert `CustomDropdown` for Status in edit mode maps all `EQUIPMENT_STATUS_CONFIG` keys with `size="md"`.
 
 ### Phase 2: Refactor `InventoryItemFormModal.tsx`
-- [ ] Add import: `import { CustomDropdown } from "@/components/ui/CustomDropdown";`.
-- [ ] Replace native `<select>` in Category block (lines 182-192) with `<CustomDropdown<string>>`:
+- [x] Add import: `import { CustomDropdown } from "@/components/ui/CustomDropdown";`.
+- [x] Replace native `<select>` in Category block (lines 182-192) with `<CustomDropdown<string>>`:
   ```tsx
   <CustomDropdown<string>
     value={category}
@@ -45,11 +45,11 @@ This plan outlines the atomic, test-driven steps to migrate `Category` and `Equi
     size="md"
     direction="auto"
     searchable={false}
-    buttonClassName="w-full bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-xs text-left"
+    className="w-full"
     menuClassName="w-full min-w-full max-h-60"
   />
   ```
-- [ ] Replace native `<select>` in Equipment Status block (lines 243-253) with `<CustomDropdown<EquipmentStatus>>`:
+- [x] Replace native `<select>` in Equipment Status block (lines 243-253) with `<CustomDropdown<EquipmentStatus>>`:
   ```tsx
   <CustomDropdown<EquipmentStatus>
     value={status}
@@ -61,20 +61,20 @@ This plan outlines the atomic, test-driven steps to migrate `Category` and `Equi
     size="md"
     direction="auto"
     searchable={false}
-    buttonClassName="w-full bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-xs text-left"
+    className="w-full"
     menuClassName="w-full min-w-full max-h-60"
   />
   ```
-- [ ] Verify form submit button loading guard (`disabled={loading}`) remains intact.
+- [x] Verify form submit button loading guard (`disabled={loading}`) remains intact.
 
 ### Phase 3: Non-Negotiable Verification & Handover
-- [ ] Run targeted tests: `npx tsx --test src/components/views/InventoryView/inventoryItemFormModal.test.ts`.
-- [ ] Run invariant drift check: `npm run drift:check` (must report 68/68 spec-plan pairs valid).
-- [ ] Run TypeScript type check: `npm run build:check` (0 errors required).
-- [ ] Run smoke test suite: `npm run test:smoke` (0 failures required).
-- [ ] Run full test suite: `npm test` (0 failures required).
-- [ ] Author execution-ready handover document `docs/handover-inventory-item-form-custom-dropdowns.md`.
-- [ ] Update `CHANGELOG.md` and `docs/SESSION_STATE.md`.
+- [x] Run targeted tests: `npx tsx --test src/components/views/InventoryView/inventoryItemFormModal.test.ts`.
+- [x] Run invariant drift check: `npm run drift:check` (must report 68/68 spec-plan pairs valid).
+- [x] Run TypeScript type check: `npm run build:check` (0 errors required).
+- [x] Run smoke test suite: `npm run test:smoke` (0 failures required).
+- [x] Run full test suite: `npm test` (0 failures required).
+- [x] Author execution-ready handover document `docs/handover-inventory-item-form-custom-dropdowns.md`.
+- [x] Update `CHANGELOG.md` and `docs/SESSION_STATE.md`.
 
 ---
 

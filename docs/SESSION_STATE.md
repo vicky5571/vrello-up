@@ -8,20 +8,30 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Standardize Inventory Item Form CustomDropdowns (ADR-0041) — **PLANNING COMPLETE (READY FOR IMPLEMENTATION)**  
+**Active Feature:** Standardize Inventory Item Form CustomDropdowns (ADR-0041) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Standardized ConfirmDialog Component & Inventory Deletion Integration (ADR-0040)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Standardisasi CustomDropdown pada Modal Item Inventaris (ADR-0041 — Planning-Only Mode):**
-   - **Mode Perencanaan Eksklusif (*Planning-Only Mode*):** Sesuai instruksi pengguna ("don't code in this session"), tidak ada kode produksi (`.ts` / `.tsx`) yang ditulis atau diubah. Seluruh dokumen perancangan disusun secara lengkap dan eksekusi siap dilakukan pada sesi berikutnya.
-   - **Penerbitan ADR-0041:** Disusun dan disetujui di `docs/adr/0041-inventory-item-form-custom-dropdowns.md` mengevaluasi 3 opsi cakupan arsitektural dan memilih Opsi 1 (fokus pada `InventoryItemFormModal.tsx`).
-   - **Penyusunan Spec Lengkap:** Disusun di `docs/superpowers/specs/2026-11-05-inventory-item-form-custom-dropdowns-design.md` mencakup kontrak antarmuka SSOT (`EQUIPMENT_CATEGORIES` dan `EQUIPMENT_STATUS_CONFIG`), mapping opsi, aturan visual `size="md"`, penataan z-index Layer 5 pada popover, serta guard loading.
-   - **Penyusunan Implementation Plan:** Disusun di `docs/superpowers/plans/2026-11-05-inventory-item-form-custom-dropdowns.md` membagi eksekusi ke dalam 3 fase atomik (Test-First, Refactor Modal, Verifikasi & Handover).
-   - **Penyusunan Dokumen Handover Siap Eksekusi:** Dibuat di `docs/handover-inventory-item-form-custom-dropdowns.md` memuat snippet kode eksisting *verbatim*, instruksi penggantian kode baris-per-baris, kode file test otomatis `inventoryItemFormModal.test.ts`, daftar proteksi *Do Not Touch*, dan acceptance criteria.
-   - **Verifikasi Invariant Perencanaan:** `npm run drift:check` ✅ *68/68 spec-plan pairs valid, no drift detected.*
+1. **Standardisasi CustomDropdown pada Modal Form Item Inventaris (ADR-0041 — Implementation Complete):**
+   - **Eliminasi Total Native `<select>`:**
+     - Menggantikan elemen `<select>` bawaan browser untuk pilihan *Category* dan *Equipment Status* pada `src/components/views/InventoryView/InventoryItemFormModal.tsx` dengan komponen kanonikal `CustomDropdown` (`src/components/ui/CustomDropdown.tsx`).
+     - Menghilangkan tampilan dropdown Aqua bawaan OS macOS dan menggantinya dengan popover menu modern, ber-shadow, dan tema dark/light mode yang kohesif.
+   - **Preservasi Kontrak Tipe & Skema Data:**
+     - Menstandarkan properti `size="md"` (`min-h-[36px]`) dengan `className="w-full"` agar tinggi dan lebar dropdown selaras sempurna dengan input teks sekitarnya.
+     - Memetakan opsi kategori secara dinamis dari `EQUIPMENT_CATEGORIES` dan status dari `EQUIPMENT_STATUS_CONFIG`.
+     - Menjaga typing ketat `<CustomDropdown<EquipmentStatus>>` dan `<CustomDropdown<string>>`.
+   - **Preservasi Proteksi Loading & Double-Submission:**
+     - Menjaga atribut `disabled={loading}` dan spinner `Loader2` pada tombol submit form.
+   - **Automated Testing & Invariant Verification:**
+     - Menambahkan pengujian otomatis di `src/components/views/InventoryView/inventoryItemFormModal.test.ts` (4/4 assertions lulus 100%).
+     - Verifikasi non-negotiable gates:
+       - `npm run drift:check` ✅ *All 68 spec(s) have matching plan files. No drift detected.*
+       - `npm run build:check` ✅ *TypeScript compilation 0 errors (`tsc --noEmit`).*
+       - `npm test` ✅ *836/836 tests passed 100% (0 failures across 152 suites).*
+
 
 1. **Standardized ConfirmDialog Component & Inventory Deletion Integration (ADR-0040 — Implementation Complete):**
    - **Komponen Reusable `ConfirmDialog.tsx`:**

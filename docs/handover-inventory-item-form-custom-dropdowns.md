@@ -249,13 +249,13 @@ test("Inventory Item Form Modal CustomDropdown Invariants (ADR-0041)", async (t)
 
 ## 7. Acceptance Criteria Checklist
 
-- [ ] `InventoryItemFormModal.tsx` contains 0 instances of raw `<select>` tags.
-- [ ] Category dropdown renders with `CustomDropdown<string>`, mapping `EQUIPMENT_CATEGORIES`.
-- [ ] Status dropdown renders with `CustomDropdown<EquipmentStatus>`, mapping `EQUIPMENT_STATUS_CONFIG`.
-- [ ] Form submit button retains loading spinner and double-submission lock (`disabled={loading}`).
-- [ ] `inventoryItemFormModal.test.ts` passes with 0 failures.
-- [ ] `npm run drift:check` passes with no drift detected.
-- [ ] `npm run build:check` passes with 0 errors.
-- [ ] `npm test` passes with 100% green tests.
+- [x] `InventoryItemFormModal.tsx` contains 0 instances of raw `<select>` tags.
+- [x] Category dropdown renders with `CustomDropdown<string>`, mapping `EQUIPMENT_CATEGORIES`.
+- [x] Status dropdown renders with `CustomDropdown<EquipmentStatus>`, mapping `EQUIPMENT_STATUS_CONFIG`.
+- [x] Form submit button retains loading spinner and double-submission lock (`disabled={loading}`).
+- [x] `inventoryItemFormModal.test.ts` passes with 0 failures.
+- [x] `npm run drift:check` passes with no drift detected.
+- [x] `npm run build:check` passes with 0 errors.
+- [x] `npm test` passes with 100% green tests.
 
 

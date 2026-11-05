@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(inventory)`: Standardize InventoryItemFormModal with CustomDropdown
+  - Replaced unstyled HTML select elements for Category and Status with canonical CustomDropdown
+  - Aligned dropdown dimensions (`size="md"`, `min-h-[36px]`) with sibling form text inputs
+  - Enforced strong typing for `EquipmentStatus` and `EQUIPMENT_CATEGORIES` options
+  - Added automated unit and architectural invariant tests in `src/components/views/InventoryView/inventoryItemFormModal.test.ts` (4/4 passing)
+  - Spec: `docs/superpowers/specs/2026-11-05-inventory-item-form-custom-dropdowns-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-inventory-item-form-custom-dropdowns.md`
+  - Refs: `docs/adr/0041-inventory-item-form-custom-dropdowns.md` (ADR-0041)
+  - Gates: `npm test` 836/836 passed; `npm run build:check` 0 errors; `npm run drift:check` clean (68/68 specs paired)
+
+
 - `feat(ui)`: Standardized ConfirmDialog component and inventory deletion integration
   - Created reusable `src/components/ui/ConfirmDialog.tsx` wrapping the native HTML `<dialog>` `Modal` primitive
   - Integrated `ConfirmDialog` into `InventoryView.tsx`, completely eliminating browser-native `window.confirm`
