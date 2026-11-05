@@ -40,7 +40,7 @@ export function PipelineFilterBar({
   };
 
   return (
-    <div className="relative z-20 w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-2xs space-y-3">
+    <div className="relative z-30 w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 sm:p-4 shadow-2xs space-y-3">
       <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
         {/* Left: Search input */}
         <div className="relative flex-1 min-w-[240px]">

@@ -457,7 +457,7 @@ export function OutletMapView({
       )}
     >
       {/* Top Filter & Control Header */}
-      <div className="relative z-20 p-3.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+      <div className="relative z-30 p-3.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-xs">
         <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-[280px]">
           {/* Search Box */}
           <div className="relative min-w-[180px] max-w-[260px] flex-1">

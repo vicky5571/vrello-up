@@ -158,3 +158,21 @@ When deleting files:
 - Feature branches: `feat/<name>` off `vicky`
 - Commit format: see `AGENTS.md` §Git Commit Convention
 - WIP commits: prefix `WIP: ` on subject line
+
+---
+
+## 13. Canonical 7-Layer Z-Index & Stacking Context Hierarchy (ADR-0039)
+
+To prevent visual clipping, sibling element occlusion, and leakage between floating popovers and sticky table elements, the application strictly adheres to this 7-layer hierarchy:
+
+| Layer | Value | Scope / Components | Invariant Rules |
+| :--- | :--- | :--- | :--- |
+| **Layer 0** | `isolate` / `z-0` | `MarcomTableShell`, Data Tables, View Content Wrappers | Must be enclosed with `isolation: isolate` (`isolate`). Prevents internal sticky headers/cells from leaking out. |
+| **Layer 10** | `z-10` | Sticky Table Body Cells | Positioned inside Layer 0 only; strictly scoped to table rows. |
+| **Layer 20** | `z-20` | Sticky Table Column Headers & Fixed Row Headers | Positioned inside Layer 0 only; stacks above Layer 10 rows. |
+| **Layer 30** | `relative z-30` | Marcom View Headers & Filter Bars (`MousHeader`, etc.) | Stacks strictly above Layer 0 table shells. |
+| **Layer 40** | `relative z-40` | Global Top Navigation (`TopNav.tsx`) | Stacks strictly above Layer 30 view headers. |
+| **Layer 50** | `z-50` | Active `CustomDropdown` Container & Listbox Popover | Stacks strictly above headers and stage content when `isOpen = true`. |
+| **Layer 60** | `fixed z-60` / `z-50` | Slide-Over Drawers (`AiDrawer`, `EventDrawer`) & Form Modals | Overlays stage and headers completely. |
+| **Layer 70** | `z-[70]` / `z-50` | Command Palette, System Alerts, Global Toasts | Maximum viewport priority. |
+

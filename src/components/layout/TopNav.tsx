@@ -77,7 +77,7 @@ export function TopNav() {
   }, []);
 
   return (
-    <div className="relative z-30 flex flex-col shrink-0 select-none bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-slate-800">
+    <div className="relative z-40 flex flex-col shrink-0 select-none bg-white dark:bg-[#141721] border-b border-slate-200/80 dark:border-slate-800">
       <header className="h-11 px-4 flex items-center justify-between gap-3 bg-white dark:bg-[#18191B]">
         {/* Left: Breadcrumbs */}
         <TopNavBreadcrumbs variant="full" />

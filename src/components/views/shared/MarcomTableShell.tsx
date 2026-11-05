@@ -306,7 +306,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
   return (
     <div
       className={cn(
-        "h-full",
+        "h-full w-full isolate",
         fixedViewport && "flex min-h-0 flex-col overflow-hidden",
         !fixedViewport && !noPadding && "overflow-y-auto p-4 md:p-6",
         fixedViewport && !noPadding && "p-4 pt-3 md:p-6 md:pt-4",

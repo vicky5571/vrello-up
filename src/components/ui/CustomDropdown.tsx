@@ -181,7 +181,7 @@ export function CustomDropdown<T extends string | number = string>({
       ref={containerRef}
       className={cn(
         "relative inline-block text-left",
-        isOpen ? "z-30" : "z-auto",
+        isOpen ? "z-50" : "z-auto",
         className,
       )}
       onKeyDown={handleKeyDown}

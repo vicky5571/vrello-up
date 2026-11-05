@@ -232,7 +232,7 @@ export function OutletApprovalQueueTab({
       </div>
 
       {/* Filter Bar */}
-      <div className="relative z-20 flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+      <div className="relative z-30 flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-72">
             <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />

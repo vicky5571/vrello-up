@@ -262,7 +262,7 @@ export function MousView() {
       />
 
       {/* Main Table Content */}
-      <div className="p-4 sm:p-6 flex-1 min-h-0 space-y-4">
+      <div className="p-4 sm:p-6 flex-1 min-h-0 space-y-4 isolate">
         <MarcomTableShell
           noPadding
           hideHeader
