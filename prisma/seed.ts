@@ -939,7 +939,7 @@ async function seedBorrowRecords() {
     },
   });
 
-  // 4. Returned with Major Damage & Lost Item Check-in
+  // 4. Returned with Major Damage & Lost Item Check-in (Pending Settlement)
   await prisma.borrowRecord.create({
     data: {
       id: "brw-rec-004",
@@ -959,6 +959,12 @@ async function seedBorrowRecords() {
       approvedBy: "System Admin",
       approvedAt: daysAgo(26),
       returnNotes: "LAPORAN KERUSAKAN: 1 unit Tenda 3x3 mengalami sobek pada atap terpal karena tersangkut ranting pohon (MAJOR_DAMAGE). 1 unit Mikrofon Wireless hilang di lokasi CFD (LOST). Divisi Solo telah menyepakati penggantian biaya perbaikan.",
+      compensationAmount: 650000,
+      compensationStatus: "PENDING_SETTLEMENT",
+      compensationNotes: "Biaya ganti rugi 1 unit mic hilang dan perbaikan terpal tenda.",
+      damagePhotos: [
+        "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&auto=format&fit=crop&q=80",
+      ],
       items: {
         create: [
           {
@@ -966,6 +972,10 @@ async function seedBorrowRecords() {
             quantity: 1,
             conditionOut: "GOOD" as EquipmentCondition,
             conditionIn: "LOST" as EquipmentCondition, // LOST equipment
+            goodUnits: 0,
+            minorDamageUnits: 0,
+            majorDamageUnits: 0,
+            lostUnits: 1,
             notes: "Unit mikrofon hilang, transmitter masih ada.",
           },
           {
@@ -973,7 +983,63 @@ async function seedBorrowRecords() {
             quantity: 10,
             conditionOut: "GOOD" as EquipmentCondition,
             conditionIn: "GOOD" as EquipmentCondition,
+            goodUnits: 10,
+            minorDamageUnits: 0,
+            majorDamageUnits: 0,
+            lostUnits: 0,
             notes: "10 kursi kembali bersih dan utuh.",
+          },
+        ],
+      },
+    },
+  });
+
+  // 5. Returned & Resolved with Item Replacement (ADR-0052)
+  await prisma.borrowRecord.create({
+    data: {
+      id: "brw-rec-005",
+      borrowCode: "BRW-20261005-005",
+      borrowerName: "Agus Pratama",
+      borrowerPhone: "+62 813-9876-005",
+      borrowerDivision: "Activation Semarang",
+      picName: "Agus Pratama",
+      eventId: "event-002",
+      eventLocation: "Mall Ciputra Simpang Lima, Semarang",
+      borrowDate: daysAgo(30),
+      returnDueDate: daysAgo(25),
+      returnDate: daysAgo(24),
+      status: "RETURNED" as BorrowStatus,
+      purpose: "Eksibisi Launching Paket Baru",
+      notes: "Peminjaman stand banner dan mic.",
+      approvedBy: "System Admin",
+      approvedAt: daysAgo(30),
+      returnNotes: "Pengembalian selesai dengan 1 unit mic rusak.",
+      compensationAmount: 450000,
+      compensationStatus: "RESOLVED",
+      compensationNotes: "Telah diganti dengan 1 unit mikrofon Shure baru.",
+      damagePhotos: [
+        "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&auto=format&fit=crop&q=80",
+      ],
+      settlementType: "ITEM_REPLACEMENT",
+      settledAmount: 0,
+      settledAt: daysAgo(22),
+      settledBy: "Warehouse Admin",
+      settlementNotes: "Menyerahkan 1 unit mic pengganti fisik baru dan telah diverifikasi masuk gudang.",
+      settlementProofUrls: [
+        "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80",
+      ],
+      items: {
+        create: [
+          {
+            inventoryItemId: "inv-004", // Mic Wireless
+            quantity: 1,
+            conditionOut: "GOOD" as EquipmentCondition,
+            conditionIn: "MAJOR_DAMAGE" as EquipmentCondition,
+            goodUnits: 0,
+            minorDamageUnits: 0,
+            majorDamageUnits: 1,
+            lostUnits: 0,
+            notes: "Unit lama rusak berat, telah diganti unit baru saat pelunasan.",
           },
         ],
       },

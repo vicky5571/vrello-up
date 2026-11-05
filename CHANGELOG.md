@@ -6,6 +6,20 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-06]
 
+- `feat(inventory)`: Inventory compensation settlement and stock restoration workflow
+  - Added 6 settlement fields to `BorrowRecord` in Prisma schema & SSOT domain types (`src/types/index.ts`): `settlementType`, `settledAmount`, `settledAt`, `settledBy`, `settlementNotes`, `settlementProofUrls`
+  - Exported `CompensationSettlementType` enum (`"NONE" | "CASH_TRANSFER" | "ITEM_REPLACEMENT"`) in `src/types/index.ts`
+  - Created backend mutation endpoint `POST /api/marcom/inventory/borrow/[id]/settle/route.ts` with Four-Eyes RBAC guard (401 unauth, 403 staff/viewer), validation (400 bad status/type/notes, 422 empty proofs), and atomic `$transaction`
+  - Implemented dual-mode stock arithmetic: `CASH_TRANSFER` maintains decommissioned afkir stock; `ITEM_REPLACEMENT` atomically restores `totalUnits` and `availableUnits` on linked `InventoryItem`
+  - Created `BorrowSettlementModal.tsx` with dynamic dual-mode switch, live total afkir units calculation, and multi-file attachment deck for upload to `/api/marcom/uploads` (`kind: "inventory-proofs"`)
+  - Elevated `BorrowDetailModal.tsx` with *"Selesaikan Ganti Rugi"* trigger button for pending compensation and comprehensive resolution summary card when status is `RESOLVED`
+  - Added structural UI invariant test `src/components/views/InventoryView/borrowSettlementModal.test.ts` (4/4 passed) and integration tests in `inventoryApi.test.ts` (5/5 passed)
+  - Updated deterministic seed in `prisma/seed.ts` with `brw-rec-005` (resolved item replacement fixture)
+  - Spec: `docs/superpowers/specs/2026-11-06-inventory-compensation-settlement-and-restoration-workflow-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-inventory-compensation-settlement-and-restoration-workflow.md`
+  - Refs: `docs/adr/0052-inventory-compensation-settlement-and-restoration-workflow.md` (ADR-0052)
+  - Gates: `npm test` 886/886 passed across 154 suites (0 failures); `npm run build:check` 0 errors; `npm run drift:check` clean (79/79 specs paired); `npm run test:smoke` 127/127 passed
+
 - `feat(mou)`: MoU multi-document upload, mandatory approval guard, and revision lifecycle
   - Added `REVISION` to `MouStatus` enum and `docPaths String[] @default([])` to `Mou` in Prisma schema & SSOT domain types (`src/types/index.ts`)
   - Updated state machine (`mouMachine.ts`): allowed `SUBMITTED -> APPROVED | REVISION | REJECTED | DRAFT`, `REVISION -> SUBMITTED | DRAFT`, and `REJECTED -> DRAFT`

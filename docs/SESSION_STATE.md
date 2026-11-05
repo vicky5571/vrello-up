@@ -8,14 +8,40 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Inventory Compensation Settlement and Stock Restoration Workflow (ADR-0052) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Active Feature:** Inventory Compensation Settlement and Stock Restoration Workflow (ADR-0052) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** MoU Multi-Document Upload, Mandatory Approval Guard, and Revision Lifecycle (ADR-0051)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Pelunasan Ganti Rugi Inventaris & Pemulihan Stok (ADR-0052 — Planning Complete):**
+1. **Implementasi Pelunasan Ganti Rugi Inventaris & Pemulihan Stok (ADR-0052 — Implementation Complete):**
+   - **Database & SSOT Domain Entities:**
+     - Menambahkan 6 field settlement pada model `BorrowRecord` di `prisma/schema.prisma`: `settlementType`, `settledAmount`, `settledAt`, `settledBy`, `settlementNotes`, dan `settlementProofUrls: String[]`.
+     - Mengeksekusi DDL migration pada Postgres dan menyinkronkan client via `npx prisma generate`.
+     - Mengekspor enum tipe SSOT `CompensationSettlementType = "NONE" | "CASH_TRANSFER" | "ITEM_REPLACEMENT"` dan memperbarui domain interface `BorrowRecord` di `src/types/index.ts`.
+   - **Backend Mutation Endpoint & Transaksi Atomik (`/borrow/[id]/settle/route.ts`):**
+     - Menerapkan fail-closed authentication guard (HTTP 401) dan Four-Eyes Principle RBAC guard (HTTP 403): membatasi wewenang eksekusi hanya untuk role `warehouse`, `admin`, dan `super_admin`, serta melarang staf peminjam melunasi liabilitasnya sendiri.
+     - Validasi status awal: menolak permohonan pelunasan apabila record tidak berstatus `PENDING_SETTLEMENT` (HTTP 400).
+     - Validasi kelengkapan data: menolak jika catatan kosong (HTTP 400) atau berkas bukti tidak dilampirkan (HTTP 422).
+     - Menjalankan mutasi dalam transaksi atomik Prisma (`$transaction`):
+       - Mode `CASH_TRANSFER`: mencatat `settledAmount`, mengubah `compensationStatus` menjadi `RESOLVED`, dan membiarkan stok master tetap afkir (karena uang masuk ke kas operasional).
+       - Mode `ITEM_REPLACEMENT`: mencatat `settledAmount = 0`, mengubah `compensationStatus` menjadi `RESOLVED`, dan secara atomik memulihkan `totalUnits` serta `availableUnits` pada `InventoryItem` sebanyak jumlah unit afkir (`majorDamageUnits + lostUnits`).
+   - **Antarmuka Pengguna & Attachment Deck (`InventoryView`):**
+     - Membuat komponen baru `BorrowSettlementModal.tsx`: switch mode dinamis (Kas vs Penggantian Barang), kalkulasi live total unit afkir, input catatan pelunasan, dan deck upload multi-berkas (`multiple`) ke `/api/marcom/uploads` (`kind: "inventory-proofs"`) dengan tombol hapus individual per berkas.
+     - Memperbarui `BorrowDetailModal.tsx`: menambahkan tombol aksi *"Selesaikan Ganti Rugi"* (khusus status `PENDING_SETTLEMENT` dan `canManage`), serta kartu rincian pelunasan lengkap (metode, tanggal, verifikator, keterangan, dan tautan berkas bukti) apabila berstatus `RESOLVED`.
+     - Memperbarui `InventoryViewModals.tsx` untuk meneruskan event `onSettled` secara reaktif ke state view.
+   - **Otomatisasi Pengujian & Seed Data Fixture:**
+     - Menambahkan pengujian integrasi lifecycle ganti rugi pada `src/app/api/marcom/inventory/inventoryApi.test.ts` (5/5 tests passed).
+     - Membuat pengujian invarian struktural UI pada `src/components/views/InventoryView/borrowSettlementModal.test.ts` (4/4 tests passed).
+     - Memperbarui deterministic seed di `prisma/seed.ts` dengan data fixture ganti rugi pending (`brw-rec-004`) dan ganti rugi lunas penggantian barang (`brw-rec-005`).
+   - **Non-Negotiable Verification Gates:**
+     - `npm run drift:check` ✅ (79/79 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm test` ✅ (886/886 tests passed across 154 suites, 0 failures).
+     - `npm run test:smoke` ✅ (127/127 tests passed, 0 failures).
+
+2. **Perencanaan Arsitektur Pelunasan Ganti Rugi Inventaris & Pemulihan Stok (ADR-0052 — Planning Complete):**
    - **Analisis Kebutuhan Bisnis & Tata Kelola Operasional:**
      - Mengidentifikasi celah siklus ganti rugi di mana liabilitas kerusakan/kehilangan inventaris tertahan pada status `PENDING_SETTLEMENT` tanpa alur atau tombol pelunasan.
      - Merancang dua mode pelunasan dalam satu modal terpadu:

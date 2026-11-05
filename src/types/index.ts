@@ -802,6 +802,8 @@ export interface BorrowItem {
   notes?: string;
 }
 
+export type CompensationSettlementType = "NONE" | "CASH_TRANSFER" | "ITEM_REPLACEMENT";
+
 export interface BorrowRecord {
   id: string;
   borrowCode: string;
@@ -825,6 +827,12 @@ export interface BorrowRecord {
   compensationStatus?: "NONE" | "PENDING_SETTLEMENT" | "RESOLVED";
   compensationNotes?: string;
   damagePhotos?: string[];
+  settlementType?: CompensationSettlementType;
+  settledAmount?: number;
+  settledAt?: string | null;
+  settledBy?: string;
+  settlementNotes?: string;
+  settlementProofUrls?: string[];
   items: BorrowItem[];
   createdAt?: string;
   updatedAt?: string;

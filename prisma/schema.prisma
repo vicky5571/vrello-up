@@ -321,6 +321,14 @@ model BorrowRecord {
   compensationStatus String       @default("NONE") // "NONE" | "PENDING_SETTLEMENT" | "RESOLVED"
   compensationNotes  String       @default("")
   damagePhotos       String[]     @default([])
+
+  // Settlement Fields (ADR-0052):
+  settlementType       String       @default("NONE") // "NONE" | "CASH_TRANSFER" | "ITEM_REPLACEMENT"
+  settledAmount        Float        @default(0)
+  settledAt            DateTime?
+  settledBy            String       @default("")
+  settlementNotes      String       @default("")
+  settlementProofUrls  String[]     @default([])
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 

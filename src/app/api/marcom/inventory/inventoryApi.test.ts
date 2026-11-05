@@ -5,6 +5,7 @@ import { PUT as putItem, DELETE as deleteItem } from "./[id]/route";
 import { POST as postBorrow } from "./borrow/route";
 import { PUT as putBorrow } from "./borrow/[id]/route";
 import { POST as returnBorrow } from "./borrow/[id]/return/route";
+import { POST as settleBorrow } from "./borrow/[id]/settle/route";
 import { prisma } from "@/lib/db";
 
 test("API: GET /api/marcom/inventory returns catalog items", async () => {
@@ -304,5 +305,253 @@ test("API: Return Inspection Breakdown, Compensation Workflow, and Four-Eyes Pri
   // 7. Clean up test records
   await prisma.borrowItem.deleteMany({ where: { borrowRecordId: borrowRecord.id } });
   await prisma.borrowRecord.delete({ where: { id: borrowRecord.id } });
+  await prisma.inventoryItem.delete({ where: { id: testItem.id } });
+});
+
+test("API: Compensation Settlement Lifecycle, Dual-Mode Stock Restoration, and Four-Eyes RBAC (ADR-0052)", async () => {
+  // 1. Create a test item with 6 units
+  const testCode = `SETTLE-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const itemRes = await postInventory(
+    new Request("http://localhost:3000/api/marcom/inventory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Test Settle Audio",
+        code: testCode,
+        category: "Audio",
+        totalUnits: 6,
+        storageLocation: "Test Warehouse",
+      }),
+    })
+  );
+  assert.equal(itemRes.status, 201);
+  const testItem = await itemRes.json();
+
+  // 2. Create borrow request for 4 units, approve, and activate
+  const borrowRes = await postBorrow(
+    new Request("http://localhost:3000/api/marcom/inventory/borrow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        borrowerName: "Settlement Test User",
+        borrowDate: new Date().toISOString().slice(0, 10),
+        returnDueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+        items: [{ inventoryItemId: testItem.id, quantity: 4 }],
+      }),
+    })
+  );
+  assert.equal(borrowRes.status, 201);
+  const borrow = await borrowRes.json();
+
+  await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "APPROVED" }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+
+  const activateRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "ACTIVE" }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  const activeRecord = await activateRes.json();
+  const borrowItemId = activeRecord.items[0].id;
+
+  // 3. Process return with 2 good, 1 major damage, 1 lost (total afkir: 2)
+  const returnRes = await returnBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/return`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+      },
+      body: JSON.stringify({
+        returnNotes: "Return with 1 major damage and 1 lost",
+        compensationAmount: 500000,
+        compensationNotes: "Repair and replacement cost",
+        items: [
+          {
+            borrowItemId,
+            goodUnits: 2,
+            minorDamageUnits: 0,
+            majorDamageUnits: 1,
+            lostUnits: 1,
+          },
+        ],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(returnRes.status, 200);
+  const returnedRecord = await returnRes.json();
+  assert.equal(returnedRecord.compensationStatus, "PENDING_SETTLEMENT");
+
+  // Stock after return: totalUnits = 6 - 2 = 4, availableUnits = (6-4) + 2 = 4
+  const itemAfterReturn = await prisma.inventoryItem.findUnique({ where: { id: testItem.id } });
+  assert.equal(itemAfterReturn?.totalUnits, 4);
+  assert.equal(itemAfterReturn?.availableUnits, 4);
+
+  // 4. Test RBAC: Unauthenticated rejected with 401
+  const unauthRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settlementType: "CASH_TRANSFER" }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(unauthRes.status, 401);
+
+  // 5. Test RBAC: Staff rejected with 403 (Four-Eyes Principle)
+  const staffRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+      },
+      body: JSON.stringify({
+        settlementType: "CASH_TRANSFER",
+        settledAmount: 500000,
+        settlementNotes: "Staff trying to self-settle",
+        settlementProofUrls: ["https://example.com/receipt.pdf"],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(staffRes.status, 403);
+
+  // 6. Test Validation: Missing notes returns 400
+  const noNotesRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+      },
+      body: JSON.stringify({
+        settlementType: "CASH_TRANSFER",
+        settlementNotes: "   ",
+        settlementProofUrls: ["https://example.com/receipt.pdf"],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(noNotesRes.status, 400);
+
+  // 7. Test Validation: Empty proof URLs returns 422
+  const noProofRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+      },
+      body: JSON.stringify({
+        settlementType: "CASH_TRANSFER",
+        settlementNotes: "Paid in cash",
+        settlementProofUrls: [],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(noProofRes.status, 422);
+
+  // 8. Test Mode A: CASH_TRANSFER
+  const cashSettleRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+      },
+      body: JSON.stringify({
+        settlementType: "CASH_TRANSFER",
+        settledAmount: 500000,
+        settlementNotes: "Transfer via BCA a.n. Budi",
+        settlementProofUrls: ["https://example.com/bca-transfer.pdf"],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(cashSettleRes.status, 200);
+  const cashSettledRecord = await cashSettleRes.json();
+  assert.equal(cashSettledRecord.compensationStatus, "RESOLVED");
+  assert.equal(cashSettledRecord.settlementType, "CASH_TRANSFER");
+  assert.equal(cashSettledRecord.settledAmount, 500000);
+  assert.deepEqual(cashSettledRecord.settlementProofUrls, ["https://example.com/bca-transfer.pdf"]);
+
+  // In CASH_TRANSFER mode, stock remains afkir (totalUnits and availableUnits remain 4)
+  const itemAfterCash = await prisma.inventoryItem.findUnique({ where: { id: testItem.id } });
+  assert.equal(itemAfterCash?.totalUnits, 4);
+  assert.equal(itemAfterCash?.availableUnits, 4);
+
+  // 9. Test Rejection: Settle already resolved record returns 400
+  const reSettleRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+      },
+      body: JSON.stringify({
+        settlementType: "CASH_TRANSFER",
+        settlementNotes: "Trying again",
+        settlementProofUrls: ["https://example.com/receipt2.pdf"],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(reSettleRes.status, 400);
+
+  // 10. Test Mode B: ITEM_REPLACEMENT with stock restoration
+  // Reset borrow record to PENDING_SETTLEMENT to test ITEM_REPLACEMENT restoration
+  await prisma.borrowRecord.update({
+    where: { id: borrow.id },
+    data: {
+      compensationStatus: "PENDING_SETTLEMENT",
+      settlementType: "NONE",
+      settledAmount: 0,
+      settledAt: null,
+      settlementProofUrls: [],
+    },
+  });
+
+  const replaceSettleRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+      },
+      body: JSON.stringify({
+        settlementType: "ITEM_REPLACEMENT",
+        settlementNotes: "Replacement unit physically handed to warehouse",
+        settlementProofUrls: ["https://example.com/handover-photo.jpg"],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(replaceSettleRes.status, 200);
+  const replaceRecord = await replaceSettleRes.json();
+  assert.equal(replaceRecord.compensationStatus, "RESOLVED");
+  assert.equal(replaceRecord.settlementType, "ITEM_REPLACEMENT");
+  assert.equal(replaceRecord.settledAmount, 0); // 0 in ITEM_REPLACEMENT
+
+  // In ITEM_REPLACEMENT mode, the 2 afkir units are restored to totalUnits and availableUnits:
+  // 4 + 2 = 6!
+  const itemAfterReplace = await prisma.inventoryItem.findUnique({ where: { id: testItem.id } });
+  assert.equal(itemAfterReplace?.totalUnits, 6);
+  assert.equal(itemAfterReplace?.availableUnits, 6);
+
+  // 11. Cleanup test records
+  await prisma.borrowItem.deleteMany({ where: { borrowRecordId: borrow.id } });
+  await prisma.borrowRecord.delete({ where: { id: borrow.id } });
   await prisma.inventoryItem.delete({ where: { id: testItem.id } });
 });

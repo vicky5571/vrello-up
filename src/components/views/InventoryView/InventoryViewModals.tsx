@@ -76,6 +76,10 @@ export function InventoryViewModals({
           setSelectedBorrow(null);
           setReturningRecord(r);
         }}
+        onSettled={(r) => {
+          onReturned(r);
+          setSelectedBorrow(r);
+        }}
       />
 
       <ReturnProcessModal
