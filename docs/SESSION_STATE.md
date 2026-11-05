@@ -8,12 +8,20 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Standardized ConfirmDialog Component & Inventory Deletion Integration (ADR-0040) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** View Mode Switcher Alignment & Default Table View (Equipment Inventory)  
+**Active Feature:** Standardize Inventory Item Form CustomDropdowns (ADR-0041) — **PLANNING COMPLETE (READY FOR IMPLEMENTATION)**  
+**Previous Feature:** Standardized ConfirmDialog Component & Inventory Deletion Integration (ADR-0040)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Perencanaan Arsitektur Standardisasi CustomDropdown pada Modal Item Inventaris (ADR-0041 — Planning-Only Mode):**
+   - **Mode Perencanaan Eksklusif (*Planning-Only Mode*):** Sesuai instruksi pengguna ("don't code in this session"), tidak ada kode produksi (`.ts` / `.tsx`) yang ditulis atau diubah. Seluruh dokumen perancangan disusun secara lengkap dan eksekusi siap dilakukan pada sesi berikutnya.
+   - **Penerbitan ADR-0041:** Disusun dan disetujui di `docs/adr/0041-inventory-item-form-custom-dropdowns.md` mengevaluasi 3 opsi cakupan arsitektural dan memilih Opsi 1 (fokus pada `InventoryItemFormModal.tsx`).
+   - **Penyusunan Spec Lengkap:** Disusun di `docs/superpowers/specs/2026-11-05-inventory-item-form-custom-dropdowns-design.md` mencakup kontrak antarmuka SSOT (`EQUIPMENT_CATEGORIES` dan `EQUIPMENT_STATUS_CONFIG`), mapping opsi, aturan visual `size="md"`, penataan z-index Layer 5 pada popover, serta guard loading.
+   - **Penyusunan Implementation Plan:** Disusun di `docs/superpowers/plans/2026-11-05-inventory-item-form-custom-dropdowns.md` membagi eksekusi ke dalam 3 fase atomik (Test-First, Refactor Modal, Verifikasi & Handover).
+   - **Penyusunan Dokumen Handover Siap Eksekusi:** Dibuat di `docs/handover-inventory-item-form-custom-dropdowns.md` memuat snippet kode eksisting *verbatim*, instruksi penggantian kode baris-per-baris, kode file test otomatis `inventoryItemFormModal.test.ts`, daftar proteksi *Do Not Touch*, dan acceptance criteria.
+   - **Verifikasi Invariant Perencanaan:** `npm run drift:check` ✅ *68/68 spec-plan pairs valid, no drift detected.*
 
 1. **Standardized ConfirmDialog Component & Inventory Deletion Integration (ADR-0040 — Implementation Complete):**
    - **Komponen Reusable `ConfirmDialog.tsx`:**
