@@ -462,7 +462,7 @@ export function OutletApprovalQueueTab({
                     </>
                   ) : (
                     <div className="text-[11px] text-slate-400 italic text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                      Hanya PIC Cabang / Admin yang dapat ACC
+                      Hanya Super Admin yang dapat menyetujui outlet
                     </div>
                   )}
                 </div>

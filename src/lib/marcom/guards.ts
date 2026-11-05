@@ -39,7 +39,6 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
     "DELETE_DOCUMENT",
     "EXPORT_REPORTS",
     "SUBMIT_DRAFT_OUTLET",
-    "APPROVE_OUTLET",
     "VIEW_INVENTORY",
     "MANAGE_INVENTORY",
     "REQUEST_BORROW",
@@ -99,13 +98,13 @@ export function canAccessBranch(
  * - admin: full permissions across all branches.
  * - viewer: only EXPORT_REPORTS and VIEW_INVENTORY.
  * - supervisor (Area Supervisor):
- *   - Forbidden: MANAGE_MASTER_DATA (global system configuration).
+ *   - Forbidden: MANAGE_MASTER_DATA (global system configuration), APPROVE_OUTLET.
  *   - Global actions: EXPORT_REPORTS, VIEW_INVENTORY always allowed.
- *   - Operational actions: has admin-level authority (approve MoU, approve Outlet,
+ *   - Operational actions: has authority (approve MoU,
  *     approve borrow, delete MoU/document) IF targetBranchId is within userBranchIds.
  * - staff:
- *   - Forbidden: DELETE_MOU, DELETE_DOCUMENT, MANAGE_MASTER_DATA, APPROVE_BORROW.
- *   - APPROVE_MOU & APPROVE_OUTLET: allowed only if targetBranchId is assigned to user.
+ *   - Forbidden: DELETE_MOU, DELETE_DOCUMENT, MANAGE_MASTER_DATA, APPROVE_BORROW, APPROVE_OUTLET.
+ *   - APPROVE_MOU: allowed only if targetBranchId is assigned to user.
  *   - Branch-scoped actions (CREATE/UPDATE/SUBMIT): if targetBranchId is specified and user has assignedBranchIds,
  *     it must be in userBranchIds.
  */
@@ -115,8 +114,8 @@ export function hasScopedPermission(ctx: ScopedPermissionContext): boolean {
   if (role === "admin") return true;
   if (role === "viewer") return action === "EXPORT_REPORTS" || action === "VIEW_INVENTORY";
 
-  // MANAGE_MASTER_DATA is strictly reserved for Super Admin
-  if (action === "MANAGE_MASTER_DATA") {
+  // MANAGE_MASTER_DATA and APPROVE_OUTLET are strictly reserved for Super Admin
+  if (action === "MANAGE_MASTER_DATA" || action === "APPROVE_OUTLET") {
     return false;
   }
 
@@ -142,10 +141,10 @@ export function hasScopedPermission(ctx: ScopedPermissionContext): boolean {
     return false;
   }
 
-  // APPROVE_MOU & APPROVE_OUTLET: requires targetBranchId and targetBranchId must be in userBranchIds
-  // Four-Eyes Principle / Segregation of Duties: Outlets and MOUs affect business commitments.
+  // APPROVE_MOU: requires targetBranchId and targetBranchId must be in userBranchIds
+  // Four-Eyes Principle / Segregation of Duties: MOUs affect business commitments.
   // Approval requires Admin role or explicitly designated Branch PICs (targetBranchId in userBranchIds).
-  if (action === "APPROVE_MOU" || action === "APPROVE_OUTLET") {
+  if (action === "APPROVE_MOU") {
     if (!targetBranchId) return false;
     if (userBranchIds.length > 0) {
       return userBranchIds.includes(targetBranchId);

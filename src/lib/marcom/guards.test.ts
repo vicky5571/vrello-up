@@ -54,7 +54,7 @@ test("hasScopedPermission enforces branch boundaries for outlet approval (Four-E
     true
   );
 
-  // PIC Branch Solo can approve Solo outlet
+  // PIC Branch Solo CANNOT approve Solo outlet (reserved for Admin only)
   assert.equal(
     hasScopedPermission({
       role: "staff",
@@ -62,7 +62,7 @@ test("hasScopedPermission enforces branch boundaries for outlet approval (Four-E
       userBranchIds: ["branch-solo"],
       targetBranchId: "branch-solo",
     }),
-    true
+    false
   );
 
   // PIC Branch Solo CANNOT approve Semarang outlet
@@ -216,7 +216,7 @@ test("supervisor has admin-level operational capabilities in unscoped capability
   assert.equal(hasPermission("supervisor", "CREATE_MOU"), true);
   assert.equal(hasPermission("supervisor", "APPROVE_MOU"), true);
   assert.equal(hasPermission("supervisor", "DELETE_MOU"), true);
-  assert.equal(hasPermission("supervisor", "APPROVE_OUTLET"), true);
+  assert.equal(hasPermission("supervisor", "APPROVE_OUTLET"), false);
   assert.equal(hasPermission("supervisor", "APPROVE_BORROW"), true);
   assert.equal(hasPermission("supervisor", "DELETE_DOCUMENT"), true);
   assert.equal(hasPermission("supervisor", "EXPORT_REPORTS"), true);
@@ -254,7 +254,7 @@ test("hasScopedPermission grants supervisor admin authority within assigned bran
       userBranchIds: supervisorBranches,
       targetBranchId: "branch-sby",
     }),
-    true
+    false
   );
   assert.equal(
     hasScopedPermission({

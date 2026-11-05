@@ -288,15 +288,15 @@ test("supervisor has admin-level operational capabilities in unscoped capability
 
 ## 6. Acceptance Criteria Checklist
 
-- [ ] `hasPermission("admin", "APPROVE_OUTLET")` returns `true`.
-- [ ] `hasPermission("supervisor", "APPROVE_OUTLET")` returns `false`.
-- [ ] `hasPermission("staff", "APPROVE_OUTLET")` returns `false`.
-- [ ] `hasScopedPermission` for `APPROVE_OUTLET` returns `false` for any non-admin role.
-- [ ] In `OutletApprovalQueueTab`, the "ACC / Setujui" and "Tolak" buttons are visible only for `admin`.
-- [ ] In `OutletApprovalQueueTab`, non-admin users see *"Hanya Super Admin yang dapat menyetujui outlet"*.
-- [ ] `PATCH /api/marcom/outlets/[id]/approval` returns `403 Forbidden` for non-admin callers.
-- [ ] `npm run drift:check` passes with 0 drift.
-- [ ] `npm test` passes with 0 failures across all 152 test suites.
-- [ ] `npm run build:check` compiles with 0 TypeScript errors.
+- [x] `hasPermission("admin", "APPROVE_OUTLET")` returns `true`.
+- [x] `hasPermission("supervisor", "APPROVE_OUTLET")` returns `false`.
+- [x] `hasPermission("staff", "APPROVE_OUTLET")` returns `false`.
+- [x] `hasScopedPermission` for `APPROVE_OUTLET` returns `false` for any non-admin role.
+- [x] In `OutletApprovalQueueTab`, the "ACC / Setujui" and "Tolak" buttons are visible only for `admin`.
+- [x] In `OutletApprovalQueueTab`, non-admin users see *"Hanya Super Admin yang dapat menyetujui outlet"*.
+- [x] `PATCH /api/marcom/outlets/[id]/approval` returns `403 Forbidden` for non-admin callers.
+- [x] `npm run drift:check` passes with 0 drift.
+- [x] `npm test` passes with 0 failures across all 152 test suites.
+- [x] `npm run build:check` compiles with 0 TypeScript errors.
 
 

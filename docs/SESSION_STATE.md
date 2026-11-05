@@ -8,27 +8,36 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Centralize Outlet Approval to Super Admin Role (ADR-0046) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Active Feature:** Centralize Outlet Approval to Super Admin Role (ADR-0046) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Revoke Outlet Creation Access from Staff Role (ADR-0045)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Sentralisasi Wewenang Persetujuan Outlet ke Super Admin (ADR-0046 — Planning Complete):**
-   - **Analisis & Tata Kelola Master Data**:
-     - Mendiagnosis kebutuhan bisnis agar persetujuan outlet baru disentralisasi sepenuhnya di tangan Super Admin (`admin`).
-     - Menghapus risiko *self-approval* di mana Area Supervisor menyetujui outlet yang diajukan oleh dirinya sendiri.
-     - Mengunci `APPROVE_OUTLET` di `hasScopedPermission` sebagai izin eksklusif Super Admin (fail-closed untuk semua role lain).
-   - **Pembuatan Dokumen Perencanaan (Checkpoints 1–3 Terverifikasi):**
-     - ADR: `docs/adr/0046-centralize-outlet-approval-to-super-admin.md` (APPROVED).
-     - Spec: `docs/superpowers/specs/2026-11-05-centralize-outlet-approval-to-super-admin-design.md` (APPROVED).
-     - Plan: `docs/superpowers/plans/2026-11-05-centralize-outlet-approval-to-super-admin.md` (APPROVED).
-     - Handover: `docs/handover-centralize-outlet-approval-to-super-admin.md` (READY FOR EXECUTION).
-   - **Verifikasi Invarian & Drift:**
+1. **Sentralisasi Wewenang Persetujuan Outlet ke Super Admin (ADR-0046 — Implementation Complete):**
+   - **Pembaruan Guard RBAC Terpusat (`src/lib/marcom/guards.ts`):**
+     - Menghapus izin `"APPROVE_OUTLET"` dari daftar perizinan `rolePermissions.supervisor`.
+     - Menambahkan batasan `APPROVE_OUTLET` fail-closed bersama `MANAGE_MASTER_DATA` pada `hasScopedPermission`, memastikan hanya Super Admin (`role === "admin"`) yang dapat menyetujui outlet di tingkat sistem dan endpoint `PATCH /api/marcom/outlets/[id]/approval`.
+     - Menghapus fallback cabang PIC pada staff untuk `APPROVE_OUTLET`, mempertahankan aturan *Four-Eyes Principle* khusus untuk `APPROVE_MOU`.
+   - **Penyelarasan Tampilan Antrean Persetujuan (`OutletApprovalQueueTab.tsx`):**
+     - Memperbarui label fallback saat pengguna non-admin melihat antrean dari `"Hanya PIC Cabang / Admin yang dapat ACC"` menjadi `"Hanya Super Admin yang dapat menyetujui outlet"`.
+     - Tombol "ACC / Setujui" dan "Tolak" otomatis tersembunyi bagi supervisor, staff, dan viewer.
+   - **Pengujian Unit & Non-Negotiable Gates:**
+     - Memperbarui assertions di `src/lib/marcom/guards.test.ts` (14/14 tests pass):
+       - `hasPermission("supervisor", "APPROVE_OUTLET") === false`
+       - `hasScopedPermission` dengan `APPROVE_OUTLET` mengembalikan `false` untuk supervisor dan staff, serta `true` untuk admin.
      - `npm run drift:check` ✅ (73/73 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm test` ✅ (855/855 tests pass across 152 test suites, 0 failures).
 
-2. **Pencabutan Izin Tambah Outlet dari Role Staff (ADR-0045 — Implementation Complete):**
+2. **Penyusunan Perencanaan & Handover ADR-0046:**
+   - ADR: `docs/adr/0046-centralize-outlet-approval-to-super-admin.md` (APPROVED).
+   - Spec: `docs/superpowers/specs/2026-11-05-centralize-outlet-approval-to-super-admin-design.md` (APPROVED).
+   - Plan: `docs/superpowers/plans/2026-11-05-centralize-outlet-approval-to-super-admin.md` (COMPLETE).
+   - Handover: `docs/handover-centralize-outlet-approval-to-super-admin.md` (COMPLETE).
+
+3. **Pencabutan Izin Tambah Outlet dari Role Staff (ADR-0045 — Implementation Complete):**
    - **Pembaruan Guard RBAC Terpusat (`src/lib/marcom/guards.ts`):**
      - Menghapus izin `"SUBMIT_DRAFT_OUTLET"` dari daftar perizinan `rolePermissions.staff`.
      - Memastikan endpoint backend `POST /api/marcom/outlets/draft` dan upload foto outlet `POST /api/marcom/uploads?kind=outlets` menolak eksekusi oleh staff dengan respons HTTP 403 Forbidden.

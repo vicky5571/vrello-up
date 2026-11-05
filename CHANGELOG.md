@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `fix(rbac)`: Centralize outlet approval exclusively to super admin
+  - Removed `"APPROVE_OUTLET"` permission from `rolePermissions.supervisor` in `src/lib/marcom/guards.ts`
+  - Enforced strict fail-closed boundary for `APPROVE_OUTLET` in `hasScopedPermission` reserving outlet approvals exclusively for Super Admin
+  - Updated queue fallback label in `OutletApprovalQueueTab.tsx` to *"Hanya Super Admin yang dapat menyetujui outlet"*
+  - Updated unit tests in `src/lib/marcom/guards.test.ts` to assert supervisors and staff cannot approve outlets across any branch
+  - Spec: `docs/superpowers/specs/2026-11-05-centralize-outlet-approval-to-super-admin-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-centralize-outlet-approval-to-super-admin.md`
+  - Refs: `docs/adr/0046-centralize-outlet-approval-to-super-admin.md` (ADR-0046)
+  - Gates: `npm test` 855/855 passed; `npm run build:check` 0 errors; `npm run drift:check` clean (73/73 specs paired)
+
 - `fix(rbac)`: Revoke outlet draft creation access from staff role
   - Removed `"SUBMIT_DRAFT_OUTLET"` permission from `rolePermissions.staff` in `src/lib/marcom/guards.ts`
   - Updated `canAddOutlet` in `OutletsView.tsx` to derive strictly from `can("SUBMIT_DRAFT_OUTLET")`, hiding "+ Tambah Outlet" from staff users
