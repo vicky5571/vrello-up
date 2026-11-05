@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Hide Brain² AI Assistant from User-Facing Navigation Surfaces (ADR-0056) — **PLANNING COMPLETE (READY FOR EXECUTION)**  
+**Previous Feature:** Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Modular 4-Step Wizard Stepper Header for BorrowRequestModal (ADR-0055) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Outlet Soft-Delete Architecture and Database Restrict Protection (ADR-0053) — **IMPLEMENTATION COMPLETE**  
 
@@ -16,7 +17,33 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054 — Implementation Complete):**
+1. **Penyesuaian Label KPI Pipeline Matrix Table:**
+   - Mengubah label kartu KPI ringkasan pada Cockpit Pipeline Operasional Outlet (`src/components/views/PipelineView/PipelineView.tsx`) dari `"MoU Sehat %"` (`MOU SEHAT %`) menjadi `"Active MoU %"` (`ACTIVE MOU %`).
+
+2. **Perencanaan Arsitektur Hide Brain² AI Assistant from User-Facing Surfaces (ADR-0056 — Planning Complete):**
+   - **Analisis Kebutuhan Bisnis & Desain Solusi:**
+     - Mengidentifikasi keberadaan prototipe *Brain² AI Assistant* yang belum dibutuhkan dalam workflow operasional lapangan marcom Indosat Ooredoo Hutchison, namun tampil mencolok di navigasi utama (*Global Rail*, *More Apps Menu*, *page.tsx* root mount, dan *HelpDocsModal*).
+     - Menetapkan Opsi 1 (Clean UI Dormancy): menyembunyikan seluruh tombol dan drawer dari pandangan pengguna tanpa menghapus file kode `AiDrawer.tsx` agar dapat diaktifkan kembali secara instan jika integrasi LLM riil disetujui di masa depan.
+   - **Penyusunan Dokumen Perencanaan & Handover:**
+     - ADR: `docs/adr/0056-hide-brain2-ai-assistant.md` (ACCEPTED).
+     - Spec: `docs/superpowers/specs/2026-11-06-hide-brain2-ai-assistant-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-06-hide-brain2-ai-assistant.md` (APPROVED).
+     - Handover: `docs/handover-hide-brain2-ai-assistant.md` (READY FOR EXECUTION).
+   - **Verifikasi Invarian & Drift Check:**
+     - `npm run drift:check` ✅ (83/83 spec-plan pairs valid, 0 drift).
+
+1. **Penyediaan Akun Supervisor Semarang Pandanaran & Overhaul Database Seeding:**
+   - **Dedicated Supervisor Account:** Menambahkan akun `SUPERVISOR` khusus cabang Semarang Pandanaran (`branch-smg-01`) dengan email `spv.semarang@vrelloup.dev` dan nama "Raden Mas Hartono (SPV Semarang Pandanaran)".
+   - **User Profile Update:** Mengubah nama tampilan akun auditor (`viewer.hendra@vrelloup.dev`) dari `"Hendra Pratama (HQ Internal Auditor)"` menjadi `"Hendra Pratama (Auditor)"` di database aktif dan `prisma/seed.ts`.
+   - **Regional Scope Realignment:** Menyesuaikan scope `user-spv-jabar` (`spv.maya@vrelloup.dev`) murni untuk klaster Jawa Barat (`["branch-bdg-01", "branch-crb-01"]`).
+   - **Production-Grade Seed Script (`prisma/seed.ts`):** Overhaul seed script dengan dataset realistis marcom Indosat Ooredoo Hutchison (IM3 & Tri) mencakup seluruh arsitektur ADR-0001 hingga ADR-0055 (14 pengguna, 8 cabang, 6 material, 22 outlet, 8 MoU, 22 placement, 6 event, 14 inventaris, 8 peminjaman, 21 item pinjam, 14 post konten, 10 dokumen, 4 laporan bulanan).
+   - **Verifikasi Eksekusi:**
+     - Database seed selesai sukses dalam 41.98s dengan 0 error.
+     - `npm run drift:check` ✅ (0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
+     - `npm run test:smoke` ✅ (137/137 pass, 0 fail).
+
+2. **Implementasi Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054 — Implementation Complete):**
    - **Pure Logic & Aggregation Engine (`src/lib/marcom/eventEquipmentHelpers.ts`):**
      - Memperluas interface `EventEquipmentSummary` dengan `hasUnreturned: boolean` dan `unreturnedList: UnreturnedEquipmentItem[]`.
      - Mengimplementasikan deteksi status pinjaman terbuka (`ACTIVE`, `OVERDUE`, `PENDING`, `APPROVED`) yang terhubung dengan event, mengekstrak rincian peminjam, due date, dan breakdown item alat.

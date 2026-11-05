@@ -132,7 +132,7 @@ export function PipelineView({ className }: PipelineViewProps) {
         color: "blue",
       },
       {
-        label: "MoU Sehat %",
+        label: "Active MoU %",
         value: `${kpiMetrics.healthyMouPercent}%`,
         helper: `${kpiMetrics.healthyMouCount} dari ${kpiMetrics.totalOutlets} outlet MoU aktif`,
         icon: FileText,
