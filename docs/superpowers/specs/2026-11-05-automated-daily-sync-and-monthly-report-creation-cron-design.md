@@ -1,7 +1,7 @@
 # Design Specification: Automated Daily Rolling Sync & Monthly Report Creation via Vercel Cron
 
 - **Date:** 2026-11-05
-- **Status:** APPROVED
+- **Status:** IMPLEMENTED (ADR-0036)
 - **ADR Reference:** `docs/adr/0036-automated-daily-sync-and-monthly-report-creation-cron.md`
 
 ## 1. Executive Summary & Goals
@@ -104,17 +104,17 @@ If current day is $\le 3$ (e.g. November 1, 2, 3):
 
 ## 5. Acceptance Criteria & Verification Checklist
 
-- [ ] `vercel.json` exists in project root with daily cron schedule targeting `/api/cron/reports-sync`.
-- [ ] `GET /api/cron/reports-sync` rejects unauthorized requests with HTTP 401 when `CRON_SECRET` is set.
-- [ ] `GET /api/cron/reports-sync` succeeds with HTTP 200 and JSON response when authorized.
-- [ ] `syncMonthlyReport` creates a new `MonthlyReport` if one does not exist for the target period.
-- [ ] `syncMonthlyReport` updates `summary` and `activities` for an existing month's report.
-- [ ] Custom user narratives in `achievements`, `keyIssues`, and `actionPlans` are preserved during daily updates.
-- [ ] Automated unit test `src/lib/marcom/monthlyReportSync.test.ts` passes 100%.
-- [ ] Automated route test `src/app/api/cron/reportsSyncRoute.test.ts` passes 100%.
-- [ ] `npm run drift:check` passes with no drift detected.
-- [ ] `npm run build:check` compiles with 0 TypeScript errors.
-- [ ] `npm test` passes with 0 failures across all suites.
+- [x] `vercel.json` exists in project root with daily cron schedule targeting `/api/cron/reports-sync`.
+- [x] `GET /api/cron/reports-sync` rejects unauthorized requests with HTTP 401 when `CRON_SECRET` is set.
+- [x] `GET /api/cron/reports-sync` succeeds with HTTP 200 and JSON response when authorized.
+- [x] `syncMonthlyReport` creates a new `MonthlyReport` if one does not exist for the target period.
+- [x] `syncMonthlyReport` updates `summary` and `activities` for an existing month's report.
+- [x] Custom user narratives in `achievements`, `keyIssues`, and `actionPlans` are preserved during daily updates.
+- [x] Automated unit test `src/lib/marcom/monthlyReportSync.test.ts` passes 100%.
+- [x] Automated route test `src/app/api/cron/reportsSyncRoute.test.ts` passes 100%.
+- [x] `npm run drift:check` passes with no drift detected.
+- [x] `npm run build:check` compiles with 0 TypeScript errors.
+- [x] `npm test` passes with 0 failures across all suites.
 
 
 

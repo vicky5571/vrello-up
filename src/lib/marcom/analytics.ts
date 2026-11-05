@@ -61,7 +61,7 @@ export function summarizeMouFunnel(mous: MouStatusInput[]): MouFunnel {
   return funnel;
 }
 
-const MONTH_NAMES = [
+export const MONTH_NAMES = [
   "January",
   "February",
   "March",
@@ -75,6 +75,8 @@ const MONTH_NAMES = [
   "November",
   "December",
 ] as const;
+
+export const MONTH_OPTIONS = MONTH_NAMES;
 
 /**
  * Calendar index of a report `month` value (January=0..December=11).

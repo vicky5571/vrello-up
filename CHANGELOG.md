@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(reports)`: Automated daily rolling sync & monthly report creation via Vercel Cron
+  - Configured Vercel serverless cron job schedule (`0 17 * * *`) in root `vercel.json` targeting `/api/cron/reports-sync`
+  - Created secure App Router route handler `src/app/api/cron/reports-sync/route.ts` enforcing `CRON_SECRET` authorization check
+  - Built domain sync engine `src/lib/marcom/monthlyReportSync.ts` automating monthly report kickoff on period rollover and daily metric refresh
+  - Implemented human-in-the-loop protection via `hasCustomNarratives` to strictly preserve custom admin entries in `achievements`, `keyIssues`, and `actionPlans`
+  - Added unit and route tests in `src/lib/marcom/monthlyReportSync.test.ts` and `src/app/api/cron/reportsSyncRoute.test.ts`
+  - Spec: `docs/superpowers/specs/2026-11-05-automated-daily-sync-and-monthly-report-creation-cron-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-automated-daily-sync-and-monthly-report-creation-cron.md`
+  - Refs: `docs/adr/0036-automated-daily-sync-and-monthly-report-creation-cron.md`
+  - Gates: `npm test` passed; `npm run build:check` 0 errors; `npm run drift:check` clean
+
 - `feat(reports)`: Reports expanded row modular card grid styling & atomic extraction
   - Extracted inline expanded row markup from coordinator `ReportsView.tsx` into atomic subcomponent `MonthlyReportExpandedRow.tsx` (reduced coordinator file size by 84 LOC)
   - Designed responsive 2x2 modular card grid (`Aktivitas Operasional`, `Capaian Utama`, `Kendala & Isu Lapangan`, `Rencana Tindak Lanjut`) with themed icons (`Layers`, `CheckCircle2`, `AlertTriangle`, `ArrowUpRight`) and count pill badges
