@@ -1,4 +1,4 @@
-export type MarcomRole = "admin" | "supervisor" | "staff" | "viewer";
+export type MarcomRole = "admin" | "supervisor" | "warehouse" | "staff" | "viewer";
 export type PermissionAction =
   | "CREATE_MOU" | "APPROVE_MOU" | "DELETE_MOU" | "CREATE_PLACEMENT"
   | "UPDATE_PLACEMENT" | "CREATE_EVENT" | "UPLOAD_VIDEO_FOOTAGE"
@@ -45,6 +45,13 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
     "APPROVE_BORROW",
     "PROCESS_RETURN",
   ],
+  warehouse: [
+    "VIEW_INVENTORY",
+    "MANAGE_INVENTORY",
+    "REQUEST_BORROW",
+    "APPROVE_BORROW",
+    "PROCESS_RETURN",
+  ],
   staff: [
     "CREATE_MOU",
     "CREATE_PLACEMENT",
@@ -54,9 +61,7 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
     "UPLOAD_DOCUMENT",
     "EXPORT_REPORTS",
     "VIEW_INVENTORY",
-    "MANAGE_INVENTORY",
     "REQUEST_BORROW",
-    "PROCESS_RETURN",
   ],
   viewer: ["EXPORT_REPORTS", "VIEW_INVENTORY"],
 };
@@ -113,6 +118,11 @@ export function hasScopedPermission(ctx: ScopedPermissionContext): boolean {
 
   if (role === "admin") return true;
   if (role === "viewer") return action === "EXPORT_REPORTS" || action === "VIEW_INVENTORY";
+
+  // WAREHOUSE role: strictly limited to inventory operations
+  if (role === "warehouse") {
+    return (rolePermissions.warehouse || []).includes(action);
+  }
 
   // MANAGE_MASTER_DATA and APPROVE_OUTLET are strictly reserved for Super Admin
   if (action === "MANAGE_MASTER_DATA" || action === "APPROVE_OUTLET") {
@@ -171,7 +181,7 @@ export function resolveMarcomRole(
   currentUserId: string,
 ): MarcomRole {
   const role = members.find((m) => m.id === currentUserId)?.role;
-  return role === "admin" || role === "supervisor" || role === "staff" || role === "viewer"
+  return role === "admin" || role === "supervisor" || role === "warehouse" || role === "staff" || role === "viewer"
     ? role
     : "viewer";
 }
@@ -207,8 +217,8 @@ export function canManageUserTarget(
 
 /**
  * Evaluates whether an actor role can assign a specific role.
- * - Admin can assign any role ("admin", "supervisor", "staff", "viewer").
- * - Supervisor can assign "supervisor", "staff", "viewer", but CANNOT assign "admin".
+ * - Admin can assign any role ("admin", "supervisor", "warehouse", "staff", "viewer").
+ * - Supervisor can assign "supervisor", "warehouse", "staff", "viewer", but CANNOT assign "admin".
  */
 export function canAssignUserRole(
   actorRole: string | null | undefined,
@@ -221,6 +231,7 @@ export function canAssignUserRole(
     return (
       normalizedNewRole === "admin" ||
       normalizedNewRole === "supervisor" ||
+      normalizedNewRole === "warehouse" ||
       normalizedNewRole === "staff" ||
       normalizedNewRole === "viewer"
     );
@@ -228,6 +239,7 @@ export function canAssignUserRole(
   if (normalizedActor === "supervisor") {
     return (
       normalizedNewRole === "supervisor" ||
+      normalizedNewRole === "warehouse" ||
       normalizedNewRole === "staff" ||
       normalizedNewRole === "viewer"
     );

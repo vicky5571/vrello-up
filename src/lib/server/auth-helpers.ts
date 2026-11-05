@@ -50,6 +50,8 @@ export function normalizeRole(dbRole: DbUserRole): UserRole {
       return "admin";
     case "SUPERVISOR":
       return "supervisor";
+    case "WAREHOUSE":
+      return "warehouse";
     case "STAFF":
       return "staff";
     case "VIEWER":

@@ -15,7 +15,7 @@ export interface Status {
   order: number;
 }
 
-export type UserRole = "admin" | "supervisor" | "staff" | "viewer";
+export type UserRole = "admin" | "supervisor" | "warehouse" | "staff" | "viewer";
 
 export type UserStatus = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -793,6 +793,10 @@ export interface BorrowItem {
   quantity: number;
   conditionOut: EquipmentCondition;
   conditionIn?: EquipmentCondition | null;
+  goodUnits?: number;
+  minorDamageUnits?: number;
+  majorDamageUnits?: number;
+  lostUnits?: number;
   notes?: string;
 }
 
@@ -815,6 +819,10 @@ export interface BorrowRecord {
   approvedBy?: string;
   approvedAt?: string | null;
   returnNotes?: string;
+  compensationAmount?: number;
+  compensationStatus?: "NONE" | "PENDING_SETTLEMENT" | "RESOLVED";
+  compensationNotes?: string;
+  damagePhotos?: string[];
   items: BorrowItem[];
   createdAt?: string;
   updatedAt?: string;

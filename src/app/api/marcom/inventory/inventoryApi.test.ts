@@ -130,7 +130,10 @@ test("API: Full Borrow & Return Lifecycle", async () => {
   // 7. Process return: POST /return (AC-8: status RETURNED, restores availableUnits)
   const returnReq = new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrowRecord.id}/return`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-role": "warehouse",
+    },
     body: JSON.stringify({
       returnNotes: "All returned in good condition",
       items: [
@@ -152,6 +155,153 @@ test("API: Full Borrow & Return Lifecycle", async () => {
   assert.equal(itemAfterReturn?.availableUnits, 5);
 
   // 8. Clean up test records
+  await prisma.borrowItem.deleteMany({ where: { borrowRecordId: borrowRecord.id } });
+  await prisma.borrowRecord.delete({ where: { id: borrowRecord.id } });
+  await prisma.inventoryItem.delete({ where: { id: testItem.id } });
+});
+
+test("API: Return Inspection Breakdown, Compensation Workflow, and Four-Eyes Principle (ADR-0050)", async () => {
+  // 1. Create a test item with 10 total units
+  const testCode = `INSPECT-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const itemRes = await postInventory(
+    new Request("http://localhost:3000/api/marcom/inventory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Inspection Test Speakers",
+        code: testCode,
+        category: "Audio",
+        totalUnits: 10,
+        storageLocation: "Warehouse A",
+      }),
+    })
+  );
+  assert.equal(itemRes.status, 201);
+  const testItem = await itemRes.json();
+  assert.equal(testItem.availableUnits, 10);
+  assert.equal(testItem.totalUnits, 10);
+
+  // 2. Create and activate a borrow of 10 units
+  const borrowRes = await postBorrow(
+    new Request("http://localhost:3000/api/marcom/inventory/borrow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        borrowerName: "Field Staff Tester",
+        borrowerPhone: "0812345678",
+        borrowDate: new Date().toISOString().slice(0, 10),
+        returnDueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+        items: [{ inventoryItemId: testItem.id, quantity: 10 }],
+      }),
+    })
+  );
+  assert.equal(borrowRes.status, 201);
+  const borrowRecord = await borrowRes.json();
+
+  // Approve and activate
+  await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrowRecord.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "APPROVED" }),
+    }),
+    { params: Promise.resolve({ id: borrowRecord.id }) }
+  );
+
+  const activateRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrowRecord.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "ACTIVE" }),
+    }),
+    { params: Promise.resolve({ id: borrowRecord.id }) }
+  );
+  const activeRecord = await activateRes.json();
+  const borrowItemId = activeRecord.items[0].id;
+
+  // Verify availableUnits decremented to 0
+  const itemActive = await prisma.inventoryItem.findUnique({ where: { id: testItem.id } });
+  assert.equal(itemActive?.availableUnits, 0);
+
+  // 3. Test Four-Eyes Principle: Staff is rejected with 403
+  const staffReturnRes = await returnBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrowRecord.id}/return`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+      },
+      body: JSON.stringify({
+        items: [{ borrowItemId, goodUnits: 10, minorDamageUnits: 0, majorDamageUnits: 0, lostUnits: 0 }],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrowRecord.id }) }
+  );
+  assert.equal(staffReturnRes.status, 403);
+  const staffBody = await staffReturnRes.json();
+  assert.ok(staffBody.error.includes("Warehouse"));
+
+  // 4. Test Sum Validation: mismatched units rejected with 422
+  const invalidSumRes = await returnBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrowRecord.id}/return`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+      },
+      body: JSON.stringify({
+        items: [{ borrowItemId, goodUnits: 7, minorDamageUnits: 1, majorDamageUnits: 0, lostUnits: 0 }], // sum = 8 != 10
+      }),
+    }),
+    { params: Promise.resolve({ id: borrowRecord.id }) }
+  );
+  assert.equal(invalidSumRes.status, 422);
+
+  // 5. Valid return by Warehouse role:
+  // 8 good, 1 major damage, 1 lost
+  const validReturnRes = await returnBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrowRecord.id}/return`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+      },
+      body: JSON.stringify({
+        returnNotes: "Inspection completed with damage and loss",
+        compensationAmount: 750000,
+        compensationNotes: "Replacement fee for 1 lost unit and repair quote for 1 damaged unit",
+        damagePhotos: ["https://example.com/damage1.jpg"],
+        items: [
+          {
+            borrowItemId,
+            goodUnits: 8,
+            minorDamageUnits: 0,
+            majorDamageUnits: 1,
+            lostUnits: 1,
+            notes: "1 dropped, 1 missing cable/unit",
+          },
+        ],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrowRecord.id }) }
+  );
+  assert.equal(validReturnRes.status, 200);
+  const returnedRecord = await validReturnRes.json();
+  assert.equal(returnedRecord.status, "RETURNED");
+  assert.equal(returnedRecord.compensationStatus, "PENDING_SETTLEMENT");
+  assert.equal(returnedRecord.compensationAmount, 750000);
+  assert.equal(returnedRecord.compensationNotes, "Replacement fee for 1 lost unit and repair quote for 1 damaged unit");
+  assert.deepEqual(returnedRecord.damagePhotos, ["https://example.com/damage1.jpg"]);
+
+  // 6. Verify inventory balance arithmetic:
+  // availableUnits should be 8 (from 0 + 8)
+  // totalUnits should be 8 (from 10 - 2 write-offs: 1 major + 1 lost)
+  const itemFinal = await prisma.inventoryItem.findUnique({ where: { id: testItem.id } });
+  assert.equal(itemFinal?.availableUnits, 8);
+  assert.equal(itemFinal?.totalUnits, 8);
+  assert.equal(itemFinal?.status, "AVAILABLE");
+
+  // 7. Clean up test records
   await prisma.borrowItem.deleteMany({ where: { borrowRecordId: borrowRecord.id } });
   await prisma.borrowRecord.delete({ where: { id: borrowRecord.id } });
   await prisma.inventoryItem.delete({ where: { id: testItem.id } });

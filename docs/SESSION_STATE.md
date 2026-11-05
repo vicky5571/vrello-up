@@ -8,14 +8,45 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Warehouse Role and Return Inspection Compensation Workflow (ADR-0050) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Active Feature:** Warehouse Role and Return Inspection Compensation Workflow (ADR-0050) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Filter Approved Outlets in Operational Work Item Forms (ADR-0049)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Role Warehouse, Inspeksi Pengembalian & Tracking Ganti Rugi Alat (ADR-0050 — Planning Complete):**
+1. **Implementasi Role Warehouse, Inspeksi Pengembalian & Tracking Ganti Rugi Alat (ADR-0050 — Implementation Complete):**
+   - **Database & SSOT Domain Entities:**
+     - Menambahkan nilai `WAREHOUSE` pada enum `DbUserRole` di `prisma/schema.prisma` dan type `UserRole` di `src/types/index.ts`.
+     - Menambahkan kolom multi-unit breakdown pada `BorrowItem`: `goodUnits`, `minorDamageUnits`, `majorDamageUnits`, `lostUnits`.
+     - Menambahkan kolom pelacakan ganti rugi pada `BorrowRecord`: `compensationAmount`, `compensationStatus` (`NONE`, `PENDING_SETTLEMENT`, `RESOLVED`), `compensationNotes`, dan array `damagePhotos`.
+     - Sinkronisasi skema database via database migration SQL dan `npx prisma generate`.
+   - **Hardening RBAC & Four-Eyes Principle (`src/lib/marcom/guards.ts`):**
+     - Menambahkan definisi role `warehouse` dengan wewenang CUD penuh pada modul inventaris (`VIEW_INVENTORY`, `MANAGE_INVENTORY`, `REQUEST_BORROW`, `APPROVE_BORROW`, `PROCESS_RETURN`).
+     - Menetapkan aturan *Zero-Write / Read-Only* mutlak bagi role `warehouse` terhadap seluruh modul operasional lainnya (MoU, Placements, Outlets, Events, Content, Docs, Reports).
+     - Menegakkan *Four-Eyes Principle* dengan mencabut hak `PROCESS_RETURN` dan `MANAGE_INVENTORY` dari role `staff`.
+     - Memperbarui `hasScopedPermission`, `resolveMarcomRole`, dan `canAssignUserRole` untuk mendukung role `warehouse`.
+   - **Backend Mutation Endpoint Guard & Stock Balancing (`return/route.ts`):**
+     - Memvalidasi otorisasi: menolak permohonan pengembalian dari `staff` atau `viewer` dengan `HTTP 403 Forbidden`.
+     - Memvalidasi alokasi breakdown: menolak jika penjumlahan `goodUnits + minorDamageUnits + majorDamageUnits + lostUnits !== bi.quantity` dengan `HTTP 422 Unprocessable Entity`.
+     - Menghitung mutasi stok master secara atomik dalam `$transaction`:
+       - Unit `good` dan `minorDamage` dipulihkan ke `availableUnits`.
+       - Unit `majorDamage` dan `lost` dihapusbukukan (afkir) secara permanen dari `totalUnits` (mengurangi `totalUnits`).
+       - Status ganti rugi otomatis diatur ke `PENDING_SETTLEMENT` jika terdapat unit afkir.
+   - **Penyelarasan Antarmuka & Modals (`InventoryView` & `UsersView`):**
+     - `ReturnProcessModal.tsx`: Input numerik 4 kondisi unit per item dengan indikator real-time jika total tidak sesuai, kartu kewajiban ganti rugi (nominal, status lunas/pending, catatan, dan galeri upload foto bukti), serta submit button guard `disabled={loading || isAnySumInvalid}`.
+     - `BorrowDetailModal.tsx`: Menampilkan badge status kewajiban ganti rugi di header, kartu rincian kompensasi dan galeri foto bukti kerusakan, serta sub-rincian alokasi unit pada tabel peralatan.
+     - `UserRoleSelect.tsx`: Menambahkan opsi `Warehouse` pada dropdown pemilihan role pengguna.
+   - **Otomatisasi Pengujian Regresi & Invarian:**
+     - `src/lib/marcom/guards.test.ts`: Uji wewenang warehouse & pencabutan return pada staff (15/15 passed).
+     - `src/app/api/marcom/inventory/inventoryApi.test.ts`: Uji otorisasi 403, validasi jumlah 422, dan aritmatika keseimbangan stok & ganti rugi (4/4 passed).
+     - `src/components/views/InventoryView/returnProcessModal.test.ts`: Uji invarian struktural breakdown steppers, upload foto, dan opsi role warehouse (4/4 passed).
+   - **Non-Negotiable Gates:**
+     - `npm run drift:check` ✅ (77/77 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm test` ✅ (877/877 tests passed across 153 test suites, 0 failures).
+
+2. **Perencanaan Arsitektur Role Warehouse, Inspeksi Pengembalian & Tracking Ganti Rugi Alat (ADR-0050 — Planning Complete):**
    - **Analisis Root Cause & Blast Radius:**
      - Mengidentifikasi anomali fatal pada `return/route.ts` di mana barang rusak berat (`MAJOR_DAMAGE`) tetap dipulihkan ke `availableUnits`.
      - Mengidentifikasi celah hilangnya akurasi stok master karena ketiadaan breakdown kondisi per unit pada peminjaman kuantitas jamak (`quantity > 1`).

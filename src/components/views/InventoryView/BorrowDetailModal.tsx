@@ -70,6 +70,19 @@ export function BorrowDetailModal({
             >
               {statusCfg.label}
             </span>
+            {record.compensationStatus && record.compensationStatus !== "NONE" && (
+              <span
+                className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                  record.compensationStatus === "RESOLVED"
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900"
+                    : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900"
+                }`}
+              >
+                {record.compensationStatus === "RESOLVED"
+                  ? `Ganti Rugi: Rp ${(record.compensationAmount || 0).toLocaleString("id-ID")} (Lunas)`
+                  : `Ganti Rugi: Rp ${(record.compensationAmount || 0).toLocaleString("id-ID")} (Pending)`}
+              </span>
+            )}
             {isOverdue && (
               <span className="text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 px-2 py-0.5 rounded-full flex items-center gap-1">
                 <AlertCircle className="w-3.5 h-3.5" />
@@ -236,6 +249,64 @@ export function BorrowDetailModal({
             </div>
           )}
 
+          {/* Compensation & Damage Inspection Liability */}
+          {record.compensationStatus && record.compensationStatus !== "NONE" && (
+            <div className="bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  Kewajiban Ganti Rugi Kerusakan / Kehilangan
+                </span>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                    record.compensationStatus === "RESOLVED"
+                      ? "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-300"
+                      : "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/60 dark:text-amber-300"
+                  }`}
+                >
+                  {record.compensationStatus === "RESOLVED" ? "LUNAS / SELESAI" : "BELUM LUNAS"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Nilai Ganti Rugi:</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                    Rp {(record.compensationAmount || 0).toLocaleString("id-ID")}
+                  </span>
+                </div>
+                {record.compensationNotes && (
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Keterangan:</span>
+                    <p className="text-slate-800 dark:text-slate-200">{record.compensationNotes}</p>
+                  </div>
+                )}
+              </div>
+
+              {record.damagePhotos && record.damagePhotos.length > 0 && (
+                <div className="pt-2 border-t border-amber-200/60 dark:border-amber-900/40">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1.5">
+                    Bukti Foto Kerusakan ({record.damagePhotos.length}):
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {record.damagePhotos.map((url, i) => (
+                      <a
+                        key={i}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-14 h-14 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-800 block hover:opacity-80 transition-opacity"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt={`Bukti ${i + 1}`} className="w-full h-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Items Table */}
           <div>
             <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
@@ -280,11 +351,27 @@ export function BorrowDetailModal({
                         </td>
                         <td className="py-2.5 px-3">
                           {condInCfg ? (
-                            <span
-                              className={`text-[10px] px-2 py-0.5 rounded-full border ${condInCfg.badge}`}
-                            >
-                              {condInCfg.label}
-                            </span>
+                            <div>
+                              <span
+                                className={`text-[10px] px-2 py-0.5 rounded-full border ${condInCfg.badge}`}
+                              >
+                                {condInCfg.label}
+                              </span>
+                              {(bi.goodUnits !== undefined || bi.minorDamageUnits || bi.majorDamageUnits || bi.lostUnits) && (
+                                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 space-x-1 font-mono">
+                                  <span className="text-emerald-600 dark:text-emerald-400">✓{bi.goodUnits ?? 0}</span>
+                                  {Boolean(bi.minorDamageUnits) && (
+                                    <span className="text-amber-600 dark:text-amber-400">⚠{bi.minorDamageUnits}</span>
+                                  )}
+                                  {Boolean(bi.majorDamageUnits) && (
+                                    <span className="text-rose-600 dark:text-rose-400">✖{bi.majorDamageUnits}</span>
+                                  )}
+                                  {Boolean(bi.lostUnits) && (
+                                    <span className="text-purple-600 dark:text-purple-400">?{bi.lostUnits}</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           ) : (
                             <span className="text-slate-400 dark:text-slate-600 text-[11px]">—</span>
                           )}

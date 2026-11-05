@@ -4,6 +4,23 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-11-06]
+
+- `feat(inventory)`: Warehouse role and return inspection compensation workflow
+  - Added `WAREHOUSE` to `DbUserRole` and `UserRole` SSOT union with CUD authority over inventory and zero-write in other modules
+  - Enforced Four-Eyes Principle: revoked `PROCESS_RETURN` and `MANAGE_INVENTORY` permissions from `staff`
+  - Added multi-unit condition breakdown columns on `BorrowItem` (`goodUnits`, `minorDamageUnits`, `majorDamageUnits`, `lostUnits`)
+  - Added compensation columns on `BorrowRecord` (`compensationAmount`, `compensationStatus`, `compensationNotes`, `damagePhotos`)
+  - Updated `POST /api/marcom/inventory/borrow/[id]/return` with role authorization (403 for staff), quantity sum validation (422 for mismatch), and atomic stock math decommissioning major damaged & lost units from `totalUnits`
+  - Elevated `ReturnProcessModal.tsx` with 4-unit condition breakdown inputs, real-time sum validation, damage photo proofs, and compensation inputs
+  - Elevated `BorrowDetailModal.tsx` with compensation liability badge, details card, and damage photos gallery
+  - Added `Warehouse` option to `UserRoleSelect.tsx`
+  - Added comprehensive automated unit, integration, and structural regression tests
+  - Spec: `docs/superpowers/specs/2026-11-06-warehouse-role-and-return-inspection-compensation-workflow-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-warehouse-role-and-return-inspection-compensation-workflow.md`
+  - Refs: `docs/adr/0050-warehouse-role-and-return-inspection-compensation-workflow.md` (ADR-0050)
+  - Gates: `npm test` 877/877 passed across 153 suites; `npm run build:check` 0 errors; `npm run drift:check` clean (77/77 specs paired)
+
 ## [2026-11-05]
 
 - `fix(marcom)`: Restrict operational form outlet selection to approved stores

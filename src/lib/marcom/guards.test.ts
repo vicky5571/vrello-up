@@ -387,13 +387,15 @@ test("canAssignUserRole prevents supervisors from assigning admin role", () => {
   // Admin can assign any role
   assert.equal(canAssignUserRole("admin", "admin"), true);
   assert.equal(canAssignUserRole("admin", "supervisor"), true);
+  assert.equal(canAssignUserRole("admin", "warehouse"), true);
   assert.equal(canAssignUserRole("admin", "staff"), true);
   assert.equal(canAssignUserRole("admin", "viewer"), true);
 
-  // Supervisor can assign supervisor, staff, viewer, but CANNOT assign admin
+  // Supervisor can assign supervisor, warehouse, staff, viewer, but CANNOT assign admin
   assert.equal(canAssignUserRole("supervisor", "admin"), false);
   assert.equal(canAssignUserRole("supervisor", "ADMIN"), false);
   assert.equal(canAssignUserRole("supervisor", "supervisor"), true);
+  assert.equal(canAssignUserRole("supervisor", "warehouse"), true);
   assert.equal(canAssignUserRole("supervisor", "staff"), true);
   assert.equal(canAssignUserRole("supervisor", "viewer"), true);
   assert.equal(canAssignUserRole("supervisor", "invalid"), false);
@@ -402,5 +404,37 @@ test("canAssignUserRole prevents supervisors from assigning admin role", () => {
   assert.equal(canAssignUserRole("staff", "viewer"), false);
   assert.equal(canAssignUserRole("viewer", "viewer"), false);
   assert.equal(canAssignUserRole(null, "staff"), false);
+});
+
+test("warehouse role permissions and staff Four-Eyes Principle revocation", () => {
+  // Warehouse permissions
+  assert.equal(hasPermission("warehouse", "VIEW_INVENTORY"), true);
+  assert.equal(hasPermission("warehouse", "MANAGE_INVENTORY"), true);
+  assert.equal(hasPermission("warehouse", "REQUEST_BORROW"), true);
+  assert.equal(hasPermission("warehouse", "APPROVE_BORROW"), true);
+  assert.equal(hasPermission("warehouse", "PROCESS_RETURN"), true);
+
+  // Warehouse read-only / zero-write on other operational modules
+  assert.equal(hasPermission("warehouse", "CREATE_MOU"), false);
+  assert.equal(hasPermission("warehouse", "APPROVE_MOU"), false);
+  assert.equal(hasPermission("warehouse", "CREATE_PLACEMENT"), false);
+  assert.equal(hasPermission("warehouse", "CREATE_EVENT"), false);
+  assert.equal(hasPermission("warehouse", "UPLOAD_VIDEO_FOOTAGE"), false);
+  assert.equal(hasPermission("warehouse", "UPLOAD_DOCUMENT"), false);
+  assert.equal(hasPermission("warehouse", "DELETE_DOCUMENT"), false);
+  assert.equal(hasPermission("warehouse", "MANAGE_MASTER_DATA"), false);
+  assert.equal(hasPermission("warehouse", "EXPORT_REPORTS"), false);
+  assert.equal(hasPermission("warehouse", "SUBMIT_DRAFT_OUTLET"), false);
+  assert.equal(hasPermission("warehouse", "APPROVE_OUTLET"), false);
+
+  // Staff Four-Eyes Principle: cannot process return or manage inventory catalog
+  assert.equal(hasPermission("staff", "PROCESS_RETURN"), false);
+  assert.equal(hasPermission("staff", "MANAGE_INVENTORY"), false);
+
+  // Scoped permission checks for warehouse
+  assert.equal(hasScopedPermission({ role: "warehouse", action: "PROCESS_RETURN" }), true);
+  assert.equal(hasScopedPermission({ role: "warehouse", action: "MANAGE_INVENTORY" }), true);
+  assert.equal(hasScopedPermission({ role: "warehouse", action: "CREATE_MOU" }), false);
+  assert.equal(hasScopedPermission({ role: "warehouse", action: "CREATE_PLACEMENT" }), false);
 });
 

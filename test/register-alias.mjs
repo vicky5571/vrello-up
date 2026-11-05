@@ -21,8 +21,8 @@ function probe(base) {
 // `node --test` runner can import store modules without a bundler.
 registerHooks({
   resolve(specifier, context, next) {
-    if (specifier === "next/server") {
-      return next("next/server.js", context);
+    if (specifier === "next/server" || specifier === "next/headers" || specifier === "next/navigation") {
+      return next(`${specifier}.js`, context);
     }
     if (specifier.startsWith("@/")) {
       const url = probe(path.join(srcDir, specifier.slice(2)));

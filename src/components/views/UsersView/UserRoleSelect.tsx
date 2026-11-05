@@ -11,6 +11,7 @@ interface UserRoleSelectProps {
 const ALL_ROLE_OPTIONS = [
   { value: "admin" as const, label: "Admin" },
   { value: "supervisor" as const, label: "Supervisor" },
+  { value: "warehouse" as const, label: "Warehouse" },
   { value: "staff" as const, label: "Staff" },
   { value: "viewer" as const, label: "Viewer" },
 ];

@@ -35,6 +35,7 @@ test("verifyPassword validates correct and incorrect passwords", async () => {
 test("normalizeRole maps DbUserRole enum to UserRole union correctly", () => {
   assert.equal(normalizeRole("ADMIN"), "admin");
   assert.equal(normalizeRole("SUPERVISOR"), "supervisor");
+  assert.equal(normalizeRole("WAREHOUSE"), "warehouse");
   assert.equal(normalizeRole("STAFF"), "staff");
   assert.equal(normalizeRole("VIEWER"), "viewer");
   // @ts-expect-error test fallback for unexpected values

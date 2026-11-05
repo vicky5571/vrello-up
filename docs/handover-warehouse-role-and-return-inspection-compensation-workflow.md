@@ -1,6 +1,6 @@
 # Handover: Warehouse Role and Return Inspection Compensation Workflow
 
-- **Status:** READY FOR EXECUTION
+- **Status:** IMPLEMENTATION COMPLETE
 - **Date:** 2026-11-06
 - **ADR Reference:** `docs/adr/0050-warehouse-role-and-return-inspection-compensation-workflow.md`
 - **Spec Reference:** `docs/superpowers/specs/2026-11-06-warehouse-role-and-return-inspection-compensation-workflow-design.md`
@@ -525,21 +525,21 @@ const ALL_ROLE_OPTIONS = [
 
 ## 6. Acceptance Criteria Checklist
 
-- [ ] `DbUserRole.WAREHOUSE` and `"warehouse"` role type exist and compile cleanly.
-- [ ] `hasPermission("warehouse", "PROCESS_RETURN") === true` and `hasPermission("warehouse", "CREATE_MOU") === false`.
-- [ ] `hasPermission("staff", "PROCESS_RETURN") === false` (Four-Eyes Principle enforced).
-- [ ] `POST /api/marcom/inventory/borrow/[id]/return` rejects requests from `staff` with HTTP 403.
-- [ ] `POST /api/marcom/inventory/borrow/[id]/return` rejects mismatched breakdown sums with HTTP 422.
-- [ ] Returning 10 borrowed items with 8 good, 1 major damage, 1 lost:
-  - [ ] Increments `availableUnits` by 8.
-  - [ ] Decrements `totalUnits` by 2 (afkir / decommissioned).
-  - [ ] Automatically assigns `compensationStatus = "PENDING_SETTLEMENT"`.
-  - [ ] Persists damage proof photos array and compensation notes.
-- [ ] `ReturnProcessModal.tsx` renders 4 numeric breakdown inputs per item and disables submit button if sum is unequal to total quantity.
-- [ ] `BorrowDetailModal.tsx` renders liability status badge and damage photo gallery.
-- [ ] `UserRoleSelect.tsx` renders `Warehouse` in role dropdown options.
-- [ ] `npm run drift:check` passes with 0 drift.
-- [ ] `npm test` passes with 0 failures.
+- [x] `DbUserRole.WAREHOUSE` and `"warehouse"` role type exist and compile cleanly.
+- [x] `hasPermission("warehouse", "PROCESS_RETURN") === true` and `hasPermission("warehouse", "CREATE_MOU") === false`.
+- [x] `hasPermission("staff", "PROCESS_RETURN") === false` (Four-Eyes Principle enforced).
+- [x] `POST /api/marcom/inventory/borrow/[id]/return` rejects requests from `staff` with HTTP 403.
+- [x] `POST /api/marcom/inventory/borrow/[id]/return` rejects mismatched breakdown sums with HTTP 422.
+- [x] Returning 10 borrowed items with 8 good, 1 major damage, 1 lost:
+  - [x] Increments `availableUnits` by 8.
+  - [x] Decrements `totalUnits` by 2 (afkir / decommissioned).
+  - [x] Automatically assigns `compensationStatus = "PENDING_SETTLEMENT"`.
+  - [x] Persists damage proof photos array and compensation notes.
+- [x] `ReturnProcessModal.tsx` renders 4 numeric breakdown inputs per item and disables submit button if sum is unequal to total quantity.
+- [x] `BorrowDetailModal.tsx` renders liability status badge and damage photo gallery.
+- [x] `UserRoleSelect.tsx` renders `Warehouse` in role dropdown options.
+- [x] `npm run drift:check` passes with 0 drift.
+- [x] `npm test` passes with 0 failures.
 
 
 

@@ -314,11 +314,15 @@ model BorrowRecord {
   notes            String       @default("")
   approvedBy       String       @default("")
   approvedAt       DateTime?
-  returnNotes      String       @default("")
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  returnNotes        String       @default("")
+  compensationAmount Float        @default(0)
+  compensationStatus String       @default("NONE") // "NONE" | "PENDING_SETTLEMENT" | "RESOLVED"
+  compensationNotes  String       @default("")
+  damagePhotos       String[]     @default([])
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
-  items            BorrowItem[]
+  items              BorrowItem[]
 
   @@index([status])
   @@index([borrowDate])
@@ -333,10 +337,14 @@ model BorrowItem {
   borrowRecord    BorrowRecord        @relation(fields: [borrowRecordId], references: [id], onDelete: Cascade)
   inventoryItemId String
   inventoryItem   InventoryItem       @relation(fields: [inventoryItemId], references: [id])
-  quantity        Int                 @default(1)
-  conditionOut    EquipmentCondition  @default(GOOD)
-  conditionIn     EquipmentCondition?
-  notes           String              @default("")
+  quantity           Int                 @default(1)
+  conditionOut       EquipmentCondition  @default(GOOD)
+  conditionIn        EquipmentCondition? // Fallback/dominant condition
+  goodUnits          Int                 @default(0)
+  minorDamageUnits   Int                 @default(0)
+  majorDamageUnits   Int                 @default(0)
+  lostUnits          Int                 @default(0)
+  notes              String              @default("")
 
   @@index([borrowRecordId])
   @@index([inventoryItemId])
@@ -371,6 +379,7 @@ enum DbUserRole {
   SUPERVISOR
   STAFF
   VIEWER
+  WAREHOUSE
 }
 
 enum DbUserStatus {

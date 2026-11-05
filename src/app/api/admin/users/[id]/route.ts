@@ -15,7 +15,7 @@ import type { UserRole } from "@/types";
 
 const patchSchema = z.object({
   status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
-  role: z.enum(["admin", "supervisor", "staff", "viewer"]).optional(),
+  role: z.enum(["admin", "supervisor", "warehouse", "staff", "viewer"]).optional(),
   assignedBranchIds: z.array(z.string()).optional(),
   reason: z.string().optional(),
 });
@@ -26,6 +26,8 @@ function roleToDbRole(role: UserRole): DbUserRole {
       return "ADMIN";
     case "supervisor":
       return "SUPERVISOR";
+    case "warehouse":
+      return "WAREHOUSE";
     case "staff":
       return "STAFF";
     case "viewer":

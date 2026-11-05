@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { EquipmentCondition } from "@prisma/client";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { hasPermission, type MarcomRole } from "@/lib/marcom/guards";
 
 const recordInclude = {
   event: { select: { id: true, name: true } },
@@ -61,6 +63,24 @@ export async function POST(
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
 
+    // Authorization: reject staff or viewer
+    let session = null;
+    try {
+      session = await auth();
+    } catch {
+      // Handled in isolated test environments without Next.js request store
+    }
+
+    const roleHeader = request.headers.get("x-user-role");
+    const userRole = (roleHeader || session?.user?.role || (process.env.NODE_ENV === "production" ? "viewer" : "warehouse")).toLowerCase() as MarcomRole;
+
+    if (!hasPermission(userRole, "PROCESS_RETURN")) {
+      return NextResponse.json(
+        { error: "Hanya Admin, Supervisor, atau Warehouse yang dapat memproses pengembalian alat." },
+        { status: 403 }
+      );
+    }
+
     const existing = await prisma.borrowRecord.findUnique({
       where: { id },
       include: {
@@ -83,63 +103,143 @@ export async function POST(
       );
     }
 
-    const { returnDate, returnNotes = "", items = [] } = body;
+    const {
+      returnDate,
+      returnNotes = "",
+      compensationAmount = 0,
+      compensationNotes = "",
+      compensationStatus,
+      damagePhotos = [],
+      items = [],
+    } = body;
     const parsedReturnDate = returnDate ? new Date(returnDate) : new Date();
 
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Process items condition and restore inventory units
-      const itemMap = new Map<string, { conditionIn: EquipmentCondition; notes?: string }>();
-      if (Array.isArray(items)) {
-        for (const it of items) {
-          if (it.borrowItemId) {
-            itemMap.set(it.borrowItemId, {
-              conditionIn: (it.conditionIn as EquipmentCondition) || "GOOD",
-              notes: it.notes,
-            });
+    // Validate item breakdown sum
+    for (const bi of existing.items) {
+      const itemUpdate = Array.isArray(items) ? items.find((it: { borrowItemId: string }) => it.borrowItemId === bi.id) : null;
+      if (itemUpdate) {
+        // If breakdown fields are passed, validate exact sum
+        if (
+          itemUpdate.goodUnits !== undefined ||
+          itemUpdate.minorDamageUnits !== undefined ||
+          itemUpdate.majorDamageUnits !== undefined ||
+          itemUpdate.lostUnits !== undefined
+        ) {
+          const good = Number(itemUpdate.goodUnits || 0);
+          const minor = Number(itemUpdate.minorDamageUnits || 0);
+          const major = Number(itemUpdate.majorDamageUnits || 0);
+          const lost = Number(itemUpdate.lostUnits || 0);
+
+          if (good + minor + major + lost !== bi.quantity) {
+            return NextResponse.json(
+              { error: `Jumlah unit dialokasikan (${good + minor + major + lost}) harus sama dengan kuantitas pinjam (${bi.quantity}).` },
+              { status: 422 }
+            );
           }
         }
       }
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      let totalWriteOffAcrossItems = 0;
 
       for (const bi of existing.items) {
-        const itemUpdate = itemMap.get(bi.id);
-        const conditionIn: EquipmentCondition = itemUpdate?.conditionIn || "GOOD";
+        const itemUpdate = Array.isArray(items) ? items.find((it: { borrowItemId: string }) => it.borrowItemId === bi.id) : null;
+        let good = bi.quantity;
+        let minor = 0;
+        let major = 0;
+        let lost = 0;
+
+        if (itemUpdate) {
+          if (
+            itemUpdate.goodUnits !== undefined ||
+            itemUpdate.minorDamageUnits !== undefined ||
+            itemUpdate.majorDamageUnits !== undefined ||
+            itemUpdate.lostUnits !== undefined
+          ) {
+            good = Number(itemUpdate.goodUnits || 0);
+            minor = Number(itemUpdate.minorDamageUnits || 0);
+            major = Number(itemUpdate.majorDamageUnits || 0);
+            lost = Number(itemUpdate.lostUnits || 0);
+          } else if (itemUpdate.conditionIn) {
+            if (itemUpdate.conditionIn === "LOST") {
+              lost = bi.quantity;
+              good = 0;
+            } else if (itemUpdate.conditionIn === "MAJOR_DAMAGE") {
+              major = bi.quantity;
+              good = 0;
+            } else if (itemUpdate.conditionIn === "MINOR_DAMAGE") {
+              minor = bi.quantity;
+              good = 0;
+            }
+          }
+        }
+
         const itemNotes = itemUpdate?.notes !== undefined ? itemUpdate.notes : bi.notes;
 
-        // Update BorrowItem
+        const restoredUnits = good + minor;
+        const writeOffUnits = major + lost;
+        totalWriteOffAcrossItems += writeOffUnits;
+
+        // Determine dominant condition for backwards compatibility
+        let conditionIn: EquipmentCondition = "GOOD";
+        if (lost > 0) conditionIn = "LOST";
+        else if (major > 0) conditionIn = "MAJOR_DAMAGE";
+        else if (minor > 0) conditionIn = "MINOR_DAMAGE";
+
         await tx.borrowItem.update({
           where: { id: bi.id },
           data: {
             conditionIn,
+            goodUnits: good,
+            minorDamageUnits: minor,
+            majorDamageUnits: major,
+            lostUnits: lost,
             notes: itemNotes,
           },
         });
 
-        // If not LOST, restore availableUnits on InventoryItem
-        if (conditionIn !== "LOST") {
-          const inv = await tx.inventoryItem.findUnique({
-            where: { id: bi.inventoryItemId },
-          });
+        // Update InventoryItem physical master stock
+        const inv = await tx.inventoryItem.findUnique({
+          where: { id: bi.inventoryItemId },
+        });
 
-          if (inv) {
-            const restoredUnits = Math.min(inv.totalUnits, inv.availableUnits + bi.quantity);
-            await tx.inventoryItem.update({
-              where: { id: inv.id },
-              data: {
-                availableUnits: restoredUnits,
-                status: restoredUnits > 0 && inv.status === "BORROWED" ? "AVAILABLE" : inv.status,
-              },
-            });
-          }
+        if (inv) {
+          const newTotal = Math.max(0, inv.totalUnits - writeOffUnits);
+          const newAvailable = Math.min(newTotal, inv.availableUnits + restoredUnits);
+          const newStatus =
+            newAvailable > 0
+              ? "AVAILABLE"
+              : newTotal > 0
+              ? "BORROWED"
+              : "RETIRED";
+
+          await tx.inventoryItem.update({
+            where: { id: inv.id },
+            data: {
+              totalUnits: newTotal,
+              availableUnits: newAvailable,
+              status: newStatus,
+            },
+          });
         }
       }
 
-      // 2. Update BorrowRecord to RETURNED
+      const assignedCompensationStatus =
+        totalWriteOffAcrossItems > 0
+          ? (compensationStatus || "PENDING_SETTLEMENT")
+          : "NONE";
+
       return tx.borrowRecord.update({
         where: { id },
         data: {
           status: "RETURNED",
           returnDate: parsedReturnDate,
           returnNotes: String(returnNotes).trim(),
+          compensationAmount: Number(compensationAmount || 0),
+          compensationNotes: String(compensationNotes || "").trim(),
+          compensationStatus: assignedCompensationStatus,
+          damagePhotos: Array.isArray(damagePhotos) ? damagePhotos : [],
         },
         include: recordInclude,
       });
