@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(auth)`: Add operational branch selection via CustomDropdown on register
+  - Pre-fetched active branches during SSR in `RegisterPage` Server Component via Prisma (`findMany`)
+  - Rendered searchable `CustomDropdown<string>` (`size="md"`, `direction="auto"`) for branch assignment in `RegisterForm`
+  - Enforced client and server Zod validation requiring `branchId` with existence check against database
+  - Initialized pending user `assignedBranchIds` with selected branch upon registration
+  - Added unit and invariant tests in `src/app/api/auth/register/registerRoute.test.ts` (7/7 passing)
+  - Spec: `docs/superpowers/specs/2026-11-05-registration-branch-selection-custom-dropdown-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-registration-branch-selection-custom-dropdown.md`
+  - Refs: `docs/adr/0043-registration-branch-selection-custom-dropdown.md` (ADR-0043)
+  - Gates: `npm test` 848/848 passed; `npm run build:check` 0 errors; `npm run drift:check` clean (70/70 specs paired)
+
 - `feat(inventory)`: Comprehensive UX polish and CustomDropdown for BorrowRequestModal
   - Replaced unstyled HTML `<select>` with searchable `CustomDropdown<string>` (`size="md"`, `direction="auto"`) for Field Event linking
   - Added dedicated "Clear link" action and real-time duration counter pill

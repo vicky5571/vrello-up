@@ -12,6 +12,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { AuthAlert } from "./AuthAlert";
 import { AuthCard, AuthDivider, AuthHeader } from "./AuthCard";
 import { AuthField } from "./AuthField";
@@ -25,6 +26,7 @@ interface FieldErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
+  branchId?: string;
 }
 
 interface RegistrationValues {
@@ -32,6 +34,7 @@ interface RegistrationValues {
   email: string;
   password: string;
   confirmPassword: string;
+  branchId: string;
 }
 
 function validateRegistration(values: RegistrationValues): FieldErrors {
@@ -47,6 +50,10 @@ function validateRegistration(values: RegistrationValues): FieldErrors {
     errors.email = "Format email tidak valid.";
   }
 
+  if (!values.branchId) {
+    errors.branchId = "Cabang penugasan wajib dipilih.";
+  }
+
   if (values.password.length < 8) {
     errors.password = "Password minimal 8 karakter.";
   }
@@ -60,11 +67,16 @@ function validateRegistration(values: RegistrationValues): FieldErrors {
   return errors;
 }
 
-export function RegisterForm() {
+export interface RegisterFormProps {
+  branches?: Array<{ id: string; name: string; city: string }>;
+}
+
+export function RegisterForm({ branches = [] }: RegisterFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [branchId, setBranchId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -90,6 +102,7 @@ export function RegisterForm() {
       email,
       password,
       confirmPassword,
+      branchId,
     });
 
     if (Object.keys(errors).length > 0) {
@@ -112,6 +125,7 @@ export function RegisterForm() {
           name: name.trim(),
           email: email.trim().toLowerCase(),
           password,
+          branchId,
         }),
       });
 
@@ -250,6 +264,36 @@ export function RegisterForm() {
             error={fieldErrors.email}
             required
           />
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Cabang penugasan <span className="text-rose-500">*</span>
+            </label>
+            <CustomDropdown<string>
+              id="register-branchId"
+              value={branchId}
+              onChange={(val) => {
+                setBranchId(val);
+                clearFieldError("branchId");
+              }}
+              options={branches.map((b) => ({
+                value: b.id,
+                label: `${b.name} (${b.city})`,
+              }))}
+              placeholder="Pilih cabang penugasan..."
+              searchable={true}
+              searchPlaceholder="Cari nama cabang atau kota..."
+              size="md"
+              direction="auto"
+              className="w-full"
+              menuClassName="w-full min-w-full max-h-60"
+            />
+            {fieldErrors.branchId && (
+              <p className="text-[11px] text-rose-500 font-medium">
+                {fieldErrors.branchId}
+              </p>
+            )}
+          </div>
 
           <AuthField
             id="register-password"

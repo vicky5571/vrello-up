@@ -372,14 +372,14 @@ test("Register Form CustomDropdown Invariants (ADR-0043)", async (t) => {
 
 ## 7. Acceptance Criteria Checklist
 
-- [ ] `RegisterPage` fetches branches from Prisma during SSR and passes them as `branches` prop.
-- [ ] `RegisterForm` renders "Cabang penugasan" using `CustomDropdown<string>` with `searchable={true}`.
-- [ ] Form submission without selecting a branch halts and shows error `"Cabang penugasan wajib dipilih."`.
-- [ ] `POST /api/auth/register` validates `branchId` and confirms existence in database.
-- [ ] Newly created `User` record has `assignedBranchIds: [branchId]` and status `PENDING`.
-- [ ] `registerRoute.test.ts` passes with 0 failures.
-- [ ] `npm run drift:check` passes with no drift.
-- [ ] `npm run build:check` passes with 0 errors.
-- [ ] `npm test` passes 100% green.
+- [x] `RegisterPage` fetches branches from Prisma during SSR and passes them as `branches` prop.
+- [x] `RegisterForm` renders "Cabang penugasan" using `CustomDropdown<string>` with `searchable={true}`.
+- [x] Form submission without selecting a branch halts and shows error `"Cabang penugasan wajib dipilih."`.
+- [x] `POST /api/auth/register` validates `branchId` and confirms existence in database.
+- [x] Newly created `User` record has `assignedBranchIds: [branchId]` and status `PENDING`.
+- [x] `registerRoute.test.ts` passes with 0 failures.
+- [x] `npm run drift:check` passes with no drift.
+- [x] `npm run build:check` passes with 0 errors.
+- [x] `npm test` passes 100% green.
 
 

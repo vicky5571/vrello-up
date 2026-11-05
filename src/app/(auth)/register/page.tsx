@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/db";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 
 export default async function RegisterPage() {
@@ -11,6 +12,10 @@ export default async function RegisterPage() {
     redirect(session.user.status === "APPROVED" ? "/" : "/login");
   }
 
-  return <RegisterForm />;
-}
+  const branches = await prisma.branch.findMany({
+    select: { id: true, name: true, city: true },
+    orderBy: { name: "asc" },
+  });
 
+  return <RegisterForm branches={branches} />;
+}

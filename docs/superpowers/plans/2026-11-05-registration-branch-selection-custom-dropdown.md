@@ -1,6 +1,6 @@
 # Implementation Plan: Registration Branch Selection via Server-Rendered CustomDropdown
 
-- **Status:** READY FOR IMPLEMENTATION
+- **Status:** IMPLEMENTATION COMPLETE
 - **Date:** 2026-11-05
 - **Spec:** `docs/superpowers/specs/2026-11-05-registration-branch-selection-custom-dropdown-design.md`
 - **Refs:** `docs/adr/0043-registration-branch-selection-custom-dropdown.md` (ADR-0043)
@@ -36,14 +36,14 @@ The key objectives are:
 ## 3. Phased Implementation Roadmap
 
 ### Phase 1: Test Scaffold & Invariant Suite (Test-First)
-- [ ] Create `src/app/api/auth/register/registerRoute.test.ts` using Node.js native test runner (`node:test`, `node:assert/strict`).
-- [ ] Test 1: Assert `POST /api/auth/register` rejects payload without `branchId` with HTTP 422.
-- [ ] Test 2: Assert `POST /api/auth/register` rejects non-existent `branchId` with HTTP 400.
-- [ ] Test 3: Assert `POST /api/auth/register` creates user with `assignedBranchIds: [branchId]` and status `PENDING` when valid.
-- [ ] Run test: verify it fails initially before implementation.
+- [x] Create `src/app/api/auth/register/registerRoute.test.ts` using Node.js native test runner (`node:test`, `node:assert/strict`).
+- [x] Test 1: Assert `POST /api/auth/register` rejects payload without `branchId` with HTTP 422.
+- [x] Test 2: Assert `POST /api/auth/register` rejects non-existent `branchId` with HTTP 400.
+- [x] Test 3: Assert `POST /api/auth/register` creates user with `assignedBranchIds: [branchId]` and status `PENDING` when valid.
+- [x] Run test: verify it fails initially before implementation.
 
 ### Phase 2: Route Hardening (`src/app/api/auth/register/route.ts`)
-- [ ] Update `registerSchema`:
+- [x] Update `registerSchema`:
   ```typescript
   const registerSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -52,8 +52,8 @@ The key objectives are:
     branchId: z.string().min(1, "Branch is required"),
   });
   ```
-- [ ] Extract `branchId` from `parsed.data`.
-- [ ] Check branch existence:
+- [x] Extract `branchId` from `parsed.data`.
+- [x] Check branch existence:
   ```typescript
   const branchExists = await prisma.branch.findUnique({
     where: { id: branchId },
@@ -63,7 +63,7 @@ The key objectives are:
     return NextResponse.json({ error: "Selected branch does not exist." }, { status: 400 });
   }
   ```
-- [ ] In `prisma.user.create`:
+- [x] In `prisma.user.create`:
   ```typescript
   data: {
     name,
@@ -76,32 +76,32 @@ The key objectives are:
   ```
 
 ### Phase 3: Server Component Data Pre-fetch (`src/app/(auth)/register/page.tsx`)
-- [ ] Import `prisma` from `@/lib/db`.
-- [ ] Query active branches before rendering:
+- [x] Import `prisma` from `@/lib/db`.
+- [x] Query active branches before rendering:
   ```typescript
   const branches = await prisma.branch.findMany({
     select: { id: true, name: true, city: true },
     orderBy: { name: "asc" },
   });
   ```
-- [ ] Pass `branches` prop: `<RegisterForm branches={branches} />`.
+- [x] Pass `branches` prop: `<RegisterForm branches={branches} />`.
 
 ### Phase 4: Frontend UI Integration (`src/components/auth/RegisterForm.tsx`)
-- [ ] Import `CustomDropdown` from `@/components/ui/CustomDropdown`.
-- [ ] Define prop interface:
+- [x] Import `CustomDropdown` from `@/components/ui/CustomDropdown`.
+- [x] Define prop interface:
   ```typescript
   export interface RegisterFormProps {
     branches?: Array<{ id: string; name: string; city: string }>;
   }
   ```
-- [ ] Add state: `const [branchId, setBranchId] = useState("");`.
-- [ ] Update `validateRegistration`: add check for `branchId`:
+- [x] Add state: `const [branchId, setBranchId] = useState("");`.
+- [x] Update `validateRegistration`: add check for `branchId`:
   ```typescript
   if (!values.branchId) {
     errors.branchId = "Cabang penugasan wajib dipilih.";
   }
   ```
-- [ ] Mount `CustomDropdown` between Email and Password fields:
+- [x] Mount `CustomDropdown` between Email and Password fields:
   ```tsx
   <div className="space-y-1.5">
     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -131,7 +131,7 @@ The key objectives are:
     )}
   </div>
   ```
-- [ ] In `handleSubmit`, send `branchId` in POST body:
+- [x] In `handleSubmit`, send `branchId` in POST body:
   ```typescript
   body: JSON.stringify({
     name: name.trim(),
@@ -142,13 +142,13 @@ The key objectives are:
   ```
 
 ### Phase 5: Non-Negotiable Verification & Handover
-- [ ] Run targeted tests: `npx tsx --test src/app/api/auth/register/registerRoute.test.ts`.
-- [ ] Run invariant drift check: `npm run drift:check` (verify 70/70 spec-plan pairs valid).
-- [ ] Run TypeScript type check: `npm run build:check` (0 errors required).
-- [ ] Run full smoke test suite: `npm run test:smoke` (0 failures required).
-- [ ] Run complete regression test suite: `npm test` (0 failures required).
-- [ ] Author execution-ready handover guide `docs/handover-registration-branch-selection-custom-dropdown.md`.
-- [ ] Update `CHANGELOG.md` and `docs/SESSION_STATE.md`.
+- [x] Run targeted tests: `node --test --import ./test/register-alias.mjs src/app/api/auth/register/registerRoute.test.ts`.
+- [x] Run invariant drift check: `npm run drift:check` (verify 70/70 spec-plan pairs valid).
+- [x] Run TypeScript type check: `npm run build:check` (0 errors required).
+- [x] Run full smoke test suite: `npm run test:smoke` (0 failures required).
+- [x] Run complete regression test suite: `npm test` (0 failures required).
+- [x] Author execution-ready handover guide `docs/handover-registration-branch-selection-custom-dropdown.md`.
+- [x] Update `CHANGELOG.md` and `docs/SESSION_STATE.md`.
 
 ---
 

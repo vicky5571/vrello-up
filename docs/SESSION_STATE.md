@@ -8,19 +8,30 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Registration Branch Selection via Server-Rendered CustomDropdown (ADR-0043) — **PLAN & SPEC READY**  
+**Active Feature:** Registration Branch Selection via Server-Rendered CustomDropdown (ADR-0043) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Comprehensive UX Polish and CustomDropdown Integration for BorrowRequestModal (ADR-0042)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur: Pilihan Cabang pada Pendaftaran Akun via CustomDropdown (ADR-0043 — Planning Complete):**
-   - **Penerbitan ADR-0043:** Didokumentasikan dan disetujui di `docs/adr/0043-registration-branch-selection-custom-dropdown.md` memilih Opsi 1 (Server-Rendered Branch Props via Next.js RSC data pre-fetching + `CustomDropdown`).
-   - **Penyusunan Spesifikasi Lengkap:** Disusun di `docs/superpowers/specs/2026-11-05-registration-branch-selection-custom-dropdown-design.md` memuat alur registrasi, skema payload API `POST /api/auth/register`, aturan validasi Zod (`branchId`), dan kontrak UI dropdown.
-   - **Penyusunan Implementation Plan:** Disusun di `docs/superpowers/plans/2026-11-05-registration-branch-selection-custom-dropdown.md` membagi eksekusi ke dalam 5 fase atomik berbasis test-first.
-   - **Penyusunan Dokumen Handover Siap Eksekusi:** Dibuat di `docs/handover-registration-branch-selection-custom-dropdown.md` dengan instruksi kode *verbatim*, file test otomatis `registerRoute.test.ts`, proteksi *Do Not Touch*, dan acceptance criteria.
-   - **Verifikasi Invariant:** `npm run drift:check` ✅ *All 70 spec(s) have matching plan files. No drift detected.*
+1. **Pilihan Cabang pada Pendaftaran Akun via CustomDropdown (ADR-0043 — Implementation Complete):**
+   - **Pre-fetching Cabang Server-Side (RSC Zero-Waterfall):**
+     - Memperbarui `src/app/(auth)/register/page.tsx` untuk melakukan query daftar cabang aktif langsung ke Prisma (`findMany` terurut abjad) dan mengopernya sebagai props ke `RegisterForm`.
+   - **Integrasi `CustomDropdown` pada Formulir Registrasi:**
+     - Mengintegrasikan `CustomDropdown<string>` (`size="md"`, `searchable={true}`) pada `src/components/auth/RegisterForm.tsx` di antara field Email dan Password.
+     - Menyediakan pencarian real-time nama cabang dan kota penugasan.
+     - Validasi sisi klien dengan pesan galat *"Cabang penugasan wajib dipilih."* jika belum memilih cabang.
+   - **Validasi Ketat Backend & Inisialisasi Penugasan:**
+     - Menambahkan validasi `branchId` wajib pada `registerSchema` di `src/app/api/auth/register/route.ts`.
+     - Melakukan pengecekan keberadaan cabang di database via `prisma.branch.findUnique` sebelum user dibuat (mengembalikan HTTP 400 jika cabang tidak valid).
+     - Menginisialisasi `assignedBranchIds: [branchId]` pada saat pembuatan record user baru dengan status awal `PENDING`.
+   - **Automated Testing & Invariant Verification:**
+     - Membuat unit & invariant test di `src/app/api/auth/register/registerRoute.test.ts` (7/7 tests pass).
+     - Verifikasi non-negotiable gates:
+       - `npm run drift:check` ✅ (70/70 spec-plan pairs valid, 0 drift)
+       - `npm run build:check` ✅ (`tsc --noEmit` 0 errors)
+       - `npm test` ✅ (848/848 tests pass across 152 test suites, 0 failures)
 
 1. **Comprehensive UX Polish & CustomDropdown Integration pada BorrowRequestModal (ADR-0042 — Implementation Complete):**
    - **Eliminasi Total Native `<select>` pada Step 2:**

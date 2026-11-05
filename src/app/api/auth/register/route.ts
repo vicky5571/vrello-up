@@ -8,6 +8,7 @@ const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
+  branchId: z.string().min(1, "Branch is required"),
 });
 
 export async function POST(req: Request) {
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, password } = parsed.data;
+    const { name, password, branchId } = parsed.data;
     const email = normalizeEmail(parsed.data.email);
 
     const existing = await prisma.user.findUnique({
@@ -39,6 +40,18 @@ export async function POST(req: Request) {
       );
     }
 
+    const branchExists = await prisma.branch.findUnique({
+      where: { id: branchId },
+      select: { id: true },
+    });
+
+    if (!branchExists) {
+      return NextResponse.json(
+        { error: "Selected branch does not exist." },
+        { status: 400 }
+      );
+    }
+
     const hashedPassword = await hashPassword(password);
 
     await prisma.user.create({
@@ -48,6 +61,7 @@ export async function POST(req: Request) {
         password: hashedPassword,
         role: "STAFF",
         status: "PENDING",
+        assignedBranchIds: [branchId],
       },
     });
 
@@ -73,4 +87,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
