@@ -8,14 +8,28 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Warehouse Role and Return Inspection Compensation Workflow (ADR-0050) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Filter Approved Outlets in Operational Work Item Forms (ADR-0049)  
+**Active Feature:** MoU Multi-Document Upload, Mandatory Approval Guard, and Revision Lifecycle (ADR-0051) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Previous Feature:** Warehouse Role and Return Inspection Compensation Workflow (ADR-0050)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Implementasi Role Warehouse, Inspeksi Pengembalian & Tracking Ganti Rugi Alat (ADR-0050 — Implementation Complete):**
+1. **Perencanaan Arsitektur MoU Multi-Document Upload, Mandatory Approval Guard & Revision Lifecycle (ADR-0051 — Planning Complete):**
+   - **Discovery & Analisis Akar Masalah:**
+     - Mengidentifikasi celah tata kelola di mana status MoU dapat disetujui (`APPROVED`) atau diselesaikan (`DONE`) tanpa adanya dokumen fisik/digital kontrak yang sah.
+     - Mengidentifikasi batasan format lampiran berkas tunggal yang memaksa staf di lapangan menggabungkan foto kamera smartphone secara manual menjadi PDF sebelum mengunggah.
+     - Mengidentifikasi *dead-end rejection UX* di mana status `REJECTED` tidak menyediakan tombol aksi pemulihan di tabel atau laci detail, memaksa staf menduplikasi baris MoU baru melalui tombol "+ Buat MoU Baru".
+     - Menganalisis dampak integrasi status baru terhadap `PipelineView` & `pipelineEngine.ts` (`isHealthy`, `isBlockedItem` pada materi permanen, serta deteksi bottleneck SLA).
+   - **Penyusunan Dokumen Perencanaan & Handover:**
+     - ADR: `docs/adr/0051-mou-multi-document-upload-mandatory-approval-guard-and-revision-lifecycle.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-06-mou-multi-document-upload-mandatory-approval-guard-and-revision-lifecycle-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-06-mou-multi-document-upload-mandatory-approval-guard-and-revision-lifecycle.md` (APPROVED).
+     - Handover: `docs/handover-mou-multi-document-upload-mandatory-approval-guard-and-revision-lifecycle.md` (READY FOR EXECUTION).
+   - **Non-Negotiable Gates:**
+     - `npm run drift:check` ✅ (78/78 spec-plan pairs valid, 0 drift).
+
+2. **Implementasi Role Warehouse, Inspeksi Pengembalian & Tracking Ganti Rugi Alat (ADR-0050 — Implementation Complete):**
    - **Database & SSOT Domain Entities:**
      - Menambahkan nilai `WAREHOUSE` pada enum `DbUserRole` di `prisma/schema.prisma` dan type `UserRole` di `src/types/index.ts`.
      - Menambahkan kolom multi-unit breakdown pada `BorrowItem`: `goodUnits`, `minorDamageUnits`, `majorDamageUnits`, `lostUnits`.
