@@ -6,16 +6,30 @@
 
 ## Current Status
 
-**Date:** 2026-11-05  
+**Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Filter Approved Outlets in Operational Work Item Forms (ADR-0049) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Hard Browser Redirect on User Sign-Out (ADR-0048)  
+**Active Feature:** Warehouse Role and Return Inspection Compensation Workflow (ADR-0050) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Previous Feature:** Filter Approved Outlets in Operational Work Item Forms (ADR-0049)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Pembatasan Pemilihan Toko Hanya untuk Outlet Terverifikasi (APPROVED) pada Form Operasional (ADR-0049 — Implementation Complete):**
+1. **Perencanaan Arsitektur Role Warehouse, Inspeksi Pengembalian & Tracking Ganti Rugi Alat (ADR-0050 — Planning Complete):**
+   - **Analisis Root Cause & Blast Radius:**
+     - Mengidentifikasi anomali fatal pada `return/route.ts` di mana barang rusak berat (`MAJOR_DAMAGE`) tetap dipulihkan ke `availableUnits`.
+     - Mengidentifikasi celah hilangnya akurasi stok master karena ketiadaan breakdown kondisi per unit pada peminjaman kuantitas jamak (`quantity > 1`).
+     - Mengidentifikasi celah hilangnya data liabilitas ganti rugi (pencatatan nominal, metode, status penyelesaian, dan foto bukti kerusakan).
+     - Menegakkan *Four-Eyes Principle* dengan mencabut izin `PROCESS_RETURN` dan `MANAGE_INVENTORY` dari `staff`, serta membentuk role `WAREHOUSE` yang memiliki hak CUD penuh di inventaris dan strictly Read-Only di modul lain.
+   - **Penyusunan Dokumen Perencanaan & Handover:**
+     - ADR: `docs/adr/0050-warehouse-role-and-return-inspection-compensation-workflow.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-06-warehouse-role-and-return-inspection-compensation-workflow-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-06-warehouse-role-and-return-inspection-compensation-workflow.md` (COMPLETE).
+     - Handover: `docs/handover-warehouse-role-and-return-inspection-compensation-workflow.md` (READY FOR EXECUTION).
+   - **Non-Negotiable Gates:**
+     - `npm run drift:check` ✅ (77/77 spec-plan pairs valid, 0 drift).
+
+2. **Pembatasan Pemilihan Toko Hanya untuk Outlet Terverifikasi (APPROVED) pada Form Operasional (ADR-0049 — Implementation Complete):**
    - **Backend Mutation Guard (`src/app/api/marcom/placements/route.ts`):**
      - Menambahkan verifikasi status toko sebelum membuat penempatan POSM baru (`prisma.placement.create`).
      - Menolak penempatan pada outlet berstatus `PENDING_APPROVAL`, `DRAFT`, atau `REJECTED` dengan respons `HTTP 400 Bad Request` ("Hanya outlet berstatus APPROVED yang dapat dipasangi materi promosi.").
@@ -1616,13 +1630,14 @@
 - **TD-002 (Vestigial Workspace ID):** Kolom `workspaceId String @default("ws-main")` di tabel-tabel operasional Prisma (`Placement`, `Mou`, `FieldEvent`, `ContentPost`, `MonthlyReport`, `DocumentItem`). Aman karena Postgres memberikan nilai default otomatis.
 - **TD-003 (Dualitas Naming AppMode):** Penggunaan nilai internal `appMode: "tasks"` yang dilabeli "Projects" di UI, padahal isinya adalah tampilan Board dari entitas Marcom.
 - **TD-004 (Dead Domain Types):** Definisi interface di `src/types/index.ts` untuk fitur yang tidak pernah aktif (`CustomAutomationRule`, `ChannelMessage`, `Space`, `Folder`, `List`, `Task`). Tipe ini di-strip saat kompilasi TypeScript sehingga tidak menambah ukuran bundle JS produksi.
+- **TD-005 (Decommissioned Asset Lifecycle / Repair Tracking):** Barang yang rusak berat (`MAJOR_DAMAGE`) saat ini langsung diafkir dengan memotong `totalUnits` master item demi menjaga akurasi stok fisik harian. Ketika organisasi mulai menggunakan bengkel servis/reparasi rekanan, dapat ditambahkan modul *Asset Repair Ticketing* untuk memulihkan aset yang selesai diperbaiki kembali ke `totalUnits`.
 
 ---
 
 ## Next Step for Following Session
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. Discuss and plan the next manual attention item from human evaluation list (e.g. Return Inspection & Damaged Equipment Workflow, or MoU PDF Document Attachment).
+2. Execute implementation of ADR-0050 using `docs/handover-warehouse-role-and-return-inspection-compensation-workflow.md`.
 3. If desired, adopt `CustomDropdown` in `src/components/views/ContentPlannerView/ContentDrawer.tsx` (edit post drawer) for Platform and Format to complete Content Planner symmetry.
 
 
