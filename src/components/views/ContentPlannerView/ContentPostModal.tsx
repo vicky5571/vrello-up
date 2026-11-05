@@ -20,6 +20,7 @@ import type {
 import { PLATFORM_CONFIG } from "./contentConstants";
 import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
 import { ContentMediaSection } from "./ContentMediaSection";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export interface OutletOption {
   id: string;
@@ -139,37 +140,38 @@ export function ContentPostModal({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Platform
               </label>
-              <select
+              <CustomDropdown<PostPlatform>
                 value={platform}
-                onChange={(e) =>
-                  setPlatform(e.target.value as PostPlatform)
-                }
-                className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-              >
-                {Object.keys(PLATFORM_CONFIG).map((p) => (
-                  <option key={p} value={p}>
-                    {PLATFORM_CONFIG[p as PostPlatform].label}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setPlatform(val)}
+                options={Object.keys(PLATFORM_CONFIG).map((p) => ({
+                  value: p as PostPlatform,
+                  label: PLATFORM_CONFIG[p as PostPlatform].label,
+                }))}
+                size="md"
+                className="w-full"
+                menuClassName="w-full min-w-full"
+              />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Format
               </label>
-              <select
+              <CustomDropdown<PostFormat>
                 value={format}
-                onChange={(e) => setFormat(e.target.value as PostFormat)}
-                className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-              >
-                <option value="reel">Reel / Video</option>
-                <option value="carousel">Carousel</option>
-                <option value="image">Single Image</option>
-                <option value="story">Story</option>
-                <option value="article">Article / Press</option>
-                <option value="thread">Thread</option>
-              </select>
+                onChange={(val) => setFormat(val)}
+                options={[
+                  { value: "reel", label: "Reel / Video" },
+                  { value: "carousel", label: "Carousel" },
+                  { value: "image", label: "Single Image" },
+                  { value: "story", label: "Story" },
+                  { value: "article", label: "Article / Press" },
+                  { value: "thread", label: "Thread" },
+                ]}
+                size="md"
+                className="w-full"
+                menuClassName="w-full min-w-full"
+              />
             </div>
           </div>
 
@@ -191,19 +193,22 @@ export function ContentPostModal({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Status
               </label>
-              <select
+              <CustomDropdown<PostStatus>
                 value={status}
-                onChange={(e) => setStatus(e.target.value as PostStatus)}
-                className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-              >
-                <option value="DRAFT">DRAFT (Konsep)</option>
-                <option value="IN_REVIEW">IN_REVIEW (Menunggu Review)</option>
-                <option value="REVISION">REVISION (Perlu Revisi)</option>
-                <option value="APPROVED">APPROVED (Disetujui)</option>
-                <option value="SCHEDULED">SCHEDULED (Terjadwal)</option>
-                <option value="PUBLISHED">PUBLISHED (Sudah Tayang)</option>
-                <option value="ARCHIVED">ARCHIVED (Diarsipkan)</option>
-              </select>
+                onChange={(val) => setStatus(val)}
+                options={[
+                  { value: "DRAFT", label: "DRAFT (Konsep)" },
+                  { value: "IN_REVIEW", label: "IN_REVIEW (Menunggu Review)" },
+                  { value: "REVISION", label: "REVISION (Perlu Revisi)" },
+                  { value: "APPROVED", label: "APPROVED (Disetujui)" },
+                  { value: "SCHEDULED", label: "SCHEDULED (Terjadwal)" },
+                  { value: "PUBLISHED", label: "PUBLISHED (Sudah Tayang)" },
+                  { value: "ARCHIVED", label: "ARCHIVED (Diarsipkan)" },
+                ]}
+                size="md"
+                className="w-full"
+                menuClassName="w-full min-w-full"
+              />
             </div>
           </div>
 
@@ -224,18 +229,23 @@ export function ContentPostModal({
                 </button>
               )}
             </label>
-            <select
+            <CustomDropdown
               value={outletId || ""}
-              onChange={(e) => setOutletId?.(e.target.value)}
-              className="w-full px-2.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-pink-500 cursor-pointer"
-            >
-              <option value="">-- None (Brand / General Social Post) --</option>
-              {outlets.map((o: OutletOption) => (
-                <option key={o.id} value={o.id}>
-                  {formatOutletSelectLabel(o)}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setOutletId?.(val)}
+              options={[
+                { value: "", label: "-- None (Brand / General Social Post) --" },
+                ...outlets.map((o: OutletOption) => ({
+                  value: o.id,
+                  label: formatOutletSelectLabel(o),
+                })),
+              ]}
+              size="md"
+              searchable
+              searchPlaceholder="Cari kode atau nama outlet..."
+              className="w-full"
+              menuClassName="w-full min-w-full max-w-lg"
+              placeholder="-- None (Brand / General Social Post) --"
+            />
           </div>
 
           {/* Revision Notes / Feedback */}

@@ -1,7 +1,7 @@
 # Design Specification: Standardize Event & Content Modal/Drawer Form CustomDropdowns
 
 - **Date:** 2026-11-05
-- **Status:** APPROVED
+- **Status:** IMPLEMENTED
 - **ADR Reference:** `docs/adr/0037-standardize-event-and-content-modal-drawer-custom-dropdowns.md`
 
 ## 1. Executive Summary & Goals

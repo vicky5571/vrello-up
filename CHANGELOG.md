@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(ui)`: Standardize modal and drawer form dropdowns with CustomDropdown
+  - Replaced native unstyled HTML `<select>` elements with canonical `CustomDropdown` across `EventDrawer.tsx`, `EventCreateModal.tsx`, and `ContentPostModal.tsx`
+  - Enabled real-time search filtering (`searchable={true}`) for Outlets and Person in Charge (PIC) pickers to streamline store selection across hundreds of records
+  - Standardized form input sizing using `size="md"` (`min-h-[36px]`) to align with sibling text and number inputs
+  - Preserved all interactive form side-effects: venue location autofill, checklist template generator, and custom PIC name text input reveal
+  - Added unit test suite in `src/components/views/EventsView/eventDrawerCustomDropdown.test.ts`
+  - Spec: `docs/superpowers/specs/2026-11-05-standardize-event-and-content-modal-drawer-custom-dropdowns-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-standardize-event-and-content-modal-drawer-custom-dropdowns.md`
+  - Refs: `docs/adr/0037-standardize-event-and-content-modal-drawer-custom-dropdowns.md`
+  - Gates: `npm test` passed (817/817 tests); `npm run build:check` 0 errors; `npm run drift:check` clean (64/64 specs paired)
+
 - `feat(reports)`: Automated daily rolling sync & monthly report creation via Vercel Cron
   - Configured Vercel serverless cron job schedule (`0 17 * * *`) in root `vercel.json` targeting `/api/cron/reports-sync`
   - Created secure App Router route handler `src/app/api/cron/reports-sync/route.ts` enforcing `CRON_SECRET` authorization check

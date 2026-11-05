@@ -24,6 +24,7 @@ import {
 import { EventChecklistSection } from "./EventChecklistSection";
 import { EventMediaSection } from "./EventMediaSection";
 import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 export interface EventCreateModalProps {
   isOpen: boolean;
@@ -297,10 +298,9 @@ export function EventCreateModal({
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Activation Type
                   </label>
-                  <select
+                  <CustomDropdown
                     value={eventType}
-                    onChange={(e) => {
-                      const newType = e.target.value;
+                    onChange={(newType) => {
                       setEventType(newType);
                       setEventSubtasks(
                         getEventChecklistTemplate(newType).map((t, i) => ({
@@ -310,15 +310,18 @@ export function EventCreateModal({
                         }))
                       );
                     }}
-                    className="w-full px-3 py-2 rounded-lg text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
-                  >
-                    <option value="Roadshow">Mall Roadshow</option>
-                    <option value="Launch">Store Launch</option>
-                    <option value="Booth">Pop-up Booth</option>
-                    <option value="Exhibition">Exhibition / Expo</option>
-                    <option value="Workshop">Workshop</option>
-                    <option value="Community">Community Meetup</option>
-                  </select>
+                    options={[
+                      { value: "Roadshow", label: "Mall Roadshow" },
+                      { value: "Launch", label: "Store Launch" },
+                      { value: "Booth", label: "Pop-up Booth" },
+                      { value: "Exhibition", label: "Exhibition / Expo" },
+                      { value: "Workshop", label: "Workshop" },
+                      { value: "Community", label: "Community Meetup" },
+                    ]}
+                    size="md"
+                    className="w-full"
+                    menuClassName="w-full min-w-full"
+                  />
                 </div>
               </div>
 
@@ -328,26 +331,25 @@ export function EventCreateModal({
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Organizing Branch
                   </label>
-                  <select
+                  <CustomDropdown
                     value={eventBranchName}
-                    onChange={(e) => setEventBranchName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
-                  >
-                    {branches.length > 0 ? (
-                      branches.map((b) => (
-                        <option key={b.id} value={b.name}>
-                          {b.name}
-                        </option>
-                      ))
-                    ) : (
-                      <>
-                        <option value="Jakarta Central">Jakarta Central</option>
-                        <option value="Surabaya West">Surabaya West</option>
-                        <option value="Bandung Dago">Bandung Dago</option>
-                        <option value="Bali Kuta">Bali Kuta</option>
-                      </>
-                    )}
-                  </select>
+                    onChange={(val) => setEventBranchName(val)}
+                    options={
+                      branches.length > 0
+                        ? branches.map((b) => ({ value: b.name, label: b.name }))
+                        : [
+                            { value: "Jakarta Central", label: "Jakarta Central" },
+                            { value: "Surabaya West", label: "Surabaya West" },
+                            { value: "Bandung Dago", label: "Bandung Dago" },
+                            { value: "Bali Kuta", label: "Bali Kuta" },
+                          ]
+                    }
+                    size="md"
+                    searchable={branches.length >= 6}
+                    searchPlaceholder="Cari cabang..."
+                    className="w-full"
+                    menuClassName="w-full min-w-full"
+                  />
                 </div>
 
                 <div>
@@ -385,25 +387,29 @@ export function EventCreateModal({
                     </button>
                   )}
                 </label>
-                <select
+                <CustomDropdown
                   value={eventOutletId}
-                  onChange={(e) => {
-                    const chosenId = e.target.value;
+                  onChange={(chosenId) => {
                     setEventOutletId(chosenId);
                     if (chosenId && !eventLocation) {
                       const found = outlets.find((o) => o.id === chosenId);
                       if (found) setEventLocation(found.name);
                     }
                   }}
-                  className="w-full px-3 py-2 rounded-lg text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
-                >
-                  <option value="">-- None (Branch-Wide / Non-Store Event) --</option>
-                  {filteredOutlets.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {formatOutletSelectLabel(o)}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: "", label: "-- None (Branch-Wide / Non-Store Event) --" },
+                    ...filteredOutlets.map((o) => ({
+                      value: o.id,
+                      label: formatOutletSelectLabel(o),
+                    })),
+                  ]}
+                  size="md"
+                  searchable
+                  searchPlaceholder="Cari kode atau nama outlet..."
+                  className="w-full"
+                  menuClassName="w-full min-w-full max-w-lg"
+                  placeholder="-- None (Branch-Wide / Non-Store Event) --"
+                />
               </div>
 
               {/* Schedule Dates & PIC */}
@@ -448,25 +454,28 @@ export function EventCreateModal({
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Person in Charge (PIC)
                   </label>
-                  <select
+                  <CustomDropdown
                     value={picMemberId}
-                    onChange={(e) => {
-                      const val = e.target.value;
+                    onChange={(val) => {
                       setPicMemberId(val);
                       if (val !== "custom") {
                         const m = members.find((mem) => mem.id === val);
                         if (m) setEventPicName(m.name);
                       }
                     }}
-                    className="w-full px-3 py-2 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden cursor-pointer"
-                  >
-                    {members.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} ({m.email})
-                      </option>
-                    ))}
-                    <option value="custom">Custom PIC Name...</option>
-                  </select>
+                    options={[
+                      ...members.map((m) => ({
+                        value: m.id,
+                        label: `${m.name} (${m.email})`,
+                      })),
+                      { value: "custom", label: "Custom PIC Name..." },
+                    ]}
+                    size="md"
+                    searchable={members.length >= 6}
+                    searchPlaceholder="Cari anggota tim PIC..."
+                    className="w-full"
+                    menuClassName="w-full min-w-full max-w-md"
+                  />
 
                   {picMemberId === "custom" && (
                     <input
@@ -489,16 +498,19 @@ export function EventCreateModal({
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Status
                   </label>
-                  <select
+                  <CustomDropdown<EventStatus>
                     value={eventStatus}
-                    onChange={(e) => setEventStatus(e.target.value as EventStatus)}
-                    className="w-full px-3 py-2 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 outline-hidden"
-                  >
-                    <option value="UPCOMING">Upcoming</option>
-                    <option value="ON_PROGRESS">On Progress</option>
-                    <option value="COMPLETED">Completed</option>
-                    <option value="CANCELLED">Cancelled</option>
-                  </select>
+                    onChange={(val) => setEventStatus(val)}
+                    options={[
+                      { value: "UPCOMING", label: "Upcoming" },
+                      { value: "ON_PROGRESS", label: "On Progress" },
+                      { value: "COMPLETED", label: "Completed" },
+                      { value: "CANCELLED", label: "Cancelled" },
+                    ]}
+                    size="md"
+                    className="w-full"
+                    menuClassName="w-full min-w-full"
+                  />
                 </div>
 
                 <div>
