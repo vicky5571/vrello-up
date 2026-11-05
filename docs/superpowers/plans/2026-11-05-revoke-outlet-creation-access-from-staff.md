@@ -1,6 +1,6 @@
 # Plan: Revoke Outlet Creation Access from Staff Role
 
-- **Status:** APPROVED
+- **Status:** IMPLEMENTATION COMPLETE
 - **Date:** 2026-11-05
 - **Spec:** `docs/superpowers/specs/2026-11-05-revoke-outlet-creation-access-from-staff-design.md`
 - **Refs:** `docs/adr/0045-revoke-outlet-creation-access-from-staff.md`
@@ -29,10 +29,10 @@ Revoke outlet draft creation and submission access from the `staff` role in Vrel
 ## 3. Phased Implementation Roadmap
 
 ### Phase 1: Guard Core & Test Contract Update (TDD)
-- [ ] In `src/lib/marcom/guards.ts`:
+- [x] In `src/lib/marcom/guards.ts`:
   - Locate `rolePermissions.staff`.
   - Remove `"SUBMIT_DRAFT_OUTLET"` from the array.
-- [ ] In `src/lib/marcom/guards.test.ts`:
+- [x] In `src/lib/marcom/guards.test.ts`:
   - Update assertion from:
     ```ts
     assert.equal(hasPermission("staff", "SUBMIT_DRAFT_OUTLET"), true);
@@ -41,28 +41,28 @@ Revoke outlet draft creation and submission access from the `staff` role in Vrel
     ```ts
     assert.equal(hasPermission("staff", "SUBMIT_DRAFT_OUTLET"), false);
     ```
-- [ ] Run targeted test: `node --test src/lib/marcom/guards.test.ts` to confirm 0 failures.
+- [x] Run targeted test: `node --test src/lib/marcom/guards.test.ts` to confirm 0 failures.
 
 ### Phase 2: UI Coordinator & Component Hardening
-- [ ] In `src/components/views/OutletsView/OutletsView.tsx`:
+- [x] In `src/components/views/OutletsView/OutletsView.tsx`:
   - Refactor line 90:
     ```ts
     const canAddOutlet = canManage || can("SUBMIT_DRAFT_OUTLET");
     ```
   - In `renderExpanded={(outlet) => ...}`:
     - Pass `canManage={canManage}` to `<OutletExpandedRow />` instead of `canAddOutlet={canAddOutlet}`.
-- [ ] In `src/components/views/OutletsView/OutletExpandedRow.tsx`:
+- [x] In `src/components/views/OutletsView/OutletExpandedRow.tsx`:
   - In `OutletExpandedRowProps`: replace `canAddOutlet: boolean;` with `canManage: boolean;`.
   - In component signature: destructure `canManage`.
   - At line 123: replace `{canAddOutlet && (` with `{canManage && (`.
 
 ### Phase 3: Non-Negotiable Verification & Handover Documentation
-- [ ] Execute `npm test` across all 152 test suites (0 failures required).
-- [ ] Execute `npm run build:check` (`tsc --noEmit`, 0 errors required).
-- [ ] Execute `npm run drift:check` (verify 72/72 spec-plan pairs and single-tenant invariants).
-- [ ] Create execution handover guide: `docs/handover-revoke-outlet-creation-access-from-staff.md`.
-- [ ] Update `docs/SESSION_STATE.md` with active feature and completed planning artifacts.
-- [ ] Commit planning artifacts with standard git convention.
+- [x] Execute `npm test` across all 152 test suites (0 failures required).
+- [x] Execute `npm run build:check` (`tsc --noEmit`, 0 errors required).
+- [x] Execute `npm run drift:check` (verify 72/72 spec-plan pairs and single-tenant invariants).
+- [x] Create execution handover guide: `docs/handover-revoke-outlet-creation-access-from-staff.md`.
+- [x] Update `docs/SESSION_STATE.md` with active feature and completed planning artifacts.
+- [x] Commit planning artifacts with standard git convention.
 
 ---
 

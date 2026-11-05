@@ -8,27 +8,33 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Revoke Outlet Creation Access from Staff Role (ADR-0045) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Active Feature:** Revoke Outlet Creation Access from Staff Role (ADR-0045) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Auth Page Transition Loading Feedback via React useTransition (ADR-0044)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Pencabutan Izin Tambah Outlet dari Role Staff (ADR-0045 — Planning Complete):**
-   - **Analisis & Pembatasan RBAC**:
-     - Mendiagnosis kebutuhan pencabutan wewenang penambahan outlet (`SUBMIT_DRAFT_OUTLET`) dari role `staff`.
-     - Mengidentifikasi celah kalkulasi UI di `OutletsView.tsx` (`role !== "viewer"`) dan memetakan standardisasi ke `can("SUBMIT_DRAFT_OUTLET")`.
-     - Menyelaraskan tombol "Edit Outlet" di `OutletExpandedRow.tsx` agar menggunakan `canManage` (Admin only).
-   - **Pembuatan Dokumen Perencanaan (Checkpoints 1–3 Terverifikasi):**
-     - ADR: `docs/adr/0045-revoke-outlet-creation-access-from-staff.md` (APPROVED).
-     - Spec: `docs/superpowers/specs/2026-11-05-revoke-outlet-creation-access-from-staff-design.md` (APPROVED).
-     - Plan: `docs/superpowers/plans/2026-11-05-revoke-outlet-creation-access-from-staff.md` (APPROVED).
-     - Handover: `docs/handover-revoke-outlet-creation-access-from-staff.md` (READY FOR EXECUTION).
-   - **Verifikasi Invarian & Drift:**
+1. **Pencabutan Izin Tambah Outlet dari Role Staff (ADR-0045 — Implementation Complete):**
+   - **Pembaruan Guard RBAC Terpusat (`src/lib/marcom/guards.ts`):**
+     - Menghapus izin `"SUBMIT_DRAFT_OUTLET"` dari daftar perizinan `rolePermissions.staff`.
+     - Memastikan endpoint backend `POST /api/marcom/outlets/draft` dan upload foto outlet `POST /api/marcom/uploads?kind=outlets` menolak eksekusi oleh staff dengan respons HTTP 403 Forbidden.
+   - **Hardening UI Outlet (`OutletsView.tsx` & `OutletExpandedRow.tsx`):**
+     - Memperbaiki komputasi hak akses di `OutletsView.tsx`: Mengganti `canManage || role !== "viewer"` menjadi canonical check `canManage || can("SUBMIT_DRAFT_OUTLET")`. Tombol "+ Tambah Outlet" kini tersembunyi bagi staff.
+     - Membatasi tombol "Edit Outlet" di `OutletExpandedRow.tsx`: Mengubah prop dari `canAddOutlet` menjadi `canManage` (Admin only) agar staff maupun supervisor tidak dapat mengedit master data outlet.
+   - **Pengujian Unit & Non-Negotiable Gates:**
+     - Memperbarui unit test di `src/lib/marcom/guards.test.ts` untuk memverifikasi `hasPermission("staff", "SUBMIT_DRAFT_OUTLET") === false` (14/14 tests pass).
      - `npm run drift:check` ✅ (72/72 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm test` ✅ (855/855 tests pass across 152 test suites, 0 failures).
 
-2. **Eliminasi Banner Bottleneck Redundan pada PipelineView:**
+2. **Penyusunan Perencanaan & Handover ADR-0045:**
+   - ADR: `docs/adr/0045-revoke-outlet-creation-access-from-staff.md` (APPROVED).
+   - Spec: `docs/superpowers/specs/2026-11-05-revoke-outlet-creation-access-from-staff-design.md` (APPROVED).
+   - Plan: `docs/superpowers/plans/2026-11-05-revoke-outlet-creation-access-from-staff.md` (COMPLETE).
+   - Handover: `docs/handover-revoke-outlet-creation-access-from-staff.md` (COMPLETE).
+
+3. **Eliminasi Banner Bottleneck Redundan pada PipelineView:**
    - Menghapus banner peringatan bottleneck berulang (*"Terdapat N outlet mengalami hambatan pemasangan POSM permanen..."*) dari `src/components/views/PipelineView/PipelineView.tsx`.
    - Menghemat ruang vertikal layar karena metrik dan tombol filter bottleneck telah tersedia secara elegan pada kartu ringkasan KPI (`KpiSummaryCards`) dan bilah filter (`PipelineFilterBar`).
    - Verifikasi: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (855/855 tests passed).

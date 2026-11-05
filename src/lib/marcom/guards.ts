@@ -54,7 +54,6 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
     "UPLOAD_VIDEO_FOOTAGE",
     "UPLOAD_DOCUMENT",
     "EXPORT_REPORTS",
-    "SUBMIT_DRAFT_OUTLET",
     "VIEW_INVENTORY",
     "MANAGE_INVENTORY",
     "REQUEST_BORROW",

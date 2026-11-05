@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `fix(rbac)`: Revoke outlet draft creation access from staff role
+  - Removed `"SUBMIT_DRAFT_OUTLET"` permission from `rolePermissions.staff` in `src/lib/marcom/guards.ts`
+  - Updated `canAddOutlet` in `OutletsView.tsx` to derive strictly from `can("SUBMIT_DRAFT_OUTLET")`, hiding "+ Tambah Outlet" from staff users
+  - Updated `OutletExpandedRow.tsx` to require `canManage` (Admin only) for the "Edit Outlet" button instead of `canAddOutlet`
+  - Automated unit test assertion in `guards.test.ts` verifying staff cannot submit draft outlets or approve outlets
+  - Spec: `docs/superpowers/specs/2026-11-05-revoke-outlet-creation-access-from-staff-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-revoke-outlet-creation-access-from-staff.md`
+  - Refs: `docs/adr/0045-revoke-outlet-creation-access-from-staff.md` (ADR-0045)
+  - Gates: `npm test` 855/855 passed; `npm run build:check` 0 errors; `npm run drift:check` clean (72/72 specs paired)
+
 - `feat(auth)`: Add loading spinner transition to auth switch links
   - Created reusable `AuthSwitchLink` component wrapping React 19 `useTransition` and Next.js 15 `useRouter`
   - Rendered inline spinning `Loader2` and transition text ("Membuka pendaftaran..." / "Membuka halaman masuk...") immediately upon click

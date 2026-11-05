@@ -12,7 +12,7 @@ import { formatBrand, formatOutletCoordinates } from "./outletRowHelpers";
 
 export interface OutletExpandedRowProps {
   outlet: MarcomOutlet;
-  canAddOutlet: boolean;
+  canManage: boolean;
   onOpenDrawer: (outletId: string) => void;
   onSelectBranch: (branchId: string) => void;
   onEditOutlet: (outlet: MarcomOutlet) => void;
@@ -21,7 +21,7 @@ export interface OutletExpandedRowProps {
 
 export function OutletExpandedRow({
   outlet,
-  canAddOutlet,
+  canManage,
   onOpenDrawer,
   onSelectBranch,
   onEditOutlet,
@@ -120,7 +120,7 @@ export function OutletExpandedRow({
           </button>
         </div>
 
-        {canAddOutlet && (
+        {canManage && (
           <button
             type="button"
             onClick={(e) => {

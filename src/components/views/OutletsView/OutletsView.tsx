@@ -87,7 +87,7 @@ export function OutletsView() {
   const pendingCount = useMemo(() => filterPendingOutlets(outlets).length, [outlets]);
 
   const canManage = can("MANAGE_MASTER_DATA");
-  const canAddOutlet = canManage || role !== "viewer";
+  const canAddOutlet = canManage || can("SUBMIT_DRAFT_OUTLET");
 
   const fetchOutlets = useCallback(
     async (branchFilter = selectedBranch, typeFilter = selectedType) => {
@@ -518,7 +518,7 @@ export function OutletsView() {
             renderExpanded={(outlet) => (
               <OutletExpandedRow
                 outlet={outlet}
-                canAddOutlet={canAddOutlet}
+                canManage={canManage}
                 onOpenDrawer={(id) => setSelectedOutletIdForDrawer(id)}
                 onSelectBranch={(branchId) => setSelectedBranchId(branchId)}
                 onEditOutlet={(o) => setModalOutlet(o)}

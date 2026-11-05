@@ -256,15 +256,15 @@ export function OutletExpandedRow({
 
 ## 6. Acceptance Criteria Checklist
 
-- [ ] `hasPermission("staff", "SUBMIT_DRAFT_OUTLET")` returns `false`.
-- [ ] `hasPermission("supervisor", "SUBMIT_DRAFT_OUTLET")` returns `true`.
-- [ ] `hasPermission("admin", "SUBMIT_DRAFT_OUTLET")` returns `true`.
-- [ ] In `OutletsView`, the "+ Tambah Outlet" button is NOT rendered when logged in as `staff`.
-- [ ] In `OutletExpandedRow`, the "Edit Outlet" button is NOT rendered when logged in as `staff` or `supervisor`.
-- [ ] `POST /api/marcom/outlets/draft` returns `403 Forbidden` for `staff`.
-- [ ] `POST /api/marcom/uploads?kind=outlets` returns `403 Forbidden` for `staff`.
-- [ ] `npm run drift:check` passes with 0 drift.
-- [ ] `npm test` passes with 0 failures across all 152 test suites.
-- [ ] `npm run build:check` passes with 0 TypeScript/build errors.
+- [x] `hasPermission("staff", "SUBMIT_DRAFT_OUTLET")` returns `false`.
+- [x] `hasPermission("supervisor", "SUBMIT_DRAFT_OUTLET")` returns `true`.
+- [x] `hasPermission("admin", "SUBMIT_DRAFT_OUTLET")` returns `true`.
+- [x] In `OutletsView`, the "+ Tambah Outlet" button is NOT rendered when logged in as `staff`.
+- [x] In `OutletExpandedRow`, the "Edit Outlet" button is NOT rendered when logged in as `staff` or `supervisor`.
+- [x] `POST /api/marcom/outlets/draft` returns `403 Forbidden` for `staff`.
+- [x] `POST /api/marcom/uploads?kind=outlets` returns `403 Forbidden` for `staff`.
+- [x] `npm run drift:check` passes with 0 drift.
+- [x] `npm test` passes with 0 failures across all 152 test suites.
+- [x] `npm run build:check` passes with 0 TypeScript/build errors.
 
 

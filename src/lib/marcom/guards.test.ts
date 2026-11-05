@@ -40,8 +40,8 @@ test("admin can do everything", () => {
   for (const a of all) assert.equal(hasPermission("admin", a), true);
 });
 
-test("staff can submit draft outlet, but cannot approve outlet without branch scope", () => {
-  assert.equal(hasPermission("staff", "SUBMIT_DRAFT_OUTLET"), true);
+test("staff cannot submit draft outlet nor approve outlet", () => {
+  assert.equal(hasPermission("staff", "SUBMIT_DRAFT_OUTLET"), false);
   assert.equal(hasPermission("staff", "APPROVE_OUTLET"), false);
   assert.equal(hasPermission("viewer", "SUBMIT_DRAFT_OUTLET"), false);
   assert.equal(hasPermission("viewer", "APPROVE_OUTLET"), false);
