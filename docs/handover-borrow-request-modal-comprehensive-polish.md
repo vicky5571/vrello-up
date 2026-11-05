@@ -405,17 +405,17 @@ test("Borrow Request Modal Comprehensive Polish Invariants (ADR-0042)", async (t
 
 ## 7. Acceptance Criteria Checklist
 
-- [ ] Raw HTML `<select>` tag is completely removed from `BorrowRequestModal.tsx`.
-- [ ] Field event link uses `CustomDropdown<string>` with `size="md"` and `searchable={true}`.
-- [ ] Explicit "Clear link" action resets event link to Standalone.
-- [ ] Real-time duration pill displays accurate days calculation.
-- [ ] Step 1 auto-fills `borrowerName` from `session.data?.user?.name` when empty.
-- [ ] Division input field is removed from form markup; payload sends `borrowerDivision: ""`.
-- [ ] Step 3 features horizontal category filter chips (`EQUIPMENT_CATEGORIES`) and `+` / `-` steppers.
-- [ ] Step 4 review card displays 2-column summary with item total count and submit loading guard.
-- [ ] `borrowRequestModal.test.ts` passes with 0 failures.
-- [ ] `npm run drift:check` passes with 0 drift.
-- [ ] `npm run build:check` passes with 0 errors.
-- [ ] `npm test` passes 100% green.
+- [x] Raw HTML `<select>` tag is completely removed from `BorrowRequestModal.tsx`.
+- [x] Field event link uses `CustomDropdown<string>` with `size="md"` and `searchable={true}`.
+- [x] Explicit "Clear link" action resets event link to Standalone.
+- [x] Real-time duration pill displays accurate days calculation.
+- [x] Step 1 auto-fills `borrowerName` from `session.data?.user?.name` when empty.
+- [x] Division input field is removed from form markup; payload sends `borrowerDivision: ""`.
+- [x] Step 3 features horizontal category filter chips (`EQUIPMENT_CATEGORIES`) and `+` / `-` steppers.
+- [x] Step 4 review card displays 2-column summary with item total count and submit loading guard.
+- [x] `borrowRequestModal.test.ts` passes with 0 failures.
+- [x] `npm run drift:check` passes with 0 drift.
+- [x] `npm run build:check` passes with 0 errors.
+- [x] `npm test` passes 100% green.
 
 

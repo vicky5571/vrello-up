@@ -6,6 +6,18 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `feat(inventory)`: Comprehensive UX polish and CustomDropdown for BorrowRequestModal
+  - Replaced unstyled HTML `<select>` with searchable `CustomDropdown<string>` (`size="md"`, `direction="auto"`) for Field Event linking
+  - Added dedicated "Clear link" action and real-time duration counter pill
+  - Auto-filled `borrowerName` from session user (`useSession`) and eliminated redundant `borrowerDivision` input
+  - Added horizontal category filter chips (`EQUIPMENT_CATEGORIES`) and unit quantity stepper buttons (`-` / `+`) on Step 3
+  - Modernized review step (Step 4) with structured 2-column card layout and double-submission loading guard
+  - Added automated invariant and unit tests in `src/components/views/InventoryView/borrowRequestModal.test.ts` (5/5 passing)
+  - Spec: `docs/superpowers/specs/2026-11-05-borrow-request-modal-comprehensive-polish-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-borrow-request-modal-comprehensive-polish.md`
+  - Refs: `docs/adr/0042-borrow-request-modal-comprehensive-polish.md` (ADR-0042)
+  - Gates: `npm test` 841/841 passed; `npm run build:check` 0 errors; `npm run drift:check` clean (69/69 specs paired)
+
 - `feat(inventory)`: Standardize InventoryItemFormModal with CustomDropdown
   - Replaced unstyled HTML select elements for Category and Status with canonical CustomDropdown
   - Aligned dropdown dimensions (`size="md"`, `min-h-[36px]`) with sibling form text inputs

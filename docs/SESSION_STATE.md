@@ -8,26 +8,35 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Comprehensive UX Polish and CustomDropdown Integration for BorrowRequestModal (ADR-0042) — **PLAN & SPEC READY**  
+**Active Feature:** Comprehensive UX Polish and CustomDropdown Integration for BorrowRequestModal (ADR-0042) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Standardize Inventory Item Form CustomDropdowns (ADR-0041)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Perencanaan & Arsitektur: Comprehensive UX Polish and CustomDropdown Integration for BorrowRequestModal (ADR-0042):**
-   - **ADR-0042 Disusun & Disetujui:**
-     - Mendokumentasikan eliminasi native HTML `<select>` pada Step 2 dan integrasi `CustomDropdown<string>` (`size="md"`, `searchable={true}`) dengan format label event terperinci dan tombol "Clear link".
-     - Auto-populasi `borrowerName` dari session aktif (`useSession`) pada Step 1.
-     - Eliminasi input berulang `borrowerDivision` untuk simplifikasi form (tetap dipassing `""` di payload agar kompatibel dengan API).
-     - Penambahan filter cepat kategori (`EQUIPMENT_CATEGORIES`) dan tombol stepper unit (`-` / `+`) pada Step 3.
-     - Redesain ringkasan Step 4 menjadi 2 kolom modular dengan proteksi double-submission (`disabled={loading}`).
-   - **Spesifikasi & Roadmap Pelaksanaan:**
-     - `docs/superpowers/specs/2026-11-05-borrow-request-modal-comprehensive-polish-design.md`
-     - `docs/superpowers/plans/2026-11-05-borrow-request-modal-comprehensive-polish.md`
-   - **Verifikasi Invariant:**
-     - `npm run drift:check` ✅ (69/69 spec-plan pairs valid)
-     - `npm run build:check` ✅ (0 TypeScript errors)
+1. **Comprehensive UX Polish & CustomDropdown Integration pada BorrowRequestModal (ADR-0042 — Implementation Complete):**
+   - **Eliminasi Total Native `<select>` pada Step 2:**
+     - Menggantikan elemen `<select>` bawaan untuk *Link to Field Event* dengan komponen kanonikal `CustomDropdown<string>` (`size="md"`, `searchable={true}`).
+     - Ditambahkan aksi *Clear link* yang muncul saat event dipilih untuk mereset link kembali ke mode standalone.
+     - Ditambahkan badge durasi dinamis (*Duration: N days*) otomatis antara `borrowDate` dan `returnDueDate`.
+   - **Penyederhanaan & Auto-fill Identitas Peminjam pada Step 1:**
+     - Auto-populasi `borrowerName` dari `session?.user?.name` saat modal dibuka jika kosong, dengan preservasi kemampuan edit manual.
+     - Menghapus input `borrowerDivision` dari UI untuk meminimalkan beban input, dan memastikan payload tetap mengirimkan string kosong `borrowerDivision: ""` agar 100% kompatibel dengan API backend.
+     - Menambahkan ikon intuitif (`User`, `Phone`) pada input.
+   - **Akselerasi Pemilihan Barang pada Step 3:**
+     - Menambahkan deretan pill quick-filter kategori (`All Categories` + `EQUIPMENT_CATEGORIES`) horizontal yang dapat di-scroll.
+     - Menambahkan tombol stepper kuantitas (`-` / `+`) yang mendampingi input angka dengan pembatasan unit maksimum stok riil (`item.availableUnits`).
+     - Tampilan badge ringkasan total unit terpilih.
+   - **Redesain Ringkasan 2 Kolom & Proteksi Loading pada Step 4:**
+     - Mengelompokkan ringkasan menjadi 2 kolom terstruktur: kolom kiri untuk logistik, peminjam, jadwal, lokasi, dan event; kolom kanan untuk daftar item, kode inventaris, kuantitas, dan total agregat unit.
+     - Proteksi double-submission dengan spinner `Loader2` dan disable button saat `loading === true`.
+   - **Pengujian & Verifikasi Invariant:**
+     - Dibuat unit test `src/components/views/InventoryView/borrowRequestModal.test.ts` (5/5 assertions lulus 100%).
+     - Verifikasi non-negotiable gates:
+       - `npm run drift:check` ✅ (69/69 spec-plan pairs valid, 0 drift)
+       - `npm run build:check` ✅ (`tsc --noEmit` 0 errors)
+       - `npm test` ✅ (841/841 passing across 152 test suites, 0 failures)
 
 1. **Standardisasi CustomDropdown pada Modal Form Item Inventaris (ADR-0041 — Implementation Complete):**
    - **Eliminasi Total Native `<select>`:**

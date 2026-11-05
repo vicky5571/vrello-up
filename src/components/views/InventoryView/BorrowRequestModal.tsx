@@ -1,9 +1,26 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Loader2, ArrowRight, ArrowLeft, Check, Search } from "lucide-react";
+import {
+  X,
+  Loader2,
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  Search,
+  Plus,
+  Minus,
+  Calendar,
+  MapPin,
+  User,
+  Phone,
+  FileText,
+} from "lucide-react";
+import { useSession } from "next-auth/react";
 import type { BorrowRecord, InventoryItem } from "@/types";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { EQUIPMENT_CATEGORIES } from "./inventoryConstants";
 
 interface BorrowRequestModalProps {
   isOpen: boolean;
@@ -25,12 +42,12 @@ export function BorrowRequestModal({
   defaultEventId,
   onSaved,
 }: BorrowRequestModalProps) {
+  const { data: session } = useSession();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
   // Form State
   const [borrowerName, setBorrowerName] = useState("");
   const [borrowerPhone, setBorrowerPhone] = useState("");
-  const [borrowerDivision, setBorrowerDivision] = useState("");
   const [purpose, setPurpose] = useState("");
 
   const [eventId, setEventId] = useState<string>(defaultEventId || "");
@@ -42,6 +59,7 @@ export function BorrowRequestModal({
 
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [itemSearch, setItemSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,8 +79,11 @@ export function BorrowRequestModal({
       if (defaultEventId) {
         setEventId(defaultEventId);
       }
+      if (session?.user?.name && !borrowerName) {
+        setBorrowerName(session.user.name);
+      }
     }
-  }, [isOpen, defaultEventId, fetchEvents, fetchInventory]);
+  }, [isOpen, defaultEventId, fetchEvents, fetchInventory, session?.user?.name]);
 
   // When event is selected, auto-fill location if empty
   const handleEventChange = (selectedId: string) => {
@@ -104,6 +125,9 @@ export function BorrowRequestModal({
   };
 
   const filteredCatalog = inventoryItems.filter((i) => {
+    if (selectedCategory !== "ALL" && i.category !== selectedCategory) {
+      return false;
+    }
     if (!itemSearch) return true;
     const q = itemSearch.toLowerCase();
     return (
@@ -153,7 +177,7 @@ export function BorrowRequestModal({
       const payload = {
         borrowerName: borrowerName.trim(),
         borrowerPhone: borrowerPhone.trim(),
-        borrowerDivision: borrowerDivision.trim(),
+        borrowerDivision: "",
         eventId: eventId || null,
         eventLocation: eventLocation.trim(),
         borrowDate,
@@ -200,7 +224,7 @@ export function BorrowRequestModal({
               </h3>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {step === 1 && "Enter borrower identity and division details."}
+              {step === 1 && "Enter borrower identity and contact details."}
               {step === 2 && "Specify execution schedule and target event location."}
               {step === 3 && "Select equipment and units needed from available stock."}
               {step === 4 && "Review your request summary before submission."}
@@ -209,7 +233,7 @@ export function BorrowRequestModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -230,40 +254,31 @@ export function BorrowRequestModal({
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Borrower Full Name <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={borrowerName}
-                  onChange={(e) => setBorrowerName(e.target.value)}
-                  placeholder="e.g. Andi Pratama"
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <User className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                  <input
+                    type="text"
+                    required
+                    value={borrowerName}
+                    onChange={(e) => setBorrowerName(e.target.value)}
+                    placeholder="e.g. Andi Pratama"
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Phone / WhatsApp Number
-                  </label>
+              <div>
+                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Phone / WhatsApp Number
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
                   <input
                     type="text"
                     value={borrowerPhone}
                     onChange={(e) => setBorrowerPhone(e.target.value)}
                     placeholder="e.g. 08123456789"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Division / Team
-                  </label>
-                  <input
-                    type="text"
-                    value={borrowerDivision}
-                    onChange={(e) => setBorrowerDivision(e.target.value)}
-                    placeholder="e.g. Field Activation - Bandung"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -287,34 +302,52 @@ export function BorrowRequestModal({
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Link to Field Event (Optional)
-                </label>
-                <select
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-medium text-slate-700 dark:text-slate-300">
+                    Link to Field Event (Optional)
+                  </label>
+                  {eventId && (
+                    <button
+                      type="button"
+                      onClick={() => handleEventChange("")}
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    >
+                      Clear link
+                    </button>
+                  )}
+                </div>
+                <CustomDropdown<string>
                   value={eventId}
-                  onChange={(e) => handleEventChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">— Standalone / Not linked to Field Event —</option>
-                  {events.map((ev) => (
-                    <option key={ev.id} value={ev.id}>
-                      {ev.name} ({ev.branchName || "HQ"})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(chosenId) => handleEventChange(chosenId)}
+                  options={[
+                    { value: "", label: "— Standalone / Not linked to Field Event —" },
+                    ...events.map((ev) => ({
+                      value: ev.id,
+                      label: `${ev.name} (${ev.branchName || "HQ"}${ev.startDate ? ` · ${ev.startDate.slice(5)}` : ""})`,
+                    })),
+                  ]}
+                  size="md"
+                  searchable={true}
+                  searchPlaceholder="Search field event or branch..."
+                  direction="auto"
+                  className="w-full text-xs"
+                />
               </div>
 
               <div>
                 <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Event / Deployment Location
                 </label>
-                <input
-                  type="text"
-                  value={eventLocation}
-                  onChange={(e) => setEventLocation(e.target.value)}
-                  placeholder="e.g. Trans Studio Mall Bandung"
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <MapPin className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={eventLocation}
+                    onChange={(e) => setEventLocation(e.target.value)}
+                    placeholder="e.g. Trans Studio Mall Bandung"
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -345,12 +378,31 @@ export function BorrowRequestModal({
                   />
                 </div>
               </div>
+
+              {borrowDate && returnDueDate && (
+                <div className="text-[11px] text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded inline-flex items-center gap-1.5 border border-blue-200/60 dark:border-blue-800/40">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>
+                    Duration:{" "}
+                    <strong>
+                      {Math.max(
+                        1,
+                        Math.round(
+                          (new Date(returnDueDate).getTime() - new Date(borrowDate).getTime()) /
+                            86400000
+                        )
+                      )}{" "}
+                      days
+                    </strong>
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
           {/* STEP 3: Select Items */}
           {step === 3 && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="relative">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                 <input
@@ -362,79 +414,134 @@ export function BorrowRequestModal({
                 />
               </div>
 
-              <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 max-h-[300px] overflow-y-auto">
-                {filteredCatalog.map((item) => {
-                  const isAvailable = item.availableUnits > 0;
-                  const selected = selectedItems.find((p) => p.inventoryItemId === item.id);
-                  const currentQty = selected?.quantity || 0;
+              {/* Horizontal Category Filter Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory("ALL")}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    selectedCategory === "ALL"
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  }`}
+                >
+                  All Categories
+                </button>
+                {EQUIPMENT_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                      selectedCategory === cat
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
 
-                  return (
-                    <div
-                      key={item.id}
-                      className={`p-3 flex items-center justify-between gap-3 transition-colors ${
-                        !isAvailable
-                          ? "opacity-50 bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed"
-                          : "hover:bg-slate-50/70 dark:hover:bg-slate-800/50"
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
-                            {item.code}
-                          </span>
-                          <span className="font-semibold text-slate-900 dark:text-slate-100 truncate">
-                            {item.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                          <span>{item.category}</span>
-                          <span>·</span>
-                          <span
-                            className={
-                              isAvailable
-                                ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                : "text-rose-500 font-medium"
-                            }
-                          >
-                            {isAvailable
-                              ? `${item.availableUnits} available (${item.totalUnits} total)`
-                              : "Not Available"}
-                          </span>
-                        </div>
-                      </div>
+              <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 max-h-[280px] overflow-y-auto">
+                {filteredCatalog.length === 0 ? (
+                  <div className="p-6 text-center text-slate-400">
+                    No equipment found matching criteria.
+                  </div>
+                ) : (
+                  filteredCatalog.map((item) => {
+                    const isAvailable = item.availableUnits > 0;
+                    const selected = selectedItems.find((p) => p.inventoryItemId === item.id);
+                    const currentQty = selected?.quantity || 0;
 
-                      {/* Quantity input or disabled badge */}
-                      <div className="flex items-center gap-2">
-                        {isAvailable ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] text-slate-400">Qty:</span>
-                            <input
-                              type="number"
-                              min={0}
-                              max={item.availableUnits}
-                              value={currentQty === 0 ? "" : currentQty}
-                              onChange={(e) =>
-                                handleSelectItem(item, parseInt(e.target.value, 10) || 0)
-                              }
-                              placeholder="0"
-                              className="w-16 px-2 py-1 text-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
+                    return (
+                      <div
+                        key={item.id}
+                        className={`p-3 flex items-center justify-between gap-3 transition-colors ${
+                          !isAvailable
+                            ? "opacity-50 bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed"
+                            : "hover:bg-slate-50/70 dark:hover:bg-slate-800/50"
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                              {item.code}
+                            </span>
+                            <span className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                              {item.name}
+                            </span>
                           </div>
-                        ) : (
-                          <span className="text-[10px] text-rose-500 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 px-2 py-1 rounded">
-                            Out of Stock
-                          </span>
-                        )}
+                          <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                            <span>{item.category}</span>
+                            <span>·</span>
+                            <span
+                              className={
+                                isAvailable
+                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                                  : "text-rose-500 font-medium"
+                              }
+                            >
+                              {isAvailable
+                                ? `${item.availableUnits} available (${item.totalUnits} total)`
+                                : "Not Available"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Steppers + input */}
+                        <div className="flex items-center gap-2">
+                          {isAvailable ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleSelectItem(item, Math.max(0, currentQty - 1))}
+                                disabled={currentQty === 0}
+                                className="p-1 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 cursor-pointer"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <input
+                                type="number"
+                                min={0}
+                                max={item.availableUnits}
+                                value={currentQty === 0 ? "" : currentQty}
+                                onChange={(e) =>
+                                  handleSelectItem(item, parseInt(e.target.value, 10) || 0)
+                                }
+                                placeholder="0"
+                                className="w-12 px-1 py-1 text-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleSelectItem(item, Math.min(item.availableUnits, currentQty + 1))
+                                }
+                                disabled={currentQty >= item.availableUnits}
+                                className="p-1 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 cursor-pointer"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-rose-500 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 px-2 py-1 rounded">
+                              Out of Stock
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
 
               {selectedItems.length > 0 && (
                 <div className="p-3 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/40 rounded-lg">
-                  <div className="font-semibold text-blue-900 dark:text-blue-200 mb-1">
-                    Selected Items ({selectedItems.length}):
+                  <div className="font-semibold text-blue-900 dark:text-blue-200 mb-1 flex items-center justify-between">
+                    <span>Selected Items ({selectedItems.length}):</span>
+                    <span className="text-[11px] font-normal text-blue-700 dark:text-blue-300">
+                      {selectedItems.reduce((acc, curr) => acc + curr.quantity, 0)} total units
+                    </span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedItems.map((si) => {
@@ -452,7 +559,7 @@ export function BorrowRequestModal({
                                 p.filter((x) => x.inventoryItemId !== si.inventoryItemId)
                               )
                             }
-                            className="hover:text-rose-500 ml-1"
+                            className="hover:text-rose-500 ml-1 cursor-pointer"
                           >
                             ×
                           </button>
@@ -468,67 +575,113 @@ export function BorrowRequestModal({
           {/* STEP 4: Review & Submit */}
           {step === 4 && (
             <div className="space-y-4">
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl space-y-3 border border-slate-200 dark:border-slate-800">
-                <div className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-                  <span className="text-slate-500">Borrower:</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">
-                    {borrowerName} {borrowerDivision ? `(${borrowerDivision})` : ""}
-                  </span>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Left Column: Requester & Schedule */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl space-y-3 border border-slate-200 dark:border-slate-800">
+                  <h4 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-700 pb-2">
+                    <User className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Logistics & Requester</span>
+                  </h4>
 
-                {borrowerPhone && (
-                  <div className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-                    <span className="text-slate-500">Contact:</span>
-                    <span className="text-slate-800 dark:text-slate-200">{borrowerPhone}</span>
+                  <div className="space-y-2 text-xs">
+                    <div>
+                      <span className="text-slate-500 block text-[11px]">Borrower:</span>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">
+                        {borrowerName}
+                      </span>
+                    </div>
+
+                    {borrowerPhone && (
+                      <div>
+                        <span className="text-slate-500 block text-[11px]">Contact Phone:</span>
+                        <span className="text-slate-800 dark:text-slate-200">{borrowerPhone}</span>
+                      </div>
+                    )}
+
+                    <div>
+                      <span className="text-slate-500 block text-[11px]">Schedule:</span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="font-medium text-slate-800 dark:text-slate-200">
+                          {borrowDate} to {returnDueDate}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/50">
+                          {Math.max(
+                            1,
+                            Math.round(
+                              (new Date(returnDueDate).getTime() - new Date(borrowDate).getTime()) /
+                                86400000
+                            )
+                          )}{" "}
+                          days
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-slate-500 block text-[11px]">Location:</span>
+                      <span className="text-slate-800 dark:text-slate-200">
+                        {eventLocation || "—"}
+                      </span>
+                    </div>
+
+                    {eventId && (
+                      <div>
+                        <span className="text-slate-500 block text-[11px]">Linked Field Event:</span>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-medium">
+                          {events.find((e) => e.id === eventId)?.name || eventId}
+                        </span>
+                      </div>
+                    )}
+
+                    {purpose && (
+                      <div>
+                        <span className="text-slate-500 block text-[11px]">Purpose:</span>
+                        <span className="text-slate-600 dark:text-slate-300 italic">{purpose}</span>
+                      </div>
+                    )}
                   </div>
-                )}
-
-                <div className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-                  <span className="text-slate-500">Duration:</span>
-                  <span className="font-medium text-slate-800 dark:text-slate-200">
-                    {borrowDate} to {returnDueDate}
-                  </span>
                 </div>
 
-                <div className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-                  <span className="text-slate-500">Location:</span>
-                  <span className="text-slate-800 dark:text-slate-200">
-                    {eventLocation || "—"}
-                  </span>
-                </div>
+                {/* Right Column: Requested Items */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl flex flex-col justify-between border border-slate-200 dark:border-slate-800">
+                  <div>
+                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-700 pb-2">
+                      <FileText className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Equipment Items ({selectedItems.length})</span>
+                    </h4>
 
-                {eventId && (
-                  <div className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-                    <span className="text-slate-500">Linked Event:</span>
-                    <span className="text-indigo-600 dark:text-indigo-400 font-medium">
-                      {events.find((e) => e.id === eventId)?.name || eventId}
-                    </span>
+                    <div className="space-y-1.5 mt-3 max-h-48 overflow-y-auto pr-1">
+                      {selectedItems.map((si) => {
+                        const it = inventoryItems.find((i) => i.id === si.inventoryItemId);
+                        return (
+                          <div
+                            key={si.inventoryItemId}
+                            className="flex items-center justify-between text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-2.5 py-1.5 rounded border border-slate-200 dark:border-slate-800 text-xs"
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0 mr-2">
+                              <span className="font-mono text-[10px] text-slate-400">{it?.code}</span>
+                              <span className="font-medium truncate">{it?.name}</span>
+                            </div>
+                            <span className="font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                              × {si.quantity}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                )}
 
-                <div>
-                  <span className="text-slate-500 block mb-1.5 font-medium">Items Requested:</span>
-                  <div className="space-y-1">
-                    {selectedItems.map((si) => {
-                      const it = inventoryItems.find((i) => i.id === si.inventoryItemId);
-                      return (
-                        <div
-                          key={si.inventoryItemId}
-                          className="flex justify-between text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-800"
-                        >
-                          <span className="font-mono text-slate-500 mr-2">{it?.code}</span>
-                          <span className="flex-1 font-medium">{it?.name}</span>
-                          <span className="font-bold text-blue-600 dark:text-blue-400">
-                            × {si.quantity} units
-                          </span>
-                        </div>
-                      );
-                    })}
+                  <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between text-[11px] text-slate-500">
+                    <span>Total Units:</span>
+                    <strong className="text-slate-800 dark:text-slate-200">
+                      {selectedItems.reduce((acc, curr) => acc + curr.quantity, 0)} units across{" "}
+                      {selectedItems.length} models
+                    </strong>
                   </div>
                 </div>
               </div>
 
-              <div className="text-xs text-slate-500 dark:text-slate-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+              <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
                 ⚠️ This request will be submitted with <strong>PENDING</strong> status. Available units
                 in storage will remain unchanged until approved and marked as picked up.
               </div>
@@ -544,7 +697,7 @@ export function BorrowRequestModal({
                 type="button"
                 onClick={handleBack}
                 disabled={loading}
-                className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5"
+                className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 Back
@@ -557,7 +710,7 @@ export function BorrowRequestModal({
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
@@ -566,7 +719,7 @@ export function BorrowRequestModal({
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center gap-1.5 shadow-sm transition-colors"
+                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
               >
                 Next
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -576,7 +729,7 @@ export function BorrowRequestModal({
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-50"
+                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 Submit Request
