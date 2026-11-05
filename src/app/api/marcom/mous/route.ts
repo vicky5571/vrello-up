@@ -22,38 +22,46 @@ const mouInclude = {
 } as const;
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  try {
+    const { searchParams } = new URL(request.url);
 
-  const branchId = searchParams.get("branchId") ?? searchParams.get("branch");
-  const outletId = searchParams.get("outletId");
-  const status = searchParams.get("status");
-  const query = searchParams.get("q")?.toLowerCase();
+    const branchId = searchParams.get("branchId") ?? searchParams.get("branch");
+    const outletId = searchParams.get("outletId");
+    const status = searchParams.get("status");
+    const query = searchParams.get("q")?.toLowerCase();
 
-  if (status && status !== "ALL" && !VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-  }
+    if (status && status !== "ALL" && !VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
 
-  const where: Prisma.MouWhereInput = {};
-  if (branchId && branchId !== "ALL") {
-    where.branchId = branchId;
-  }
-  if (outletId && outletId !== "ALL") {
-    where.outletId = outletId;
-  }
-  if (status && status !== "ALL") {
-    where.status = status as (typeof VALID_STATUSES)[number];
-  }
-  if (query) {
-    const contains = { contains: query, mode: "insensitive" as const };
-    where.OR = [{ partnerName: contains }, { mouType: contains }, { outletName: contains }, { picName: contains }, { picPhone: contains }, { notes: contains }];
-  }
+    const where: Prisma.MouWhereInput = {};
+    if (branchId && branchId !== "ALL") {
+      where.branchId = branchId;
+    }
+    if (outletId && outletId !== "ALL") {
+      where.outletId = outletId;
+    }
+    if (status && status !== "ALL") {
+      where.status = status as (typeof VALID_STATUSES)[number];
+    }
+    if (query) {
+      const contains = { contains: query, mode: "insensitive" as const };
+      where.OR = [{ partnerName: contains }, { mouType: contains }, { outletName: contains }, { picName: contains }, { picPhone: contains }, { notes: contains }];
+    }
 
-  const mous = await prisma.mou.findMany({
-    where,
-    orderBy: { id: "asc" },
-    include: mouInclude,
-  });
-  return NextResponse.json({ total: mous.length, data: mous });
+    const mous = await prisma.mou.findMany({
+      where,
+      orderBy: { id: "asc" },
+      include: mouInclude,
+    });
+    return NextResponse.json({ total: mous.length, data: mous });
+  } catch (error) {
+    console.error("[api/marcom/mous] GET error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", message: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: Request) {
