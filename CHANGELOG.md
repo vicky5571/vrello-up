@@ -6,6 +6,24 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `style(inventory)`: Swap table and card view switcher positions and default to table
+  - Swapped view switcher button order: Table View on the left, Card / Grid View on the right in `InventoryHeaderKpis.tsx`
+  - Swapped switcher container and active pill styling: container uses `bg-slate-100 dark:bg-slate-800`, active pill uses `bg-white dark:bg-slate-900 rounded shadow-xs`
+  - Set default `catalogViewMode` to `"table"` in `InventoryView.tsx`
+  - Added automated unit tests in `src/components/views/InventoryView/inventoryViewMode.test.ts` (3/3 tests passing)
+
+- `feat(ui)`: Standardize z-index stacking hierarchy and isolate table shells
+  - Enforced CSS stacking context isolation (`isolation: isolate`) on `MarcomTableShell.tsx` and `MousView.tsx` to prevent sticky table headers and action cells from bleeding outside tables
+  - Elevated active `CustomDropdown` container to `z-50` when `isOpen` is true
+  - Coordinated all 12 Marcom view headers to `relative z-30` and elevated global `TopNav.tsx` to `relative z-40`
+  - Documented Canonical 7-Layer Z-Index Stacking Hierarchy in `docs/architecture-system-invariants.md`
+  - Added automated unit tests in `src/components/ui/customDropdownZIndex.test.ts` (5/5 tests passing)
+  - Spec: `docs/superpowers/specs/2026-11-05-z-index-stacking-context-standardization-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-z-index-stacking-context-standardization.md`
+  - Refs: `docs/adr/0039-z-index-stacking-context-standardization.md`
+  - Gates: `npm test` passed (826/826 tests); `npm run build:check` 0 errors; `npm run drift:check` clean (66/66 specs paired)
+
+
 - `feat(mous)`: Row-scoped loading animation & state guard for MOU quick approve
   - Added visual loading feedback (`<RefreshCw className="animate-spin" />` and `"Menyetujui..."`) to the Quick Approve button in the MOUs table
   - Introduced double-submission protection (`disabled={isApproving}`) to eliminate duplicate approval requests and race conditions

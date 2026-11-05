@@ -20,7 +20,7 @@ export function InventoryView() {
 
   // Tabs & Views
   const [activeTab, setActiveTab] = useState<"catalog" | "borrowing">("catalog");
-  const [catalogViewMode, setCatalogViewMode] = useState<"grid" | "table">("grid");
+  const [catalogViewMode, setCatalogViewMode] = useState<"grid" | "table">("table");
   const [borrowViewMode, setBorrowViewMode] = useState<"board" | "table">("board");
   const [activeStatusTab, setActiveStatusTab] = useState<string>("ALL");
 

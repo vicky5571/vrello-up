@@ -8,12 +8,44 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Row-Scoped Loading Animation & State Guard for MOU Quick Approve (ADR-0038) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Standardize Event & Content Modal/Drawer Form CustomDropdowns (ADR-0037)  
+**Active Feature:** Z-Index Stacking Context Standardization & Table Shell Isolation (ADR-0039) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Row-Scoped Loading Animation & State Guard for MOU Quick Approve (ADR-0038)  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Penataan Switcher Tampilan & Default Table View pada Equipment Inventory:**
+   - **Pertukaran Posisi Tombol (Table di Kiri, Card di Kanan):**
+     - Memindahkan tombol *Table View* (`TableIcon`) ke sisi kiri dan *Grid / Card View* (`LayoutGrid`) ke sisi kanan pada `InventoryHeaderKpis.tsx` (berlaku untuk katalog dan tab peminjaman).
+   - **Table View sebagai Tampilan Awal (Default View):**
+     - Mengubah state inisial `catalogViewMode` di `InventoryView.tsx` menjadi `"table"`.
+   - **Pertukaran Gaya Warna Background Container & Active Pill:**
+     - Kontainer tombol menggunakan `bg-slate-100 dark:bg-slate-800`.
+     - Active pill penanda tab aktif menggunakan `bg-white dark:bg-slate-900 rounded shadow-xs` dengan kontras tinggi.
+   - **Automated Testing & Verifikasi Invariant:**
+     - Menambahkan pengujian otomatis di `src/components/views/InventoryView/inventoryViewMode.test.ts` (3/3 assertions pass).
+     - Verifikasi: `npm run drift:check` (66/66 specs paired), `npm run build:check` (0 errors), `npm test` (826/826 tests pass).
+
+1. **Z-Index Stacking Context Standardization & Table Shell Isolation (ADR-0039 — Implementation Complete):**
+   - **Eliminasi Kliping Popover Menu Dropdown oleh Tabel:**
+     - Mengatasi masalah visual di mana popover menu `CustomDropdown` (seperti *All Branches* di `MousView`) tertimpa/terpotong oleh elemen tabel di bawahnya (`Dokumen MOU` dan tombol berkas PDF).
+   - **Isolasi Stacking Context Shell Tabel (`MarcomTableShell.tsx` & `MousView.tsx`):**
+     - Menerapkan `isolation: isolate` (`isolate`) pada root kontainer `MarcomTableShell.tsx` dan pembungkus konten tabel di `MousView.tsx`, mengurung elemen kolom sticky (`z-10` dan `z-20`) mutlak di dalam domain tabel Layer 0 sehingga tidak pernah bocor ke atas header.
+   - **Eskalasi Z-Index Dropdown Aktif (`CustomDropdown.tsx`):**
+     - Mengubah z-index kontainer saat `isOpen = true` dari `z-30` ke `z-50`, menjamin menu popover selalu mengambang di atas semua elemen header dan konten stage.
+   - **Harmonisasi Hierarki Header Marcom & TopNav:**
+     - Mengubah seluruh 12 header filter marcom (`MousHeader`, `OutletsHeader`, `BranchesHeader`, `DocumentsHeader`, `EventsHeader`, `ReportsHeader`, `AnalyticsHeader`, `InventoryHeaderKpis`, `UsersHeader`, `ProfileHeader`, `ProjectsFilterBar`, `PipelineFilterBar`, dan header tab/timeline terkait) dari `relative z-20` menjadi `relative z-30`.
+     - Menaikkan `TopNav.tsx` dari `relative z-30` ke `relative z-40` agar notifikasi dan menu akun pengguna selalu berada di atas header halaman.
+   - **Dokumentasi Invariant SSOT:**
+     - Menambahkan Canonical 7-Layer Z-Index & Stacking Context Hierarchy contract ke `docs/architecture-system-invariants.md`.
+   - **Automated Testing & Invariant Verification:**
+     - Menambahkan pengujian otomatis di `src/components/ui/customDropdownZIndex.test.ts` (5/5 assertions pass).
+     - Verifikasi non-negotiable gates:
+       - `npm run drift:check` ✅ All 66 spec(s) have matching plan files. No drift detected.
+       - `npm run build:check` ✅ TypeScript compilation 0 errors (`tsc --noEmit`).
+       - `npm run test:smoke` ✅ 116/116 smoke tests pass.
+       - `npm test` ✅ 826/826 tests pass 100% (0 failures).
 
 1. **Row-Scoped Loading Animation & State Guard for MOU Quick Approve (ADR-0038 — Implementation Complete):**
    - **Visual Feedback & Spinner Indikator:**
