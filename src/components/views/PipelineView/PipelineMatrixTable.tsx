@@ -23,6 +23,8 @@ import type {
   PipelineSortOrder,
 } from "./pipelineTypes";
 import type { OutletPipelineRow } from "@/types";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
+import { getEventEquipmentSummary } from "@/lib/marcom/eventEquipmentHelpers";
 
 function renderSortIcon(
   field: PipelineSortField,
@@ -155,6 +157,8 @@ export function PipelineMatrixTable({
   sortOrder,
   onSortChange,
 }: PipelineMatrixTableProps) {
+  const borrowRecords = useMarcomDataStore((s) => s.borrowRecords);
+
   const handleSort = (field: PipelineSortField) => {
     if (onSortChange) {
       onSortChange(field);
@@ -409,6 +413,16 @@ export function PipelineMatrixTable({
                               </span>
                               {renderEventBadge(outlet.eventSummary.status)}
                             </div>
+                            {outlet.eventSummary.nearestEventId && (() => {
+                              const eqSummary = getEventEquipmentSummary(borrowRecords, outlet.eventSummary.nearestEventId);
+                              if (!eqSummary?.hasUnreturned) return null;
+                              return (
+                                <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                                  <AlertTriangle className="w-3 h-3 text-amber-500 flex-shrink-0" />
+                                  <span>{eqSummary.totalUnits} alat belum kembali</span>
+                                </div>
+                              );
+                            })()}
                           </>
                         ) : (
                           <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">

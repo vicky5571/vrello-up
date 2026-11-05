@@ -8,15 +8,41 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Modular 4-Step Wizard Stepper Header for BorrowRequestModal (ADR-0055) — **IMPLEMENTATION COMPLETE**  
-**Parallel Feature Ready:** Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Active Feature:** Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Modular 4-Step Wizard Stepper Header for BorrowRequestModal (ADR-0055) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Outlet Soft-Delete Architecture and Database Restrict Protection (ADR-0053) — **IMPLEMENTATION COMPLETE**  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Implementasi Modular 4-Step Wizard Stepper Header untuk BorrowRequestModal (ADR-0055 — Implementation Complete):**
+1. **Implementasi Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054 — Implementation Complete):**
+   - **Pure Logic & Aggregation Engine (`src/lib/marcom/eventEquipmentHelpers.ts`):**
+     - Memperluas interface `EventEquipmentSummary` dengan `hasUnreturned: boolean` dan `unreturnedList: UnreturnedEquipmentItem[]`.
+     - Mengimplementasikan deteksi status pinjaman terbuka (`ACTIVE`, `OVERDUE`, `PENDING`, `APPROVED`) yang terhubung dengan event, mengekstrak rincian peminjam, due date, dan breakdown item alat.
+     - Menambahkan penanda utang operasional `ponytail: debt DEBT-EVENT-LOGISTICS-001`.
+   - **Unit Testing Pure Logic (`src/lib/marcom/eventEquipmentHelpers.test.ts`):**
+     - Menambahkan unit tests untuk memverifikasi penanganan status: pinjaman berstatus `RETURNED` dan `CANCELLED` menghasilkan `hasUnreturned: false`, sedangkan `ACTIVE`/`OVERDUE`/`PENDING` menghasilkan `hasUnreturned: true` beserta ekstraksi daftar item alat tercecer (6/6 passing).
+   - **Warning Interception Modal (`src/components/views/EventsView/EventCompleteWarningModal.tsx`):**
+     - Membuat dialog interseptif saat operator mencoba menandai event sebagai `COMPLETED` saat masih ada alat yang belum kembali.
+     - Menyediakan visualisasi kartu pinjaman (kode pinjam, nama PIC peminjam, telepon, jadwal tempo, rincian unit alat).
+     - Menyediakan dua jalur tindakan: *"Batal & Periksa Alat"* (membatalkan status change dan trigger scroll ke seksi inventaris) serta *"Tetap Selesaikan Acara (Override)"* (mengizinkan penutupan event dengan peringatan audit).
+   - **Integrasi EventDrawer (`src/components/views/EventsView/EventDrawer.tsx`):**
+     - Mengintersepsi pemilihan status `COMPLETED` dari dropdown status (Opsi B) seketika bila `equipmentSummary?.hasUnreturned`.
+     - Menambahkan banner peringatan permanen berlatar amber/kuning di bawah header drawer ketika event berstatus `COMPLETED` namun masih memiliki alat yang belum kembali ke gudang.
+     - Menambahkan ID anchor `#borrowed-equipment-section` dengan auto-scroll halus ke daftar alat saat operator membatalkan dialog.
+   - **Multi-Surface Pervasive Visibility:**
+     - `EventCardsView.tsx`: Menampilkan badge peringatan berlatar merah/oranye dengan ikon `AlertTriangle` dan teks `${equipmentSummary.totalUnits} Unit (Alat Tercecer)` ketika event berstatus `COMPLETED`.
+     - `EventTableView.tsx`: Menghubungkan store `borrowRecords` dan menampilkan pill badge peringatan oranye pada kolom nama event bila memiliki alat belum kembali.
+     - `Outlet360Drawer.tsx`: Menampilkan pill peringatan *"Alat Belum Kembali"* pada tab Field Events di samping status event.
+     - `PipelineMatrixTable.tsx`: Menambahkan `nearestEventId` ke `OutletPipelineRow.eventSummary` di SSOT (`src/types/index.ts`) dan `pipelineEngine.ts`, serta menampilkan indikator peringatan alat belum kembali di Kolom 4 (Field Events).
+   - **Non-Negotiable Gates & Quality Verifications:**
+     - `npm run drift:check` ✅ (82/82 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm run test:smoke` ✅ (137/137 tests pass, 0 failures).
+     - `npm test` ✅ (899/899 tests pass across 155 suites, 0 failures).
+
+2. **Implementasi Modular 4-Step Wizard Stepper Header untuk BorrowRequestModal (ADR-0055 — Implementation Complete):**
    - **Modular Helper & Validation Logic (`src/components/views/InventoryView/wizard/borrowWizardHelpers.ts`):**
      - Mendefinisikan metadata 4 langkah (`BORROW_WIZARD_STEPS`): *Peminjam* (Langkah 1), *Jadwal & Event* (Langkah 2), *Pilih Alat* (Langkah 3), *Review & Submit* (Langkah 4).
      - Mengekspor pure logic guard `canAdvanceFromBorrowStep` untuk memvalidasi syarat input tiap langkah dan `getBorrowStepCompletionStatus` untuk status centang (*completed*).

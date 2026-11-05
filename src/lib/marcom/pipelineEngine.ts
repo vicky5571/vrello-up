@@ -313,6 +313,7 @@ export function buildOutletPipelineRows(
     }
 
     // Determine nearest event: prioritize upcoming/future events chronologically
+    let nearestEventId: string | undefined;
     let nearestEventName: string | undefined;
     let nearestEventDate: string | undefined;
     let nearestEventStatus: string | undefined;
@@ -345,6 +346,7 @@ export function buildOutletPipelineRows(
 
       const nearest = sortedEvents[0];
       if (nearest) {
+        nearestEventId = nearest.id;
         nearestEventName = nearest.name;
         const rawDate = nearest.startDate || nearest.date;
         if (rawDate) {
@@ -432,6 +434,7 @@ export function buildOutletPipelineRows(
       eventSummary: {
         total: totalEvents,
         upcomingCount,
+        nearestEventId,
         nearestEventName,
         nearestEventDate,
         status: nearestEventStatus,

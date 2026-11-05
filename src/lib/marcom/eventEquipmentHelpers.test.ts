@@ -88,7 +88,95 @@ test("getEventEquipmentSummary accurately aggregates units and records count", (
   assert.equal(summary.totalUnits, 6);
   assert.equal(summary.hasActive, true);
   assert.equal(summary.hasOverdue, false);
-  assert.equal(summary.statusText, "6 Unit Alat");
+  assert.equal(summary.hasUnreturned, true);
+  assert.equal(summary.statusText, "6 Unit (Di Lapangan)");
+});
+
+test("getEventEquipmentSummary returns hasUnreturned: false when all equipment is returned", () => {
+  const records: BorrowRecord[] = [
+    {
+      id: "brw-ret-1",
+      borrowCode: "BRW-20261031-001",
+      borrowerName: "Budi",
+      eventId: "event-ret",
+      borrowDate: "2026-11-01",
+      returnDueDate: "2026-11-05",
+      status: "RETURNED",
+      items: [
+        {
+          id: "bi-1",
+          borrowRecordId: "brw-ret-1",
+          inventoryItemId: "item-1",
+          quantity: 2,
+          conditionOut: "GOOD",
+        },
+      ],
+    },
+  ];
+
+  const summary = getEventEquipmentSummary(records, "event-ret");
+  assert.ok(summary);
+  assert.equal(summary.totalUnits, 2);
+  assert.equal(summary.hasUnreturned, false);
+  assert.equal(summary.statusText, "2 Unit Alat");
+  assert.equal(summary.unreturnedList.length, 0);
+});
+
+test("getEventEquipmentSummary extracts unreturned list and respects debt invariants (ADR-0054)", () => {
+  const records: BorrowRecord[] = [
+    {
+      id: "brw-active",
+      borrowCode: "BRW-001",
+      borrowerName: "Budi Santoso",
+      borrowerPhone: "0812345678",
+      eventId: "event-test-1",
+      borrowDate: "2026-11-01",
+      returnDueDate: "2026-11-05",
+      status: "ACTIVE",
+      items: [
+        {
+          id: "bi-1",
+          borrowRecordId: "brw-active",
+          inventoryItemId: "item-spk",
+          quantity: 2,
+          conditionOut: "GOOD",
+          // @ts-expect-error mock inventoryItem
+          inventoryItem: { id: "item-spk", name: "Portable PA Sound" },
+        },
+      ],
+    },
+    {
+      id: "brw-returned",
+      borrowCode: "BRW-002",
+      borrowerName: "Dewi",
+      eventId: "event-test-1",
+      borrowDate: "2026-11-01",
+      returnDueDate: "2026-11-04",
+      status: "RETURNED",
+      compensationStatus: "PENDING_SETTLEMENT", // Physical custody returned!
+      items: [
+        {
+          id: "bi-2",
+          borrowRecordId: "brw-returned",
+          inventoryItemId: "item-mic",
+          quantity: 1,
+          conditionOut: "GOOD",
+          // @ts-expect-error mock inventoryItem
+          inventoryItem: { id: "item-mic", name: "Wireless Mic" },
+        },
+      ],
+    },
+  ];
+
+  const summary = getEventEquipmentSummary(records, "event-test-1");
+  assert.ok(summary);
+  assert.equal(summary.recordCount, 2);
+  assert.equal(summary.totalUnits, 3);
+  assert.equal(summary.hasUnreturned, true);
+  assert.equal(summary.unreturnedList.length, 1);
+  assert.equal(summary.unreturnedList[0].borrowCode, "BRW-001");
+  assert.equal(summary.unreturnedList[0].borrowerName, "Budi Santoso");
+  assert.ok(summary.unreturnedList[0].itemsSummary.includes("Portable PA Sound ×2"));
 });
 
 test("getEventEquipmentSummary flags overdue loans correctly", () => {

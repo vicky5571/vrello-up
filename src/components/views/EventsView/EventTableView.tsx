@@ -11,6 +11,7 @@ import {
   Users,
   Edit2,
   Trash2,
+  Package,
 } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
 import { AppImage } from "@/components/ui/AppImage";
@@ -26,6 +27,8 @@ import {
   getEfficiencyBadgeClasses,
 } from "@/lib/marcom/eventCostAnalytics";
 import { STATUS_CONFIG, EVENT_TYPE_STYLES } from "./eventsConstants";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
+import { getEventEquipmentSummary } from "@/lib/marcom/eventEquipmentHelpers";
 
 const columnHelper = createMarcomColumnHelper<FieldEventItem>();
 
@@ -54,6 +57,8 @@ export function EventTableView({
   onDeleteEvent,
   onOpenFootageModal,
 }: EventTableViewProps) {
+  const borrowRecords = useMarcomDataStore((s) => s.borrowRecords);
+
   const columns = useMemo(
     () => [
       columnHelper.accessor("name", {
@@ -65,6 +70,8 @@ export function EventTableView({
             label: e.eventType,
             badge: "bg-slate-500/10 text-slate-600 border-slate-500/20",
           };
+          const equipmentSummary = getEventEquipmentSummary(borrowRecords, e.id);
+
           return (
             <div className="flex flex-col gap-1 py-1 min-w-[200px]">
               <div className="flex items-center gap-2">
@@ -75,10 +82,24 @@ export function EventTableView({
                   {e.name}
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-[11px]">
+              <div className="flex flex-wrap items-center gap-2 text-[11px]">
                 <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-medium border", typeStyle.badge)}>
                   {typeStyle.label}
                 </span>
+                {equipmentSummary?.hasUnreturned && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border",
+                      e.status === "COMPLETED"
+                        ? "bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300"
+                        : "bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300"
+                    )}
+                    title={`Terdapat ${equipmentSummary.totalUnits} unit alat belum kembali`}
+                  >
+                    <Package className="w-3 h-3 text-amber-500 shrink-0" />
+                    <span>{equipmentSummary.totalUnits} alat di lapangan</span>
+                  </span>
+                )}
                 {(() => {
                   const mediaCount =
                     e.mediaAttachments && e.mediaAttachments.length > 0

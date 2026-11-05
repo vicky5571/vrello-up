@@ -680,6 +680,7 @@ export interface OutletPipelineRow {
   eventSummary: {
     total: number;
     upcomingCount: number;
+    nearestEventId?: string;
     nearestEventName?: string;
     nearestEventDate?: string;
     status?: string;

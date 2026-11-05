@@ -24,45 +24,45 @@ Rencana implementasi ini mengeksekusi arsitektur peringatan operasional (Opsi 2)
 ## 2. Phased Implementation Breakdown
 
 ### Phase 1: Pure Logic & Diagnostics Engine
-- [ ] 1.1 Perbarui interface `EventEquipmentSummary` dan tambahkan `UnreturnedEquipmentItem` di `src/lib/marcom/eventEquipmentHelpers.ts`.
-- [ ] 1.2 Implementasikan logika ekstraksi `unreturnedList` dan kalkulasi `hasUnreturned` pada `getEventEquipmentSummary()`.
-- [ ] 1.3 Perbarui unit test di `src/lib/marcom/eventEquipmentHelpers.test.ts` untuk memverifikasi penanganan status:
+- [x] 1.1 Perbarui interface `EventEquipmentSummary` dan tambahkan `UnreturnedEquipmentItem` di `src/lib/marcom/eventEquipmentHelpers.ts`.
+- [x] 1.2 Implementasikan logika ekstraksi `unreturnedList` dan kalkulasi `hasUnreturned` pada `getEventEquipmentSummary()`.
+- [x] 1.3 Perbarui unit test di `src/lib/marcom/eventEquipmentHelpers.test.ts` untuk memverifikasi penanganan status:
   - `RETURNED` & `CANCELLED` tidak memicu peringatan (`hasUnreturned: false`).
   - `ACTIVE`, `OVERDUE`, `PENDING`, `APPROVED` memicu peringatan (`hasUnreturned: true`).
 
 ### Phase 2: Warning Intercept Modal & EventDrawer Integration (Opsi B)
-- [ ] 2.1 Buat komponen baru `src/components/views/EventsView/EventCompleteWarningModal.tsx`:
+- [x] 2.1 Buat komponen baru `src/components/views/EventsView/EventCompleteWarningModal.tsx`:
   - Roster kartu peminjaman alat (kode pinjam, nama peminjam, item summary, due date).
   - Aksi "Batal & Periksa Alat" (`onCancel`).
   - Aksi "Tetap Selesaikan Acara" (`onConfirmComplete`).
-- [ ] 2.2 Hubungkan intersepsi seketika (Opsi B) pada dropdown status di `EventDrawer.tsx`:
+- [x] 2.2 Hubungkan intersepsi seketika (Opsi B) pada dropdown status di `EventDrawer.tsx`:
   - Cegat pemilihan "Completed" saat `equipmentSummary?.hasUnreturned`.
   - Tampilkan modal peringatan konfirmasi.
   - Tampilkan banner peringatan permanen di bawah header drawer jika event berstatus `COMPLETED` namun alat masih tercecer.
   - Sediakan auto-scroll halus ke elemen `#borrowed-equipment-section` saat tombol batal diklik.
 
 ### Phase 3: Multi-Surface Visibility Enhancements
-- [ ] 3.1 Perbarui `EventCardsView.tsx`:
+- [x] 3.1 Perbarui `EventCardsView.tsx`:
   - Jika `event.status === "COMPLETED"` dan `equipmentSummary?.hasUnreturned`, tampilkan styling badge alat tercecer berlatar merah/oranye.
-- [ ] 3.2 Perbarui `EventTableView.tsx`:
+- [x] 3.2 Perbarui `EventTableView.tsx`:
   - Teruskan prop `borrowRecords` dari `EventsView.tsx`.
   - Render indikator badge logistik peringatan pada kolom event jika memiliki alat yang belum kembali.
-- [ ] 3.3 Perbarui `Outlet360Drawer.tsx`:
+- [x] 3.3 Perbarui `Outlet360Drawer.tsx`:
   - Pada tab `activeTab === "events"`, lakukan evaluasi status alat menggunakan `getEventEquipmentSummary(data.borrows, ev.id)` atau API data.
   - Tampilkan pill peringatan *"Peralatan Belum Kembali"* di samping badge status event.
-- [ ] 3.4 Perbarui `PipelineMatrixTable.tsx`:
+- [x] 3.4 Perbarui `PipelineMatrixTable.tsx`:
   - Tampilkan ikon peringatan `Package` / `AlertTriangle` pada Kolom 4 (Field Events) untuk outlet yang memiliki event dengan peralatan tercecer.
 
 ### Phase 4: Fixture Seed, Debt Ledger & Non-Negotiable Verification
-- [ ] 4.1 Tambahkan fixture QA pada `prisma/seed.ts`:
+- [x] 4.1 Tambahkan fixture QA pada `prisma/seed.ts`:
   - Event `event-004` (atau event terselesaikan) yang memiliki peminjaman aktif/overdue untuk verifikasi visual otomatis.
-- [ ] 4.2 Tambahkan komentar penanda utang operasional (`ponytail: debt DEBT-EVENT-LOGISTICS-001`) pada `eventEquipmentHelpers.ts` dan `EventDrawer.tsx`.
-- [ ] 4.3 Jalankan seluruh quality gates:
+- [x] 4.2 Tambahkan komentar penanda utang operasional (`ponytail: debt DEBT-EVENT-LOGISTICS-001`) pada `eventEquipmentHelpers.ts` dan `EventDrawer.tsx`.
+- [x] 4.3 Jalankan seluruh quality gates:
   - `npm run drift:check` (81/81 pasangan spec-plan).
   - `npm run build:check` (0 errors).
   - `npm test` (0 failures).
   - `npm run test:smoke` (0 failures).
-- [ ] 4.4 Perbarui `docs/SESSION_STATE.md` dan `CHANGELOG.md`.
+- [x] 4.4 Perbarui `docs/SESSION_STATE.md` dan `CHANGELOG.md`.
 
 ---
 

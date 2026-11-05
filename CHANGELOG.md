@@ -6,6 +6,21 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-06]
 
+- `feat(events)`: Field event completion unreturned equipment warning workflow and operational debt architecture
+  - Extended pure logic helper `src/lib/marcom/eventEquipmentHelpers.ts` with `UnreturnedEquipmentItem` interface, `hasUnreturned: boolean`, and `unreturnedList: UnreturnedEquipmentItem[]` to detect outstanding or overdue equipment loans
+  - Created interactive modal `src/components/views/EventsView/EventCompleteWarningModal.tsx` intercepting completion when active/overdue loans remain, displaying borrower contacts, item lists, and providing "Batal & Periksa Alat" or override actions
+  - Integrated status interception and persistent warning banner into `EventDrawer.tsx` with smooth auto-scroll to `#borrowed-equipment-section`
+  - Elevated multi-surface visibility across the system:
+    - `EventCardsView.tsx`: Displays alert triangle and amber badge for completed events with unreturned equipment
+    - `EventTableView.tsx`: Displays warning pill badge on event names with unreturned units
+    - `Outlet360Drawer.tsx`: Renders *"Alat Belum Kembali"* pill in the Field Events tab
+    - `PipelineMatrixTable.tsx`: Populates `nearestEventId` and displays unreturned equipment warning in Column 4 (Field Events)
+  - Logged operational debt tag `DEBT-EVENT-LOGISTICS-001` with explicit transition criteria towards future fail-closed policy
+  - Spec: `docs/superpowers/specs/2026-11-06-field-event-completion-unreturned-equipment-warning-workflow-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-field-event-completion-unreturned-equipment-warning-workflow.md`
+  - Refs: `docs/adr/0054-field-event-completion-unreturned-equipment-warning-workflow.md` (ADR-0054)
+  - Gates: `npm test` 899/899 passed across 155 suites (0 failures); `npm run build:check` 0 errors; `npm run drift:check` clean (82/82 specs paired); `npm run test:smoke` 137/137 passed
+
 - `feat(inventory)`: Modular 4-step wizard stepper header for borrow request modal
   - Created modular helper `src/components/views/InventoryView/wizard/borrowWizardHelpers.ts` with SSOT step metadata (`BORROW_WIZARD_STEPS`), `BorrowWizardStepId`, pure logic guard `canAdvanceFromBorrowStep`, and reactive status calculator `getBorrowStepCompletionStatus`
   - Created visual stepper header `src/components/views/InventoryView/wizard/BorrowStepperHeader.tsx` adapting Media Placement's 4-column card design with Inventory blue tokens, sequence circles, short labels, step sub-labels (*Langkah 1..4*), completion checkmarks (`Check`), and animated horizontal progress track (`(step / 4) * 100%`)

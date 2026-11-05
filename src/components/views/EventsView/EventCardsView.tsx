@@ -382,17 +382,21 @@ export function EventCardsView({
                       title={`${equipmentSummary.totalUnits} unit equipment across ${equipmentSummary.recordCount} borrow record(s)`}
                       className={cn(
                         "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer shrink-0",
-                        equipmentSummary.hasOverdue
-                          ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-900/40 hover:bg-rose-100 dark:hover:bg-rose-900/50"
+                        equipmentSummary.hasOverdue || (event.status === "COMPLETED" && equipmentSummary.hasUnreturned)
+                          ? "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/50 shadow-2xs"
                           : "bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 border-teal-200/60 dark:border-teal-800/50 hover:bg-teal-100 dark:hover:bg-teal-900/40"
                       )}
                     >
-                      {equipmentSummary.hasOverdue ? (
+                      {equipmentSummary.hasOverdue || (event.status === "COMPLETED" && equipmentSummary.hasUnreturned) ? (
                         <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                       ) : (
                         <Package className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
                       )}
-                      <span>{equipmentSummary.statusText}</span>
+                      <span>
+                        {event.status === "COMPLETED" && equipmentSummary.hasUnreturned
+                          ? `${equipmentSummary.totalUnits} Unit (Alat Tercecer)`
+                          : equipmentSummary.statusText}
+                      </span>
                     </button>
                   )}
                 </div>

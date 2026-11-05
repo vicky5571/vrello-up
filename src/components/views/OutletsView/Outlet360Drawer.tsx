@@ -39,6 +39,7 @@ import { parsePlacementPhotos } from "@/lib/marcom/photoUtils";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
+import { getEventEquipmentSummary } from "@/lib/marcom/eventEquipmentHelpers";
 import { getContentStatusMeta } from "@/lib/marcom/contentWorkflow";
 import { PLATFORM_CONFIG } from "@/components/views/ContentPlannerView/contentConstants";
 import { summarizeOutletPendingActions } from "./outlet360Actions";
@@ -180,6 +181,7 @@ export function Outlet360Drawer({
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [viewingDocMou, setViewingDocMou] = useState<Outlet360Mou | null>(null);
+  const borrowRecords = useMarcomDataStore((s) => s.borrowRecords);
 
   const navigateToMarcom = useWorkspaceStore((state) => state.navigateToMarcom);
   const { can } = useMarcomPermissions();
@@ -1581,6 +1583,7 @@ export function Outlet360Drawer({
                 </div>
               ) : (
                 events.map((ev) => {
+                  const eqSummary = getEventEquipmentSummary(borrowRecords, ev.id);
                   const statusBadgeClass =
                     ev.status === "UPCOMING"
                       ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
@@ -1630,7 +1633,7 @@ export function Outlet360Drawer({
                           )}
                         </div>
 
-                        <div className="text-right shrink-0">
+                        <div className="text-right shrink-0 flex flex-col items-end gap-1">
                           <span
                             className={cn(
                               "inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
@@ -1639,7 +1642,13 @@ export function Outlet360Drawer({
                           >
                             {ev.status.replace("_", " ")}
                           </span>
-                          <span className="block text-xs font-bold text-slate-800 dark:text-slate-200 mt-1">
+                          {eqSummary?.hasUnreturned && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 text-amber-500" />
+                              <span>Alat Belum Kembali</span>
+                            </span>
+                          )}
+                          <span className="block text-xs font-bold text-slate-800 dark:text-slate-200 mt-0.5">
                             {formatIDR(safeAmount(ev.budget))}
                           </span>
                         </div>

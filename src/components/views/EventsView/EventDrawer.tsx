@@ -11,6 +11,7 @@ import {
   MapPin,
   Store,
   Coins,
+  AlertTriangle,
 } from "lucide-react";
 import type {
   FieldEventItem,
@@ -26,9 +27,12 @@ import {
 import { EventChecklistSection } from "./EventChecklistSection";
 import { EventBorrowedEquipmentSection } from "./EventBorrowedEquipmentSection";
 import { EventMediaSection } from "./EventMediaSection";
+import { EventCompleteWarningModal } from "./EventCompleteWarningModal";
 import { canTransitionEvent } from "@/lib/marcom/eventMachine";
 import { formatOutletSelectLabel } from "@/lib/marcom/outletRelations";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
+import { getEventEquipmentSummary } from "@/lib/marcom/eventEquipmentHelpers";
 
 export interface EventDrawerProps {
   event: FieldEventItem | null;
@@ -98,6 +102,34 @@ export function EventDrawer({
   >([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const borrowRecords = useMarcomDataStore((s) => s.borrowRecords);
+  const equipmentSummary = useMemo(
+    () => (event ? getEventEquipmentSummary(borrowRecords, event.id) : null),
+    [borrowRecords, event]
+  );
+  const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
+
+  // ponytail: debt DEBT-EVENT-LOGISTICS-001 (intercept completed if unreturned equipment)
+  const handleStatusChange = (newStatus: EventStatus) => {
+    if (newStatus === "COMPLETED" && equipmentSummary?.hasUnreturned) {
+      setIsWarningModalOpen(true);
+      return;
+    }
+    setEventStatus(newStatus);
+  };
+
+  const handleCancelWarning = () => {
+    setIsWarningModalOpen(false);
+    document
+      .getElementById("borrowed-equipment-section")
+      ?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleConfirmComplete = () => {
+    setIsWarningModalOpen(false);
+    setEventStatus("COMPLETED");
+  };
 
   const handleNumberInputChange = (
     value: string,
@@ -355,7 +387,7 @@ export function EventDrawer({
               <div className="relative">
                 <select
                   value={eventStatus}
-                  onChange={(e) => setEventStatus(e.target.value as EventStatus)}
+                  onChange={(e) => handleStatusChange(e.target.value as EventStatus)}
                   className={cn(
                     "px-2.5 py-1 text-xs font-bold rounded-lg border uppercase tracking-wider cursor-pointer outline-hidden transition-all",
                     currentStatusMeta.badgeClass
@@ -398,6 +430,21 @@ export function EventDrawer({
             placeholder="Nama Event / Aktivasi..."
             className="w-full text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 bg-transparent border-b border-transparent hover:border-slate-200 dark:hover:border-slate-700 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-hidden transition-colors py-1"
           />
+
+          {/* Unreturned Equipment Permanent Warning Banner */}
+          {eventStatus === "COMPLETED" && equipmentSummary?.hasUnreturned && (
+            <div className="mt-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <span className="font-bold block">
+                  Peringatan: {equipmentSummary.totalUnits} Unit Alat Masih di Lapangan
+                </span>
+                <span className="text-[11px] text-amber-700 dark:text-amber-300">
+                  Acara ini ditandai selesai dengan alat inventaris yang belum kembali ke gudang. Harap segera koordinasikan pengembalian fisik.
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 2. Scrollable Body Content */}
@@ -750,7 +797,9 @@ export function EventDrawer({
           />
 
           {/* Borrowed Equipment Section */}
-          <EventBorrowedEquipmentSection eventId={event.id} />
+          <div id="borrowed-equipment-section">
+            <EventBorrowedEquipmentSection eventId={event.id} />
+          </div>
 
           {/* Checklist Section */}
           <EventChecklistSection
@@ -801,6 +850,15 @@ export function EventDrawer({
             </button>
           </div>
         </div>
+
+        {/* Unreturned Equipment Completion Warning Intercept Modal */}
+        <EventCompleteWarningModal
+          isOpen={isWarningModalOpen}
+          eventName={eventName || event.name}
+          unreturnedItems={equipmentSummary?.unreturnedList || []}
+          onConfirmComplete={handleConfirmComplete}
+          onCancel={handleCancelWarning}
+        />
       </motion.div>
     </div>
   );
