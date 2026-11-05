@@ -8,24 +8,30 @@
 
 **Date:** 2026-11-05  
 **Active Branch:** `vicky`  
-**Active Feature:** Relocate Export Center from TopNav to More Apps Menu (ADR-0047) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Active Feature:** Relocate Export Center from TopNav to More Apps Menu (ADR-0047) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Centralize Outlet Approval to Super Admin Role (ADR-0046)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Relokasi Tombol Export Center dari TopNav ke Menu Pop-up More (ADR-0047 — Planning Complete):**
-   - **Analisis & Optimasi Tampilan Header**:
-     - Mendiagnosis kebutuhan eliminasi tombol redundan *Export Center* di bilah atas (*TopNav*) setelah utilitas tersebut terintegrasi di menu pop-up *More* (`MoreAppsMenu.tsx`).
-     - Menghemat ruang horizontal *TopNav* agar lebih lega bagi *Breadcrumbs*, *Command Palette*, *Notification Center*, *Theme Toggle*, dan *User Profile Avatar*.
-   - **Pembuatan Dokumen Perencanaan (Checkpoints 1–3 Terverifikasi):**
+1. **Relokasi Tombol Export Center dari TopNav ke Menu Pop-up More (ADR-0047 — Implementation Complete):**
+   - **Pembersihan Komponen TopNav (`src/components/layout/TopNav.tsx`):**
+     - Menghapus tombol trigger *Export Center* (`<button title="Export Center">`) dari kluster aksi kanan.
+     - Menghapus impor ikon `Download` dari `lucide-react`.
+     - Menghapus selektor hook Zustand `setExportCenterOpen`.
+     - Menghemat ruang horizontal *TopNav* agar lebih lapang dan bebas tombol redundan.
+   - **Otomatisasi Pengujian Regresi (`src/components/modals/MoreAppsMenu.test.ts`):**
+     - Menambahkan unit test yang memvalidasi bahwa `TopNav.tsx` tidak lagi merender `title="Export Center"` maupun mengimpor `setExportCenterOpen` (9/9 tests pass).
+   - **Penyusunan Perencanaan & Handover ADR-0047:**
      - ADR: `docs/adr/0047-relocate-export-center-to-more-apps-menu.md` (APPROVED).
      - Spec: `docs/superpowers/specs/2026-11-05-relocate-export-center-to-more-apps-menu-design.md` (APPROVED).
-     - Plan: `docs/superpowers/plans/2026-11-05-relocate-export-center-to-more-apps-menu.md` (APPROVED).
-     - Handover: `docs/handover-relocate-export-center-to-more-apps-menu.md` (READY FOR EXECUTION).
-   - **Verifikasi Invarian & Drift:**
+     - Plan: `docs/superpowers/plans/2026-11-05-relocate-export-center-to-more-apps-menu.md` (COMPLETE).
+     - Handover: `docs/handover-relocate-export-center-to-more-apps-menu.md` (COMPLETE).
+   - **Non-Negotiable Gates:**
      - `npm run drift:check` ✅ (74/74 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm test` ✅ (856/856 tests pass across 152 test suites, 0 failures).
 
 2. **Sentralisasi Wewenang Persetujuan Outlet ke Super Admin (ADR-0046 — Implementation Complete):**
    - **Pembaruan Guard RBAC Terpusat (`src/lib/marcom/guards.ts`):**
@@ -41,7 +47,7 @@
        - `hasScopedPermission` dengan `APPROVE_OUTLET` mengembalikan `false` untuk supervisor dan staff, serta `true` untuk admin.
      - `npm run drift:check` ✅ (73/73 spec-plan pairs valid, 0 drift).
      - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
-     - `npm test` ✅ (855/855 tests pass across 152 test suites, 0 failures).
+     - `npm test` ✅ (856/856 tests pass across 152 test suites, 0 failures).
 
 2. **Penyusunan Perencanaan & Handover ADR-0046:**
    - ADR: `docs/adr/0046-centralize-outlet-approval-to-super-admin.md` (APPROVED).
@@ -60,7 +66,7 @@
      - Memperbarui unit test di `src/lib/marcom/guards.test.ts` untuk memverifikasi `hasPermission("staff", "SUBMIT_DRAFT_OUTLET") === false` (14/14 tests pass).
      - `npm run drift:check` ✅ (72/72 spec-plan pairs valid, 0 drift).
      - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
-     - `npm test` ✅ (855/855 tests pass across 152 test suites, 0 failures).
+     - `npm test` ✅ (856/856 tests pass across 152 test suites, 0 failures).
 
 2. **Penyusunan Perencanaan & Handover ADR-0045:**
    - ADR: `docs/adr/0045-revoke-outlet-creation-access-from-staff.md` (APPROVED).

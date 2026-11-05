@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `style(layout)`: Relocate export center button from top nav to more apps menu
+  - Removed redundant Export Center download button from `src/components/layout/TopNav.tsx` to declutter the top bar
+  - Removed unused `Download` icon import and `setExportCenterOpen` selector from `TopNav.tsx`
+  - Consolidated off-canvas global export access inside the Global Rail's "More" popover (`MoreAppsMenu.tsx`) under Main Tools
+  - Added automated regression assertions in `src/components/modals/MoreAppsMenu.test.ts`
+  - Spec: `docs/superpowers/specs/2026-11-05-relocate-export-center-to-more-apps-menu-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-05-relocate-export-center-to-more-apps-menu.md`
+  - Refs: `docs/adr/0047-relocate-export-center-to-more-apps-menu.md` (ADR-0047)
+  - Gates: `npm test` 856/856 passed; `npm run build:check` 0 errors; `npm run drift:check` clean (74/74 specs paired)
+
 - `fix(rbac)`: Centralize outlet approval exclusively to super admin
   - Removed `"APPROVE_OUTLET"` permission from `rolePermissions.supervisor` in `src/lib/marcom/guards.ts`
   - Enforced strict fail-closed boundary for `APPROVE_OUTLET` in `hasScopedPermission` reserving outlet approvals exclusively for Super Admin

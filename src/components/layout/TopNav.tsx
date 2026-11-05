@@ -11,7 +11,7 @@ import { ProjectsFilterBar } from "./ProjectsFilterBar";
 import { shouldRenderProjectsFilterBar } from "./layoutHierarchyHelpers";
 import { getEffectiveProfile } from "./userProfileHelpers";
 import { AppImage } from "@/components/ui/AppImage";
-import { Search, Download } from "lucide-react";
+import { Search } from "lucide-react";
 
 export function TopNav() {
   const users = useWorkspaceStore((s) => s.users);
@@ -21,7 +21,6 @@ export function TopNav() {
   const appMode = useWorkspaceStore((s) => s.appMode);
   const activeView = useWorkspaceStore((s) => s.activeView);
   const openCommandPalette = useWorkspaceStore((s) => s.openCommandPalette);
-  const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);
 
   const me = users.find((u) => u.id === currentUserId) ?? users[0];
   const { data: session } = useSession();
@@ -96,14 +95,6 @@ export function TopNav() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setExportCenterOpen(true)}
-            title="Export Center"
-            className="p-2 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" />
-          </button>
           <NotificationCenter />
           <ThemeToggle />
 

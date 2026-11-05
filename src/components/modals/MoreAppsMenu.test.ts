@@ -165,4 +165,22 @@ describe("MoreAppsMenu & SettingsModal YAGNI Elimination (ADR-0031)", () => {
       "Expected ReportsHeader to retain Export Center button"
     );
   });
+
+  it("verifies TopNav does not render redundant Export Center button (ADR-0047)", () => {
+    const topNavPath = path.resolve(
+      process.cwd(),
+      "src/components/layout/TopNav.tsx"
+    );
+    const topNavContent = fs.readFileSync(topNavPath, "utf-8");
+    assert.strictEqual(
+      topNavContent.includes('title="Export Center"'),
+      false,
+      "Expected TopNav not to render button with title='Export Center'"
+    );
+    assert.strictEqual(
+      topNavContent.includes("setExportCenterOpen"),
+      false,
+      "Expected TopNav not to select setExportCenterOpen from store"
+    );
+  });
 });

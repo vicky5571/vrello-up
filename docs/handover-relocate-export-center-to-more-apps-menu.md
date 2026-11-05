@@ -142,13 +142,13 @@ import { Search } from "lucide-react";
 
 ## 6. Acceptance Criteria Checklist
 
-- [ ] `TopNav.tsx` does not render a button with `title="Export Center"`.
-- [ ] `TopNav.tsx` does not import `Download` from `lucide-react`.
-- [ ] `TopNav.tsx` does not call `useWorkspaceStore((s) => s.setExportCenterOpen)`.
-- [ ] `MoreAppsMenu.tsx` retains the Export Center button in Main Tools with `FileSpreadsheet` icon.
-- [ ] `ReportsHeader.tsx`, `MousHeader.tsx`, and `PlacementsHeader.tsx` retain their contextual export triggers.
-- [ ] `npm run drift:check` passes with 0 drift (74/74 paired specs/plans).
-- [ ] `npm run build:check` compiles with 0 TypeScript errors.
-- [ ] `npm test` passes with 0 failures across all 152 test suites.
+- [x] `TopNav.tsx` does not render a button with `title="Export Center"`.
+- [x] `TopNav.tsx` does not import `Download` from `lucide-react`.
+- [x] `TopNav.tsx` does not call `useWorkspaceStore((s) => s.setExportCenterOpen)`.
+- [x] `MoreAppsMenu.tsx` retains the Export Center button in Main Tools with `FileSpreadsheet` icon.
+- [x] `ReportsHeader.tsx`, `MousHeader.tsx`, and `PlacementsHeader.tsx` retain their contextual export triggers.
+- [x] `npm run drift:check` passes with 0 drift (74/74 paired specs/plans).
+- [x] `npm run build:check` compiles with 0 TypeScript errors.
+- [x] `npm test` passes with 0 failures across all 152 test suites.
 
 

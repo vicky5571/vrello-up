@@ -1,6 +1,6 @@
 # Plan: Relocate Export Center from TopNav to More Apps Menu
 
-- **Status:** APPROVED
+- **Status:** IMPLEMENTATION COMPLETE
 - **Date:** 2026-11-05
 - **Spec:** `docs/superpowers/specs/2026-11-05-relocate-export-center-to-more-apps-menu-design.md`
 - **Refs:** `docs/adr/0047-relocate-export-center-to-more-apps-menu.md`
@@ -27,23 +27,23 @@ Remove the redundant Export Center button from the top navigation bar (`TopNav.t
 ## 3. Phased Implementation Roadmap
 
 ### Phase 1: TopNav Code Cleanup
-- [ ] In `src/components/layout/TopNav.tsx`:
+- [x] In `src/components/layout/TopNav.tsx`:
   - Remove `Download` from `import { Search, Download } from "lucide-react";`.
   - Remove `const setExportCenterOpen = useWorkspaceStore((s) => s.setExportCenterOpen);`.
   - Remove `<button type="button" onClick={() => setExportCenterOpen(true)} title="Export Center" ...>...</button>`.
 
 ### Phase 2: Test Suite Hardening
-- [ ] In `src/components/modals/MoreAppsMenu.test.ts`:
+- [x] In `src/components/modals/MoreAppsMenu.test.ts`:
   - Add test: `it("verifies TopNav does not render redundant Export Center button (ADR-0047)", () => ...)`
   - Assert that `TopNav.tsx` content does NOT include `title="Export Center"` or `setExportCenterOpen`.
 
 ### Phase 3: Non-Negotiable Verification & Handover Documentation
-- [ ] Run `npm run drift:check` (verify 74/74 spec-plan pairs and invariants).
-- [ ] Run `npm run build:check` (`tsc --noEmit`, 0 errors required).
-- [ ] Run `npm test` across all 152 test suites (0 failures required).
-- [ ] Create execution handover guide: `docs/handover-relocate-export-center-to-more-apps-menu.md`.
-- [ ] Update `docs/SESSION_STATE.md`.
-- [ ] Commit planning artifacts with standard git convention.
+- [x] Run `npm run drift:check` (verify 74/74 spec-plan pairs and invariants).
+- [x] Run `npm run build:check` (`tsc --noEmit`, 0 errors required).
+- [x] Run `npm test` across all 152 test suites (0 failures required).
+- [x] Create execution handover guide: `docs/handover-relocate-export-center-to-more-apps-menu.md`.
+- [x] Update `docs/SESSION_STATE.md`.
+- [x] Commit planning artifacts with standard git convention.
 
 ---
 
