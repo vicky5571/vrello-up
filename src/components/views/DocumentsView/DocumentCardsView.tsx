@@ -7,7 +7,6 @@ import {
   Archive,
   Film,
   Image as ImageIcon,
-  Eye,
   Copy,
   Edit2,
   Trash2,
@@ -181,15 +180,6 @@ export function DocumentCardsView({
             {/* Card Footer Actions */}
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-end">
               <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  onClick={() => onSelectDocument(doc)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  title="Lihat Pratinjau"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                </button>
-
                 <a
                   href={buildShareableDocumentUrl(doc.id)}
                   onClick={(e) => handleCopyLink(doc, e)}

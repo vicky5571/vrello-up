@@ -15,7 +15,11 @@
 
 ## What Was Completed This Session
 
-1. **Standardisasi CustomDropdown pada Form Modal & Drawer Event dan Content (ADR-0037 — Implementation Complete):**
+1. **Pembersihan Ikon Mata Pratinjau pada Kartu Dokumen:**
+   - Menghapus tombol tindakan `<Eye />` dari footer `DocumentCardsView.tsx`.
+   - Menjaga affordance klik langsung pada seluruh bodi kartu untuk membuka pratinjau drawer dokumen.
+
+2. **Standardisasi CustomDropdown pada Form Modal & Drawer Event dan Content (ADR-0037 — Implementation Complete):**
    - **Eliminasi OS Aqua Native Popover:**
      - Menggantikan seluruh elemen native `<select>` yang memunculkan popover tidak bergaya bawaan OS (khususnya Aqua macOS) pada `EventDrawer.tsx`, `EventCreateModal.tsx`, dan `ContentPostModal.tsx` menggunakan komponen terstandarisasi `CustomDropdown` (`src/components/ui/CustomDropdown.tsx`).
    - **Dukungan Pencarian Data Master Terintegrasi:**

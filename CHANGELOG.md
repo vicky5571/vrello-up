@@ -6,6 +6,10 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-05]
 
+- `style(documents)`: Remove redundant preview eye icon button from document cards
+  - Cleaned up footer action bar in `DocumentCardsView.tsx` by removing redundant `Eye` button
+  - Preserved root card clickability opening document preview drawer
+
 - `feat(ui)`: Standardize modal and drawer form dropdowns with CustomDropdown
   - Replaced native unstyled HTML `<select>` elements with canonical `CustomDropdown` across `EventDrawer.tsx`, `EventCreateModal.tsx`, and `ContentPostModal.tsx`
   - Enabled real-time search filtering (`searchable={true}`) for Outlets and Person in Charge (PIC) pickers to streamline store selection across hundreds of records
