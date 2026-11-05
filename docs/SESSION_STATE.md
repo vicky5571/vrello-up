@@ -8,14 +8,28 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Inventory Compensation Settlement and Stock Restoration Workflow (ADR-0052) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** MoU Multi-Document Upload, Mandatory Approval Guard, and Revision Lifecycle (ADR-0051)  
+**Active Feature:** Outlet Soft-Delete Architecture and Database Restrict Protection (ADR-0053) — **PLAN & SPEC READY (EXECUTION-READY)**  
+**Previous Feature:** Inventory Compensation Settlement and Stock Restoration Workflow (ADR-0052)  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Implementasi Pelunasan Ganti Rugi Inventaris & Pemulihan Stok (ADR-0052 — Implementation Complete):**
+1. **Perencanaan Arsitektur Outlet Soft-Delete & Database Restrict Protection (ADR-0053 — Planning Complete):**
+   - **Analisis Risiko Finansial & Master Data Invariants:**
+     - Mengidentifikasi kerentanan kritis *cascade deletion* pada skema Prisma di mana penghapusan `Outlet` menghapus permanen seluruh riwayat pemasangan materi promosi (`Placement`), foto bukti fisik di toko, dan realisasi anggaran promosi (`cost`), menyebabkan distorsi retrospektif pada Laporan Triwulanan Eksekutif.
+     - Merumuskan arsitektur soft-delete murni sesuai mandat bisnis: **"Meskipun tertulis hapus permanen, tetap tidak boleh ada hard delete."**
+     - Mengubah relasi PostgreSQL `Placement.outlet` dari `onDelete: Cascade` menjadi `onDelete: Restrict` sebagai pertahanan berlapis di tingkat database.
+     - Mengisolasi kueri direktori toko dengan filter default `where.deletedAt = null` pada `outletsSearchFilter.ts`, serta mewajibkan `active = true` untuk seleksi form operasional POSM/MoU/Event.
+   - **Penyusunan Dokumen Perencanaan & Handover:**
+     - ADR: `docs/adr/0053-outlet-soft-delete-and-database-restrict-protection.md` (APPROVED).
+     - Spec: `docs/superpowers/specs/2026-11-06-outlet-soft-delete-and-database-restrict-protection-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-06-outlet-soft-delete-and-database-restrict-protection.md` (APPROVED).
+     - Handover: `docs/handover-outlet-soft-delete-and-database-restrict-protection.md` (READY FOR EXECUTION).
+   - **Non-Negotiable Gates:**
+     - `npm run drift:check` ✅ (80/80 spec-plan pairs valid, 0 drift).
+
+2. **Implementasi Pelunasan Ganti Rugi Inventaris & Pemulihan Stok (ADR-0052 — Implementation Complete):**
    - **Database & SSOT Domain Entities:**
      - Menambahkan 6 field settlement pada model `BorrowRecord` di `prisma/schema.prisma`: `settlementType`, `settledAmount`, `settledAt`, `settledBy`, `settlementNotes`, dan `settlementProofUrls: String[]`.
      - Mengeksekusi DDL migration pada Postgres dan menyinkronkan client via `npx prisma generate`.
