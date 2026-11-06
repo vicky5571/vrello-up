@@ -6,6 +6,29 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-06]
 
+- `feat(mobile)`: Placements table header deduplication and filter toolbar brand unification
+  - Eliminated redundant local table header `[📋] Placements 22 placements` in `PlacementsView.tsx` via `hideHeader={true}` on `MarcomTableShell`, aligning with `OutletsView` and `EventsView` and recovering ~40px of mobile vertical screen height
+  - Extracted and exported responsive `PlacementTableToolbar` in `PlacementFilterControls.tsx`:
+    - Row 1: Responsive container (`flex-col sm:flex-row`) pairing full-width search input (`w-full sm:max-w-xs`) with brand filter chips (`PlacementBrandChips`), completely resolving horizontal clipping of `3 (Tri)` on mobile smartphones
+    - Row 2: Status chips (`PlacementStatusChips`) with *Reset Filters* action
+  - Maintained 100% desktop pixel parity and ergonomics on screens $\ge 640\text{px}$ (`sm:flex-row sm:items-center sm:max-w-xs`)
+  - Enforced coordinator file constraints (`PlacementsView.tsx` at 228 LOC $\le 250$ LOC, `PlacementFilterControls.tsx` at 226 LOC $\le 250$ LOC)
+  - Added TDD unit test suite in `src/components/views/PlacementsView/placementsFilterLayout.test.ts` (3/3 tests passing)
+  - Spec: `docs/superpowers/specs/2026-11-06-mobile-placements-filter-bar-brand-unification-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-mobile-placements-filter-bar-brand-unification.md`
+  - Refs: `docs/adr/0062-mobile-placements-table-header-deduplication-and-brand-filter-unification.md` (ADR-0062)
+
+
+- `feat(mobile)`: Mobile view switcher full-width and action row right alignment
+  - Right-aligned mobile action button row across headers (`PlacementsHeader.tsx`, `OutletsHeader.tsx`, `EventsHeader.tsx`) via `justify-end sm:justify-start w-full sm:w-auto`, anchoring action triggers to the right margin and removing the uneven empty void on smartphone screens
+  - Expanded segmented view mode switcher containers to 100% full width (`w-full sm:w-auto`) on mobile with symmetrically divided tabs (`flex-1 sm:flex-initial justify-center`), providing expansive thumb touch targets and modern mobile segmented control behavior
+  - Preserved 100% byte-for-byte desktop ergonomics and pixel alignment on screens $\ge 640\text{px}$ (`sm:justify-start`, `sm:w-auto`, `sm:flex-initial`)
+  - Added comprehensive TDD unit test suites in `src/components/views/PlacementsView/placementsHeaderResponsiveness.test.ts` (4/4 tests passing) and `src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts` (10/10 tests passing)
+  - Spec: `docs/superpowers/specs/2026-11-06-mobile-view-switcher-and-action-alignment-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-mobile-view-switcher-and-action-alignment.md`
+  - Refs: `docs/adr/0061-mobile-view-switcher-full-width-and-action-row-alignment.md` (ADR-0061)
+  - Gates: `npm test` 923/923 passed across 160 suites (0 failures); `npm run build:check` 0 errors; `npm run drift:check` clean (89/89 specs paired); `npm run test:smoke` 140/140 passed
+
 - `feat(mobile)`: Mobile filter and search proportional grid layout
   - Reorganized filter dropdowns and search bar in `OutletsHeader.tsx` into a 2-row symmetrical responsive layout on mobile (< 640px):
     - Row 1: Symmetrical 50/50 2-column grid (`grid grid-cols-2 gap-2 w-full`) with `w-full sm:w-44` dropdowns for Branch and Store Type filters, eliminating right margin void

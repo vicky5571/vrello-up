@@ -16,7 +16,11 @@ import { PlacementsRecapTab } from "./PlacementsRecapTab";
 import { usePlacementMutations } from "./usePlacementMutations";
 import { buildPlacementColumns } from "./placementColumns";
 import { extractPlacementSearchText, PLACEMENT_SEARCH_KEYS } from "./placementSearchHelpers";
-import { PlacementBrandChips, PlacementStatusChips } from "./PlacementFilterControls";
+import {
+  PlacementBrandChips,
+  PlacementStatusChips,
+  PlacementTableToolbar,
+} from "./PlacementFilterControls";
 import { PlacementsHeader } from "./PlacementsHeader";
 import type { PlacementStatus, MarcomPlacement } from "@/types";
 
@@ -132,44 +136,55 @@ export function PlacementsView() {
       <div className="p-4 sm:p-6 flex-1 min-h-0">
         {viewMode === "table" ? (
           <MarcomTableShell
-          noPadding
-          hideRefreshButton
-          data={filteredPlacements}
-          columns={columns}
-          getRowId={(row) => row.id}
-          initialSorting={[{ id: "date", desc: true }]}
-          title="Placements"
-          titleIcon={ClipboardList}
-          entityName="placement"
-          entityPlural="placements"
-          isLoading={isLoading}
-          error={error}
-          onRefresh={() => loadPlacements(true)}
-          canDelete={canManage}
-          deleteRequiresMessage="Delete requires staff or admin role"
-          onDeleteOne={deleteOne}
-          onDeleteBatch={deleteBatch}
-          canAdd={false}
-          renderFloatingBulkBar={(selectedIds, clearSelection) => (
-            <PlacementBulkActionBar
-              selectedIds={selectedIds}
-              placements={placements}
-              onClearSelection={clearSelection}
-              onRefresh={() => loadPlacements(true)}
-              onDeleteBatch={deleteBatch}
-              canManage={canManage}
-            />
-          )}
-          headerExtra={brandChips}
-          onRowClick={(p) => setSelectedPlacement(p)}
-          filterBar={statusFilterChips}
-          searchKeys={PLACEMENT_SEARCH_KEYS}
-          getSearchableText={extractPlacementSearchText}
-          searchTerm={searchTerm}
-          onSearchChange={(q) => setMarcomFilter("placements", q)}
-          emptyLabel="No placements found."
-        />
-      ) : viewMode === "map" ? (
+            noPadding
+            hideHeader
+            hideRefreshButton
+            data={filteredPlacements}
+            columns={columns}
+            getRowId={(row) => row.id}
+            initialSorting={[{ id: "date", desc: true }]}
+            title="Placements"
+            titleIcon={ClipboardList}
+            entityName="placement"
+            entityPlural="placements"
+            isLoading={isLoading}
+            error={error}
+            onRefresh={() => loadPlacements(true)}
+            canDelete={canManage}
+            deleteRequiresMessage="Delete requires staff or admin role"
+            onDeleteOne={deleteOne}
+            onDeleteBatch={deleteBatch}
+            canAdd={false}
+            renderFloatingBulkBar={(selectedIds, clearSelection) => (
+              <PlacementBulkActionBar
+                selectedIds={selectedIds}
+                placements={placements}
+                onClearSelection={clearSelection}
+                onRefresh={() => loadPlacements(true)}
+                onDeleteBatch={deleteBatch}
+                canManage={canManage}
+              />
+            )}
+            onRowClick={(p) => setSelectedPlacement(p)}
+            filterBar={
+              <PlacementTableToolbar
+                selectedBrand={selectedBrand}
+                onBrandChange={(b) => setSelectedBrand((prev) => (prev === b && b !== "ALL" ? "ALL" : b))}
+                selectedStatus={selectedStatus}
+                onStatusChange={(s) => setSelectedStatus((prev) => (prev === s && s !== "ALL" ? "ALL" : s))}
+                onReset={() => { setSelectedStatus("ALL"); setSelectedBrand("ALL"); }}
+                isFiltered={selectedStatus !== "ALL" || selectedBrand !== "ALL"}
+                searchTerm={searchTerm}
+                onSearchChange={(q) => setMarcomFilter("placements", q)}
+              />
+            }
+            searchKeys={PLACEMENT_SEARCH_KEYS}
+            getSearchableText={extractPlacementSearchText}
+            searchTerm={searchTerm}
+            onSearchChange={(q) => setMarcomFilter("placements", q)}
+            emptyLabel="No placements found."
+          />
+        ) : viewMode === "map" ? (
         <PlacementsMapTab
           placements={mapPlacements}
           brandChips={brandChips}

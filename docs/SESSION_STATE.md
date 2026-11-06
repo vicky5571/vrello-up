@@ -8,7 +8,9 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Filter & Search Proportional Grid Layout (ADR-0060) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile View Switcher Full-Width & Action Row Right Alignment (ADR-0061) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Placements Table Header Deduplication & Brand Filter Toolbar Unification (ADR-0062) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Filter & Search Proportional Grid Layout (ADR-0060) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Typographical Scale and Visual Hierarchy Standardization (ADR-0059) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Shell UI/UX Polish and Viewport Optimization (ADR-0058) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Responsiveness Chassis and Navigation Architecture (ADR-0057) — **IMPLEMENTATION COMPLETE**  
@@ -17,6 +19,63 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Implementasi Mobile Placements Table Header Deduplication & Brand Filter Toolbar Unification (ADR-0062 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/PlacementsView/placementsFilterLayout.test.ts`):**
+     - Memverifikasi de-duplikasi header: `PlacementsView.tsx` mengonfigurasi `hideHeader={true}` pada `MarcomTableShell`.
+     - Memverifikasi pencegahan clipping: `PlacementsView.tsx` tidak lagi menyematkan `headerExtra={brandChips}` pada tabel.
+     - Memverifikasi ekspor dan integrasi `PlacementTableToolbar` di `PlacementFilterControls.tsx` dan pemasangannya pada prop `filterBar`.
+     - Memverifikasi kelas responsif search input (`flex-1 w-full sm:max-w-xs`) dan penyatuan `PlacementBrandChips` serta `PlacementStatusChips`.
+     - Memverifikasi batas koordinator tetap terjaga: `PlacementsView.tsx` 228 LOC (≤ 250 LOC) dan `PlacementFilterControls.tsx` 226 LOC (≤ 250 LOC).
+     - Seluruh 3 assertions lulus (3/3 tests passing).
+   - **Komponen Toolbar Terpadu (`PlacementFilterControls.tsx` — 226 LOC):**
+     - Mengimplementasikan `PlacementTableToolbar` yang menyatukan search input responsif (full-width di mobile, compact di desktop), chip filter brand (`PlacementBrandChips`), dan chip status (`PlacementStatusChips`).
+     - Menyediakan tombol pembersih pencarian (`X`) instan dan pembersihan filter (`Reset Filters`).
+   - **Integrasi View Koordinator (`PlacementsView.tsx` — 228 LOC):**
+     - Menyetel `hideHeader={true}` pada `MarcomTableShell`, melenyapkan judul lokal ganda `[📋] Placements 22 placements` dan memulihkan ruang vertikal layar smartphone ~40px.
+     - Memasang `<PlacementTableToolbar ... />` via prop `filterBar`.
+     - Memberikan lebar tak terbatas pada brand chips di mobile, melenyapkan bug teks terpotong pada chip `3 (Tri)`.
+     - Mempertahankan keselarasan desktop 100% utuh tanpa regresi visual.
+   - **Verifikasi Invarian & Drift Check:**
+     - `npx tsx --test src/components/views/PlacementsView/placementsFilterLayout.test.ts` ✅ (3/3 pass).
+     - `npm run drift:check` ✅ (89/89 spec-plan pairs valid, coordinator sizes ≤ 250 LOC, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
+
+1. **Implementasi Mobile View Switcher Full-Width & Action Row Right Alignment (ADR-0061 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/PlacementsView/placementsHeaderResponsiveness.test.ts` & `src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts`):**
+     - Memverifikasi baris aksi `PlacementsHeader.tsx` menggunakan perataan kanan mobile: `justify-end sm:justify-start w-full sm:w-auto`.
+     - Memverifikasi segmented control `PlacementViewSwitcher` menggunakan `w-full sm:w-auto` dengan tab `flex-1 sm:flex-initial justify-center`.
+     - Memverifikasi `OutletsHeader.tsx` menggunakan `justify-end sm:justify-start w-full sm:w-auto` pada baris tombol dan `w-full sm:w-auto` dengan tab `flex-1 sm:flex-initial justify-center` pada view mode switcher.
+     - Memverifikasi `EventsHeader.tsx` menggunakan `justify-end sm:justify-start w-full sm:w-auto` pada baris tombol dan `w-full sm:w-auto` dengan tab `flex-1 sm:flex-initial justify-center` pada view mode switcher.
+     - Seluruh pengujian lulus (4/4 di Placements test suite, 10/10 di Outlets test suite).
+   - **Refaktor Komponen Layout Header Responsif:**
+     - `PlacementsHeader.tsx` (96 LOC): Menyetel baris tombol aksi ke `justify-end sm:justify-start w-full sm:w-auto`.
+     - `PlacementFilterControls.tsx` (226 LOC): Menyetel `PlacementViewSwitcher` ke `w-full sm:w-auto` dan tombol segmented tab ke `flex-1 sm:flex-initial justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-1`.
+     - `OutletsHeader.tsx` (282 LOC): Menyetel tombol aksi ke `justify-end sm:justify-start w-full sm:w-auto`, kontainer view switcher ke `w-full sm:w-auto flex items-center`, dan tab ke `flex-1 sm:flex-initial justify-center py-1.5 sm:py-1`.
+     - `EventsHeader.tsx` (140 LOC): Menyetel tombol aksi ke `justify-end sm:justify-start w-full sm:w-auto`, kontainer view switcher ke `relative w-full sm:w-auto flex items-center`, dan tab ke `flex-1 sm:flex-initial justify-center py-1.5 sm:py-1`.
+   - **Non-Negotiable Quality Gates:**
+     - Invarian desktop $\ge 640\text{px}$ (`sm:`) dipertahankan 100% tanpa perubahan visual di desktop.
+     - `npx tsx --test src/components/views/PlacementsView/placementsHeaderResponsiveness.test.ts` ✅ (4/4 pass).
+     - `npx tsx --test src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts` ✅ (10/10 pass).
+     - `npm run drift:check` ✅ (89/89 spec-plan pairs valid, coordinator sizes ≤ 250 LOC, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
+     - `npm run test:smoke` ✅ (140/140 pass, 0 fail).
+     - `npm test` ✅ (923/923 tests passing across 160 suites, 0 fail).
+
+1. **Perencanaan Arsitektur Mobile View Switcher Full-Width & Action Row Right Alignment (ADR-0061 — Planning Complete):**
+   - **Diagnostik Ketidakseimbangan Visual Header Mobile:**
+     - Mendiagnosis dari screenshot pengguna bahwa baris tombol aksi (`Refresh`, `Export`, `+ Add Placement`) menggantung di sebelah kiri (~65% lebar layar) menyisakan ruang kosong tak terpakai di margin kanan kartu pada viewport mobile (< 640px).
+     - Mendiagnosis bahwa segmented view mode switcher (`Table`, `Map View`, `Rekap Kuartal`) terpotong di ~80% lebar layar dengan padding sempit, menyimpang dari standar segmented control mobile native yang membentang penuh (100% width).
+     - Merancang solusi tata letak responsif: baris tombol aksi diratakan ke kanan (`justify-end sm:justify-start w-full sm:w-auto`), dan kontainer view switcher dibuat membentang penuh (`w-full sm:w-auto`) dengan pembagian tab yang terbagi rata secara simetris (`flex-1 sm:flex-initial justify-center`).
+     - **Invarian Desktop Terjaga 100%**: Pada layar $\ge 640\text{px}$ (`sm:`), tombol aksi kembali ke `sm:justify-start` dan view switcher kembali ke `sm:w-auto sm:inline-flex` (100% identik dengan kondisi saat ini tanpa pergeseran piksel).
+   - **Penyusunan Dokumen Perencanaan & Handover:**
+     - ADR: `docs/adr/0061-mobile-view-switcher-full-width-and-action-row-alignment.md` (ACCEPTED).
+     - Spec: `docs/superpowers/specs/2026-11-06-mobile-view-switcher-and-action-alignment-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-06-mobile-view-switcher-and-action-alignment.md` (APPROVED).
+     - Handover: `docs/handover-mobile-view-switcher-and-action-alignment.md` (READY FOR EXECUTION).
+   - **Verifikasi Invarian & Drift Check:**
+     - `npm run drift:check` ✅ (88/88 spec-plan pairs valid, coordinator sizes ≤ 250 LOC, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
 
 1. **Implementasi Mobile Filter & Search Proportional Grid Layout (ADR-0060 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts`):**
