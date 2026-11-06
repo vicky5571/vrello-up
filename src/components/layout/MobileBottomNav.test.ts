@@ -130,6 +130,40 @@ describe("Mobile Sidebar Slide Transition & Desktop Invariants (ADR-0063)", () =
     );
   });
 
+  it("verifies Sidebar.tsx uses a non-overshooting tween for mobile drawer motion", () => {
+    const content = fs.readFileSync(sidebarPath, "utf-8");
+    assert.ok(
+      content.includes('type: "tween"') && content.includes("duration: 0.24"),
+      "Sidebar.tsx must use a 240ms tween for mobile drawer motion"
+    );
+    assert.strictEqual(
+      content.includes('type: "spring"') || content.includes("damping") || content.includes("stiffness"),
+      false,
+      "Sidebar.tsx must not use spring physics (overshoot exposes the page background on the left edge)"
+    );
+  });
+
+  it("verifies mobile backdrop fade shares the drawer tween timing", () => {
+    const content = fs.readFileSync(sidebarPath, "utf-8");
+    const tweenDurations = content.match(/duration: 0\.24/g) ?? [];
+    assert.ok(
+      tweenDurations.length >= 2,
+      "Backdrop fade and drawer slide must share the same 240ms duration"
+    );
+  });
+
+  it("verifies desktop motion remains instant and untranslated", () => {
+    const content = fs.readFileSync(sidebarPath, "utf-8");
+    assert.ok(
+      content.includes('initial={isMobile && !shouldReduceMotion ? { x: "-100%" } : false}'),
+      "Desktop must keep initial={false} so the sidebar never slides in"
+    );
+    assert.ok(
+      content.includes("shouldReduceMotion || !isMobile") && content.includes("{ duration: 0 }"),
+      "Desktop and reduced-motion transitions must stay at duration 0"
+    );
+  });
+
   it("verifies Sidebar.tsx coordinator remains strictly <= 250 LOC", () => {
     const sidebarLoc = fs.readFileSync(sidebarPath, "utf-8").split("\n").length;
     assert.ok(sidebarLoc <= 250, `Sidebar.tsx is ${sidebarLoc} LOC, exceeding 250 LOC limit`);

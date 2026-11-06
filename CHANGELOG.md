@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(mobile)`: Remove spring overshoot from sidebar animation
+  - Replaced the mobile sidebar's underdamped spring (`damping: 28, stiffness: 300`) with a monotonic 240ms tween (`ease: [0.2, 0, 0, 1]`) in `Sidebar.tsx`
+  - Eliminated the bump/overshoot past `x: 0` that briefly pushed the drawer right of the viewport edge and exposed the page background on the left side
+  - Aligned the mobile backdrop fade to the same 240ms/easing so both layers settle together
+  - Kept desktop behavior byte-for-byte unchanged: `initial={false}`, `exit={undefined}`, and `transition={{ duration: 0 }}` when `!isMobile`
+  - Added regression tests for no spring physics, shared backdrop/drawer timing, and desktop instant motion in `src/components/layout/MobileBottomNav.test.ts` (14/14 tests passing)
+  - Updated ADR-0063 with a 2026-11-07 amendment and reconciled the animation spec
+  - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (940/940), `npm run test:smoke` ✅ (145/145)
+  - Refs: `docs/adr/0063-mobile-sidebar-slide-transition-and-backdrop-animation.md` (ADR-0063, amended)
+
 - `fix(outlets)`: Stabilize GPS toast and mobile Create Outlet layout
   - Moved the `View on Maps` link to a dedicated second row on mobile (`sm:hidden`) while preserving the desktop header row (`hidden sm:inline-flex`) in `OutletFormModal.tsx`
   - Prevented the GPS header title from wrapping (`whitespace-nowrap`) so the header row stays compact at 390px

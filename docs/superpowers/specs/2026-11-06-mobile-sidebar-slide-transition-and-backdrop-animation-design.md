@@ -1,6 +1,7 @@
 # Technical Specification: Mobile Sidebar Slide Transition & Backdrop Animation
 
 - **Date:** 2026-11-06
+- **Revised:** 2026-11-07 (spring replaced with non-overshooting tween)
 - **Status:** APPROVED
 - **Refs:** ADR-0063, ADR-0058, ADR-0057
 - **Target Files:**
@@ -24,8 +25,8 @@ This specification defines the responsive transition architecture for the mobile
 ### 2.2 Desired User Experience Flow
 1. **Drawer Opening on Mobile (< 768px):**
    - User taps the hamburger menu in the top bar or **Menu** in the bottom bar.
-   - The dark overlay backdrop smoothly fades in (`opacity: 0 -> 1` in ~200ms).
-   - Simultaneously, the sidebar drawer smoothly slides into view from the left edge (`x: "-100%" -> 0`) with realistic spring physics (`damping: 28, stiffness: 300`).
+   - The dark overlay backdrop smoothly fades in (`opacity: 0 -> 1` in ~240ms).
+   - Simultaneously, the sidebar drawer smoothly slides into view from the left edge (`x: "-100%" -> 0`) with a monotonic tween (`duration: 0.24`, `ease: [0.2, 0, 0, 1]`). Spring physics is prohibited because its overshoot past `x: 0` exposes the page background on the left edge.
 2. **Drawer Dismissal on Mobile (< 768px):**
    - User taps the backdrop or a navigation link (`handleSelectView`).
    - The drawer slides smoothly back out to the left (`x: 0 -> "-100%"`).
@@ -73,7 +74,7 @@ export function Sidebar() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+      transition={{ duration: shouldReduceMotion ? 0 : 0.24, ease: [0.2, 0, 0, 1] }}
       onClick={toggleSidebar}
       className="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-2xs"
     />
@@ -89,7 +90,7 @@ export function Sidebar() {
       transition={
         shouldReduceMotion || !isMobile
           ? { duration: 0 }
-          : { type: "spring", damping: 28, stiffness: 300 }
+          : { type: "tween", duration: 0.24, ease: [0.2, 0, 0, 1] }
       }
       className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] md:static md:z-20 md:w-60 md:h-full rounded-r-2xl md:rounded-2xl border-r md:border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#18191B] shadow-2xl md:shadow-lg flex flex-col justify-between shrink-0 select-none overflow-hidden"
     >
@@ -109,7 +110,8 @@ export function Sidebar() {
 ## 4. Acceptance Criteria & Non-Goals
 
 ### 4.1 Acceptance Criteria
-- [ ] On mobile viewports (< 768px), opening the sidebar triggers a smooth slide-in from `x: "-100%"` to `0` with spring physics (`damping: 28, stiffness: 300`).
+- [ ] On mobile viewports (< 768px), opening the sidebar triggers a smooth slide-in from `x: "-100%"` to `0` with a 240ms non-overshooting tween (`ease: [0.2, 0, 0, 1]`); no spring physics is present.
+- [ ] The drawer never crosses `x: 0` during open or close, so no page background is exposed on the left edge.
 - [ ] On mobile viewports (< 768px), opening the sidebar triggers a smooth fade-in backdrop from `opacity: 0` to `1`.
 - [ ] On mobile viewports (< 768px), closing the sidebar (tapping backdrop or navigation item) triggers an exit slide-out to `x: "-100%"` and backdrop fade-out to `opacity: 0` via `AnimatePresence`.
 - [ ] On desktop screens ($\ge 768\text{px}$), the sidebar renders statically without initial or exit translation (`initial={false}`, `exit={false}`).

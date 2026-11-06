@@ -18,7 +18,7 @@ Currently in `src/components/layout/Sidebar.tsx`:
 - Wrap backdrop and aside in `<AnimatePresence>`.
 - Detect viewport mode (`isMobile: window.innerWidth < 768`) reactively inside `Sidebar.tsx`.
 - Backdrop: Animate `opacity: 0 -> 1 -> 0` via `motion.div` with a 200ms ease curve.
-- Mobile Drawer: Animate `x: "-100%" -> 0 -> "-100%"` via `motion.aside` with standard spring physics (`damping: 28, stiffness: 300`).
+- Mobile Drawer: Animate `x: "-100%" -> 0 -> "-100%"` via `motion.aside` with a monotonic 240ms tween (`ease: [0.2, 0, 0, 1]`). No spring physics: an overshooting spring pushes the drawer past `x: 0`, exposing a sliver of page background on the left edge.
 - Desktop Preservation: When `!isMobile`, set `initial={false}`, `exit={false}`, and `transition={{ duration: 0 }}`, ensuring the desktop sidebar renders as a 100% static panel without transform offsets or slide jumps.
 - Accessibility: Honor `useReducedMotion()` with `{ duration: 0 }`.
 
@@ -43,6 +43,17 @@ We adopt **Option 1: In-Place Framer Motion with `AnimatePresence` and Mobile-Sc
 3. Apply `motion.div` to the backdrop (`opacity: 0` to `1` to `0`).
 4. Apply `motion.aside` to the drawer (`x: isMobile ? "-100%" : 0`), guarded by `shouldReduceMotion` and `isMobile`.
 5. Keep coordinator size strictly $\le 250$ LOC.
+
+### Amendment (2026-11-07): Non-Overshooting Tween
+
+Field review on a 390px mobile viewport showed that the initial spring (`damping: 28, stiffness: 300`) is underdamped and overshoots `x: 0` on open. Because the drawer is anchored at `left-0`, that overshoot translates the panel to the right of the viewport edge, briefly revealing the page background as a flash on the left side.
+
+The mobile transition is therefore a tween with no overshoot:
+- Duration: `0.24s` on both enter and exit.
+- Easing: `[0.2, 0, 0, 1]` (monotonic deceleration, never crosses the target).
+- Backdrop fade uses the same `0.24s` / `[0.2, 0, 0, 1]` timing so both layers settle together.
+- Spring physics (`type: "spring"`, `damping`, `stiffness`) is explicitly forbidden in `Sidebar.tsx` and guarded by a regression test.
+- Desktop remains untouched: `initial={false}`, `exit={undefined}`, and `transition={{ duration: 0 }}` when `!isMobile`.
 
 ## Consequences & Mitigations
 

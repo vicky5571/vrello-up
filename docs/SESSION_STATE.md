@@ -8,9 +8,9 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Notification Center Popover Viewport-Bounded Layout (ADR-0064) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile Sidebar Non-Overshooting Tween Refinement (ADR-0063 Amendment) — **IMPLEMENTATION COMPLETE**  
 **Latest Fix:** Mobile Create Outlet Form GPS Layout & Toast Resilience — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Mobile Sidebar Slide Transition & Backdrop Animation (ADR-0063) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Notification Center Popover Viewport-Bounded Layout (ADR-0064) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Placements Table Header Deduplication & Brand Filter Toolbar Unification (ADR-0062) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile View Switcher Full-Width & Action Row Right Alignment (ADR-0061) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Filter & Search Proportional Grid Layout (ADR-0060) — **IMPLEMENTATION COMPLETE**  
@@ -22,6 +22,15 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Mobile Sidebar Non-Overshooting Tween Refinement (ADR-0063 Amendment — Implementation Complete):**
+   - **Defect:** The mobile drawer used spring physics (`damping: 28, stiffness: 300`), which is underdamped. On open it overshot `x: 0`, translating the `left-0` panel to the right and briefly exposing the page background as a flash on the left edge.
+   - **Fix (`Sidebar.tsx`):** Replaced the spring with a monotonic 240ms tween (`type: "tween"`, `duration: 0.24`, `ease: [0.2, 0, 0, 1]`). The drawer now decelerates into `x: 0` without crossing the target.
+   - **Choreography:** The mobile backdrop fade now shares the same 240ms duration and easing, so both layers settle together.
+   - **Desktop Invariant:** Unchanged. `initial={false}`, `exit={undefined}`, and `transition={{ duration: 0 }}` when `!isMobile`; `useReducedMotion()` still bypasses animation.
+   - **Regression Tests (`MobileBottomNav.test.ts`):** Added assertions that `Sidebar.tsx` contains a tween and no `spring`/`damping`/`stiffness`, that backdrop and drawer share `duration: 0.24`, and that desktop motion stays instant and untranslated (14/14 pass).
+   - **Docs:** Added a 2026-11-07 amendment to ADR-0063 and reconciled the animation spec (executive summary, timing, code contract, acceptance criteria).
+   - **Verification:** `npx tsx --test src/components/layout/MobileBottomNav.test.ts` ✅ (14/14), `npm run drift:check` ✅ (91/91 spec-plan pairs, 0 drift), `npm run build:check` ✅ (0 errors), `npm test` ✅ (940/940 across 163 suites), `npm run test:smoke` ✅ (145/145).
 
 1. **Mobile Create Outlet Form GPS Layout & Toast Fix:**
    - Memindahkan tautan *"View on Maps"* ke baris kedua khusus mobile (`sm:hidden`) dan mempertahankan tautan desktop di baris header (`hidden sm:inline-flex`) pada `OutletFormModal.tsx`; judul GPS memakai `whitespace-nowrap` agar tidak terpecah.
