@@ -16,11 +16,7 @@ import { PlacementsRecapTab } from "./PlacementsRecapTab";
 import { usePlacementMutations } from "./usePlacementMutations";
 import { buildPlacementColumns } from "./placementColumns";
 import { extractPlacementSearchText, PLACEMENT_SEARCH_KEYS } from "./placementSearchHelpers";
-import {
-  PlacementBrandChips,
-  PlacementStatusChips,
-  PlacementTableToolbar,
-} from "./PlacementFilterControls";
+import { PlacementBrandChips, PlacementStatusChips } from "./PlacementFilterControls";
 import { PlacementsHeader } from "./PlacementsHeader";
 import type { PlacementStatus, MarcomPlacement } from "@/types";
 
@@ -137,7 +133,7 @@ export function PlacementsView() {
         {viewMode === "table" ? (
           <MarcomTableShell
             noPadding
-            hideHeader
+            hideTitle
             hideRefreshButton
             data={filteredPlacements}
             columns={columns}
@@ -165,19 +161,9 @@ export function PlacementsView() {
                 canManage={canManage}
               />
             )}
+            headerExtra={brandChips}
             onRowClick={(p) => setSelectedPlacement(p)}
-            filterBar={
-              <PlacementTableToolbar
-                selectedBrand={selectedBrand}
-                onBrandChange={(b) => setSelectedBrand((prev) => (prev === b && b !== "ALL" ? "ALL" : b))}
-                selectedStatus={selectedStatus}
-                onStatusChange={(s) => setSelectedStatus((prev) => (prev === s && s !== "ALL" ? "ALL" : s))}
-                onReset={() => { setSelectedStatus("ALL"); setSelectedBrand("ALL"); }}
-                isFiltered={selectedStatus !== "ALL" || selectedBrand !== "ALL"}
-                searchTerm={searchTerm}
-                onSearchChange={(q) => setMarcomFilter("placements", q)}
-              />
-            }
+            filterBar={statusFilterChips}
             searchKeys={PLACEMENT_SEARCH_KEYS}
             getSearchableText={extractPlacementSearchText}
             searchTerm={searchTerm}

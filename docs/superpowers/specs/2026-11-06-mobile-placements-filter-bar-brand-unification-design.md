@@ -21,94 +21,28 @@ This specification governs the elimination of the redundant local table header (
 
 ### 2.2 Desired UX Flow & Responsive Layout
 1. **Mobile Smartphone (< 640px):**
-   - Redundant title `[📋] Placements 22 placements` is completely removed.
-   - Brand Chips render in their own full-width horizontal bar (`w-full`), fitting all 3 pills (`All Brands`, `IM3`, `3 (Tri)`) comfortably with zero clipping and zero horizontal scrolling.
+   - Redundant title `[📋] Placements 22 placements` is eliminated via `hideTitle={true}` on `MarcomTableShell`.
+   - Compact Brand Filter Chips (`PlacementBrandChips`) sit in `headerExtra` on the right side of the card header without being stretched full width.
+   - Without the redundant title on the left, all 3 pills (`All Brands`, `IM3`, `3 (Tri)`) have ample room across the ~340px container, completely eliminating clipping.
    - Search input box sits below, stretching across 100% width.
-   - Status chips sit below the search input, allowing quick thumb filtering.
-   - Data table rows move ~40px higher up, visible immediately above the fold.
+   - Status chips sit below the search input in `filterBar`.
 2. **Desktop Viewport ($\ge 640\text{px}$):**
-   - Search bar and Brand filter chips align inline on Row 1.
-   - Status chips align on Row 2 with *Reset Filters* action.
+   - Desktop search bar and compact Brand filter chips align inline on the right edge of the card header.
+   - Status chips align below in `filterBar` with *Reset Filters* action.
    - Desktop layout remains 100% clean, spacious, and ergonomic.
 
 ---
 
-## 3. Component Architecture & CSS Token Contracts
+## 3. Component Architecture & Invariants
 
-### 3.1 `PlacementFilterControls.tsx` — `PlacementTableToolbar` Component
-Create a reusable, highly modular toolbar component:
-
-```tsx
-export interface PlacementTableToolbarProps {
-  selectedBrand: string;
-  onBrandChange: (brand: string) => void;
-  selectedStatus: string;
-  onStatusChange: (status: string) => void;
-  onReset: () => void;
-  isFiltered: boolean;
-  searchTerm: string;
-  onSearchChange: (q: string) => void;
-}
-
-export function PlacementTableToolbar({
-  selectedBrand,
-  onBrandChange,
-  selectedStatus,
-  onStatusChange,
-  onReset,
-  isFiltered,
-  searchTerm,
-  onSearchChange,
-}: PlacementTableToolbarProps) {
-  return (
-    <div className="space-y-2.5 mb-3">
-      {/* Row 1: Search & Brand Chips */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-        {/* Search Input Box */}
-        <div className="relative flex-1 sm:max-w-xs text-xs sm:text-sm">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search placements, outlets, themes..."
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full h-8 sm:h-9 pl-9 pr-7 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-          />
-          {searchTerm && (
-            <button
-              type="button"
-              onClick={() => onSearchChange("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-
-        {/* Brand Filter Chips */}
-        <PlacementBrandChips
-          selectedBrand={selectedBrand}
-          onBrandChange={onBrandChange}
-        />
-      </div>
-
-      {/* Row 2: Status Chips & Reset Action */}
-      <PlacementStatusChips
-        selectedStatus={selectedStatus}
-        onStatusChange={onStatusChange}
-        onReset={onReset}
-        isFiltered={isFiltered}
-      />
-    </div>
-  );
-}
-```
+### 3.1 `MarcomTableShell.tsx` — `hideTitle` Support
+Add `hideTitle?: boolean` prop:
+- When `hideTitle` is true: title block `[Icon Title Count]` is omitted, and the header container right-aligns `headerExtra` (`hideTitle && "justify-end"`).
 
 ### 3.2 `PlacementsView.tsx` Integration
 In `src/components/views/PlacementsView/PlacementsView.tsx`:
-- Pass `hideHeader={true}` to `MarcomTableShell`.
-- Remove `headerExtra={brandChips}`.
-- Supply `<PlacementTableToolbar ... />` via `filterBar` (or render it directly above `MarcomTableShell`).
+- Pass `hideTitle={true}`, `headerExtra={brandChips}`, and `filterBar={statusFilterChips}` to `MarcomTableShell`.
+- Retain compact `PlacementBrandChips` styling (`shrink-0`).
 - Keep `PlacementsView.tsx` strictly under 220 LOC (coordinator invariant $\le 250$ LOC).
 
 ---

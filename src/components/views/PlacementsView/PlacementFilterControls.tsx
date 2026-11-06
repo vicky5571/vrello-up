@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { MapPin, Search, Sparkles, TableProperties, X } from "lucide-react";
+import { MapPin, Sparkles, TableProperties } from "lucide-react";
 
 export const BRAND_CHIPS: { label: string; value: string; color?: string }[] = [
   { label: "All Brands", value: "ALL" },
@@ -93,68 +93,6 @@ export function PlacementStatusChips({
           Reset Filters
         </button>
       )}
-    </div>
-  );
-}
-
-export interface PlacementTableToolbarProps {
-  selectedBrand: string;
-  onBrandChange: (brand: string) => void;
-  selectedStatus: string;
-  onStatusChange: (status: string) => void;
-  onReset: () => void;
-  isFiltered: boolean;
-  searchTerm: string;
-  onSearchChange: (q: string) => void;
-}
-
-export function PlacementTableToolbar({
-  selectedBrand,
-  onBrandChange,
-  selectedStatus,
-  onStatusChange,
-  onReset,
-  isFiltered,
-  searchTerm,
-  onSearchChange,
-}: PlacementTableToolbarProps) {
-  return (
-    <div className="space-y-2.5 mb-3">
-      {/* Row 1: Search & Brand Chips */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-        <div className="relative flex-1 sm:max-w-xs text-xs sm:text-sm">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search placements, outlets, themes..."
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full h-8 sm:h-9 pl-9 pr-7 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-          />
-          {searchTerm && (
-            <button
-              type="button"
-              onClick={() => onSearchChange("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-
-        <PlacementBrandChips
-          selectedBrand={selectedBrand}
-          onBrandChange={onBrandChange}
-        />
-      </div>
-
-      {/* Row 2: Status Chips & Reset Action */}
-      <PlacementStatusChips
-        selectedStatus={selectedStatus}
-        onStatusChange={onStatusChange}
-        onReset={onReset}
-        isFiltered={isFiltered}
-      />
     </div>
   );
 }

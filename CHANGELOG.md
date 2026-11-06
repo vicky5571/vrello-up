@@ -6,14 +6,14 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-06]
 
-- `feat(mobile)`: Placements table header deduplication and filter toolbar brand unification
-  - Eliminated redundant local table header `[📋] Placements 22 placements` in `PlacementsView.tsx` via `hideHeader={true}` on `MarcomTableShell`, aligning with `OutletsView` and `EventsView` and recovering ~40px of mobile vertical screen height
-  - Extracted and exported responsive `PlacementTableToolbar` in `PlacementFilterControls.tsx`:
-    - Row 1: Responsive container (`flex-col sm:flex-row`) pairing full-width search input (`w-full sm:max-w-xs`) with brand filter chips (`PlacementBrandChips`), completely resolving horizontal clipping of `3 (Tri)` on mobile smartphones
-    - Row 2: Status chips (`PlacementStatusChips`) with *Reset Filters* action
-  - Maintained 100% desktop pixel parity and ergonomics on screens $\ge 640\text{px}$ (`sm:flex-row sm:items-center sm:max-w-xs`)
-  - Enforced coordinator file constraints (`PlacementsView.tsx` at 228 LOC $\le 250$ LOC, `PlacementFilterControls.tsx` at 226 LOC $\le 250$ LOC)
-  - Added TDD unit test suite in `src/components/views/PlacementsView/placementsFilterLayout.test.ts` (3/3 tests passing)
+- `feat(mobile)`: Placements table header deduplication and brand filter preservation
+  - Eliminated redundant local table title `[📋] Placements 22 placements` in `PlacementsView.tsx` via `hideTitle={true}` on `MarcomTableShell`, resolving mobile screen crowding beside the brand filter
+  - Preserved compact pill styling and positioning of brand filter buttons in `headerExtra={brandChips}` (`shrink-0`), avoiding full-width stretching per user preference
+  - Supported `hideTitle?: boolean` prop on `MarcomTableShell.tsx` with right-aligned `headerExtra` (`hideTitle && "justify-end"`)
+  - With the redundant title removed on the left, compact brand chips (`All Brands`, `IM3`, `3 (Tri)`) have ample room across the mobile container, completely eliminating clipping of `3 (Tri)`
+  - Maintained 100% desktop pixel parity and ergonomics on screens $\ge 640\text{px}$
+  - Enforced coordinator file constraints (`PlacementsView.tsx` at 214 LOC $\le 250$ LOC, `PlacementFilterControls.tsx` at 164 LOC $\le 250$ LOC)
+  - Added TDD unit test suite in `src/components/views/PlacementsView/placementsFilterLayout.test.ts` (4/4 tests passing)
   - Spec: `docs/superpowers/specs/2026-11-06-mobile-placements-filter-bar-brand-unification-design.md`
   - Plan: `docs/superpowers/plans/2026-11-06-mobile-placements-filter-bar-brand-unification.md`
   - Refs: `docs/adr/0062-mobile-placements-table-header-deduplication-and-brand-filter-unification.md` (ADR-0062)

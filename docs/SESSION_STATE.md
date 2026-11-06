@@ -20,24 +20,22 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Mobile Placements Table Header Deduplication & Brand Filter Toolbar Unification (ADR-0062 — Implementation Complete):**
+1. **Implementasi Mobile Placements Table Header Deduplication & Brand Filter Preservation (ADR-0062 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/PlacementsView/placementsFilterLayout.test.ts`):**
-     - Memverifikasi de-duplikasi header: `PlacementsView.tsx` mengonfigurasi `hideHeader={true}` pada `MarcomTableShell`.
-     - Memverifikasi pencegahan clipping: `PlacementsView.tsx` tidak lagi menyematkan `headerExtra={brandChips}` pada tabel.
-     - Memverifikasi ekspor dan integrasi `PlacementTableToolbar` di `PlacementFilterControls.tsx` dan pemasangannya pada prop `filterBar`.
-     - Memverifikasi kelas responsif search input (`flex-1 w-full sm:max-w-xs`) dan penyatuan `PlacementBrandChips` serta `PlacementStatusChips`.
-     - Memverifikasi batas koordinator tetap terjaga: `PlacementsView.tsx` 228 LOC (≤ 250 LOC) dan `PlacementFilterControls.tsx` 226 LOC (≤ 250 LOC).
-     - Seluruh 3 assertions lulus (3/3 tests passing).
-   - **Komponen Toolbar Terpadu (`PlacementFilterControls.tsx` — 226 LOC):**
-     - Mengimplementasikan `PlacementTableToolbar` yang menyatukan search input responsif (full-width di mobile, compact di desktop), chip filter brand (`PlacementBrandChips`), dan chip status (`PlacementStatusChips`).
-     - Menyediakan tombol pembersih pencarian (`X`) instan dan pembersihan filter (`Reset Filters`).
-   - **Integrasi View Koordinator (`PlacementsView.tsx` — 228 LOC):**
-     - Menyetel `hideHeader={true}` pada `MarcomTableShell`, melenyapkan judul lokal ganda `[📋] Placements 22 placements` dan memulihkan ruang vertikal layar smartphone ~40px.
-     - Memasang `<PlacementTableToolbar ... />` via prop `filterBar`.
-     - Memberikan lebar tak terbatas pada brand chips di mobile, melenyapkan bug teks terpotong pada chip `3 (Tri)`.
+     - Memverifikasi de-duplikasi judul: `PlacementsView.tsx` mengonfigurasi `hideTitle={true}` pada `MarcomTableShell` untuk melenyapkan judul lokal `[📋] Placements 22 placements` yang berdesakan di samping filter brand.
+     - Memverifikasi pelestarian filter brand: `PlacementsView.tsx` mempertahankan `headerExtra={brandChips}` pada header tabel dengan styling pill kompak (`shrink-0`), tanpa ditarik memanjang secara paksa (full-width).
+     - Memverifikasi dukungan `hideTitle?: boolean` di `MarcomTableShell.tsx` dengan perataan kanan otomatis (`hideTitle && "justify-end"`).
+     - Memverifikasi batas koordinator tetap terjaga: `PlacementsView.tsx` 214 LOC (≤ 250 LOC) dan `PlacementFilterControls.tsx` 164 LOC (≤ 250 LOC).
+     - Seluruh 4 assertions lulus (4/4 tests passing).
+   - **Pelestarian Desain Kompak Brand Filter (`PlacementFilterControls.tsx` — 164 LOC):**
+     - Mempertahankan `PlacementBrandChips` sebagai kelompok pill kompak (`shrink-0`, `p-0.5 rounded-xl border`), sesuai preferensi visual pengguna.
+     - Karena judul di sebelah kiri ditiadakan, kelompok pill brand (`[ All Brands | • IM3 | • 3 (Tri) ]`, ~210px) leluasa berada di kartu header tanpa terpotong (bebas clipping).
+   - **Integrasi View Koordinator (`PlacementsView.tsx` — 214 LOC):**
+     - Menyetel `hideTitle={true}` pada `MarcomTableShell`, melenyapkan judul lokal ganda tanpa menghilangkan header tabel itu sendiri.
+     - Mempertahankan `headerExtra={brandChips}`, mobile search bar bawaan tabel (`w-full`), dan `filterBar={statusFilterChips}`.
      - Mempertahankan keselarasan desktop 100% utuh tanpa regresi visual.
    - **Verifikasi Invarian & Drift Check:**
-     - `npx tsx --test src/components/views/PlacementsView/placementsFilterLayout.test.ts` ✅ (3/3 pass).
+     - `npx tsx --test src/components/views/PlacementsView/placementsFilterLayout.test.ts` ✅ (4/4 pass).
      - `npm run drift:check` ✅ (89/89 spec-plan pairs valid, coordinator sizes ≤ 250 LOC, 0 drift).
      - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
 

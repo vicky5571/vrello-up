@@ -100,6 +100,7 @@ interface MarcomTableShellProps<T extends object & { id: string }> {
   emptyLabel?: string;
   // layout controls
   hideHeader?: boolean;
+  hideTitle?: boolean;
   hideSearch?: boolean;
   hideRefreshButton?: boolean;
   noPadding?: boolean;
@@ -141,6 +142,7 @@ export function MarcomTableShell<T extends object & { id: string }>({
   renderFloatingBulkBar,
   emptyLabel = `No ${entityPlural} found.`,
   hideHeader = false,
+  hideTitle = false,
   hideSearch = false,
   hideRefreshButton = false,
   noPadding = false,
@@ -321,16 +323,19 @@ export function MarcomTableShell<T extends object & { id: string }>({
         <div
           className={cn(
             "flex items-center justify-between mb-3 gap-3",
+            hideTitle && "justify-end",
             fixedViewport && "shrink-0 flex-wrap",
           )}
         >
-          <div className="flex items-center gap-2">
-            <TitleIcon className="w-4 h-4 text-slate-500" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</h2>
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-              {filteredCount !== data.length ? `${filteredCount}/${data.length}` : `${data.length}`} {filteredCount === 1 ? (countLabel?.singular ?? entityName) : (countLabel?.plural ?? entityPlural)}
-            </span>
-          </div>
+          {!hideTitle && (
+            <div className="flex items-center gap-2">
+              <TitleIcon className="w-4 h-4 text-slate-500" />
+              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</h2>
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                {filteredCount !== data.length ? `${filteredCount}/${data.length}` : `${data.length}`} {filteredCount === 1 ? (countLabel?.singular ?? entityName) : (countLabel?.plural ?? entityPlural)}
+              </span>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             {!hideSearch && (
               <div className="relative hidden sm:flex items-center">

@@ -14,38 +14,34 @@ Following mobile shell, navigation, and typographical improvements (ADR-0057 thr
 
 ## Options Considered
 
-### Option 1: Eliminate Redundant Table Header (`hideHeader={true}`) & Unify Brand Chips in Filter Toolbar (Chosen)
-- Pass `hideHeader={true}` to `MarcomTableShell` in `PlacementsView.tsx`, matching `OutletsView`, `EventsView`, and `MousView`.
-- Remove the local table header title (`📋 Placements 22 placements`) completely, leaving `PlacementsHeader.tsx` as the single authoritative title source.
-- Create an integrated, responsive filter toolbar in `PlacementFilterControls.tsx` combining:
-  - Brand filter chips (`PlacementBrandChips`)
-  - Search input box (full-width on mobile, compact on desktop)
-  - Status filter chips (`PlacementStatusChips`)
+### Option 1: Eliminate Redundant Table Title (`hideTitle={true}`) & Retain Compact Brand Chips in Header (Chosen)
+- Add `hideTitle?: boolean` prop to `MarcomTableShell.tsx`.
+- In `PlacementsView.tsx`, pass `hideTitle={true}` to `MarcomTableShell` to remove the redundant `[📋] Placements 22 placements` title that sits beside the brand filter.
+- Retain `headerExtra={brandChips}` in `MarcomTableShell` exactly as before, with compact inline pill styling (`shrink-0`), rather than stretching it full-width.
 - **Mobile (`< 640px`) UX:**
-  - Brand filter chips gain full-width horizontal breathing room without competition, eliminating clipping of `3 (Tri)` completely.
-  - Recovers ~40px of vertical screen height, bringing data table rows above the fold.
+  - With the redundant title eliminated on the left, the compact brand filter pill group (`[ All Brands | • IM3 | • 3 (Tri) ]`, width ~210px) has ample space across the ~340px container.
+  - The rightmost pill `3 (Tri)` is no longer pushed off-screen or clipped.
+  - Search bar remains full-width directly below the header row, and status filter chips sit in `filterBar` below search.
 - **Desktop ($\ge 640\text{px}$) UX:**
-  - Brand chips and search bar align in a clean, unified horizontal toolbar with identical styling and zero pixel regression.
+  - Search bar and brand filter chips remain horizontally aligned on the right edge of the card, with zero pixel regression.
 
 *Trade-offs:*
-- **Pros:** Completely eliminates clipping and double-header redundancy; aligns architecture with standard project invariants; strictly increases data density on mobile.
-- **Cons:** Requires small component composition in `PlacementFilterControls.tsx`.
+- **Pros:** Completely eliminates clipping and double-header redundancy; preserves user-favored compact brand filter button styling without full-width stretching; zero new dependencies.
+- **Cons:** None.
 
-### Option 2: Wrap Table Shell Header into 2 Rows on Mobile
-- In `MarcomTableShell.tsx`, wrap the header row on mobile so the title sits on Row 1 and `PlacementBrandChips` wraps to Row 2.
-
-*Trade-offs:*
-- **Pros:** Minimal code change in `MarcomTableShell`.
-- **Cons:** Keeps the confusing double-header; wastes an additional 35px of vertical screen height on mobile. Rejected per user preference.
+### Option 2: Stretch Brand Filter into Full-Width Toolbar
+- Force brand filter into a full-width row with `items-stretch`.
+- **Trade-offs:** Stretches the brand filter across the entire card, disrupting compact pill appearance. Explicitly rejected per user preference ("brand filter button jangan dibuat full begitu. kembalikan seperti sebelumnya untuk brand filter").
 
 ## Decision
 
-We adopt **Option 1: Eliminate Redundant Table Header (`hideHeader={true}`) & Unify Brand Chips in Filter Toolbar**.
+We adopt **Option 1: Eliminate Redundant Table Title (`hideTitle={true}`) & Retain Compact Brand Chips in Header**.
 
 ### Technical Architecture & Invariants:
-1. **`PlacementsView.tsx`:** Set `hideHeader={true}` on `MarcomTableShell` and supply the unified toolbar via `filterBar`.
-2. **`PlacementFilterControls.tsx`:** Compose `PlacementTableToolbar` incorporating Brand Chips, Search Input, and Status Chips into a responsive layout (Mobile: Brand Chips row, Search row, Status row; Desktop: Inline Search + Brand Chips row, Status row).
-3. **LOC Discipline:** Keep `PlacementsView.tsx` under 220 LOC (strictly below 250 LOC coordinator limit).
+1. **`MarcomTableShell.tsx`:** Declare `hideTitle?: boolean` prop; conditionally render title block only when `!hideTitle`; right-align `headerExtra` when `hideTitle` is true (`hideTitle && "justify-end"`).
+2. **`PlacementsView.tsx`:** Pass `hideTitle={true}`, `headerExtra={brandChips}`, and `filterBar={statusFilterChips}` to `MarcomTableShell`.
+3. **`PlacementFilterControls.tsx`:** Retain compact `PlacementBrandChips` (`shrink-0`, inline-flex buttons).
+4. **LOC Discipline:** Keep `PlacementsView.tsx` under 220 LOC (currently 214 LOC).
 
 ## Consequences & Mitigations
 

@@ -10,7 +10,7 @@
 
 ## 1. Overview & Context
 
-This handover details the codebase changes required to fix the mobile brand chip text clipping defect and eliminate the redundant table header (`[📋] Placements 22 placements`) in `PlacementsView.tsx`. The search input, brand filter chips, and status chips are unified into `PlacementTableToolbar` within `PlacementFilterControls.tsx`, matching the `hideHeader={true}` standard across all other marcom modules (*Outlets*, *Events*, *MoUs*).
+This handover details the codebase changes implemented to fix the mobile brand chip text clipping defect and eliminate the redundant table title (`[📋] Placements 22 placements`) in `PlacementsView.tsx`. The duplicate title is removed via `hideTitle={true}` on `MarcomTableShell`, and the brand filter button (`headerExtra={brandChips}`) is preserved in its compact inline pill styling on the right edge of the card header, avoiding full-width stretching per user preference.
 
 ---
 
@@ -19,8 +19,9 @@ This handover details the codebase changes required to fix the mobile brand chip
 | File Path | Action | One-Line Purpose |
 | :--- | :--- | :--- |
 | `src/components/views/PlacementsView/placementsFilterLayout.test.ts` | CREATE | TDD unit test verifying layout contracts and invariants |
-| `src/components/views/PlacementsView/PlacementFilterControls.tsx` | MODIFY | Export `PlacementTableToolbar` uniting search, brand chips & status chips |
-| `src/components/views/PlacementsView/PlacementsView.tsx` | MODIFY | Set `hideHeader={true}`, remove `headerExtra`, pass `PlacementTableToolbar` via `filterBar` |
+| `src/components/views/shared/MarcomTableShell.tsx` | MODIFY | Support `hideTitle?: boolean` prop with automatic right-alignment (`justify-end`) |
+| `src/components/views/PlacementsView/PlacementsView.tsx` | MODIFY | Pass `hideTitle={true}`, `headerExtra={brandChips}`, and `filterBar={statusFilterChips}` |
+| `src/components/views/PlacementsView/PlacementFilterControls.tsx` | MAINTAIN | Keep compact `PlacementBrandChips` (`shrink-0`) |
 | `docs/SESSION_STATE.md` | MODIFY | Record feature completion and verification |
 | `CHANGELOG.md` | MODIFY | Document changes under ADR-0062 |
 
