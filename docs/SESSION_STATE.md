@@ -8,8 +8,9 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Equipment Inventory Mobile Responsiveness & Layout Optimization — **IMPLEMENTATION COMPLETE**  
-**Latest Fix:** Branches Header Anti-Shift Reset Filters & Mobile Full-Width Search — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Documents Header Mobile Action Alignment — **IMPLEMENTATION COMPLETE**  
+**Latest Fix:** Equipment Inventory Mobile Responsiveness & Layout Optimization — **IMPLEMENTATION COMPLETE**  
+**Previous Fix:** Branches Header Anti-Shift Reset Filters & Mobile Full-Width Search — **IMPLEMENTATION COMPLETE**  
 **Previous Fix:** Branches Header Mobile Action Alignment & Full-Width Search — **IMPLEMENTATION COMPLETE**  
 **Previous Fix:** Mobile Sidebar Non-Overshooting Tween Refinement (ADR-0063 Amendment) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Create Outlet Form GPS Layout & Toast Resilience — **IMPLEMENTATION COMPLETE**  
@@ -24,6 +25,12 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Documents Header Mobile Action Alignment (Implementation Complete):**
+   - **Fix (`DocumentsHeader.tsx`):** Aligned the action row containing `Refresh` and `Tambah Dokumen` to the right on mobile viewports (`justify-end sm:justify-start`), eliminating dead whitespace on the right margin and matching the one-handed thumb ergonomics of Placements, Outlets, Branches, and Inventory.
+   - **Preserved:** Desktop layout remains 100% byte-for-byte identical with `sm:justify-start`. Category chips, search bar, view mode switcher, and KPI horizontal scroller remain untouched per user confirmation.
+   - **TDD:** Added `src/components/views/DocumentsView/documentsHeaderResponsiveness.test.ts` (3/3 tests passing).
+   - **Verification:** `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅, `npm run test:smoke` ✅ (148/148 pass).
 
 1. **Equipment Inventory Mobile Responsiveness & Layout Optimization (Implementation Complete):**
    - **Problems Addressed:**

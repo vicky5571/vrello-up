@@ -6,6 +6,13 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(documents)`: Right-align header action buttons on mobile
+  - Mobile: aligned `Refresh` and `Tambah Dokumen` buttons to the right (`justify-end sm:justify-start`) for consistent one-handed thumb ergonomics
+  - Desktop preserved: action buttons remain left-aligned in their column (`sm:justify-start`), and search/switcher controls are 100% untouched
+  - Added TDD unit test suite in `src/components/views/DocumentsView/documentsHeaderResponsiveness.test.ts` (3/3 tests passing)
+  - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅, `npm run test:smoke` ✅ (148/148)
+  - Refs: direct mobile UX review request
+
 - `fix(inventory)`: Optimize mobile header layout and prevent code badge wrapping
   - Mobile: expanded search input to full width on row 2 (`order-last sm:order-first relative w-full sm:w-56`), eliminating the cramped ~90px search input
   - Mobile: paired category dropdown (`flex-1 sm:flex-initial sm:w-44`) with view mode switcher (`shrink-0`) on row 1
