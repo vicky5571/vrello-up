@@ -110,9 +110,9 @@ export function MobileBottomNav() {
             whileTap={shouldReduceMotion ? undefined : { scale: 0.92 }}
             onClick={() => tab.onClick(helpers)}
             className={cn(
-              "flex-1 h-full py-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] cursor-pointer group transition-colors",
+              "flex-1 h-full py-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] rounded-xl cursor-pointer group transition-all",
               active
-                ? "text-slate-900 dark:text-white font-semibold"
+                ? "text-slate-900 dark:text-white font-semibold bg-slate-100/70 dark:bg-white/10"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
             )}
           >

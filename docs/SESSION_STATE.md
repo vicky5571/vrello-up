@@ -8,13 +8,53 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Responsiveness Chassis and Navigation Architecture (ADR-0057) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile Shell UI/UX Polish and Viewport Optimization (ADR-0058) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Responsiveness Chassis and Navigation Architecture (ADR-0057) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Hide Brain² AI Assistant from User-Facing Navigation Surfaces (ADR-0056) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054) — **IMPLEMENTATION COMPLETE**  
 
 ---
 
 ## What Was Completed This Session
+
+1. **Implementasi Mobile Shell UI/UX Polish & Viewport Optimization (ADR-0058 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**
+     - Memverifikasi de-duplikasi tombol hamburger di `TopNav.tsx` (tidak ada lagi duplikat outer button).
+     - Memverifikasi keberadaan single canonical hamburger di `TopNavBreadcrumbs.tsx` terikat ke `toggleSidebar`.
+     - Memverifikasi default `mobileStrip = true` pada `KpiSummaryCards.tsx`.
+     - Memverifikasi layout edge-to-edge `fixed inset-y-0 left-0` pada mobile drawer `Sidebar.tsx`.
+     - Memverifikasi ketiadaan styling kaku `border border-blue-600` pada `MobileBottomNav.tsx`.
+     - Memverifikasi seluruh koordinator file tetap berada di bawah batas ketat `<= 250 LOC` (`page.tsx`: 86, `TopNav.tsx`: 142, `Sidebar.tsx`: 175, `MobileBottomNav.tsx`: 137) (6/6 tests passing).
+   - **De-duplikasi Hamburger Header (`TopNav.tsx` — 142 LOC):**
+     - Menghapus outer `<button>` toggle dan impor ikon `Menu` dari `TopNav.tsx`.
+     - Menstandarkan pemicu tunggal hamburger di dalam `TopNavBreadcrumbs.tsx`.
+   - **Breadcrumb Ringkas Responsif (`TopNavBreadcrumbs.tsx` — 185 LOC):**
+     - Menyembunyikan prefix panjang `[V] Vrello / Marketing Hub /` pada layar smartphone (`< 640px`).
+     - Menampilkan secara eksklusif `[☰ Menu] [Active View Label]` yang ringkas (`max-w-[140px] truncate`), melenyapkan tabrakan visual dengan badge unread notification `(2)` dan avatar pengguna.
+   - **Universal Mobile KPI Strip (`KpiSummaryCards.tsx` — 241 LOC):**
+     - Mengubah default parameter dari `mobileStrip = false` menjadi `mobileStrip = true` pada `KpiSummaryCards` dan `KpiSummaryCardsSkeleton`.
+     - Secara instan mengubah tumpukan vertikal 4-5 kartu KPI (yang tadinya memakan ~500px layar) menjadi strip carousel horizontal geser jempol (`max-h-[85px]`) di seluruh modul aplikasi (*Outlets, Placements, Events, Branches, Pipeline, Reports*).
+     - Menarik tabel data dan kartu operasional langsung *above the fold* tanpa perlu scrolling berlebih.
+   - **Styling Tab Modern (`MobileBottomNav.tsx` — 137 LOC):**
+     - Menghapus border kaku dan mengadopsi styling pill modern `bg-slate-100/70 dark:bg-white/10 rounded-xl` dengan aksen dot indicator pada tab aktif.
+   - **Edge-to-Edge Native Sheet (`Sidebar.tsx` — 175 LOC):**
+     - Mengubah penataan aside mobile menjadi `fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] rounded-r-2xl border-r shadow-2xl`, menghilangkan celah floating atas-bawah.
+   - **Non-Negotiable Quality Gates:**
+     - `npm run drift:check` ✅ (85/85 spec-plan pairs valid, coordinator files <= 250 LOC, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
+     - `npm run test:smoke` ✅ (138/138 pass, 0 fail).
+     - `npm test` ✅ (906/906 tests pass across 156 suites, 0 failures).
+
+1. **Perencanaan Arsitektur Mobile Shell UI/UX Polish & Viewport Optimization (ADR-0058 — Planning Complete):**
+   - **Analisis Kebutuhan Visual & Diagnostik Screenshot:**
+     - Mendiagnosis 5 kecacatan visual dari screenshot aktual: duplikasi hamburger `☰ ☰` di TopNav, tabrakan breadcrumb dengan notifikasi merah `(2)`, penumpukan vertikal 4 kartu KPI yang memakan 500px tinggi layar, kotak border biru kaku pada tab aktif bottom nav, dan gap melayang pada mobile sidebar.
+     - Merancang solusi holistik: single canonical hamburger di `TopNavBreadcrumbs.tsx`, breadcrumb ringkas khusus mobile (`sm:hidden`), universal default `mobileStrip = true` di `KpiSummaryCards.tsx` (mengubah KPI seluruh halaman menjadi carousel swipe 80px), styling pill modern di `MobileBottomNav.tsx`, dan drawer edge-to-edge native sheet di `Sidebar.tsx`.
+   - **Penyusunan Dokumen Perencanaan & Handover:**
+     - ADR: `docs/adr/0058-mobile-shell-ui-ux-polish-and-viewport-optimization.md` (ACCEPTED).
+     - Spec: `docs/superpowers/specs/2026-11-06-mobile-shell-ui-ux-polish-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-06-mobile-shell-ui-ux-polish.md` (APPROVED).
+     - Handover: `docs/handover-mobile-shell-ui-ux-polish.md` (READY FOR EXECUTION).
+   - **Verifikasi Invarian & Drift Check:**
+     - `npm run drift:check` ✅ (85/85 spec-plan pairs valid, coordinator sizes ≤ 250 LOC, 0 drift).
 
 1. **Implementasi Mobile Responsiveness Chassis & Navigation (ADR-0057 — Implementation Complete):**
    - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**

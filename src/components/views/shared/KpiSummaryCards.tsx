@@ -65,7 +65,7 @@ const COLOR_MAP: Record<
 export function KpiSummaryCardsSkeleton({
   count = 4,
   className,
-  mobileStrip = false,
+  mobileStrip = true,
 }: {
   count?: number;
   className?: string;
@@ -118,7 +118,7 @@ export function KpiSummaryCards({
   isLoading = false,
   skeletonCount = 4,
   className,
-  mobileStrip = false,
+  mobileStrip = true,
   activeLayoutId = "activeKpiCardIndicator",
 }: KpiSummaryCardsProps) {
   const shouldReduceMotion = useReducedMotion();

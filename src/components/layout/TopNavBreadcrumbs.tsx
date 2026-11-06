@@ -42,33 +42,35 @@ export function TopNavBreadcrumbs({
         type="button"
         onClick={toggleSidebar}
         title="Open navigation"
-        className="md:hidden p-1.5 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+        className="md:hidden p-1.5 -ml-1 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
       >
         <Menu className="w-4 h-4" />
       </button>
 
-      <div className="w-5 h-5 rounded bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shadow-2xs shrink-0">
-        V
-      </div>
+      <div className="hidden sm:flex items-center gap-2">
+        <div className="w-5 h-5 rounded bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shadow-2xs shrink-0">
+          V
+        </div>
 
-      <span className="font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[160px] sm:max-w-[200px]">
-        Vrello
-      </span>
+        <span className="font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[160px] sm:max-w-[200px]">
+          Vrello
+        </span>
+      </div>
     </div>
   );
 
   const renderProjectsTrail = () => (
     <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 min-w-0 shrink-0">
-      <div className="flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400 shrink-0">
+      <div className="hidden sm:flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400 shrink-0">
         <FolderIcon className="w-3.5 h-3.5 fill-blue-500/20" />
         <span className="truncate max-w-[130px] sm:max-w-[180px]">
           Projects
         </span>
       </div>
 
-      <span className="text-slate-400 shrink-0">/</span>
+      <span className="hidden sm:inline text-slate-400 shrink-0">/</span>
 
-      <span className="font-medium text-slate-800 dark:text-slate-200 shrink-0 truncate">
+      <span className="font-semibold sm:font-medium text-slate-800 dark:text-slate-100 shrink-0 truncate max-w-[140px] sm:max-w-[200px]">
         {PROJECTS_VIEW_LABELS[activeView] || activeView}
       </span>
 
@@ -104,16 +106,16 @@ export function TopNavBreadcrumbs({
 
   const renderMarcomTrail = () => (
     <div className="flex items-center gap-2 text-xs min-w-0 shrink-0">
-      <span className="font-semibold text-pink-600 dark:text-pink-400 flex items-center gap-1 shrink-0">
+      <span className="hidden sm:flex font-semibold text-pink-600 dark:text-pink-400 items-center gap-1 shrink-0">
         <Megaphone className="w-3.5 h-3.5" />
         <span className="truncate max-w-[130px] sm:max-w-[180px]">
           Marketing Hub
         </span>
       </span>
 
-      <span className="text-slate-300 dark:text-slate-700 shrink-0">/</span>
+      <span className="hidden sm:inline text-slate-300 dark:text-slate-700 shrink-0">/</span>
 
-      <span className="font-medium text-slate-800 dark:text-slate-200 shrink-0 truncate">
+      <span className="font-semibold sm:font-medium text-slate-800 dark:text-slate-100 truncate max-w-[140px] sm:max-w-[200px]">
         {MARCOM_VIEW_LABELS[activeView] || "Overview"}
       </span>
     </div>
@@ -139,7 +141,7 @@ export function TopNavBreadcrumbs({
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-slate-200 dark:border-slate-800 shrink-0">
+        <div className="hidden sm:flex items-center gap-1.5 ml-2 pl-2 border-l border-slate-200 dark:border-slate-800 shrink-0">
           <button
             type="button"
             onClick={() => {
@@ -172,7 +174,7 @@ export function TopNavBreadcrumbs({
   return (
     <div className="flex items-center gap-2 text-xs min-w-0">
       {renderBrandAnchor()}
-      <span className="text-slate-300 dark:text-slate-700 shrink-0">/</span>
+      <span className="hidden sm:inline text-slate-300 dark:text-slate-700 shrink-0">/</span>
       {globalInfo
         ? renderGlobalTrail(globalInfo)
         : appMode === "marcom"
