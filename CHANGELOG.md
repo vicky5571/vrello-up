@@ -6,6 +6,14 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(branches)`: Right-align header actions and make mobile search full width
+  - Mobile: the `Refresh` and `Tambah Branch` action row is now right-aligned (`justify-end sm:justify-start`), matching the card's right margin
+  - Mobile: the branch search input now spans the full content width (`w-full sm:w-56`), eliminating the narrow left-aligned field
+  - Desktop preserved: title and actions stay on one row, the action row remains left-aligned within its own column, the region dropdown stays `w-40 sm:w-44`, and the search stays `sm:w-56` (224px)
+  - Added structural regression tests in `src/components/views/BranchesView/branchesHeaderResponsiveness.test.ts` (3/3 tests passing)
+  - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (943/943), `npm run test:smoke` ✅ (146/146)
+  - Refs: direct mobile UX review request (no ADR/spec required for this targeted layout fix)
+
 - `fix(mobile)`: Remove spring overshoot from sidebar animation
   - Replaced the mobile sidebar's underdamped spring (`damping: 28, stiffness: 300`) with a monotonic 240ms tween (`ease: [0.2, 0, 0, 1]`) in `Sidebar.tsx`
   - Eliminated the bump/overshoot past `x: 0` that briefly pushed the drawer right of the viewport edge and exposed the page background on the left side

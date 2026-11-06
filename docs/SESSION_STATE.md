@@ -8,9 +8,9 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Sidebar Non-Overshooting Tween Refinement (ADR-0063 Amendment) — **IMPLEMENTATION COMPLETE**  
-**Latest Fix:** Mobile Create Outlet Form GPS Layout & Toast Resilience — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Mobile Notification Center Popover Viewport-Bounded Layout (ADR-0064) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Branches Header Mobile Action Alignment & Full-Width Search — **IMPLEMENTATION COMPLETE**  
+**Latest Fix:** Mobile Sidebar Non-Overshooting Tween Refinement (ADR-0063 Amendment) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Create Outlet Form GPS Layout & Toast Resilience — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Placements Table Header Deduplication & Brand Filter Toolbar Unification (ADR-0062) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile View Switcher Full-Width & Action Row Right Alignment (ADR-0061) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Filter & Search Proportional Grid Layout (ADR-0060) — **IMPLEMENTATION COMPLETE**  
@@ -22,6 +22,14 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Branches Header Mobile Action Alignment & Full-Width Search (Implementation Complete):**
+   - **Actions:** The mobile row containing `Refresh` and `Tambah Branch` now uses `justify-end sm:justify-start` in `BranchesHeader.tsx`, anchoring both controls to the right content margin. Desktop keeps its original right-hand column position and internal left alignment.
+   - **Search:** The branch search wrapper changed from `w-44 sm:w-56` to `w-full sm:w-56`, so the field spans the full mobile content width (358px at a 390px viewport) while remaining 224px on desktop.
+   - **Preserved:** Status chip scroller, region dropdown (`w-40 sm:w-44`), reset-filter link, KPI cards, and the `md:flex-row` controls layout are untouched.
+   - **TDD:** Added `src/components/views/BranchesView/branchesHeaderResponsiveness.test.ts` with assertions for mobile right alignment, full-width mobile search, and desktop width/layout invariants (3/3 pass).
+   - **Runtime verification (Playwright, real Chrome):** Mobile 390px — action row `justify-content: flex-end`, group right edge 374px, search width 358px; desktop 1440px — action row `flex-start` in its column, search width 224px.
+   - **Verification:** `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅, `npm run test:smoke` ✅.
 
 1. **Mobile Sidebar Non-Overshooting Tween Refinement (ADR-0063 Amendment — Implementation Complete):**
    - **Defect:** The mobile drawer used spring physics (`damping: 28, stiffness: 300`), which is underdamped. On open it overshot `x: 0`, translating the `left-0` panel to the right and briefly exposing the page background as a flash on the left edge.

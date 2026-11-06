@@ -72,7 +72,7 @@ export function BranchesHeader({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-end sm:justify-start">
           <button
             type="button"
             onClick={onRefresh}
@@ -152,7 +152,7 @@ export function BranchesHeader({
             className="w-40 sm:w-44 text-xs"
           />
 
-          <div className="relative w-44 sm:w-56 text-xs">
+          <div className="relative w-full sm:w-56 text-xs">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
