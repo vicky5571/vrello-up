@@ -14,10 +14,6 @@ const BranchDetailDrawer = dynamic(
   () => import("@/components/branches/BranchDetailDrawer").then((m) => m.BranchDetailDrawer),
   { ssr: false },
 );
-const AiDrawer = dynamic(
-  () => import("@/components/ai/AiDrawer").then((m) => m.AiDrawer),
-  { ssr: false },
-);
 const CommandPalette = dynamic(
   () => import("@/components/layout/CommandPalette").then((m) => m.CommandPalette),
   { ssr: false },
@@ -74,7 +70,6 @@ export default function WorkspacePage() {
 
         {/* Global Drawers & Modals */}
         <BranchDetailDrawer />
-        <AiDrawer />
         <CommandPalette />
         <ExportCenter />
       </div>

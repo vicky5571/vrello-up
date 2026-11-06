@@ -12,7 +12,7 @@ import {
   ListTodo,
   Calendar,
   Zap,
-  Bot,
+  Package,
   HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -50,9 +50,9 @@ const GUIDES = [
     desc: "Schedule milestone deliverables and visualize task due dates across monthly and weekly calendar grids.",
   },
   {
-    icon: Bot,
-    title: "Brain² & Autonomous Agents",
-    desc: "AI-assisted triage, blocker watchdogs, automated sprint summaries, and code security audits built right into your workspace.",
+    icon: Package,
+    title: "Field Inventory & Equipment Loans",
+    desc: "Kelola peminjaman sound system, genset, dan aset lapangan; catat hasil inspeksi pengembalian fisik dan klaim kompensasi barang rusak.",
   },
   {
     icon: Zap,

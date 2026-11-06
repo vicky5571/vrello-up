@@ -92,9 +92,10 @@ describe("MoreAppsMenu & SettingsModal YAGNI Elimination (ADR-0031)", () => {
       moreContent.includes("Command Palette"),
       "Expected MoreAppsMenu to retain Command Palette"
     );
-    assert.ok(
+    assert.strictEqual(
       moreContent.includes("Brain² AI Assistant"),
-      "Expected MoreAppsMenu to retain Brain² AI Assistant"
+      false,
+      "Expected MoreAppsMenu to omit Brain² AI Assistant per ADR-0056"
     );
     assert.strictEqual(
       moreContent.includes("Toggle"),

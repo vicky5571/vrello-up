@@ -1,3 +1,5 @@
+// ponytail: deferred AI assistant UI dormant until LLM backend integration.
+// Not mounted in user-facing navigation (ADR-0056).
 "use client";
 
 import { useEffect, useRef, useState } from "react";

@@ -8,16 +8,27 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Hide Brain² AI Assistant from User-Facing Navigation Surfaces (ADR-0056) — **PLANNING COMPLETE (READY FOR EXECUTION)**  
+**Active Feature:** Hide Brain² AI Assistant from User-Facing Navigation Surfaces (ADR-0056) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Field Event Completion Unreturned Equipment Warning Workflow (ADR-0054) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Modular 4-Step Wizard Stepper Header for BorrowRequestModal (ADR-0055) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Outlet Soft-Delete Architecture and Database Restrict Protection (ADR-0053) — **IMPLEMENTATION COMPLETE**  
 
 ---
 
 ## What Was Completed This Session
 
-1. **Penyesuaian Label KPI Pipeline Matrix Table:**
+1. **Implementasi Hide Brain² AI Assistant from User-Facing Navigation Surfaces (ADR-0056 — Implementation Complete):**
+   - **TDD Assertion (`src/components/modals/MoreAppsMenu.test.ts`):** Mengubah pengujian dari positif menjadi negatif (`assert.strictEqual(moreContent.includes("Brain² AI Assistant"), false)`) untuk mencegah regresi kebangkitan tombol AI.
+   - **Global Rail Navigation (`src/components/layout/GlobalRail.tsx`):** Menghapus tombol navigasi `"ai"` (`Sparkles` icon), serta membersihkan selector Zustand `isAiDrawerOpen` dan `setAiDrawerOpen`.
+   - **More Apps Popover (`src/components/modals/MoreAppsMenu.tsx`):** Menghapus tombol `"Brain² AI Assistant"`, menyisakan `Command Palette` (⌘K), `Export Center`, dan `Backup & Data`.
+   - **Root Canvas Host (`src/app/page.tsx`):** Menghapus dynamic import dan unmount `<AiDrawer />` dari render tree root canvas, menghemat client evaluation saat inisialisasi aplikasi (LOC: 78).
+   - **Help & Docs Card (`src/components/modals/HelpDocsModal.tsx`):** Mengganti kartu panduan *"Brain² & Autonomous Agents"* menjadi panduan operasional riil: *"Field Inventory & Equipment Loans"*.
+   - **Dormancy Comment (`src/components/ai/AiDrawer.tsx`):** Menandai file sebagai kode dorman (`// ponytail: deferred AI assistant UI dormant until LLM backend integration`) tanpa menghapusnya, sehingga siap diaktifkan kembali jika integrasi LLM riil disetujui.
+   - **Non-Negotiable Quality Gates:**
+     - `npm run drift:check` ✅ (83/83 spec-plan pairs valid, coordinator files <= 250 LOC, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
+     - `npm run test:smoke` ✅ (137/137 pass, 0 fail).
+     - `npm test` ✅ (900/900 tests pass across 155 suites, 0 failures).
+
+2. **Penyesuaian Label KPI Pipeline Matrix Table:**
    - Mengubah label kartu KPI ringkasan pada Cockpit Pipeline Operasional Outlet (`src/components/views/PipelineView/PipelineView.tsx`) dari `"MoU Sehat %"` (`MOU SEHAT %`) menjadi `"Active MoU %"` (`ACTIVE MOU %`).
 
 2. **Perencanaan Arsitektur Hide Brain² AI Assistant from User-Facing Surfaces (ADR-0056 — Planning Complete):**

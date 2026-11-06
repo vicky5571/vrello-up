@@ -72,5 +72,23 @@ describe("GlobalRail Pending Users Badge", () => {
     assert.equal(formatPendingBadgeCount(99), "99");
     assert.equal(formatPendingBadgeCount(100), "99+");
   });
+
+  it("omits AI navigation button and Sparkles per ADR-0056", () => {
+    const globalRailPath = path.resolve(
+      process.cwd(),
+      "src/components/layout/GlobalRail.tsx"
+    );
+    const content = fs.readFileSync(globalRailPath, "utf-8");
+    assert.strictEqual(
+      content.includes('id: "ai"'),
+      false,
+      "Expected GlobalRail to omit AI nav item per ADR-0056"
+    );
+    assert.strictEqual(
+      content.includes("Sparkles"),
+      false,
+      "Expected GlobalRail to omit Sparkles icon per ADR-0056"
+    );
+  });
 });
 

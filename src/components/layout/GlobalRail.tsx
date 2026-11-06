@@ -6,7 +6,6 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   Home,
   CalendarDays,
-  Sparkles,
   Users,
   Grid3X3,
   ChevronsLeft,
@@ -28,20 +27,17 @@ export function GlobalRail() {
   const {
     appMode,
     isSidebarOpen,
-    isAiDrawerOpen,
     activeView,
   } = useWorkspaceStore(
     useShallow((s) => ({
       appMode: s.appMode,
       isSidebarOpen: s.isSidebarOpen,
-      isAiDrawerOpen: s.isAiDrawerOpen,
       activeView: s.activeView,
     })),
   );
 
   const setAppMode = useWorkspaceStore((s) => s.setAppMode);
   const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
-  const setAiDrawerOpen = useWorkspaceStore((s) => s.setAiDrawerOpen);
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -64,13 +60,6 @@ export function GlobalRail() {
       icon: CalendarDays,
       isActive: activeView === "calendar",
       onClick: () => setActiveView("calendar"),
-    },
-    {
-      id: "ai",
-      label: "AI",
-      icon: Sparkles,
-      isActive: isAiDrawerOpen,
-      onClick: () => setAiDrawerOpen(true),
     },
     ...(canManageUsers
       ? [
