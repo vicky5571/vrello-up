@@ -6,6 +6,14 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(placements)`: Equalize mobile view switcher pill height across tabs
+  - Mobile: changed view switcher container from `flex items-center` to `flex items-stretch sm:items-center` in `PlacementFilterControls.tsx`
+  - Mobile: added `min-h-[40px] sm:min-h-0` to all view switcher buttons so active pill spans the full track height consistently across all 3 tabs (`Table`, `Map View`, and 2-line `Rekap Kuartal`), eliminating the shrunken pill and vertical gaps
+  - Desktop 100% preserved: resets to `sm:items-center` and `sm:min-h-0`
+  - Added TDD assertions in `src/components/views/PlacementsView/placementsHeaderResponsiveness.test.ts` (5/5 tests passing)
+  - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm run test:smoke` ✅ (150/150), `npm test` ✅ (965/965)
+  - Refs: direct mobile UI/UX bug report
+
 - `fix(outlets)`: Equalize mobile view switcher pill height across loading and loaded states
   - Mobile: changed view switcher container from `flex items-center` to `flex items-stretch sm:items-center` on `OutletsHeader.tsx`
   - Mobile: added `min-h-[40px] sm:min-h-0` to all view switcher buttons so active pill spans the full track height consistently, whether text is 1-line (`Tabel Data`) or 2-line (`Peta \n Sebaran`, `Antrean \n Approval`), eliminating the shrunken pill during loading

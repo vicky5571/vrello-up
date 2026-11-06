@@ -32,12 +32,20 @@ describe("Mobile Action Row Alignment & View Switcher (ADR-0061)", () => {
   it("verifies PlacementViewSwitcher uses full width w-full on mobile with flex-1 tabs", () => {
     const content = fs.readFileSync(switcherPath, "utf-8");
     assert.ok(
-      content.includes("w-full sm:w-auto"),
-      "PlacementViewSwitcher must use w-full sm:w-auto"
+      content.includes("w-full sm:w-auto flex items-stretch sm:items-center"),
+      "PlacementViewSwitcher must use items-stretch on mobile and sm:items-center on desktop"
     );
     assert.ok(
       content.includes("flex-1 sm:flex-initial") && content.includes("justify-center"),
       "PlacementViewSwitcher tab buttons must use flex-1 sm:flex-initial justify-center"
+    );
+  });
+
+  it("verifies PlacementViewSwitcher tab buttons use min-h-[40px] sm:min-h-0 for consistent pill height", () => {
+    const content = fs.readFileSync(switcherPath, "utf-8");
+    assert.ok(
+      content.includes("min-h-[40px] sm:min-h-0"),
+      "PlacementViewSwitcher tab buttons must use min-h-[40px] on mobile and sm:min-h-0 on desktop"
     );
   });
 

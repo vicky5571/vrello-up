@@ -121,7 +121,7 @@ export function PlacementViewSwitcher({
     <div
       role="tablist"
       aria-label="Placements View Switcher"
-      className="relative w-full sm:w-auto flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 select-none shrink-0"
+      className="relative w-full sm:w-auto flex items-stretch sm:items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 select-none shrink-0"
     >
       {VIEW_SWITCHER_OPTIONS.map((opt) => {
         const Icon = opt.icon;
@@ -135,7 +135,7 @@ export function PlacementViewSwitcher({
             whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => onViewModeChange(opt.id)}
             className={cn(
-              "relative flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer",
+              "relative flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-1 min-h-[40px] sm:min-h-0 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer",
               isActive
                 ? "text-slate-900 dark:text-slate-100"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",

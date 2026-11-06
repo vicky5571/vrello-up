@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Outlets Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Placements Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Outlets Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Analytics ROI Header Layout and Horizontal KPI Carousel (ADR-0065) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Reports Header Mobile Action Alignment — **IMPLEMENTATION COMPLETE**  
 **Latest Fix:** Documents Header Mobile Action Alignment — **IMPLEMENTATION COMPLETE**  
@@ -29,7 +30,18 @@
 
 ## What Was Completed This Session
 
-1. **Perbaikan Proporsi & Tinggi Active Pill Mobile View Switcher Outlets (Implementation Complete):**
+1. **Perbaikan Proporsi & Tinggi Active Pill Mobile View Switcher Placements (Implementation Complete):**
+   - **Diagnostik Masalah:**
+     - Pada viewport mobile (< 640px), kontainer tab switcher di `PlacementFilterControls.tsx` menggunakan `flex items-center`. Tombol tab anak (`motion.button`) tidak meregang (*stretch*), melainkan tingginya murni dihitung dari jumlah baris teks masing-masing.
+     - Tab `Table` dan `Map View` berada pada 1 baris (~30px), sedangkan tab `Rekap Kuartal` berada pada 2 baris (~46px). Akibatnya, saat `Table` atau `Map View` aktif, *active pill* putih (`absolute inset-0`) menjadi kerdil (~30px) dan mengambang di tengah track abu-abu (48px) dengan gap kosong ~8px di atas dan bawahnya.
+   - **Solusi yang Diterapkan (`PlacementFilterControls.tsx`):**
+     - Mengubah kontainer menjadi `flex items-stretch sm:items-center` sehingga seluruh tombol tab di mobile dipaksa memiliki tinggi yang seragam dengan item tertinggi (100% tinggi track).
+     - Menambahkan `min-h-[40px] sm:min-h-0` pada tombol tab di mobile untuk menjamin area sentuh sentuhan jempol ergonomis dan *active pill* selalu mengisi penuh track abu-abu secara presisi tanpa jeda vertikal pada semua tab.
+     - **Invarian Desktop 100% Terjaga:** Kembali ke `sm:items-center` dan `sm:min-h-0` di desktop ($\ge 640\text{px}$).
+   - **TDD:** Memperbarui `src/components/views/PlacementsView/placementsHeaderResponsiveness.test.ts` (5/5 tests pass).
+   - **Verifikasi Quality Gates:** `npm run drift:check` ✅ (92/92 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (150/150), `npm test` ✅ (965/965).
+
+2. **Perbaikan Proporsi & Tinggi Active Pill Mobile View Switcher Outlets (Implementation Complete):**
    - **Diagnostik Masalah:**
      - Pada viewport mobile (< 640px), kontainer tab switcher menggunakan `flex items-center`. Tombol tab anak (`motion.button`) tidak meregang (*stretch*), melainkan tingginya murni dihitung dari jumlah baris teks masing-masing.
      - Saat loading (atau sebelum teks wrap), tab *Tabel Data* berada pada 1 baris (~30px), sedangkan tab lain membengkak menjadi 2 baris (~46px). Akibatnya, *active pill* putih (`absolute inset-0`) menjadi kerdil dan mengambang di tengah track abu-abu dengan ruang kosong di atas dan bawahnya.
