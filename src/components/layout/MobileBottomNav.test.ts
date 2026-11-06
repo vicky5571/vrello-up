@@ -61,6 +61,10 @@ describe("Mobile Shell UI/UX Polish Invariants (ADR-0058)", () => {
     assert.ok(bottomNavContent.includes("Events"), "Must include Events tab");
     assert.ok(bottomNavContent.includes("Menu"), "Must include Menu tab");
     assert.ok(bottomNavContent.includes("md:hidden"), "MobileBottomNav must include md:hidden class");
+    assert.ok(
+      bottomNavContent.includes('layoutId="activeMobileBottomTab"'),
+      "Expected MobileBottomNav to render sliding active pill with layoutId"
+    );
     assert.strictEqual(
       bottomNavContent.includes("border border-blue-600"),
       false,

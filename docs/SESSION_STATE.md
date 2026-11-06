@@ -36,6 +36,10 @@
      - Memperbarui nama outlet ke `text-xs sm:text-sm font-semibold` dengan padding baris sel `py-2 sm:py-3.5 px-2.5 sm:px-3`.
    - **Penyesuaian Visual Bottom Navigation Bar (`MobileBottomNav.tsx`):**
      - Mengubah label tab menjadi `text-[10.5px] font-medium leading-none mt-0.5` untuk proporsi visual yang seimbang dengan header dan tabel.
+   - **Animasi Active Button Sliding Bottom Navigation Bar (`MobileBottomNav.tsx`):**
+     - Mengimplementasikan `<motion.div layoutId="activeMobileBottomTab" />` dengan spring physics (`stiffness: 450, damping: 32`) untuk efek sliding pill background yang halus dan responsif saat berpindah antar tab navigasi.
+     - Menyusun layering z-index (`relative z-10`) untuk ikon dan teks label agar tetap berada di atas sliding background.
+     - Menambahkan proteksi tab collision pada state `isSidebarOpen` dan unit test assertion di `MobileBottomNav.test.ts`.
    - **Non-Negotiable Invariants Verification:**
      - 100% kelas desktop (`sm:text-xl`, `sm:h-9`, dsb.) dipertahankan tanpa perubahan visual di desktop.
      - `npx tsx --test src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts` ✅ (5/5 pass).

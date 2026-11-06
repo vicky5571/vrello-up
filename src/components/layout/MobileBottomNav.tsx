@@ -32,7 +32,7 @@ const BOTTOM_TABS: BottomTabItem[] = [
     label: "Home",
     icon: Home,
     activeColor: "text-blue-500 dark:text-blue-400",
-    isActive: (view) => view === "home",
+    isActive: (view, isSidebarOpen) => !isSidebarOpen && view === "home",
     onClick: ({ setActiveView }) => setActiveView("home"),
   },
   {
@@ -40,7 +40,7 @@ const BOTTOM_TABS: BottomTabItem[] = [
     label: "Outlets",
     icon: Store,
     activeColor: "text-violet-500 dark:text-violet-400",
-    isActive: (view) => view === "outlets",
+    isActive: (view, isSidebarOpen) => !isSidebarOpen && view === "outlets",
     onClick: ({ setActiveView, setAppMode }) => {
       setAppMode("marcom");
       setActiveView("outlets");
@@ -51,7 +51,7 @@ const BOTTOM_TABS: BottomTabItem[] = [
     label: "Placements",
     icon: MapPin,
     activeColor: "text-emerald-500 dark:text-emerald-400",
-    isActive: (view) => view === "placements",
+    isActive: (view, isSidebarOpen) => !isSidebarOpen && view === "placements",
     onClick: ({ setActiveView, setAppMode }) => {
       setAppMode("marcom");
       setActiveView("placements");
@@ -62,7 +62,7 @@ const BOTTOM_TABS: BottomTabItem[] = [
     label: "Events",
     icon: CalendarDays,
     activeColor: "text-blue-500 dark:text-blue-400",
-    isActive: (view) => view === "events",
+    isActive: (view, isSidebarOpen) => !isSidebarOpen && view === "events",
     onClick: ({ setActiveView, setAppMode }) => {
       setAppMode("marcom");
       setActiveView("events");
@@ -110,13 +110,24 @@ export function MobileBottomNav() {
             whileTap={shouldReduceMotion ? undefined : { scale: 0.92 }}
             onClick={() => tab.onClick(helpers)}
             className={cn(
-              "flex-1 h-full py-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] rounded-xl cursor-pointer group transition-all",
+              "relative flex-1 h-full py-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] rounded-xl cursor-pointer group transition-colors",
               active
-                ? "text-slate-900 dark:text-white font-semibold bg-slate-100/70 dark:bg-white/10"
+                ? "text-slate-900 dark:text-white font-semibold"
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200",
             )}
           >
-            <div className="relative flex items-center justify-center">
+            {active && (
+              <motion.div
+                layoutId="activeMobileBottomTab"
+                className="absolute inset-y-1 inset-x-0.5 bg-slate-100/80 dark:bg-white/10 rounded-xl"
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 450, damping: 32 }
+                }
+              />
+            )}
+            <div className="relative z-10 flex items-center justify-center">
               <Icon
                 className={cn(
                   "w-4 h-4 transition-transform group-hover:scale-105",
@@ -124,11 +135,10 @@ export function MobileBottomNav() {
                 )}
               />
             </div>
-            <span className="text-[10.5px] font-medium leading-none mt-0.5">{tab.label}</span>
+            <span className="relative z-10 text-[10.5px] font-medium leading-none mt-0.5">{tab.label}</span>
           </motion.button>
         );
       })}
     </nav>
   );
 }
-

@@ -20,6 +20,7 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
     - Outlet code scaled to `text-[10px] sm:text-xs font-mono`
   - Refined bottom navigation bar in `MobileBottomNav.tsx`:
     - Standardized tab label typography to `text-[10.5px] font-medium leading-none mt-0.5`
+    - Implemented spring-driven sliding active background pill using Framer Motion `layoutId="activeMobileBottomTab"`
   - Strictly preserved 100% desktop layouts and sizing via Tailwind responsive prefixes (`<mobile> sm:<desktop>`)
   - Added dedicated test suite `src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts` (5/5 tests passing)
   - Spec: `docs/superpowers/specs/2026-11-06-mobile-typographical-scale-and-density-design.md`
