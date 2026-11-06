@@ -62,3 +62,46 @@ describe("Mobile Typographical Scale & Desktop Invariants (ADR-0059)", () => {
   });
 });
 
+describe("Mobile Filter & Search Proportional Grid (ADR-0060)", () => {
+  const outletsHeaderPath = path.resolve(
+    process.cwd(),
+    "src/components/views/OutletsView/OutletsHeader.tsx"
+  );
+
+  it("verifies OutletsHeader dropdowns use 2-column mobile grid: grid grid-cols-2", () => {
+    const content = fs.readFileSync(outletsHeaderPath, "utf-8");
+    assert.ok(
+      content.includes("grid grid-cols-2"),
+      "Dropdown container must use 'grid grid-cols-2' on mobile"
+    );
+    assert.ok(
+      content.includes("w-full sm:w-44"),
+      "Dropdowns must use 'w-full sm:w-44' to span 50% on mobile and fixed 176px on desktop"
+    );
+  });
+
+  it("verifies OutletsHeader search input uses full width flex-1 on mobile row 2", () => {
+    const content = fs.readFileSync(outletsHeaderPath, "utf-8");
+    assert.ok(
+      content.includes("relative flex-1 sm:w-52") || content.includes("flex-1 sm:w-52"),
+      "Search container must use flex-1 on mobile and sm:w-52 on desktop"
+    );
+  });
+
+  it("verifies desktop invariants are strictly preserved (sm:w-44, sm:w-52, sm:flex)", () => {
+    const content = fs.readFileSync(outletsHeaderPath, "utf-8");
+    assert.ok(
+      content.includes("sm:flex") && content.includes("sm:items-center"),
+      "Dropdown wrapper must switch to 'sm:flex sm:items-center' on desktop"
+    );
+    assert.ok(
+      content.includes("sm:w-44"),
+      "Dropdowns must retain 'sm:w-44' on desktop"
+    );
+    assert.ok(
+      content.includes("sm:w-52"),
+      "Search box must retain 'sm:w-52' on desktop"
+    );
+  });
+});
+

@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-06]
 
+- `feat(mobile)`: Mobile filter and search proportional grid layout
+  - Reorganized filter dropdowns and search bar in `OutletsHeader.tsx` into a 2-row symmetrical responsive layout on mobile (< 640px):
+    - Row 1: Symmetrical 50/50 2-column grid (`grid grid-cols-2 gap-2 w-full`) with `w-full sm:w-44` dropdowns for Branch and Store Type filters, eliminating right margin void
+    - Row 2: Full-width search bar and reset container (`flex items-center gap-2 w-full`), expanding input to `flex-1 sm:w-52` and positioning `Reset Filters` (`shrink-0`) beside it
+  - Strictly preserved 100% desktop inline layout via Tailwind responsive prefixes (`sm:flex sm:items-center sm:gap-2 sm:w-auto`, `sm:w-44`, `sm:w-52`)
+  - Added unit test suite in `src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts` (8/8 tests passing)
+  - Spec: `docs/superpowers/specs/2026-11-06-mobile-filter-search-proportional-grid-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-mobile-filter-search-proportional-grid.md`
+  - Refs: `docs/adr/0060-mobile-filter-and-search-proportional-grid-layout.md` (ADR-0060)
+  - Gates: `npm test` 911/911 passed across 157 suites (0 failures); `npm run build:check` 0 errors; `npm run drift:check` clean (87/87 specs paired); `npm run test:smoke` 139/139 passed
+
 - `feat(mobile)`: Mobile typographical scale and compact visual hierarchy standardization
   - Standardized mobile page headers (`OutletsHeader.tsx`, `PlacementsHeader.tsx`, `EventsHeader.tsx`):
     - Scaled page title H1 down to `text-base sm:text-xl font-bold` (16px on mobile, 20px on desktop)

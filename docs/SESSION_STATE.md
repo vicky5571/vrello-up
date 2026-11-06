@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Typographical Scale and Visual Hierarchy Standardization (ADR-0059) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile Filter & Search Proportional Grid Layout (ADR-0060) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Typographical Scale and Visual Hierarchy Standardization (ADR-0059) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Shell UI/UX Polish and Viewport Optimization (ADR-0058) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Responsiveness Chassis and Navigation Architecture (ADR-0057) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Hide Brain² AI Assistant from User-Facing Navigation Surfaces (ADR-0056) — **IMPLEMENTATION COMPLETE**  
@@ -16,6 +17,23 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Implementasi Mobile Filter & Search Proportional Grid Layout (ADR-0060 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts`):**
+     - Memverifikasi dropdown filter dibungkus dalam 2-column mobile grid: `grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center`.
+     - Memverifikasi komponen dropdown menggunakan `w-full sm:w-44` agar membentang simetris 50% di mobile dan fixed 176px di desktop.
+     - Memverifikasi kolom pencarian menggunakan `flex-1 sm:w-52` sehingga membentang 100% penuh di baris kedua mobile.
+     - Memverifikasi proteksi invarian desktop tetap 100% utuh (`sm:w-44`, `sm:w-52`, `sm:flex sm:items-center`).
+     - Seluruh 8 assertions lulus (8/8 tests passing).
+   - **Refaktor Komponen Layout Filter (`OutletsHeader.tsx`):**
+     - Membungkus filter dan pencarian dalam container responsif `flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto`.
+     - Mengelompokkan *All Branches* dan *All Store Types* ke dalam Baris 1 mobile (`grid grid-cols-2`), melenyapkan ruang kosong asimetris di margin kanan layar smartphone.
+     - Mengelompokkan input pencarian dan tombol *Reset Filters* ke dalam Baris 2 mobile (`flex items-center gap-2 w-full`), memberikan area sentuh pencarian yang luas dan proporsional.
+   - **Verifikasi Invarian & Drift Check:**
+     - `npx tsx --test src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts` ✅ (8/8 pass).
+     - `npm run drift:check` ✅ (87/87 spec-plan pairs valid, coordinator sizes ≤ 250 LOC, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
+     - `npm run test:smoke` ✅ (139/139 pass, 0 fail).
 
 1. **Implementasi Mobile Typographical Scale & Density Standardization (ADR-0059 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts`):**

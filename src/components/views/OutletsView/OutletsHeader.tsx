@@ -202,66 +202,72 @@ export function OutletsHeader({
         </div>
 
         {/* Filters & Search */}
-        <div className="flex flex-wrap items-center gap-2">
-          <CustomDropdown
-            value={selectedBranch}
-            onChange={onBranchChange}
-            options={[
-              { value: "ALL", label: "All Branches" },
-              ...branches.map((b) => ({
-                value: b.id,
-                label: `${b.name} (${b.code})`,
-              })),
-            ]}
-            ariaLabel="Filter by branch"
-            searchPlaceholder="Cari cabang..."
-            className="w-36 sm:w-44 text-xs sm:text-sm"
-          />
-
-          <CustomDropdown
-            value={selectedType}
-            onChange={onTypeChange}
-            options={[
-              { value: "ALL", label: "All Store Types" },
-              { value: "TRADITIONAL", label: "Traditional" },
-              { value: "MODERN_RETAIL", label: "Modern Retail" },
-              { value: "EXCLUSIVE", label: "Official Store / Exclusive" },
-              { value: "CAMPUS_OUTLET", label: "Campus Outlet" },
-            ]}
-            ariaLabel="Filter by store type"
-            searchPlaceholder="Cari tipe..."
-            className="w-36 sm:w-44 text-xs sm:text-sm"
-          />
-
-          <div className="relative w-44 sm:w-52 text-xs sm:text-sm">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Cari outlet, kota..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full h-8 sm:h-9 pl-9 pr-7 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {/* Row 1 on mobile: Symmetrical 50/50 2-Column Grid */}
+          <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center">
+            <CustomDropdown
+              value={selectedBranch}
+              onChange={onBranchChange}
+              options={[
+                { value: "ALL", label: "All Branches" },
+                ...branches.map((b) => ({
+                  value: b.id,
+                  label: `${b.name} (${b.code})`,
+                })),
+              ]}
+              ariaLabel="Filter by branch"
+              searchPlaceholder="Cari cabang..."
+              className="w-full sm:w-44 text-xs sm:text-sm"
             />
-            {searchQuery && (
+
+            <CustomDropdown
+              value={selectedType}
+              onChange={onTypeChange}
+              options={[
+                { value: "ALL", label: "All Store Types" },
+                { value: "TRADITIONAL", label: "Traditional" },
+                { value: "MODERN_RETAIL", label: "Modern Retail" },
+                { value: "EXCLUSIVE", label: "Official Store / Exclusive" },
+                { value: "CAMPUS_OUTLET", label: "Campus Outlet" },
+              ]}
+              ariaLabel="Filter by store type"
+              searchPlaceholder="Cari tipe..."
+              className="w-full sm:w-44 text-xs sm:text-sm"
+            />
+          </div>
+
+          {/* Row 2 on mobile: Full-Width Search & Reset Action */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-52 text-xs sm:text-sm">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Cari outlet, kota..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="w-full h-8 sm:h-9 pl-9 pr-7 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {isFiltered && (
               <button
                 type="button"
-                onClick={() => onSearchChange("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                onClick={onResetFilters}
+                className="text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 underline font-medium cursor-pointer shrink-0"
               >
-                <X className="w-3 h-3" />
+                Reset Filters
               </button>
             )}
           </div>
-
-          {isFiltered && (
-            <button
-              type="button"
-              onClick={onResetFilters}
-              className="text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 underline font-medium cursor-pointer shrink-0"
-            >
-              Reset Filters
-            </button>
-          )}
         </div>
       </div>
 
