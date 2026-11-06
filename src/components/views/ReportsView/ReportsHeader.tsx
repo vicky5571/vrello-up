@@ -62,7 +62,7 @@ export function ReportsHeader({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 justify-end sm:justify-start">
           <button
             type="button"
             onClick={fetchReports}
@@ -159,7 +159,7 @@ export function ReportsHeader({
           <button
             type="button"
             onClick={() => setShowCreateForm((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-2xs transition-colors cursor-pointer self-start sm:self-auto"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-2xs transition-colors cursor-pointer self-end sm:self-auto"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>{showCreateForm ? "Tutup Form Laporan" : "Buat Laporan Bulanan"}</span>

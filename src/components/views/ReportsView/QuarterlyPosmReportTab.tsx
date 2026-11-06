@@ -142,7 +142,7 @@ export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosm
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 justify-end sm:justify-start">
           <button
             type="button"
             onClick={() => fetchReportData(true)}

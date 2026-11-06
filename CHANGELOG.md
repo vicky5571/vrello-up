@@ -6,6 +6,14 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(reports)`: Right-align header action buttons on mobile
+  - Mobile: aligned primary action row (`Refresh`, `Export Center`) to the right (`justify-end sm:justify-start`) and aligned `+ Buat Laporan Bulanan` button to the right (`self-end sm:self-auto`)
+  - Mobile: aligned `QuarterlyPosmReportTab` action row to the right (`justify-end sm:justify-start`)
+  - Desktop 100% preserved: action rows stay left-aligned within columns (`sm:justify-start`) and button stays standard flow (`sm:self-auto`)
+  - Added TDD unit test suite in `src/components/views/ReportsView/reportsHeaderResponsiveness.test.ts` (3/3 tests passing)
+  - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (958/958), `npm run test:smoke` ✅ (149/149)
+  - Refs: direct mobile UX review request
+
 - `fix(documents)`: Right-align header action buttons on mobile
   - Mobile: aligned `Refresh` and `Tambah Dokumen` buttons to the right (`justify-end sm:justify-start`) for consistent one-handed thumb ergonomics
   - Desktop preserved: action buttons remain left-aligned in their column (`sm:justify-start`), and search/switcher controls are 100% untouched
