@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Reports Header Mobile Action Alignment — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile Analytics ROI Header Layout and Horizontal KPI Carousel (ADR-0065) — **PLANNING COMPLETE (READY FOR EXECUTION)**  
+**Previous Feature:** Reports Header Mobile Action Alignment — **IMPLEMENTATION COMPLETE**  
 **Latest Fix:** Documents Header Mobile Action Alignment — **IMPLEMENTATION COMPLETE**  
 **Previous Fix:** Equipment Inventory Mobile Responsiveness & Layout Optimization — **IMPLEMENTATION COMPLETE**  
 **Previous Fix:** Branches Header Anti-Shift Reset Filters & Mobile Full-Width Search — **IMPLEMENTATION COMPLETE**  
@@ -26,6 +27,20 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Perencanaan Arsitektur Mobile Analytics ROI Header Layout & Horizontal KPI Carousel (ADR-0065 — Planning Complete):**
+   - **Diagnostik & Keputusan Tata Letak:**
+     - Menstandarkan perataan tombol `[🔄]` (Refresh) ke margin kanan pada mobile (`justify-end sm:justify-start`), menyelaraskan dengan ergonomi jempol satu tangan di halaman lainnya.
+     - Menyusun ulang toolbar filter menjadi 2 baris terorganisir: Baris 1 berisi dropdown *Branch* dan *Quarter* dalam **Grid 2 Kolom Simetris 50/50** (`grid grid-cols-2 gap-2 w-full sm:w-auto`), melenyapkan pemotongan teks `"Semua Bran..."` dan `"Semua K..."`. Baris 2 berisi *Brand Toggle Pills* dan tombol kondisional *Reset Filters* dengan penataan `justify-between` (zero layout shift).
+     - Mentransformasikan 4 kartu KPI dari grid 2x2 sempit yang memotong teks footer (`"Rata-ra..."`, `"17/22 terpas..."`) menjadi **Horizontal Scroll Carousel** pada mobile (`flex overflow-x-auto pb-2 -mx-4 px-4 min-w-[210px] shrink-0`), memberikan ruang horizontal ~210px per kartu dan menghemat ~140px tinggi vertikal layar (*above the fold*).
+     - **Invarian Desktop Terjaga 100%**: Pada layar $\ge 640\text{px}$ (`sm:` / `lg:`), kartu kembali ke grid 4 kolom (`sm:grid-cols-2 lg:grid-cols-4`), toolbar filter kembali menjadi 1 baris inline (`sm:flex`), dan tombol refresh kembali ke `sm:justify-start`.
+   - **Dokumen Perencanaan Lengkap:**
+     - ADR: `docs/adr/0065-mobile-analytics-roi-header-layout-and-horizontal-kpi-carousel.md` (ACCEPTED).
+     - Spec: `docs/superpowers/specs/2026-11-07-mobile-analytics-roi-header-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-07-mobile-analytics-roi-header.md` (APPROVED).
+     - Handover: `docs/handover-mobile-analytics-roi-header.md` (READY FOR EXECUTION).
+   - **Verifikasi Drift Check:**
+     - `npm run drift:check` ✅ (92/92 spec-plan pairs valid, 0 drift).
 
 1. **Reports Header Mobile Action Alignment (Implementation Complete):**
    - **Fix (`ReportsHeader.tsx` & `QuarterlyPosmReportTab.tsx`):** Aligned primary action row (`Refresh`, `Export Center`) to the right (`justify-end sm:justify-start`) and aligned `+ Buat Laporan Bulanan` button to the right (`self-end sm:self-auto`) on mobile viewports. Aligned quarterly POSM report tab action controls to the right on mobile (`justify-end sm:justify-start`).
