@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Placements Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **PLANNING COMPLETE / READY FOR IMPLEMENTATION**  
+**Previous Feature:** Placements Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Outlets Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Analytics ROI Header Layout and Horizontal KPI Carousel (ADR-0065) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Reports Header Mobile Action Alignment — **IMPLEMENTATION COMPLETE**  
@@ -30,7 +31,20 @@
 
 ## What Was Completed This Session
 
-1. **Perbaikan Proporsi & Tinggi Active Pill Mobile View Switcher Placements (Implementation Complete):**
+1. **Perencanaan Arsitektur Mobile Bottom Navigation — Penggantian Home dengan Pipeline (ADR-0066 — Planning Complete):**
+   - **Keputusan Desain & Rationale:**
+     - Menggantikan slot 1 pada bilah navigasi bawah mobile (`MobileBottomNav.tsx`) dari `Home` menjadi `Pipeline` (`id: "pipeline"`, icon: `Layers`, activeColor: `text-indigo-500`).
+     - Mengeliminasi redundansi tombol `Home` pada mobile yang sebelumnya hanya mengarah ke Kanban Board Tasks. Menu Kanban Board tetap dapat diakses penuh melalui drawer samping (`Sidebar.tsx`) di bawah mode Tasks.
+     - Mewujudkan bilah navigasi bawah 100% khusus modul kerja operasional Marcom lapangan: **Pipeline**, **Outlets**, **Placements**, **Events**, serta tombol **Menu**.
+     - Invarian desktop tetap terjaga 100% pada `GlobalRail.tsx` dan `Sidebar.tsx`.
+   - **Dokumen Perencanaan Lengkap Disusun:**
+     - ADR: `docs/adr/0066-mobile-bottom-nav-replace-home-with-pipeline.md` (ACCEPTED).
+     - Spec: `docs/superpowers/specs/2026-11-07-mobile-bottom-nav-pipeline-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-07-mobile-bottom-nav-pipeline.md` (APPROVED).
+     - Handover: `docs/handover-mobile-bottom-nav-pipeline.md` (READY FOR EXECUTION).
+   - **Verifikasi Drift Check:** `npm run drift:check` ✅ (93/93 spec-plan pairs valid, 0 drift).
+
+2. **Perbaikan Proporsi & Tinggi Active Pill Mobile View Switcher Placements (Implementation Complete):**
    - **Diagnostik Masalah:**
      - Pada viewport mobile (< 640px), kontainer tab switcher di `PlacementFilterControls.tsx` menggunakan `flex items-center`. Tombol tab anak (`motion.button`) tidak meregang (*stretch*), melainkan tingginya murni dihitung dari jumlah baris teks masing-masing.
      - Tab `Table` dan `Map View` berada pada 1 baris (~30px), sedangkan tab `Rekap Kuartal` berada pada 2 baris (~46px). Akibatnya, saat `Table` atau `Map View` aktif, *active pill* putih (`absolute inset-0`) menjadi kerdil (~30px) dan mengambang di tengah track abu-abu (48px) dengan gap kosong ~8px di atas dan bawahnya.
