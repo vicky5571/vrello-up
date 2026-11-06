@@ -105,3 +105,30 @@ describe("Mobile Filter & Search Proportional Grid (ADR-0060)", () => {
   });
 });
 
+describe("Mobile Action Row Alignment & View Switcher (ADR-0061)", () => {
+  const outletsHeaderPath = path.resolve(
+    process.cwd(),
+    "src/components/views/OutletsView/OutletsHeader.tsx"
+  );
+
+  it("verifies OutletsHeader action row uses right alignment on mobile: justify-end sm:justify-start w-full sm:w-auto", () => {
+    const content = fs.readFileSync(outletsHeaderPath, "utf-8");
+    assert.ok(
+      content.includes("justify-end sm:justify-start") && content.includes("w-full sm:w-auto"),
+      "OutletsHeader action row must be right-aligned on mobile"
+    );
+  });
+
+  it("verifies OutletsHeader view switcher container uses w-full sm:w-auto and flex-1 tabs", () => {
+    const content = fs.readFileSync(outletsHeaderPath, "utf-8");
+    assert.ok(
+      content.includes("w-full sm:w-auto flex items-center"),
+      "OutletsHeader view switcher must use w-full sm:w-auto"
+    );
+    assert.ok(
+      content.includes("flex-1 sm:flex-initial") && content.includes("justify-center"),
+      "OutletsHeader view switcher tabs must use flex-1 sm:flex-initial justify-center"
+    );
+  });
+});
+

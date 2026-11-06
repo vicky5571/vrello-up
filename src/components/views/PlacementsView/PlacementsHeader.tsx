@@ -45,7 +45,7 @@ export function PlacementsHeader({
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center justify-end sm:justify-start gap-1.5 sm:gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={onRefresh}

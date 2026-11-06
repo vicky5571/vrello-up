@@ -87,7 +87,7 @@ export function OutletsHeader({
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center justify-end sm:justify-start gap-1.5 sm:gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={onRefresh}
@@ -117,7 +117,7 @@ export function OutletsHeader({
         <div
           role="tablist"
           aria-label="View Mode Switcher"
-          className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 self-start"
+          className="w-full sm:w-auto flex items-center bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80"
         >
           <motion.button
             type="button"
@@ -126,7 +126,7 @@ export function OutletsHeader({
             whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => onViewModeChange("table")}
             className={cn(
-              "relative inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
+              "relative flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer",
               viewMode === "table"
                 ? "text-orange-600 dark:text-orange-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
@@ -151,7 +151,7 @@ export function OutletsHeader({
             whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => onViewModeChange("map")}
             className={cn(
-              "relative inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
+              "relative flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer",
               viewMode === "map"
                 ? "text-orange-600 dark:text-orange-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
@@ -176,7 +176,7 @@ export function OutletsHeader({
             whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => onViewModeChange("approval")}
             className={cn(
-              "relative inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
+              "relative flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer",
               viewMode === "approval"
                 ? "text-orange-600 dark:text-orange-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",

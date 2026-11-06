@@ -58,7 +58,7 @@ export function EventsHeader({
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center justify-end sm:justify-start gap-1.5 sm:gap-2 w-full sm:w-auto">
           {/* Refresh Button */}
           <button
             type="button"
@@ -89,7 +89,7 @@ export function EventsHeader({
         <div
           role="tablist"
           aria-label="Field event view modes"
-          className="relative flex items-center rounded-lg border border-slate-200 dark:border-slate-800 p-0.5 bg-slate-100 dark:bg-slate-800 select-none"
+          className="relative w-full sm:w-auto flex items-center rounded-lg border border-slate-200 dark:border-slate-800 p-0.5 bg-slate-100 dark:bg-slate-800 select-none"
         >
           {VIEW_OPTIONS.map((opt) => {
             const Icon = opt.icon;
@@ -103,7 +103,7 @@ export function EventsHeader({
                 whileTap={{ scale: 0.95 }}
                 onClick={() => onViewModeChange(opt.id)}
                 className={cn(
-                  "relative px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer",
+                  "relative flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-md text-xs font-medium transition-colors cursor-pointer",
                   isActive
                     ? "text-slate-900 dark:text-slate-100 font-semibold"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
