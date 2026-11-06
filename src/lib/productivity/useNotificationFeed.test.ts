@@ -107,4 +107,22 @@ describe("TopNav Notification Feed Lifecycle (ADR-0032)", () => {
       `NotificationCenter.tsx line count is ${loc}`
     );
   });
+
+  it("verifies NotificationCenter employs viewport-bounded mobile positioning with desktop preservation (ADR-0064)", () => {
+    const filePath = path.resolve(process.cwd(), "src/components/layout/NotificationCenter.tsx");
+    const content = fs.readFileSync(filePath, "utf-8");
+
+    assert.ok(
+      content.includes("fixed inset-x-3 top-13"),
+      "NotificationCenter must use 'fixed inset-x-3 top-13' on mobile to avoid left clipping"
+    );
+    assert.ok(
+      content.includes("fixed inset-0 bg-slate-900/20") && content.includes("sm:hidden"),
+      "NotificationCenter must render a mobile-only backdrop for tap dismissal"
+    );
+    assert.ok(
+      content.includes("sm:absolute") && content.includes("sm:right-0") && content.includes("sm:w-86"),
+      "NotificationCenter must preserve desktop classes 'sm:absolute sm:right-0 sm:w-86'"
+    );
+  });
 });

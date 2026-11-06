@@ -1,7 +1,7 @@
 # Technical Specification: Mobile Notification Center Popover Viewport-Bounded Layout
 
 - **Date:** 2026-11-06
-- **Status:** DRAFT
+- **Status:** IMPLEMENTED
 - **Refs:** ADR-0064
 - **Target File:** `src/components/layout/NotificationCenter.tsx`
 
@@ -98,13 +98,13 @@ This specification addresses the horizontal clipping defect of the notification 
 ## 4. Acceptance Criteria & Non-Goals
 
 ### 4.1 Acceptance Criteria
-- [ ] On mobile screens (< 640px), the *Activity Center* popover does not overflow past the left screen edge.
-- [ ] On mobile screens (< 640px), the popover renders with symmetrical 12px margins (`inset-x-3`) and directly beneath the header (`top-13`).
-- [ ] A mobile backdrop overlay renders when the popover is open, and tapping it immediately closes the popover (`setIsOpen(false)`).
-- [ ] On desktop screens ($\ge 640\text{px}$), the popover reverts to `sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-86` with identical original styling and zero backdrop overlay (`sm:hidden`).
-- [ ] Notification feed derivation, click navigation (opening task or MOU), and *"Mark all read"* functionality remain 100% operational.
-- [ ] Coordinator line limits remain strictly $\le 250$ LOC (`NotificationCenter.tsx` monitored).
-- [ ] All unit tests pass with 0 failures.
+- [x] On mobile screens (< 640px), the *Activity Center* popover does not overflow past the left screen edge.
+- [x] On mobile screens (< 640px), the popover renders with symmetrical 12px margins (`inset-x-3`) and directly beneath the header (`top-13`).
+- [x] A mobile backdrop overlay renders when the popover is open, and tapping it immediately closes the popover (`setIsOpen(false)`).
+- [x] On desktop screens ($\ge 640\text{px}$), the popover reverts to `sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-86` with identical original styling and zero backdrop overlay (`sm:hidden`).
+- [x] Notification feed derivation, click navigation (opening task or MOU), and *"Mark all read"* functionality remain 100% operational.
+- [x] Coordinator line limits remain strictly $\le 250$ LOC (`NotificationCenter.tsx` monitored).
+- [x] All unit tests pass with 0 failures.
 
 ### 4.2 Non-Goals
 - Altering the notification aggregation logic in `useNotificationFeed.ts` or `notifications.ts`.

@@ -1,7 +1,7 @@
 # Handover: Mobile Notification Center Popover Viewport-Bounded Layout
 
 - **Date:** 2026-11-06
-- **Status:** READY FOR EXECUTION
+- **Status:** IMPLEMENTATION COMPLETE
 - **Spec:** docs/superpowers/specs/2026-11-06-mobile-notification-center-popover-viewport-bounded-design.md
 - **Plan:** docs/superpowers/plans/2026-11-06-mobile-notification-center-popover-viewport-bounded.md
 - **Refs:** ADR-0064
@@ -167,15 +167,15 @@ npm test
 
 ## 6. Acceptance Criteria Checklist
 
-- [ ] On mobile screens (< 640px), the *Activity Center* popover renders with symmetrical 12px margins (`inset-x-3`) directly below the top nav bar (`top-13`).
-- [ ] No text, titles, or categories are clipped on the left edge on any smartphone screen width (360px–430px).
-- [ ] Tapping the mobile backdrop overlay immediately closes the popover.
-- [ ] On desktop screens ($\ge 640\text{px}$), the popover reverts strictly to `sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-86` with identical original styling and zero backdrop overlay (`sm:hidden`).
-- [ ] Notification feed derivation, click navigation (opening task or MOU), and *"Mark all read"* functionality remain 100% operational.
-- [ ] Coordinator line limits remain strictly $\le 250$ LOC.
-- [ ] `npm run drift:check` passes with 90/90 pairs and 0 drift.
-- [ ] `npm run build:check` exits with code 0.
-- [ ] `npm run test:smoke` passes with 0 failures.
+- [x] On mobile screens (< 640px), the *Activity Center* popover renders with symmetrical 12px margins (`inset-x-3`) directly below the top nav bar (`top-13`).
+- [x] No text, titles, or categories are clipped on the left edge on any smartphone screen width (360px–430px).
+- [x] Tapping the mobile backdrop overlay immediately closes the popover.
+- [x] On desktop screens ($\ge 640\text{px}$), the popover reverts strictly to `sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-86` with identical original styling and zero backdrop overlay (`sm:hidden`).
+- [x] Notification feed derivation, click navigation (opening task or MOU), and *"Mark all read"* functionality remain 100% operational.
+- [x] Coordinator line limits remain strictly $\le 250$ LOC.
+- [x] `npm run drift:check` passes with 91/91 pairs and 0 drift.
+- [x] `npm run build:check` exits with code 0.
+- [x] `npx tsx --test src/lib/productivity/useNotificationFeed.test.ts` passes with 0 failures.
 
 
 

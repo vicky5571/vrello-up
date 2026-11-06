@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-06]
 
+- `feat(mobile)`: Bound notification center popover to viewport and add mobile backdrop
+  - Decoupled `NotificationCenter` popover from relative bell icon trigger on mobile smartphones (< 640px) using `fixed inset-x-3 top-13 z-50 max-h-[82vh] flex flex-col`, eliminating left-edge clipping overflow
+  - Introduced a tap-dismissable mobile backdrop overlay (`fixed inset-0 bg-slate-900/20 backdrop-blur-2xs z-40 sm:hidden`) for intuitive dismissal outside the panel
+  - Strictly preserved 100% desktop placement and ergonomics on screens $\ge 640\text{px}$ (`sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-86`)
+  - Maintained coordinator file boundaries and compact implementation
+  - Added TDD unit test suite in `src/lib/productivity/useNotificationFeed.test.ts` (5/5 tests passing)
+  - Spec: `docs/superpowers/specs/2026-11-06-mobile-notification-center-popover-viewport-bounded-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-mobile-notification-center-popover-viewport-bounded.md`
+  - Refs: `docs/adr/0064-mobile-notification-center-popover-viewport-bounded-layout.md` (ADR-0064)
+
 - `feat(mobile)`: Mobile sidebar slide transition and backdrop animation
   - Introduced fluid slide-in and slide-out transitions (`x: "-100%" -> 0 -> "-100%"`) and backdrop fade-in and fade-out transitions (`opacity: 0 -> 1 -> 0`) using Framer Motion `<AnimatePresence>` in `Sidebar.tsx`
   - Applied spring physics (`damping: 28, stiffness: 300`) on `motion.aside` for a responsive native sheet gesture feel on smartphone viewports (< 768px)

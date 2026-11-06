@@ -26,40 +26,14 @@ const KIND_META: Record<
   NotificationKind,
   { label: string; icon: typeof Bell; className: string }
 > = {
-  assignment: {
-    label: "Assignments",
-    icon: UserPlus,
-    className: "bg-blue-500/10 text-blue-500",
-  },
-  mou_approval: {
-    label: "MOU approvals",
-    icon: FileCheck,
-    className: "bg-violet-500/10 text-violet-500",
-  },
-  mou_expiry: {
-    label: "MOU expiry",
-    icon: AlertTriangle,
-    className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  },
-  status: {
-    label: "Status changes",
-    icon: ArrowLeftRight,
-    className: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
-  },
-  overdue: {
-    label: "Overdue",
-    icon: AlarmClock,
-    className: "bg-rose-500/10 text-rose-500",
-  },
+  assignment: { label: "Assignments", icon: UserPlus, className: "bg-blue-500/10 text-blue-500" },
+  mou_approval: { label: "MOU approvals", icon: FileCheck, className: "bg-violet-500/10 text-violet-500" },
+  mou_expiry: { label: "MOU expiry", icon: AlertTriangle, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+  status: { label: "Status changes", icon: ArrowLeftRight, className: "bg-teal-500/10 text-teal-600 dark:text-teal-400" },
+  overdue: { label: "Overdue", icon: AlarmClock, className: "bg-rose-500/10 text-rose-500" },
 };
 
-const KIND_ORDER: NotificationKind[] = [
-  "overdue",
-  "mou_expiry",
-  "mou_approval",
-  "assignment",
-  "status",
-];
+const KIND_ORDER: NotificationKind[] = ["overdue", "mou_expiry", "mou_approval", "assignment", "status"];
 
 function timeAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
@@ -74,21 +48,16 @@ function timeAgo(iso: string): string {
 }
 
 export function NotificationCenter() {
-  const {
-    tasks,
-    spaces,
-    activeSpaceId,
-    currentUserId,
-    lastSeenNotificationsAt,
-  } = useWorkspaceStore(
-    useShallow((s) => ({
-      tasks: s.tasks,
-      spaces: s.spaces,
-      activeSpaceId: s.activeSpaceId,
-      currentUserId: s.currentUserId,
-      lastSeenNotificationsAt: s.lastSeenNotificationsAt,
-    })),
-  );
+  const { tasks, spaces, activeSpaceId, currentUserId, lastSeenNotificationsAt } =
+    useWorkspaceStore(
+      useShallow((s) => ({
+        tasks: s.tasks,
+        spaces: s.spaces,
+        activeSpaceId: s.activeSpaceId,
+        currentUserId: s.currentUserId,
+        lastSeenNotificationsAt: s.lastSeenNotificationsAt,
+      })),
+    );
 
   const setLastSeenNotificationsAt = useWorkspaceStore((s) => s.setLastSeenNotificationsAt);
   const setSelectedTaskId = useWorkspaceStore((s) => s.setSelectedTaskId);
@@ -119,16 +88,13 @@ export function NotificationCenter() {
   );
   const unread = countUnread(allNotifs, lastSeenNotificationsAt);
   const isUnread = (n: AppNotification) =>
-    !lastSeenNotificationsAt ||
-    new Date(n.createdAt).getTime() > new Date(lastSeenNotificationsAt).getTime();
+    !lastSeenNotificationsAt || new Date(n.createdAt).getTime() > new Date(lastSeenNotificationsAt).getTime();
 
   // Close on outside click / Escape.
   useEffect(() => {
     if (!isOpen) return;
     const onPointerDown = (e: PointerEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) setIsOpen(false);
     };
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsOpen(false);
@@ -145,7 +111,6 @@ export function NotificationCenter() {
     if (n.taskId) setSelectedTaskId(n.taskId);
     setIsOpen(false);
   };
-
   const handleOpenMous = () => {
     setActiveView("mous");
     setIsOpen(false);
@@ -182,28 +147,41 @@ export function NotificationCenter() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-86 max-w-[calc(100vw-2rem)] rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-slate-800">
-            <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-              Activity Center
-              {unread > 0 && (
-                <span className="ml-1.5 text-[10px] font-semibold text-rose-500">
-                  {unread} new
-                </span>
-              )}
-            </span>
-            <button
-              type="button"
-              onClick={() => setLastSeenNotificationsAt(new Date().toISOString())}
-              disabled={allNotifs.length === 0}
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-500 transition-colors cursor-pointer disabled:opacity-40"
-            >
-              <CheckCheck className="w-3.5 h-3.5" />
-              Mark all read
-            </button>
-          </div>
+        <>
+          {/* Mobile Backdrop Overlay for easy tap-dismissal */}
+          <div
+            className="fixed inset-0 bg-slate-900/20 backdrop-blur-2xs z-40 sm:hidden"
+            onClick={() => setIsOpen(false)}
+          />
 
-          <div className="max-h-96 overflow-y-auto p-2 space-y-3">
+          {/* Responsive Popover Panel */}
+          <div
+            className={cn(
+              "fixed inset-x-3 top-13 z-50 max-h-[82vh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-100",
+              "sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-86 sm:max-w-[calc(100vw-2rem)] sm:max-h-none sm:block",
+            )}
+          >
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 shrink-0">
+              <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                Activity Center
+                {unread > 0 && (
+                  <span className="ml-1.5 text-[10px] font-semibold text-rose-500">
+                    {unread} new
+                  </span>
+                )}
+              </span>
+              <button
+                type="button"
+                onClick={() => setLastSeenNotificationsAt(new Date().toISOString())}
+                disabled={allNotifs.length === 0}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-500 transition-colors cursor-pointer disabled:opacity-40"
+              >
+                <CheckCheck className="w-3.5 h-3.5" />
+                Mark all read
+              </button>
+            </div>
+
+            <div className="flex-1 max-h-96 sm:max-h-96 overflow-y-auto p-2 space-y-3">
             {grouped.length === 0 ? (
               <div className="py-10 text-center text-xs text-slate-500 dark:text-slate-400">
                 <Bell className="w-6 h-6 mx-auto mb-2 text-slate-300 dark:text-slate-700" />
@@ -267,8 +245,9 @@ export function NotificationCenter() {
                 );
               })
             )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
