@@ -75,36 +75,36 @@ export function OutletsHeader({
       {/* 1. Title Row & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Store className="w-5 h-5 text-orange-500" />
+          <h1 className="text-base sm:text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 sm:gap-2">
+            <Store className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
             Outlets Directory
-            <span className="px-2 py-0.5 text-[11px] font-semibold bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300 rounded-md border border-orange-200/60 dark:border-orange-800/60">
+            <span className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300 rounded-md border border-orange-200/60 dark:border-orange-800/60">
               {totalOutlets} outlet
             </span>
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-tight sm:leading-normal">
             Pusat data jaringan outlet, integrasi MoU, riwayat branding fisik, dan geolokasi.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={onRefresh}
             disabled={isLoading}
             title="Refresh outlets data"
-            className="p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+            className="p-1.5 sm:p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
+            <RefreshCw className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4", isLoading && "animate-spin")} />
           </button>
 
           {canAddOutlet && (
             <button
               type="button"
               onClick={onAddOutlet}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
+              className="inline-flex items-center gap-1 sm:gap-1.5 h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-lg text-xs sm:text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 transition-colors shadow-2xs cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>{canManage ? "Add Outlet" : "Ajukan Toko Baru"}</span>
             </button>
           )}
@@ -126,7 +126,7 @@ export function OutletsHeader({
             whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => onViewModeChange("table")}
             className={cn(
-              "relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
+              "relative inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
               viewMode === "table"
                 ? "text-orange-600 dark:text-orange-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
@@ -151,7 +151,7 @@ export function OutletsHeader({
             whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => onViewModeChange("map")}
             className={cn(
-              "relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
+              "relative inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
               viewMode === "map"
                 ? "text-orange-600 dark:text-orange-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
@@ -176,7 +176,7 @@ export function OutletsHeader({
             whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
             onClick={() => onViewModeChange("approval")}
             className={cn(
-              "relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
+              "relative inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer",
               viewMode === "approval"
                 ? "text-orange-600 dark:text-orange-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
@@ -215,7 +215,7 @@ export function OutletsHeader({
             ]}
             ariaLabel="Filter by branch"
             searchPlaceholder="Cari cabang..."
-            className="w-36 sm:w-44 text-xs"
+            className="w-36 sm:w-44 text-xs sm:text-sm"
           />
 
           <CustomDropdown
@@ -230,17 +230,17 @@ export function OutletsHeader({
             ]}
             ariaLabel="Filter by store type"
             searchPlaceholder="Cari tipe..."
-            className="w-36 sm:w-44 text-xs"
+            className="w-36 sm:w-44 text-xs sm:text-sm"
           />
 
-          <div className="relative w-44 sm:w-52 text-xs">
+          <div className="relative w-44 sm:w-52 text-xs sm:text-sm">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Cari outlet, kota..."
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full pl-9 pr-7 py-1.5 text-xs rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
+              className="w-full h-8 sm:h-9 pl-9 pr-7 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-orange-500"
             />
             {searchQuery && (
               <button

@@ -184,7 +184,11 @@ export function OutletsView() {
           header: "Code",
           size: 95,
           minSize: 80,
-          cell: ({ row }) => <span className="font-semibold text-slate-900 dark:text-slate-100">{row.original.code}</span>,
+          cell: ({ row }) => (
+            <span className="font-mono text-[10px] sm:text-xs font-semibold text-slate-900 dark:text-slate-100">
+              {row.original.code}
+            </span>
+          ),
         }),
         columnHelper.accessor("name", {
           id: "name",
@@ -198,7 +202,7 @@ export function OutletsView() {
                 e.stopPropagation();
                 setSelectedOutletIdForDrawer(row.original.id);
               }}
-              className="group text-left font-semibold text-slate-800 dark:text-slate-100 hover:text-orange-600 dark:hover:text-orange-400 flex items-center gap-1.5 cursor-pointer"
+              className="group text-left text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 hover:text-orange-600 dark:hover:text-orange-400 flex items-center gap-1.5 cursor-pointer py-2 sm:py-3.5 px-2.5 sm:px-3"
               title="Klik untuk membuka Profil 360°"
             >
               <span className="truncate">{row.original.name}</span>

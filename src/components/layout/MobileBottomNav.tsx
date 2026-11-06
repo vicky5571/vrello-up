@@ -124,7 +124,7 @@ export function MobileBottomNav() {
                 )}
               />
             </div>
-            <span className="text-[10px] leading-tight font-medium">{tab.label}</span>
+            <span className="text-[10.5px] font-medium leading-none mt-0.5">{tab.label}</span>
           </motion.button>
         );
       })}

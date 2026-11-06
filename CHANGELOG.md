@@ -6,6 +6,48 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-06]
 
+- `feat(mobile)`: Mobile typographical scale and compact visual hierarchy standardization
+  - Standardized mobile page headers (`OutletsHeader.tsx`, `PlacementsHeader.tsx`, `EventsHeader.tsx`):
+    - Scaled page title H1 down to `text-base sm:text-xl font-bold` (16px on mobile, 20px on desktop)
+    - Scaled count badge to `text-[10px] sm:text-[11px]`
+    - Scaled view description subtitle to `text-[11px] sm:text-xs leading-tight sm:leading-normal`
+    - Scaled action buttons (`Refresh`, `+ Add Outlet`, `Export`, `New Field Event`) to `h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3.5`
+    - Scaled filter dropdowns and search inputs to `h-8 sm:h-9 text-xs sm:text-sm`
+    - Scaled view switcher pills to `px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs`
+  - Optimized data table row density in `OutletsView.tsx`:
+    - Row cell padding reduced on mobile to `py-2 sm:py-3.5 px-2.5 sm:px-3`
+    - Outlet name scaled to `text-xs sm:text-sm font-semibold`
+    - Outlet code scaled to `text-[10px] sm:text-xs font-mono`
+  - Refined bottom navigation bar in `MobileBottomNav.tsx`:
+    - Standardized tab label typography to `text-[10.5px] font-medium leading-none mt-0.5`
+  - Strictly preserved 100% desktop layouts and sizing via Tailwind responsive prefixes (`<mobile> sm:<desktop>`)
+  - Added dedicated test suite `src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts` (5/5 tests passing)
+  - Spec: `docs/superpowers/specs/2026-11-06-mobile-typographical-scale-and-density-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-mobile-typographical-scale-and-density.md`
+  - Refs: `docs/adr/0059-mobile-typographical-scale-and-density-standardization.md` (ADR-0059)
+  - Gates: `npm test` 911/911 passed across 157 suites (0 failures); `npm run build:check` 0 errors; `npm run drift:check` clean (86/86 specs paired); `npm run test:smoke` 139/139 passed
+
+- `feat(mobile)`: Mobile shell UI/UX polish and viewport optimization
+  - De-duplicated header hamburger button in `TopNav.tsx` and standardized on single canonical hamburger in `TopNavBreadcrumbs.tsx`
+  - Responsive breadcrumbs in `TopNavBreadcrumbs.tsx`: displays compact `[☰ Menu] [Active View Label]` on mobile (`< 640px`)
+  - Universal mobile horizontal carousel strip in `KpiSummaryCards.tsx` (`mobileStrip = true` by default)
+  - Refined modern active pill styling in `MobileBottomNav.tsx` (`bg-slate-100/70 dark:bg-white/10`)
+  - Edge-to-edge native sheet in `Sidebar.tsx` (`fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] rounded-r-2xl border-r shadow-2xl`)
+  - Added test suite `src/components/layout/MobileBottomNav.test.ts` (6/6 tests passing)
+  - Spec: `docs/superpowers/specs/2026-11-06-mobile-shell-ui-ux-polish-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-mobile-shell-ui-ux-polish.md`
+  - Refs: `docs/adr/0058-mobile-shell-ui-ux-polish-and-viewport-optimization.md` (ADR-0058)
+  - Gates: `npm test` 906/906 passed across 156 suites (0 failures); `npm run build:check` 0 errors; `npm run drift:check` clean (84/84 specs paired); `npm run test:smoke` 138/138 passed
+
+- `feat(mobile)`: Mobile responsiveness chassis and navigation architecture
+  - Implemented responsive mobile viewport chassis in `src/app/page.tsx` with dynamic padding `pb-16 md:pb-0`
+  - Created standalone fixed bottom navigation bar `src/components/layout/MobileBottomNav.tsx` (< 150 LOC) with 5 primary thumb-zone tabs
+  - Added test suite `src/components/layout/MobileBottomNav.test.ts`
+  - Spec: `docs/superpowers/specs/2026-11-06-mobile-responsiveness-chassis-and-navigation-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-mobile-responsiveness-chassis-and-navigation.md`
+  - Refs: `docs/adr/0057-mobile-responsiveness-chassis-and-navigation-architecture.md` (ADR-0057)
+  - Gates: `npm test` 900/900 passed across 156 suites (0 failures); `npm run build:check` 0 errors; `npm run drift:check` clean (83/83 specs paired); `npm run test:smoke` 137/137 passed
+
 - `feat(events)`: Field event completion unreturned equipment warning workflow and operational debt architecture
   - Extended pure logic helper `src/lib/marcom/eventEquipmentHelpers.ts` with `UnreturnedEquipmentItem` interface, `hasUnreturned: boolean`, and `unreturnedList: UnreturnedEquipmentItem[]` to detect outstanding or overdue equipment loans
   - Created interactive modal `src/components/views/EventsView/EventCompleteWarningModal.tsx` intercepting completion when active/overdue loans remain, displaying borrower contacts, item lists, and providing "Batal & Periksa Alat" or override actions
