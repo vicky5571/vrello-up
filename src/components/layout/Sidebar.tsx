@@ -32,6 +32,13 @@ export function Sidebar() {
   const setHelpDocsOpen = useWorkspaceStore((s) => s.setHelpDocsOpen);
   const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
 
+  const handleSelectView = (viewId: string) => {
+    setActiveView(viewId as any);
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      toggleSidebar();
+    }
+  };
+
   if (!shouldRenderSidebar(activeView)) {
     return null;
   }
@@ -66,7 +73,7 @@ export function Sidebar() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setActiveView(item.id)}
+                      onClick={() => handleSelectView(item.id)}
                       className={cn(
                         "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors text-left",
                         isItemActive
@@ -96,7 +103,7 @@ export function Sidebar() {
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setActiveView(item.id)}
+                        onClick={() => handleSelectView(item.id)}
                         className={cn(
                           "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors text-left",
                           isItemActive
@@ -125,7 +132,7 @@ export function Sidebar() {
                       <button
                         key={item.id}
                         type="button"
-                        onClick={() => setActiveView(item.id)}
+                        onClick={() => handleSelectView(item.id)}
                         className={cn(
                           "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors text-left",
                           isItemActive

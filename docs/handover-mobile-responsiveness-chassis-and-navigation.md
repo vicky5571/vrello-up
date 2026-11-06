@@ -1,7 +1,7 @@
 # Handover: Mobile Responsiveness Chassis and Navigation Architecture
 
 - **Date:** 2026-11-06
-- **Status:** READY FOR EXECUTION
+- **Status:** EXECUTION COMPLETE
 - **Spec:** docs/superpowers/specs/2026-11-06-mobile-responsiveness-chassis-and-navigation-design.md
 - **Plan:** docs/superpowers/plans/2026-11-06-mobile-responsiveness-chassis-and-navigation.md
 - **Refs:** ADR-0057
@@ -397,17 +397,17 @@ npm test
 
 ## 6. Acceptance Criteria Checklist
 
-- [ ] On viewports `< 768px`, `MobileBottomNav` renders fixed at bottom with 5 tabs.
-- [ ] On viewports `≥ 768px`, `MobileBottomNav` is hidden via `md:hidden`.
-- [ ] Tab icons match canonical tokens: Home (`Home`), Outlets (`Store`), Placements (`MapPin`), Events (`CalendarDays`), Menu (`Menu`).
-- [ ] Tapping Outlets, Placements, or Events automatically switches `appMode` to `"marcom"`.
-- [ ] Tapping "Menu" in bottom nav opens the `Sidebar` drawer.
-- [ ] `TopNav.tsx` displays hamburger `Menu` button on mobile viewports (`md:hidden`).
-- [ ] Selecting an item in the mobile `Sidebar` automatically closes the sidebar backdrop.
-- [ ] All coordinator files (`page.tsx`, `TopNav.tsx`, `Sidebar.tsx`, `GlobalRail.tsx`) stay strictly ≤ 250 LOC.
-- [ ] `npx tsx --test src/components/layout/MobileBottomNav.test.ts` passes with 0 failures.
-- [ ] `npm run drift:check` passes with 84/84 pairs and 0 drift.
-- [ ] `npm run build:check` exits with code 0.
+- [x] On viewports `< 768px`, `MobileBottomNav` renders fixed at bottom with 5 tabs.
+- [x] On viewports `≥ 768px`, `MobileBottomNav` is hidden via `md:hidden`.
+- [x] Tab icons match canonical tokens: Home (`Home`), Outlets (`Store`), Placements (`MapPin`), Events (`CalendarDays`), Menu (`Menu`).
+- [x] Tapping Outlets, Placements, or Events automatically switches `appMode` to `"marcom"`.
+- [x] Tapping "Menu" in bottom nav opens the `Sidebar` drawer.
+- [x] `TopNav.tsx` displays hamburger `Menu` button on mobile viewports (`md:hidden`).
+- [x] Selecting an item in the mobile `Sidebar` automatically closes the sidebar backdrop.
+- [x] All coordinator files (`page.tsx`, `TopNav.tsx`, `Sidebar.tsx`, `GlobalRail.tsx`) stay strictly ≤ 250 LOC.
+- [x] `npx tsx --test src/components/layout/MobileBottomNav.test.ts` passes with 0 failures.
+- [x] `npm run drift:check` passes with 84/84 pairs and 0 drift.
+- [x] `npm run build:check` exits with code 0.
 
 
 

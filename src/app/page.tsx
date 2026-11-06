@@ -22,6 +22,10 @@ const ExportCenter = dynamic(
   () => import("@/components/layout/ExportCenter").then((m) => m.ExportCenter),
   { ssr: false },
 );
+const MobileBottomNav = dynamic(
+  () => import("@/components/layout/MobileBottomNav").then((m) => m.MobileBottomNav),
+  { ssr: false },
+);
 
 export default function WorkspacePage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -43,7 +47,7 @@ export default function WorkspacePage() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="flex h-dvh w-full overflow-hidden bg-[#F0F1F4] dark:bg-[#0C0D0F] p-2 gap-2 text-slate-900 dark:text-slate-100">
+      <div className="flex h-dvh w-full overflow-hidden bg-[#F0F1F4] dark:bg-[#0C0D0F] p-0 md:p-2 gap-0 md:gap-2 text-slate-900 dark:text-slate-100 pb-14 md:pb-0">
         {/* Skip link for accessibility */}
         <a
           href="#workspace-main"
@@ -62,7 +66,7 @@ export default function WorkspacePage() {
         <main
           id="workspace-main"
           tabIndex={-1}
-          className="flex-1 flex flex-col min-w-0 h-full rounded-2xl bg-white dark:bg-[#18191B] border border-slate-200/80 dark:border-white/10 shadow-lg overflow-hidden focus:outline-hidden"
+          className="flex-1 flex flex-col min-w-0 h-full rounded-none md:rounded-2xl bg-white dark:bg-[#18191B] border-x-0 md:border border-y-0 md:border-y border-slate-200/80 dark:border-white/10 shadow-lg overflow-hidden focus:outline-hidden"
         >
           <TopNav />
           <ActiveViewStage />
@@ -72,6 +76,9 @@ export default function WorkspacePage() {
         <BranchDetailDrawer />
         <CommandPalette />
         <ExportCenter />
+
+        {/* Mobile Bottom Navigation */}
+        <MobileBottomNav />
       </div>
     </MotionConfig>
   );
