@@ -119,15 +119,23 @@ describe("Mobile Action Row Alignment & View Switcher (ADR-0061)", () => {
     );
   });
 
-  it("verifies OutletsHeader view switcher container uses w-full sm:w-auto and flex-1 tabs", () => {
+  it("verifies OutletsHeader view switcher container uses w-full sm:w-auto and items-stretch sm:items-center", () => {
     const content = fs.readFileSync(outletsHeaderPath, "utf-8");
     assert.ok(
-      content.includes("w-full sm:w-auto flex items-center"),
-      "OutletsHeader view switcher must use w-full sm:w-auto"
+      content.includes("w-full sm:w-auto flex items-stretch sm:items-center"),
+      "OutletsHeader view switcher must use items-stretch on mobile and sm:items-center on desktop"
     );
     assert.ok(
       content.includes("flex-1 sm:flex-initial") && content.includes("justify-center"),
       "OutletsHeader view switcher tabs must use flex-1 sm:flex-initial justify-center"
+    );
+  });
+
+  it("verifies OutletsHeader view switcher tabs use min-h-[40px] sm:min-h-0 for consistent pill height", () => {
+    const content = fs.readFileSync(outletsHeaderPath, "utf-8");
+    assert.ok(
+      content.includes("min-h-[40px] sm:min-h-0"),
+      "OutletsHeader view switcher buttons must use min-h-[40px] on mobile and sm:min-h-0 on desktop"
     );
   });
 });

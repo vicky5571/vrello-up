@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Analytics ROI Header Layout and Horizontal KPI Carousel (ADR-0065) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Outlets Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Analytics ROI Header Layout and Horizontal KPI Carousel (ADR-0065) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Reports Header Mobile Action Alignment — **IMPLEMENTATION COMPLETE**  
 **Latest Fix:** Documents Header Mobile Action Alignment — **IMPLEMENTATION COMPLETE**  
 **Previous Fix:** Equipment Inventory Mobile Responsiveness & Layout Optimization — **IMPLEMENTATION COMPLETE**  
@@ -27,6 +28,17 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Perbaikan Proporsi & Tinggi Active Pill Mobile View Switcher Outlets (Implementation Complete):**
+   - **Diagnostik Masalah:**
+     - Pada viewport mobile (< 640px), kontainer tab switcher menggunakan `flex items-center`. Tombol tab anak (`motion.button`) tidak meregang (*stretch*), melainkan tingginya murni dihitung dari jumlah baris teks masing-masing.
+     - Saat loading (atau sebelum teks wrap), tab *Tabel Data* berada pada 1 baris (~30px), sedangkan tab lain membengkak menjadi 2 baris (~46px). Akibatnya, *active pill* putih (`absolute inset-0`) menjadi kerdil dan mengambang di tengah track abu-abu dengan ruang kosong di atas dan bawahnya.
+   - **Solusi yang Diterapkan (`OutletsHeader.tsx`):**
+     - Mengubah kontainer menjadi `flex items-stretch sm:items-center` sehingga seluruh tombol tab di mobile dipaksa memiliki tinggi yang sama dengan item tertinggi (100% tinggi track).
+     - Menambahkan `min-h-[40px] sm:min-h-0` pada tombol tab di mobile untuk menjamin area sentuh sentuhan jempol stabil dan *active pill* selalu mengisi penuh track abu-abu secara presisi tanpa jeda, baik saat teks 1 baris maupun 2 baris, baik saat loading maupun loaded.
+     - **Invarian Desktop 100% Terjaga:** Kembali ke `sm:items-center` dan `sm:min-h-0` di desktop ($\ge 640\text{px}$).
+   - **TDD:** Memperbarui `src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts` (11/11 tests pass).
+   - **Verifikasi Quality Gates:** `npm run drift:check` ✅ (92/92 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (150/150), `npm test` ✅ (964/964).
 
 1. **Implementasi Mobile Analytics ROI Header Layout & Horizontal KPI Carousel (ADR-0065 — Implementation Complete):**
    - **Diagnostik & Keputusan Tata Letak:**

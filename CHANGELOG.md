@@ -6,6 +6,14 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(outlets)`: Equalize mobile view switcher pill height across loading and loaded states
+  - Mobile: changed view switcher container from `flex items-center` to `flex items-stretch sm:items-center` on `OutletsHeader.tsx`
+  - Mobile: added `min-h-[40px] sm:min-h-0` to all view switcher buttons so active pill spans the full track height consistently, whether text is 1-line (`Tabel Data`) or 2-line (`Peta \n Sebaran`, `Antrean \n Approval`), eliminating the shrunken pill during loading
+  - Desktop 100% preserved: resets to `sm:items-center` and `sm:min-h-0`
+  - Added TDD assertions in `src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts` (11/11 tests passing)
+  - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm run test:smoke` ✅ (150/150), `npm test` ✅ (964/964)
+  - Refs: direct mobile UI/UX bug report
+
 - `feat(analytics)`: Mobile header layout and horizontal KPI carousel (ADR-0065)
   - Mobile: aligned refresh action button to the right (`justify-end sm:justify-start`) for consistent one-handed thumb ergonomics
   - Mobile: organized filter toolbar into 2 rows — Row 1 with 50/50 2-column grid (`grid grid-cols-2 gap-2 w-full sm:w-auto`) for Branch and Quarter dropdowns, hiding `Filter:` label (`hidden sm:flex`); Row 2 for Brand toggle pills and conditional Reset button (`justify-between sm:justify-start`)
