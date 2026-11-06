@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `feat(analytics)`: Mobile header layout and horizontal KPI carousel (ADR-0065)
+  - Mobile: aligned refresh action button to the right (`justify-end sm:justify-start`) for consistent one-handed thumb ergonomics
+  - Mobile: organized filter toolbar into 2 rows — Row 1 with 50/50 2-column grid (`grid grid-cols-2 gap-2 w-full sm:w-auto`) for Branch and Quarter dropdowns, hiding `Filter:` label (`hidden sm:flex`); Row 2 for Brand toggle pills and conditional Reset button (`justify-between sm:justify-start`)
+  - Mobile: transformed 2x2 KPI grid into a smooth horizontal scroll carousel (`flex overflow-x-auto pb-2 -mx-4 px-4 min-w-[210px] shrink-0`) eliminating text truncation in card footers and pulling downstream charts *above the fold*
+  - Desktop 100% preserved: action button stays left-aligned in column (`sm:justify-start`), filter toolbar stays single inline row (`sm:flex sm:items-center`), and KPI cards stay static 4-column grid (`sm:grid sm:grid-cols-2 lg:grid-cols-4`)
+  - Added TDD unit test suite in `src/components/views/AnalyticsView/analyticsHeaderResponsiveness.test.ts` (5/5 tests passing)
+  - Verification: `npm run drift:check` ✅ (92/92 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (150/150), `npm test` ✅ (963/963)
+  - Refs: `docs/adr/0065-mobile-analytics-roi-header-layout-and-horizontal-kpi-carousel.md`, `docs/superpowers/specs/2026-11-07-mobile-analytics-roi-header-design.md`, `docs/superpowers/plans/2026-11-07-mobile-analytics-roi-header.md`
+
 - `fix(reports)`: Right-align header action buttons on mobile
   - Mobile: aligned primary action row (`Refresh`, `Export Center`) to the right (`justify-end sm:justify-start`) and aligned `+ Buat Laporan Bulanan` button to the right (`self-end sm:self-auto`)
   - Mobile: aligned `QuarterlyPosmReportTab` action row to the right (`justify-end sm:justify-start`)
