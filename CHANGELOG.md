@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-06]
 
+- `feat(mobile)`: Mobile sidebar slide transition and backdrop animation
+  - Introduced fluid slide-in and slide-out transitions (`x: "-100%" -> 0 -> "-100%"`) and backdrop fade-in and fade-out transitions (`opacity: 0 -> 1 -> 0`) using Framer Motion `<AnimatePresence>` in `Sidebar.tsx`
+  - Applied spring physics (`damping: 28, stiffness: 300`) on `motion.aside` for a responsive native sheet gesture feel on smartphone viewports (< 768px)
+  - Strictly isolated motion transformations to mobile viewports via hydration-safe `isMobile` check, ensuring desktop sidebar ($\ge 768\text{px}$) renders as a 100% static panel without transform offsets or layout shift
+  - Respected user accessibility preferences via `useReducedMotion()`
+  - Enforced coordinator file constraints (`Sidebar.tsx` at 205 LOC $\le 250$ LOC)
+  - Added TDD unit test suite in `src/components/layout/MobileBottomNav.test.ts` (11/11 tests passing)
+  - Spec: `docs/superpowers/specs/2026-11-06-mobile-sidebar-slide-transition-and-backdrop-animation-design.md`
+  - Plan: `docs/superpowers/plans/2026-11-06-mobile-sidebar-slide-transition-and-backdrop-animation.md`
+  - Refs: `docs/adr/0063-mobile-sidebar-slide-transition-and-backdrop-animation.md` (ADR-0063)
+
 - `feat(mobile)`: Placements table header deduplication and brand filter preservation
   - Eliminated redundant local table title `[📋] Placements 22 placements` in `PlacementsView.tsx` via `hideTitle={true}` on `MarcomTableShell`, resolving mobile screen crowding beside the brand filter
   - Preserved compact pill styling and positioning of brand filter buttons in `headerExtra={brandChips}` (`shrink-0`), avoiding full-width stretching per user preference

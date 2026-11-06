@@ -86,3 +86,52 @@ describe("Mobile Shell UI/UX Polish Invariants (ADR-0058)", () => {
     assert.ok(bottomNavLoc <= 150, `MobileBottomNav.tsx is ${bottomNavLoc} LOC, exceeding 150 LOC limit`);
   });
 });
+
+describe("Mobile Sidebar Slide Transition & Desktop Invariants (ADR-0063)", () => {
+  const sidebarPath = path.resolve(process.cwd(), "src/components/layout/Sidebar.tsx");
+
+  it("verifies Sidebar.tsx imports motion, AnimatePresence, and useReducedMotion", () => {
+    const content = fs.readFileSync(sidebarPath, "utf-8");
+    assert.ok(
+      content.includes("AnimatePresence") && content.includes("motion") && content.includes("useReducedMotion"),
+      "Sidebar.tsx must import AnimatePresence, motion, and useReducedMotion from framer-motion"
+    );
+  });
+
+  it("verifies Sidebar.tsx wraps mobile backdrop and drawer in AnimatePresence", () => {
+    const content = fs.readFileSync(sidebarPath, "utf-8");
+    assert.ok(
+      content.includes("<AnimatePresence>"),
+      "Sidebar.tsx must wrap render elements in AnimatePresence"
+    );
+  });
+
+  it("verifies Sidebar.tsx uses motion.div for backdrop fade and motion.aside for drawer slide", () => {
+    const content = fs.readFileSync(sidebarPath, "utf-8");
+    assert.ok(
+      content.includes("<motion.div") && content.includes("opacity: 0"),
+      "Sidebar.tsx must use motion.div with opacity fade for backdrop"
+    );
+    assert.ok(
+      content.includes("<motion.aside") && content.includes('x: "-100%"'),
+      "Sidebar.tsx must use motion.aside with x: '-100%' for mobile drawer slide"
+    );
+  });
+
+  it("verifies Sidebar.tsx guards motion props with isMobile to protect desktop static layout", () => {
+    const content = fs.readFileSync(sidebarPath, "utf-8");
+    assert.ok(
+      content.includes("isMobile"),
+      "Sidebar.tsx must include isMobile check"
+    );
+    assert.ok(
+      content.includes("isMobile && isSidebarOpen") || content.includes("isSidebarOpen && isMobile") || content.includes("isMobile && !shouldReduceMotion"),
+      "Sidebar.tsx must guard mobile-only motion props with isMobile"
+    );
+  });
+
+  it("verifies Sidebar.tsx coordinator remains strictly <= 250 LOC", () => {
+    const sidebarLoc = fs.readFileSync(sidebarPath, "utf-8").split("\n").length;
+    assert.ok(sidebarLoc <= 250, `Sidebar.tsx is ${sidebarLoc} LOC, exceeding 250 LOC limit`);
+  });
+});

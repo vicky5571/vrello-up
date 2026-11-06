@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
 import { HelpCircle } from "lucide-react";
@@ -14,6 +16,16 @@ import { shouldRenderSidebar } from "./layoutHierarchyHelpers";
 import { HelpDocsModal } from "@/components/modals/HelpDocsModal";
 
 export function Sidebar() {
+  const shouldReduceMotion = useReducedMotion();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const {
     appMode,
     activeView,
@@ -45,18 +57,35 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile overlay backdrop */}
-      {isSidebarOpen && (
-        <div
-          onClick={toggleSidebar}
-          className="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-2xs transition-opacity"
-        />
-      )}
+      <AnimatePresence>
+        {/* Mobile overlay backdrop */}
+        {isSidebarOpen && isMobile && (
+          <motion.div
+            key="mobile-sidebar-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+            onClick={toggleSidebar}
+            className="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-2xs"
+          />
+        )}
 
-      {isSidebarOpen && (
-        <aside className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] md:static md:z-20 md:w-60 md:h-full rounded-r-2xl md:rounded-2xl border-r md:border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#18191B] shadow-2xl md:shadow-lg flex flex-col justify-between shrink-0 select-none overflow-hidden">
-          {/* Mode Switcher Segmented Control */}
-          <AppModeSegmentedControl />
+        {isSidebarOpen && (
+          <motion.aside
+            key="sidebar-aside"
+            initial={isMobile && !shouldReduceMotion ? { x: "-100%" } : false}
+            animate={{ x: 0 }}
+            exit={isMobile && !shouldReduceMotion ? { x: "-100%" } : undefined}
+            transition={
+              shouldReduceMotion || !isMobile
+                ? { duration: 0 }
+                : { type: "spring", damping: 28, stiffness: 300 }
+            }
+            className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] md:static md:z-20 md:w-60 md:h-full rounded-r-2xl md:rounded-2xl border-r md:border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#18191B] shadow-2xl md:shadow-lg flex flex-col justify-between shrink-0 select-none overflow-hidden"
+          >
+            {/* Mode Switcher Segmented Control */}
+            <AppModeSegmentedControl />
 
         {/* Navigation Body */}
         <div className="flex-1 overflow-y-auto px-2 py-3 space-y-4">
@@ -162,8 +191,9 @@ export function Sidebar() {
             <span>Help & Docs</span>
           </button>
         </div>
-      </aside>
+      </motion.aside>
       )}
+      </AnimatePresence>
 
       {/* Modals */}
       <HelpDocsModal

@@ -8,8 +8,10 @@
 
 **Date:** 2026-11-06  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile View Switcher Full-Width & Action Row Right Alignment (ADR-0061) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile Sidebar Slide Transition & Backdrop Animation (ADR-0063) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Notification Center Popover Viewport-Bounded Layout (ADR-0064) — **PLANNING COMPLETE (READY FOR EXECUTION)**  
 **Previous Feature:** Mobile Placements Table Header Deduplication & Brand Filter Toolbar Unification (ADR-0062) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile View Switcher Full-Width & Action Row Right Alignment (ADR-0061) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Filter & Search Proportional Grid Layout (ADR-0060) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Typographical Scale and Visual Hierarchy Standardization (ADR-0059) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Shell UI/UX Polish and Viewport Optimization (ADR-0058) — **IMPLEMENTATION COMPLETE**  
@@ -19,6 +21,42 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Implementasi Mobile Sidebar Slide Transition & Backdrop Animation (ADR-0063 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**
+     - Memverifikasi impor `motion`, `AnimatePresence`, dan `useReducedMotion` pada `Sidebar.tsx`.
+     - Memverifikasi pembungkusan backdrop mobile dan drawer dengan `<AnimatePresence>`.
+     - Memverifikasi penggunaan `motion.div` untuk backdrop fade (`opacity: 0 -> 1 -> 0`) dan `motion.aside` untuk drawer slide (`x: "-100%"`).
+     - Memverifikasi proteksi guard `isMobile` untuk mencegah translasi inline atau layout shift pada desktop.
+     - Memverifikasi batas koordinator `Sidebar.tsx` tetap $\le 250$ LOC (205 LOC).
+     - Seluruh 11 assertions lulus (11/11 tests passing).
+   - **Refaktor Komponen Drawer Navigasi (`Sidebar.tsx` — 205 LOC):**
+     - Menambahkan listener `isMobile: window.innerWidth < 768` yang hydration-safe (default `false` di server).
+     - Membungkus mobile backdrop dan drawer dalam `<AnimatePresence>`.
+     - Mengimplementasikan backdrop `motion.div` dengan animasi fade halus (200ms).
+     - Mengimplementasikan drawer `motion.aside` dengan animasi slide dari tepi kiri (`x: isMobile ? "-100%" : 0`) dan spring physics (`damping: 28, stiffness: 300`).
+     - Menjamin desktop preservasi 100%: pada viewport $\ge 768\text{px}$, motion disetel ke `initial={false}`, `exit={undefined}`, dan `transition={{ duration: 0 }}` sehingga sidebar tetap menjadi panel statis murni.
+     - Menghormati preferensi aksesibilitas `useReducedMotion()`.
+   - **Verifikasi Invarian & Drift Check:**
+     - `npx tsx --test src/components/layout/MobileBottomNav.test.ts` ✅ (11/11 pass).
+     - `npm run drift:check` ✅ (91/91 spec-plan pairs valid, coordinator sizes ≤ 250 LOC, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
+     - `npm run test:smoke` ✅ (144/144 pass, 0 fail).
+
+1. **Perencanaan Arsitektur Mobile Notification Center Popover Viewport-Bounded Layout (ADR-0064 — Planning Complete):**
+   - **Diagnostik Masalah Terpotong (*Clipping Defect*):**
+     - Mendiagnosis dari screenshot pengguna bahwa popover notifikasi *Activity Center* terpotong ~50px di sebelah kiri layar smartphone (< 640px).
+     - Menemukan akar penyebab: popover di-anchor `right-0` terhadap kontainer lonceng yang berjarak ~80px dari tepi kanan layar, dengan lebar statis `w-86` (344px), sehingga batas kirinya jatuh di luar viewport `(375px - 80px) - 344px = -49px`.
+     - Merancang penataan viewport-bounded mobile: melepaskan anchor relatif lonceng pada mobile dan menggantinya dengan `fixed inset-x-3 top-13 z-50 max-h-[82vh] flex flex-col` (margin simetris 12px dari tepi kiri dan kanan layar), dilengkapi mobile backdrop overlay (`fixed inset-0 bg-slate-900/20 backdrop-blur-2xs sm:hidden`) untuk mempermudah dismiss.
+     - **Invarian Desktop Terjaga 100%**: Pada layar $\ge 640\text{px}$ (`sm:`), popover kembali ke posisi anchor lonceng `sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-86` tanpa backdrop (`sm:hidden`), 100% byte-for-byte identik dengan kondisi saat ini.
+   - **Penyusunan Dokumen Perencanaan & Handover:**
+     - ADR: `docs/adr/0064-mobile-notification-center-popover-viewport-bounded-layout.md` (ACCEPTED).
+     - Spec: `docs/superpowers/specs/2026-11-06-mobile-notification-center-popover-viewport-bounded-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-06-mobile-notification-center-popover-viewport-bounded.md` (APPROVED).
+     - Handover: `docs/handover-mobile-notification-center-popover-viewport-bounded.md` (READY FOR EXECUTION).
+   - **Verifikasi Invarian & Drift Check:**
+     - `npm run drift:check` ✅ (91/91 spec-plan pairs valid, coordinator sizes ≤ 250 LOC, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
 
 1. **Implementasi Mobile Placements Table Header Deduplication & Brand Filter Preservation (ADR-0062 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/PlacementsView/placementsFilterLayout.test.ts`):**
