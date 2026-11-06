@@ -123,9 +123,6 @@ export function MobileBottomNav() {
                   active ? tab.activeColor : "text-slate-400 dark:text-slate-400",
                 )}
               />
-              {active && (
-                <span className="absolute -bottom-1 w-1 h-1 rounded-full bg-current" />
-              )}
             </div>
             <span className="text-[10px] leading-tight font-medium">{tab.label}</span>
           </motion.button>

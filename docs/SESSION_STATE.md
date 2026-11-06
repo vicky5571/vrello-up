@@ -23,7 +23,7 @@
      - Memverifikasi default `mobileStrip = true` pada `KpiSummaryCards.tsx`.
      - Memverifikasi layout edge-to-edge `fixed inset-y-0 left-0` pada mobile drawer `Sidebar.tsx`.
      - Memverifikasi ketiadaan styling kaku `border border-blue-600` pada `MobileBottomNav.tsx`.
-     - Memverifikasi seluruh koordinator file tetap berada di bawah batas ketat `<= 250 LOC` (`page.tsx`: 86, `TopNav.tsx`: 142, `Sidebar.tsx`: 175, `MobileBottomNav.tsx`: 137) (6/6 tests passing).
+     - Memverifikasi seluruh koordinator file tetap berada di bawah batas ketat `<= 250 LOC` (`page.tsx`: 86, `TopNav.tsx`: 142, `Sidebar.tsx`: 175, `MobileBottomNav.tsx`: 134) (6/6 tests passing).
    - **De-duplikasi Hamburger Header (`TopNav.tsx` — 142 LOC):**
      - Menghapus outer `<button>` toggle dan impor ikon `Menu` dari `TopNav.tsx`.
      - Menstandarkan pemicu tunggal hamburger di dalam `TopNavBreadcrumbs.tsx`.
@@ -34,8 +34,8 @@
      - Mengubah default parameter dari `mobileStrip = false` menjadi `mobileStrip = true` pada `KpiSummaryCards` dan `KpiSummaryCardsSkeleton`.
      - Secara instan mengubah tumpukan vertikal 4-5 kartu KPI (yang tadinya memakan ~500px layar) menjadi strip carousel horizontal geser jempol (`max-h-[85px]`) di seluruh modul aplikasi (*Outlets, Placements, Events, Branches, Pipeline, Reports*).
      - Menarik tabel data dan kartu operasional langsung *above the fold* tanpa perlu scrolling berlebih.
-   - **Styling Tab Modern (`MobileBottomNav.tsx` — 137 LOC):**
-     - Menghapus border kaku dan mengadopsi styling pill modern `bg-slate-100/70 dark:bg-white/10 rounded-xl` dengan aksen dot indicator pada tab aktif.
+   - **Styling Tab Modern (`MobileBottomNav.tsx` — 134 LOC):**
+     - Menghapus border kaku dan dot indicator yang bertabrakan dengan label teks, mengadopsi styling pill bersih `bg-slate-100/70 dark:bg-white/10 rounded-xl` dengan warna aksen ikon pada tab aktif.
    - **Edge-to-Edge Native Sheet (`Sidebar.tsx` — 175 LOC):**
      - Mengubah penataan aside mobile menjadi `fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] rounded-r-2xl border-r shadow-2xl`, menghilangkan celah floating atas-bawah.
    - **Non-Negotiable Quality Gates:**
