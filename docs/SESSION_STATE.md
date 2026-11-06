@@ -8,8 +8,9 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Branches Header Anti-Shift Reset Filters & Mobile Full-Width Search — **IMPLEMENTATION COMPLETE**  
-**Latest Fix:** Branches Header Mobile Action Alignment & Full-Width Search — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Equipment Inventory Mobile Responsiveness & Layout Optimization — **IMPLEMENTATION COMPLETE**  
+**Latest Fix:** Branches Header Anti-Shift Reset Filters & Mobile Full-Width Search — **IMPLEMENTATION COMPLETE**  
+**Previous Fix:** Branches Header Mobile Action Alignment & Full-Width Search — **IMPLEMENTATION COMPLETE**  
 **Previous Fix:** Mobile Sidebar Non-Overshooting Tween Refinement (ADR-0063 Amendment) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Create Outlet Form GPS Layout & Toast Resilience — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Placements Table Header Deduplication & Brand Filter Toolbar Unification (ADR-0062) — **IMPLEMENTATION COMPLETE**  
@@ -23,6 +24,28 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Equipment Inventory Mobile Responsiveness & Layout Optimization (Implementation Complete):**
+   - **Problems Addressed:**
+     - Search input was cramped into ~90px on mobile (`Search c...`) because search, category dropdown, and view mode switcher were crammed into a single flex row.
+     - Equipment code badge in `InventoryTableView.tsx` wrapped onto 3 lines (`BTH- \n POP- \n 001`) due to missing `whitespace-nowrap`.
+     - Segmented tabs were inline width with dead space rather than balanced 50/50.
+     - Header and content outer padding used static `p-6` (48px wasted margin on mobile).
+     - Action buttons were left-aligned rather than right-aligned for mobile thumb reach.
+   - **Fixes Applied:**
+     - `InventoryHeaderKpis.tsx`:
+       - Changed filter & search container to `flex flex-wrap items-center gap-2 w-full sm:w-auto`.
+       - Search container now uses `order-last sm:order-first relative w-full sm:w-56 text-xs` (100% full-width on mobile row 2, first in row on desktop row 1).
+       - Category dropdown uses `flex-1 sm:flex-initial sm:w-44 text-xs` to expand flexibly alongside view mode switcher on mobile row 1 and stay 176px on desktop.
+       - View mode switcher uses `shrink-0` (with `ml-auto sm:ml-0` on borrowing tab).
+       - Segmented tabs use `w-full sm:w-auto` with tab buttons using `flex-1 sm:flex-initial text-center justify-center`.
+       - Action row aligned to right on mobile via `justify-end sm:justify-start`.
+       - Outer padding updated to responsive `p-4 sm:p-6 pb-2`.
+     - `InventoryView.tsx`: Outer content container padding updated to `p-4 sm:p-6 flex-1`.
+     - `InventoryTableView.tsx`: Added `whitespace-nowrap font-mono` and badge `whitespace-nowrap` to prevent item code from splitting across lines.
+     - **Desktop 100% Invariant:** Search remains first in row (`sm:order-first sm:w-56`), dropdown remains `sm:w-44`, action row remains `sm:justify-start`, and tabs remain inline.
+   - **TDD:** Added `src/components/views/InventoryView/inventoryHeaderResponsiveness.test.ts` (7/7 tests passing).
+   - **Verification:** `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅, `npm run test:smoke` ✅ (147/147 pass).
 
 1. **Branches Header Anti-Shift Reset Filters & Mobile Full-Width Search (Implementation Complete):**
    - **Problem Addressed:** On desktop, when `Reset Filters` appeared on the right of the search bar, the right-aligned flex layout pushed both `Search` and `CustomDropdown` 90px to the left, jarring user focus. On mobile, `Reset Filters` was pushed to an orphaned 3rd row beneath the full-width search input, creating Cumulative Layout Shift (CLS).

@@ -155,7 +155,7 @@ export function InventoryView() {
         onBorrowRequest={() => setIsBorrowModalOpen(true)}
       />
 
-      <div className="p-6 flex-1">
+      <div className="p-4 sm:p-6 flex-1">
         {activeTab === "catalog" ? (
           catalogViewMode === "grid" ? (
             <InventoryItemsGrid

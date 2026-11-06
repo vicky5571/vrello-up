@@ -126,8 +126,8 @@ export function InventoryTableView({
                   onClick={() => onEdit(item)}
                   className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors cursor-pointer group"
                 >
-                  <td className="py-3 px-4 font-mono font-medium text-slate-700 dark:text-slate-300">
-                    <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <td className="py-3 px-4 font-mono font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                    <span className="inline-block px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 whitespace-nowrap">
                       {item.code}
                     </span>
                   </td>

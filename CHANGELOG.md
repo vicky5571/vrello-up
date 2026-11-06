@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(inventory)`: Optimize mobile header layout and prevent code badge wrapping
+  - Mobile: expanded search input to full width on row 2 (`order-last sm:order-first relative w-full sm:w-56`), eliminating the cramped ~90px search input
+  - Mobile: paired category dropdown (`flex-1 sm:flex-initial sm:w-44`) with view mode switcher (`shrink-0`) on row 1
+  - Mobile: right-aligned action row (`justify-end sm:justify-start`) and balanced segmented tabs 50/50 (`w-full sm:w-auto` with `flex-1 sm:flex-initial`)
+  - Mobile: adjusted header and view outer padding from static `p-6` to responsive `p-4 sm:p-6`
+  - Fixed item code badge breaking into 3 lines in `InventoryTableView.tsx` by adding `whitespace-nowrap`
+  - Desktop 100% preserved: search remains first in row (`sm:order-first sm:w-56`), dropdown remains `sm:w-44`, action row left-aligned (`sm:justify-start`), and tabs inline
+  - Added TDD unit test suite in `src/components/views/InventoryView/inventoryHeaderResponsiveness.test.ts` (7/7 tests passing)
+  - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅, `npm run test:smoke` ✅ (147/147)
+  - Refs: direct mobile UX review request
+
 - `fix(branches)`: Anchor Reset Filters to prevent desktop layout shift and mobile CLS
   - Mobile: moved `Reset Filters` to Row 1 alongside `CustomDropdown` using `justify-between sm:justify-start`, eliminating the orphaned 3rd row and preventing Cumulative Layout Shift (CLS)
   - Desktop: ordered `Reset Filters` before the region dropdown via `sm:order-first`, so when active filters appear, they expand into left dead space instead of pushing the dropdown and search bar 90px to the left
