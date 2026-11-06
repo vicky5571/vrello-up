@@ -8,8 +8,9 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Branches Header Mobile Action Alignment & Full-Width Search — **IMPLEMENTATION COMPLETE**  
-**Latest Fix:** Mobile Sidebar Non-Overshooting Tween Refinement (ADR-0063 Amendment) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Branches Header Anti-Shift Reset Filters & Mobile Full-Width Search — **IMPLEMENTATION COMPLETE**  
+**Latest Fix:** Branches Header Mobile Action Alignment & Full-Width Search — **IMPLEMENTATION COMPLETE**  
+**Previous Fix:** Mobile Sidebar Non-Overshooting Tween Refinement (ADR-0063 Amendment) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Create Outlet Form GPS Layout & Toast Resilience — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Placements Table Header Deduplication & Brand Filter Toolbar Unification (ADR-0062) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile View Switcher Full-Width & Action Row Right Alignment (ADR-0061) — **IMPLEMENTATION COMPLETE**  
@@ -22,6 +23,15 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Branches Header Anti-Shift Reset Filters & Mobile Full-Width Search (Implementation Complete):**
+   - **Problem Addressed:** On desktop, when `Reset Filters` appeared on the right of the search bar, the right-aligned flex layout pushed both `Search` and `CustomDropdown` 90px to the left, jarring user focus. On mobile, `Reset Filters` was pushed to an orphaned 3rd row beneath the full-width search input, creating Cumulative Layout Shift (CLS).
+   - **Fix (`BranchesHeader.tsx`):**
+     - Mobile: Placed `Reset Filters` inside Row 1 beside `CustomDropdown` using `justify-between sm:justify-start`, consuming the unused horizontal dead space and keeping Row 1 at fixed height (0 CLS).
+     - Desktop: Added `sm:order-first` to `Reset Filters`, rendering it to the *left* of `CustomDropdown`. When active filters appear, they expand into open space to the left rather than pushing the right-anchored `Search` and `CustomDropdown` (0px layout shift).
+     - Search bar remains full-width (`w-full`) on mobile and 224px (`sm:w-56`) on desktop.
+   - **TDD:** Updated `src/components/views/BranchesView/branchesHeaderResponsiveness.test.ts` with assertions for mobile `justify-between`, desktop `sm:order-first`, and coordinator LOC limits (5/5 pass).
+   - **Verification:** `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅, `npm run test:smoke` ✅ (146/146 pass).
 
 1. **Branches Header Mobile Action Alignment & Full-Width Search (Implementation Complete):**
    - **Actions:** The mobile row containing `Refresh` and `Tambah Branch` now uses `justify-end sm:justify-start` in `BranchesHeader.tsx`, anchoring both controls to the right content margin. Desktop keeps its original right-hand column position and internal left alignment.

@@ -6,6 +6,13 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(branches)`: Anchor Reset Filters to prevent desktop layout shift and mobile CLS
+  - Mobile: moved `Reset Filters` to Row 1 alongside `CustomDropdown` using `justify-between sm:justify-start`, eliminating the orphaned 3rd row and preventing Cumulative Layout Shift (CLS)
+  - Desktop: ordered `Reset Filters` before the region dropdown via `sm:order-first`, so when active filters appear, they expand into left dead space instead of pushing the dropdown and search bar 90px to the left
+  - Added unit test coverage in `src/components/views/BranchesView/branchesHeaderResponsiveness.test.ts` (5/5 tests passing)
+  - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅, `npm run test:smoke` ✅ (146/146)
+  - Refs: direct UX refinement request
+
 - `fix(branches)`: Right-align header actions and make mobile search full width
   - Mobile: the `Refresh` and `Tambah Branch` action row is now right-aligned (`justify-end sm:justify-start`), matching the card's right margin
   - Mobile: the branch search input now spans the full content width (`w-full sm:w-56`), eliminating the narrow left-aligned field

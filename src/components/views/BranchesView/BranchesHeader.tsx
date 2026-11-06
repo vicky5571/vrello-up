@@ -139,19 +139,33 @@ export function BranchesHeader({
         </div>
 
         {/* Region & Search */}
-        <div className="flex flex-wrap items-center gap-2">
-          <CustomDropdown
-            value={selectedRegion}
-            onChange={onRegionChange}
-            options={[
-              { value: "ALL", label: "Semua Region" },
-              ...availableRegions.map((reg) => ({ value: reg, label: reg })),
-            ]}
-            ariaLabel="Filter by region"
-            searchPlaceholder="Cari region..."
-            className="w-40 sm:w-44 text-xs"
-          />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {/* Mobile Row 1: Region Selector & Reset Filters / Desktop: Reset Filters anchored to the left of Region */}
+          <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+            <CustomDropdown
+              value={selectedRegion}
+              onChange={onRegionChange}
+              options={[
+                { value: "ALL", label: "Semua Region" },
+                ...availableRegions.map((reg) => ({ value: reg, label: reg })),
+              ]}
+              ariaLabel="Filter by region"
+              searchPlaceholder="Cari region..."
+              className="w-40 sm:w-44 text-xs"
+            />
 
+            {isFiltered && (
+              <button
+                type="button"
+                onClick={onResetFilters}
+                className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 underline font-medium cursor-pointer shrink-0 sm:order-first"
+              >
+                Reset Filters
+              </button>
+            )}
+          </div>
+
+          {/* Mobile Row 2: Full-width search bar / Desktop: Fixed right-anchored search bar */}
           <div className="relative w-full sm:w-56 text-xs">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -171,16 +185,6 @@ export function BranchesHeader({
               </button>
             )}
           </div>
-
-          {isFiltered && (
-            <button
-              type="button"
-              onClick={onResetFilters}
-              className="text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 underline font-medium cursor-pointer shrink-0"
-            >
-              Reset Filters
-            </button>
-          )}
         </div>
       </div>
 

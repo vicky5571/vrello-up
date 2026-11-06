@@ -36,4 +36,25 @@ describe("Branches Header Mobile Layout & Desktop Invariants", () => {
       "Controls row must keep its md:flex-row desktop layout"
     );
   });
+
+  it("places Reset Filters beside dropdown on mobile and orders it before dropdown on desktop to prevent shifting", () => {
+    const content = fs.readFileSync(headerPath, "utf-8");
+    assert.ok(
+      content.includes("justify-between sm:justify-start gap-2 w-full sm:w-auto"),
+      "Dropdown container must use justify-between on mobile to anchor dropdown left and reset right"
+    );
+    assert.ok(
+      content.includes("sm:order-first"),
+      "Reset Filters must use sm:order-first to sit left of dropdown on desktop and prevent layout shift"
+    );
+  });
+
+  it("enforces coordinator file size limit (<= 250 LOC)", () => {
+    const content = fs.readFileSync(headerPath, "utf-8");
+    const lines = content.split("\n").length;
+    assert.ok(
+      lines <= 250,
+      `BranchesHeader.tsx LOC (${lines}) must remain <= 250 LOC`
+    );
+  });
 });
