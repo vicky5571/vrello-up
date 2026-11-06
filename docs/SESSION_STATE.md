@@ -6,9 +6,10 @@
 
 ## Current Status
 
-**Date:** 2026-11-06  
+**Date:** 2026-11-07  
 **Active Branch:** `vicky`  
 **Active Feature:** Mobile Notification Center Popover Viewport-Bounded Layout (ADR-0064) — **IMPLEMENTATION COMPLETE**  
+**Latest Fix:** Mobile Create Outlet Form GPS Layout & Toast Resilience — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Sidebar Slide Transition & Backdrop Animation (ADR-0063) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Placements Table Header Deduplication & Brand Filter Toolbar Unification (ADR-0062) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile View Switcher Full-Width & Action Row Right Alignment (ADR-0061) — **IMPLEMENTATION COMPLETE**  
@@ -21,6 +22,13 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Mobile Create Outlet Form GPS Layout & Toast Fix:**
+   - Memindahkan tautan *"View on Maps"* ke baris kedua khusus mobile (`sm:hidden`) dan mempertahankan tautan desktop di baris header (`hidden sm:inline-flex`) pada `OutletFormModal.tsx`; judul GPS memakai `whitespace-nowrap` agar tidak terpecah.
+   - Memperbaiki toast GPS yang macet pada perangkat sentuh: toast memakai ID stabil `outlet-gps-detection`, `pointerEvents: "none"` sehingga ketukan diteruskan ke tombol tutup modal di belakangnya, dan `toast.dismiss(GPS_TOAST_ID)` saat modal unmount.
+   - Menambahkan aturan Sonner di `globals.css`: kontainer `[data-sonner-toaster]` meneruskan ketukan pada area kosong, sedangkan `[data-sonner-toast]` tetap interaktif.
+   - Menambahkan TDD suite `src/components/views/OutletsView/outletFormModalMobileUx.test.ts` (7/7 pass).
+   - Verifikasi: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (937/937 pass), `npm run test:smoke` ✅ (145/145 pass).
 
 1. **Implementasi Mobile Notification Center Popover Viewport-Bounded Layout (ADR-0064 — Implementation Complete):**
    - **TDD Test Suite (`src/lib/productivity/useNotificationFeed.test.ts`):**
@@ -40,6 +48,23 @@
      - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
      - `npm run test:smoke` ✅ (144/144 pass, 0 fail).
      - `npm test` ✅ (930/930 tests pass across 161 suites, 0 fail).
+
+1. **Implementasi Mobile Notification Center Popover Viewport-Bounded Layout (ADR-0064 — Implementation Complete):**
+   - **TDD Test Suite (`src/lib/productivity/useNotificationFeed.test.ts`):**
+     - Memverifikasi tata letak popover mobile menggunakan `fixed inset-x-3 top-13` untuk mencegah terpotongnya teks di sisi kiri layar smartphone (< 640px).
+     - Memverifikasi keberadaan overlay backdrop mobile (`fixed inset-0 bg-slate-900/20 sm:hidden`) untuk penutupan instan saat disentuh (tap-dismissal).
+     - Memverifikasi preservasi desktop 100% utuh menggunakan kelas `sm:absolute sm:right-0 sm:w-86`.
+     - Memverifikasi batas ukuran baris koordinator `NotificationCenter.tsx` tetap di bawah ambang batas (251 LOC).
+     - Seluruh 5 pengujian pada suite lulus (5/5 tests passing).
+   - **Refaktor Komponen Popover (`NotificationCenter.tsx` — 251 LOC):**
+     - Melepaskan popover dari kontainer lonceng relatif pada viewport smartphone dengan kelas `fixed inset-x-3 top-13 z-50 max-h-[82vh] flex flex-col`.
+     - Menambahkan backdrop overlay transparan `fixed inset-0 bg-slate-900/20 backdrop-blur-2xs z-40 sm:hidden` dengan handler klik `setIsOpen(false)`.
+     - Mempertahankan penataan desktop 100% identik dengan `sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-86 sm:max-w-[calc(100vw-2rem)] sm:max-h-none sm:block`.
+     - Menjaga fungsionalitas navigasi klik, pembacaan feed notifikasi, dan tombol *"Mark all read"* beroperasi optimal tanpa regresi.
+   - **Verifikasi Invarian & Drift Check:**
+     - `npx tsx --test src/lib/productivity/useNotificationFeed.test.ts` ✅ (5/5 pass).
+     - `npm run drift:check` ✅ (91/91 spec-plan pairs valid, coordinator sizes ≤ 250 LOC, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 error).
 
 1. **Implementasi Mobile Sidebar Slide Transition & Backdrop Animation (ADR-0063 — Implementation Complete):**
    - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**

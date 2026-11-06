@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Store, X, MapPin, Navigation, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -31,6 +31,11 @@ interface OutletFormModalContentProps {
   onSuccess: () => void;
 }
 
+// Sonner pauses its dismiss timer on hover/tap. On touch, tapping the toast can
+// pin it forever and also covers the modal close button, so this toast ignores
+// pointer events and is dismissed explicitly when the modal unmounts.
+const GPS_TOAST_ID = "outlet-gps-detection";
+
 function OutletFormModalContent({
   outlet,
   onClose,
@@ -48,6 +53,12 @@ function OutletFormModalContent({
   const [isLocatingInModal, setIsLocatingInModal] = useState(false);
   const [quickPasteCoord, setQuickPasteCoord] = useState("");
   const [suggestionSeed, setSuggestionSeed] = useState(0);
+
+  useEffect(() => {
+    return () => {
+      toast.dismiss(GPS_TOAST_ID);
+    };
+  }, []);
 
   const selectedBranch = branches.find((b) => b.id === formOutlet.branchId);
   const suggestedCode = useMemo(() => {
@@ -81,9 +92,15 @@ function OutletFormModalContent({
     try {
       const { latitude, longitude } = await getCurrentGpsLocation();
       setFormOutlet((prev) => ({ ...prev, latitude, longitude }));
-      toast.success(`Koordinat GPS terdeteksi: ${latitude}, ${longitude}`);
+      toast.success(`Koordinat GPS terdeteksi: ${latitude}, ${longitude}`, {
+        id: GPS_TOAST_ID,
+        style: { pointerEvents: "none" },
+      });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal mendeteksi lokasi GPS");
+      toast.error(err instanceof Error ? err.message : "Gagal mendeteksi lokasi GPS", {
+        id: GPS_TOAST_ID,
+        style: { pointerEvents: "none" },
+      });
     } finally {
       setIsLocatingInModal(false);
     }
@@ -405,8 +422,8 @@ function OutletFormModalContent({
 
             {/* GPS Coordinates Picker Block */}
             <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
                   <MapPin className="w-3.5 h-3.5 text-orange-500" />
                   <span>GPS Coordinates</span>
                 </div>
@@ -416,7 +433,7 @@ function OutletFormModalContent({
                       href={`https://www.google.com/maps?q=${formOutlet.latitude},${formOutlet.longitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400"
+                      className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400"
                     >
                       <span>View on Maps</span>
                       <ExternalLink className="w-3 h-3" />
@@ -433,6 +450,17 @@ function OutletFormModalContent({
                   </button>
                 </div>
               </div>
+              {hasValidCoordinates && (
+                <a
+                  href={`https://www.google.com/maps?q=${formOutlet.latitude},${formOutlet.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex sm:hidden items-center gap-1 w-fit text-[11px] font-semibold text-orange-600 hover:text-orange-700 dark:text-orange-400"
+                >
+                  <span>View on Maps</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
               <div>
                 <label htmlFor="outlet-quick-paste" className="sr-only">
                   Quick paste coordinates

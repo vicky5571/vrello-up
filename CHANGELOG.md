@@ -4,6 +4,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-11-07]
+
+- `fix(outlets)`: Stabilize GPS toast and mobile Create Outlet layout
+  - Moved the `View on Maps` link to a dedicated second row on mobile (`sm:hidden`) while preserving the desktop header row (`hidden sm:inline-flex`) in `OutletFormModal.tsx`
+  - Prevented the GPS header title from wrapping (`whitespace-nowrap`) so the header row stays compact at 390px
+  - Fixed the GPS toast getting stuck on touch devices after it was tapped: the toast now uses a stable id, ignores pointer events so taps reach the modal close button, and is explicitly dismissed when the modal unmounts
+  - Made the Sonner toaster container pass-through while keeping individual toasts interactive, preventing hover-pause on empty stack areas
+  - Added TDD coverage in `src/components/views/OutletsView/outletFormModalMobileUx.test.ts` (7/7 tests passing)
+  - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (937/937), `npm run test:smoke` ✅ (145/145)
+  - Refs: direct mobile UX review request (no ADR/spec required for this targeted fix)
+
 ## [2026-11-06]
 
 - `feat(mobile)`: Bound notification center popover to viewport and add mobile backdrop

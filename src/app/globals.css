@@ -306,6 +306,17 @@ html {
   }
 }
 
+/* Sonner Toast: let taps on the empty stack area pass through to the page.
+   Individual toasts opt back in; the GPS status toast opts out entirely so a
+   tap on it can never pause its dismiss timer on touch devices. */
+[data-sonner-toaster] {
+  pointer-events: none;
+}
+
+[data-sonner-toast] {
+  pointer-events: auto;
+}
+
 /* Sonner Toast: Thin countdown timer progress bar at bottom */
 [data-sonner-toast]:not([data-type='loading']):not([data-type='promise']):not([data-removed='true'])::after {
   content: '';
