@@ -4,7 +4,7 @@ import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  Home,
+  Layers,
   Store,
   MapPin,
   CalendarDays,
@@ -16,7 +16,7 @@ import type { ViewMode } from "@/types";
 interface BottomTabItem {
   id: string;
   label: string;
-  icon: typeof Home;
+  icon: typeof Layers;
   activeColor: string;
   isActive: (activeView: ViewMode, isSidebarOpen: boolean) => boolean;
   onClick: (helpers: {
@@ -28,12 +28,15 @@ interface BottomTabItem {
 
 const BOTTOM_TABS: BottomTabItem[] = [
   {
-    id: "home",
-    label: "Home",
-    icon: Home,
-    activeColor: "text-blue-500 dark:text-blue-400",
-    isActive: (view, isSidebarOpen) => !isSidebarOpen && view === "home",
-    onClick: ({ setActiveView }) => setActiveView("home"),
+    id: "pipeline",
+    label: "Pipeline",
+    icon: Layers,
+    activeColor: "text-indigo-500 dark:text-indigo-400",
+    isActive: (view, isSidebarOpen) => !isSidebarOpen && view === "pipeline",
+    onClick: ({ setActiveView, setAppMode }) => {
+      setAppMode("marcom");
+      setActiveView("pipeline");
+    },
   },
   {
     id: "outlets",

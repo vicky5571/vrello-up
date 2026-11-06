@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **PLANNING COMPLETE / READY FOR IMPLEMENTATION**  
+**Active Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **PLANNING COMPLETE**  
 **Previous Feature:** Placements Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Outlets Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Analytics ROI Header Layout and Horizontal KPI Carousel (ADR-0065) — **IMPLEMENTATION COMPLETE**  
@@ -31,7 +32,31 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Mobile Bottom Navigation — Penggantian Home dengan Pipeline (ADR-0066 — Planning Complete):**
+1. **Implementasi Mobile Bottom Navigation — Penggantian Home dengan Pipeline (ADR-0066 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**
+     - Memperbarui pengujian kanonikal 5-tab bilah navigasi bawah mobile untuk memverifikasi `"Pipeline"`, `"Outlets"`, `"Placements"`, `"Events"`, dan `"Menu"` (menggantikan `"Home"`).
+     - Mengonfirmasi siklus Red-Green: tes gagal pada assertions `"Pipeline"` saat kode awal dijalankan (RED), kemudian lulus 100% setelah implementasi (GREEN).
+     - Memverifikasi batas koordinator `MobileBottomNav.tsx` tetap di bawah ambang batas (147 LOC <= 150 LOC) dan tidak ada border biru kaku.
+     - Seluruh 14 pengujian pada suite lulus (14/14 tests passing).
+   - **Refaktor Komponen Navigasi (`src/components/layout/MobileBottomNav.tsx` — 147 LOC):**
+     - Mengganti impor ikon `Home` dari `lucide-react` dengan `Layers`.
+     - Memperbarui item slot 1 pada array `BOTTOM_TABS`:
+       - `id: "pipeline"`
+       - `label: "Pipeline"`
+       - `icon: Layers`
+       - `activeColor: "text-indigo-500 dark:text-indigo-400"`
+       - `isActive: (view, isSidebarOpen) => !isSidebarOpen && view === "pipeline"`
+       - `onClick: ({ setActiveView, setAppMode }) => { setAppMode("marcom"); setActiveView("pipeline"); }`
+     - Menjadikan bilah navigasi bawah mobile 100% terdedikasi untuk alur kerja operasional pemasaran lapangan (*Field Marcom Toolbar*).
+     - **Invarian Desktop 100% Terjaga:** `GlobalRail.tsx` dan `Sidebar.tsx` tidak tersentuh dan tetap menampilkan menu sesuai arsitektur dasbor desktop.
+   - **Verifikasi Non-Negotiable Quality Gates:**
+     - `npx tsx --test src/components/layout/MobileBottomNav.test.ts` ✅ (14/14 tests passing).
+     - `npm run drift:check` ✅ (93/93 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm run test:smoke` ✅ (150/150 smoke tests pass).
+     - `npm test` ✅ (965/965 tests pass across 168 suites).
+
+2. **Perencanaan Arsitektur Mobile Bottom Navigation — Penggantian Home dengan Pipeline (ADR-0066 — Planning Complete):**
    - **Keputusan Desain & Rationale:**
      - Menggantikan slot 1 pada bilah navigasi bawah mobile (`MobileBottomNav.tsx`) dari `Home` menjadi `Pipeline` (`id: "pipeline"`, icon: `Layers`, activeColor: `text-indigo-500`).
      - Mengeliminasi redundansi tombol `Home` pada mobile yang sebelumnya hanya mengarah ke Kanban Board Tasks. Menu Kanban Board tetap dapat diakses penuh melalui drawer samping (`Sidebar.tsx`) di bawah mode Tasks.

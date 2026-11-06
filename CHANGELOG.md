@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `feat(navigation)`: Replace mobile bottom nav Home tab with Pipeline & Status (ADR-0066)
+  - Mobile: replaced redundant `Home` tab in Slot 1 with `Pipeline` (`id: "pipeline"`, icon: `Layers`, activeColor: `text-indigo-500`) in `MobileBottomNav.tsx`
+  - Operational alignment: elevates retail partnership pipeline (MoU approvals, proposal reviews, SLA aging) to instant 1-tap thumb reach for field teams, creating a 100% Marcom operational bottom toolbar (`Pipeline`, `Outlets`, `Placements`, `Events`, `Menu`)
+  - Redundancy elimination: removes the mobile `Home` tab which duplicated the Kanban board; project task tracking remains fully accessible via the sidebar drawer (`Sidebar.tsx`) under Tasks mode
+  - Desktop 100% preserved: desktop rail (`GlobalRail.tsx`) and drawer remain untouched
+  - Updated TDD unit test assertions in `src/components/layout/MobileBottomNav.test.ts` (14/14 tests passing)
+  - Verification: `npm run drift:check` ✅ (93/93 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (150/150), `npm test` ✅ (965/965)
+  - Refs: `docs/adr/0066-mobile-bottom-nav-replace-home-with-pipeline.md`, `docs/superpowers/specs/2026-11-07-mobile-bottom-nav-pipeline-design.md`, `docs/superpowers/plans/2026-11-07-mobile-bottom-nav-pipeline.md`
+
 - `fix(placements)`: Equalize mobile view switcher pill height across tabs
   - Mobile: changed view switcher container from `flex items-center` to `flex items-stretch sm:items-center` in `PlacementFilterControls.tsx`
   - Mobile: added `min-h-[40px] sm:min-h-0` to all view switcher buttons so active pill spans the full track height consistently across all 3 tabs (`Table`, `Map View`, and 2-line `Rekap Kuartal`), eliminating the shrunken pill and vertical gaps

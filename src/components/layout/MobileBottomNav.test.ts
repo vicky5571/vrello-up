@@ -55,7 +55,7 @@ describe("Mobile Shell UI/UX Polish Invariants (ADR-0058)", () => {
 
   it("verifies MobileBottomNav contains 5 canonical tabs and no rigid blue border box", () => {
     const bottomNavContent = fs.readFileSync(bottomNavPath, "utf-8");
-    assert.ok(bottomNavContent.includes("Home"), "Must include Home tab");
+    assert.ok(bottomNavContent.includes("Pipeline"), "Must include Pipeline tab");
     assert.ok(bottomNavContent.includes("Outlets"), "Must include Outlets tab");
     assert.ok(bottomNavContent.includes("Placements"), "Must include Placements tab");
     assert.ok(bottomNavContent.includes("Events"), "Must include Events tab");
