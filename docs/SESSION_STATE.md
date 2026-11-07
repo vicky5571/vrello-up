@@ -8,7 +8,7 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Wizard Stepper Header Dynamic Accordion Expansion (ADR-0077) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Wizard Stepper Header Dynamic Accordion Expansion (ADR-0077) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Placement Modal Viewport Height Stabilization and Search Results Expansion (ADR-0076) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **PLANNING COMPLETE & AMENDED**  
@@ -44,7 +44,25 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Stepper Header Dynamic Accordion di Mobile & Penyatuan Label Ringkas (ADR-0077 — Implementation Complete & Amended):**
+1. **Perencanaan Arsitektur Unifikasi Selektor Material POSM dengan CustomDropdown & Pembersihan Emoji (ADR-0078 — Planning Complete):**
+   - **Diagnosis Masalah UX Lapangan:**
+     - Pada Langkah 2 wizard POSM (`Step2MaterialTheme.tsx`), terdapat redundansi ganda antara 7 tombol pills kategori (`Poster`, `Shopblind`, dll.) dan dropdown native HTML `<select>`. Keduanya sama-sama memanipulasi `placement.materialId`, membingungkan pengguna, dan memakan ~80px tinggi modal vertikal.
+     - Native `<select>` tidak memiliki fitur pencarian/filter teks dan tampil tidak konsisten antar-OS.
+     - Bagian "Skema Biaya & Legalitas" menggunakan emoji mentah: `🏷️ Bebas Biaya (Rp 0)` dan `💰 Pemasangan Berbayar` yang tidak selaras dengan sistem icon Lucide platform.
+   - **Solusi Desain Responsif & Unifikasi Selektor:**
+     - Menghapus deretan pills `POSM_MATERIALS.map(...)` yang redundan di Langkah 2.
+     - Menggantikan native `<select>` dengan komponen standar platform [`CustomDropdown`](file:///Users/mac/Web%20Development/vrello-up/src/components/ui/CustomDropdown.tsx) di **semua viewport (mobile & desktop)**, dilengkapi fitur pencarian internal (`searchable={true}`).
+     - Menghapus seluruh emoji mentah dari Langkah 2 dan menggantikannya dengan icon Lucide `<Tag />` dan `<CreditCard />`.
+     - Menghemat ~80px tinggi vertikal di Langkah 2, memastikan bagian Kuartal, Tema Kampanye, dan Skema Biaya langsung terlihat tanpa scroll berlebih.
+   - **Artefak Perencanaan:**
+     - ADR: [`docs/adr/0078-step2-material-selector-unification-and-emoji-sanitization.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0078-step2-material-selector-unification-and-emoji-sanitization.md)
+     - Spec: [`docs/superpowers/specs/2026-11-07-step2-material-selector-unification-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-07-step2-material-selector-unification-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-07-step2-material-selector-unification.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-step2-material-selector-unification.md)
+     - Handover: [`docs/handover-step2-material-selector-unification.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-step2-material-selector-unification.md)
+   - **Verifikasi Invarian Drift:**
+     - 105/105 spec-plan pairing lulus 100% tanpa drift (`npm run drift:check`).
+
+2. **Perencanaan Arsitektur Stepper Header Dynamic Accordion di Mobile (ADR-0077 — Planning Complete):**
    - **TDD Test Suite (`src/components/views/PlacementsView/wizardStepperResponsiveness.test.ts`):**
      - Dibuat test suite mencakup 6 pengujian invariant tata letak responsif accordion, penghapusan subtitle redundan, dan integritas metadata langkah wizard.
      - Terverifikasi baseline RED (pengujian gagal sebelum refactor) dan GREEN setelah perbaikan.
