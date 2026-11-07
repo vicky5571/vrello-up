@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `feat(placements)`: Step 3 direct physical photo upload enforcement and Tautan URL removal (ADR-0079)
+  - Legacy URL elimination: completely removed `"Tautan URL"` toggle button, collapsible text input box, and manual `"Tambah"` action from `PlacementPhotoUploader.tsx`, enforcing 100% authentic physical uploads via device camera or gallery
+  - Dead code pruning: purged unused component states (`showManualUrl`, `manualUrlInput`), handler `handleAddManualUrl`, and unused Lucide icon imports (`Link as LinkIcon`, `ChevronDown`, `ChevronUp`, `Plus`), reducing component LOC by ~63 lines
+  - Header row stabilization: streamlined header row to display clean section title `"Foto Bukti Pemasangan"` on the left and dynamic counter badge `"{photos.length} Foto Terlampir"` on the right across all viewports
+  - Zero regression on physical uploads: preserved direct camera capture with `capture="environment"`, gallery file picker with `multiple`, client compression pipeline (`compressImage`), `/api/marcom/uploads` integration, thumbnail grid, and full-screen lightbox modal
+  - Added TDD unit test suite in `src/components/views/PlacementsView/step3PhotoUploadResponsiveness.test.ts` (7/7 tests passing)
+  - Verification: `npm run drift:check` ✅ (106/106 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (157/157), `npm test` ✅ (1015/1015)
+  - Refs: `docs/adr/0079-step3-tautan-url-removal.md`, `docs/superpowers/specs/2026-11-07-step3-tautan-url-removal-design.md`, `docs/superpowers/plans/2026-11-07-step3-tautan-url-removal.md`
+
+
 - `feat(placements)`: Step 2 POSM material selector unification and emoji sanitization (ADR-0078)
   - Redundancy eradication: eliminated 7 redundant hardcoded material category chip buttons (`POSM_MATERIALS.map(...)`) and associated dead handlers (`handleSelectPosmChip`, `activeChipLabel`) from `Step2MaterialTheme.tsx`, reclaiming ~80px of critical vertical viewport space in Step 2
   - Platform CustomDropdown integration: unified POSM material catalog selection using standard searchable [`CustomDropdown`](file:///Users/mac/Web%20Development/vrello-up/src/components/ui/CustomDropdown.tsx) across all viewports (mobile and desktop) with live fuzzy filtering (`searchable={true}` and `searchPlaceholder="Cari material POSM..."`)

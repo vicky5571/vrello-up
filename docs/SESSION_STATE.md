@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Step 3 Direct Physical Photo Upload Enforcement and Tautan URL Removal (ADR-0079) — **PLANNING COMPLETE**  
+**Active Feature:** Step 3 Direct Physical Photo Upload Enforcement and Tautan URL Removal (ADR-0079) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Step 3 Direct Physical Photo Upload Enforcement and Tautan URL Removal (ADR-0079) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Wizard Stepper Header Dynamic Accordion Expansion (ADR-0077) — **PLANNING COMPLETE**  
@@ -46,7 +47,19 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Penegakan Bukti Foto Fisik & Penghapusan Tautan URL Langkah 3 (ADR-0079 — Planning Complete):**
+1. **Implementasi Penegakan Bukti Foto Fisik & Penghapusan Tautan URL Langkah 3 (ADR-0079 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/PlacementsView/step3PhotoUploadResponsiveness.test.ts`):**
+     - Dibuat test suite 7 pengujian memverifikasi eliminasi total tombol `"Tautan URL"`, state `showManualUrl`/`manualUrlInput`, fungsi `handleAddManualUrl`, kontainer input URL `type="url"`, pembersihan icon Lucide (`LinkIcon`, `ChevronDown`, `ChevronUp`, `Plus`), serta preservasi tombol kamera dan galeri.
+     - Terverifikasi baseline RED (4 pengujian gagal sebelum refactor) dan GREEN setelah perbaikan.
+   - **Refactor Komponen Uploader (`src/components/views/PlacementsView/PlacementPhotoUploader.tsx`):**
+     - Menghapus tombol toggle `"Tautan URL"` dan kontainer input manual URL, mereduksi file sebanyak 63 baris kode (dari 333 LOC menjadi 270 LOC).
+     - Menstabilkan baris header: menampilkan label `"Foto Bukti Pemasangan"` di kiri dan badge counter `"{photos.length} Foto Terlampir"` di kanan saat foto terlampir di semua viewport.
+     - Mempertahankan 100% upload fisik kamera (`capture="environment"`), galeri (`multiple`), kompresi client-side (`compressImage`), endpoint `/api/marcom/uploads`, thumbnail grid preview, dan modal lightbox.
+   - **Verifikasi Kualitas & Invarian:**
+     - `npm run drift:check`: ✅ 0 drift (106/106 spec-plan pairs).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+
+2. **Perencanaan Arsitektur Penegakan Bukti Foto Fisik & Penghapusan Tautan URL Langkah 3 (ADR-0079 — Planning Complete):**
    - **Diagnosis Masalah UX & Integritas Operasional:**
      - Pada Langkah 3 wizard POSM (`Step3PhotoNotes.tsx` / `PlacementPhotoUploader.tsx`), tombol pemicu `"🔗 Tautan URL v"` memungkinkan pengguna menempelkan link gambar eksternal manual (`https://...`).
      - Alur ini merupakan *legacy dead UI* yang membypass kompresi berkas otomatis client-side (`compressImage`) dan penyimpanan cloud tersentralisir (`/api/marcom/uploads`), memicu risiko *broken images* (link kedaluwarsa atau hotlink blocking), serta mengacaukan kerapian baris header foto di semua viewport.

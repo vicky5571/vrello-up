@@ -8,10 +8,6 @@ import {
   X,
   Eye,
   Loader2,
-  Plus,
-  Link as LinkIcon,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppImage } from "@/components/ui/AppImage";
@@ -39,8 +35,6 @@ export function PlacementPhotoUploader({
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-  const [showManualUrl, setShowManualUrl] = useState(false);
-  const [manualUrlInput, setManualUrlInput] = useState("");
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   const photos = parsePlacementPhotos(photoUrl);
@@ -116,19 +110,6 @@ export function PlacementPhotoUploader({
     toast.info("Foto bukti dihapus");
   };
 
-  const handleAddManualUrl = () => {
-    const trimmed = manualUrlInput.trim();
-    if (!trimmed) return;
-    if (photos.includes(trimmed)) {
-      toast.warning("URL foto sudah ada dalam daftar");
-      return;
-    }
-    const next = [...photos, trimmed];
-    onChange(serializePlacementPhotos(next));
-    setManualUrlInput("");
-    toast.success("Tautan foto ditambahkan");
-  };
-
   return (
     <div className="space-y-2.5">
       {/* Hidden file inputs for direct camera and gallery */}
@@ -156,26 +137,11 @@ export function PlacementPhotoUploader({
         <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
           Foto Bukti Pemasangan
         </label>
-        <div className="flex items-center gap-2">
-          {photos.length > 0 && (
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80">
-              {photos.length} Foto Terlampir
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => setShowManualUrl((prev) => !prev)}
-            className="inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
-          >
-            <LinkIcon className="w-3 h-3" />
-            <span>Tautan URL</span>
-            {showManualUrl ? (
-              <ChevronUp className="w-3 h-3" />
-            ) : (
-              <ChevronDown className="w-3 h-3" />
-            )}
-          </button>
-        </div>
+        {photos.length > 0 && (
+          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80">
+            {photos.length} Foto Terlampir
+          </span>
+        )}
       </div>
 
       {/* Action Buttons: Camera & Gallery */}
@@ -222,35 +188,6 @@ export function PlacementPhotoUploader({
         <div className="flex items-center gap-2 p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs border border-blue-200/60 dark:border-blue-800/60 animate-pulse">
           <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
           <span>{uploadStatus || "Sedang memproses foto..."}</span>
-        </div>
-      )}
-
-      {/* Optional Manual URL Input */}
-      {showManualUrl && (
-        <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 animate-in fade-in duration-150">
-          <input
-            type="url"
-            placeholder="Tempel tautan gambar https://..."
-            value={manualUrlInput}
-            onChange={(e) => setManualUrlInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleAddManualUrl();
-              }
-            }}
-            disabled={disabled || isUploading}
-            className="flex-1 px-2.5 py-1 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
-          />
-          <button
-            type="button"
-            onClick={handleAddManualUrl}
-            disabled={!manualUrlInput.trim() || disabled || isUploading}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Plus className="w-3 h-3" />
-            <span>Tambah</span>
-          </button>
         </div>
       )}
 
