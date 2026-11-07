@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(inventory)`: BorrowRequestModal Step 4 review badge completion and clickability separation (ADR-0088)
+  - Data-driven completion restricted to Steps 1–3: updated `getBorrowStepCompletionStatus` in `borrowWizardHelpers.ts` to strictly return `4: false`, ensuring Step 4 (Review & Submit) never renders an emerald checkmark (`✓`) prior to submission
+  - Clickability vs completion decoupling: refactored `BorrowStepperHeader.tsx` to separate `isCompleted` (`s.step < 4 && completionStatus[s.step]`) from `isStep4Ready` (`s.step === 4 && completionStatus[1] && completionStatus[2] && completionStatus[3]`) and `isClickable`
+  - Unlocked review pill with retained step indicator: when equipment is chosen on Step 3, Step 4 becomes unlocked and interactive for clicking while displaying number `4` rather than a premature checkmark
+  - Visual continuity on backward navigation: navigating back from Step 4 to Step 1 or 2 preserves the green checkmark on Step 3 (`✓ Alat`) while keeping Step 4 accessible via 1-click
+  - Dedicated unit tests in `src/components/views/InventoryView/borrowRequestModal.test.ts` (14/14 tests passing)
+  - Verification: `npm run drift:check` ✅ (115/115 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (167/167)
+  - Refs: `docs/adr/0088-borrow-stepper-step4-review-completion-refinement.md`, `docs/superpowers/specs/2026-11-08-borrow-stepper-step4-review-completion-refinement-design.md`, `docs/superpowers/plans/2026-11-08-borrow-stepper-step4-review-completion-refinement.md`
+
 - `feat(inventory)`: BorrowRequestModal Step 2 empty initial schedule dates and Step 3 mobile catalog card readability (ADR-0087)
   - Empty initial schedule dates & modal reset: initialized `borrowDate` and `returnDueDate` to `""` in `BorrowRequestModal.tsx` and reset both to `""` on modal open in `useEffect`, preventing Step 2 from prematurely evaluating to `completed` with a green checkmark before the user specifies schedule dates
   - Responsive modal body padding: updated body wrapper from `p-6` to `p-4 sm:p-6 text-xs`, reclaiming 16px of horizontal screen real estate for narrow mobile viewports ($\le 375\text{px}$)

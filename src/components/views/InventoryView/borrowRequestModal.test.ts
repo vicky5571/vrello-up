@@ -153,7 +153,7 @@ test("Borrow Request Modal Stepper Header Invariants (ADR-0055 smoke)", async (t
     );
   });
 
-  await t.test("verifies getBorrowStepCompletionStatus computes statuses correctly", () => {
+  await t.test("verifies getBorrowStepCompletionStatus computes statuses correctly and never marks Step 4 Review as completed (ADR-0088)", () => {
     const statuses = getBorrowStepCompletionStatus({
       borrowerName: "Budi",
       borrowDate: "2026-11-10",
@@ -164,6 +164,21 @@ test("Borrow Request Modal Stepper Header Invariants (ADR-0055 smoke)", async (t
     assert.equal(statuses[2], true);
     assert.equal(statuses[3], false);
     assert.equal(statuses[4], false);
+
+    const allDataFilledStatuses = getBorrowStepCompletionStatus({
+      borrowerName: "Budi",
+      borrowDate: "2026-11-10",
+      returnDueDate: "2026-11-12",
+      selectedItems: [{ inventoryItemId: "it-1", quantity: 2 }],
+    });
+    assert.equal(allDataFilledStatuses[1], true);
+    assert.equal(allDataFilledStatuses[2], true);
+    assert.equal(allDataFilledStatuses[3], true);
+    assert.equal(
+      allDataFilledStatuses[4],
+      false,
+      "Step 4 (Review & Submit) must remain false in completionStatus so it never shows a premature green checkmark before submission"
+    );
   });
 
   await t.test("verifies BorrowRequestModal imports and mounts BorrowStepperHeader", () => {
@@ -255,6 +270,25 @@ test("Borrow Request Modal Stepper Header Invariants (ADR-0055 smoke)", async (t
       modalContent,
       /line-clamp-2\s+break-words/,
       "Item name must span full card width with line-clamp-2 break-words"
+    );
+  });
+
+  await t.test("verifies BorrowStepperHeader separates Step 4 clickability from Step 1-3 completion checkmarks (ADR-0088)", () => {
+    const headerContent = fs.readFileSync(headerPath, "utf-8");
+    assert.match(
+      headerContent,
+      /const\s+isCompleted\s*=\s*s\.step\s*<\s*4\s*&&\s*completionStatus\[s\.step\];/,
+      "isCompleted must be restricted to s.step < 4 so Step 4 never renders a green checkmark"
+    );
+    assert.match(
+      headerContent,
+      /isStep4Ready/,
+      "BorrowStepperHeader must compute isStep4Ready so Step 4 unlocks once Steps 1-3 are complete"
+    );
+    assert.match(
+      headerContent,
+      /const\s+isClickable\s*=\s*isCompleted\s*\|\|\s*isStep4Ready\s*\|\|\s*s\.step\s*<=\s*currentStep;/,
+      "isClickable must include isStep4Ready alongside isCompleted and s.step <= currentStep"
     );
   });
 });

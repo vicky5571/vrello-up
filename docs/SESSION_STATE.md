@@ -8,7 +8,9 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** BorrowRequestModal Step 2 Empty Initial Schedule Dates & Step 3 Mobile Catalog Card Readability (ADR-0087) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** BorrowRequestModal Step 4 Review Badge Completion & Clickability Separation (ADR-0088) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** BorrowRequestModal Step 4 Review Badge Completion & Clickability Separation (ADR-0088) — **PLANNING COMPLETE**  
+**Previous Feature:** BorrowRequestModal Step 2 Empty Initial Schedule Dates & Step 3 Mobile Catalog Card Readability (ADR-0087) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** BorrowRequestModal Step 2 Empty Initial Schedule Dates & Step 3 Mobile Catalog Card Readability (ADR-0087) — **PLANNING COMPLETE**  
 **Previous Feature:** BorrowRequestModal Rules of Hooks Order Stabilization (ADR-0086) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** BorrowRequestModal Rules of Hooks Order Stabilization (ADR-0086) — **PLANNING COMPLETE**  
@@ -62,7 +64,27 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Perbaikan Tanggal Awal Step 2 & Readability Katalog Step 3 pada BorrowRequestModal (ADR-0087 — Implementation Complete):**
+1. **Implementasi Pemisahan Tanda Selesai Step 4 (Review) & Navigasi Stepper pada BorrowRequestModal (ADR-0088 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/InventoryView/borrowRequestModal.test.ts`):**
+     - Memperbarui subtest `getBorrowStepCompletionStatus` untuk memverifikasi bahwa saat seluruh data Steps 1–3 terisi lengkap, `statuses[1]`, `statuses[2]`, dan `statuses[3]` bernilai `true`, sedangkan `statuses[4]` secara ketat bernilai `false` sehingga Step 4 (Review & Submit) tidak pernah menampilkan centang hijau prematur sebelum form dikirimkan.
+     - Menambahkan subtest baru `"verifies BorrowStepperHeader separates Step 4 clickability from Step 1-3 completion checkmarks (ADR-0088)"` yang menguji bahwa `BorrowStepperHeader.tsx` membatasi `isCompleted` pada `s.step < 4`, menghitung `isStep4Ready` berdasarkan kelengkapan Steps 1–3, dan menggabungkannya ke dalam `isClickable`.
+     - Terverifikasi siklus TDD: Baseline RED (assertion gagal) -> GREEN (14/14 tests passing).
+   - **Refaktor Komponen Helper & Stepper Header:**
+     - `borrowWizardHelpers.ts`: Mengubah return value Step 4 pada `getBorrowStepCompletionStatus` menjadi `4: false` sembari tetap mempertahankan guard `canAdvanceFromBorrowStep(4, data)`.
+     - `BorrowStepperHeader.tsx`: Memisahkan status selesai data (`isCompleted = s.step < 4 && completionStatus[s.step]`) dari kesiapan klik Step 4 (`isStep4Ready = s.step === 4 && completionStatus[1] && completionStatus[2] && completionStatus[3]`) dan status interaktivitas tombol (`isClickable = isCompleted || isStep4Ready || s.step <= currentStep`).
+     - Menyesuaikan styling container tombol stepper pada `isClickable` agar saat seluruh data Steps 1–3 valid, pill Step 4 langsung aktif/bisa diklik (`hover:bg-slate-100 cursor-pointer`) dengan tetap menampilkan angka `4` (bukan centang hijau).
+     - Menjamin bahwa saat pengguna di Step 4 menavigasi mundur ke Step 1 atau Step 2 untuk memeriksa data, centang hijau pada Step 3 (`✓ Alat`) tetap terjaga dan Step 4 (`4 Review`) tetap dapat diakses kembali dengan 1 klik langsung.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0088-borrow-stepper-step4-review-completion-refinement.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0088-borrow-stepper-step4-review-completion-refinement.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-borrow-stepper-step4-review-completion-refinement-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-borrow-stepper-step4-review-completion-refinement-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-borrow-stepper-step4-review-completion-refinement.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-borrow-stepper-step4-review-completion-refinement.md)
+     - Handover: [`docs/handover-borrow-stepper-step4-review-completion-refinement.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-borrow-stepper-step4-review-completion-refinement.md)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (115/115 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 167/167 tests passing across 65 suites (0 failures).
+     - Targeted unit test: ✅ 14/14 tests passing in `borrowRequestModal.test.ts`.
+2. **Implementasi Perbaikan Tanggal Awal Step 2 & Readability Katalog Step 3 pada BorrowRequestModal (ADR-0087 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/InventoryView/borrowRequestModal.test.ts`):**
      - Menambahkan subtest `"verifies borrowDate and returnDueDate initialize to empty string so Step 2 is not prematurely completed (ADR-0087)"` yang memvalidasi bahwa `borrowDate` dan `returnDueDate` diinisialisasi ke `""` dan di-reset ke `""` saat modal dibuka via `useEffect`.
      - Menambahkan subtest `"verifies Step 3 mobile catalog readability and 3-layer item card layout (ADR-0087)"` yang memvalidasi padding body responsif `p-4 sm:p-6`, scrollbar filter kategori `no-scrollbar`, tata letak kartu vertikal 3-lapis `p-3 flex flex-col gap-2`, kode barang `shrink-0 whitespace-nowrap font-mono`, dan nama barang `line-clamp-2 break-words`.

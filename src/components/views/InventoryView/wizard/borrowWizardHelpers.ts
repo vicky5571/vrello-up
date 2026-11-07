@@ -79,6 +79,6 @@ export function getBorrowStepCompletionStatus(
     1: canAdvanceFromBorrowStep(1, data),
     2: canAdvanceFromBorrowStep(2, data),
     3: canAdvanceFromBorrowStep(3, data),
-    4: canAdvanceFromBorrowStep(4, data),
+    4: false,
   };
 }

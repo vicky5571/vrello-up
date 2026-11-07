@@ -36,8 +36,13 @@ export function BorrowStepperHeader({
         {BORROW_WIZARD_STEPS.map((s) => {
           const Icon = STEP_ICONS[s.step];
           const isCurrent = currentStep === s.step;
-          const isCompleted = completionStatus[s.step];
-          const isClickable = isCompleted || s.step <= currentStep;
+          const isCompleted = s.step < 4 && completionStatus[s.step];
+          const isStep4Ready =
+            s.step === 4 &&
+            completionStatus[1] &&
+            completionStatus[2] &&
+            completionStatus[3];
+          const isClickable = isCompleted || isStep4Ready || s.step <= currentStep;
 
           return (
             <button
@@ -49,7 +54,7 @@ export function BorrowStepperHeader({
                 "flex items-center justify-center sm:justify-start gap-1.5 px-2 py-1.5 rounded-xl border text-left transition-all text-xs font-semibold",
                 isCurrent
                   ? "bg-blue-500/10 text-blue-800 dark:text-blue-300 border-blue-500/40 ring-2 ring-blue-500/20 shadow-xs"
-                  : isCompleted
+                  : isClickable
                   ? "bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 cursor-pointer"
                   : "bg-slate-50/50 dark:bg-slate-900/40 text-slate-400 dark:text-slate-600 border-transparent cursor-not-allowed opacity-60"
               )}
