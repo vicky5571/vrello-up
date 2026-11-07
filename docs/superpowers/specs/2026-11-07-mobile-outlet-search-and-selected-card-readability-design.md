@@ -100,14 +100,41 @@ Introduce a mobile-specific layout (`sm:hidden`) while preserving the existing d
 3. **Desktop Invariance Contract:**
    - On desktop viewports ($\ge 640\text{px}$), the header displays `[🔄 Ganti Outlet]` and `[✕]` side-by-side. The mobile button is completely hidden (`sm:hidden`).
 
+### 2.3 Search Dropdown Header Clutter Reduction Contract (`OutletSearchCombobox.tsx`)
+In the search results panel header (line 623), hide keyboard navigation hints on touch/mobile devices:
+```tsx
+<span className="hidden sm:inline text-[10px] text-slate-400 font-normal">
+  Gunakan ↑↓ lalu Enter atau klik outlet
+</span>
+```
+This ensures the search count banner (`Ditemukan N outlet`) renders on a single, clean horizontal line on mobile without awkward multi-line text wrapping.
+
+### 2.4 Step 1 Header Subtitle Relief Contract (`Step1Outlet.tsx`)
+In `src/components/views/PlacementsView/wizard/Step1Outlet.tsx`, hide the redundant subtitle on mobile when an outlet is selected to save vertical space above the fold:
+```tsx
+<p
+  className={cn(
+    "text-[11px] text-slate-500 dark:text-slate-400 mt-0.5",
+    selectedOutlet && "hidden sm:block"
+  )}
+>
+  {selectedOutlet
+    ? "Outlet terverifikasi untuk pelaksanaan materi promosi lapangan"
+    : "Cari toko berdasarkan nama, ID outlet, atau alamat lapangan"}
+</p>
+```
+
 ## 3. Acceptance Criteria & Invariants
 
 1. **AC-1 (Search Item Mobile Legibility):** On mobile viewports (< 640px), search results allow outlet names to wrap cleanly up to 2 lines (`break-words line-clamp-2`), showing full branch/qualifier names without aggressive truncation.
 2. **AC-2 (Search Address Mobile Legibility):** On mobile viewports (< 640px), street addresses render across up to 2 lines with `MapPin`, remaining legible without cutting off sub-districts prematurely.
 3. **AC-3 (Selected Card Header Relief):** On mobile viewports (< 640px), removing the 105px `Ganti Outlet` button from the top row expands store title and address width by >140%, eliminating the 5-line title and 8-line address collapse.
 4. **AC-4 (Dedicated Mobile Ganti Outlet Button):** On mobile viewports (< 640px), a full-width `Ganti Outlet Lain` button is rendered below the card content with high-contrast thumb ergonomics.
-5. **AC-5 (Desktop Visual Invariant):** On desktop viewports ($\ge 640\text{px}$), both search results and selected card maintain their existing single-row header structures byte-for-byte.
-6. **AC-6 (Behavioral Invariance):** Both desktop and mobile action buttons trigger `handleChangeClick`, clear unselect triggers `handleClear`, and keyboard navigation (`ArrowDown`, `ArrowUp`, `Enter`) remains fully functional.
+5. **AC-5 (Desktop Visual Invariant):** On desktop viewports ($\ge 640\text{px}$), search results, card headers, and subtitles maintain their existing desktop structures byte-for-byte.
+6. **AC-6 (Behavioral Invariance):** Both desktop and mobile action buttons trigger `handleChangeClick`, clear unselect triggers `handleClear`, and keyboard navigation remains functional.
+7. **AC-7 (Search Header Clutter Relief):** On mobile viewports (< 640px), the keyboard hint `"Gunakan ↑↓ lalu Enter atau klik outlet"` is hidden (`hidden sm:inline`).
+8. **AC-8 (Step 1 Subtitle Vertical Space Relief):** On mobile viewports (< 640px), when an outlet is selected, the subtitle `"Outlet terverifikasi untuk pelaksanaan materi promosi lapangan"` is hidden (`hidden sm:block`) to conserve vertical space.
+
 
 ## 4. Explicit Non-Goals
 - No changes to API search parameters or endpoints.

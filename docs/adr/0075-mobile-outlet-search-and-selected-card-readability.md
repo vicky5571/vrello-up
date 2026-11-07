@@ -62,6 +62,9 @@ Specifically:
    - Refactor the search result list item (`results.map`) with responsive multi-line stacking on mobile (`sm:hidden` / `hidden sm:flex`).
    - Refactor the selected outlet card (`showCard && currentOutlet`) so the name, code, address, and PIC enjoy 100% card width on mobile.
    - Relocate `[🔄 Ganti Outlet]` on mobile to a dedicated action row with ergonomic touch targets, while retaining its exact top-right header position on desktop (`sm:flex`).
+   - Hide keyboard instructions `"Gunakan ↑↓ lalu Enter atau klik outlet"` on mobile devices via `hidden sm:inline` to eliminate multi-line header clutter in the results panel.
+2. In `src/components/views/PlacementsView/wizard/Step1Outlet.tsx`:
+   - Hide subtitle `"Outlet terverifikasi untuk pelaksanaan materi promosi lapangan"` on mobile devices when an outlet is selected (`hidden sm:block`) to save vertical space.
 
 ## Consequences
 
@@ -69,8 +72,10 @@ Specifically:
 1. **Flawless Mobile Typography:** Eliminates 5-line title and 8-line address wrapping on the selected outlet card. Address and store titles flow naturally.
 2. **Transparent Search Disambiguation:** Field operators can read full outlet names and branch qualifiers in the search dropdown without losing critical words.
 3. **Ergonomic Touch Targets:** The mobile "Ganti Outlet" action becomes comfortable to tap with one thumb.
-4. **Desktop Zero-Regression:** 100% visual parity preserved on desktop viewports ($\ge 640\text{px}$).
-5. **Architectural Purity:** Strictly scoped to responsive CSS utilities in `OutletSearchCombobox.tsx`. No changes to API routes, database schemas, or global state stores.
+4. **Optimized Vertical Space on Mobile:** Removing redundant keyboard hints and verification subheadings frees up critical vertical height above the fold on mobile screens.
+5. **Desktop Zero-Regression:** 100% visual parity preserved on desktop viewports ($\ge 640\text{px}$).
+6. **Architectural Purity:** Strictly scoped to responsive CSS utilities in `OutletSearchCombobox.tsx` and `Step1Outlet.tsx`. No changes to API routes, database schemas, or global state stores.
+
 
 ### Negative Consequences / Accepted Technical Debt
 1. None. All mutations are responsive presentation enhancements.

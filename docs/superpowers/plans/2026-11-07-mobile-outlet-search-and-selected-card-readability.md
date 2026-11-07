@@ -16,8 +16,9 @@ Refine mobile readability for outlet search results and the selected target POSM
 
 | File Path | Responsibility | Estimated Diff |
 | :--- | :--- | :--- |
-| `src/components/views/PlacementsView/outletSearchResponsiveness.test.ts` | Unit & responsiveness regression test suite | ~65 LOC (New) |
-| `src/components/views/PlacementsView/OutletSearchCombobox.tsx` | Mobile-first responsive refactoring of search items and selected card | ~35 LOC modified |
+| `src/components/views/PlacementsView/outletSearchResponsiveness.test.ts` | Unit & responsiveness regression test suite | ~75 LOC (New) |
+| `src/components/views/PlacementsView/OutletSearchCombobox.tsx` | Mobile-first responsive refactoring of search items, selected card, and header hint | ~40 LOC modified |
+| `src/components/views/PlacementsView/wizard/Step1Outlet.tsx` | Hide selected subtitle on mobile to conserve vertical space | ~5 LOC modified |
 | `CHANGELOG.md` | Document release entry with ADR-0075 reference | ~10 LOC |
 | `docs/SESSION_STATE.md` | Session tracking update | ~15 LOC |
 
@@ -30,6 +31,8 @@ Refine mobile readability for outlet search results and the selected target POSM
   - Search result mobile name element applies `break-words` and `line-clamp-2`.
   - Selected outlet card header button container hides `Ganti Outlet` on mobile using `hidden sm:inline-flex`.
   - Selected outlet card mobile bottom button container applies `w-full sm:hidden`.
+  - Search results header hides keyboard hint on mobile using `hidden sm:inline`.
+  - Step 1 selected subtitle hides on mobile using `hidden sm:block`.
   - Both mobile and desktop buttons trigger `handleChangeClick`.
   - Unselect button triggers `handleClear`.
 - [ ] Run test suite (`npx tsx --test src/components/views/PlacementsView/outletSearchResponsiveness.test.ts`) and confirm baseline failure (RED).
@@ -38,6 +41,12 @@ Refine mobile readability for outlet search results and the selected target POSM
 - [ ] In `src/components/views/PlacementsView/OutletSearchCombobox.tsx`:
   - Refactor `results.map` list item rendering with mobile stacked section (`sm:hidden`) and desktop row (`hidden sm:flex`).
   - Update selected card header actions: add `hidden sm:inline-flex` to `[🔄 Ganti Outlet]` button.
+  - Insert mobile full-width `[🔄 Ganti Outlet Lain]` button (`w-full sm:hidden`) at bottom of card.
+  - Add `hidden sm:inline` to keyboard hint in search panel header.
+- [ ] In `src/components/views/PlacementsView/wizard/Step1Outlet.tsx`:
+  - Add `selectedOutlet && "hidden sm:block"` to the subtitle paragraph.
+- [ ] Run test suite and confirm pass (GREEN).
+
   - Insert mobile full-width `[🔄 Ganti Outlet Lain]` button (`w-full sm:hidden`) at bottom of card.
 - [ ] Run test suite and confirm pass (GREEN).
 

@@ -11,6 +11,8 @@
 | :--- | :--- |
 | `src/components/views/PlacementsView/outletSearchResponsiveness.test.ts` | Unit & responsiveness regression test suite verifying mobile layout contracts |
 | `src/components/views/PlacementsView/OutletSearchCombobox.tsx` | Component governing outlet search, autocomplete dropdown, and selected target card |
+| `src/components/views/PlacementsView/wizard/Step1Outlet.tsx` | Step 1 wrapper containing step header, brand filters, and subtitle |
+
 
 ---
 
@@ -85,9 +87,26 @@ From `src/components/views/PlacementsView/OutletSearchCombobox.tsx`:
                         </div>
 ```
 
+### Snippet C: Search Result Panel Header Hint in `OutletSearchCombobox.tsx` (Lines 623–626)
+```tsx
+                <span className="text-[10px] text-slate-400 font-normal">
+                  Gunakan ↑↓ lalu Enter atau klik outlet
+                </span>
+```
+
+### Snippet D: Step 1 Header Subtitle in `src/components/views/PlacementsView/wizard/Step1Outlet.tsx` (Lines 61–65)
+```tsx
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            {selectedOutlet
+              ? "Outlet terverifikasi untuk pelaksanaan materi promosi lapangan"
+              : "Cari toko berdasarkan nama, ID outlet, atau alamat lapangan"}
+          </p>
+```
+
 ---
 
 ## 3. Exact Change Instructions
+
 
 ### Change 1: Selected Card Header Actions & Bottom Mobile Button
 
@@ -222,6 +241,51 @@ In `src/components/views/PlacementsView/OutletSearchCombobox.tsx`, wrap the top 
                         </div>
 ```
 
+### Change 3: Search Result Panel Header Keyboard Hint
+
+In `src/components/views/PlacementsView/OutletSearchCombobox.tsx`, line 623:
+
+DELETE:
+```tsx
+                <span className="text-[10px] text-slate-400 font-normal">
+                  Gunakan ↑↓ lalu Enter atau klik outlet
+                </span>
+```
+
+REPLACE WITH:
+```tsx
+                <span className="hidden sm:inline text-[10px] text-slate-400 font-normal">
+                  Gunakan ↑↓ lalu Enter atau klik outlet
+                </span>
+```
+
+### Change 4: Step 1 Header Subtitle Relief
+
+In `src/components/views/PlacementsView/wizard/Step1Outlet.tsx`, lines 61–65:
+
+DELETE:
+```tsx
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            {selectedOutlet
+              ? "Outlet terverifikasi untuk pelaksanaan materi promosi lapangan"
+              : "Cari toko berdasarkan nama, ID outlet, atau alamat lapangan"}
+          </p>
+```
+
+REPLACE WITH:
+```tsx
+          <p
+            className={cn(
+              "text-[11px] text-slate-500 dark:text-slate-400 mt-0.5",
+              selectedOutlet && "hidden sm:block"
+            )}
+          >
+            {selectedOutlet
+              ? "Outlet terverifikasi untuk pelaksanaan materi promosi lapangan"
+              : "Cari toko berdasarkan nama, ID outlet, atau alamat lapangan"}
+          </p>
+```
+
 ---
 
 ## 4. Do Not Touch List
@@ -229,7 +293,7 @@ In `src/components/views/PlacementsView/OutletSearchCombobox.tsx`, wrap the top 
 | File / Component | Reason |
 | :--- | :--- |
 | `src/app/api/marcom/outlets/outletsSearchFilter.ts` | Pure ranking helper; working as expected |
-| `src/components/views/PlacementsView/wizard/Step1Outlet.tsx` | Pure wrapper; brand selector & titles intact |
+| `src/components/views/PlacementsView/wizard/Step1Outlet.tsx` Segmented Brand Filter | Brand filter pills (`Semua`, `IM3`, `3/Tri`) intact |
 | `src/components/views/PlacementsView/wizard/Step4LocationVerification.tsx` | Step 4 verification logic; outside scope |
 | Desktop CSS breakpoints (`sm:`, `md:`, `lg:`) | Desktop visual layout must remain 100% byte-for-byte unaffected |
 
@@ -239,12 +303,15 @@ In `src/components/views/PlacementsView/OutletSearchCombobox.tsx`, wrap the top 
 
 1. **Create Test File:**
    - Create `src/components/views/PlacementsView/outletSearchResponsiveness.test.ts`.
-   - Implement test assertions verifying presence of `sm:hidden` mobile stacked containers, `hidden sm:inline-flex` for header button, and `w-full sm:hidden` for mobile bottom button.
+   - Implement test assertions verifying presence of `sm:hidden` mobile stacked containers, `hidden sm:inline-flex` for header button, `w-full sm:hidden` for mobile bottom button, `hidden sm:inline` for keyboard hint, and `hidden sm:block` for selected subtitle.
    - Run `npx tsx --test src/components/views/PlacementsView/outletSearchResponsiveness.test.ts` (verify RED / baseline failure).
-2. **Apply OutletSearchCombobox Refactor:**
+2. **Apply OutletSearchCombobox & Step1Outlet Refactors:**
    - Update `src/components/views/PlacementsView/OutletSearchCombobox.tsx`:
      - Apply Change 1 (Header `hidden sm:inline-flex` and bottom `w-full sm:hidden` button).
      - Apply Change 2 (Search list items responsive separation).
+     - Apply Change 3 (Search header hint `hidden sm:inline`).
+   - Update `src/components/views/PlacementsView/wizard/Step1Outlet.tsx`:
+     - Apply Change 4 (Subtitle `selectedOutlet && "hidden sm:block"`).
 3. **Verify Tests & Build:**
    - Run `npx tsx --test src/components/views/PlacementsView/outletSearchResponsiveness.test.ts` (verify GREEN).
    - Run `npm run drift:check` (verify 102/102 spec-plan pairs).
@@ -265,7 +332,10 @@ In `src/components/views/PlacementsView/OutletSearchCombobox.tsx`, wrap the top 
 - [ ] Mobile selected card store name flows naturally without 5-line vertical fragmentation.
 - [ ] Mobile selected card address flows naturally without 8-line vertical fragmentation.
 - [ ] Mobile selected card renders dedicated full-width `Ganti Outlet Lain` button at bottom.
+- [ ] Mobile search panel header hides keyboard navigation hint (`hidden sm:inline`).
+- [ ] Step 1 header subtitle hides on mobile when outlet is selected (`hidden sm:block`) to conserve vertical space.
 - [ ] Desktop viewport ($\ge 640\text{px}$) remains 100% byte-for-byte unaffected.
+
 
 
 

@@ -42,37 +42,26 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Keterbacaan Hasil Pencarian & Kartu Outlet Terpilih di Mobile (ADR-0075 — Implementation Complete):**
-   - **TDD Test Suite (`src/components/views/PlacementsView/outletSearchResponsiveness.test.ts`):**
-     - Memverifikasi dropdown pencarian memiliki container stacked mobile (`flex flex-col gap-1 sm:hidden`) dan container desktop (`hidden sm:flex`).
-     - Memverifikasi elemen nama toko mobile menerapkan `break-words line-clamp-2` tanpa pemotongan kaku.
-     - Memverifikasi alamat mobile menerapkan `MapPin` dan `line-clamp-2 leading-normal`.
-     - Memverifikasi tombol `Ganti Outlet` di header kartu disembunyikan di mobile dengan `hidden sm:inline-flex`.
-     - Memverifikasi kartu outlet terpilih merender tombol bawah *full-width* `Ganti Outlet Lain` di mobile via `w-full sm:hidden`.
-     - Memverifikasi kedua tombol memicu `handleChangeClick` dan tombol unselect memicu `handleClear`.
-     - Siklus TDD terverifikasi: RED state (6 assertions gagal saat baseline) -> GREEN state (7/7 assertions lulus).
-   - **Refaktor Komponen Combobox (`src/components/views/PlacementsView/OutletSearchCombobox.tsx`):**
-     - Mengubah tombol `Ganti Outlet` di header kartu terpilih menjadi `hidden sm:inline-flex`, membebaskan ruang horizontal nama dan alamat toko dari ~92px menjadi ~230px (+148% lebih lebar), meniadakan pemotongan 5 baris nama dan 8 baris alamat.
-     - Menambahkan tombol aksi mobile bawah *full-width* ramah sentuhan jempol (`w-full sm:hidden py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 ...`) berlabel `Ganti Outlet Lain`.
-     - Merestrukturisasi item dropdown hasil pencarian (`results.map`) dengan layout bertingkat di mobile (`sm:hidden`): baris 1 (kode + brand + GPS status), baris 2 (nama outlet penuh multi-baris), baris 3 (alamat lengkap 2 baris).
-     - **Invarian Desktop 100% Terjaga:** Tampilan desktop ($\ge 640\text{px}$) identik dengan desain asal.
-   - **Verifikasi Non-Negotiable Quality Gates:**
-     - `npm run drift:check` ✅ (102/102 spec-plan pairs valid, 0 drift).
-     - `npm run build:check` ✅ (0 TypeScript / Next.js compilation errors).
-     - `npm run test:smoke` ✅ (154/154 pass, 0 fail).
-     - `npm test` ✅ (990/990 pass, 0 fail).
-
-2. **Perencanaan Arsitektur Keterbacaan Hasil Pencarian & Kartu Outlet Terpilih di Mobile (ADR-0075 — Planning Complete):**
+1. **Perencanaan Arsitektur Keterbacaan Hasil Pencarian & Kartu Outlet Terpilih di Mobile (ADR-0075 — Planning Complete & Amended):**
    - **Diagnosis Masalah Visual Mobile:**
-     - Hasil pencarian (`results.map`): Baris nama toko terpotong kaku (`truncate`) karena dipaksa sejajar dengan badge kode dan brand. Baris alamat juga terpotong kaku.
-     - Kartu outlet terpilih (`showCard`): Tombol `[🔄 Ganti Outlet]` (~105px) dan `[✕]` (~28px) di baris header memakan ~140px, mencekik kolom nama dan alamat di mobile menjadi hanya ~92px lebar. Ini mengakibatkan nama toko terpotong menjadi 5 baris vertikal dan alamat menjadi 8 baris vertikal kaku.
-   - **Solusi Desain Responsif Mobile-First:**
+     - Hasil pencarian (`results.map`): Baris nama toko terpotong kaku (`truncate`) karena dipaksa sejajar dengan badge kode dan brand. Baris alamat juga terpotong kaku. Petunjuk keyboard *"Gunakan ↑↓ lalu Enter atau klik outlet"* menambah beban vertikal di mobile yang berbasis sentuhan.
+     - Kartu outlet terpilih (`showCard`): Tombol `[🔄 Ganti Outlet]` (~105px) dan `[✕]` (~28px) di baris header memakan ~140px, mencekik kolom nama dan alamat di mobile menjadi hanya ~92px lebar. Ini mengakibatkan nama toko terpotong menjadi 5 baris vertikal dan alamat menjadi 8 baris vertikal kaku. Subtitle *"Outlet terverifikasi..."* juga memakan tinggi vertikal berharga di mobile.
+   - **Solusi Desain Responsif Mobile-First (Disempurnakan):**
      - Hasil pencarian di mobile: Menggunakan layout bertingkat di mana baris 1 berisi badge kode, brand, dan status GPS; baris 2 berisi nama toko penuh (`break-words line-clamp-2`); baris 3 berisi alamat lengkap (`line-clamp-2`).
      - Kartu terpilih di mobile: Tombol `[🔄 Ganti Outlet]` dipindahkan dari header ke baris aksi bawah sebagai tombol *full-width* ramah sentuhan jempol (`w-full sm:hidden`). Kolom nama dan alamat memperoleh lebar penuh ~230px (+148% lebih lega), menghilangkan 100% pemotongan vertikal 5-baris nama & 8-baris alamat.
+     - **Hemat Ruang Vertikal Mobile (Amandemen Pengguna):**
+       - Menyembunyikan petunjuk keyboard *"Gunakan ↑↓ lalu Enter atau klik outlet"* di mobile via `hidden sm:inline`.
+       - Menyembunyikan subtitle *"Outlet terverifikasi untuk pelaksanaan materi promosi lapangan"* di mobile saat outlet terpilih via `hidden sm:block` di `Step1Outlet.tsx`.
      - Desktop invariant: Tampilan desktop ($\ge 640\text{px}$) dipertahankan 100% *byte-for-byte* tanpa perubahan.
    - **Artefak Perencanaan:**
      - ADR: [`docs/adr/0075-mobile-outlet-search-and-selected-card-readability.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0075-mobile-outlet-search-and-selected-card-readability.md)
      - Spec: [`docs/superpowers/specs/2026-11-07-mobile-outlet-search-and-selected-card-readability-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-07-mobile-outlet-search-and-selected-card-readability-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-07-mobile-outlet-search-and-selected-card-readability.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-mobile-outlet-search-and-selected-card-readability.md)
+     - Handover: [`docs/handover-mobile-outlet-search-and-selected-card-readability.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-mobile-outlet-search-and-selected-card-readability.md)
+   - **Verifikasi Invarian Drift:**
+     - 102/102 spec-plan pairing lulus 100% tanpa drift (`npm run drift:check`).
+
+2. **Implementasi Propagasi GPS & Alamat Outlet Placement (ADR-0074 — Implementation Complete):**
      - Plan: [`docs/superpowers/plans/2026-11-07-mobile-outlet-search-and-selected-card-readability.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-mobile-outlet-search-and-selected-card-readability.md)
      - Handover: [`docs/handover-mobile-outlet-search-and-selected-card-readability.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-mobile-outlet-search-and-selected-card-readability.md)
    - **Verifikasi Invarian Drift:**
