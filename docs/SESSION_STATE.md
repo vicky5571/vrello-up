@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **PLANNING COMPLETE / READY FOR IMPLEMENTATION**  
+**Previous Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **PLANNING COMPLETE**  
 **Previous Feature:** Placements Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Outlets Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
@@ -32,7 +33,24 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Mobile Bottom Navigation — Penggantian Home dengan Pipeline (ADR-0066 — Implementation Complete):**
+1. **Perencanaan Arsitektur Mobile Bottom Navigation — Animasi Luncuran Active Pill (ADR-0067 — Planning Complete):**
+   - **Diagnostik & Root Cause Masalah:**
+     - Efek sentuh `whileTap={{ scale: 0.92 }}` pada `<motion.button>` induk menyebabkan distorsi *bounding box* geometri saat jempol menyentuh layar, sehingga kalkulasi *layout projection* Framer Motion gagal atau meloncat kaku (*snap*) alih-alih meluncur mulus.
+     - Ketiadaan `<LayoutGroup>` membiarkan pohon proyeksi animasi bilah bawah tercampur dengan pohon animasi global halaman utama (`ActiveViewStage`).
+     - Kontras visual pill `bg-slate-100/80 dark:bg-white/10` sebelumnya terlalu samar tanpa border dan bayangan halus, mengurangi kejelasan visual pergerakan pill.
+   - **Solusi Arsitektur yang Ditetapkan (ADR-0067):**
+     - Membungkus daftar tab dengan `<LayoutGroup id="mobile-bottom-nav">` untuk isolasi pohon proyeksi independen.
+     - Menghilangkan `whileTap` pada tombol luar (menjadikannya tombol dengan *bounding box* statis), dan memindahkan `whileTap` ke pembungkus konten dalam (`<motion.div className="relative z-10 ...">`).
+     - Memperjelas kontras visual pill: `bg-slate-100/90 dark:bg-white/10 border border-slate-200/60 dark:border-white/10 shadow-2xs rounded-xl`.
+     - Menyetel fisika transisi pegas: `{ type: "spring", stiffness: 420, damping: 30 }`.
+   - **Dokumen Perencanaan Lengkap Disusun:**
+     - ADR: `docs/adr/0067-mobile-bottom-nav-sliding-pill-animation.md` (ACCEPTED).
+     - Spec: `docs/superpowers/specs/2026-11-07-mobile-bottom-nav-sliding-pill-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-07-mobile-bottom-nav-sliding-pill.md` (APPROVED).
+     - Handover: `docs/handover-mobile-bottom-nav-sliding-pill.md` (READY FOR EXECUTION).
+   - **Verifikasi Drift Check:** `npm run drift:check` ✅ (94/94 spec-plan pairs valid, 0 drift).
+
+2. **Implementasi Mobile Bottom Navigation — Penggantian Home dengan Pipeline (ADR-0066 — Implementation Complete):**
    - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**
      - Memperbarui pengujian kanonikal 5-tab bilah navigasi bawah mobile untuk memverifikasi `"Pipeline"`, `"Outlets"`, `"Placements"`, `"Events"`, dan `"Menu"` (menggantikan `"Home"`).
      - Mengonfirmasi siklus Red-Green: tes gagal pada assertions `"Pipeline"` saat kode awal dijalankan (RED), kemudian lulus 100% setelah implementasi (GREEN).
