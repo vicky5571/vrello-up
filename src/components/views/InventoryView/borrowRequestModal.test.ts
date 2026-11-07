@@ -204,5 +204,58 @@ test("Borrow Request Modal Stepper Header Invariants (ADR-0055 smoke)", async (t
       "No React hooks may be called after `if (!isOpen) return null;`"
     );
   });
+
+  await t.test("verifies borrowDate and returnDueDate initialize to empty string so Step 2 is not prematurely completed (ADR-0087)", () => {
+    const modalContent = fs.readFileSync(modalPath, "utf-8");
+    assert.match(
+      modalContent,
+      /const\s*\[borrowDate,\s*setBorrowDate\]\s*=\s*useState\(["']["']\);/,
+      "borrowDate must initialize to empty string"
+    );
+    assert.match(
+      modalContent,
+      /const\s*\[returnDueDate,\s*setReturnDueDate\]\s*=\s*useState\(["']["']\);/,
+      "returnDueDate must initialize to empty string"
+    );
+    assert.match(
+      modalContent,
+      /setBorrowDate\(["']["']\);/,
+      "useEffect must reset borrowDate to empty string when modal opens"
+    );
+    assert.match(
+      modalContent,
+      /setReturnDueDate\(["']["']\);/,
+      "useEffect must reset returnDueDate to empty string when modal opens"
+    );
+  });
+
+  await t.test("verifies Step 3 mobile catalog readability and 3-layer item card layout (ADR-0087)", () => {
+    const modalContent = fs.readFileSync(modalPath, "utf-8");
+    assert.match(
+      modalContent,
+      /flex-1\s+overflow-y-auto\s+p-4\s+sm:p-6\s+text-xs/,
+      "Modal body must use responsive p-4 sm:p-6 padding"
+    );
+    assert.match(
+      modalContent,
+      /overflow-x-auto\s+pb-1\s+no-scrollbar/,
+      "Step 3 category filter rail must use no-scrollbar"
+    );
+    assert.match(
+      modalContent,
+      /p-3\s+flex\s+flex-col\s+gap-2\s+transition-colors/,
+      "Step 3 catalog item row must use 3-layer vertical flex-col card layout"
+    );
+    assert.match(
+      modalContent,
+      /shrink-0\s+whitespace-nowrap\s+font-mono\s+text-\[10px\]/,
+      "Item code badge must use shrink-0 whitespace-nowrap so codes never fracture across lines"
+    );
+    assert.match(
+      modalContent,
+      /line-clamp-2\s+break-words/,
+      "Item name must span full card width with line-clamp-2 break-words"
+    );
+  });
 });
 

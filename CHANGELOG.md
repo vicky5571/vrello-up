@@ -6,6 +6,18 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(inventory)`: BorrowRequestModal Step 2 empty initial schedule dates and Step 3 mobile catalog card readability (ADR-0087)
+  - Empty initial schedule dates & modal reset: initialized `borrowDate` and `returnDueDate` to `""` in `BorrowRequestModal.tsx` and reset both to `""` on modal open in `useEffect`, preventing Step 2 from prematurely evaluating to `completed` with a green checkmark before the user specifies schedule dates
+  - Responsive modal body padding: updated body wrapper from `p-6` to `p-4 sm:p-6 text-xs`, reclaiming 16px of horizontal screen real estate for narrow mobile viewports ($\le 375\text{px}$)
+  - Category filter rail optimization: added `no-scrollbar` and `shrink-0` to the horizontal category pill buttons in Step 3, ensuring smooth touch scrolling without ugly native scrollbars
+  - 3-layer mobile catalog card layout: refactored cramped 2-column horizontal catalog rows into vertical 3-layer cards:
+    - Layer 1: single-line item code badge (`shrink-0 whitespace-nowrap font-mono text-[10px]`) and category name
+    - Layer 2: full-width equipment title (`line-clamp-2 break-words text-xs sm:text-sm font-semibold leading-snug`), eliminating aggressive 12-character ellipsis truncation
+    - Layer 3: clean bottom row with stock availability on the left (`shrink-0 text-[11px]`) and quantity steppers `[-] [qty] [+]` on the right (`shrink-0`)
+  - Dedicated unit regression tests in `src/components/views/InventoryView/borrowRequestModal.test.ts` (13/13 tests passing)
+  - Verification: `npm run drift:check` ✅ (114/114 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (166/166)
+  - Refs: `docs/adr/0087-borrow-request-modal-step2-empty-dates-and-step3-catalog-readability.md`, `docs/superpowers/specs/2026-11-08-borrow-request-modal-step2-dates-and-step3-readability-design.md`, `docs/superpowers/plans/2026-11-08-borrow-request-modal-step2-dates-and-step3-readability.md`
+
 - `fix(inventory)`: BorrowRequestModal React Rules of Hooks order stabilization (ADR-0086)
   - Unconditional React hook hoisting: relocated `const completionStatus = useMemo(...)` in `BorrowRequestModal.tsx` from line 214 to line 93 (above `if (!isOpen) return null;`), ensuring all 33 hooks execute unconditionally in identical sequence across both open and closed modal states
   - Elimination of hook ordering crash: completely resolved React 19 runtime crash (`Rendered more hooks than during the previous render`) triggered when opening the borrow equipment request modal

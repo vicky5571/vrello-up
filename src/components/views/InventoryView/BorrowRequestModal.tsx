@@ -57,10 +57,8 @@ export function BorrowRequestModal({
 
   const [eventId, setEventId] = useState<string>(defaultEventId || "");
   const [eventLocation, setEventLocation] = useState("");
-  const [borrowDate, setBorrowDate] = useState(new Date().toISOString().slice(0, 10));
-  const [returnDueDate, setReturnDueDate] = useState(
-    new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10)
-  );
+  const [borrowDate, setBorrowDate] = useState("");
+  const [returnDueDate, setReturnDueDate] = useState("");
 
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [itemSearch, setItemSearch] = useState("");
@@ -81,6 +79,8 @@ export function BorrowRequestModal({
       fetchInventory();
       setStep(1);
       setError(null);
+      setBorrowDate("");
+      setReturnDueDate("");
       if (defaultEventId) {
         setEventId(defaultEventId);
       }
@@ -261,7 +261,7 @@ export function BorrowRequestModal({
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-6 text-xs">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 text-xs">
           {error && (
             <div className="p-3 mb-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-600 dark:text-rose-400">
               {error}
@@ -436,11 +436,11 @@ export function BorrowRequestModal({
               </div>
 
               {/* Horizontal Category Filter Chips */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
                 <button
                   type="button"
                   onClick={() => setSelectedCategory("ALL")}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                  className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
                     selectedCategory === "ALL"
                       ? "bg-blue-600 text-white"
                       : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
@@ -453,7 +453,7 @@ export function BorrowRequestModal({
                     key={cat}
                     type="button"
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors whitespace-nowrap cursor-pointer ${
                       selectedCategory === cat
                         ? "bg-blue-600 text-white"
                         : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
@@ -478,77 +478,84 @@ export function BorrowRequestModal({
                     return (
                       <div
                         key={item.id}
-                        className={`p-3 flex items-center justify-between gap-3 transition-colors ${
+                        className={`p-3 flex flex-col gap-2 transition-colors ${
                           !isAvailable
                             ? "opacity-50 bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed"
+                            : currentQty > 0
+                            ? "bg-blue-50/40 dark:bg-blue-950/20 hover:bg-blue-50/60 dark:hover:bg-blue-950/30"
                             : "hover:bg-slate-50/70 dark:hover:bg-slate-800/50"
                         }`}
                       >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
-                              {item.code}
-                            </span>
-                            <span className="font-semibold text-slate-900 dark:text-slate-100 truncate">
-                              {item.name}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                            <span>{item.category}</span>
-                            <span>·</span>
-                            <span
-                              className={
-                                isAvailable
-                                  ? "text-emerald-600 dark:text-emerald-400 font-medium"
-                                  : "text-rose-500 font-medium"
-                              }
-                            >
-                              {isAvailable
-                                ? `${item.availableUnits} available (${item.totalUnits} total)`
-                                : "Not Available"}
-                            </span>
-                          </div>
+                        {/* Layer 1: Code Badge & Category */}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="shrink-0 whitespace-nowrap font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                            {item.code}
+                          </span>
+                          <span className="text-slate-300 dark:text-slate-700">·</span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                            {item.category}
+                          </span>
                         </div>
 
-                        {/* Steppers + input */}
-                        <div className="flex items-center gap-2">
-                          {isAvailable ? (
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => handleSelectItem(item, Math.max(0, currentQty - 1))}
-                                disabled={currentQty === 0}
-                                className="p-1 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 cursor-pointer"
-                              >
-                                <Minus className="w-3 h-3" />
-                              </button>
-                              <input
-                                type="number"
-                                min={0}
-                                max={item.availableUnits}
-                                value={currentQty === 0 ? "" : currentQty}
-                                onChange={(e) =>
-                                  handleSelectItem(item, parseInt(e.target.value, 10) || 0)
-                                }
-                                placeholder="0"
-                                className="w-12 px-1 py-1 text-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleSelectItem(item, Math.min(item.availableUnits, currentQty + 1))
-                                }
-                                disabled={currentQty >= item.availableUnits}
-                                className="p-1 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 cursor-pointer"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-[10px] text-rose-500 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 px-2 py-1 rounded">
-                              Out of Stock
-                            </span>
-                          )}
+                        {/* Layer 2: Full-Width Equipment Name */}
+                        <div className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-slate-100 leading-snug line-clamp-2 break-words">
+                          {item.name}
+                        </div>
+
+                        {/* Layer 3: Stock Availability + Stepper Controls */}
+                        <div className="flex items-center justify-between gap-2 pt-0.5">
+                          <span
+                            className={`text-[11px] font-medium shrink-0 ${
+                              isAvailable
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-rose-500"
+                            }`}
+                          >
+                            {isAvailable
+                              ? `${item.availableUnits} available (${item.totalUnits} total)`
+                              : "Not Available"}
+                          </span>
+
+                          {/* Steppers + input */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            {isAvailable ? (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSelectItem(item, Math.max(0, currentQty - 1))}
+                                  disabled={currentQty === 0}
+                                  className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 cursor-pointer"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={item.availableUnits}
+                                  value={currentQty === 0 ? "" : currentQty}
+                                  onChange={(e) =>
+                                    handleSelectItem(item, parseInt(e.target.value, 10) || 0)
+                                  }
+                                  placeholder="0"
+                                  className="w-12 px-1 py-1 text-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleSelectItem(item, Math.min(item.availableUnits, currentQty + 1))
+                                  }
+                                  disabled={currentQty >= item.availableUnits}
+                                  className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 cursor-pointer"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-rose-500 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 px-2 py-1 rounded">
+                                Out of Stock
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

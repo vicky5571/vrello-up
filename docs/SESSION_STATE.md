@@ -8,7 +8,9 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** BorrowRequestModal Rules of Hooks Order Stabilization (ADR-0086) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** BorrowRequestModal Step 2 Empty Initial Schedule Dates & Step 3 Mobile Catalog Card Readability (ADR-0087) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** BorrowRequestModal Step 2 Empty Initial Schedule Dates & Step 3 Mobile Catalog Card Readability (ADR-0087) — **PLANNING COMPLETE**  
+**Previous Feature:** BorrowRequestModal Rules of Hooks Order Stabilization (ADR-0086) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** BorrowRequestModal Rules of Hooks Order Stabilization (ADR-0086) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile MOU Status Pills Horizontal Scroll & Desktop-Only Table Sticky Columns (ADR-0085) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile MOU Status Pills Horizontal Scroll & Desktop-Only Table Sticky Columns (ADR-0085) — **PLANNING COMPLETE**  
@@ -60,7 +62,31 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Stabilisasi Urutan React Hooks pada BorrowRequestModal (ADR-0086 — Implementation Complete):**
+1. **Implementasi Perbaikan Tanggal Awal Step 2 & Readability Katalog Step 3 pada BorrowRequestModal (ADR-0087 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/InventoryView/borrowRequestModal.test.ts`):**
+     - Menambahkan subtest `"verifies borrowDate and returnDueDate initialize to empty string so Step 2 is not prematurely completed (ADR-0087)"` yang memvalidasi bahwa `borrowDate` dan `returnDueDate` diinisialisasi ke `""` dan di-reset ke `""` saat modal dibuka via `useEffect`.
+     - Menambahkan subtest `"verifies Step 3 mobile catalog readability and 3-layer item card layout (ADR-0087)"` yang memvalidasi padding body responsif `p-4 sm:p-6`, scrollbar filter kategori `no-scrollbar`, tata letak kartu vertikal 3-lapis `p-3 flex flex-col gap-2`, kode barang `shrink-0 whitespace-nowrap font-mono`, dan nama barang `line-clamp-2 break-words`.
+     - Terverifikasi siklus TDD: Baseline RED (assertion gagal pada initial state dan regex layout) -> GREEN (13/13 tests passing).
+   - **Refaktor Komponen Wizard Modal (`BorrowRequestModal.tsx`):**
+     - Mengubah state inisial `borrowDate` dan `returnDueDate` menjadi string kosong `""` (`useState("")`) dan me-reset keduanya ke `""` saat modal dibuka di `useEffect`. Hal ini mencegah Step 2 otomatis berstatus `completed` dengan centang hijau (`✓`) saat modal baru dibuka di Step 1.
+     - Memperluas area konten modal mobile dengan mengganti padding modal body dari `p-6` menjadi responsif `p-4 sm:p-6`.
+     - Menghapus scrollbar default pada rel kategori dengan `no-scrollbar` dan menambahkan `shrink-0` pada tombol chip kategori.
+     - Mengganti layout horizontal 2-kolom yang sempit pada kartu katalog Step 3 menjadi kartu terstruktur 3-lapis vertikal (`p-3 flex flex-col gap-2`):
+       - Lapis 1: Badge kode barang yang tahan patah kata (`shrink-0 whitespace-nowrap font-mono text-[10px]`) berdampingan dengan kategori barang.
+       - Lapis 2: Nama alat musik/peralatan membentang 100% lebar kartu dengan `line-clamp-2 break-words text-xs sm:text-sm font-semibold`.
+       - Lapis 3: Baris bawah yang lega dengan status ketersediaan unit di sisi kiri dan kontrol kuantitas stepper `[-] [qty] [+]` di sisi kanan (`shrink-0`).
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0087-borrow-request-modal-step2-empty-dates-and-step3-catalog-readability.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0087-borrow-request-modal-step2-empty-dates-and-step3-catalog-readability.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-borrow-request-modal-step2-dates-and-step3-readability-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-borrow-request-modal-step2-dates-and-step3-readability-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-borrow-request-modal-step2-dates-and-step3-readability.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-borrow-request-modal-step2-dates-and-step3-readability.md)
+     - Handover: [`docs/handover-borrow-request-modal-step2-dates-and-step3-readability.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-borrow-request-modal-step2-dates-and-step3-readability.md)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (114/114 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 166/166 tests passing across 65 suites (0 failures).
+     - Targeted unit test: ✅ 13/13 tests passing in `borrowRequestModal.test.ts`.
+
+2. **Implementasi Stabilisasi Urutan React Hooks pada BorrowRequestModal (ADR-0086 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/InventoryView/borrowRequestModal.test.ts`):**
      - Menambahkan subtest baru `"verifies all React hooks are called before early return if (!isOpen) return null"`.
      - Memverifikasi keberadaan `if (!isOpen) return null;` dan `useMemo(`, menguji secara statis bahwa `useMemo` terpanggil sebelum early return (`useMemoIdx < earlyReturnIdx`).
