@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `feat(placements)`: Step 4 location verification emoji sanitization and map label simplification (ADR-0081)
+  - Raw emoji eradication: purged all 6 raw Unicode emojis from Step 4 (`👆`, `🔒`, `ℹ️`, `⚠️`, `📍`, `🗺️`), replacing them with standard Lucide SVG icons (`MousePointerClick`, `Lock`, `Info`, `AlertTriangle`, `CheckCircle2`, `MapPin`) for consistent cross-platform enterprise styling
+  - Jargon elimination: completely removed engineering-centric parenthetical `(Mode Hemat RAM/Data)` when the map is open and `(Preview Radius 100m)` when the map is closed
+  - Action label simplification: streamlined interactive map toggle button text to clean single-line labels (`"Tutup Peta Interaktif"`, `"Sesuaikan Titik di Peta"`, `"Buka Peta Pinpoint (Opsional)"`), preventing multiline button wrapping on 360px mobile viewports
+  - Mobile scroll guard polish: styled scroll guard overlay and lock button in `Step4LocationVerification.tsx` with dedicated Lucide SVG icons, preserving mobile touch isolation without OS-dependent glyphs
+  - Added TDD unit test suite in `src/components/views/PlacementsView/step4EmojiSanitization.test.ts` (7/7 tests passing)
+  - Verification: `npm run drift:check` ✅ (108/108 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (161/161), `npm test` ✅
+  - Refs: `docs/adr/0081-step4-emoji-sanitization-and-map-label-simplification.md`, `docs/superpowers/specs/2026-11-07-step4-emoji-sanitization-and-map-label-simplification-design.md`, `docs/superpowers/plans/2026-11-07-step4-emoji-sanitization-and-map-label-simplification.md`
+
+
 - `fix(placements)`: Wizard step transition submission guard and placement date sanitization (ADR-0080)
   - Premature auto-save prevention: added explicit unique keys `key="wizard-btn-next"` and `key="wizard-btn-submit"` to `WizardFooter.tsx`, forcing React DOM reconciliation to unmount the transition button and preventing synthetic touch/pointer click leakage onto mutated `type="submit"` buttons when advancing from Step 3 to Step 4
   - Modal form submission guard: implemented `handleFormSubmit` defensive wrapper in `PlacementFormModal.tsx` (`currentStep !== 4` returns immediately), ensuring form submission cannot execute prematurely on intermediate steps (1, 2, or 3) from rogue keyboard submit events or touch bleed

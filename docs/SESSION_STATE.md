@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **PLANNING COMPLETE**  
+**Active Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **PLANNING COMPLETE**  
 **Previous Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 3 Direct Physical Photo Upload Enforcement and Tautan URL Removal (ADR-0079) — **PLANNING COMPLETE**  
@@ -49,7 +50,31 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Sanitasi Emoji Langkah 4 & Simplifikasi Label Peta (ADR-0081 — Planning Complete):**
+1. **Implementasi Sanitasi Emoji Langkah 4 & Penyederhanaan Label Peta (ADR-0081 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/PlacementsView/step4EmojiSanitization.test.ts`):**
+     - Dibuat test suite 7 pengujian memverifikasi eliminasi 100% emoji mentah (`👆`, `🔒`, `ℹ️`, `⚠️`, `📍`, `🗺️`), eliminasi teks teknis internal `(Mode Hemat RAM/Data)` dan `(Preview Radius 100m)`, penyederhanaan label toggle peta interaktif, integrasi icon Lucide SVG (`MousePointerClick`, `Lock`, `Info`, `AlertTriangle`, `CheckCircle2`), dan pemenuhan batas LOC komponen.
+     - Terverifikasi baseline RED (6/7 pengujian gagal saat awal) -> GREEN setelah perbaikan.
+   - **Refaktor Komponen Langkah 4 (`Step4LocationVerification.tsx`):**
+     - Mengganti teks `<span>👆 Ketuk untuk geser pin peta</span>` dengan icon `<MousePointerClick />` dan label bersih.
+     - Mengganti teks `<span>🔒 Kunci Scroll Modal</span>` dengan icon `<Lock />` dan label bersih.
+     - File tetap terjaga ramping pada 129 LOC ($\le 150$ LOC budget).
+   - **Refaktor Komponen Pemilih Lokasi (`LocationPicker.tsx`):**
+     - Mengganti seluruh emoji status geofence badge dengan icon Lucide standard:
+       - Belum ada koordinat: `<Info />` + `"Koordinat outlet belum terdaftar"`
+       - Di lokasi valid: `<CheckCircle2 />` + `"Di Lokasi ({dev}m)"`
+       - Di luar toleransi radius: `<AlertTriangle />` + `"Melebihi radius 100m ({dev}m)"`
+       - Menunggu GPS: `<MapPin />` + `"Menunggu titik GPS"`
+     - Menyederhanakan tombol toggle peta interaktif:
+       - Terbuka: `"Tutup Peta Interaktif"` (menghapus `(Mode Hemat RAM/Data)`)
+       - Tertutup: `"Sesuaikan Titik di Peta"` (menghapus `(Preview Radius 100m)` dan emoji `🗺️`)
+       - Tanpa titik: `"Buka Peta Pinpoint (Opsional)"`
+   - **Verifikasi Kualitas & Invarian:**
+     - `npm run drift:check`: ✅ 0 drift (108/108 spec-plan pairs).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 161/161 tests passing.
+     - `npm test`: ✅ 1025/1025 tests passing.
+
+2. **Perencanaan Arsitektur Sanitasi Emoji Langkah 4 & Simplifikasi Label Peta (ADR-0081 — Planning Complete):**
    - **Diagnosis Masalah UX Lapangan & Inkonsistensi Visual:**
      - Pada Langkah 4 wizard POSM (`Step4LocationVerification.tsx` dan `LocationPicker.tsx`), ditemukan 6 emoji mentah (`👆`, `🔒`, `ℹ️`, `⚠️`, `📍`, `🗺️`) yang merender secara tidak konsisten antar sistem operasi seluler dan bertentangan dengan standar design system platform (Lucide SVG).
      - Tombol toggle Leaflet map menyertakan teks bertele-tele dan jargon pengembang:

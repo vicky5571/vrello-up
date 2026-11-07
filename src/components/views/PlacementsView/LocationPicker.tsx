@@ -12,6 +12,9 @@ import {
   HelpCircle,
   Navigation,
   Map,
+  Info,
+  AlertTriangle,
+  CheckCircle2,
 } from "lucide-react";
 import type * as L from "leaflet";
 import {
@@ -464,8 +467,9 @@ export function LocationPicker({
         {(() => {
           if (!hasOutletCoords) {
             return (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 px-2.5 py-0.5 rounded-full">
-                ℹ️ Koordinat outlet belum terdaftar
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 px-2.5 py-0.5 rounded-full">
+                <Info className="w-3 h-3 text-sky-600 dark:text-sky-400 shrink-0" />
+                <span>Koordinat outlet belum terdaftar</span>
               </span>
             );
           }
@@ -478,21 +482,24 @@ export function LocationPicker({
             const dev = geo.deviationMeters ?? 0;
             if (geo.isValid) {
               return (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-full">
-                  ✓ Di Lokasi ({dev}m)
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-full">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Di Lokasi ({dev}m)</span>
                 </span>
               );
             }
             return (
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-2.5 py-0.5 rounded-full">
-                ⚠️ Melebihi radius 100m ({dev}m)
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-2.5 py-0.5 rounded-full">
+                <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>Melebihi radius 100m ({dev}m)</span>
               </span>
             );
           }
 
           return (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full">
-              📍 Menunggu titik GPS
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full">
+              <MapPin className="w-3 h-3 text-slate-500 shrink-0" />
+              <span>Menunggu titik GPS</span>
             </span>
           );
         })()}
@@ -562,10 +569,10 @@ export function LocationPicker({
           <Map className="w-3.5 h-3.5 shrink-0" />
           <span>
             {showInteractiveMap
-              ? "Tutup Peta Interaktif (Mode Hemat RAM/Data)"
+              ? "Tutup Peta Interaktif"
               : hasCoords || hasOutletCoords
-                ? "🗺️ Sesuaikan Titik di Peta (Preview Radius 100m)"
-                : "🗺️ Buka Peta Pinpoint (Opsional)"}
+                ? "Sesuaikan Titik di Peta"
+                : "Buka Peta Pinpoint (Opsional)"}
           </span>
         </button>
 

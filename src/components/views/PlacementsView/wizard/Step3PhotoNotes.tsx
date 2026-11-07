@@ -51,6 +51,7 @@ export function Step3PhotoNotes({
           )}
         </label>
 
+        {/* ponytail: debt TD-006 - lift isUploading state to block Lanjut/Simpan Cepat/Kembali in WizardFooter */}
         <PlacementPhotoUploader
           photoUrl={placement.photoUrl || ""}
           placementId={placement.id}
