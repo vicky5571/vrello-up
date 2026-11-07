@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** Field Events Table Row Click Edit Drawer & Action Column Simplification (ADR-0084) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile MOU Status Pills Horizontal Scroll & Desktop-Only Table Sticky Columns (ADR-0085) — **PLANNING COMPLETE**  
+**Previous Feature:** Field Events Table Row Click Edit Drawer & Action Column Simplification (ADR-0084) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Field Events Table Row Click Edit Drawer & Action Column Simplification (ADR-0084) — **PLANNING COMPLETE**  
 **Previous Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **PLANNING COMPLETE**  
@@ -56,7 +57,21 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Klik Baris Tabel Field Events & Penyederhanaan Kolom Aksi (ADR-0084 — Implementation Complete):**
+1. **Perencanaan Perbaikan Scroll Horizontal Filter Status MOU Mobile & Sticky Kolom Khusus Desktop (ADR-0085 — Planning Complete):**
+   - **Diagnosis Masalah Responsivitas Mobile pada Modul MOUs:**
+     - Pada [`MousHeader.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/MousView/MousHeader.tsx), kontainer kapsul `Status:` tidak memiliki batas lebar (`w-full sm:w-auto max-w-full`) dan `overflow-x-auto no-scrollbar`, sehingga ketujuh chip status melebar keluar batas kanan layar mobile (~375px).
+     - Pada [`MarcomTableShell.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/shared/MarcomTableShell.tsx) dan [`mouColumns.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/MousView/mouColumns.tsx), kolom `Dokumen MOU` (`165px`) dan `Actions` (`130px`) menggunakan inline `position: "sticky"` di semua ukuran layar, sehingga area sticky `295px` menutupi **86% lebar tabel mobile (`343px`)** dan hanya menyisakan celah `48px` di sebelah kiri.
+   - **Solusi Desain Scrollable Status Pill Rail & Responsive `static md:sticky`:**
+     - Menambahkan `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar` pada kontainer status pills di `MousHeader.tsx`, `shrink-0 whitespace-nowrap` pada label `Status:` serta tombol chip, dan `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs` pada wrapper input pencarian.
+     - Mencabut `position: "sticky"` dari inline `style` di `MarcomTableShell.tsx` (menyisakan `right: "${rightOffset}px"`) dan menerapkan class responsif `static md:sticky` (beserta `md:border-l` dan `md:shadow-[...]`) sehingga di mobile (`< 768px`) kolom berada di posisi normal ujung kanan tabel, sedangkan di tablet/desktop ($\ge 768\text{px}$) tetap terkunci (*sticky*) di sisi kanan.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0085-mobile-mou-status-pills-scroll-and-desktop-only-sticky-columns.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0085-mobile-mou-status-pills-scroll-and-desktop-only-sticky-columns.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-mobile-mou-status-pills-and-table-sticky-fix-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-mobile-mou-status-pills-and-table-sticky-fix-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-mobile-mou-status-pills-and-table-sticky-fix.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-mobile-mou-status-pills-and-table-sticky-fix.md)
+     - Handover: [`docs/handover-mobile-mou-status-pills-and-table-sticky-fix.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-mobile-mou-status-pills-and-table-sticky-fix.md)
+     - Invarian Verifikasi: `npm run drift:check` ✅ (112/112 spec-plan pairs).
+
+2. **Implementasi Klik Baris Tabel Field Events & Penyederhanaan Kolom Aksi (ADR-0084 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/EventsView/eventTableView.test.ts`):**
      - Dibuat test suite 7 subtests memverifikasi:
        - `MarcomTableShell` menerima `onRowClick={onSelectEvent}` untuk interaksi klik baris penuh.
@@ -2872,10 +2887,10 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (all 111 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (all 112 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ Full test suite passed (1037/1037 tests passed)
-- `npm run test:smoke` → ✅ 162 passed, 0 failed
+- `npm test` → ✅ Full test suite passed (1038/1038 tests passed)
+- `npm run test:smoke` → ✅ 163 passed, 0 failed
 
 ---
 
@@ -2899,9 +2914,10 @@
 ## Next Step for Following Session
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. Execute implementation of ADR-0084 using [`docs/handover-field-events-table-row-click-edit-drawer.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-field-events-table-row-click-edit-drawer.md):
-   - Create unit regression test `src/components/views/EventsView/eventTableView.test.ts`.
-   - Update `src/components/views/EventsView/EventTableView.tsx` (bind `onRowClick={onSelectEvent}`, purge `Edit2` pencil icon, isolate `stopPropagation` on delete wrapper and footage button, resize actions column to 70px).
+2. Execute implementation of ADR-0085 using [`docs/handover-mobile-mou-status-pills-and-table-sticky-fix.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-mobile-mou-status-pills-and-table-sticky-fix.md):
+   - Update unit regression test `src/components/views/MousView/mouColumns.test.ts`.
+   - Update `src/components/views/MousView/MousHeader.tsx` (bounded horizontal scroll rail `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar` for status pills and `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs` for search input).
+   - Update `src/components/views/shared/MarcomTableShell.tsx` (replace unconditional inline `position: "sticky"` with responsive `static md:sticky` and `md:border-l` / `md:shadow-[...]`).
    - Verify all tests pass, 0 drift, and clean smoke test.
 
 
