@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `feat(placements)`: Step 2 POSM material selector unification and emoji sanitization (ADR-0078)
+  - Redundancy eradication: eliminated 7 redundant hardcoded material category chip buttons (`POSM_MATERIALS.map(...)`) and associated dead handlers (`handleSelectPosmChip`, `activeChipLabel`) from `Step2MaterialTheme.tsx`, reclaiming ~80px of critical vertical viewport space in Step 2
+  - Platform CustomDropdown integration: unified POSM material catalog selection using standard searchable [`CustomDropdown`](file:///Users/mac/Web%20Development/vrello-up/src/components/ui/CustomDropdown.tsx) across all viewports (mobile and desktop) with live fuzzy filtering (`searchable={true}` and `searchPlaceholder="Cari material POSM..."`)
+  - Emoji sanitization: completely purged raw Unicode emojis (`🏷️`, `💰`) from costing scheme buttons, replacing them with standard Lucide SVG icons (`<Tag />` and `<CreditCard />`) for consistent cross-platform enterprise styling
+  - Flawless state & MoU continuity: updating `placement.materialId` via `CustomDropdown` drives automated MoU requirement detection and auto-expansion rules identically to previous behavior
+  - Added TDD unit test suite in `src/components/views/PlacementsView/step2MaterialResponsiveness.test.ts` (6/6 tests passing)
+  - Verification: `npm run drift:check` ✅ (105/105 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (156/156), `npm test` ✅ (1008/1008)
+  - Refs: `docs/adr/0078-step2-material-selector-unification-and-emoji-sanitization.md`, `docs/superpowers/specs/2026-11-07-step2-material-selector-unification-design.md`, `docs/superpowers/plans/2026-11-07-step2-material-selector-unification.md`
+
+
 - `feat(placements)`: Mobile wizard stepper header dynamic accordion expansion (ADR-0077)
   - Responsive layout transition: transformed 4-step wizard track in `WizardStepperHeader.tsx` from rigid 4-column mobile grid into dynamic flex accordion (`flex items-center gap-1 sm:grid sm:grid-cols-4 sm:gap-2`), while strictly preserving desktop equal 4-column grid layout
   - Active step dynamic expansion: active step pill expands dynamically (`flex-1 min-w-0 px-2.5 justify-start`) on mobile, presenting concise milestone title and icon, providing field operators immediate contextual milestone awareness without guesswork

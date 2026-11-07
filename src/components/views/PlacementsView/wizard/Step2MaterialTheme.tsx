@@ -10,8 +10,11 @@ import {
   ChevronUp,
   Eye,
   SlidersHorizontal,
+  Tag,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { isPermanentMaterial, type MouSummaryInfo, type MouValidationResult } from "@/lib/marcom/placementMouBridge";
 import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 import {
@@ -19,17 +22,13 @@ import {
   isPaidPlacement,
   togglePaidPlacement,
   DEFAULT_PAID_PLACEMENT_COST,
-  POSM_MATERIALS,
   DEFAULT_FALLBACK_MATERIALS,
   getEffectiveMaterials,
-  resolvePosmChipMaterial,
-  getActivePosmChipLabel,
-  type PosmMaterialChip,
 } from "./placementWizardHelpers";
 
 import type { MarcomPlacement } from "@/types";
 
-export { POSM_MATERIALS, DEFAULT_FALLBACK_MATERIALS };
+export { DEFAULT_FALLBACK_MATERIALS };
 
 
 export const QUARTERS = ["Q1 2026", "Q2 2026", "Q3 2026", "Q4 2026"] as const;
@@ -96,20 +95,6 @@ export function Step2MaterialTheme({
   }, [placement.cost]);
 
 
-  const activeChipLabel = getActivePosmChipLabel(
-    placement.materialId,
-    effectiveMaterials,
-    selectedMat
-  );
-
-  const handleSelectPosmChip = (chip: PosmMaterialChip) => {
-    const matched = resolvePosmChipMaterial(chip, effectiveMaterials);
-    if (matched) {
-      setPlacement((prev) => (prev ? { ...prev, materialId: matched.id } : prev));
-    }
-  };
-
-
   const currentEffectiveMat =
     selectedMat ||
     effectiveMaterials.find((m) => m.id === placement.materialId);
@@ -129,48 +114,30 @@ export function Step2MaterialTheme({
 
   return (
     <div className="space-y-4 animate-in fade-in-50 duration-200">
-      {/* Dimensi 1: Material POSM Chips */}
+      {/* Dimensi 1: Material POSM Catalog Master Data Selector */}
       <div>
-        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+        <label
+          htmlFor="wizard-step2-material-select"
+          className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
+        >
           Material POSM *
         </label>
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {POSM_MATERIALS.map((chip) => {
-            const isActive = activeChipLabel === chip.label;
-            return (
-              <button
-                key={chip.label}
-                type="button"
-                onClick={() => handleSelectPosmChip(chip)}
-                className={cn(
-                  "px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer",
-                  isActive
-                    ? "bg-lime-600 text-white border-lime-700 shadow-2xs ring-2 ring-lime-500/30"
-                    : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700"
-                )}
-              >
-                {chip.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Master Data Select */}
-        <select
-          required
+        <CustomDropdown
+          id="wizard-step2-material-select"
           value={placement.materialId || ""}
-          onChange={(e) =>
-            setPlacement((prev) => (prev ? { ...prev, materialId: e.target.value } : prev))
+          onChange={(val) =>
+            setPlacement((prev) => (prev ? { ...prev, materialId: val } : prev))
           }
-          className="w-full px-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-lime-500 cursor-pointer"
-        >
-          <option value="">Pilih Material Katalog Master Data...</option>
-          {effectiveMaterials.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name} {m.requiresMou ? "(Wajib MoU)" : ""}
-            </option>
-          ))}
-        </select>
+          options={effectiveMaterials.map((m) => ({
+            value: m.id,
+            label: `${m.name}${m.requiresMou ? " (Wajib MoU)" : ""}`,
+          }))}
+          placeholder="Pilih Material Katalog Master Data..."
+          searchable
+          searchPlaceholder="Cari material POSM..."
+          size="sm"
+          className="w-full"
+        />
       </div>
 
       {/* Dimensi 2: Kuartal & Tema Kampanye */}
@@ -269,7 +236,8 @@ export function Step2MaterialTheme({
                 : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
             )}
           >
-            <span>🏷️ Bebas Biaya (Rp 0)</span>
+            <Tag className="w-3.5 h-3.5 shrink-0" />
+            <span>Bebas Biaya (Rp 0)</span>
           </button>
 
           <button
@@ -290,7 +258,8 @@ export function Step2MaterialTheme({
                 : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
             )}
           >
-            <span>💰 Pemasangan Berbayar</span>
+            <CreditCard className="w-3.5 h-3.5 shrink-0" />
+            <span>Pemasangan Berbayar</span>
           </button>
         </div>
 
