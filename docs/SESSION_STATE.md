@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **PLANNING COMPLETE**  
+**Active Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **IMPLEMENTATION COMPLETE**  
@@ -53,7 +54,24 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Penyelarasan Posisi Checkbox Center-Left pada Checklist Event (ADR-0083 — Planning Complete):**
+1. **Implementasi Penyelarasan Posisi Checkbox Center-Left pada Checklist Event (ADR-0083 — Implementation Complete):**
+   - **TDD Test Suite Refactor (`src/components/views/EventsView/eventChecklistResponsiveness.test.ts`):**
+     - Memperbarui pengujian unit untuk memverifikasi struktur tata letak *center-left*: kontainer baris menggunakan `items-center justify-between`, wrapper `<label>` menggunakan `items-center gap-2.5`, dan input checkbox berukuran 16px (`w-4 h-4 shrink-0`) tanpa margin offset vertikal `mt-0.5`.
+     - Terverifikasi baseline RED (gagal pada baris assertion label `items-center`) -> GREEN setelah refactor komponen.
+   - **Refaktor Komponen Checklist Event (`EventChecklistSection.tsx`):**
+     - Mengubah baris kontainer dari `items-start` menjadi `items-center justify-between`.
+     - Mengubah wrapper `<label>` dari `items-start` menjadi `items-center gap-2.5`.
+     - Menghapus offset `mt-0.5` dari `<input type="checkbox">` sehingga checkbox terselaraskan tepat di tengah-kiri secara vertikal (*center-left*).
+     - Tombol hapus `X` di sisi kanan juga terselaraskan di tengah secara vertikal (*center-right*).
+     - Pembungkusan teks multi-baris (`break-words text-xs leading-snug flex-1 min-w-0`) tetap terjaga rapi tanpa terpotong.
+     - Ukuran file koordinator: 159 LOC (tetap jauh di bawah batas $\le 250$ LOC).
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (110/110 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 162/162 tests passing.
+     - `npm test`: ✅ 1037/1037 tests passing (0 failures).
+
+2. **Perencanaan Penyelarasan Posisi Checkbox Center-Left pada Checklist Event (ADR-0083 — Planning Complete):**
    - **Diagnosis Masalah Visual & Ergonomi Mobile:**
      - Pada kartu item checklist persiapan event ([`EventChecklistSection.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/EventsView/EventChecklistSection.tsx)), penataan sebelumnya menggunakan `items-start` dengan offset `mt-0.5`.
      - Saat judul subtask melipat menjadi 2–3 baris pada layar mobile, checkbox menempel di pojok kiri-atas (*top-left*), tampak asimetris dan meninggalkan kekosongan di area kiri-bawah kartu item.

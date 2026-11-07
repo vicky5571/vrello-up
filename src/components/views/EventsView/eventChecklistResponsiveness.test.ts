@@ -38,15 +38,19 @@ describe("Mobile Field Event Checklist Readability (ADR-0072)", () => {
     );
   });
 
-  it("verifies checkbox and task item containers align to top on multi-line text", () => {
+  it("verifies checkbox and task item containers use center-left vertical alignment", () => {
     const content = fs.readFileSync(filePath, "utf-8");
     assert.ok(
-      content.includes("items-start justify-between"),
-      "Task item container must use items-start to anchor checkbox on multi-line wrap"
+      content.includes("items-center justify-between"),
+      "Task item container must use items-center for center-left alignment on multi-line wrap"
     );
     assert.ok(
-      content.includes("mt-0.5 shrink-0"),
-      "Checkbox must use mt-0.5 shrink-0 to prevent vertical squishing"
+      content.includes("items-center gap-2.5"),
+      "Item label must use items-center for center-left alignment"
+    );
+    assert.ok(
+      content.includes("w-4 h-4 shrink-0") && !content.includes("mt-0.5 shrink-0"),
+      "Checkbox must use w-4 h-4 shrink-0 without mt-0.5 top offset"
     );
   });
 

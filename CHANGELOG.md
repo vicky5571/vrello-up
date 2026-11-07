@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `feat(events)`: Event preparation checklist checkbox center-left vertical alignment (ADR-0083)
+  - Card row flex alignment: updated checklist row container and `<label>` wrapper from `items-start` to `items-center` in `EventChecklistSection.tsx`
+  - Vertical offset cleanup: eliminated `mt-0.5` from `<input type="checkbox">` while preserving `w-4 h-4 shrink-0`, centering the checkbox symmetrically along the left edge of rounded subtask cards
+  - Multi-line text wrapping & tap ergonomics: preserved full multi-line title wrapping (`break-words text-xs leading-snug`) while aligning touch targets with the card's vertical center for improved mobile thumb ergonomics
+  - Coordinator file budget preserved: `EventChecklistSection.tsx` maintained at 159 LOC ($\le 250$ LOC limit)
+  - Updated unit test suite in `src/components/views/EventsView/eventChecklistResponsiveness.test.ts` (5/5 tests passing)
+  - Verification: `npm run drift:check` ✅ (110/110 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (162/162), `npm test` ✅ (1037/1037)
+  - Refs: `docs/adr/0083-event-checklist-checkbox-center-left-alignment.md`, `docs/superpowers/specs/2026-11-07-event-checklist-checkbox-center-left-design.md`, `docs/superpowers/plans/2026-11-07-event-checklist-checkbox-center-left.md`
+
+
 - `feat(placements)`: Step 3 photo upload navigation blocker and state lifting (ADR-0082)
   - Declarative state lifting: exposed `onUploadingChange?: (isUploading: boolean) => void` on `PlacementPhotoUploader` and forwarded through `Step3PhotoNotes` to coordinator state `isPhotoUploading` in `PlacementFormModal.tsx`
   - Navigation lockdown during network activity: updated `WizardFooter.tsx` to disable `Kembali`, `Simpan Cepat`, and `Lanjut` (`disabled={... || Boolean(isPhotoUploading)}`) while image compression and cloud upload are mid-flight, preventing unmounting or premature submission without attached photos

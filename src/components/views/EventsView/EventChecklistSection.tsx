@@ -96,14 +96,14 @@ export function EventChecklistSection({
           {eventSubtasks.map((s, idx) => (
             <div
               key={s.id || idx}
-              className="flex items-start justify-between gap-2.5 p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"
+              className="flex items-center justify-between gap-2.5 p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"
             >
-              <label className="flex items-start gap-2.5 flex-1 min-w-0 cursor-pointer">
+              <label className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={Boolean(s.completed)}
                   onChange={(e) => handleToggleSubtask(idx, e.target.checked)}
-                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 mt-0.5 shrink-0"
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 shrink-0"
                 />
                 <span
                   className={cn(
