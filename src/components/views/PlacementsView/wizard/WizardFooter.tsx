@@ -11,6 +11,7 @@ interface WizardFooterProps {
   canAdvance: boolean;
   onClose: () => void;
   isSaving: boolean;
+  isPhotoUploading?: boolean;
   isEditMode: boolean;
   canSubmitDirectly: boolean;
 }
@@ -22,6 +23,7 @@ export function WizardFooter({
   canAdvance,
   onClose,
   isSaving,
+  isPhotoUploading,
   isEditMode,
   canSubmitDirectly,
 }: WizardFooterProps) {
@@ -44,7 +46,7 @@ export function WizardFooter({
           <button
             type="button"
             onClick={onPrevStep}
-            disabled={isSaving}
+            disabled={isSaving || Boolean(isPhotoUploading)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -59,7 +61,7 @@ export function WizardFooter({
         {!isFinalStep && canSubmitDirectly && (
           <button
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || Boolean(isPhotoUploading)}
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer disabled:opacity-50"
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-lime-600" />
@@ -72,7 +74,7 @@ export function WizardFooter({
             key="wizard-btn-next"
             type="button"
             onClick={onNextStep}
-            disabled={!canAdvance || isSaving}
+            disabled={!canAdvance || isSaving || Boolean(isPhotoUploading)}
             className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-lime-600 hover:bg-lime-700 transition-all shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>Lanjut</span>
@@ -82,7 +84,7 @@ export function WizardFooter({
           <button
             key="wizard-btn-submit"
             type="submit"
-            disabled={!canAdvance || isSaving}
+            disabled={!canAdvance || isSaving || Boolean(isPhotoUploading)}
             className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-lime-600 hover:bg-lime-700 transition-all shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? (

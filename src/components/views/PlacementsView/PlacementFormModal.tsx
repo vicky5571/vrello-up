@@ -69,6 +69,7 @@ function PlacementFormModalContent({
 }: PlacementFormModalProps & { placement: Partial<MarcomPlacement> }) {
   const [currentStep, setCurrentStep] = useState<WizardStepId>(1);
   const [viewingDocMou, setViewingDocMou] = useState<MouSummaryInfo | null>(null);
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
 
   const selOutlet = outletsList.find((o) => o.id === placement.outletId);
   const inheritedCoords = placement.outletId
@@ -273,6 +274,7 @@ function PlacementFormModalContent({
                 placement={placement}
                 setPlacement={setPlacement}
                 disabled={isSaving}
+                onUploadingChange={setIsPhotoUploading}
               />
             )}
 
@@ -296,6 +298,7 @@ function PlacementFormModalContent({
               canAdvance={canAdvance}
               onClose={onClose}
               isSaving={isSaving}
+              isPhotoUploading={isPhotoUploading}
               isEditMode={Boolean(placement.id)}
               canSubmitDirectly={canSubmitDirectly}
             />

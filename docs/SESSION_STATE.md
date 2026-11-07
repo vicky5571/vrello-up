@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **PLANNING COMPLETE**  
+**Active Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **PLANNING COMPLETE**  
 **Previous Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **IMPLEMENTATION COMPLETE**  
@@ -51,7 +52,36 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Blokir Navigasi Saat Upload Foto Langkah 3 (ADR-0082 / TD-006 — Planning Complete):**
+1. **Implementasi Blokir Navigasi Saat Upload Foto Langkah 3 (ADR-0082 / TD-006 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/PlacementsView/step3UploadBlocker.test.ts`):**
+     - Dibuat test suite 6 subtests memverifikasi:
+       - `PlacementPhotoUploader` mendeklarasikan `onUploadingChange` dan menjalankannya dalam blok `try ... finally` (`true` saat mulai, `false` di `finally`).
+       - `Step3PhotoNotes` meneruskan callback `onUploadingChange` ke `PlacementPhotoUploader`.
+       - `PlacementFormModal` mengelola state `isPhotoUploading`, meneruskannya ke Step3 dan `WizardFooter`, serta mempertahankan koordinator $\le 350$ LOC (aktual: 321 LOC).
+       - `WizardFooter` menonaktifkan tombol `Kembali`, `Simpan Cepat`, dan `Lanjut` saat `isPhotoUploading === true`.
+       - `WizardFooter` tetap mempertahankan tombol `Batal` aktif saat upload foto berlangsung sebagai pelindung darurat operator jika jaringan putus/hang.
+     - Terverifikasi baseline RED (5/5 assertion gagal sebelum implementasi) -> GREEN setelah implementasi.
+   - **Refaktor Komponen Uploader (`PlacementPhotoUploader.tsx`):**
+     - Menambahkan callback prop `onUploadingChange?: (isUploading: boolean) => void` pada `PlacementPhotoUploaderProps`.
+     - Membungkus proses iterasi `handleFiles` dalam `try ... finally`: `onUploadingChange?.(true)` saat mulai, dan `onUploadingChange?.(false)` pada blok `finally`.
+   - **Penerusan Prop di Langkah 3 (`Step3PhotoNotes.tsx`):**
+     - Menerima `onUploadingChange` pada `Step3PhotoNotesProps` dan meneruskannya langsung ke `<PlacementPhotoUploader onUploadingChange={onUploadingChange} />`.
+   - **Pengangkatan State Modal Koordinator (`PlacementFormModal.tsx`):**
+     - Menambahkan `const [isPhotoUploading, setIsPhotoUploading] = useState(false);`.
+     - Meneruskan `onUploadingChange={setIsPhotoUploading}` ke `<Step3PhotoNotes />`.
+     - Meneruskan `isPhotoUploading={isPhotoUploading}` ke `<WizardFooter />`.
+     - Ukuran file koordinator: 321 LOC (tetap jauh di bawah limit 350 LOC).
+   - **Penguncian Navigasi Footer (`WizardFooter.tsx`):**
+     - Menambahkan `isPhotoUploading?: boolean` ke `WizardFooterProps`.
+     - Menambahkan kondisi `|| Boolean(isPhotoUploading)` ke atribut `disabled` tombol `Kembali`, `Simpan Cepat`, `Lanjut`, dan tombol submit akhir.
+     - Mempertahankan `disabled={isSaving}` pada tombol `Batal` (tanpa `isPhotoUploading`) agar petugas tetap dapat menutup/membatalkan modal.
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (109/109 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 162/162 tests passing.
+     - `npm test`: ✅ 1037/1037 tests passing (0 failures).
+
+2. **Perencanaan Arsitektur Blokir Navigasi Saat Upload Foto Langkah 3 (ADR-0082 / TD-006 — Planning Complete):**
    - **Diagnosis Masalah UX Lapangan & Integritas Bukti Foto:**
      - Pada Langkah 3 wizard POSM (`Step3PhotoNotes.tsx` / `PlacementPhotoUploader.tsx`), status upload foto (`isUploading === true`) sebelumnya terisolasi di dalam *local state* komponen uploader.
      - Tombol navigasi footer modal (`WizardFooter.tsx`) untuk aksi `Lanjut`, `Simpan Cepat`, dan `Kembali` tetap aktif (*clickable*) saat foto sedang dikompresi dan diunggah. Jika petugas berpindah ke Langkah 4 atau menekan Simpan Cepat, foto yang sedang diunggah tidak terlampir ke payload penyimpanan.

@@ -22,6 +22,7 @@ interface PlacementPhotoUploaderProps {
   onChange: (newPhotoUrl: string) => void;
   placementId?: string;
   disabled?: boolean;
+  onUploadingChange?: (isUploading: boolean) => void;
 }
 
 export function PlacementPhotoUploader({
@@ -29,6 +30,7 @@ export function PlacementPhotoUploader({
   onChange,
   placementId,
   disabled = false,
+  onUploadingChange,
 }: PlacementPhotoUploaderProps) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -44,51 +46,55 @@ export function PlacementPhotoUploader({
 
     const files = Array.from(fileList);
     setIsUploading(true);
+    onUploadingChange?.(true);
     setUploadStatus(`Mengompres & mengunggah ${files.length} foto...`);
 
     const newUploadedUrls: string[] = [];
     const uploadTargetId = placementId || `placement-temp-${Date.now()}`;
 
-    for (let i = 0; i < files.length; i++) {
-      const originalFile = files[i];
-      setUploadStatus(`Mengunggah foto ${i + 1} dari ${files.length}...`);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const originalFile = files[i];
+        setUploadStatus(`Mengunggah foto ${i + 1} dari ${files.length}...`);
 
-      try {
-        // 1. Compress image client-side to save mobile bandwidth
-        const compressed = await compressImage(originalFile, {
-          maxWidth: 1600,
-          maxHeight: 1600,
-          quality: 0.82,
-        });
+        try {
+          // 1. Compress image client-side to save mobile bandwidth
+          const compressed = await compressImage(originalFile, {
+            maxWidth: 1600,
+            maxHeight: 1600,
+            quality: 0.82,
+          });
 
-        // 2. Prepare multipart upload payload
-        const formData = new FormData();
-        formData.append("kind", "placements");
-        formData.append("id", uploadTargetId);
-        formData.append("file", compressed);
+          // 2. Prepare multipart upload payload
+          const formData = new FormData();
+          formData.append("kind", "placements");
+          formData.append("id", uploadTargetId);
+          formData.append("file", compressed);
 
-        const res = await fetch("/api/marcom/uploads", {
-          method: "POST",
-          body: formData,
-        });
+          const res = await fetch("/api/marcom/uploads", {
+            method: "POST",
+            body: formData,
+          });
 
-        const data = await res.json();
-        if (!res.ok) {
-          toast.error(data.error || `Gagal mengunggah ${originalFile.name}`);
-          continue;
+          const data = await res.json();
+          if (!res.ok) {
+            toast.error(data.error || `Gagal mengunggah ${originalFile.name}`);
+            continue;
+          }
+
+          if (data.filePath) {
+            newUploadedUrls.push(data.filePath);
+          }
+        } catch (err) {
+          console.error("Upload error:", err);
+          toast.error(`Gagal mengunggah ${originalFile.name}`);
         }
-
-        if (data.filePath) {
-          newUploadedUrls.push(data.filePath);
-        }
-      } catch (err) {
-        console.error("Upload error:", err);
-        toast.error(`Gagal mengunggah ${originalFile.name}`);
       }
+    } finally {
+      setIsUploading(false);
+      onUploadingChange?.(false);
+      setUploadStatus(null);
     }
-
-    setIsUploading(false);
-    setUploadStatus(null);
 
     // Reset input elements so the same file can be re-selected if needed
     if (cameraInputRef.current) cameraInputRef.current.value = "";

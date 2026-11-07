@@ -1,6 +1,6 @@
 # Plan: Step 3 Photo Upload Navigation Blocker and State Lifting
 
-- **Status:** In Progress
+- **Status:** Completed
 - **Date:** 2026-11-07
 - **Author:** Critical Senior Software Engineer (Pair Programmer)
 - **ADR Reference:** `docs/adr/0082-step3-photo-upload-navigation-blocker.md`
@@ -13,7 +13,7 @@
 
 | File | Operation | Description | Est. LOC Delta |
 | :--- | :--- | :--- | :--- |
-| `src/components/views/PlacementsView/step3UploadBlocker.test.ts` | Create | Unit test suite asserting upload navigation blocking & Batal preservation | +85 LOC |
+| `src/components/views/PlacementsView/step3UploadBlocker.test.ts` | Create | Unit test suite asserting upload navigation blocking & Batal preservation | +125 LOC |
 | `src/components/views/PlacementsView/PlacementPhotoUploader.tsx` | Modify | Add `onUploadingChange` prop and trigger in `handleFiles` start/finally | +8 LOC |
 | `src/components/views/PlacementsView/wizard/Step3PhotoNotes.tsx` | Modify | Forward `onUploadingChange` prop to `PlacementPhotoUploader` | +3 LOC |
 | `src/components/views/PlacementsView/PlacementFormModal.tsx` | Modify | Manage `isPhotoUploading` state and pass to `WizardFooter` | +6 LOC |
@@ -26,29 +26,29 @@
 ## 2. Phased Execution Tasks
 
 ### Phase 1: Test-Driven Harness & Baseline Verification (TDD First)
-- [ ] Create `src/components/views/PlacementsView/step3UploadBlocker.test.ts`:
-  - [ ] Test 1: Assert `WizardFooter` disables `"Lanjut"`, `"Simpan Cepat"`, and `"Kembali"` when `isPhotoUploading={true}`.
-  - [ ] Test 2: Assert `WizardFooter` keeps `"Batal"` enabled when `isPhotoUploading={true}`.
-  - [ ] Test 3: Assert `PlacementPhotoUploader` declares and invokes `onUploadingChange`.
-  - [ ] Test 4: Assert `Step3PhotoNotes` forwards `onUploadingChange`.
-  - [ ] Test 5: Assert `PlacementFormModal` manages `isPhotoUploading` and complies with coordinator budget ($\le 350$ LOC).
-- [ ] Run test suite: `node --import tsx --test src/components/views/PlacementsView/step3UploadBlocker.test.ts` (verify RED baseline failure).
+- [x] Create `src/components/views/PlacementsView/step3UploadBlocker.test.ts`:
+  - [x] Test 1: Assert `WizardFooter` disables `"Lanjut"`, `"Simpan Cepat"`, and `"Kembali"` when `isPhotoUploading={true}`.
+  - [x] Test 2: Assert `WizardFooter` keeps `"Batal"` enabled when `isPhotoUploading={true}`.
+  - [x] Test 3: Assert `PlacementPhotoUploader` declares and invokes `onUploadingChange`.
+  - [x] Test 4: Assert `Step3PhotoNotes` forwards `onUploadingChange`.
+  - [x] Test 5: Assert `PlacementFormModal` manages `isPhotoUploading` and complies with coordinator budget ($\le 350$ LOC).
+- [x] Run test suite: `node --import tsx --test src/components/views/PlacementsView/step3UploadBlocker.test.ts` (verify RED baseline failure).
 
 ### Phase 2: Propagasi Event pada Uploader & Step 3
-- [ ] Update `src/components/views/PlacementsView/PlacementPhotoUploader.tsx`:
+- [x] Update `src/components/views/PlacementsView/PlacementPhotoUploader.tsx`:
   - Add `onUploadingChange?: (isUploading: boolean) => void` to `PlacementPhotoUploaderProps`.
   - In `handleFiles`: invoke `onUploadingChange?.(true)` at start, and `onUploadingChange?.(false)` in `finally` block.
-- [ ] Update `src/components/views/PlacementsView/wizard/Step3PhotoNotes.tsx`:
+- [x] Update `src/components/views/PlacementsView/wizard/Step3PhotoNotes.tsx`:
   - Add `onUploadingChange?: (isUploading: boolean) => void` to `Step3PhotoNotesProps`.
   - Pass `onUploadingChange={onUploadingChange}` to `<PlacementPhotoUploader />`.
 
 ### Phase 3: Coordinator State & Footer Navigation Lock
-- [ ] Update `src/components/views/PlacementsView/PlacementFormModal.tsx`:
+- [x] Update `src/components/views/PlacementsView/PlacementFormModal.tsx`:
   - Add `const [isPhotoUploading, setIsPhotoUploading] = useState(false);`.
   - Pass `onUploadingChange={setIsPhotoUploading}` to `<Step3PhotoNotes />`.
   - Pass `isPhotoUploading={isPhotoUploading}` to `<WizardFooter />`.
-  - Verify coordinator file limit remains $\le 350$ LOC (currently 318 LOC).
-- [ ] Update `src/components/views/PlacementsView/wizard/WizardFooter.tsx`:
+  - Verify coordinator file limit remains $\le 350$ LOC (currently 321 LOC).
+- [x] Update `src/components/views/PlacementsView/wizard/WizardFooter.tsx`:
   - Add `isPhotoUploading?: boolean` to `WizardFooterProps`.
   - Update `Kembali`: `disabled={isSaving || Boolean(isPhotoUploading)}`.
   - Update `Simpan Cepat`: `disabled={isSaving || Boolean(isPhotoUploading)}`.
@@ -56,30 +56,30 @@
   - Keep `Batal`: `disabled={isSaving}` (unaffected by `isPhotoUploading`).
 
 ### Phase 4: Full Invariant Verification & Session Handoff
-- [ ] Run targeted test suite:
+- [x] Run targeted test suite:
   ```bash
   node --import tsx --test src/components/views/PlacementsView/step3UploadBlocker.test.ts
   ```
   Ensure all tests pass (GREEN).
-- [ ] Run architectural drift check:
+- [x] Run architectural drift check:
   ```bash
   npm run drift:check
   ```
   Ensure 109/109 paired specs pass.
-- [ ] Run TypeScript compilation check:
+- [x] Run TypeScript compilation check:
   ```bash
   npm run build:check
   ```
   Ensure 0 errors.
-- [ ] Run smoke suite:
+- [x] Run smoke suite:
   ```bash
   npm run test:smoke
   ```
-- [ ] Run full test suite:
+- [x] Run full test suite:
   ```bash
   npm test
   ```
-- [ ] Update `CHANGELOG.md` with ADR-0082 entry.
-- [ ] Update `docs/SESSION_STATE.md`.
-- [ ] Git commit planning artifacts.
+- [x] Update `CHANGELOG.md` with ADR-0082 entry.
+- [x] Update `docs/SESSION_STATE.md`.
+- [x] Git commit planning artifacts.
 

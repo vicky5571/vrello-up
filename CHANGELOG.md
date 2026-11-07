@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `feat(placements)`: Step 3 photo upload navigation blocker and state lifting (ADR-0082)
+  - Declarative state lifting: exposed `onUploadingChange?: (isUploading: boolean) => void` on `PlacementPhotoUploader` and forwarded through `Step3PhotoNotes` to coordinator state `isPhotoUploading` in `PlacementFormModal.tsx`
+  - Navigation lockdown during network activity: updated `WizardFooter.tsx` to disable `Kembali`, `Simpan Cepat`, and `Lanjut` (`disabled={... || Boolean(isPhotoUploading)}`) while image compression and cloud upload are mid-flight, preventing unmounting or premature submission without attached photos
+  - Resilient escape hatch: strictly preserved `Batal` button usability (`disabled={isSaving}`), ensuring operators are never trapped inside modal dialogs during network drops or background upload timeouts
+  - Coordinator budget compliance: `PlacementFormModal.tsx` maintained at 321 LOC ($\le 350$ LOC coordinator budget)
+  - Added TDD unit test suite in `src/components/views/PlacementsView/step3UploadBlocker.test.ts` (6/6 tests passing)
+  - Verification: `npm run drift:check` ✅ (109/109 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (162/162), `npm test` ✅ (1037/1037)
+  - Refs: `docs/adr/0082-step3-photo-upload-navigation-blocker.md`, `docs/superpowers/specs/2026-11-07-step3-photo-upload-navigation-blocker-design.md`, `docs/superpowers/plans/2026-11-07-step3-photo-upload-navigation-blocker.md`
+
+
 - `feat(placements)`: Step 4 location verification emoji sanitization and map label simplification (ADR-0081)
   - Raw emoji eradication: purged all 6 raw Unicode emojis from Step 4 (`👆`, `🔒`, `ℹ️`, `⚠️`, `📍`, `🗺️`), replacing them with standard Lucide SVG icons (`MousePointerClick`, `Lock`, `Info`, `AlertTriangle`, `CheckCircle2`, `MapPin`) for consistent cross-platform enterprise styling
   - Jargon elimination: completely removed engineering-centric parenthetical `(Mode Hemat RAM/Data)` when the map is open and `(Preview Radius 100m)` when the map is closed

@@ -14,12 +14,14 @@ interface Step3PhotoNotesProps {
   placement: Partial<MarcomPlacement>;
   setPlacement: React.Dispatch<React.SetStateAction<Partial<MarcomPlacement> | null>>;
   disabled?: boolean;
+  onUploadingChange?: (isUploading: boolean) => void;
 }
 
 export function Step3PhotoNotes({
   placement,
   setPlacement,
   disabled,
+  onUploadingChange,
 }: Step3PhotoNotesProps) {
   const currentStatus = placement.status || "NOT_STARTED";
 
@@ -57,6 +59,7 @@ export function Step3PhotoNotes({
           placementId={placement.id}
           disabled={disabled}
           onChange={handlePhotoChange}
+          onUploadingChange={onUploadingChange}
         />
       </div>
 
