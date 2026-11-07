@@ -124,7 +124,7 @@ export function MousHeader({
       {/* 3. Search & Filter Controls */}
       <div className="flex flex-wrap items-center gap-2.5 text-xs">
         {/* Instant Search Input */}
-        <div className="relative flex-1 min-w-[200px] max-w-xs">
+        <div className="relative w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -145,8 +145,8 @@ export function MousHeader({
         </div>
 
         {/* Status Chips with Fluid Sliding Pill Animation */}
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-1.5">
+        <div className="flex items-center gap-1 w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+          <span className="sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]">
             Status:
           </span>
           {statusChips.map((chip) => {
@@ -158,7 +158,7 @@ export function MousHeader({
                 whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
                 onClick={() => onStatusChange(chip.value)}
                 className={cn(
-                  "relative px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer",
+                  "relative shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer",
                   isActive
                     ? "text-fuchsia-700 dark:text-fuchsia-300"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",

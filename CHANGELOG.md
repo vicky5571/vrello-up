@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(mous)`: Mobile MOU status pills horizontal scroll and desktop-only table sticky columns (ADR-0085)
+  - Horizontally scrollable status rail: bounded status pills container in `MousHeader.tsx` with `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar`, allowing smooth touch scrolling across all 7 status chips on mobile screens ($\le 375\text{px}$)
+  - In-rail fixed status label: pinned `Status:` with `sticky left-0 z-20 bg-slate-100 dark:bg-slate-800` and subtle drop-shadow in `MousHeader.tsx`, keeping the filter context permanently visible during mobile scroll without text bleed-through
+  - Text wrapping & animation guard: added `shrink-0 whitespace-nowrap` to the `Status:` label and each `<motion.button>` chip, preventing flex compression and ensuring Framer Motion `layoutId="activeMouStatusPill"` glides cleanly
+  - Mobile full-width search: updated search input container in `MousHeader.tsx` to `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs`, ensuring generous input tap targets on narrow viewports
+  - Desktop-only sticky right columns: removed inline `position: "sticky"` in `MarcomTableShell.tsx` and applied responsive `static md:sticky` classes to right-pinned headers and body cells (`Dokumen MOU` and `Actions`), accompanied by `md:border-l` and `md:shadow-[...]`
+  - Liberated mobile table viewport: on mobile (`< 768px`), table columns sit in natural document flow so 100% of the table width is visible and scrollable, while preserving the exact sticky pinning and drop-shadow on desktop ($\ge 768\text{px}$)
+  - Dedicated unit regression test in `src/components/views/MousView/mouColumns.test.ts` (8/8 tests passing)
+  - Verification: `npm run drift:check` ✅ (112/112 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (163/163), `npm test` ✅ (1046/1046)
+  - Refs: `docs/adr/0085-mobile-mou-status-pills-scroll-and-desktop-only-sticky-columns.md`, `docs/superpowers/specs/2026-11-08-mobile-mou-status-pills-and-table-sticky-fix-design.md`, `docs/superpowers/plans/2026-11-08-mobile-mou-status-pills-and-table-sticky-fix.md`
+
 - `feat(events)`: Field events table row click edit drawer and action column simplification (ADR-0084)
   - Full row interactivity: bound `onRowClick={onSelectEvent}` to `MarcomTableShell` in `EventTableView.tsx`, standardizing table row ergonomics with `BranchesView`, `MousView`, and `PlacementsView`
   - Redundancy & clutter elimination: removed `Edit2` pencil icon and import from the `actions` column, eliminating visual noise and reclaiming horizontal column space

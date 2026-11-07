@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile MOU Status Pills Horizontal Scroll & Desktop-Only Table Sticky Columns (ADR-0085) — **PLANNING COMPLETE**  
+**Active Feature:** Mobile MOU Status Pills Horizontal Scroll & Desktop-Only Table Sticky Columns (ADR-0085) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile MOU Status Pills Horizontal Scroll & Desktop-Only Table Sticky Columns (ADR-0085) — **PLANNING COMPLETE**  
 **Previous Feature:** Field Events Table Row Click Edit Drawer & Action Column Simplification (ADR-0084) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Field Events Table Row Click Edit Drawer & Action Column Simplification (ADR-0084) — **PLANNING COMPLETE**  
 **Previous Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **IMPLEMENTATION COMPLETE**  
@@ -57,7 +58,32 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Perbaikan Scroll Horizontal Filter Status MOU Mobile & Sticky Kolom Khusus Desktop (ADR-0085 — Planning Complete):**
+1. **Implementasi Scroll Horizontal Filter Status MOU Mobile & Sticky Kolom Khusus Desktop (ADR-0085 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/MousView/mouColumns.test.ts`):**
+     - Dibuat subtests baru memverifikasi:
+       - `MarcomTableShell.tsx` menerapkan class responsif `static md:sticky` untuk sel header dan body sticky, serta menghapus inline `position: "sticky"` agar tidak mengaburkan viewport tabel mobile.
+       - `MarcomTableShell.tsx` membatasi border pemisah dan bayangan drop-shadow pada breakpoint medium ke atas (`md:border-l` dan `md:shadow-[...]`).
+       - `MousHeader.tsx` membungkus input pencarian dengan `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs` untuk tampilan mobile penuh.
+       - `MousHeader.tsx` mengaplikasikan `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar` pada kontainer kapsul status dan `shrink-0 whitespace-nowrap` pada tombol chip.
+       - `MousHeader.tsx` menerapkan `sticky left-0 z-20` pada label `Status:` dengan background solid (`bg-slate-100 dark:bg-slate-800`) dan drop-shadow pemisah agar label tetap terpampang (*fixed*) saat scroll horizontal tanpa *text bleed-through*.
+     - Terverifikasi siklus TDD: Baseline RED (assertion gagal) -> GREEN (8/8 passing).
+   - **Refaktor Komponen Header MOUs (`MousHeader.tsx`):**
+     - Input pencarian kini responsif: `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs`.
+     - Kontainer status filter pills memiliki batas lebar dan scroll horizontal sentuh: `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar`.
+     - Label `Status:` kini berposisi sticky di dalam rel (`sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]`), sehingga tetap terlihat permanen saat operator menggeser chip status di mobile.
+     - Tombol status chip dilindungi dengan `shrink-0 whitespace-nowrap` sehingga animasi kapsul geser Framer Motion `layoutId="activeMouStatusPill"` meluncur mulus tanpa teks terlipat.
+   - **Refaktor Komponen Tabel Bersama (`MarcomTableShell.tsx`):**
+     - Menghapus deklarasi inline `position: "sticky"` pada header dan body cells (mempertahankan `right: "${rightOffset}px"`).
+     - Menggantikan dengan kelas responsif `static md:sticky z-20` (header) dan `static md:sticky z-10` (body).
+     - Menjadikan border pemisah dan bayangan sticky eksklusif pada desktop: `md:border-l` dan `md:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:md:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]`.
+     - Di layar mobile (`< 768px`), kolom `Dokumen MOU` dan `Actions` berada di posisi normal paling kanan tabel, membebaskan 100% viewport mobile untuk membaca data partner dan MoU. Di desktop ($\ge 768\text{px}$), sticky right tetap terkunci sempurna.
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (112/112 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 163/163 tests passing.
+     - `npm test`: ✅ 1046/1046 tests passing across 188 suites (0 failures).
+
+2. **Perencanaan Perbaikan Scroll Horizontal Filter Status MOU Mobile & Sticky Kolom Khusus Desktop (ADR-0085 — Planning Complete):**
    - **Diagnosis Masalah Responsivitas Mobile pada Modul MOUs:**
      - Pada [`MousHeader.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/MousView/MousHeader.tsx), kontainer kapsul `Status:` tidak memiliki batas lebar (`w-full sm:w-auto max-w-full`) dan `overflow-x-auto no-scrollbar`, sehingga ketujuh chip status melebar keluar batas kanan layar mobile (~375px).
      - Pada [`MarcomTableShell.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/shared/MarcomTableShell.tsx) dan [`mouColumns.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/MousView/mouColumns.tsx), kolom `Dokumen MOU` (`165px`) dan `Actions` (`130px`) menggunakan inline `position: "sticky"` di semua ukuran layar, sehingga area sticky `295px` menutupi **86% lebar tabel mobile (`343px`)** dan hanya menyisakan celah `48px` di sebelah kiri.

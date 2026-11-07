@@ -469,14 +469,14 @@ export function MarcomTableShell<T extends object & { id: string }>({
                     aria-sort={canSort ? sortDirection : undefined}
                     style={{
                       width: `${(header as any).getSize()}px`,
-                      ...(isRightSticky ? { position: "sticky", right: `${rightOffset}px` } : {}),
+                      ...(isRightSticky ? { right: `${rightOffset}px` } : {}),
                     }}
                     className={cn(
-                      "relative flex items-center gap-1.5 shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden",
+                      "flex items-center gap-1.5 shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden",
+                      isRightSticky ? "static md:sticky z-20 bg-slate-50 dark:bg-[#18191B]" : "relative",
                       isRightAligned && "justify-end",
-                      isRightSticky && "z-20 bg-slate-50 dark:bg-[#18191B]",
                       isRightSticky && rightOffset === 0 && "pr-3",
-                      hasStickyBorder && "border-l border-slate-200/80 dark:border-slate-800 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]",
+                      hasStickyBorder && "md:border-l border-slate-200/80 dark:border-slate-800 md:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:md:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]",
                     )}
                   >
                     {canSort ? (
@@ -577,17 +577,17 @@ export function MarcomTableShell<T extends object & { id: string }>({
                             role="cell"
                             style={{
                               width: `${cell.column.getSize()}px`,
-                              ...(isRightSticky ? { position: "sticky", right: `${rightOffset}px` } : {}),
+                              ...(isRightSticky ? { right: `${rightOffset}px` } : {}),
                             }}
                             className={cn(
                               "shrink-0 px-2 first:pl-0 last:pr-0 overflow-hidden",
                               isRightSticky && (
                                 isSelected
-                                  ? "z-10 bg-teal-50 dark:bg-[#042f2e] group-hover:bg-teal-100 dark:group-hover:bg-[#0f3d3b]"
-                                  : "z-10 bg-white dark:bg-[#18191B] group-hover:bg-slate-50 dark:group-hover:bg-[#202124]"
+                                  ? "static md:sticky z-10 bg-teal-50 dark:bg-[#042f2e] group-hover:bg-teal-100 dark:group-hover:bg-[#0f3d3b]"
+                                  : "static md:sticky z-10 bg-white dark:bg-[#18191B] group-hover:bg-slate-50 dark:group-hover:bg-[#202124]"
                               ),
                               isRightSticky && rightOffset === 0 && "pr-3",
-                              hasStickyBorder && "border-l border-slate-200/80 dark:border-slate-800 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]",
+                              hasStickyBorder && "md:border-l border-slate-200/80 dark:border-slate-800 md:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:md:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]",
                             )}
                           >
                             {isExpander ? (

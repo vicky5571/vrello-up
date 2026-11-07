@@ -105,6 +105,60 @@ describe("mouColumns and MarcomTableShell sticky right configuration (ADR-0030)"
     );
   });
 
+  it("verifies MarcomTableShell implements responsive desktop-only sticky right (static md:sticky) (ADR-0085)", () => {
+    assert.ok(
+      !tableShellContent.includes('position: "sticky"'),
+      "MarcomTableShell must not hardcode inline position: sticky so mobile viewports are not covered"
+    );
+    assert.ok(
+      tableShellContent.includes("static md:sticky"),
+      "MarcomTableShell must apply static md:sticky responsive classes to sticky cells"
+    );
+    assert.ok(
+      tableShellContent.includes("md:border-l"),
+      "MarcomTableShell must restrict left border on sticky cells to md breakpoint and above"
+    );
+    assert.ok(
+      tableShellContent.includes("md:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)]"),
+      "MarcomTableShell must restrict drop shadow on sticky cells to md breakpoint and above"
+    );
+  });
+
+  it("verifies MousHeader status pill horizontal scroll and responsive search input (ADR-0085)", () => {
+    const mousHeaderPath = path.resolve(
+      process.cwd(),
+      "src/components/views/MousView/MousHeader.tsx"
+    );
+    const mousHeaderContent = fs.readFileSync(mousHeaderPath, "utf-8");
+
+    assert.ok(
+      mousHeaderContent.includes("w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs"),
+      "MousHeader search input wrapper must be full-width on mobile and constrained on sm/desktop"
+    );
+    assert.ok(
+      mousHeaderContent.includes("w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar"),
+      "MousHeader status chips container must support horizontal touch scroll on mobile"
+    );
+    assert.ok(
+      mousHeaderContent.includes("shrink-0 whitespace-nowrap") &&
+      mousHeaderContent.includes("Status:"),
+      "MousHeader Status: label must not shrink or wrap"
+    );
+    assert.ok(
+      mousHeaderContent.includes("sticky left-0 z-20") &&
+      mousHeaderContent.includes("bg-slate-100 dark:bg-slate-800"),
+      "MousHeader Status: label must be sticky left-0 z-20 with solid background to remain fixed on mobile scroll without bleed-through"
+    );
+    assert.ok(
+      mousHeaderContent.includes("shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)]"),
+      "MousHeader Status: label must have soft drop-shadow separator"
+    );
+    assert.ok(
+      mousHeaderContent.includes("relative shrink-0 whitespace-nowrap px-2.5 py-1"),
+      "MousHeader status chip buttons must have shrink-0 whitespace-nowrap to avoid breaking sliding pill"
+    );
+  });
+
   it("verifies row-scoped loading animation and state guard for quick approve (ADR-0038)", () => {
     const mousViewPath = path.resolve(
       process.cwd(),

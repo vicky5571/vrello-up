@@ -26,10 +26,11 @@ In the MOUs & Partnerships module (`/mode=marcom&view=mous`), field managers and
 
 ## Options Considered
 
-### Option 1: Scrollable Status Pill Rail in `MousHeader` + Responsive CSS `static md:sticky` in `MarcomTableShell` (Accepted)
+### Option 1: Scrollable Status Pill Rail with In-Rail Sticky "Status:" Label in `MousHeader` + Responsive CSS `static md:sticky` in `MarcomTableShell` (Accepted)
 - In `MousHeader.tsx`:
   - Add `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar` to the status chips container.
-  - Add `shrink-0 whitespace-nowrap` to the `Status:` label and each `<motion.button>` chip so Framer Motion's `layoutId="activeMouStatusPill"` animates cleanly without text wrapping or flex compression.
+  - Pin the `Status:` label with in-rail sticky positioning: `sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]` so the label stays fixed in place during horizontal touch scrolling on mobile without text bleed-through.
+  - Add `shrink-0 whitespace-nowrap` to each `<motion.button>` chip so Framer Motion's `layoutId="activeMouStatusPill"` animates cleanly without text wrapping or flex compression.
   - Update search input wrapper from `flex-1 min-w-[200px] max-w-xs` to `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs` so it spans full width cleanly on mobile.
 - In `MarcomTableShell.tsx`:
   - Remove `position: "sticky"` from the inline `style` object on header and body cells, leaving only `...(isRightSticky ? { right: `${rightOffset}px` } : {})` in inline `style`.
@@ -68,7 +69,8 @@ In the MOUs & Partnerships module (`/mode=marcom&view=mous`), field managers and
 We accept **Option 1**:
 1. In `src/components/views/MousView/MousHeader.tsx`:
    - Constrain the status chips container with `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar`.
-   - Add `shrink-0 whitespace-nowrap` to the `Status:` label and each `<motion.button>` status chip.
+   - Make the `Status:` label fixed/sticky on mobile with `sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]` so context is preserved as chips slide behind it.
+   - Add `shrink-0 whitespace-nowrap` to each `<motion.button>` status chip.
    - Make the search input container full-width on mobile (`w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs`).
 2. In `src/components/views/shared/MarcomTableShell.tsx`:
    - Remove `position: "sticky"` from the inline `style` object on header and body cells, keeping `...(isRightSticky ? { right: `${rightOffset}px` } : {})`.

@@ -86,7 +86,7 @@ This specification defines the exact CSS/Tailwind changes in `MousHeader.tsx` an
 // AFTER:
 {/* Status Chips with Fluid Sliding Pill Animation */}
 <div className="flex items-center gap-1 w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 px-1.5 shrink-0 whitespace-nowrap">
+  <span className="sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]">
     Status:
   </span>
   {statusChips.map((chip) => {
@@ -182,6 +182,7 @@ Update `src/components/views/MousView/mouColumns.test.ts` to assert:
 1. `MarcomTableShell.tsx` uses responsive `static md:sticky` for `isRightSticky` columns instead of unconditional inline `position: "sticky"`.
 2. `MarcomTableShell.tsx` applies `md:border-l` and `md:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)]` for `hasStickyBorder`.
 3. `MousHeader.tsx` applies `overflow-x-auto no-scrollbar` and `max-w-full` to the status chips container and `shrink-0 whitespace-nowrap` to status chip buttons.
+4. `MousHeader.tsx` applies in-rail `sticky left-0 z-20`, `bg-slate-100 dark:bg-slate-800`, and `shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)]` to the `Status:` label so it remains fixed during mobile horizontal scrolling without text bleed-through.
 
 ---
 
