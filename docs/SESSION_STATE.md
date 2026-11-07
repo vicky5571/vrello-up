@@ -68,17 +68,20 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Upload Mode Toggle, Penghapusan Google Drive Picker, & Standarisasi CustomDropdown pada DocumentCreateModal (ADR-0090 — Implementation Complete):**
+1. **Implementasi Upload Mode Toggle, Penghapusan Google Drive Picker, & Standarisasi CustomDropdown pada DocumentCreateModal (ADR-0090 — Implementation Complete & Reconciler Fix):**
    - **TDD Test Suite (`src/components/views/DocumentsView/documentDrawer.test.ts`):**
      - Memperbarui subtest `verifies DocumentCreateModal implementation details` untuk memverifikasi bahwa modal TIDAK lagi menyertakan `Pilih dari Google Drive`, `useGoogleDrivePicker`, maupun `GoogleDriveLinkModal`.
-     - Menambahkan subtest baru `verifies DocumentCreateModal upload mode toggle, Choose File Type placeholder, and CustomDropdown integration (ADR-0090)` yang memvalidasi deklarasi `uploadMode` (`"local" | "url"`), fungsi `handleModeChange`, inisialisasi/reset `fileType` ke string kosong `""` dengan placeholder `"Choose File Type"`, serta integrasi `CustomDropdown` untuk `Kategori Dokumen`, `Branch / Wilayah`, dan `Tipe File`.
-     - Terverifikasi siklus TDD: Baseline RED (2 assertion gagal) -> GREEN (11/11 tests passing).
+     - Menambahkan subtest baru `verifies DocumentCreateModal upload mode toggle, Choose File Type placeholder, and CustomDropdown integration (ADR-0090)` yang memvalidasi deklarasi `uploadMode` (`"local" | "url"`), fungsi `handleModeChange`, inisialisasi/reset `fileType` ke string kosong `""` dengan placeholder `"Choose File Type"`, key isolation props (`upload-local-mode` dan `upload-url-mode`), serta integrasi `CustomDropdown` untuk `Kategori Dokumen`, `Branch / Wilayah`, dan `Tipe File`.
+     - Terverifikasi siklus TDD: Baseline RED -> GREEN (11/11 tests passing).
    - **Refaktor Komponen Pembuatan Dokumen (`DocumentCreateModal.tsx`):**
      - Menghapus ketergantungan Google Drive picker (`useGoogleDrivePicker`, `GoogleDriveLinkModal`, ikon `Cloud`).
      - Menambahkan segmented mode toggle 2-tombol (`Upload File Lokal` vs `Tautan URL`) ber-ikon `Upload` dan `Link2`.
      - Mengimplementasikan `handleModeChange(nextMode)` yang me-reset `filePath` (`""`), `fileSizeMb` (`0`), dan `fileType` (`""`) untuk mencegah kebocoran state lama antar mode.
      - Mengubah state `fileType` menjadi `DocFileType | ""` (inisial `""`), merender `CustomDropdown` ber-placeholder `"Choose File Type"`, mendeteksi ekstensi otomatis pada mode lokal, dan memvalidasi `if (!fileType)` pada `handleSubmit` dengan toast error `"Tipe file wajib dipilih"`.
      - Mengonversi `Kategori Dokumen *` (`DOCUMENT_CATEGORY_OPTIONS`), `Branch / Wilayah`, dan `Tipe File *` (`FILE_TYPE_OPTIONS`) ke komponen terstandarisasi `CustomDropdown`.
+     - **Perbaikan Bug React Reconciler (Uncontrolled to Controlled Input Transition):**
+       - Menetapkan key React terisolasi (`key="upload-local-mode"` + `key="file-upload-input"` untuk mode lokal vs `key="upload-url-mode"` + `key="url-text-input"` untuk mode URL) guna mencegah React DOM fiber mendaur ulang elemen DOM input file tak-terkontrol menjadi input text URL terkontrol.
+       - Menambahkan nullish coalescing defensive fallback pada seluruh controlled input (`value={name ?? ""}`, `value={period ?? ""}`, `value={ownerPic ?? ""}`, `value={filePath ?? ""}`, `value={fileSizeMb ?? 0}`).
    - **Artefak Perencanaan & Handover:**
      - ADR: [`docs/adr/0090-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0090-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md)
      - Spec: [`docs/superpowers/specs/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns-design.md)

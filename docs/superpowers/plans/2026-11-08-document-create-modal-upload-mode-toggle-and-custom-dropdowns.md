@@ -54,6 +54,13 @@
 - [x] Run `npm run test:smoke` (`0 failures`).
 - [x] Update `docs/SESSION_STATE.md`.
 
+### Phase 4: Post-Implementation Uncontrolled-to-Controlled Input Reconciliation Fix
+- [x] Identify React 19 fiber reconciliation collision when switching between uncontrolled `<input type="file">` and controlled `<input type="url">` in `DocumentCreateModal.tsx`.
+- [x] Assign distinct keys to conditional wrappers (`key="upload-local-mode"` vs `key="upload-url-mode"`) and input nodes (`key="file-upload-input"` vs `key="url-text-input"`).
+- [x] Provide defensive nullish coalescing defaults across all controlled inputs (`name ?? ""`, `period ?? ""`, `ownerPic ?? ""`, `filePath ?? ""`, `fileSizeMb ?? 0`).
+- [x] Add regression test assertion in `src/components/views/DocumentsView/documentDrawer.test.ts` asserting keys exist in `DocumentCreateModal.tsx`.
+- [x] Verify targeted test `documentDrawer.test.ts` (11/11 passing).
+
 ---
 
 ## 3. Risks, Mitigations & Dependencies
@@ -63,4 +70,5 @@
 | TypeScript type mismatch on `fileType` (`DocFileType \| ""`) when constructing `payload` in `handleSubmit` | Guard `if (!fileType)` before `setIsSaving(true)` so TypeScript narrows `fileType` to `DocFileType` automatically inside the `try` block. |
 | Stale `filePath` or `fileType` persisting when switching between `Upload File Lokal` and `Tautan URL` | `handleModeChange` explicitly clears `filePath = ""`, `fileSizeMb = 0`, and `fileType = ""`. |
 | Dropdown popover clipping inside modal scroll container | `CustomDropdown` uses `computeDropdownPlacement` with `direction="auto"` and `z-[60]` to prevent clipping. |
+| React fiber DOM reuse causing uncontrolled-to-controlled input runtime exception when toggling upload mode | Explicit key isolation on container `div`s and `input`s forces React to unmount the file input and mount a fresh URL input node. |
 

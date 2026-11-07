@@ -83,6 +83,11 @@ Replace lines 98–118 in `src/components/views/DocumentsView/documentDrawer.tes
       "DocumentCreateModal must implement uploadMode toggle ('local' | 'url') and handleModeChange"
     );
     assert.ok(
+      content.includes('key="upload-local-mode"') &&
+        content.includes('key="upload-url-mode"'),
+      "DocumentCreateModal must assign distinct keys to upload mode branches to prevent uncontrolled-to-controlled input reconciliation errors"
+    );
+    assert.ok(
       content.includes('useState<DocFileType | "">("")') &&
         content.includes('placeholder="Choose File Type"'),
       "DocumentCreateModal must initialize/reset fileType to empty string and display 'Choose File Type' placeholder"
@@ -757,7 +762,7 @@ const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
               </div>
 
               {uploadMode === "local" ? (
-                <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3.5 bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5">
+                <div key="upload-local-mode" className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3.5 bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                       <Upload className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
@@ -771,6 +776,7 @@ const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
                     )}
                   </div>
                   <input
+                    key="file-upload-input"
                     type="file"
                     onChange={handleFileUpload}
                     disabled={isUploading}
@@ -784,15 +790,16 @@ const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
                   )}
                 </div>
               ) : (
-                <div className="space-y-1.5">
+                <div key="upload-url-mode" className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Tautan URL *
                   </label>
                   <input
+                    key="url-text-input"
                     type="url"
                     required
                     placeholder="https://..."
-                    value={filePath}
+                    value={filePath ?? ""}
                     onChange={(e) => setFilePath(e.target.value)}
                     className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
                   />
@@ -907,6 +914,7 @@ const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
 - [x] `fileType` initializes to `""` and uses `CustomDropdown` with `placeholder="Choose File Type"`.
 - [x] Uploading a file in `Upload File Lokal` mode automatically detects and selects `fileType` and populates `fileSizeMb`.
 - [x] `Kategori Dokumen *`, `Branch / Wilayah`, and `Tipe File *` all use `CustomDropdown`.
+- [x] Upload mode conditional branches and inputs use distinct keys (`key="upload-local-mode"`, `key="file-upload-input"`, `key="upload-url-mode"`, `key="url-text-input"`) and null-coalesced value defaults, completely preventing uncontrolled-to-controlled React errors.
 - [x] `node --test src/components/views/DocumentsView/documentDrawer.test.ts` passes with 0 failures.
 - [x] `npm run drift:check`, `npm run build:check`, and `npm run test:smoke` all pass with 0 errors/failures.
 

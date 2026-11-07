@@ -129,6 +129,11 @@ describe("Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)"
       "DocumentCreateModal must implement uploadMode toggle ('local' | 'url') and handleModeChange"
     );
     assert.ok(
+      content.includes('key="upload-local-mode"') &&
+        content.includes('key="upload-url-mode"'),
+      "DocumentCreateModal must assign distinct keys to upload mode branches to prevent uncontrolled-to-controlled input reconciliation errors"
+    );
+    assert.ok(
       content.includes('useState<DocFileType | "">("")') &&
         content.includes('placeholder="Choose File Type"'),
       "DocumentCreateModal must initialize/reset fileType to empty string and display 'Choose File Type' placeholder"

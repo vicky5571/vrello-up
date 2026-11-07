@@ -135,9 +135,9 @@ export function DocumentCreateModal({
         : "";
       const detectedSize = Number((file.size / (1024 * 1024)).toFixed(2));
 
-      setFilePath(data.filePath);
+      setFilePath(data.filePath || "");
       setFileType(detectedType);
-      setFileSizeMb(detectedSize);
+      setFileSizeMb(detectedSize || 0);
       if (!name.trim()) {
         setName(file.name.replace(/\.[^/.]+$/, ""));
       }
@@ -240,7 +240,7 @@ export function DocumentCreateModal({
                 type="text"
                 required
                 placeholder="Contoh: Brand Guidelines 2026, SOP Toko, Master Key Visual"
-                value={name}
+                value={name ?? ""}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
               />
@@ -290,7 +290,7 @@ export function DocumentCreateModal({
                 <input
                   type="text"
                   placeholder="Contoh: 2026, Q1"
-                  value={period}
+                  value={period ?? ""}
                   onChange={(e) => setPeriod(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
                 />
@@ -304,7 +304,7 @@ export function DocumentCreateModal({
                   type="text"
                   list="doc-create-members-list"
                   placeholder="Nama PIC/Tim"
-                  value={ownerPic}
+                  value={ownerPic ?? ""}
                   onChange={(e) => setOwnerPic(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
                 />
@@ -346,7 +346,7 @@ export function DocumentCreateModal({
               </div>
 
               {uploadMode === "local" ? (
-                <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3.5 bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5">
+                <div key="upload-local-mode" className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3.5 bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                       <Upload className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
@@ -360,6 +360,7 @@ export function DocumentCreateModal({
                     )}
                   </div>
                   <input
+                    key="file-upload-input"
                     type="file"
                     onChange={handleFileUpload}
                     disabled={isUploading}
@@ -373,15 +374,16 @@ export function DocumentCreateModal({
                   )}
                 </div>
               ) : (
-                <div className="space-y-1.5">
+                <div key="upload-url-mode" className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Tautan URL *
                   </label>
                   <input
+                    key="url-text-input"
                     type="url"
                     required
                     placeholder="https://..."
-                    value={filePath}
+                    value={filePath ?? ""}
                     onChange={(e) => setFilePath(e.target.value)}
                     className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
                   />
@@ -414,7 +416,7 @@ export function DocumentCreateModal({
                   type="number"
                   step="0.01"
                   min="0"
-                  value={fileSizeMb}
+                  value={fileSizeMb ?? 0}
                   onChange={(e) =>
                     setFileSizeMb(e.target.value ? Number(e.target.value) : 0)
                   }

@@ -39,8 +39,14 @@ const [description, setDescription] = useState("");
 | :--- | :--- | :--- |
 | **Modal Initial Mount / `resetForm()`** | `uploadMode = "local"`, `name = ""`, `category = "Brand Guidelines"`, `branchName = branches[0]?.name \|\| ""`, `ownerPic = ""`, `period = ""`, `fileType = ""`, `fileSizeMb = 0`, `filePath = ""`, `description = ""` | `Tipe File *` displays `"Choose File Type"`. |
 | **Switch Mode (`handleModeChange(nextMode)`)** | If `nextMode !== uploadMode`: `setUploadMode(nextMode); setFilePath(""); setFileSizeMb(0); setFileType("");` | Prevents stale `/api/marcom/files/...` paths or auto-detected `fileType` from leaking into `"url"` mode (and vice versa). |
-| **Local File Uploaded (`handleFileUpload`)** | `setFilePath(data.filePath); setFileType(detectedType); setFileSizeMb(detectedSize);` (where `detectedType = VALID_FILE_TYPES.includes(ext) ? ext : ""`) | Only active in `uploadMode === "local"`. Auto-fills `name` if `name.trim()` is empty. |
+| **Local File Uploaded (`handleFileUpload`)** | `setFilePath(data.filePath || ""); setFileType(detectedType); setFileSizeMb(detectedSize || 0);` (where `detectedType = VALID_FILE_TYPES.includes(ext) ? ext : ""`) | Only active in `uploadMode === "local"`. Auto-fills `name` if `name.trim()` is empty. |
 | **Form Submit (`handleSubmit`)** | Validates `name.trim()`, `category.trim()`, `fileType !== ""`, `filePath.trim()`, and `isValidDocumentFilePath(filePath.trim())`. | If `!fileType`, shows `toast.error("Tipe file wajib dipilih")` and aborts submission. |
+
+### 2.3 Reconciliation Isolation & Controlled Input Contracts (Amendment)
+- **DOM Fiber Key Isolation:** The `"local"` upload branch and `"url"` input branch render different input types (`type="file"` vs `type="url"`). To prevent React from mutating an uncontrolled `<input type="file">` node into a controlled `<input type="url">` node at the same DOM coordinate, both wrapper containers and input nodes must carry distinct `key` attributes:
+  - Local mode: container `<div key="upload-local-mode">` and `<input key="file-upload-input" type="file" ... />`.
+  - URL mode: container `<div key="upload-url-mode">` and `<input key="url-text-input" type="url" ... />`.
+- **Defensive Value Fallbacks:** All controlled input elements strictly bind to non-undefined values using nullish coalescing (`value={name ?? ""}`, `value={period ?? ""}`, `value={ownerPic ?? ""}`, `value={filePath ?? ""}`, `value={fileSizeMb ?? 0}`).
 
 ---
 
@@ -93,6 +99,8 @@ const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
 
 ## 4. Failure & Recovery Modes
 
+- **Uncontrolled-to-Controlled React Reconciliation Error Prevention:**
+  - Distinct `key` props (`upload-local-mode` / `file-upload-input` vs `upload-url-mode` / `url-text-input`) guarantee React completely unmounts the uncontrolled file input before mounting the controlled URL text input, preventing React DOM fiber reuse and uncontrolled-to-controlled exceptions.
 - **Submitting Without Selecting `Tipe File *` (`fileType === ""`):**
   - `handleSubmit` blocks the API call and triggers `toast.error("Tipe file wajib dipilih")`.
 - **Submitting Without Uploading File (`uploadMode === "local"`) or Entering URL (`uploadMode === "url"`):**
@@ -110,7 +118,8 @@ const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
 4. `fileType` initializes to `""` and resets to `""` on `handleModeChange` and `resetForm`, displaying `"Choose File Type"` inside the `Tipe File *` `CustomDropdown`.
 5. Uploading a local file in `"local"` mode auto-populates `fileType` (`VALID_FILE_TYPES.includes(ext) ? ext : ""`) and `fileSizeMb`.
 6. `Kategori Dokumen *`, `Branch / Wilayah`, and `Tipe File *` all use `CustomDropdown`.
-7. `documentDrawer.test.ts` passes with updated and added assertions covering ADR-0090.
+7. Upload mode conditional branches and inputs use distinct keys (`key="upload-local-mode"`, `key="file-upload-input"`, `key="upload-url-mode"`, `key="url-text-input"`) and null-coalesced value defaults, completely preventing uncontrolled-to-controlled React errors.
+8. `documentDrawer.test.ts` passes with updated and added assertions covering ADR-0090 and key isolation.
 
 ---
 
@@ -124,9 +133,9 @@ const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
 
 ## 7. Verification Checklist
 
-- [ ] `node --test src/components/views/DocumentsView/documentDrawer.test.ts` passes with 0 failures.
-- [ ] `npm run drift:check` passes (`✅ No drift detected`).
-- [ ] `npm run build:check` passes (`0 TypeScript errors`).
-- [ ] `npm run test:smoke` passes (`0 failures`).
+- [x] `node --test src/components/views/DocumentsView/documentDrawer.test.ts` passes with 0 failures.
+- [x] `npm run drift:check` passes (`✅ No drift detected`).
+- [x] `npm run build:check` passes (`0 TypeScript errors`).
+- [x] `npm run test:smoke` passes (`0 failures`).
 
 

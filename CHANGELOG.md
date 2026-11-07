@@ -9,6 +9,7 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 - `feat(documents)`: DocumentCreateModal upload mode toggle, Google Drive picker removal, and CustomDropdown standardization (ADR-0090)
   - Google Drive picker removal: eliminated `useGoogleDrivePicker`, `GoogleDriveLinkModal`, and `Pilih dari Google Drive` action from `DocumentCreateModal.tsx`, preventing user confusion regarding whether files are stored in VrelloUp's Supabase Storage
   - Segmented upload mode toggle: added 2-option mode toggle (`Upload File Lokal` vs `Tautan URL`) with `handleModeChange` resetting `filePath`, `fileSizeMb`, and `fileType` to prevent cross-mode state leakage
+  - React fiber reconciliation key isolation: fixed React runtime exception ("component is changing an uncontrolled input to be controlled") by assigning distinct keys (`key="upload-local-mode"` / `key="file-upload-input"` vs `key="upload-url-mode"` / `key="url-text-input"`) and defensive nullish coalescing defaults across all controlled inputs
   - Explicit or auto-detected `fileType`: initialized `fileType` to `""`, rendering `CustomDropdown` with `"Choose File Type"` placeholder; automatically detects type upon local file upload and blocks submission with `toast.error("Tipe file wajib dipilih")` if not set
   - CustomDropdown standardization: converted `Kategori Dokumen *`, `Branch / Wilayah`, and `Tipe File *` from native datalists and selects to `CustomDropdown`
   - Dedicated unit tests in `src/components/views/DocumentsView/documentDrawer.test.ts` (11/11 tests passing)

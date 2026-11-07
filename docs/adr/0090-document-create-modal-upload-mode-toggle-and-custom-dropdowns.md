@@ -73,4 +73,26 @@ We adopt **Option A + B (Combined)**:
 - **Preset Document Categories in `CustomDropdown`:** Converting `Kategori Dokumen *` from `<datalist>` to `CustomDropdown` constrains selection to the canonical category options (`Brand Guidelines`, `SOP`, `Kontrak`, `Master Key Visual`, `Template Presentasi`, `Legalitas`, `Laporan`), improving data normalization across reports and filters.
 - **Test Suite Alignment:** Existing static assertions in `src/components/views/DocumentsView/documentDrawer.test.ts` that checked for `"Google Drive"` inside `DocumentCreateModal.tsx` must be updated to assert the absence of Google Drive picker in `DocumentCreateModal.tsx`, the presence of the upload mode toggle, `CustomDropdown` usage, and the `"Choose File Type"` placeholder.
 
+---
+
+## 5. Post-Implementation Amendment: Key Isolation for Conditional Input Reconciliation
+
+### Context & Symptom
+During runtime testing of the upload mode toggle (`uploadMode === "local"` vs `"url"`), React 19 raised a fatal warning/exception:
+```
+Error: A component is changing an uncontrolled input to be controlled. This is likely caused by the value changing from undefined to a defined value, which should not happen. Decide between using a controlled or uncontrolled input element for the lifetime of the component.
+    at input (<anonymous>)
+    at DocumentCreateModal (...)
+```
+
+### Root Cause
+In React DOM's reconciliation algorithm (`commitHostUpdate` / `updateProperties`), when two branches of a conditional ternary render HTML elements of the same tag (`<input>`) at the exact same tree position inside identical wrapper tags without explicit `key` props, React attempts to reuse (mutate) the existing DOM `<input>` element instead of unmounting and remounting a fresh node.
+1. In `"local"` mode, `<input type="file" ... />` is an **uncontrolled** input (`value={undefined}`).
+2. In `"url"` mode, `<input type="url" value={filePath} ... />` is a **controlled** input (`value={filePath}`).
+When toggling between `"local"` and `"url"`, React reused the fiber node, transitioning the input from `value={undefined}` to `value=""`, which React flags as an invalid switch from uncontrolled to controlled.
+
+### Architectural Solution
+1. **Explicit Fiber Key Isolation:** Assign distinct React keys to both the conditional wrapper `<div>`s (`key="upload-local-mode"` vs `key="upload-url-mode"`) and the underlying input elements (`key="file-upload-input"` vs `key="url-text-input"`). This forces React's reconciler to unmount the file input DOM node entirely and create a distinct URL input element with zero DOM node reuse.
+2. **Defensive Value Fallbacks:** Explicitly guard all controlled inputs with null-coalescing fallbacks (`value={name ?? ""}`, `value={period ?? ""}`, `value={ownerPic ?? ""}`, `value={filePath ?? ""}`, `value={fileSizeMb ?? 0}`) and sanitize upload response paths (`setFilePath(data.filePath || "")`) to guarantee values are never `undefined`.
+
 
