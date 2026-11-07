@@ -6,9 +6,10 @@
 
 ## Current Status
 
-**Date:** 2026-11-07  
+**Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Field Events Table Row Click Edit Drawer & Action Column Simplification (ADR-0084) — **PLANNING COMPLETE**  
+**Previous Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **PLANNING COMPLETE**  
@@ -54,7 +55,24 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Penyelarasan Posisi Checkbox Center-Left pada Checklist Event (ADR-0083 — Implementation Complete):**
+1. **Perencanaan Klik Baris Tabel Field Events & Penyederhanaan Kolom Aksi (ADR-0084 — Planning Complete):**
+   - **Diagnosis UX & Redundansi Kolom Aksi:**
+     - Pada tabel Field Events ([`EventTableView.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/EventsView/EventTableView.tsx)), pembukaan drawer edit (`EventDrawer`) sebelumnya bertumpu pada teks judul event atau ikon pensil (`Edit2`) di kolom `Actions`.
+     - Tabel-tabel utama lain di aplikasi (`BranchesView`, `MousView`, `PlacementsView`, `DocumentsView`) sudah mengadopsi standar klik baris penuh (`onRowClick`), sehingga keberadaan tombol pensil di kolom aksi menjadi redundan dan memakan ruang horizontal tabel yang berharga.
+   - **Solusi Desain Native `MarcomTableShell.onRowClick` & Event Bubbling Isolation:**
+     - Mengoperasikan prop `onRowClick={onSelectEvent}` ke `<MarcomTableShell<FieldEventItem>>`. Fitur bawaan shell menangani `cursor-pointer`, efek hover, dan aksesibilitas keyboard (`tabIndex={0}`, `Enter`/`Space`).
+     - Menghapus tombol pensil (`Edit2`) dari kolom `actions` dan membersihkan import `Edit2` dari `lucide-react`.
+     - Membungkus tombol delete (`Trash2`) dengan handler `onClick={(ev) => ev.stopPropagation()}` agar aksi hapus tidak memicu drawer edit.
+     - Mengisolasi tombol preview footage video (`X media ▶`) dengan `ev.stopPropagation()` agar modal video tidak membuka drawer edit.
+     - Merampingkan alokasi lebar kolom `actions` dari `size: 140` menjadi `size: 70` (`minSize: 60`, `maxSize: 80`).
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0084-field-events-table-row-click-edit-drawer.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0084-field-events-table-row-click-edit-drawer.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-field-events-table-row-click-edit-drawer-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-field-events-table-row-click-edit-drawer-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-field-events-table-row-click-edit-drawer.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-field-events-table-row-click-edit-drawer.md)
+     - Handover: [`docs/handover-field-events-table-row-click-edit-drawer.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-field-events-table-row-click-edit-drawer.md)
+     - Invarian Verifikasi: `npm run drift:check` ✅ (111/111 spec-plan pairs).
+
+2. **Implementasi Penyelarasan Posisi Checkbox Center-Left pada Checklist Event (ADR-0083 — Implementation Complete):**
    - **TDD Test Suite Refactor (`src/components/views/EventsView/eventChecklistResponsiveness.test.ts`):**
      - Memperbarui pengujian unit untuk memverifikasi struktur tata letak *center-left*: kontainer baris menggunakan `items-center justify-between`, wrapper `<label>` menggunakan `items-center gap-2.5`, dan input checkbox berukuran 16px (`w-4 h-4 shrink-0`) tanpa margin offset vertikal `mt-0.5`.
      - Terverifikasi baseline RED (gagal pada baris assertion label `items-center`) -> GREEN setelah refactor komponen.
@@ -2829,16 +2847,16 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (all 64 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (all 111 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ Full test suite passed (817/817 tests passed)
-- `npm run test:smoke` → ✅ 114 passed, 0 failed
+- `npm test` → ✅ Full test suite passed (1037/1037 tests passed)
+- `npm run test:smoke` → ✅ 162 passed, 0 failed
 
 ---
 
 ## Blocked / Risks
 
-- None. Implementation complete and verified.
+- None. Planning complete and execution-ready.
 
 ---
 
@@ -2849,13 +2867,17 @@
 - **TD-003 (Dualitas Naming AppMode):** Penggunaan nilai internal `appMode: "tasks"` yang dilabeli "Projects" di UI, padahal isinya adalah tampilan Board dari entitas Marcom.
 - **TD-004 (Dead Domain Types):** Definisi interface di `src/types/index.ts` untuk fitur yang tidak pernah aktif (`CustomAutomationRule`, `ChannelMessage`, `Space`, `Folder`, `List`, `Task`). Tipe ini di-strip saat kompilasi TypeScript sehingga tidak menambah ukuran bundle JS produksi.
 - **TD-005 (Decommissioned Asset Lifecycle / Repair Tracking):** Barang yang rusak berat (`MAJOR_DAMAGE`) saat ini langsung diafkir dengan memotong `totalUnits` master item demi menjaga akurasi stok fisik harian. Ketika organisasi mulai menggunakan bengkel servis/reparasi rekanan, dapat ditambahkan modul *Asset Repair Ticketing* untuk memulihkan aset yang selesai diperbaiki kembali ke `totalUnits`.
+- **TD-006 (Step 3 Photo Upload Navigation Blocker):** Ketika upload foto fisik sedang berlangsung di Langkah 3 wizard placement, tombol navigasi `Kembali`, `Simpan Cepat`, dan `Lanjut` harus dinonaktifkan untuk mencegah submit parsial atau kehilangan data foto.
 
 ---
 
 ## Next Step for Following Session
 
 1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. Execute implementation of ADR-0050 using `docs/handover-warehouse-role-and-return-inspection-compensation-workflow.md`.
-3. If desired, adopt `CustomDropdown` in `src/components/views/ContentPlannerView/ContentDrawer.tsx` (edit post drawer) for Platform and Format to complete Content Planner symmetry.
+2. Execute implementation of ADR-0084 using [`docs/handover-field-events-table-row-click-edit-drawer.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-field-events-table-row-click-edit-drawer.md):
+   - Create unit regression test `src/components/views/EventsView/eventTableView.test.ts`.
+   - Update `src/components/views/EventsView/EventTableView.tsx` (bind `onRowClick={onSelectEvent}`, purge `Edit2` pencil icon, isolate `stopPropagation` on delete wrapper and footage button, resize actions column to 70px).
+   - Verify all tests pass, 0 drift, and clean smoke test.
+
 
 
