@@ -7,15 +7,15 @@ import {
   X,
   Upload,
   RefreshCw,
-  Cloud,
+  Link2,
+  CheckCircle2,
 } from "lucide-react";
 import type {
   DocumentItem as MarcomDocument,
   DocFileType,
   User,
 } from "@/types";
-import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
-import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { isValidDocumentFilePath } from "@/lib/marcom/documentWorkflow";
 
 export interface DocumentCreateModalProps {
@@ -37,6 +37,27 @@ const VALID_FILE_TYPES: DocFileType[] = [
   "ZIP",
 ];
 
+const DOCUMENT_CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: "Brand Guidelines", label: "Brand Guidelines" },
+  { value: "SOP", label: "SOP" },
+  { value: "Kontrak", label: "Kontrak" },
+  { value: "Master Key Visual", label: "Master Key Visual" },
+  { value: "Template Presentasi", label: "Template Presentasi" },
+  { value: "Legalitas", label: "Legalitas" },
+  { value: "Laporan", label: "Laporan" },
+];
+
+const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
+  { value: "PDF", label: "PDF Document" },
+  { value: "PNG", label: "PNG Image" },
+  { value: "JPG", label: "JPG Image" },
+  { value: "MP4", label: "MP4 Video" },
+  { value: "DOCX", label: "DOCX Word" },
+  { value: "XLSX", label: "XLSX Excel" },
+  { value: "CSV", label: "CSV Data" },
+  { value: "ZIP", label: "ZIP Archive" },
+];
+
 export function DocumentCreateModal({
   isOpen,
   onClose,
@@ -44,12 +65,13 @@ export function DocumentCreateModal({
   branches,
   members,
 }: DocumentCreateModalProps) {
+  const [uploadMode, setUploadMode] = useState<"local" | "url">("local");
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Brand Guidelines");
   const [branchName, setBranchName] = useState(branches[0]?.name || "");
   const [ownerPic, setOwnerPic] = useState("");
   const [period, setPeriod] = useState("");
-  const [fileType, setFileType] = useState<DocFileType>("PDF");
+  const [fileType, setFileType] = useState<DocFileType | "">("");
   const [fileSizeMb, setFileSizeMb] = useState<number>(0);
   const [filePath, setFilePath] = useState("");
   const [description, setDescription] = useState("");
@@ -57,25 +79,27 @@ export function DocumentCreateModal({
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const {
-    openSelector,
-    isModalOpen: isDriveModalOpen,
-    closeModal: closeDriveModal,
-    handleManualAttach,
-  } = useGoogleDrivePicker();
-
   if (!isOpen) return null;
 
   const resetForm = () => {
+    setUploadMode("local");
     setName("");
     setCategory("Brand Guidelines");
     setBranchName(branches[0]?.name || "");
     setOwnerPic("");
     setPeriod("");
-    setFileType("PDF");
+    setFileType("");
     setFileSizeMb(0);
     setFilePath("");
     setDescription("");
+  };
+
+  const handleModeChange = (nextMode: "local" | "url") => {
+    if (nextMode === uploadMode) return;
+    setUploadMode(nextMode);
+    setFilePath("");
+    setFileSizeMb(0);
+    setFileType("");
   };
 
   const handleClose = () => {
@@ -106,7 +130,9 @@ export function DocumentCreateModal({
 
       const data = await res.json();
       const ext = file.name.split(".").pop()?.toUpperCase() as DocFileType;
-      const detectedType = VALID_FILE_TYPES.includes(ext) ? ext : "PDF";
+      const detectedType: DocFileType | "" = VALID_FILE_TYPES.includes(ext)
+        ? ext
+        : "";
       const detectedSize = Number((file.size / (1024 * 1024)).toFixed(2));
 
       setFilePath(data.filePath);
@@ -133,6 +159,10 @@ export function DocumentCreateModal({
     }
     if (!category.trim()) {
       toast.error("Kategori dokumen wajib diisi");
+      return;
+    }
+    if (!fileType) {
+      toast.error("Tipe file wajib dipilih");
       return;
     }
     if (!filePath.trim()) {
@@ -222,42 +252,32 @@ export function DocumentCreateModal({
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Kategori Dokumen *
                 </label>
-                <input
-                  type="text"
-                  required
-                  list="doc-categories-list"
-                  placeholder="Brand Guidelines, SOP, Kontrak..."
+                <CustomDropdown
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                  onChange={(val) => setCategory(val)}
+                  options={DOCUMENT_CATEGORY_OPTIONS}
+                  placeholder="Pilih Kategori"
+                  searchable={false}
+                  size="sm"
+                  ariaLabel="Kategori Dokumen"
                 />
-                <datalist id="doc-categories-list">
-                  <option value="Brand Guidelines" />
-                  <option value="SOP" />
-                  <option value="Kontrak" />
-                  <option value="Master Key Visual" />
-                  <option value="Template Presentasi" />
-                  <option value="Legalitas" />
-                  <option value="Laporan" />
-                </datalist>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Branch / Wilayah
                 </label>
-                <select
+                <CustomDropdown
                   value={branchName}
-                  onChange={(e) => setBranchName(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
-                >
-                  <option value="">HQ / Nasional (Semua Branch)</option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.name}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setBranchName(val)}
+                  options={[
+                    { value: "", label: "HQ / Nasional (Semua Branch)" },
+                    ...branches.map((b) => ({ value: b.name, label: b.name })),
+                  ]}
+                  placeholder="HQ / Nasional (Semua Branch)"
+                  size="sm"
+                  ariaLabel="Branch / Wilayah"
+                />
               </div>
             </div>
 
@@ -296,26 +316,77 @@ export function DocumentCreateModal({
               </div>
             </div>
 
-            {/* Upload Box with Google Drive Alternative */}
-            <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3.5 bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Upload className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                  <span>Upload File Lokal (Maksimal 25MB)</span>
-                </span>
-                {isUploading && (
-                  <span className="text-xs text-teal-600 dark:text-teal-400 flex items-center gap-1 font-medium">
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                    Mengunggah...
-                  </span>
-                )}
+            {/* Source Mode Toggle & Input */}
+            <div className="space-y-2.5">
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/70">
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("local")}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    uploadMode === "local"
+                      ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload File Lokal</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("url")}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    uploadMode === "url"
+                      ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <Link2 className="w-3.5 h-3.5" />
+                  <span>Tautan URL</span>
+                </button>
               </div>
-              <input
-                type="file"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-                className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-50 dark:file:bg-teal-950/40 file:text-teal-700 dark:file:text-teal-300 hover:file:bg-teal-100 cursor-pointer"
-              />
+
+              {uploadMode === "local" ? (
+                <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3.5 bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Upload className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                      <span>Upload File Lokal (Maksimal 25MB)</span>
+                    </span>
+                    {isUploading && (
+                      <span className="text-xs text-teal-600 dark:text-teal-400 flex items-center gap-1 font-medium">
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        Mengunggah...
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    onChange={handleFileUpload}
+                    disabled={isUploading}
+                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-50 dark:file:bg-teal-950/40 file:text-teal-700 dark:file:text-teal-300 hover:file:bg-teal-100 cursor-pointer"
+                  />
+                  {filePath && (
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-teal-600 dark:text-teal-400">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">File siap disimpan ({filePath.split("/").pop()})</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Tautan URL *
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://..."
+                    value={filePath}
+                    onChange={(e) => setFilePath(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              )}
             </div>
 
             {/* File Type & File Size */}
@@ -324,20 +395,15 @@ export function DocumentCreateModal({
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Tipe File *
                 </label>
-                <select
+                <CustomDropdown
                   value={fileType}
-                  onChange={(e) => setFileType(e.target.value as DocFileType)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
-                >
-                  <option value="PDF">PDF Document</option>
-                  <option value="PNG">PNG Image</option>
-                  <option value="JPG">JPG Image</option>
-                  <option value="MP4">MP4 Video</option>
-                  <option value="DOCX">DOCX Word</option>
-                  <option value="XLSX">XLSX Excel</option>
-                  <option value="CSV">CSV Data</option>
-                  <option value="ZIP">ZIP Archive</option>
-                </select>
+                  onChange={(val) => setFileType(val as DocFileType)}
+                  options={FILE_TYPE_OPTIONS}
+                  placeholder="Choose File Type"
+                  searchable={false}
+                  size="sm"
+                  ariaLabel="Tipe File"
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -355,44 +421,6 @@ export function DocumentCreateModal({
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
                 />
               </div>
-            </div>
-
-            {/* File Path / URL with Google Drive Picker Trigger */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  File Path / Tautan URL *
-                </label>
-                <button
-                  type="button"
-                  onClick={() =>
-                    openSelector({
-                      defaultKind: "all",
-                      onSelect: (atts) => {
-                        if (atts[0]) {
-                          setFilePath(atts[0].url);
-                          if (!name.trim()) {
-                            setName(atts[0].name.replace(/\.[^/.]+$/, ""));
-                          }
-                          toast.success("Tautan Google Drive berhasil disematkan!");
-                        }
-                      },
-                    })
-                  }
-                  className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <Cloud className="w-3.5 h-3.5" />
-                  <span>Pilih dari Google Drive</span>
-                </button>
-              </div>
-              <input
-                type="text"
-                required
-                placeholder="/api/marcom/files/... atau https://drive.google.com/..."
-                value={filePath}
-                onChange={(e) => setFilePath(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-              />
             </div>
 
             {/* Description */}
@@ -431,13 +459,6 @@ export function DocumentCreateModal({
           </form>
         </div>
       </div>
-
-      <GoogleDriveLinkModal
-        isOpen={isDriveModalOpen}
-        onClose={closeDriveModal}
-        onAttach={handleManualAttach}
-        defaultKind="all"
-      />
     </>
   );
 }

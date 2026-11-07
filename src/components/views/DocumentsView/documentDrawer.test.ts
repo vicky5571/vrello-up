@@ -112,8 +112,32 @@ describe("Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)"
       "DocumentCreateModal must dispatch POST to /api/marcom/documents"
     );
     assert.ok(
-      content.includes("Google Drive"),
-      "DocumentCreateModal must support Google Drive attachment fallback"
+      !content.includes("Pilih dari Google Drive") &&
+        !content.includes("useGoogleDrivePicker") &&
+        !content.includes("GoogleDriveLinkModal"),
+      "DocumentCreateModal must not include Pilih dari Google Drive option (ADR-0090)"
+    );
+  });
+
+  it("verifies DocumentCreateModal upload mode toggle, Choose File Type placeholder, and CustomDropdown integration (ADR-0090)", () => {
+    const createModalPath = path.join(docsDir, "DocumentCreateModal.tsx");
+    const content = fs.readFileSync(createModalPath, "utf-8");
+
+    assert.ok(
+      content.includes('useState<"local" | "url">("local")') &&
+        content.includes("handleModeChange"),
+      "DocumentCreateModal must implement uploadMode toggle ('local' | 'url') and handleModeChange"
+    );
+    assert.ok(
+      content.includes('useState<DocFileType | "">("")') &&
+        content.includes('placeholder="Choose File Type"'),
+      "DocumentCreateModal must initialize/reset fileType to empty string and display 'Choose File Type' placeholder"
+    );
+    assert.ok(
+      content.includes("CustomDropdown") &&
+        content.includes("DOCUMENT_CATEGORY_OPTIONS") &&
+        content.includes("FILE_TYPE_OPTIONS"),
+      "DocumentCreateModal must use CustomDropdown for category, branch, and fileType"
     );
   });
 

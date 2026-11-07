@@ -8,7 +8,9 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** BorrowRequestModal Smart Draft Cache vs Submit/Cancel Reset & Cumulative Sequential Stepper Gate (ADR-0089) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090) — **PLANNING COMPLETE**  
+**Previous Feature:** BorrowRequestModal Smart Draft Cache vs Submit/Cancel Reset & Cumulative Sequential Stepper Gate (ADR-0089) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** BorrowRequestModal Smart Draft Cache vs Submit/Cancel Reset & Cumulative Sequential Stepper Gate (ADR-0089) — **PLANNING COMPLETE**  
 **Previous Feature:** BorrowRequestModal Step 4 Review Badge Completion & Clickability Separation (ADR-0088) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** BorrowRequestModal Step 4 Review Badge Completion & Clickability Separation (ADR-0088) — **PLANNING COMPLETE**  
@@ -66,7 +68,44 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Smart Draft Cache vs Reset Submit/Cancel & Cumulative Stepper Gate pada BorrowRequestModal (ADR-0089 — Implementation Complete):**
+1. **Implementasi Upload Mode Toggle, Penghapusan Google Drive Picker, & Standarisasi CustomDropdown pada DocumentCreateModal (ADR-0090 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/DocumentsView/documentDrawer.test.ts`):**
+     - Memperbarui subtest `verifies DocumentCreateModal implementation details` untuk memverifikasi bahwa modal TIDAK lagi menyertakan `Pilih dari Google Drive`, `useGoogleDrivePicker`, maupun `GoogleDriveLinkModal`.
+     - Menambahkan subtest baru `verifies DocumentCreateModal upload mode toggle, Choose File Type placeholder, and CustomDropdown integration (ADR-0090)` yang memvalidasi deklarasi `uploadMode` (`"local" | "url"`), fungsi `handleModeChange`, inisialisasi/reset `fileType` ke string kosong `""` dengan placeholder `"Choose File Type"`, serta integrasi `CustomDropdown` untuk `Kategori Dokumen`, `Branch / Wilayah`, dan `Tipe File`.
+     - Terverifikasi siklus TDD: Baseline RED (2 assertion gagal) -> GREEN (11/11 tests passing).
+   - **Refaktor Komponen Pembuatan Dokumen (`DocumentCreateModal.tsx`):**
+     - Menghapus ketergantungan Google Drive picker (`useGoogleDrivePicker`, `GoogleDriveLinkModal`, ikon `Cloud`).
+     - Menambahkan segmented mode toggle 2-tombol (`Upload File Lokal` vs `Tautan URL`) ber-ikon `Upload` dan `Link2`.
+     - Mengimplementasikan `handleModeChange(nextMode)` yang me-reset `filePath` (`""`), `fileSizeMb` (`0`), dan `fileType` (`""`) untuk mencegah kebocoran state lama antar mode.
+     - Mengubah state `fileType` menjadi `DocFileType | ""` (inisial `""`), merender `CustomDropdown` ber-placeholder `"Choose File Type"`, mendeteksi ekstensi otomatis pada mode lokal, dan memvalidasi `if (!fileType)` pada `handleSubmit` dengan toast error `"Tipe file wajib dipilih"`.
+     - Mengonversi `Kategori Dokumen *` (`DOCUMENT_CATEGORY_OPTIONS`), `Branch / Wilayah`, dan `Tipe File *` (`FILE_TYPE_OPTIONS`) ke komponen terstandarisasi `CustomDropdown`.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0090-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0090-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md)
+     - Handover: [`docs/handover-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (117/117 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 168/168 tests passing across 65 suites (0 failures).
+     - Targeted unit test: ✅ 11/11 tests passing in `documentDrawer.test.ts`.
+
+2. **Perencanaan Upload Mode Toggle, Penghapusan Google Drive Picker, & Standarisasi CustomDropdown pada DocumentCreateModal (ADR-0090 — Planning Complete):**
+   - **Discovery & Business Reality Check:**
+     - **Risiko Salah Mental Model Penyimpanan (Google Drive vs Supabase):** Kehadiran tombol `Pilih dari Google Drive` di dalam modal *Unggah Dokumen Aset Baru* (`DocumentCreateModal.tsx`) membuat pengguna mengira file dari Google Drive di-copy ke Supabase Storage aplikasi, sehingga jika file asli di Google Drive dihapus/dipindahkan, tautan dokumen di VrelloUp rusak.
+     - **Salah Klasifikasi `Tipe File` pada Mode URL:** State `fileType` sebelumnya diinisialisasi ke `"PDF"`. Saat pengguna menggunakan URL eksternal, `fileType` tidak terdeteksi otomatis dan diam-diam tersimpan sebagai `"PDF"`.
+     - **Inkonsistensi Komponen Dropdown:** `Kategori Dokumen *`, `Branch / Wilayah`, dan `Tipe File *` masih menggunakan `<datalist>` dan `<select>` bawaan browser, belum menggunakan `CustomDropdown`.
+   - **Keputusan Arsitektur (Opsi A + B — Segmented Upload Mode Toggle + Empty `fileType` `"Choose File Type"` + `CustomDropdown`):**
+     - Menghapus `Pilih dari Google Drive`, `useGoogleDrivePicker`, dan `GoogleDriveLinkModal` dari `DocumentCreateModal.tsx`.
+     - Menambahkan segmented toggle `uploadMode` (`"local"` = *Upload File Lokal* vs `"url"` = *Tautan URL*) dengan `handleModeChange` yang me-reset `filePath` (`""`), `fileSizeMb` (`0`), dan `fileType` (`""`).
+     - Menginisialisasi `fileType` ke `""` (`useState<DocFileType | "">("")`) dengan `CustomDropdown` ber-placeholder `"Choose File Type"`, auto-fill saat upload file lokal, dan validasi wajib pilih sebelum submit.
+     - Mengganti `Kategori Dokumen *`, `Branch / Wilayah`, dan `Tipe File *` dengan komponen `CustomDropdown`.
+   - **Artefak Perencanaan & Handover (Planning-Only Mode):**
+     - ADR: [`docs/adr/0090-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0090-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md)
+     - Handover: [`docs/handover-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md)
+2. **Implementasi Smart Draft Cache vs Reset Submit/Cancel & Cumulative Stepper Gate pada BorrowRequestModal (ADR-0089 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/InventoryView/borrowRequestModal.test.ts`):**
      - Memperbarui subtest `getBorrowStepCompletionStatus` untuk memverifikasi cumulative sequential gate: jika `borrowerName` dan `selectedItems` terisi namun tanggal Step 2 (`borrowDate` & `returnDueDate`) kosong, maka `statuses[2] === false` dan `statuses[3] === false`. Step 3 tidak boleh berstatus selesai sebelum Step 1 dan Step 2 valid.
      - Menambahkan subtest baru `"verifies smart draft cache on close (X) and full resetForm on Submit and Cancel (ADR-0089)"` yang memvalidasi deklarasi fungsi `resetForm()`, pembersihan `selectedItems` ke `[]`, handler `handleCancel = () => { resetForm(); onClose(); }`, wiring tombol footer `Cancel` ke `handleCancel`, dan pemanggilan `resetForm()` saat `handleSubmit` berhasil.

@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(documents)`: DocumentCreateModal upload mode toggle, Google Drive picker removal, and CustomDropdown standardization (ADR-0090)
+  - Google Drive picker removal: eliminated `useGoogleDrivePicker`, `GoogleDriveLinkModal`, and `Pilih dari Google Drive` action from `DocumentCreateModal.tsx`, preventing user confusion regarding whether files are stored in VrelloUp's Supabase Storage
+  - Segmented upload mode toggle: added 2-option mode toggle (`Upload File Lokal` vs `Tautan URL`) with `handleModeChange` resetting `filePath`, `fileSizeMb`, and `fileType` to prevent cross-mode state leakage
+  - Explicit or auto-detected `fileType`: initialized `fileType` to `""`, rendering `CustomDropdown` with `"Choose File Type"` placeholder; automatically detects type upon local file upload and blocks submission with `toast.error("Tipe file wajib dipilih")` if not set
+  - CustomDropdown standardization: converted `Kategori Dokumen *`, `Branch / Wilayah`, and `Tipe File *` from native datalists and selects to `CustomDropdown`
+  - Dedicated unit tests in `src/components/views/DocumentsView/documentDrawer.test.ts` (11/11 tests passing)
+  - Verification: `npm run drift:check` ✅ (117/117 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (168/168)
+  - Refs: `docs/adr/0090-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`, `docs/superpowers/specs/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns-design.md`, `docs/superpowers/plans/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`
+
 - `feat(inventory)`: BorrowRequestModal smart draft cache vs submit/cancel reset and cumulative sequential stepper gate (ADR-0089)
   - Cumulative sequential stepper gate: updated `getBorrowStepCompletionStatus` in `borrowWizardHelpers.ts` to compute sequential status flags (`step1`, `step2 = step1 && canAdvanceFromBorrowStep(2)`, `step3 = step2 && canAdvanceFromBorrowStep(3)`, `4: false`), ensuring Step 3 is never marked completed or rendered clickable while Step 1 or Step 2 is incomplete
   - Explicit form reset on submit and cancel: introduced `resetForm()` in `BorrowRequestModal.tsx` clearing all 11 form state fields (`step = 1`, `selectedItems = []`, `borrowDate = ""`, `returnDueDate = ""`, `purpose = ""`, `eventLocation = ""`, `borrowerPhone = ""`, `itemSearch = ""`, `selectedCategory = "ALL"`, `error = null`)
