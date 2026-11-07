@@ -58,18 +58,20 @@
 
 1. **Implementasi Klik Baris Tabel Field Events & Penyederhanaan Kolom Aksi (ADR-0084 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/EventsView/eventTableView.test.ts`):**
-     - Dibuat test suite 6 subtests memverifikasi:
+     - Dibuat test suite 7 subtests memverifikasi:
        - `MarcomTableShell` menerima `onRowClick={onSelectEvent}` untuk interaksi klik baris penuh.
        - Ikon pensil `Edit2` dan import-nya dieliminasi sepenuhnya dari kolom `actions` dan komponen.
        - Isolasi event propagation (`ev.stopPropagation()`) terpasang pada kontainer tombol `Trash2` dan tombol preview footage (`X media ▶`).
        - Alokasi lebar kolom `actions` dirampingkan menjadi `size: 70` (`minSize: 60`, `maxSize: 80`).
+       - Tombol trash icon memiliki padding ergonomis `p-1.5 rounded-lg` dan kontainer memiliki jarak margin/padding `pr-2`.
        - Batas ukuran file koordinator `EventTableView.tsx` tetap terjaga ($\le 350$ LOC).
-     - Terverifikasi baseline RED (gagal pada 4 assertion sebelum refaktor) -> GREEN (6/6 lulus setelah refaktor).
+     - Terverifikasi baseline RED (gagal pada assertion sebelum refaktor) -> GREEN (7/7 lulus setelah refaktor).
    - **Refaktor Komponen Tabel Field Events (`EventTableView.tsx`):**
      - Menghapus import dan pemakaian `Edit2` dari `lucide-react`.
      - Menambahkan `ev.stopPropagation()` pada tombol footage media preview (`X media ▶`).
      - Menghapus tombol edit pensil dari definisi kolom `actions`.
-     - Membungkus sel tombol hapus dengan `<div className="flex items-center justify-end" onClick={(ev) => ev.stopPropagation()}>`.
+     - Membungkus sel tombol hapus dengan `<div className="flex items-center justify-end pr-2" onClick={(ev) => ev.stopPropagation()}>`.
+     - Meningkatkan ergonomi tombol hapus dengan `p-1.5 rounded-lg` dan menyelaraskan header dengan `meta: { align: "right" }`.
      - Menyesuaikan alokasi ukuran kolom `actions` menjadi `size: 70, minSize: 60, maxSize: 80`.
      - Meneruskan prop `onRowClick={onSelectEvent}` ke `<MarcomTableShell<FieldEventItem>>`.
    - **Verifikasi Kualitas & Invarian Penuh:**

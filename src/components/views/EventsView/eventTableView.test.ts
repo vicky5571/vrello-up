@@ -60,6 +60,19 @@ test("Field Events Table Row Click Edit Drawer & Action Column Simplification (A
     );
   });
 
+  await t.test("verifies trash button has improved padding and container spacing", () => {
+    assert.match(
+      content,
+      /className="[^"]*?p-1\.5\s+rounded-lg[^"]*?"[^>]*?title="Delete Event"/,
+      "Trash button must use p-1.5 rounded-lg for improved click target and hover padding"
+    );
+    assert.match(
+      content,
+      /className="[^"]*?justify-end\s+pr-2[^"]*?"[^>]*?onClick=\{\s*\(ev\)\s*=>\s*ev\.stopPropagation\(\)\s*\}/,
+      "Actions container must provide right margin/padding spacing"
+    );
+  });
+
   await t.test("verifies EventTableView LOC remains within safe limit (<= 350 LOC)", () => {
     const lines = content.split("\n").length;
     assert.ok(

@@ -295,11 +295,14 @@ export function EventTableView({
         size: 70,
         minSize: 60,
         maxSize: 80,
+        meta: {
+          align: "right",
+        },
         cell: ({ row }) => {
           const e = row.original;
           return (
             <div
-              className="flex items-center justify-end"
+              className="flex items-center justify-end pr-2"
               onClick={(ev) => ev.stopPropagation()}
             >
               <button
@@ -309,7 +312,7 @@ export function EventTableView({
                     onDeleteEvent(e.id);
                   }
                 }}
-                className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                 title="Delete Event"
               >
                 <Trash2 className="w-3.5 h-3.5" />
