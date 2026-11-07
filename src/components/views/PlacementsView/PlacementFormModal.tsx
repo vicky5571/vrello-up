@@ -207,7 +207,7 @@ function PlacementFormModalContent({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-xs">
-      <div className="w-full max-w-xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+      <div className="w-full max-w-xl h-[88dvh] sm:h-auto sm:max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
         {/* Modal Header */}
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center justify-between pb-3">
@@ -236,7 +236,7 @@ function PlacementFormModalContent({
 
         {/* Active Step Content Form with scrollable body & pinned footer */}
         <form onSubmit={onSave} className="flex flex-col flex-1 min-h-0">
-          <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-[340px] space-y-4">
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-4">
             {currentStep === 1 && (
               <Step1Outlet
                 placement={placement}

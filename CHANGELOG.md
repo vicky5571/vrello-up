@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(placements)`: Mobile placement modal fixed viewport height and search results expansion (ADR-0076)
+  - Modal chassis height stabilization: updated outer dialog wrapper in `PlacementFormModal.tsx` to `w-full max-w-xl h-[88dvh] sm:h-auto sm:max-h-[92vh]`, anchoring the wizard chassis to a stable 88% dynamic viewport height on mobile devices and keeping the header and footer (`"Batal"` and `"Lanjut"`) permanently pinned without bouncing layout shift
+  - Scroll container unconstrained baseline: replaced `min-h-[340px]` on form scroll body with `min-h-0 flex-1 overflow-y-auto`, ensuring seamless internal scrolling across all 4 steps without outer modal clipping or vertical distortion
+  - Search results container expansion: increased dropdown list maximum height in `OutletSearchCombobox.tsx` from `max-h-60` (240px) to `max-h-80 sm:max-h-72` (320px on mobile), accommodating 3–4 detailed multi-line outlet cards simultaneously for faster visual scanning
+  - Desktop 100% byte-for-byte preserved: retains auto-height behavior bounded by `sm:max-h-[92vh]` and search dropdown bounded by `sm:max-h-72` on viewports $\ge 640\text{px}$
+  - Safe coordinator bounds maintained: `PlacementFormModal.tsx` maintained at 310 LOC ($\le 350$ LOC ceiling)
+  - Added TDD unit test suite in `src/components/views/PlacementsView/placementModalResponsiveness.test.ts` (4/4 tests passing)
+  - Verification: `npm run drift:check` ✅ (103/103 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (155/155), `npm test` ✅ (996/996)
+  - Refs: `docs/adr/0076-mobile-placement-modal-fixed-height-and-search-expansion.md`, `docs/superpowers/specs/2026-11-07-mobile-placement-modal-fixed-height-design.md`, `docs/superpowers/plans/2026-11-07-mobile-placement-modal-fixed-height.md`
+
 - `fix(placements)`: Mobile outlet search results and selected outlet card readability (ADR-0075)
   - Search results dropdown responsive layout: introduced mobile stacked layout (`sm:hidden`) in `OutletSearchCombobox.tsx` rendering code, brand, and GPS status on row 1, full outlet name with `break-words line-clamp-2` on row 2, and physical street address with `MapPin line-clamp-2` on row 3, eliminating premature single-line truncation of retail names and branch qualifiers
   - Selected card header decluttering: hid `Ganti Outlet` from top header on mobile using `hidden sm:inline-flex`, expanding horizontal space for store title and physical address from ~92px to ~230px (+148% wider) and completely eliminating 5-line title and 8-line address fragmentation

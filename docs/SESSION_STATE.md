@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Placement Modal Viewport Height Stabilization and Search Results Expansion (ADR-0076) — **PLANNING COMPLETE**  
+**Active Feature:** Mobile Placement Modal Viewport Height Stabilization and Search Results Expansion (ADR-0076) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Placement Modal Viewport Height Stabilization and Search Results Expansion (ADR-0076) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **PLANNING COMPLETE & AMENDED**  
 **Previous Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **PLANNING COMPLETE**  
@@ -42,7 +43,26 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Stabilisasi Ketinggian Modal & Ekspansi Hasil Pencarian Mobile (ADR-0076 — Planning Complete):**
+1. **Implementasi Stabilisasi Ketinggian Modal & Ekspansi Hasil Pencarian Mobile (ADR-0076 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/PlacementsView/placementModalResponsiveness.test.ts`):**
+     - Memverifikasi container modal menggunakan `h-[88dvh]` di mobile dan `sm:h-auto sm:max-h-[92vh]` di desktop.
+     - Memverifikasi form body menggunakan `flex-1 min-h-0 overflow-y-auto` dan menghapus `min-h-[340px]`.
+     - Memverifikasi container hasil pencarian combobox meluas ke `max-h-80` di mobile dan mempertahankan `sm:max-h-72` di desktop.
+     - Memverifikasi file `PlacementFormModal.tsx` tetap dalam batas koordinator $\le 350$ LOC (310 LOC).
+     - Siklus TDD terverifikasi: RED state (3 assertions gagal saat baseline) -> GREEN state (4/4 assertions lulus).
+   - **Refaktor Komponen Modal (`src/components/views/PlacementsView/PlacementFormModal.tsx` — 310 LOC):**
+     - Mengubah wrapper modal menjadi `w-full max-w-xl h-[88dvh] sm:h-auto sm:max-h-[92vh]`, mematri header dan footer tombol "Batal" serta "Lanjut" secara permanen tanpa lonjakan *layout shift*.
+     - Mengubah scroll container menjadi `min-h-0 flex-1 overflow-y-auto`, mencegah distorsi tinggi minimum pada layar ponsel kecil.
+     - **Invarian Desktop 100% Terjaga:** Tampilan desktop ($\ge 640\text{px}$) tetap mempertahankan *auto-height* dibatasi `sm:max-h-[92vh]`.
+   - **Refaktor Komponen Combobox (`src/components/views/PlacementsView/OutletSearchCombobox.tsx`):**
+     - Memperluas tinggi maksimum container list hasil pencarian dari `max-h-60` (240px) ke `max-h-80 sm:max-h-72` (320px di mobile), menampilkan 3–4 kartu outlet lengkap secara simultan.
+   - **Verifikasi Non-Negotiable Quality Gates:**
+     - `npm run drift:check` ✅ (103/103 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (0 TypeScript / Next.js compilation errors).
+     - `npm run test:smoke` ✅ (155/155 pass, 0 fail).
+     - `npm test` ✅ (996/996 pass, 0 fail).
+
+2. **Perencanaan Arsitektur Stabilisasi Ketinggian Modal & Ekspansi Hasil Pencarian Mobile (ADR-0076 — Planning Complete):**
    - **Diagnosis Masalah UX Lapangan:**
      - Modal wizard POSM (`PlacementFormModal.tsx`) menggunakan `max-h-[92vh]` tanpa tinggi tetap di mobile, menyebabkan ketinggian modal berubah-ubah secara liar mengikuti konten (misal saat query kosong, modal mengkerut ke ~400px sehingga tombol footer "Batal" dan "Lanjut" naik ke tengah; saat hasil pencarian muncul, modal meregang ke bawah mendorong tombol jatuh). Ini memicu *layout shift* yang melelahkan jempol pengguna.
      - Container daftar hasil pencarian di mobile pada `OutletSearchCombobox.tsx` dibatasi kaku di `max-h-60` (240px), sehingga hanya menampilkan ~2 outlet sebelum harus di-scroll.

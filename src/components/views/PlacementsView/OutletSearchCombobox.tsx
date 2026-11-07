@@ -682,7 +682,7 @@ export function OutletSearchCombobox({
                   ref={listRef}
                   id={`${id}-listbox`}
                   role="listbox"
-                  className="overflow-y-auto max-h-60 sm:max-h-72 divide-y divide-slate-100 dark:divide-slate-700/50 p-1.5"
+                  className="overflow-y-auto max-h-80 sm:max-h-72 divide-y divide-slate-100 dark:divide-slate-700/50 p-1.5"
                 >
                   {results.map((outlet, index) => {
                     const isHighlighted = highlightedIndex === index;
