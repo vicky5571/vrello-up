@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **PLANNING COMPLETE**  
+**Previous Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **PLANNING COMPLETE**  
@@ -40,7 +41,23 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Propagasi GPS & Alamat Outlet Placement (ADR-0074 — Implementation Complete):**
+1. **Perencanaan Arsitektur Keterbacaan Hasil Pencarian & Kartu Outlet Terpilih di Mobile (ADR-0075 — Planning Complete):**
+   - **Diagnosis Masalah Visual Mobile:**
+     - Hasil pencarian (`results.map`): Baris nama toko terpotong kaku (`truncate`) karena dipaksa sejajar dengan badge kode dan brand. Baris alamat juga terpotong kaku.
+     - Kartu outlet terpilih (`showCard`): Tombol `[🔄 Ganti Outlet]` (~105px) dan `[✕]` (~28px) di baris header memakan ~140px, mencekik kolom nama dan alamat di mobile menjadi hanya ~92px lebar. Ini mengakibatkan nama toko terpotong menjadi 5 baris vertikal dan alamat menjadi 8 baris vertikal kaku.
+   - **Solusi Desain Responsif Mobile-First:**
+     - Hasil pencarian di mobile: Menggunakan layout bertingkat di mana baris 1 berisi badge kode, brand, dan status GPS; baris 2 berisi nama toko penuh (`break-words line-clamp-2`); baris 3 berisi alamat lengkap (`line-clamp-2`).
+     - Kartu terpilih di mobile: Tombol `[🔄 Ganti Outlet]` dipindahkan dari header ke baris aksi bawah sebagai tombol *full-width* ramah sentuhan jempol (`w-full sm:hidden`). Kolom nama dan alamat memperoleh lebar penuh ~230px (+148% lebih lega), menghilangkan 100% pemotongan vertikal 5-baris nama & 8-baris alamat.
+     - Desktop invariant: Tampilan desktop ($\ge 640\text{px}$) dipertahankan 100% *byte-for-byte* tanpa perubahan.
+   - **Artefak Perencanaan:**
+     - ADR: [`docs/adr/0075-mobile-outlet-search-and-selected-card-readability.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0075-mobile-outlet-search-and-selected-card-readability.md)
+     - Spec: [`docs/superpowers/specs/2026-11-07-mobile-outlet-search-and-selected-card-readability-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-07-mobile-outlet-search-and-selected-card-readability-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-07-mobile-outlet-search-and-selected-card-readability.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-mobile-outlet-search-and-selected-card-readability.md)
+     - Handover: [`docs/handover-mobile-outlet-search-and-selected-card-readability.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-mobile-outlet-search-and-selected-card-readability.md)
+   - **Verifikasi Invarian Drift:**
+     - 102/102 spec-plan pairing lulus 100% tanpa drift (`npm run drift:check`).
+
+2. **Implementasi Propagasi GPS & Alamat Outlet Placement (ADR-0074 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/PlacementsView/placementOutletPropagation.test.ts`):**
      - Memverifikasi preservasi seluruh atribut outlet (`latitude`, `longitude`, `address`, `code`, `city`, `picPhone`) dalam pemetaan `outletsList` di `PlacementsView.tsx`.
      - Memverifikasi implementasi penggabungan fail-safe (*defensive coalescing*) koordinat dan alamat di `PlacementFormModal.tsx`.
