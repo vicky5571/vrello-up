@@ -153,6 +153,34 @@ describe("Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)"
     );
   });
 
+  it("verifies DocumentCreateModal real branch store binding, auto-filled Owner/PIC, LINK fileType on URL mode, and upload submit lock (ADR-0091)", () => {
+    const createModalPath = path.join(docsDir, "DocumentCreateModal.tsx");
+    const content = fs.readFileSync(createModalPath, "utf-8");
+
+    assert.ok(
+      content.includes("useMarcomDataStore") &&
+        content.includes('placeholder="Choose"') &&
+        !content.includes("HQ / Nasional (Semua Branch)"),
+      "DocumentCreateModal must bind real branches from useMarcomDataStore with placeholder='Choose' and omit synthetic HQ option"
+    );
+    assert.ok(
+      content.includes("useSession") &&
+        content.includes("defaultOwnerName") &&
+        content.includes("setOwnerPic(defaultOwnerName)"),
+      "DocumentCreateModal must auto-fill Owner / PIC with active user's name"
+    );
+    assert.ok(
+      content.includes('{ value: "LINK", label: "Link" }') &&
+        content.includes('setFileType(nextMode === "url" ? "LINK" : "")'),
+      "DocumentCreateModal must auto-select 'LINK' fileType in URL mode and reset to '' in local mode"
+    );
+    assert.ok(
+      content.includes("disabled={isSaving || isUploading}") &&
+        content.includes('isUploading ? "Mengunggah..." : "Simpan Dokumen"'),
+      "DocumentCreateModal must disable and show loading state on Simpan Dokumen while isUploading is true"
+    );
+  });
+
   it("verifies DocumentCardsView card item clickability", () => {
     const cardsPath = path.join(docsDir, "DocumentCardsView.tsx");
     const content = fs.readFileSync(cardsPath, "utf-8");

@@ -84,6 +84,10 @@ test("getDocumentTypeMeta returns valid color and label", () => {
   const mp4Meta = getDocumentTypeMeta("MP4");
   assert.equal(mp4Meta.label, "MP4 Video Master");
   assert.equal(mp4Meta.iconName, "film");
+
+  const linkMeta = getDocumentTypeMeta("LINK");
+  assert.equal(linkMeta.label, "Link");
+  assert.equal(linkMeta.type, "LINK");
 });
 
 test("calculateDocumentKPIs computes storage, category, and cloud/local aggregates", () => {

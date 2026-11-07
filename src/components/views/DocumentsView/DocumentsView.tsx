@@ -63,7 +63,9 @@ export function DocumentsView() {
 
   const canManage = can("DELETE_DOCUMENT");
   const canUpload = can("UPLOAD_DOCUMENT");
-  const { fetchBranches } = useMarcomDataStore();
+  const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
+  const storeBranches = useMarcomDataStore((s) => s.branches);
+  const effectiveBranches = branches.length > 0 ? branches : storeBranches;
   const members = useWorkspaceStore((s) => s.users);
 
   const fetchDocuments = useCallback(async () => {
@@ -430,7 +432,7 @@ export function DocumentsView() {
             onClose={() => handleSelectDrawerDoc(null)}
             onUpdateDocument={handleUpdateDocument}
             onDeleteDocument={deleteOne}
-            branches={branches}
+            branches={effectiveBranches}
             members={members}
             canManage={canManage}
           />
@@ -442,7 +444,7 @@ export function DocumentsView() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreated={handleDocumentCreated}
-        branches={branches}
+        branches={effectiveBranches}
         members={members}
       />
     </div>

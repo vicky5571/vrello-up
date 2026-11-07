@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090 Amendment 2) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** DocumentCreateModal Real Branch Store Binding, Auto-Filled Owner/PIC, LINK FileType on URL Mode & Upload Submit Lock (ADR-0091) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090 Amendment 2) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090 Amendment 2) — **PLANNING COMPLETE**  
 **Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090) — **PLANNING COMPLETE**  
@@ -70,7 +71,33 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Amendment 2 pada DocumentCreateModal — Perbaikan Overflow Lebar CustomDropdown, Penghapusan Input Periode, & Auto FileSizeMb Tanpa Input Editable (ADR-0090 Amendment 2 — Implementation Complete):**
+1. **Implementasi Real Branch Store Binding, Auto-Fill Owner/PIC, LINK FileType pada Mode URL, & Upload Submit Lock pada DocumentCreateModal (ADR-0091 — Implementation Complete):**
+   - **TDD Test Suites (`src/lib/marcom/documentWorkflow.test.ts` & `src/components/views/DocumentsView/documentDrawer.test.ts`):**
+     - Menambahkan assertion meta `getDocumentTypeMeta("LINK")` pada `documentWorkflow.test.ts` (`type: "LINK"`, `label: "Link"`, `#6366F1`, badge indigo, icon `file-text`).
+     - Menambahkan subtest baru `verifies DocumentCreateModal real branch store binding, auto-filled Owner/PIC, LINK fileType on URL mode, and upload submit lock (ADR-0091)` pada `documentDrawer.test.ts`.
+     - Terverifikasi siklus TDD: Baseline RED (1 assertion gagal) -> GREEN (12/12 tests passing).
+   - **Pembaruan Skema Database & Enum SSOT (`DocFileType` = `... | "LINK"`):**
+     - Memperbarui `prisma/schema.prisma` dengan menambahkan enum value `LINK` pada `DocFileType`.
+     - Menjalankan migrasi database (`ALTER TYPE "DocFileType" ADD VALUE IF NOT EXISTS 'LINK';` via `npx prisma db execute --stdin`) dan sinkronisasi client (`npx prisma generate`).
+     - Memperbarui SSOT `src/types/index.ts` dengan menyertakan `"LINK"` pada `export type DocFileType`.
+     - Memperbarui `DOCUMENT_TYPE_CONFIG` pada `src/lib/marcom/documentWorkflow.ts`, `VALID_FILE_TYPES` pada `/api/marcom/documents` (POST & PATCH routes), dan dropdown opsi pada `DocumentDrawer.tsx`.
+   - **Refaktor Komponen Pembuatan Dokumen (`DocumentCreateModal.tsx` & `DocumentsView.tsx`):**
+     - Mengaitkan `DocumentsView.tsx` dan `DocumentCreateModal.tsx` secara reaktif ke `useMarcomDataStore((s) => s.branches)`, mengeliminasi opsi sintetis `"HQ / Nasional (Semua Branch)"`, dan menggunakan `placeholder="Choose"`.
+     - Mengisi otomatis `ownerPic` dari user aktif (`session?.user?.name || currentUser?.name || ""`) saat modal dibuka dan saat reset form (tetap dapat diedit manual).
+     - Menjamin kepatuhan React Rules of Hooks: seluruh hook (`useSession`, `useWorkspaceStore`, `useMarcomDataStore`, `useState`, `useEffect`) dipanggil tanpa syarat sebelum `if (!isOpen) return null;`.
+     - Menyinkronkan transisi mode upload: saat beralih ke mode `Tautan URL`, `fileType` otomatis terisi `"LINK"`; saat beralih kembali ke `Upload File Lokal`, di-reset ke `""` dengan placeholder `"Choose File Type"`.
+     - Mengunci tombol submit `Simpan Dokumen`: menambahkan kondisi `disabled={isSaving || isUploading}`, ikon pemutar `<RefreshCw className="w-3.5 h-3.5 animate-spin" />`, serta label dinamis `"Mengunggah..."` ketika `isUploading === true`.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0091-document-create-modal-real-branches-auto-pic-link-filetype-and-upload-lock.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0091-document-create-modal-real-branches-auto-pic-link-filetype-and-upload-lock.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-document-create-modal-real-branches-auto-pic-link-filetype-and-upload-lock-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-document-create-modal-real-branches-auto-pic-link-filetype-and-upload-lock-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-document-create-modal-real-branches-auto-pic-link-filetype-and-upload-lock.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-document-create-modal-real-branches-auto-pic-link-filetype-and-upload-lock.md)
+     - Handover: [`docs/handover-document-create-modal-real-branches-auto-pic-link-filetype-and-upload-lock.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-document-create-modal-real-branches-auto-pic-link-filetype-and-upload-lock.md)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (118/118 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 168/168 tests passing across 65 suites (0 failures).
+     - Targeted unit tests: ✅ 12/12 in `documentDrawer.test.ts`, 5/5 in `documentWorkflow.test.ts`.
+2. **Implementasi Amendment 2 pada DocumentCreateModal — Perbaikan Overflow Lebar CustomDropdown, Penghapusan Input Periode, & Auto FileSizeMb Tanpa Input Editable (ADR-0090 Amendment 2 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/DocumentsView/documentDrawer.test.ts`):**
      - Memperbarui subtest `verifies DocumentCreateModal upload mode toggle, Choose File Type placeholder, and CustomDropdown integration (ADR-0090)` untuk memverifikasi bahwa `CustomDropdown` menggunakan `className="w-full"` di dalam cell ber-`min-w-0`, serta memverifikasi bahwa input manual `Periode` (`"Contoh: 2026, Q1"`) dan input editable `Ukuran File (MB)` telah dieliminasi dari modal.
      - Terverifikasi siklus TDD: Baseline RED (1 assertion gagal) -> GREEN (11/11 tests passing).
@@ -3085,16 +3112,16 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (all 112 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (all 118 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
-- `npm test` → ✅ Full test suite passed (1038/1038 tests passed)
-- `npm run test:smoke` → ✅ 163 passed, 0 failed
+- `npm run test:smoke` → ✅ 168 passed, 0 failed
+- Targeted unit tests → ✅ `documentDrawer.test.ts` (12/12 passing), `documentWorkflow.test.ts` (5/5 passing)
 
 ---
 
 ## Blocked / Risks
 
-- None. Planning complete and execution-ready.
+- None. Implementation complete, verified, and tested.
 
 ---
 
@@ -3111,12 +3138,8 @@
 
 ## Next Step for Following Session
 
-1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm test`) on session start.
-2. Execute implementation of ADR-0085 using [`docs/handover-mobile-mou-status-pills-and-table-sticky-fix.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-mobile-mou-status-pills-and-table-sticky-fix.md):
-   - Update unit regression test `src/components/views/MousView/mouColumns.test.ts`.
-   - Update `src/components/views/MousView/MousHeader.tsx` (bounded horizontal scroll rail `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar` for status pills and `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs` for search input).
-   - Update `src/components/views/shared/MarcomTableShell.tsx` (replace unconditional inline `position: "sticky"` with responsive `static md:sticky` and `md:border-l` / `md:shadow-[...]`).
-   - Verify all tests pass, 0 drift, and clean smoke test.
+1. Run verification commands (`npm run drift:check`, `npm run build:check`, `npm run test:smoke`) on session start.
+2. Await next user instruction or feature request.
 
 
 

@@ -58,6 +58,7 @@ const VALID_FILE_TYPES: DocFileType[] = [
   "XLSX",
   "CSV",
   "ZIP",
+  "LINK",
 ];
 
 export function DocumentDrawer({
@@ -656,6 +657,7 @@ export function DocumentDrawer({
                     <option value="XLSX">XLSX Excel</option>
                     <option value="CSV">CSV Data</option>
                     <option value="ZIP">ZIP Archive</option>
+                    <option value="LINK">Link</option>
                   </select>
                 </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import {
   Files,
@@ -17,6 +18,8 @@ import type {
 } from "@/types";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { isValidDocumentFilePath } from "@/lib/marcom/documentWorkflow";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
+import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 
 export interface DocumentCreateModalProps {
   isOpen: boolean;
@@ -35,6 +38,7 @@ const VALID_FILE_TYPES: DocFileType[] = [
   "XLSX",
   "CSV",
   "ZIP",
+  "LINK",
 ];
 
 const DOCUMENT_CATEGORY_OPTIONS: { value: string; label: string }[] = [
@@ -56,6 +60,7 @@ const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
   { value: "XLSX", label: "XLSX Excel" },
   { value: "CSV", label: "CSV Data" },
   { value: "ZIP", label: "ZIP Archive" },
+  { value: "LINK", label: "Link" },
 ];
 
 export function DocumentCreateModal({
@@ -65,11 +70,21 @@ export function DocumentCreateModal({
   branches,
   members,
 }: DocumentCreateModalProps) {
+  const { data: session } = useSession();
+  const users = useWorkspaceStore((s) => s.users);
+  const currentUserId = useWorkspaceStore((s) => s.currentUserId);
+  const currentUser = users.find((u) => u.id === currentUserId);
+  const storeBranches = useMarcomDataStore((s) => s.branches);
+  const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
+
+  const defaultOwnerName = session?.user?.name || currentUser?.name || "";
+  const effectiveBranches = branches.length > 0 ? branches : storeBranches;
+
   const [uploadMode, setUploadMode] = useState<"local" | "url">("local");
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Brand Guidelines");
-  const [branchName, setBranchName] = useState(branches[0]?.name || "");
-  const [ownerPic, setOwnerPic] = useState("");
+  const [branchName, setBranchName] = useState("");
+  const [ownerPic, setOwnerPic] = useState(defaultOwnerName);
   const [fileType, setFileType] = useState<DocFileType | "">("");
   const [fileSizeMb, setFileSizeMb] = useState<number>(0);
   const [filePath, setFilePath] = useState("");
@@ -78,14 +93,25 @@ export function DocumentCreateModal({
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  useEffect(() => {
+    if (isOpen) {
+      if (storeBranches.length === 0) {
+        fetchBranches();
+      }
+      if (defaultOwnerName && !ownerPic) {
+        setOwnerPic(defaultOwnerName);
+      }
+    }
+  }, [isOpen, storeBranches.length, fetchBranches, defaultOwnerName]);
+
   if (!isOpen) return null;
 
   const resetForm = () => {
     setUploadMode("local");
     setName("");
     setCategory("Brand Guidelines");
-    setBranchName(branches[0]?.name || "");
-    setOwnerPic("");
+    setBranchName("");
+    setOwnerPic(defaultOwnerName);
     setFileType("");
     setFileSizeMb(0);
     setFilePath("");
@@ -97,7 +123,7 @@ export function DocumentCreateModal({
     setUploadMode(nextMode);
     setFilePath("");
     setFileSizeMb(0);
-    setFileType("");
+    setFileType(nextMode === "url" ? "LINK" : "");
   };
 
   const handleClose = () => {
@@ -150,6 +176,8 @@ export function DocumentCreateModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isUploading) return;
 
     if (!name.trim()) {
       toast.error("Nama dokumen wajib diisi");
@@ -269,11 +297,11 @@ export function DocumentCreateModal({
                   className="w-full"
                   value={branchName}
                   onChange={(val) => setBranchName(val)}
-                  options={[
-                    { value: "", label: "HQ / Nasional (Semua Branch)" },
-                    ...branches.map((b) => ({ value: b.name, label: b.name })),
-                  ]}
-                  placeholder="HQ / Nasional (Semua Branch)"
+                  options={effectiveBranches.map((b) => ({
+                    value: b.name,
+                    label: b.name,
+                  }))}
+                  placeholder="Choose"
                   size="sm"
                   ariaLabel="Branch / Wilayah"
                 />
@@ -414,18 +442,22 @@ export function DocumentCreateModal({
               <button
                 type="button"
                 onClick={handleClose}
-                disabled={isSaving}
+                disabled={isSaving || isUploading}
                 className="px-3.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                disabled={isSaving}
-                className="px-4 py-1.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-colors shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                disabled={isSaving || isUploading}
+                className="px-4 py-1.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-colors shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
-                {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                <span>Simpan Dokumen</span>
+                {(isSaving || isUploading) && (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                )}
+                <span>
+                  {isUploading ? "Mengunggah..." : "Simpan Dokumen"}
+                </span>
               </button>
             </div>
           </form>

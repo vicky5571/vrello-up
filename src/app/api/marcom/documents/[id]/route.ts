@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { isValidDocumentFilePath } from "@/lib/marcom/upload";
 
-const VALID_FILE_TYPES = ["PDF", "XLSX", "DOCX", "ZIP", "CSV", "MP4", "PNG", "JPG"] as const;
+const VALID_FILE_TYPES = ["PDF", "XLSX", "DOCX", "ZIP", "CSV", "MP4", "PNG", "JPG", "LINK"] as const;
 const PATCHABLE_FIELDS = ["name", "category", "period", "branchName", "ownerPic", "fileType", "fileSizeMb", "filePath", "description"] as const;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(documents)`: DocumentCreateModal real branch store binding, auto-filled Owner/PIC, LINK fileType on URL mode, and upload submit lock (ADR-0091)
+  - Real branch master binding: reactively subscribed `DocumentsView.tsx` and `DocumentCreateModal.tsx` to `useMarcomDataStore((s) => s.branches)`, eliminated synthetic `"HQ / Nasional (Semua Branch)"` item, and standardized placeholder to `"Choose"`
+  - Active user Owner/PIC auto-fill: automatically pre-populated `ownerPic` with `session?.user?.name || currentUser?.name || ""` on modal open and reset, maintaining user editability
+  - Full-stack `LINK` file type: extended `enum DocFileType` in Prisma schema, SSOT type definitions, `documentWorkflow.ts` (`label: "Link"`, indigo badge, `#6366F1`), API route validation, and `DocumentDrawer.tsx`
+  - Upload mode fileType synchronization: switching to URL mode (`"url"`) automatically selects `"LINK"`, while switching back to local upload (`"local"`) resets to `""` with placeholder `"Choose File Type"`
+  - Upload submit lock: guarded modal submission with `disabled={isSaving || isUploading}`, rendering `<RefreshCw className="w-3.5 h-3.5 animate-spin" />` and `"Mengunggah..."` button label during active file upload
+  - Dedicated unit tests: verified metadata in `src/lib/marcom/documentWorkflow.test.ts` (5/5) and modal behavior in `src/components/views/DocumentsView/documentDrawer.test.ts` (12/12)
+  - Verification: `npm run drift:check` ✅ (118/118 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (168/168)
+  - Refs: `docs/adr/0091-document-create-modal-real-branches-auto-pic-link-filetype-and-upload-lock.md`, `docs/superpowers/specs/2026-11-08-document-create-modal-real-branches-auto-pic-link-filetype-and-upload-lock-design.md`, `docs/superpowers/plans/2026-11-08-document-create-modal-real-branches-auto-pic-link-filetype-and-upload-lock.md`
+
 - `feat(documents)`: DocumentCreateModal upload mode toggle, Google Drive picker removal, and CustomDropdown standardization (ADR-0090)
   - Google Drive picker removal: eliminated `useGoogleDrivePicker`, `GoogleDriveLinkModal`, and `Pilih dari Google Drive` action from `DocumentCreateModal.tsx`, preventing user confusion regarding whether files are stored in VrelloUp's Supabase Storage
   - Segmented upload mode toggle: added 2-option mode toggle (`Upload File Lokal` vs `Tautan URL`) with `handleModeChange` resetting `filePath`, `fileSizeMb`, and `fileType` to prevent cross-mode state leakage

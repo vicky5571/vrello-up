@@ -73,6 +73,7 @@ enum DocFileType {
   MP4
   PNG
   JPG
+  LINK
 }
 
 enum EquipmentStatus {

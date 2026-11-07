@@ -74,6 +74,13 @@ export const DOCUMENT_TYPE_CONFIG: Record<DocFileType, DocumentTypeMeta> = {
     badgeClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-200/60 dark:border-sky-900/40",
     iconName: "image",
   },
+  LINK: {
+    type: "LINK",
+    label: "Link",
+    color: "#6366F1",
+    badgeClass: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-200/60 dark:border-indigo-900/40",
+    iconName: "file-text",
+  },
 };
 
 export function formatFileSize(sizeMb: number): string {

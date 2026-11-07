@@ -477,7 +477,7 @@ export interface MarcomMou {
   }>;
 }
 
-export type DocFileType = "PDF" | "XLSX" | "DOCX" | "ZIP" | "CSV" | "MP4" | "PNG" | "JPG";
+export type DocFileType = "PDF" | "XLSX" | "DOCX" | "ZIP" | "CSV" | "MP4" | "PNG" | "JPG" | "LINK";
 
 export interface DocumentItem {
   id: string;
