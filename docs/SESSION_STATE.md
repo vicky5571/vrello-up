@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Step 3 Direct Physical Photo Upload Enforcement and Tautan URL Removal (ADR-0079) — **PLANNING COMPLETE**  
+**Previous Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Wizard Stepper Header Dynamic Accordion Expansion (ADR-0077) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Placement Modal Viewport Height Stabilization and Search Results Expansion (ADR-0076) — **PLANNING COMPLETE**  
@@ -45,7 +46,23 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Unifikasi Selektor Material POSM dengan CustomDropdown & Pembersihan Emoji (ADR-0078 — Implementation Complete):**
+1. **Perencanaan Arsitektur Penegakan Bukti Foto Fisik & Penghapusan Tautan URL Langkah 3 (ADR-0079 — Planning Complete):**
+   - **Diagnosis Masalah UX & Integritas Operasional:**
+     - Pada Langkah 3 wizard POSM (`Step3PhotoNotes.tsx` / `PlacementPhotoUploader.tsx`), tombol pemicu `"🔗 Tautan URL v"` memungkinkan pengguna menempelkan link gambar eksternal manual (`https://...`).
+     - Alur ini merupakan *legacy dead UI* yang membypass kompresi berkas otomatis client-side (`compressImage`) dan penyimpanan cloud tersentralisir (`/api/marcom/uploads`), memicu risiko *broken images* (link kedaluwarsa atau hotlink blocking), serta mengacaukan kerapian baris header foto di semua viewport.
+     - Di operasional lapangan nyata, petugas selalu mengambil foto fisik via kamera (`Ambil Foto (Kamera)`) atau galeri perangkat (`Pilih dari Galeri`).
+   - **Solusi Desain Responsif & Eliminasi Dead Code:**
+     - Menghapus tombol toggle `"Tautan URL"`, kontainer input manual URL (`showManualUrl && (...)`), state `showManualUrl`/`manualUrlInput`, fungsi `handleAddManualUrl`, serta impor icon Lucide yang tidak lagi terpakai (`LinkIcon`, `ChevronDown`, `ChevronUp`, `Plus`).
+     - Baris header foto direfaktor menjadi bersih: label `"Foto Bukti Pemasangan"` di sisi kiri dan badge counter `"{photos.length} Foto Terlampir"` di sisi kanan saat foto ada.
+     - Mempertahankan 100% kapabilitas upload foto fisik asli, preview grid thumbnail, penghapusan foto, dan modal lightbox perbesaran.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0079-step3-tautan-url-removal.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0079-step3-tautan-url-removal.md)
+     - Spec: [`docs/superpowers/specs/2026-11-07-step3-tautan-url-removal-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-07-step3-tautan-url-removal-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-07-step3-tautan-url-removal.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-step3-tautan-url-removal.md)
+     - Handover: [`docs/handover-step3-tautan-url-removal.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-step3-tautan-url-removal.md)
+     - Invarian Verifikasi: `npm run drift:check` ✅ (106/106 spec-plan pairs).
+
+2. **Implementasi Unifikasi Selektor Material POSM dengan CustomDropdown & Pembersihan Emoji (ADR-0078 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/PlacementsView/step2MaterialResponsiveness.test.ts`):**
      - Dibuat test suite 6 pengujian memverifikasi integrasi `CustomDropdown`, eliminasi pills redundan `POSM_MATERIALS.map(...)`, eliminasi native `<select>` untuk material, dan sanitasi emoji mentah.
      - Terverifikasi baseline RED (6/6 pengujian gagal sebelum perbaikan) dan GREEN setelah perbaikan.
