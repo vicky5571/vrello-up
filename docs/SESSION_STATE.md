@@ -8,8 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **IMPLEMENTATION COMPLETE**  
-**Previous Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **PLANNING COMPLETE**  
+**Active Feature:** Mobile Placement Modal Viewport Height Stabilization and Search Results Expansion (ADR-0076) — **PLANNING COMPLETE**  
+**Previous Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **PLANNING COMPLETE & AMENDED**  
 **Previous Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **IMPLEMENTATION COMPLETE**  
@@ -42,7 +42,23 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Keterbacaan Hasil Pencarian & Kartu Outlet Terpilih di Mobile (ADR-0075 — Implementation Complete):**
+1. **Perencanaan Arsitektur Stabilisasi Ketinggian Modal & Ekspansi Hasil Pencarian Mobile (ADR-0076 — Planning Complete):**
+   - **Diagnosis Masalah UX Lapangan:**
+     - Modal wizard POSM (`PlacementFormModal.tsx`) menggunakan `max-h-[92vh]` tanpa tinggi tetap di mobile, menyebabkan ketinggian modal berubah-ubah secara liar mengikuti konten (misal saat query kosong, modal mengkerut ke ~400px sehingga tombol footer "Batal" dan "Lanjut" naik ke tengah; saat hasil pencarian muncul, modal meregang ke bawah mendorong tombol jatuh). Ini memicu *layout shift* yang melelahkan jempol pengguna.
+     - Container daftar hasil pencarian di mobile pada `OutletSearchCombobox.tsx` dibatasi kaku di `max-h-60` (240px), sehingga hanya menampilkan ~2 outlet sebelum harus di-scroll.
+   - **Solusi Desain Responsif Mobile-First:**
+     - Mengubah container modal di mobile menjadi `h-[88dvh] sm:h-auto sm:max-h-[92vh]`. Dengan `flex flex-col`, header wizard (`shrink-0`) dan footer wizard (`shrink-0 border-t`) selalu terpatri stabil, sedangkan form body (`flex-1 min-h-0 overflow-y-auto`) menangani scrolling secara internal. Tombol "Batal" dan "Lanjut" **100% diam dan terpatri** di posisi bawah yang konsisten.
+     - Memperluas container hasil pencarian di mobile dari `max-h-60` menjadi `max-h-80 sm:max-h-72` (320px di mobile), menampilkan 3–4 outlet sekaligus secara lega.
+     - Desktop invariant: Tampilan desktop ($\ge 640\text{px}$) dipertahankan 100% *byte-for-byte* tanpa perubahan (`sm:h-auto sm:max-h-[92vh]` dan `sm:max-h-72`).
+   - **Artefak Perencanaan:**
+     - ADR: [`docs/adr/0076-mobile-placement-modal-fixed-height-and-search-expansion.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0076-mobile-placement-modal-fixed-height-and-search-expansion.md)
+     - Spec: [`docs/superpowers/specs/2026-11-07-mobile-placement-modal-fixed-height-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-07-mobile-placement-modal-fixed-height-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-07-mobile-placement-modal-fixed-height.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-mobile-placement-modal-fixed-height.md)
+     - Handover: [`docs/handover-mobile-placement-modal-fixed-height.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-mobile-placement-modal-fixed-height.md)
+   - **Verifikasi Invarian Drift:**
+     - 103/103 spec-plan pairing lulus 100% tanpa drift (`npm run drift:check`).
+
+2. **Perencanaan Arsitektur Keterbacaan Hasil Pencarian & Kartu Outlet Terpilih di Mobile (ADR-0075 — Planning Complete & Amended):**
    - **TDD Test Suite (`src/components/views/PlacementsView/outletSearchResponsiveness.test.ts`):**
      - Memverifikasi dropdown pencarian memiliki container stacked mobile (`flex flex-col gap-1 sm:hidden`) dan container desktop (`hidden sm:flex`).
      - Memverifikasi elemen nama toko mobile menerapkan `break-words line-clamp-2` tanpa pemotongan kaku.
