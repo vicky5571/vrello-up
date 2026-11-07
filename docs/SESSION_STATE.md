@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Retrospective Documentation Backfill for Mobile Responsiveness (ADR-0068, ADR-0069, ADR-0070, ADR-0071) — **DOCUMENTATION COMPLETE**  
+**Active Feature:** Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072) — **PLANNING COMPLETE**  
+**Previous Feature:** Retrospective Documentation Backfill for Mobile Responsiveness (ADR-0068, ADR-0069, ADR-0070, ADR-0071) — **DOCUMENTATION COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **IMPLEMENTATION COMPLETE**  
@@ -35,7 +36,25 @@
 
 ## What Was Completed This Session
 
-1. **Penyusunan Dokumentasi Retrospektif Arsitektur Mobile Responsiveness (ADR-0068, ADR-0069, ADR-0070, ADR-0071 — Documentation Complete):**
+1. **Perencanaan Arsitektur Mobile Field Event Checklist Readability (ADR-0072 — Planning Complete):**
+   - **Diagnostik Masalah:**
+     - Header `EventChecklistSection.tsx` memaksakan 3 elemen panjang (*Judul*, *Counter completion*, dan *Tombol template*) dalam satu baris sempit mobile (< 640px), menyebabkan judul terpecah menjadi 4 baris vertikal sempit dan counter/tombol terjepit.
+     - Setiap baris item checklist dipotong secara kaku dengan `truncate`, menghilangkan informasi detail instruksi persiapan operasional bagi staf lapangan.
+     - Placeholder input penambahan item terpotong canggung di tengah kurung buka (`"Add new checklist item... ("`).
+     - Penggunaan `items-center` menyebabkan checkbox melayang di tengah vertikal saat teks item membungkus menjadi 2 baris.
+   - **Keputusan Desain & Rationale (ADR-0072):**
+     - Menerapkan arsitektur header 2 baris responsif di mobile (`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2`): Baris 1 untuk judul penuh `Event Preparation Checklist`, Baris 2 untuk counter badge `0/5 selesai` dan tombol `[🔄 Template <type>]` (`justify-between sm:justify-end`).
+     - Menghapus `truncate` pada item checklist, menggantikannya dengan `break-words text-xs leading-snug` serta penataan `items-start sm:items-center` dengan checkbox `w-4 h-4 mt-0.5 shrink-0`.
+     - Mengubah placeholder input menjadi ringkas `"Tambah item checklist baru..."`.
+     - **Invarian Desktop 100% Terjaga:** Pada layar $\ge 640\text{px}$ (`sm:`), seluruh layout kembali 1 baris inline identik dengan kondisi saat ini.
+   - **Dokumen Perencanaan Lengkap Disusun:**
+     - ADR: `docs/adr/0072-mobile-event-checklist-readability-enhancement.md` (ACCEPTED).
+     - Spec: `docs/superpowers/specs/2026-11-07-mobile-event-checklist-readability-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-07-mobile-event-checklist-readability.md` (APPROVED).
+     - Handover: `docs/handover-mobile-event-checklist-readability.md` (EXECUTION-READY).
+   - **Verifikasi Drift Check:** `npm run drift:check` ✅ (99/99 spec-plan pairs valid, 0 drift).
+
+2. **Penyusunan Dokumentasi Retrospektif Arsitektur Mobile Responsiveness (ADR-0068, ADR-0069, ADR-0070, ADR-0071 — Documentation Complete):**
    - **Latar Belakang & Mandat Pengguna:** Mengodifikasi seluruh perbaikan responsivitas mobile yang sebelumnya diimplementasikan secara taktis menjadi paket dokumen arsitektur formal (ADR, Design Spec, Implementation Plan, Execution Handover) untuk mencegah miskomunikasi (*drift understanding*) antara pengguna, proyek, dan model AI lainnya.
    - **Klaster 1: Standarisasi Perataan Kanan Tombol Aksi Header Mobile (ADR-0068):**
      - Mengodifikasi aturan `justify-end sm:justify-start w-full sm:w-auto` untuk kenyamanan jempol satu tangan pada `BranchesHeader.tsx`, `DocumentsHeader.tsx`, `ReportsHeader.tsx`, dan `QuarterlyPosmReportTab.tsx`.
