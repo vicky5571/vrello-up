@@ -61,6 +61,16 @@
 - [x] Add regression test assertion in `src/components/views/DocumentsView/documentDrawer.test.ts` asserting keys exist in `DocumentCreateModal.tsx`.
 - [x] Verify targeted test `documentDrawer.test.ts` (11/11 passing).
 
+### Phase 5: Amendment 2 — `CustomDropdown` Grid Width Fix, Removal of `Periode`, and Non-Editable Auto `fileSizeMb`
+- [x] Update `src/components/views/DocumentsView/documentDrawer.test.ts` to assert:
+  - `className="w-full"` on `CustomDropdown` and `min-w-0` on grid column wrappers.
+  - Absence of `Periode` input and absence of editable `Ukuran File (MB)` input in `DocumentCreateModal.tsx`.
+- [x] Update `src/components/views/DocumentsView/DocumentCreateModal.tsx`:
+  - Remove `period` state, `setPeriod("")` in `resetForm`, `period` field in `handleSubmit` payload, and the `Periode` JSX input block (making `Owner / PIC` a full-width row).
+  - Add `min-w-0` on the 2-column grid wrappers (`<div className="space-y-1.5 min-w-0">`) for `Kategori Dokumen *` and `Branch / Wilayah`, and pass `className="w-full"` to all three `CustomDropdown` instances.
+  - Remove the editable `Ukuran File (MB)` input, make `Tipe File *` a full-width row, and include `• ${fileSizeMb} MB` in the local upload confirmation badge when `fileSizeMb > 0`.
+- [x] Run `node --test src/components/views/DocumentsView/documentDrawer.test.ts`, `npm run drift:check`, `npm run build:check`, and `npm run test:smoke`.
+
 ---
 
 ## 3. Risks, Mitigations & Dependencies
@@ -71,4 +81,5 @@
 | Stale `filePath` or `fileType` persisting when switching between `Upload File Lokal` and `Tautan URL` | `handleModeChange` explicitly clears `filePath = ""`, `fileSizeMb = 0`, and `fileType = ""`. |
 | Dropdown popover clipping inside modal scroll container | `CustomDropdown` uses `computeDropdownPlacement` with `direction="auto"` and `z-[60]` to prevent clipping. |
 | React fiber DOM reuse causing uncontrolled-to-controlled input runtime exception when toggling upload mode | Explicit key isolation on container `div`s and `input`s forces React to unmount the file input and mount a fresh URL input node. |
+| `CustomDropdown` (`inline-block`) overflowing 50% CSS Grid cell when label is long (`"HQ / Nasional (Semua Branch)"`) | Add `min-w-0` to grid cell containers and `className="w-full"` to `CustomDropdown`. |
 

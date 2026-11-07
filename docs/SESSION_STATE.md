@@ -8,7 +8,9 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090 Amendment 2) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090 Amendment 2) — **PLANNING COMPLETE**  
+**Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090) — **PLANNING COMPLETE**  
 **Previous Feature:** BorrowRequestModal Smart Draft Cache vs Submit/Cancel Reset & Cumulative Sequential Stepper Gate (ADR-0089) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** BorrowRequestModal Smart Draft Cache vs Submit/Cancel Reset & Cumulative Sequential Stepper Gate (ADR-0089) — **PLANNING COMPLETE**  
@@ -68,7 +70,25 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Upload Mode Toggle, Penghapusan Google Drive Picker, & Standarisasi CustomDropdown pada DocumentCreateModal (ADR-0090 — Implementation Complete & Reconciler Fix):**
+1. **Implementasi Amendment 2 pada DocumentCreateModal — Perbaikan Overflow Lebar CustomDropdown, Penghapusan Input Periode, & Auto FileSizeMb Tanpa Input Editable (ADR-0090 Amendment 2 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/DocumentsView/documentDrawer.test.ts`):**
+     - Memperbarui subtest `verifies DocumentCreateModal upload mode toggle, Choose File Type placeholder, and CustomDropdown integration (ADR-0090)` untuk memverifikasi bahwa `CustomDropdown` menggunakan `className="w-full"` di dalam cell ber-`min-w-0`, serta memverifikasi bahwa input manual `Periode` (`"Contoh: 2026, Q1"`) dan input editable `Ukuran File (MB)` telah dieliminasi dari modal.
+     - Terverifikasi siklus TDD: Baseline RED (1 assertion gagal) -> GREEN (11/11 tests passing).
+   - **Refaktor Komponen Pembuatan Dokumen (`DocumentCreateModal.tsx`):**
+     - Menambahkan `min-w-0` pada grid cell pembungkus `Kategori Dokumen *` dan `Branch / Wilayah`, serta menyematkan `className="w-full"` pada seluruh pemanggilan `CustomDropdown` agar teks panjang (seperti `"HQ / Nasional (Semua Branch)"`) terpotong rapi dengan ellipsis tanpa meluap keluar batas kanan modal.
+     - Menghapus input dan state `Periode`, menjadikan field `Owner / PIC` tampil penuh 1 baris (`w-full`).
+     - Menghapus input angka editable `Ukuran File (MB)`; `fileSizeMb` dihitung otomatis saat upload file lokal dan ditampilkan secara informatif pada badge konfirmasi siap simpan (`"File siap disimpan (nama.ext • X.XX MB)"`), sedangkan `Tipe File *` tampil penuh 1 baris (`w-full`).
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0090-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0090-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md) (Section 6)
+     - Spec: [`docs/superpowers/specs/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns-design.md) (Section 2.4, 3.2, 5)
+     - Plan: [`docs/superpowers/plans/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md) (Phase 5)
+     - Handover: [`docs/handover-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-document-create-modal-upload-mode-toggle-and-custom-dropdowns.md) (Section 7)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (117/117 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 168/168 tests passing across 65 suites (0 failures).
+     - Targeted unit test: ✅ 11/11 tests passing in `documentDrawer.test.ts`.
+2. **Implementasi Upload Mode Toggle, Penghapusan Google Drive Picker, & Standarisasi CustomDropdown pada DocumentCreateModal (ADR-0090 — Implementation Complete & Reconciler Fix):**
    - **TDD Test Suite (`src/components/views/DocumentsView/documentDrawer.test.ts`):**
      - Memperbarui subtest `verifies DocumentCreateModal implementation details` untuk memverifikasi bahwa modal TIDAK lagi menyertakan `Pilih dari Google Drive`, `useGoogleDrivePicker`, maupun `GoogleDriveLinkModal`.
      - Menambahkan subtest baru `verifies DocumentCreateModal upload mode toggle, Choose File Type placeholder, and CustomDropdown integration (ADR-0090)` yang memvalidasi deklarasi `uploadMode` (`"local" | "url"`), fungsi `handleModeChange`, inisialisasi/reset `fileType` ke string kosong `""` dengan placeholder `"Choose File Type"`, key isolation props (`upload-local-mode` dan `upload-url-mode`), serta integrasi `CustomDropdown` untuk `Kategori Dokumen`, `Branch / Wilayah`, dan `Tipe File`.

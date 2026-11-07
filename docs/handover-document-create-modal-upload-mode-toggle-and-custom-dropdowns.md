@@ -915,8 +915,519 @@ const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
 - [x] Uploading a file in `Upload File Lokal` mode automatically detects and selects `fileType` and populates `fileSizeMb`.
 - [x] `Kategori Dokumen *`, `Branch / Wilayah`, and `Tipe File *` all use `CustomDropdown`.
 - [x] Upload mode conditional branches and inputs use distinct keys (`key="upload-local-mode"`, `key="file-upload-input"`, `key="upload-url-mode"`, `key="url-text-input"`) and null-coalesced value defaults, completely preventing uncontrolled-to-controlled React errors.
-- [x] `node --test src/components/views/DocumentsView/documentDrawer.test.ts` passes with 0 failures.
-- [x] `npm run drift:check`, `npm run build:check`, and `npm run test:smoke` all pass with 0 errors/failures.
+- [ ] `Kategori Dokumen *`, `Branch / Wilayah`, and `Tipe File *` pass `className="w-full"` inside `min-w-0` grid cells so long labels (`"HQ / Nasional (Semua Branch)"`) never overflow horizontally.
+- [ ] `Periode` and editable `Ukuran File (MB)` inputs are removed from `DocumentCreateModal.tsx`; `Owner / PIC` and `Tipe File *` each render full-width (`w-full`).
+- [ ] `node --test src/components/views/DocumentsView/documentDrawer.test.ts` passes with 0 failures.
+- [ ] `npm run drift:check`, `npm run build:check`, and `npm run test:smoke` all pass with 0 errors/failures.
+
+---
+
+## 7. Amendment 2 (Ready for Execution): `CustomDropdown` Grid Width Fix, Removal of `Periode`, and Non-Editable Auto `fileSizeMb`
+
+### 7.1 File 1: `src/components/views/DocumentsView/documentDrawer.test.ts` (Lines 122–147)
+
+#### Current Code:
+```ts
+  it("verifies DocumentCreateModal upload mode toggle, Choose File Type placeholder, and CustomDropdown integration (ADR-0090)", () => {
+    const createModalPath = path.join(docsDir, "DocumentCreateModal.tsx");
+    const content = fs.readFileSync(createModalPath, "utf-8");
+
+    assert.ok(
+      content.includes('useState<"local" | "url">("local")') &&
+        content.includes("handleModeChange"),
+      "DocumentCreateModal must implement uploadMode toggle ('local' | 'url') and handleModeChange"
+    );
+    assert.ok(
+      content.includes('key="upload-local-mode"') &&
+        content.includes('key="upload-url-mode"'),
+      "DocumentCreateModal must assign distinct keys to upload mode branches to prevent uncontrolled-to-controlled input reconciliation errors"
+    );
+    assert.ok(
+      content.includes('useState<DocFileType | "">("")') &&
+        content.includes('placeholder="Choose File Type"'),
+      "DocumentCreateModal must initialize/reset fileType to empty string and display 'Choose File Type' placeholder"
+    );
+    assert.ok(
+      content.includes("CustomDropdown") &&
+        content.includes("DOCUMENT_CATEGORY_OPTIONS") &&
+        content.includes("FILE_TYPE_OPTIONS"),
+      "DocumentCreateModal must use CustomDropdown for category, branch, and fileType"
+    );
+  });
+```
+
+#### Replacement Code:
+```ts
+  it("verifies DocumentCreateModal upload mode toggle, Choose File Type placeholder, and CustomDropdown integration (ADR-0090)", () => {
+    const createModalPath = path.join(docsDir, "DocumentCreateModal.tsx");
+    const content = fs.readFileSync(createModalPath, "utf-8");
+
+    assert.ok(
+      content.includes('useState<"local" | "url">("local")') &&
+        content.includes("handleModeChange"),
+      "DocumentCreateModal must implement uploadMode toggle ('local' | 'url') and handleModeChange"
+    );
+    assert.ok(
+      content.includes('key="upload-local-mode"') &&
+        content.includes('key="upload-url-mode"'),
+      "DocumentCreateModal must assign distinct keys to upload mode branches to prevent uncontrolled-to-controlled input reconciliation errors"
+    );
+    assert.ok(
+      content.includes('useState<DocFileType | "">("")') &&
+        content.includes('placeholder="Choose File Type"'),
+      "DocumentCreateModal must initialize/reset fileType to empty string and display 'Choose File Type' placeholder"
+    );
+    assert.ok(
+      content.includes("CustomDropdown") &&
+        content.includes("DOCUMENT_CATEGORY_OPTIONS") &&
+        content.includes("FILE_TYPE_OPTIONS") &&
+        content.includes('className="w-full"') &&
+        content.includes("min-w-0"),
+      "DocumentCreateModal must use full-width CustomDropdown inside min-w-0 grid cells for category, branch, and fileType"
+    );
+    assert.ok(
+      !content.includes("Contoh: 2026, Q1") &&
+        !content.includes("Ukuran File (MB)"),
+      "DocumentCreateModal must not render manual Periode or editable Ukuran File (MB) inputs (ADR-0090 Amendment 2)"
+    );
+  });
+```
+
+---
+
+### 7.2 File 2: `src/components/views/DocumentsView/DocumentCreateModal.tsx`
+
+#### 7.2.1 Remove `period` from State, `resetForm`, and `handleSubmit` Payload (Lines 68–190)
+
+##### Current Code:
+```tsx
+  const [uploadMode, setUploadMode] = useState<"local" | "url">("local");
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("Brand Guidelines");
+  const [branchName, setBranchName] = useState(branches[0]?.name || "");
+  const [ownerPic, setOwnerPic] = useState("");
+  const [period, setPeriod] = useState("");
+  const [fileType, setFileType] = useState<DocFileType | "">("");
+  const [fileSizeMb, setFileSizeMb] = useState<number>(0);
+  const [filePath, setFilePath] = useState("");
+  const [description, setDescription] = useState("");
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  if (!isOpen) return null;
+
+  const resetForm = () => {
+    setUploadMode("local");
+    setName("");
+    setCategory("Brand Guidelines");
+    setBranchName(branches[0]?.name || "");
+    setOwnerPic("");
+    setPeriod("");
+    setFileType("");
+    setFileSizeMb(0);
+    setFilePath("");
+    setDescription("");
+  };
+```
+and in `handleSubmit` (lines 179–189):
+```tsx
+      const payload = {
+        name: name.trim(),
+        category: category.trim(),
+        branchName: branchName.trim() || undefined,
+        ownerPic: ownerPic.trim() || undefined,
+        period: period.trim() || undefined,
+        fileType,
+        fileSizeMb: Number(fileSizeMb) || 0,
+        filePath: filePath.trim(),
+        description: description.trim() || undefined,
+      };
+```
+
+##### Replacement Code:
+Remove `const [period, setPeriod] = useState("");`, `setPeriod("");`, and `period: period.trim() || undefined,`:
+```tsx
+  const [uploadMode, setUploadMode] = useState<"local" | "url">("local");
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("Brand Guidelines");
+  const [branchName, setBranchName] = useState(branches[0]?.name || "");
+  const [ownerPic, setOwnerPic] = useState("");
+  const [fileType, setFileType] = useState<DocFileType | "">("");
+  const [fileSizeMb, setFileSizeMb] = useState<number>(0);
+  const [filePath, setFilePath] = useState("");
+  const [description, setDescription] = useState("");
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  if (!isOpen) return null;
+
+  const resetForm = () => {
+    setUploadMode("local");
+    setName("");
+    setCategory("Brand Guidelines");
+    setBranchName(branches[0]?.name || "");
+    setOwnerPic("");
+    setFileType("");
+    setFileSizeMb(0);
+    setFilePath("");
+    setDescription("");
+  };
+```
+and in `handleSubmit`:
+```tsx
+      const payload = {
+        name: name.trim(),
+        category: category.trim(),
+        branchName: branchName.trim() || undefined,
+        ownerPic: ownerPic.trim() || undefined,
+        fileType,
+        fileSizeMb: Number(fileSizeMb) || 0,
+        filePath: filePath.trim(),
+        description: description.trim() || undefined,
+      };
+```
+
+#### 7.2.2 Fix `CustomDropdown` Grid Width, Remove `Periode`, and Remove Editable `Ukuran File (MB)` (Lines 249–426)
+
+##### Current Code:
+```tsx
+            {/* Category & Branch */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Kategori Dokumen *
+                </label>
+                <CustomDropdown
+                  value={category}
+                  onChange={(val) => setCategory(val)}
+                  options={DOCUMENT_CATEGORY_OPTIONS}
+                  placeholder="Pilih Kategori"
+                  searchable={false}
+                  size="sm"
+                  ariaLabel="Kategori Dokumen"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Branch / Wilayah
+                </label>
+                <CustomDropdown
+                  value={branchName}
+                  onChange={(val) => setBranchName(val)}
+                  options={[
+                    { value: "", label: "HQ / Nasional (Semua Branch)" },
+                    ...branches.map((b) => ({ value: b.name, label: b.name })),
+                  ]}
+                  placeholder="HQ / Nasional (Semua Branch)"
+                  size="sm"
+                  ariaLabel="Branch / Wilayah"
+                />
+              </div>
+            </div>
+
+            {/* Period & PIC */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Periode
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: 2026, Q1"
+                  value={period ?? ""}
+                  onChange={(e) => setPeriod(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Owner / PIC
+                </label>
+                <input
+                  type="text"
+                  list="doc-create-members-list"
+                  placeholder="Nama PIC/Tim"
+                  value={ownerPic ?? ""}
+                  onChange={(e) => setOwnerPic(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                />
+                <datalist id="doc-create-members-list">
+                  {members.map((m) => (
+                    <option key={m.id} value={m.name || m.email || ""} />
+                  ))}
+                </datalist>
+              </div>
+            </div>
+
+            {/* Source Mode Toggle & Input */}
+            <div className="space-y-2.5">
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/70">
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("local")}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    uploadMode === "local"
+                      ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload File Lokal</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("url")}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    uploadMode === "url"
+                      ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <Link2 className="w-3.5 h-3.5" />
+                  <span>Tautan URL</span>
+                </button>
+              </div>
+
+              {uploadMode === "local" ? (
+                <div key="upload-local-mode" className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3.5 bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Upload className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                      <span>Upload File Lokal (Maksimal 25MB)</span>
+                    </span>
+                    {isUploading && (
+                      <span className="text-xs text-teal-600 dark:text-teal-400 flex items-center gap-1 font-medium">
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        Mengunggah...
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    key="file-upload-input"
+                    type="file"
+                    onChange={handleFileUpload}
+                    disabled={isUploading}
+                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-50 dark:file:bg-teal-950/40 file:text-teal-700 dark:file:text-teal-300 hover:file:bg-teal-100 cursor-pointer"
+                  />
+                  {filePath && (
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-teal-600 dark:text-teal-400">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">File siap disimpan ({filePath.split("/").pop()})</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div key="upload-url-mode" className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Tautan URL *
+                  </label>
+                  <input
+                    key="url-text-input"
+                    type="url"
+                    required
+                    placeholder="https://..."
+                    value={filePath ?? ""}
+                    onChange={(e) => setFilePath(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* File Type & File Size */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Tipe File *
+                </label>
+                <CustomDropdown
+                  value={fileType}
+                  onChange={(val) => setFileType(val as DocFileType)}
+                  options={FILE_TYPE_OPTIONS}
+                  placeholder="Choose File Type"
+                  searchable={false}
+                  size="sm"
+                  ariaLabel="Tipe File"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Ukuran File (MB)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={fileSizeMb ?? 0}
+                  onChange={(e) =>
+                    setFileSizeMb(e.target.value ? Number(e.target.value) : 0)
+                  }
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            </div>
+```
+
+##### Replacement Code:
+```tsx
+            {/* Category & Branch */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5 min-w-0">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Kategori Dokumen *
+                </label>
+                <CustomDropdown
+                  className="w-full"
+                  value={category}
+                  onChange={(val) => setCategory(val)}
+                  options={DOCUMENT_CATEGORY_OPTIONS}
+                  placeholder="Pilih Kategori"
+                  searchable={false}
+                  size="sm"
+                  ariaLabel="Kategori Dokumen"
+                />
+              </div>
+
+              <div className="space-y-1.5 min-w-0">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Branch / Wilayah
+                </label>
+                <CustomDropdown
+                  className="w-full"
+                  value={branchName}
+                  onChange={(val) => setBranchName(val)}
+                  options={[
+                    { value: "", label: "HQ / Nasional (Semua Branch)" },
+                    ...branches.map((b) => ({ value: b.name, label: b.name })),
+                  ]}
+                  placeholder="HQ / Nasional (Semua Branch)"
+                  size="sm"
+                  ariaLabel="Branch / Wilayah"
+                />
+              </div>
+            </div>
+
+            {/* Owner / PIC */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Owner / PIC
+              </label>
+              <input
+                type="text"
+                list="doc-create-members-list"
+                placeholder="Nama PIC/Tim"
+                value={ownerPic ?? ""}
+                onChange={(e) => setOwnerPic(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+              />
+              <datalist id="doc-create-members-list">
+                {members.map((m) => (
+                  <option key={m.id} value={m.name || m.email || ""} />
+                ))}
+              </datalist>
+            </div>
+
+            {/* Source Mode Toggle & Input */}
+            <div className="space-y-2.5">
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/70">
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("local")}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    uploadMode === "local"
+                      ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload File Lokal</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("url")}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    uploadMode === "url"
+                      ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <Link2 className="w-3.5 h-3.5" />
+                  <span>Tautan URL</span>
+                </button>
+              </div>
+
+              {uploadMode === "local" ? (
+                <div key="upload-local-mode" className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-3.5 bg-slate-50/50 dark:bg-slate-900/50 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Upload className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                      <span>Upload File Lokal (Maksimal 25MB)</span>
+                    </span>
+                    {isUploading && (
+                      <span className="text-xs text-teal-600 dark:text-teal-400 flex items-center gap-1 font-medium">
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        Mengunggah...
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    key="file-upload-input"
+                    type="file"
+                    onChange={handleFileUpload}
+                    disabled={isUploading}
+                    className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-50 dark:file:bg-teal-950/40 file:text-teal-700 dark:file:text-teal-300 hover:file:bg-teal-100 cursor-pointer"
+                  />
+                  {filePath && (
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-teal-600 dark:text-teal-400">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">
+                        File siap disimpan ({filePath.split("/").pop()}
+                        {fileSizeMb > 0 ? ` • ${fileSizeMb} MB` : ""})
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div key="upload-url-mode" className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Tautan URL *
+                  </label>
+                  <input
+                    key="url-text-input"
+                    type="url"
+                    required
+                    placeholder="https://..."
+                    value={filePath ?? ""}
+                    onChange={(e) => setFilePath(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* File Type */}
+            <div className="space-y-1.5 min-w-0">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Tipe File *
+              </label>
+              <CustomDropdown
+                className="w-full"
+                value={fileType}
+                onChange={(val) => setFileType(val as DocFileType)}
+                options={FILE_TYPE_OPTIONS}
+                placeholder="Choose File Type"
+                searchable={false}
+                size="sm"
+                ariaLabel="Tipe File"
+              />
+            </div>
+```
+
 
 
 

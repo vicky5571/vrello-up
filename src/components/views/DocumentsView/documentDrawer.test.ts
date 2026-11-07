@@ -141,8 +141,15 @@ describe("Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)"
     assert.ok(
       content.includes("CustomDropdown") &&
         content.includes("DOCUMENT_CATEGORY_OPTIONS") &&
-        content.includes("FILE_TYPE_OPTIONS"),
-      "DocumentCreateModal must use CustomDropdown for category, branch, and fileType"
+        content.includes("FILE_TYPE_OPTIONS") &&
+        content.includes('className="w-full"') &&
+        content.includes("min-w-0"),
+      "DocumentCreateModal must use full-width CustomDropdown inside min-w-0 grid cells for category, branch, and fileType"
+    );
+    assert.ok(
+      !content.includes("Contoh: 2026, Q1") &&
+        !content.includes("Ukuran File (MB)"),
+      "DocumentCreateModal must not render manual Periode or editable Ukuran File (MB) inputs (ADR-0090 Amendment 2)"
     );
   });
 

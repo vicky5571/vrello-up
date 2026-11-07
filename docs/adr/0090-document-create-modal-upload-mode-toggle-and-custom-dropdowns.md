@@ -93,6 +93,22 @@ When toggling between `"local"` and `"url"`, React reused the fiber node, transi
 
 ### Architectural Solution
 1. **Explicit Fiber Key Isolation:** Assign distinct React keys to both the conditional wrapper `<div>`s (`key="upload-local-mode"` vs `key="upload-url-mode"`) and the underlying input elements (`key="file-upload-input"` vs `key="url-text-input"`). This forces React's reconciler to unmount the file input DOM node entirely and create a distinct URL input element with zero DOM node reuse.
-2. **Defensive Value Fallbacks:** Explicitly guard all controlled inputs with null-coalescing fallbacks (`value={name ?? ""}`, `value={period ?? ""}`, `value={ownerPic ?? ""}`, `value={filePath ?? ""}`, `value={fileSizeMb ?? 0}`) and sanitize upload response paths (`setFilePath(data.filePath || "")`) to guarantee values are never `undefined`.
+2. **Defensive Value Fallbacks:** Explicitly guard all controlled inputs with null-coalescing fallbacks (`value={name ?? ""}`, `value={ownerPic ?? ""}`, `value={filePath ?? ""}`) and sanitize upload response paths (`setFilePath(data.filePath || "")`) to guarantee values are never `undefined`.
+
+---
+
+## 6. Post-Implementation Amendment 2: `CustomDropdown` Grid Width Constraints, Removal of `Periode`, and Non-Editable Auto `fileSizeMb`
+
+### Context & Visual/UX Findings
+1. **`Branch / Wilayah` Horizontal Overflow in 2-Column Grid:**
+   - `CustomDropdown` uses `relative inline-block text-left` on its root container. Inside `<div className="grid grid-cols-2 gap-3">`, grid items default to `min-width: auto` (`min-w-auto`). When `Branch / Wilayah` displayed `"HQ / Nasional (Semua Branch)"`, the `inline-block` root expanded to its intrinsic text width and overflowed past the right boundary of the modal, while shorter labels (`"Brand Guidelines"`, `"Choose File Type"`) shrank narrower than their column.
+   - **Decision:** Add `min-w-0` to each grid column wrapper (`<div className="space-y-1.5 min-w-0">`) and pass `className="w-full"` to all three `CustomDropdown` instances (`Kategori Dokumen *`, `Branch / Wilayah`, and `Tipe File *`).
+2. **Removal of Redundant `Periode` Input from `DocumentCreateModal.tsx`:**
+   - General Marcom document assets (Brand Guidelines, SOP, Master Key Visuals) do not require manual period entry at creation time, and removing `Periode` from the creation modal leaves the optional `DocumentItem.period?: string` schema intact without breaking downstream consumers (`DocumentDrawer`, `DocumentCardsView`, `ReportsView`).
+   - **Decision:** Remove the `Periode` input and `period` state from `DocumentCreateModal.tsx`, promoting `Owner / PIC` to a clean full-width row.
+3. **Removal of Editable `Ukuran File (MB)` Input (Option 1):**
+   - Allowing users to manually edit `Ukuran File (MB)` (`fileSizeMb`) introduces inaccurate storage metrics in the Documents KPI header (`totalStorageMb` in `documentWorkflow.ts`), while in `"url"` mode external links do not consume local Supabase Storage.
+   - **Decision:** Remove the editable `Ukuran File (MB)` number input from `DocumentCreateModal.tsx`. Keep `fileSizeMb` state (`useState<number>(0)`) auto-computed from `file.size` during local file upload (and displayed inside the green confirmation badge: `File siap disimpan (${filePath.split("/").pop()} • ${fileSizeMb} MB)`), and automatically reset to `0` in `"url"` mode. Render `Tipe File *` as a full-width (`w-full`) row.
+
 
 

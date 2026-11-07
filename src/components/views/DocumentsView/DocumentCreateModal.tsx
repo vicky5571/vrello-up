@@ -70,7 +70,6 @@ export function DocumentCreateModal({
   const [category, setCategory] = useState("Brand Guidelines");
   const [branchName, setBranchName] = useState(branches[0]?.name || "");
   const [ownerPic, setOwnerPic] = useState("");
-  const [period, setPeriod] = useState("");
   const [fileType, setFileType] = useState<DocFileType | "">("");
   const [fileSizeMb, setFileSizeMb] = useState<number>(0);
   const [filePath, setFilePath] = useState("");
@@ -87,7 +86,6 @@ export function DocumentCreateModal({
     setCategory("Brand Guidelines");
     setBranchName(branches[0]?.name || "");
     setOwnerPic("");
-    setPeriod("");
     setFileType("");
     setFileSizeMb(0);
     setFilePath("");
@@ -181,7 +179,6 @@ export function DocumentCreateModal({
         category: category.trim(),
         branchName: branchName.trim() || undefined,
         ownerPic: ownerPic.trim() || undefined,
-        period: period.trim() || undefined,
         fileType,
         fileSizeMb: Number(fileSizeMb) || 0,
         filePath: filePath.trim(),
@@ -248,11 +245,12 @@ export function DocumentCreateModal({
 
             {/* Category & Branch */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Kategori Dokumen *
                 </label>
                 <CustomDropdown
+                  className="w-full"
                   value={category}
                   onChange={(val) => setCategory(val)}
                   options={DOCUMENT_CATEGORY_OPTIONS}
@@ -263,11 +261,12 @@ export function DocumentCreateModal({
                 />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 min-w-0">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Branch / Wilayah
                 </label>
                 <CustomDropdown
+                  className="w-full"
                   value={branchName}
                   onChange={(val) => setBranchName(val)}
                   options={[
@@ -281,39 +280,24 @@ export function DocumentCreateModal({
               </div>
             </div>
 
-            {/* Period & PIC */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Periode
-                </label>
-                <input
-                  type="text"
-                  placeholder="Contoh: 2026, Q1"
-                  value={period ?? ""}
-                  onChange={(e) => setPeriod(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Owner / PIC
-                </label>
-                <input
-                  type="text"
-                  list="doc-create-members-list"
-                  placeholder="Nama PIC/Tim"
-                  value={ownerPic ?? ""}
-                  onChange={(e) => setOwnerPic(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                />
-                <datalist id="doc-create-members-list">
-                  {members.map((m) => (
-                    <option key={m.id} value={m.name || m.email || ""} />
-                  ))}
-                </datalist>
-              </div>
+            {/* Owner / PIC */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Owner / PIC
+              </label>
+              <input
+                type="text"
+                list="doc-create-members-list"
+                placeholder="Nama PIC/Tim"
+                value={ownerPic ?? ""}
+                onChange={(e) => setOwnerPic(e.target.value)}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+              />
+              <datalist id="doc-create-members-list">
+                {members.map((m) => (
+                  <option key={m.id} value={m.name || m.email || ""} />
+                ))}
+              </datalist>
             </div>
 
             {/* Source Mode Toggle & Input */}
@@ -369,7 +353,10 @@ export function DocumentCreateModal({
                   {filePath && (
                     <div className="flex items-center gap-1.5 text-[11px] font-medium text-teal-600 dark:text-teal-400">
                       <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">File siap disimpan ({filePath.split("/").pop()})</span>
+                      <span className="truncate">
+                        File siap disimpan ({filePath.split("/").pop()}
+                        {fileSizeMb > 0 ? ` • ${fileSizeMb} MB` : ""})
+                      </span>
                     </div>
                   )}
                 </div>
@@ -391,38 +378,21 @@ export function DocumentCreateModal({
               )}
             </div>
 
-            {/* File Type & File Size */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Tipe File *
-                </label>
-                <CustomDropdown
-                  value={fileType}
-                  onChange={(val) => setFileType(val as DocFileType)}
-                  options={FILE_TYPE_OPTIONS}
-                  placeholder="Choose File Type"
-                  searchable={false}
-                  size="sm"
-                  ariaLabel="Tipe File"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Ukuran File (MB)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={fileSizeMb ?? 0}
-                  onChange={(e) =>
-                    setFileSizeMb(e.target.value ? Number(e.target.value) : 0)
-                  }
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                />
-              </div>
+            {/* File Type */}
+            <div className="space-y-1.5 min-w-0">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Tipe File *
+              </label>
+              <CustomDropdown
+                className="w-full"
+                value={fileType}
+                onChange={(val) => setFileType(val as DocFileType)}
+                options={FILE_TYPE_OPTIONS}
+                placeholder="Choose File Type"
+                searchable={false}
+                size="sm"
+                ariaLabel="Tipe File"
+              />
             </div>
 
             {/* Description */}

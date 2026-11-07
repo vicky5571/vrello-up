@@ -27,7 +27,6 @@ const [name, setName] = useState("");
 const [category, setCategory] = useState("Brand Guidelines");
 const [branchName, setBranchName] = useState(branches[0]?.name || "");
 const [ownerPic, setOwnerPic] = useState("");
-const [period, setPeriod] = useState("");
 const [fileType, setFileType] = useState<DocFileType | "">("");
 const [fileSizeMb, setFileSizeMb] = useState<number>(0);
 const [filePath, setFilePath] = useState("");
@@ -37,16 +36,21 @@ const [description, setDescription] = useState("");
 ### 2.2 State Transitions
 | Trigger | State Mutation | Guard / Post-Condition |
 | :--- | :--- | :--- |
-| **Modal Initial Mount / `resetForm()`** | `uploadMode = "local"`, `name = ""`, `category = "Brand Guidelines"`, `branchName = branches[0]?.name \|\| ""`, `ownerPic = ""`, `period = ""`, `fileType = ""`, `fileSizeMb = 0`, `filePath = ""`, `description = ""` | `Tipe File *` displays `"Choose File Type"`. |
+| **Modal Initial Mount / `resetForm()`** | `uploadMode = "local"`, `name = ""`, `category = "Brand Guidelines"`, `branchName = branches[0]?.name \|\| ""`, `ownerPic = ""`, `fileType = ""`, `fileSizeMb = 0`, `filePath = ""`, `description = ""` | `Tipe File *` displays `"Choose File Type"`. |
 | **Switch Mode (`handleModeChange(nextMode)`)** | If `nextMode !== uploadMode`: `setUploadMode(nextMode); setFilePath(""); setFileSizeMb(0); setFileType("");` | Prevents stale `/api/marcom/files/...` paths or auto-detected `fileType` from leaking into `"url"` mode (and vice versa). |
-| **Local File Uploaded (`handleFileUpload`)** | `setFilePath(data.filePath || ""); setFileType(detectedType); setFileSizeMb(detectedSize || 0);` (where `detectedType = VALID_FILE_TYPES.includes(ext) ? ext : ""`) | Only active in `uploadMode === "local"`. Auto-fills `name` if `name.trim()` is empty. |
+| **Local File Uploaded (`handleFileUpload`)** | `setFilePath(data.filePath || ""); setFileType(detectedType); setFileSizeMb(detectedSize || 0);` (where `detectedType = VALID_FILE_TYPES.includes(ext) ? ext : ""`) | Only active in `uploadMode === "local"`. Auto-fills `name` if `name.trim()` is empty. Confirmation badge shows filename and detected MB size (`${filePath.split("/").pop()} • ${fileSizeMb} MB`). |
 | **Form Submit (`handleSubmit`)** | Validates `name.trim()`, `category.trim()`, `fileType !== ""`, `filePath.trim()`, and `isValidDocumentFilePath(filePath.trim())`. | If `!fileType`, shows `toast.error("Tipe file wajib dipilih")` and aborts submission. |
 
 ### 2.3 Reconciliation Isolation & Controlled Input Contracts (Amendment)
 - **DOM Fiber Key Isolation:** The `"local"` upload branch and `"url"` input branch render different input types (`type="file"` vs `type="url"`). To prevent React from mutating an uncontrolled `<input type="file">` node into a controlled `<input type="url">` node at the same DOM coordinate, both wrapper containers and input nodes must carry distinct `key` attributes:
   - Local mode: container `<div key="upload-local-mode">` and `<input key="file-upload-input" type="file" ... />`.
   - URL mode: container `<div key="upload-url-mode">` and `<input key="url-text-input" type="url" ... />`.
-- **Defensive Value Fallbacks:** All controlled input elements strictly bind to non-undefined values using nullish coalescing (`value={name ?? ""}`, `value={period ?? ""}`, `value={ownerPic ?? ""}`, `value={filePath ?? ""}`, `value={fileSizeMb ?? 0}`).
+- **Defensive Value Fallbacks:** All controlled input elements strictly bind to non-undefined values using nullish coalescing (`value={name ?? ""}`, `value={ownerPic ?? ""}`, `value={filePath ?? ""}`).
+
+### 2.4 Form Layout & Field Refinements (Amendment 2)
+- **`CustomDropdown` Grid Width Constraints:** Every grid cell wrapping a `CustomDropdown` uses `min-w-0` (`<div className="space-y-1.5 min-w-0">`), and every `CustomDropdown` passes `className="w-full"` so long labels (e.g. `"HQ / Nasional (Semua Branch)"`) truncate cleanly within their column instead of overflowing horizontally.
+- **Removal of `Periode` Input:** The `Periode` field is removed from `DocumentCreateModal.tsx`, making `Owner / PIC` a single full-width row.
+- **Removal of Editable `Ukuran File (MB)` Input:** The manual `Ukuran File (MB)` number input is removed from `DocumentCreateModal.tsx`. `fileSizeMb` remains automatically calculated in background state during local upload (and `0` in URL mode), and `Tipe File *` renders as a full-width (`w-full`) row.
 
 ---
 
@@ -78,17 +82,20 @@ const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
 
 ### 3.2 `CustomDropdown` Field Specifications
 1. **Kategori Dokumen \*:**
+   - `className="w-full"` inside `<div className="space-y-1.5 min-w-0">`
    - `value={category}`
    - `onChange={(val) => setCategory(val)}`
    - `options={DOCUMENT_CATEGORY_OPTIONS}`
    - `placeholder="Pilih Kategori"`
    - `searchable={false}`
 2. **Branch / Wilayah:**
+   - `className="w-full"` inside `<div className="space-y-1.5 min-w-0">`
    - `value={branchName}`
    - `onChange={(val) => setBranchName(val)}`
    - `options={[{ value: "", label: "HQ / Nasional (Semua Branch)" }, ...branches.map((b) => ({ value: b.name, label: b.name }))]}`
    - `placeholder="HQ / Nasional (Semua Branch)"`
 3. **Tipe File \*:**
+   - `className="w-full"` inside full-width `<div className="space-y-1.5">`
    - `value={fileType}`
    - `onChange={(val) => setFileType(val as DocFileType)}`
    - `options={FILE_TYPE_OPTIONS}`
@@ -117,9 +124,10 @@ const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
 3. In `"local"` mode, only the local file upload box (`Upload File Lokal (Maksimal 25MB)`) is displayed; in `"url"` mode, only the `Tautan URL *` input is displayed.
 4. `fileType` initializes to `""` and resets to `""` on `handleModeChange` and `resetForm`, displaying `"Choose File Type"` inside the `Tipe File *` `CustomDropdown`.
 5. Uploading a local file in `"local"` mode auto-populates `fileType` (`VALID_FILE_TYPES.includes(ext) ? ext : ""`) and `fileSizeMb`.
-6. `Kategori Dokumen *`, `Branch / Wilayah`, and `Tipe File *` all use `CustomDropdown`.
+6. `Kategori Dokumen *`, `Branch / Wilayah`, and `Tipe File *` all use `CustomDropdown` with `className="w-full"` inside `min-w-0` grid cells so long labels never overflow the modal width.
 7. Upload mode conditional branches and inputs use distinct keys (`key="upload-local-mode"`, `key="file-upload-input"`, `key="upload-url-mode"`, `key="url-text-input"`) and null-coalesced value defaults, completely preventing uncontrolled-to-controlled React errors.
-8. `documentDrawer.test.ts` passes with updated and added assertions covering ADR-0090 and key isolation.
+8. `Periode` and editable `Ukuran File (MB)` inputs are removed from `DocumentCreateModal.tsx`; `Owner / PIC` and `Tipe File *` each render full-width (`w-full`), while `fileSizeMb` is automatically computed on local upload and displayed in the upload confirmation badge.
+9. `documentDrawer.test.ts` passes with updated and added assertions covering ADR-0090, key isolation, `className="w-full"` on `CustomDropdown`, and removal of `Periode` and editable `Ukuran File (MB)`.
 
 ---
 
