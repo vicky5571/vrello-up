@@ -393,13 +393,13 @@ export function OutletSearchCombobox({
               </div>
             </div>
 
-            {/* Action Buttons: Ganti Outlet and Remove */}
+            {/* Action Buttons: Ganti Outlet (Desktop only in header) and Remove */}
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={handleChangeClick}
                 disabled={disabled}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer disabled:opacity-50"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer disabled:opacity-50"
                 title="Ganti outlet lain"
               >
                 <RefreshCw className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
@@ -528,6 +528,17 @@ export function OutletSearchCombobox({
               ))}
             </div>
           )}
+
+          {/* Mobile Action: Ganti Outlet Button (Full-width, thumb-friendly) */}
+          <button
+            type="button"
+            onClick={handleChangeClick}
+            disabled={disabled}
+            className="w-full sm:hidden py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center justify-center gap-2 border border-slate-200/80 dark:border-slate-600 transition-colors cursor-pointer disabled:opacity-50 shadow-2xs mt-1"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+            <span>Ganti Outlet Lain</span>
+          </button>
         </div>
       )}
 
@@ -696,41 +707,83 @@ export function OutletSearchCombobox({
                             : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-800 dark:text-slate-200"
                         )}
                       >
-                        {/* First line: Code, Name, Brand */}
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          {outlet.code && (
-                            <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 shrink-0">
-                              {outlet.code}
-                            </span>
-                          )}
-                          <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
-                            {outlet.name}
-                          </span>
-                          {renderBrandBadge(outlet.brand)}
-                        </div>
+                        {/* Mobile Layout (< 640px): Stacked and clear without aggressive truncation */}
+                        <div className="flex flex-col gap-1 sm:hidden">
+                          {/* Badges Row: Code + Brand on left, GPS Status on right */}
+                          <div className="flex items-center justify-between gap-1.5 min-w-0">
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {outlet.code && (
+                                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                                  {outlet.code}
+                                </span>
+                              )}
+                              {renderBrandBadge(outlet.brand)}
+                            </div>
+                            {hasCoordinates ? (
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 shrink-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                <span>GPS Ada</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium shrink-0">
+                                Titik GPS Kosong
+                              </span>
+                            )}
+                          </div>
 
-                        {/* Second line: Address / City / GPS */}
-                        <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                          <div className="flex items-center gap-1 truncate min-w-0">
-                            <MapPin className="w-3 h-3 shrink-0 text-slate-400" />
-                            <span className="truncate">
-                              {[outlet.address, outlet.city]
-                                .filter(Boolean)
-                                .join(", ") || "Alamat belum ada"}
+                          {/* Outlet Name: Full-width, break-words, up to 2 lines */}
+                          <div className="font-bold text-xs text-slate-900 dark:text-slate-100 leading-snug break-words line-clamp-2">
+                            {outlet.name}
+                          </div>
+
+                          {/* Address: Full-width, line-clamp-2, natural text flow */}
+                          <div className="flex items-start gap-1 text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
+                            <MapPin className="w-3 h-3 shrink-0 text-slate-400 mt-0.5" />
+                            <span className="line-clamp-2 leading-normal">
+                              {[outlet.address, outlet.city].filter(Boolean).join(", ") || "Alamat belum ada"}
                               {outlet.branch?.name ? ` (${outlet.branch.name})` : ""}
                             </span>
                           </div>
+                        </div>
 
-                          {hasCoordinates ? (
-                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 shrink-0 font-semibold flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                              <span>GPS Ada</span>
+                        {/* Desktop Layout (>= 640px): Exact legacy single-row layout */}
+                        <div className="hidden sm:flex sm:flex-col sm:gap-1.5">
+                          {/* First line: Code, Name, Brand */}
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {outlet.code && (
+                              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 shrink-0">
+                                {outlet.code}
+                              </span>
+                            )}
+                            <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+                              {outlet.name}
                             </span>
-                          ) : (
-                            <span className="text-[10px] text-amber-600 dark:text-amber-400 shrink-0 font-medium">
-                              Titik GPS Kosong
-                            </span>
-                          )}
+                            {renderBrandBadge(outlet.brand)}
+                          </div>
+
+                          {/* Second line: Address / City / GPS */}
+                          <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center gap-1 truncate min-w-0">
+                              <MapPin className="w-3 h-3 shrink-0 text-slate-400" />
+                              <span className="truncate">
+                                {[outlet.address, outlet.city]
+                                  .filter(Boolean)
+                                  .join(", ") || "Alamat belum ada"}
+                                {outlet.branch?.name ? ` (${outlet.branch.name})` : ""}
+                              </span>
+                            </div>
+
+                            {hasCoordinates ? (
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 shrink-0 font-semibold flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                <span>GPS Ada</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-amber-600 dark:text-amber-400 shrink-0 font-medium">
+                                Titik GPS Kosong
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {/* Third line: Recent Placement History preview */}

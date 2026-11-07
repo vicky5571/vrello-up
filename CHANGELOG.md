@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(placements)`: Mobile outlet search results and selected outlet card readability (ADR-0075)
+  - Search results dropdown responsive layout: introduced mobile stacked layout (`sm:hidden`) in `OutletSearchCombobox.tsx` rendering code, brand, and GPS status on row 1, full outlet name with `break-words line-clamp-2` on row 2, and physical street address with `MapPin line-clamp-2` on row 3, eliminating premature single-line truncation of retail names and branch qualifiers
+  - Selected card header decluttering: hid `Ganti Outlet` from top header on mobile using `hidden sm:inline-flex`, expanding horizontal space for store title and physical address from ~92px to ~230px (+148% wider) and completely eliminating 5-line title and 8-line address fragmentation
+  - Dedicated mobile action button: rendered a thumb-friendly full-width `Ganti Outlet Lain` button (`w-full sm:hidden py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-700 font-semibold border border-slate-200/80 shadow-2xs mt-1`) at the bottom of the card
+  - Desktop 100% byte-for-byte preserved: retains legacy single-row header button placement (`hidden sm:flex sm:flex-col` / `hidden sm:inline-flex`) and hides mobile bottom buttons on viewports $\ge 640\text{px}$
+  - Added TDD unit test suite in `src/components/views/PlacementsView/outletSearchResponsiveness.test.ts` (7/7 tests passing)
+  - Verification: `npm run drift:check` ✅ (102/102 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (154/154), `npm test` ✅ (990/990)
+  - Refs: `docs/adr/0075-mobile-outlet-search-and-selected-card-readability.md`, `docs/superpowers/specs/2026-11-07-mobile-outlet-search-and-selected-card-readability-design.md`, `docs/superpowers/plans/2026-11-07-mobile-outlet-search-and-selected-card-readability.md`
+
 - `fix(placements)`: Placement form selected outlet GPS and address data propagation (ADR-0074)
   - Upstream projection preservation: enriched `outletsList` projection in `PlacementsView.tsx` to retain complete outlet records (`code`, `address`, `city`, `latitude`, `longitude`, `picPhone`) from `storeOutlets`, eliminating data stripping before modal delivery
   - Defensive coordinate & address coalescing: refactored `selectedOutletObj` in `PlacementFormModal.tsx` to coalesce `placement.outlet` and `selOutlet` via `pOutlet?.latitude ?? selOutlet?.latitude ?? null` and `pOutlet?.address || selOutlet?.address || ""`, preventing unselected properties from overwriting active GPS coordinates and physical street addresses

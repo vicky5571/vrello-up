@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **PLANNING COMPLETE**  
+**Active Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **PLANNING COMPLETE**  
 **Previous Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **IMPLEMENTATION COMPLETE**  
@@ -41,7 +42,27 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Keterbacaan Hasil Pencarian & Kartu Outlet Terpilih di Mobile (ADR-0075 — Planning Complete):**
+1. **Implementasi Keterbacaan Hasil Pencarian & Kartu Outlet Terpilih di Mobile (ADR-0075 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/PlacementsView/outletSearchResponsiveness.test.ts`):**
+     - Memverifikasi dropdown pencarian memiliki container stacked mobile (`flex flex-col gap-1 sm:hidden`) dan container desktop (`hidden sm:flex`).
+     - Memverifikasi elemen nama toko mobile menerapkan `break-words line-clamp-2` tanpa pemotongan kaku.
+     - Memverifikasi alamat mobile menerapkan `MapPin` dan `line-clamp-2 leading-normal`.
+     - Memverifikasi tombol `Ganti Outlet` di header kartu disembunyikan di mobile dengan `hidden sm:inline-flex`.
+     - Memverifikasi kartu outlet terpilih merender tombol bawah *full-width* `Ganti Outlet Lain` di mobile via `w-full sm:hidden`.
+     - Memverifikasi kedua tombol memicu `handleChangeClick` dan tombol unselect memicu `handleClear`.
+     - Siklus TDD terverifikasi: RED state (6 assertions gagal saat baseline) -> GREEN state (7/7 assertions lulus).
+   - **Refaktor Komponen Combobox (`src/components/views/PlacementsView/OutletSearchCombobox.tsx`):**
+     - Mengubah tombol `Ganti Outlet` di header kartu terpilih menjadi `hidden sm:inline-flex`, membebaskan ruang horizontal nama dan alamat toko dari ~92px menjadi ~230px (+148% lebih lebar), meniadakan pemotongan 5 baris nama dan 8 baris alamat.
+     - Menambahkan tombol aksi mobile bawah *full-width* ramah sentuhan jempol (`w-full sm:hidden py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 ...`) berlabel `Ganti Outlet Lain`.
+     - Merestrukturisasi item dropdown hasil pencarian (`results.map`) dengan layout bertingkat di mobile (`sm:hidden`): baris 1 (kode + brand + GPS status), baris 2 (nama outlet penuh multi-baris), baris 3 (alamat lengkap 2 baris).
+     - **Invarian Desktop 100% Terjaga:** Tampilan desktop ($\ge 640\text{px}$) identik dengan desain asal.
+   - **Verifikasi Non-Negotiable Quality Gates:**
+     - `npm run drift:check` ✅ (102/102 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (0 TypeScript / Next.js compilation errors).
+     - `npm run test:smoke` ✅ (154/154 pass, 0 fail).
+     - `npm test` ✅ (990/990 pass, 0 fail).
+
+2. **Perencanaan Arsitektur Keterbacaan Hasil Pencarian & Kartu Outlet Terpilih di Mobile (ADR-0075 — Planning Complete):**
    - **Diagnosis Masalah Visual Mobile:**
      - Hasil pencarian (`results.map`): Baris nama toko terpotong kaku (`truncate`) karena dipaksa sejajar dengan badge kode dan brand. Baris alamat juga terpotong kaku.
      - Kartu outlet terpilih (`showCard`): Tombol `[🔄 Ganti Outlet]` (~105px) dan `[✕]` (~28px) di baris header memakan ~140px, mencekik kolom nama dan alamat di mobile menjadi hanya ~92px lebar. Ini mengakibatkan nama toko terpotong menjadi 5 baris vertikal dan alamat menjadi 8 baris vertikal kaku.
