@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ListTodo, RotateCcw, X, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { getEventChecklistTemplate } from "@/lib/marcom/eventChecklist";
 
 export interface EventSubtaskItem {
@@ -65,14 +66,14 @@ export function EventChecklistSection({
 
   return (
     <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100">
-          <ListTodo className="w-4 h-4 text-blue-500" />
-          <span>Event Preparation Checklist (Task Subtasks)</span>
+          <ListTodo className="w-4 h-4 text-blue-500 shrink-0" />
+          <span>Event Preparation Checklist</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-slate-400 font-mono">
-            {completedCount}/{eventSubtasks.length} completed
+        <div className="flex items-center justify-between sm:justify-end gap-2.5">
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+            {completedCount}/{eventSubtasks.length} selesai
           </span>
           <button
             type="button"
@@ -95,21 +96,22 @@ export function EventChecklistSection({
           {eventSubtasks.map((s, idx) => (
             <div
               key={s.id || idx}
-              className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"
+              className="flex items-start justify-between gap-2.5 p-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"
             >
-              <label className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer">
+              <label className="flex items-start gap-2.5 flex-1 min-w-0 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={Boolean(s.completed)}
                   onChange={(e) => handleToggleSubtask(idx, e.target.checked)}
-                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4 mt-0.5 shrink-0"
                 />
                 <span
-                  className={
+                  className={cn(
+                    "break-words text-xs leading-snug flex-1 min-w-0",
                     s.completed
-                      ? "truncate text-slate-400 dark:text-slate-500 line-through"
-                      : "truncate text-slate-800 dark:text-slate-200"
-                  }
+                      ? "text-slate-400 dark:text-slate-500 line-through"
+                      : "text-slate-800 dark:text-slate-200"
+                  )}
                 >
                   {s.title}
                 </span>
@@ -117,7 +119,7 @@ export function EventChecklistSection({
               <button
                 type="button"
                 onClick={() => handleRemoveSubtask(idx)}
-                className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer transition-colors"
+                className="text-slate-400 hover:text-rose-500 p-1 shrink-0 cursor-pointer transition-colors"
                 title="Remove checklist item"
               >
                 <X className="w-3.5 h-3.5" />
@@ -131,7 +133,7 @@ export function EventChecklistSection({
       <div className="flex items-center gap-2 pt-1">
         <input
           type="text"
-          placeholder="Add new checklist item... (e.g. Rent 10kVA generator)"
+          placeholder="Tambah item checklist baru..."
           value={newSubtaskTitle}
           onChange={(e) => setNewSubtaskTitle(e.target.value)}
           onKeyDown={(e) => {

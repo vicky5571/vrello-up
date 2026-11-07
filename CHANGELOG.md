@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(events)`: Mobile checklist readability and responsive header layout (ADR-0072)
+  - Mobile (< 640px) header: restructured header into 2 rows (`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2`) with title `Event Preparation Checklist` spanning row 1 and status strip (`0/5 selesai` + `Template <type>`) on row 2, eliminating text collision and 4-line squished wrapping
+  - Multi-line subtask text wrapping: removed single-line `truncate` from checklist item titles, applying `break-words text-xs leading-snug` so field teams can read complete logistics subtasks
+  - Checkbox alignment: adjusted item row to `items-start justify-between gap-2.5` with checkbox `mt-0.5 shrink-0 w-4 h-4` to prevent vertical center-floating on multi-line text
+  - Add-item input placeholder: shortened to `"Tambah item checklist baru..."` to prevent truncation on narrow smartphone viewports
+  - Desktop 100% preserved: resets to single horizontal inline row (`sm:flex-row sm:items-center sm:justify-between`) on screens $\ge 640\text{px}$
+  - Added TDD unit test suite in `src/components/views/EventsView/eventChecklistResponsiveness.test.ts` (5/5 tests passing)
+  - Verification: `npm run drift:check` ✅ (99/99 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (151/151), `npm test` ✅ (971/971)
+  - Refs: `docs/adr/0072-mobile-event-checklist-readability-enhancement.md`, `docs/superpowers/specs/2026-11-07-mobile-event-checklist-readability-design.md`, `docs/superpowers/plans/2026-11-07-mobile-event-checklist-readability.md`
+
 - `feat(navigation)`: Fluid sliding pill animation and layout isolation for mobile bottom nav (ADR-0067)
   - Layout projection tree isolation: wrapped bottom navigation tab mapping inside `<LayoutGroup id="mobile-bottom-nav">` in `MobileBottomNav.tsx`, isolating bottom nav layout animations from page-level state transitions and mount/unmount cascades in `ActiveViewStage`
   - Decoupled tap scale feedback: replaced outer `<motion.button whileTap={{ scale: 0.92 }}>` with a static-boundary `<button>` and relocated tactile micro-scale feedback to the inner icon/label container (`<motion.div className="relative z-10 ...">`), eliminating bounding-box geometry distortion and layout projection cancellation during touch gestures

@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072) — **PLANNING COMPLETE**  
+**Active Feature:** Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072) — **PLANNING COMPLETE**  
 **Previous Feature:** Retrospective Documentation Backfill for Mobile Responsiveness (ADR-0068, ADR-0069, ADR-0070, ADR-0071) — **DOCUMENTATION COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **PLANNING COMPLETE**  
@@ -36,7 +37,29 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Mobile Field Event Checklist Readability (ADR-0072 — Planning Complete):**
+1. **Implementasi Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/EventsView/eventChecklistResponsiveness.test.ts`):**
+     - Menambahkan pengujian responsivitas 2 baris header pada mobile dan 1 baris inline pada desktop.
+     - Memverifikasi ketiadaan kelas `truncate` dan penggunaan `break-words text-xs leading-snug` untuk pembungkusan multi-baris subtask.
+     - Memverifikasi perataan `items-start` dan `mt-0.5 shrink-0` pada checkbox untuk penjangkaran baris pertama.
+     - Memverifikasi placeholder ringkas `"Tambah item checklist baru..."` tanpa terpotong di layar 320px-390px.
+     - Memverifikasi batasan koordinator `EventChecklistSection.tsx` tetap $\le 250$ LOC (159 LOC).
+     - Siklus Red-Green terkonfirmasi: 4/5 assertions gagal saat baseline (RED), kemudian lulus 100% pasca implementasi (GREEN - 5/5 pass).
+   - **Refaktor Komponen Checklist (`src/components/views/EventsView/EventChecklistSection.tsx` — 159 LOC):**
+     - Mengubah header container menjadi `flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2`.
+     - Memisahkan judul event checklist (`Event Preparation Checklist`) pada Baris 1 mobile dan status strip (`0/5 selesai` + `Template <type>`) pada Baris 2 dengan `justify-between sm:justify-end`.
+     - Mengganti `truncate` pada judul subtask dengan `break-words text-xs leading-snug flex-1 min-w-0` menggunakan utilitas `cn()`.
+     - Mengubah alignment baris item menjadi `items-start justify-between gap-2.5` dengan checkbox `w-4 h-4 mt-0.5 shrink-0`.
+     - Mengganti placeholder add-item input menjadi `"Tambah item checklist baru..."`.
+     - **Invarian Desktop 100% Terjaga:** Tampilan desktop ($\ge 640\text{px}$) tetap menjadi 1 baris inline identik dengan desain asal.
+   - **Verifikasi Non-Negotiable Quality Gates:**
+     - `npx tsx --test src/components/views/EventsView/eventChecklistResponsiveness.test.ts` ✅ (5/5 pass).
+     - `npm run drift:check` ✅ (99/99 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm run test:smoke` ✅ (151/151 smoke tests pass).
+     - `npm test` ✅ (971/971 tests pass across 169 suites).
+
+2. **Perencanaan Arsitektur Mobile Field Event Checklist Readability (ADR-0072 — Planning Complete):**
    - **Diagnostik Masalah:**
      - Header `EventChecklistSection.tsx` memaksakan 3 elemen panjang (*Judul*, *Counter completion*, dan *Tombol template*) dalam satu baris sempit mobile (< 640px), menyebabkan judul terpecah menjadi 4 baris vertikal sempit dan counter/tombol terjepit.
      - Setiap baris item checklist dipotong secara kaku dengan `truncate`, menghilangkan informasi detail instruksi persiapan operasional bagi staf lapangan.
