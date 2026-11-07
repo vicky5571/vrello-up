@@ -75,10 +75,14 @@ export function canAdvanceFromBorrowStep(
 export function getBorrowStepCompletionStatus(
   data: Partial<BorrowFormData>
 ): Record<BorrowWizardStepId, boolean> {
+  const step1 = canAdvanceFromBorrowStep(1, data);
+  const step2 = step1 && canAdvanceFromBorrowStep(2, data);
+  const step3 = step2 && canAdvanceFromBorrowStep(3, data);
+
   return {
-    1: canAdvanceFromBorrowStep(1, data),
-    2: canAdvanceFromBorrowStep(2, data),
-    3: canAdvanceFromBorrowStep(3, data),
+    1: step1,
+    2: step2,
+    3: step3,
     4: false,
   };
 }

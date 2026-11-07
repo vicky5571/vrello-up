@@ -355,13 +355,13 @@ export function getBorrowStepCompletionStatus(
 
 ## 5. Acceptance Criteria Checklist
 
-- [ ] `getBorrowStepCompletionStatus` returns `3: false` whenever Step 1 or Step 2 is invalid, even if `selectedItems` has items.
-- [ ] `BorrowRequestModal.tsx` defines `resetForm()` clearing `selectedItems` (`[]`), `borrowDate` (`""`), `returnDueDate` (`""`), `purpose` (`""`), `eventLocation` (`""`), `borrowerPhone` (`""`), and resetting `step` to `1`.
-- [ ] `handleSubmit` calls `resetForm()` upon successful response before `onSaved(data)` and `onClose()`.
-- [ ] Footer `Cancel` button calls `handleCancel` (`resetForm(); onClose();`), whereas header `×` button calls `onClose` to preserve the draft cache.
-- [ ] `node --test --import ./test/register-alias.mjs src/components/views/InventoryView/borrowRequestModal.test.ts` passes with 0 failures.
-- [ ] `npm run drift:check` passes with 0 drift (116/116 spec-plan pairs).
-- [ ] `npm run build:check` passes with 0 TypeScript errors.
-- [ ] `npm run test:smoke` passes with 0 failures.
+- [x] `getBorrowStepCompletionStatus` returns `3: false` whenever Step 1 or Step 2 is invalid, even if `selectedItems` has items.
+- [x] `BorrowRequestModal.tsx` defines `resetForm()` clearing `selectedItems` (`[]`), `borrowDate` (`""`), `returnDueDate` (`""`), `purpose` (`""`), `eventLocation` (`""`), `borrowerPhone` (`""`), and resetting `step` to `1`.
+- [x] `handleSubmit` calls `resetForm()` upon successful response before `onSaved(data)` and `onClose()`.
+- [x] Footer `Cancel` button calls `handleCancel` (`resetForm(); onClose();`), whereas header `×` button calls `onClose` to preserve the draft cache.
+- [x] `node --test --import ./test/register-alias.mjs src/components/views/InventoryView/borrowRequestModal.test.ts` passes with 0 failures.
+- [x] `npm run drift:check` passes with 0 drift (116/116 spec-plan pairs).
+- [x] `npm run build:check` passes with 0 TypeScript errors.
+- [x] `npm run test:smoke` passes with 0 failures.
 
 

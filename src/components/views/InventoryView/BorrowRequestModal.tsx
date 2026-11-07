@@ -73,14 +73,31 @@ export function BorrowRequestModal({
   const inventoryItems = useMarcomDataStore((s) => s.inventoryItems);
   const fetchInventory = useMarcomDataStore((s) => s.fetchInventory);
 
+  const resetForm = () => {
+    setStep(1);
+    setBorrowerName(session?.user?.name || "");
+    setBorrowerPhone("");
+    setPurpose("");
+    setEventId(defaultEventId || "");
+    setEventLocation("");
+    setBorrowDate("");
+    setReturnDueDate("");
+    setSelectedItems([]);
+    setItemSearch("");
+    setSelectedCategory("ALL");
+    setError(null);
+  };
+
+  const handleCancel = () => {
+    resetForm();
+    onClose();
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchEvents();
       fetchInventory();
-      setStep(1);
       setError(null);
-      setBorrowDate("");
-      setReturnDueDate("");
       if (defaultEventId) {
         setEventId(defaultEventId);
       }
@@ -214,6 +231,7 @@ export function BorrowRequestModal({
         throw new Error(data.error || "Failed to submit borrow request");
       }
 
+      resetForm();
       onSaved(data);
       onClose();
     } catch (err: unknown) {
@@ -736,7 +754,7 @@ export function BorrowRequestModal({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleCancel}
               disabled={loading}
               className="px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
             >

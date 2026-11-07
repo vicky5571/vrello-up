@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(inventory)`: BorrowRequestModal smart draft cache vs submit/cancel reset and cumulative sequential stepper gate (ADR-0089)
+  - Cumulative sequential stepper gate: updated `getBorrowStepCompletionStatus` in `borrowWizardHelpers.ts` to compute sequential status flags (`step1`, `step2 = step1 && canAdvanceFromBorrowStep(2)`, `step3 = step2 && canAdvanceFromBorrowStep(3)`, `4: false`), ensuring Step 3 is never marked completed or rendered clickable while Step 1 or Step 2 is incomplete
+  - Explicit form reset on submit and cancel: introduced `resetForm()` in `BorrowRequestModal.tsx` clearing all 11 form state fields (`step = 1`, `selectedItems = []`, `borrowDate = ""`, `returnDueDate = ""`, `purpose = ""`, `eventLocation = ""`, `borrowerPhone = ""`, `itemSearch = ""`, `selectedCategory = "ALL"`, `error = null`)
+  - Dedicated submit & cancel hooks: wired `handleSubmit` to call `resetForm()` upon HTTP success, and created `handleCancel` (`resetForm(); onClose();`) for the modal footer Cancel button
+  - Lossless draft preservation on close (`×`): removed destructive reset statements (`setStep(1); setBorrowDate(""); setReturnDueDate("");`) from `useEffect(isOpen)`, allowing users who close the modal via header `×` to reopen it with their exact draft intact
+  - Dedicated unit tests in `src/components/views/InventoryView/borrowRequestModal.test.ts` (15/15 tests passing)
+  - Verification: `npm run drift:check` ✅ (116/116 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (168/168)
+  - Refs: `docs/adr/0089-borrow-request-modal-draft-cache-reset-and-cumulative-stepper-gate.md`, `docs/superpowers/specs/2026-11-08-borrow-request-modal-draft-cache-reset-and-cumulative-stepper-gate-design.md`, `docs/superpowers/plans/2026-11-08-borrow-request-modal-draft-cache-reset-and-cumulative-stepper-gate.md`
+
 - `feat(inventory)`: BorrowRequestModal Step 4 review badge completion and clickability separation (ADR-0088)
   - Data-driven completion restricted to Steps 1–3: updated `getBorrowStepCompletionStatus` in `borrowWizardHelpers.ts` to strictly return `4: false`, ensuring Step 4 (Review & Submit) never renders an emerald checkmark (`✓`) prior to submission
   - Clickability vs completion decoupling: refactored `BorrowStepperHeader.tsx` to separate `isCompleted` (`s.step < 4 && completionStatus[s.step]`) from `isStep4Ready` (`s.step === 4 && completionStatus[1] && completionStatus[2] && completionStatus[3]`) and `isClickable`

@@ -153,7 +153,7 @@ test("Borrow Request Modal Stepper Header Invariants (ADR-0055 smoke)", async (t
     );
   });
 
-  await t.test("verifies getBorrowStepCompletionStatus computes statuses correctly and never marks Step 4 Review as completed (ADR-0088)", () => {
+  await t.test("verifies getBorrowStepCompletionStatus computes cumulative sequential statuses and never marks Step 4 Review as completed (ADR-0088 & ADR-0089)", () => {
     const statuses = getBorrowStepCompletionStatus({
       borrowerName: "Budi",
       borrowDate: "2026-11-10",
@@ -164,6 +164,21 @@ test("Borrow Request Modal Stepper Header Invariants (ADR-0055 smoke)", async (t
     assert.equal(statuses[2], true);
     assert.equal(statuses[3], false);
     assert.equal(statuses[4], false);
+
+    const missingStep2DatesStatuses = getBorrowStepCompletionStatus({
+      borrowerName: "Budi",
+      borrowDate: "",
+      returnDueDate: "",
+      selectedItems: [{ inventoryItemId: "it-1", quantity: 2 }],
+    });
+    assert.equal(missingStep2DatesStatuses[1], true);
+    assert.equal(missingStep2DatesStatuses[2], false);
+    assert.equal(
+      missingStep2DatesStatuses[3],
+      false,
+      "Step 3 must not be marked completed or clickable when Step 2 dates are missing"
+    );
+    assert.equal(missingStep2DatesStatuses[4], false);
 
     const allDataFilledStatuses = getBorrowStepCompletionStatus({
       borrowerName: "Budi",
@@ -289,6 +304,35 @@ test("Borrow Request Modal Stepper Header Invariants (ADR-0055 smoke)", async (t
       headerContent,
       /const\s+isClickable\s*=\s*isCompleted\s*\|\|\s*isStep4Ready\s*\|\|\s*s\.step\s*<=\s*currentStep;/,
       "isClickable must include isStep4Ready alongside isCompleted and s.step <= currentStep"
+    );
+  });
+
+  await t.test("verifies smart draft cache on close (X) and full resetForm on Submit and Cancel (ADR-0089)", () => {
+    const modalContent = fs.readFileSync(modalPath, "utf-8");
+    assert.match(
+      modalContent,
+      /const\s+resetForm\s*=\s*\(\)\s*=>\s*\{/,
+      "BorrowRequestModal must define a resetForm helper"
+    );
+    assert.match(
+      modalContent,
+      /setSelectedItems\(\[\]\);/,
+      "resetForm must clear selectedItems to an empty array"
+    );
+    assert.match(
+      modalContent,
+      /const\s+handleCancel\s*=\s*\(\)\s*=>\s*\{\s*resetForm\(\);\s*onClose\(\);\s*\};/,
+      "handleCancel must invoke resetForm() and onClose()"
+    );
+    assert.match(
+      modalContent,
+      /onClick=\{handleCancel\}/,
+      "Footer Cancel button must be wired to handleCancel"
+    );
+    assert.match(
+      modalContent,
+      /resetForm\(\);\s*onSaved\(data\);\s*onClose\(\);/,
+      "handleSubmit must invoke resetForm() before onSaved(data) and onClose()"
     );
   });
 });

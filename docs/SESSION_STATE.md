@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** BorrowRequestModal Smart Draft Cache vs Submit/Cancel Reset & Cumulative Sequential Stepper Gate (ADR-0089) — **PLANNING COMPLETE**  
+**Active Feature:** BorrowRequestModal Smart Draft Cache vs Submit/Cancel Reset & Cumulative Sequential Stepper Gate (ADR-0089) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** BorrowRequestModal Smart Draft Cache vs Submit/Cancel Reset & Cumulative Sequential Stepper Gate (ADR-0089) — **PLANNING COMPLETE**  
 **Previous Feature:** BorrowRequestModal Step 4 Review Badge Completion & Clickability Separation (ADR-0088) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** BorrowRequestModal Step 4 Review Badge Completion & Clickability Separation (ADR-0088) — **PLANNING COMPLETE**  
 **Previous Feature:** BorrowRequestModal Step 2 Empty Initial Schedule Dates & Step 3 Mobile Catalog Card Readability (ADR-0087) — **IMPLEMENTATION COMPLETE**  
@@ -65,7 +66,30 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Smart Draft Cache vs Reset Submit/Cancel & Cumulative Stepper Gate pada BorrowRequestModal (ADR-0089 — Planning Complete):**
+1. **Implementasi Smart Draft Cache vs Reset Submit/Cancel & Cumulative Stepper Gate pada BorrowRequestModal (ADR-0089 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/InventoryView/borrowRequestModal.test.ts`):**
+     - Memperbarui subtest `getBorrowStepCompletionStatus` untuk memverifikasi cumulative sequential gate: jika `borrowerName` dan `selectedItems` terisi namun tanggal Step 2 (`borrowDate` & `returnDueDate`) kosong, maka `statuses[2] === false` dan `statuses[3] === false`. Step 3 tidak boleh berstatus selesai sebelum Step 1 dan Step 2 valid.
+     - Menambahkan subtest baru `"verifies smart draft cache on close (X) and full resetForm on Submit and Cancel (ADR-0089)"` yang memvalidasi deklarasi fungsi `resetForm()`, pembersihan `selectedItems` ke `[]`, handler `handleCancel = () => { resetForm(); onClose(); }`, wiring tombol footer `Cancel` ke `handleCancel`, dan pemanggilan `resetForm()` saat `handleSubmit` berhasil.
+     - Terverifikasi siklus TDD: Baseline RED (2 kegagalan assertion) -> GREEN (15/15 tests passing).
+   - **Refaktor Komponen Helper & Wizard Modal:**
+     - `src/components/views/InventoryView/wizard/borrowWizardHelpers.ts`: Mengubah `getBorrowStepCompletionStatus` menjadi kumulatif berurutan (`step1 = canAdvanceFromBorrowStep(1, data)`, `step2 = step1 && canAdvanceFromBorrowStep(2, data)`, `step3 = step2 && canAdvanceFromBorrowStep(3, data)`, `4: false`).
+     - `src/components/views/InventoryView/BorrowRequestModal.tsx`:
+       - Mendeklarasikan helper `resetForm()` yang me-reset 11 state form (`step = 1`, `borrowerName`, `borrowerPhone = ""`, `purpose = ""`, `eventId = defaultEventId || ""`, `eventLocation = ""`, `borrowDate = ""`, `returnDueDate = ""`, `selectedItems = []`, `itemSearch = ""`, `selectedCategory = "ALL"`, `error = null`).
+       - Mendeklarasikan `handleCancel = () => { resetForm(); onClose(); }` dan memasangkannya pada tombol footer `Cancel` (`onClick={handleCancel}`).
+       - Menghapus pembersihan destruktif `setStep(1); setBorrowDate(""); setReturnDueDate("");` dari `useEffect(isOpen)` sehingga penutupan modal via tombol header `×` (`onClose`) mempertahankan draft pengguna secara utuh.
+       - Memanggil `resetForm()` pada `handleSubmit` setelah respons API sukses sebelum `onSaved(data); onClose();`.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0089-borrow-request-modal-draft-cache-reset-and-cumulative-stepper-gate.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0089-borrow-request-modal-draft-cache-reset-and-cumulative-stepper-gate.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-borrow-request-modal-draft-cache-reset-and-cumulative-stepper-gate-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-borrow-request-modal-draft-cache-reset-and-cumulative-stepper-gate-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-borrow-request-modal-draft-cache-reset-and-cumulative-stepper-gate.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-borrow-request-modal-draft-cache-reset-and-cumulative-stepper-gate.md)
+     - Handover: [`docs/handover-borrow-request-modal-draft-cache-reset-and-cumulative-stepper-gate.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-borrow-request-modal-draft-cache-reset-and-cumulative-stepper-gate.md)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (116/116 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 168/168 tests passing across 65 suites (0 failures).
+     - Targeted unit test: ✅ 15/15 tests passing in `borrowRequestModal.test.ts`.
+
+2. **Perencanaan Smart Draft Cache vs Reset Submit/Cancel & Cumulative Stepper Gate pada BorrowRequestModal (ADR-0089 — Planning Complete):**
    - **Discovery & Root Cause Analysis:**
      - **Stale `selectedItems` setelah Submit Request:** Pada `BorrowRequestModal.tsx` (`handleSubmit` baris 212–220), saat request peminjaman berhasil dikirim (`onSaved(data); onClose();`), state `selectedItems`, `purpose`, `eventLocation`, `borrowerPhone`, `itemSearch`, dan `selectedCategory` tidak pernah di-reset ke state awal.
      - **Inconsistent Half-Reset di `useEffect(isOpen)`:** Pada baris 76–91, saat modal dibuka kembali (`isOpen === true`), `useEffect` hanya me-reset `step` ke `1`, `borrowDate` ke `""`, dan `returnDueDate` ke `""`, namun membiarkan `selectedItems` tetap berisi item dari sesi sebelumnya. Akibatnya: jika ditutup dengan `×` jadwalnya hilang, sedangkan jika sudah `Submit Request` daftar barang lama tetap muncul.
