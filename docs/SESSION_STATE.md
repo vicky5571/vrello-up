@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **PLANNING COMPLETE**  
+**Previous Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 3 Direct Physical Photo Upload Enforcement and Tautan URL Removal (ADR-0079) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **IMPLEMENTATION COMPLETE**  
@@ -48,7 +49,25 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Guard Transisi Langkah Wizard & Normalisasi Tanggal Placement (ADR-0080 — Implementation Complete):**
+1. **Perencanaan Arsitektur Sanitasi Emoji Langkah 4 & Simplifikasi Label Peta (ADR-0081 — Planning Complete):**
+   - **Diagnosis Masalah UX Lapangan & Inkonsistensi Visual:**
+     - Pada Langkah 4 wizard POSM (`Step4LocationVerification.tsx` dan `LocationPicker.tsx`), ditemukan 6 emoji mentah (`👆`, `🔒`, `ℹ️`, `⚠️`, `📍`, `🗺️`) yang merender secara tidak konsisten antar sistem operasi seluler dan bertentangan dengan standar design system platform (Lucide SVG).
+     - Tombol toggle Leaflet map menyertakan teks bertele-tele dan jargon pengembang:
+       - Saat peta terbuka: `"Tutup Peta Interaktif (Mode Hemat RAM/Data)"` memuat jargon teknis internal yang membingungkan petugas.
+       - Saat peta tertutup: `"🗺️ Sesuaikan Titik di Peta (Preview Radius 100m)"` terlalu panjang dan memicu *line wrapping* / teks terlipat pada layar ponsel 360px–390px, padahal radius 100m sudah dijelaskan di banner status geofence.
+   - **Solusi Desain Responsif & Eliminasi Emoji:**
+     - Menggantikan seluruh 6 emoji mentah dengan icon SVG Lucide (`MousePointerClick`, `Lock`, `Info`, `AlertTriangle`, `MapPin`, `Map`).
+     - Menyederhanakan string tombol toggle peta:
+       - Saat peta terbuka: `"Tutup Peta Interaktif"` (menghapus `(Mode Hemat RAM/Data)`).
+       - Saat peta tertutup: `"Sesuaikan Titik di Peta"` (menghapus `🗺️` dan `(Preview Radius 100m)`) atau `"Buka Peta Pinpoint (Opsional)"`.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0081-step4-emoji-sanitization-and-map-label-simplification.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0081-step4-emoji-sanitization-and-map-label-simplification.md)
+     - Spec: [`docs/superpowers/specs/2026-11-07-step4-emoji-sanitization-and-map-label-simplification-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-07-step4-emoji-sanitization-and-map-label-simplification-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-07-step4-emoji-sanitization-and-map-label-simplification.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-step4-emoji-sanitization-and-map-label-simplification.md)
+     - Handover: [`docs/handover-step4-emoji-sanitization-and-map-label-simplification.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-step4-emoji-sanitization-and-map-label-simplification.md)
+     - Invarian Verifikasi: `npm run drift:check` ✅ (108/108 spec-plan pairs).
+
+2. **Implementasi Guard Transisi Langkah Wizard & Normalisasi Tanggal Placement (ADR-0080 — Implementation Complete):**
    - **TDD Test Suite (`src/app/api/marcom/placements/placementDateSanitization.test.ts` & `src/components/views/PlacementsView/placementStepTransitionGuard.test.ts`):**
      - Dibuat test suite mencakup 5 pengujian date sanitization (penerimaan format `"YYYY-MM-DD"`, ISO string, handling null/omitted date, serta static invariant helper check).
      - Dibuat test suite mencakup 3 pengujian UI submission guard (verifikasi atribut `key="wizard-btn-next"` dan `key="wizard-btn-submit"`, verifikasi guard `handleFormSubmit` yang mengecek `currentStep !== 4`, serta batasan koordinator `PlacementFormModal.tsx` $\le 350$ LOC).
