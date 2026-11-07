@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `feat(navigation)`: Fluid sliding pill animation and layout isolation for mobile bottom nav (ADR-0067)
+  - Layout projection tree isolation: wrapped bottom navigation tab mapping inside `<LayoutGroup id="mobile-bottom-nav">` in `MobileBottomNav.tsx`, isolating bottom nav layout animations from page-level state transitions and mount/unmount cascades in `ActiveViewStage`
+  - Decoupled tap scale feedback: replaced outer `<motion.button whileTap={{ scale: 0.92 }}>` with a static-boundary `<button>` and relocated tactile micro-scale feedback to the inner icon/label container (`<motion.div className="relative z-10 ...">`), eliminating bounding-box geometry distortion and layout projection cancellation during touch gestures
+  - Tactile pill styling & spring physics: refined active pill styling with `bg-slate-100/90 dark:bg-white/10 border border-slate-200/60 dark:border-white/10 shadow-2xs rounded-xl` and calibrated spring transition `{ type: "spring", stiffness: 420, damping: 30 }` for a crisp, continuous 60fps sliding transition across tabs
+  - Invariants preserved: desktop navigation (`GlobalRail.tsx`, `Sidebar.tsx`) remains 100% byte-for-byte unaffected; coordinator file size remains strictly under limits (135 LOC <= 150 LOC)
+  - Unit test verification: added `LayoutGroup` tree isolation assertion to `src/components/layout/MobileBottomNav.test.ts` (15/15 tests passing)
+  - Verification: `npm run drift:check` ✅ (94/94 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (150/150), `npm test` ✅ (966/966)
+  - Refs: `docs/adr/0067-mobile-bottom-nav-sliding-pill-animation.md`, `docs/superpowers/specs/2026-11-07-mobile-bottom-nav-sliding-pill-design.md`, `docs/superpowers/plans/2026-11-07-mobile-bottom-nav-sliding-pill.md`
+
 - `feat(navigation)`: Replace mobile bottom nav Home tab with Pipeline & Status (ADR-0066)
   - Mobile: replaced redundant `Home` tab in Slot 1 with `Pipeline` (`id: "pipeline"`, icon: `Layers`, activeColor: `text-indigo-500`) in `MobileBottomNav.tsx`
   - Operational alignment: elevates retail partnership pipeline (MoU approvals, proposal reviews, SLA aging) to instant 1-tap thumb reach for field teams, creating a 100% Marcom operational bottom toolbar (`Pipeline`, `Outlets`, `Placements`, `Events`, `Menu`)

@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **PLANNING COMPLETE / READY FOR IMPLEMENTATION**  
+**Active Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **PLANNING COMPLETE**  
 **Previous Feature:** Placements Mobile View Switcher Pill Height Equalization — **IMPLEMENTATION COMPLETE**  
@@ -33,7 +34,27 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Mobile Bottom Navigation — Animasi Luncuran Active Pill (ADR-0067 — Planning Complete):**
+1. **Implementasi Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**
+     - Menambahkan pengujian `it("verifies MobileBottomNav wraps tabs in LayoutGroup for projection tree isolation")` yang memverifikasi pembungkusan tab dengan `<LayoutGroup id="mobile-bottom-nav">`.
+     - Mengonfirmasi siklus Red-Green: tes gagal saat asserting LayoutGroup (RED), kemudian lulus 100% setelah implementasi (GREEN).
+     - Memverifikasi batasan koordinator `MobileBottomNav.tsx` tetap di bawah ambang batas (135 LOC <= 150 LOC).
+     - Seluruh 15 pengujian pada suite lulus (15/15 tests passing).
+   - **Refaktor Komponen Navigasi (`src/components/layout/MobileBottomNav.tsx` — 135 LOC):**
+     - Mengimpor `LayoutGroup` dari `framer-motion` dan membungkus daftar pemetaan tab bottom bar dengan `<LayoutGroup id="mobile-bottom-nav">` untuk isolasi pohon proyeksi independen dari `ActiveViewStage`.
+     - Menghapus efek `whileTap` skala pada tombol luar (`<button>`), sehingga batas geometris (*bounding box*) tetap stabil selama interaksi sentuhan jempol.
+     - Memindahkan `whileTap={shouldReduceMotion ? undefined : { scale: 0.92 }}` ke pembungkus konten internal (`<motion.div className="relative z-10 ...">`), mempertahankan feedback sentuhan fisik yang responsif tanpa merusak kalkulasi layout projection.
+     - Memperjelas kontras visual pill aktif: `bg-slate-100/90 dark:bg-white/10 border border-slate-200/60 dark:border-white/10 shadow-2xs rounded-xl`.
+     - Menyetel parameter fisika pegas: `{ type: "spring", stiffness: 420, damping: 30 }` untuk pergerakan luncuran 60fps yang halus dan presisi.
+     - **Invarian Desktop 100% Terjaga:** `GlobalRail.tsx` dan `Sidebar.tsx` tetap tidak tersentuh.
+   - **Verifikasi Non-Negotiable Quality Gates:**
+     - `npx tsx --test src/components/layout/MobileBottomNav.test.ts` ✅ (15/15 tests passing).
+     - `npm run drift:check` ✅ (94/94 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (`tsc --noEmit` 0 errors).
+     - `npm run test:smoke` ✅ (150/150 smoke tests pass).
+     - `npm test` ✅ (966/966 tests pass across 168 suites).
+
+2. **Perencanaan Arsitektur Mobile Bottom Navigation — Animasi Luncuran Active Pill (ADR-0067 — Planning Complete):**
    - **Diagnostik & Root Cause Masalah:**
      - Efek sentuh `whileTap={{ scale: 0.92 }}` pada `<motion.button>` induk menyebabkan distorsi *bounding box* geometri saat jempol menyentuh layar, sehingga kalkulasi *layout projection* Framer Motion gagal atau meloncat kaku (*snap*) alih-alih meluncur mulus.
      - Ketiadaan `<LayoutGroup>` membiarkan pohon proyeksi animasi bilah bawah tercampur dengan pohon animasi global halaman utama (`ActiveViewStage`).

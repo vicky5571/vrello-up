@@ -72,6 +72,15 @@ describe("Mobile Shell UI/UX Polish Invariants (ADR-0058)", () => {
     );
   });
 
+  it("verifies MobileBottomNav wraps tabs in LayoutGroup for projection tree isolation", () => {
+    const bottomNavContent = fs.readFileSync(bottomNavPath, "utf-8");
+    assert.ok(
+      bottomNavContent.includes("LayoutGroup") &&
+        bottomNavContent.includes('id="mobile-bottom-nav"'),
+      "Expected MobileBottomNav to wrap tabs in LayoutGroup with id mobile-bottom-nav"
+    );
+  });
+
   it("verifies all coordinator files remain under 250 LOC limit", () => {
     const pageLoc = fs.readFileSync(pagePath, "utf-8").split("\n").length;
     assert.ok(pageLoc <= 250, `page.tsx is ${pageLoc} LOC, exceeding 250 LOC limit`);
