@@ -1,6 +1,6 @@
 # Plan: Field Events Table Row Click Edit Drawer & Action Column Simplification
 
-- **Status:** Pending Implementation
+- **Status:** Completed
 - **Date:** 2026-11-08
 - **Author:** Critical Senior Software Engineer (Pair Programmer)
 - **ADR Reference:** `docs/adr/0084-field-events-table-row-click-edit-drawer.md`
@@ -22,46 +22,46 @@
 ## 2. Phased Execution Tasks
 
 ### Phase 1: Test-Driven Harness Setup (TDD First)
-- [ ] Create `src/components/views/EventsView/eventTableView.test.ts`:
-  - [ ] Assert `MarcomTableShell` receives `onRowClick={onSelectEvent}`.
-  - [ ] Assert `Edit2` is not imported or rendered in the `actions` column.
-  - [ ] Assert `stopPropagation` guards are present on both the actions cell wrapper and the footage preview button.
-  - [ ] Assert `actions` column has `size: 70` (or $\le 80$).
-- [ ] Run test suite: `node --import tsx --test src/components/views/EventsView/eventTableView.test.ts` (verify RED baseline failure).
+- [x] Create `src/components/views/EventsView/eventTableView.test.ts`:
+  - [x] Assert `MarcomTableShell` receives `onRowClick={onSelectEvent}`.
+  - [x] Assert `Edit2` is not imported or rendered in the `actions` column.
+  - [x] Assert `stopPropagation` guards are present on both the actions cell wrapper and the footage preview button.
+  - [x] Assert `actions` column has `size: 70` (or $\le 80$).
+- [x] Run test suite: `node --import tsx --test src/components/views/EventsView/eventTableView.test.ts` (verify RED baseline failure).
 
 ### Phase 2: Component Refactor (`EventTableView.tsx`)
-- [ ] In `src/components/views/EventsView/EventTableView.tsx`:
-  - [ ] Remove `Edit2` from `lucide-react` import.
-  - [ ] Add `ev.stopPropagation()` to footage media button click handler.
-  - [ ] Remove pencil edit button from `actions` column definition.
-  - [ ] Wrap `Trash2` delete button with `<div className="flex items-center justify-end" onClick={(ev) => ev.stopPropagation()}>`.
-  - [ ] Update `actions` column configuration to `size: 70, minSize: 60, maxSize: 80`.
-  - [ ] Pass `onRowClick={onSelectEvent}` to `<MarcomTableShell<FieldEventItem>>`.
-  - [ ] Verify file syntax and clean formatting.
+- [x] In `src/components/views/EventsView/EventTableView.tsx`:
+  - [x] Remove `Edit2` from `lucide-react` import.
+  - [x] Add `ev.stopPropagation()` to footage media button click handler.
+  - [x] Remove pencil edit button from `actions` column definition.
+  - [x] Wrap `Trash2` delete button with `<div className="flex items-center justify-end" onClick={(ev) => ev.stopPropagation()}>`.
+  - [x] Update `actions` column configuration to `size: 70, minSize: 60, maxSize: 80`.
+  - [x] Pass `onRowClick={onSelectEvent}` to `<MarcomTableShell<FieldEventItem>>`.
+  - [x] Verify file syntax and clean formatting.
 
 ### Phase 3: Full Invariant Verification & Session Handoff
-- [ ] Run targeted test suite:
+- [x] Run targeted test suite:
   ```bash
   node --import tsx --test src/components/views/EventsView/eventTableView.test.ts
   ```
   Ensure all assertions pass (GREEN).
-- [ ] Run architectural drift check:
+- [x] Run architectural drift check:
   ```bash
   npm run drift:check
   ```
   Ensure 111/111 paired specs pass with 0 drift.
-- [ ] Run TypeScript compilation check:
+- [x] Run TypeScript compilation check:
   ```bash
   npm run build:check
   ```
   Ensure 0 errors.
-- [ ] Run smoke suite:
+- [x] Run smoke suite:
   ```bash
   npm run test:smoke
   ```
-- [ ] Run full test suite:
+- [x] Run full test suite:
   ```bash
   npm test
   ```
-- [ ] Update `docs/SESSION_STATE.md`.
+- [x] Update `docs/SESSION_STATE.md`.
 

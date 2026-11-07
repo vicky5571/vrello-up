@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** Field Events Table Row Click Edit Drawer & Action Column Simplification (ADR-0084) — **PLANNING COMPLETE**  
+**Active Feature:** Field Events Table Row Click Edit Drawer & Action Column Simplification (ADR-0084) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Field Events Table Row Click Edit Drawer & Action Column Simplification (ADR-0084) — **PLANNING COMPLETE**  
 **Previous Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **IMPLEMENTATION COMPLETE**  
@@ -55,7 +56,29 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Klik Baris Tabel Field Events & Penyederhanaan Kolom Aksi (ADR-0084 — Planning Complete):**
+1. **Implementasi Klik Baris Tabel Field Events & Penyederhanaan Kolom Aksi (ADR-0084 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/EventsView/eventTableView.test.ts`):**
+     - Dibuat test suite 6 subtests memverifikasi:
+       - `MarcomTableShell` menerima `onRowClick={onSelectEvent}` untuk interaksi klik baris penuh.
+       - Ikon pensil `Edit2` dan import-nya dieliminasi sepenuhnya dari kolom `actions` dan komponen.
+       - Isolasi event propagation (`ev.stopPropagation()`) terpasang pada kontainer tombol `Trash2` dan tombol preview footage (`X media ▶`).
+       - Alokasi lebar kolom `actions` dirampingkan menjadi `size: 70` (`minSize: 60`, `maxSize: 80`).
+       - Batas ukuran file koordinator `EventTableView.tsx` tetap terjaga ($\le 350$ LOC).
+     - Terverifikasi baseline RED (gagal pada 4 assertion sebelum refaktor) -> GREEN (6/6 lulus setelah refaktor).
+   - **Refaktor Komponen Tabel Field Events (`EventTableView.tsx`):**
+     - Menghapus import dan pemakaian `Edit2` dari `lucide-react`.
+     - Menambahkan `ev.stopPropagation()` pada tombol footage media preview (`X media ▶`).
+     - Menghapus tombol edit pensil dari definisi kolom `actions`.
+     - Membungkus sel tombol hapus dengan `<div className="flex items-center justify-end" onClick={(ev) => ev.stopPropagation()}>`.
+     - Menyesuaikan alokasi ukuran kolom `actions` menjadi `size: 70, minSize: 60, maxSize: 80`.
+     - Meneruskan prop `onRowClick={onSelectEvent}` ke `<MarcomTableShell<FieldEventItem>>`.
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (111/111 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 163/163 tests passing.
+     - `npm test`: ✅ 1038/1038 tests passing (0 failures).
+
+2. **Perencanaan Klik Baris Tabel Field Events & Penyederhanaan Kolom Aksi (ADR-0084 — Planning Complete):**
    - **Diagnosis UX & Redundansi Kolom Aksi:**
      - Pada tabel Field Events ([`EventTableView.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/EventsView/EventTableView.tsx)), pembukaan drawer edit (`EventDrawer`) sebelumnya bertumpu pada teks judul event atau ikon pensil (`Edit2`) di kolom `Actions`.
      - Tabel-tabel utama lain di aplikasi (`BranchesView`, `MousView`, `PlacementsView`, `DocumentsView`) sudah mengadopsi standar klik baris penuh (`onRowClick`), sehingga keberadaan tombol pensil di kolom aksi menjadi redundan dan memakan ruang horizontal tabel yang berharga.

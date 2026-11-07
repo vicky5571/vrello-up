@@ -4,6 +4,18 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-11-08]
+
+- `feat(events)`: Field events table row click edit drawer and action column simplification (ADR-0084)
+  - Full row interactivity: bound `onRowClick={onSelectEvent}` to `MarcomTableShell` in `EventTableView.tsx`, standardizing table row ergonomics with `BranchesView`, `MousView`, and `PlacementsView`
+  - Redundancy & clutter elimination: removed `Edit2` pencil icon and import from the `actions` column, eliminating visual noise and reclaiming horizontal column space
+  - Event propagation isolation: wrapped the delete button cell in `<div onClick={(ev) => ev.stopPropagation()}>` and added `ev.stopPropagation()` to the media footage button (`X media ▶`), preventing accidental edit drawer opening during media viewing or item deletion
+  - Column size optimization: narrowed `actions` column allocation from `140px` to `70px` (`minSize: 60, maxSize: 80`)
+  - Added dedicated unit regression test in `src/components/views/EventsView/eventTableView.test.ts` (6/6 tests passing)
+  - Verification: `npm run drift:check` ✅ (111/111 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (163/163), `npm test` ✅ (1038/1038)
+  - Refs: `docs/adr/0084-field-events-table-row-click-edit-drawer.md`, `docs/superpowers/specs/2026-11-08-field-events-table-row-click-edit-drawer-design.md`, `docs/superpowers/plans/2026-11-08-field-events-table-row-click-edit-drawer.md`
+
+
 ## [2026-11-07]
 
 - `feat(events)`: Event preparation checklist checkbox center-left vertical alignment (ADR-0083)

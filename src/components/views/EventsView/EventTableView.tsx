@@ -9,7 +9,6 @@ import {
   AlertTriangle,
   Film,
   Users,
-  Edit2,
   Trash2,
   Package,
 } from "lucide-react";
@@ -109,7 +108,10 @@ export function EventTableView({
                   return (
                     <button
                       type="button"
-                      onClick={() => onOpenFootageModal(e, 0)}
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        onOpenFootageModal(e, 0);
+                      }}
                       className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-[10px] cursor-pointer font-medium"
                       title="Watch footage & documentation media"
                     >
@@ -290,19 +292,16 @@ export function EventTableView({
       columnHelper.display({
         id: "actions",
         header: "Actions",
-        size: 140,
+        size: 70,
+        minSize: 60,
+        maxSize: 80,
         cell: ({ row }) => {
           const e = row.original;
           return (
-            <div className="flex items-center gap-1.5 justify-end">
-              <button
-                type="button"
-                onClick={() => onSelectEvent(e)}
-                className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                title="Edit Event"
-              >
-                <Edit2 className="w-3.5 h-3.5" />
-              </button>
+            <div
+              className="flex items-center justify-end"
+              onClick={(ev) => ev.stopPropagation()}
+            >
               <button
                 type="button"
                 onClick={() => {
@@ -336,6 +335,7 @@ export function EventTableView({
       isLoading={isLoading}
       error={error}
       onRefresh={onRefresh}
+      onRowClick={onSelectEvent}
       canDelete={canDelete}
       deleteRequiresMessage="Delete requires admin or manager role"
       onDeleteOne={onDeleteEvent}
