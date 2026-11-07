@@ -8,6 +8,10 @@ describe("Mobile Outlet Search and Selected Card Readability (ADR-0075)", () => 
     process.cwd(),
     "src/components/views/PlacementsView/OutletSearchCombobox.tsx"
   );
+  const step1Path = path.resolve(
+    process.cwd(),
+    "src/components/views/PlacementsView/wizard/Step1Outlet.tsx"
+  );
 
   describe("Search Results Dropdown Readability Invariants", () => {
     it("verifies search result dropdown has mobile stacked container (sm:hidden) and desktop container (hidden sm:flex)", () => {
@@ -36,6 +40,14 @@ describe("Mobile Outlet Search and Selected Card Readability (ADR-0075)", () => 
       assert.ok(
         content.includes("line-clamp-2 leading-normal"),
         "Mobile address text must use line-clamp-2 leading-normal"
+      );
+    });
+
+    it("verifies search dropdown keyboard hint is hidden on mobile using hidden sm:inline", () => {
+      const content = fs.readFileSync(filePath, "utf-8");
+      assert.ok(
+        content.includes('hidden sm:inline text-[10px] text-slate-400 font-normal'),
+        "Keyboard hint must be hidden on mobile via hidden sm:inline"
       );
     });
   });
@@ -74,6 +86,14 @@ describe("Mobile Outlet Search and Selected Card Readability (ADR-0075)", () => 
       assert.ok(
         content.includes("onClick={handleClear}"),
         "Card header must have unselect button triggering handleClear"
+      );
+    });
+
+    it("verifies Step1Outlet subtitle is hidden on mobile when outlet is selected using hidden sm:block", () => {
+      const content = fs.readFileSync(step1Path, "utf-8");
+      assert.ok(
+        content.includes('selectedOutlet && "hidden sm:block"'),
+        "Step1Outlet subtitle must be hidden on mobile when selectedOutlet is truthy"
       );
     });
   });

@@ -631,7 +631,7 @@ export function OutletSearchCombobox({
                     "Pencarian Outlet"
                   )}
                 </span>
-                <span className="text-[10px] text-slate-400 font-normal">
+                <span className="hidden sm:inline text-[10px] text-slate-400 font-normal">
                   Gunakan ↑↓ lalu Enter atau klik outlet
                 </span>
               </div>

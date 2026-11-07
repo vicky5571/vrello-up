@@ -10,9 +10,10 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
   - Search results dropdown responsive layout: introduced mobile stacked layout (`sm:hidden`) in `OutletSearchCombobox.tsx` rendering code, brand, and GPS status on row 1, full outlet name with `break-words line-clamp-2` on row 2, and physical street address with `MapPin line-clamp-2` on row 3, eliminating premature single-line truncation of retail names and branch qualifiers
   - Selected card header decluttering: hid `Ganti Outlet` from top header on mobile using `hidden sm:inline-flex`, expanding horizontal space for store title and physical address from ~92px to ~230px (+148% wider) and completely eliminating 5-line title and 8-line address fragmentation
   - Dedicated mobile action button: rendered a thumb-friendly full-width `Ganti Outlet Lain` button (`w-full sm:hidden py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-700 font-semibold border border-slate-200/80 shadow-2xs mt-1`) at the bottom of the card
-  - Desktop 100% byte-for-byte preserved: retains legacy single-row header button placement (`hidden sm:flex sm:flex-col` / `hidden sm:inline-flex`) and hides mobile bottom buttons on viewports $\ge 640\text{px}$
-  - Added TDD unit test suite in `src/components/views/PlacementsView/outletSearchResponsiveness.test.ts` (7/7 tests passing)
-  - Verification: `npm run drift:check` ✅ (102/102 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (154/154), `npm test` ✅ (990/990)
+  - Vertical clutter relief: hid keyboard navigation hint in search panel header on mobile (`hidden sm:inline`), ensuring single-line result count banner; hid redundant Step 1 subtitle on mobile when an outlet is selected (`selectedOutlet && "hidden sm:block"`) in `Step1Outlet.tsx` to conserve vertical space above the fold
+  - Desktop 100% byte-for-byte preserved: retains legacy single-row header button placement (`hidden sm:flex sm:flex-col` / `hidden sm:inline-flex`), keyboard shortcuts, and full subtitles on viewports $\ge 640\text{px}$
+  - Added TDD unit test suite in `src/components/views/PlacementsView/outletSearchResponsiveness.test.ts` (9/9 tests passing)
+  - Verification: `npm run drift:check` ✅ (102/102 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (154/154), `npm test` ✅ (992/992)
   - Refs: `docs/adr/0075-mobile-outlet-search-and-selected-card-readability.md`, `docs/superpowers/specs/2026-11-07-mobile-outlet-search-and-selected-card-readability-design.md`, `docs/superpowers/plans/2026-11-07-mobile-outlet-search-and-selected-card-readability.md`
 
 - `fix(placements)`: Placement form selected outlet GPS and address data propagation (ADR-0074)

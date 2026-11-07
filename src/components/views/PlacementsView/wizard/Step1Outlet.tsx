@@ -58,7 +58,12 @@ export function Step1Outlet({
             <Store className="w-3.5 h-3.5 text-lime-600 dark:text-lime-400" />
             <span>{selectedOutlet ? "Outlet Target POSM Terpilih" : "Pilih Outlet Target POSM *"}</span>
           </label>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+          <p
+            className={cn(
+              "text-[11px] text-slate-500 dark:text-slate-400 mt-0.5",
+              selectedOutlet && "hidden sm:block"
+            )}
+          >
             {selectedOutlet
               ? "Outlet terverifikasi untuk pelaksanaan materi promosi lapangan"
               : "Cari toko berdasarkan nama, ID outlet, atau alamat lapangan"}
