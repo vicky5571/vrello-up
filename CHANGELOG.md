@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(placements)`: Placement form selected outlet GPS and address data propagation (ADR-0074)
+  - Upstream projection preservation: enriched `outletsList` projection in `PlacementsView.tsx` to retain complete outlet records (`code`, `address`, `city`, `latitude`, `longitude`, `picPhone`) from `storeOutlets`, eliminating data stripping before modal delivery
+  - Defensive coordinate & address coalescing: refactored `selectedOutletObj` in `PlacementFormModal.tsx` to coalesce `placement.outlet` and `selOutlet` via `pOutlet?.latitude ?? selOutlet?.latitude ?? null` and `pOutlet?.address || selOutlet?.address || ""`, preventing unselected properties from overwriting active GPS coordinates and physical street addresses
+  - Step 1 & Step 4 consistency: restored `• GPS Aktif` badges and full address preview in `OutletSelectedCard.tsx`, ensuring installer geofencing radius validation in `Step4FinalCheck.tsx` receives authentic location telemetry
+  - Architecturally compliant file bounds: `PlacementsView.tsx` maintained at 230 LOC ($\le 250$ LOC coordinator ceiling) and `PlacementFormModal.tsx` at 310 LOC ($\le 350$ LOC ceiling)
+  - Added TDD unit test suite in `src/components/views/PlacementsView/placementOutletPropagation.test.ts` (8/8 tests passing)
+  - Verification: `npm run drift:check` ✅ (101/101 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (153/153), `npm test` ✅ (983/983)
+  - Refs: `docs/adr/0074-placement-form-selected-outlet-gps-and-address-propagation.md`, `docs/superpowers/specs/2026-11-07-placement-form-selected-outlet-gps-propagation-design.md`, `docs/superpowers/plans/2026-11-07-placement-form-selected-outlet-gps-propagation.md`
+
 - `fix(events)`: Mobile event media upload action layout and header stabilization (ADR-0073)
   - Mobile (< 640px) header: hid the cramped `"Upload dari Perangkat"` header button via `hidden sm:flex` and added `shrink-0` to the header icon, allowing section title `"Media & Dokumentasi Event"` to span 100% on a single row without 2-line lateral wrapping
   - Mobile (< 640px) upload action: relocated the primary upload button to a dedicated full-width action button (`w-full sm:hidden py-2.5 px-3 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold flex items-center justify-center gap-2 border border-blue-200/60 shadow-2xs`) positioned directly beneath the media area (below thumbnail grid or dropzone), dramatically improving thumb reach ergonomics for field teams

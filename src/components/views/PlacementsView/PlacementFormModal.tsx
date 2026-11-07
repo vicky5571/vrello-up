@@ -95,38 +95,30 @@ function PlacementFormModalContent({
   );
 
   const selectedOutletObj = useMemo((): OutletSearchResult | undefined => {
-    if (selOutlet) {
-      return {
-        id: selOutlet.id,
-        name: selOutlet.name,
-        code: selOutlet.code || "",
-        brand: selOutlet.brand,
-        address: selOutlet.address,
-        latitude: selOutlet.latitude,
-        longitude: selOutlet.longitude,
-      };
-    }
-    if (placement.outlet) {
-      const pOutlet = placement.outlet as {
-        id: string;
-        name: string;
-        code?: string;
-        brand?: string;
-        address?: string;
-        latitude?: number | null;
-        longitude?: number | null;
-      };
-      return {
-        id: pOutlet.id,
-        name: pOutlet.name,
-        code: pOutlet.code || "",
-        brand: pOutlet.brand,
-        address: pOutlet.address,
-        latitude: pOutlet.latitude,
-        longitude: pOutlet.longitude,
-      };
-    }
-    return undefined;
+    const pOutlet = placement.outlet as {
+      id: string;
+      name: string;
+      code?: string;
+      brand?: string;
+      address?: string;
+      latitude?: number | null;
+      longitude?: number | null;
+    } | undefined;
+
+    if (!selOutlet && !pOutlet) return undefined;
+
+    const lat = pOutlet?.latitude ?? selOutlet?.latitude ?? null;
+    const lng = pOutlet?.longitude ?? selOutlet?.longitude ?? null;
+
+    return {
+      id: pOutlet?.id || selOutlet?.id || "",
+      name: pOutlet?.name || selOutlet?.name || "",
+      code: pOutlet?.code || selOutlet?.code || "",
+      brand: pOutlet?.brand || selOutlet?.brand || "IM3",
+      address: pOutlet?.address || selOutlet?.address || "",
+      latitude: lat !== undefined ? lat : null,
+      longitude: lng !== undefined ? lng : null,
+    };
   }, [selOutlet, placement.outlet]);
 
   const effectiveMaterials = getEffectiveMaterials(materialsList);

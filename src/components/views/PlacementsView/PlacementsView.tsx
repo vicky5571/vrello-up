@@ -49,7 +49,23 @@ export function PlacementsView() {
   const [modalPlacement, setModalPlacement] = useState<Partial<MarcomPlacement> | null>(null);
   const [selectedPlacement, setSelectedPlacement] = useState<MarcomPlacement | null>(null);
 
-  const outletsList = useMemo(() => storeOutlets.map((o) => ({ id: o.id, name: o.name, brand: o.brand, picName: o.picName, branchId: o.branchId })), [storeOutlets]);
+  const outletsList = useMemo(
+    () =>
+      storeOutlets.map((o) => ({
+        id: o.id,
+        name: o.name,
+        code: o.code,
+        brand: o.brand,
+        address: o.address,
+        city: o.city,
+        latitude: o.latitude,
+        longitude: o.longitude,
+        picName: o.picName,
+        picPhone: o.picPhone,
+        branchId: o.branchId,
+      })),
+    [storeOutlets]
+  );
   const materialsList = useMemo(() => storeMaterials.map((m) => ({ id: m.id, name: m.name, type: m.type, requiresMou: m.requiresMou })), [storeMaterials]);
 
   const { isSaving, handleSavePlacement, handleOpenAddPlacement, deleteOne, deleteBatch } =

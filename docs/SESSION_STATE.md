@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **PLANNING COMPLETE**  
+**Active Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072) — **IMPLEMENTATION COMPLETE**  
@@ -39,7 +40,25 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Propagasi GPS & Alamat Outlet Placement (ADR-0074 — Planning Complete):**
+1. **Implementasi Propagasi GPS & Alamat Outlet Placement (ADR-0074 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/PlacementsView/placementOutletPropagation.test.ts`):**
+     - Memverifikasi preservasi seluruh atribut outlet (`latitude`, `longitude`, `address`, `code`, `city`, `picPhone`) dalam pemetaan `outletsList` di `PlacementsView.tsx`.
+     - Memverifikasi implementasi penggabungan fail-safe (*defensive coalescing*) koordinat dan alamat di `PlacementFormModal.tsx`.
+     - Menguji 4 skenario operasional: Fresh Selection (koordinat & alamat terjaga), Edit Mode (resolusi dari `selOutlet`), Legitimate Null Coordinates (koordinat null sejati tetap null), dan Unselected State.
+     - Memverifikasi batas ukuran file: `PlacementsView.tsx` (230 LOC $\le 250$ LOC ceiling) dan `PlacementFormModal.tsx` (310 LOC $\le 350$ LOC ceiling).
+     - Siklus TDD terverifikasi: RED state (2 assertions gagal saat baseline) -> GREEN state (8/8 assertions lulus).
+   - **Refaktor Proyeksi Parent (`src/components/views/PlacementsView/PlacementsView.tsx` — 230 LOC):**
+     - Memperluas pemetaan `outletsList` agar mempertahankan `code: o.code`, `address: o.address`, `city: o.city`, `latitude: o.latitude`, `longitude: o.longitude`, `picPhone: o.picPhone`.
+   - **Refaktor Modal Placement (`src/components/views/PlacementsView/PlacementFormModal.tsx` — 310 LOC):**
+     - Mengubah komputasi `selectedOutletObj` dengan fail-safe coalescing: `lat = pOutlet?.latitude ?? selOutlet?.latitude ?? null`, `lng = pOutlet?.longitude ?? selOutlet?.longitude ?? null`, serta mempertahankan alamat non-kosong.
+     - Memulihkan badge `• GPS Aktif` dan pratinjau alamat lengkap di `OutletSelectedCard.tsx` serta memastikan geofencing di `Step4FinalCheck.tsx` menerima telemetri lokasi asli.
+   - **Verifikasi Non-Negotiable Quality Gates:**
+     - `npm run drift:check` ✅ (101/101 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (0 TypeScript / Next.js compilation errors).
+     - `npm run test:smoke` ✅ (153/153 pass, 0 fail).
+     - `npm test` ✅ (983/983 pass, 0 fail).
+
+2. **Perencanaan Arsitektur Propagasi GPS & Alamat Outlet Placement (ADR-0074 — Planning Complete):**
    - **Diagnosis Bug & Root Cause Analysis:**
      - Menemukan bahwa combobox pencarian API (`GET /api/marcom/outlets?q=...`) mengembalikan data GPS & alamat lengkap (`• GPS Ada`).
      - Namun saat dipilih, `PlacementsView.tsx` memotong atribut (`latitude`, `longitude`, `address`, `code`) pada pemetaan `outletsList`.
