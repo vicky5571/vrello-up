@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **PLANNING COMPLETE**  
+**Previous Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Retrospective Documentation Backfill for Mobile Responsiveness (ADR-0068, ADR-0069, ADR-0070, ADR-0071) — **DOCUMENTATION COMPLETE**  
@@ -38,7 +39,23 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Mobile Field Event Media Section Upload Action Layout (ADR-0073 — Implementation Complete):**
+1. **Perencanaan Arsitektur Propagasi GPS & Alamat Outlet Placement (ADR-0074 — Planning Complete):**
+   - **Diagnosis Bug & Root Cause Analysis:**
+     - Menemukan bahwa combobox pencarian API (`GET /api/marcom/outlets?q=...`) mengembalikan data GPS & alamat lengkap (`• GPS Ada`).
+     - Namun saat dipilih, `PlacementsView.tsx` memotong atribut (`latitude`, `longitude`, `address`, `code`) pada pemetaan `outletsList`.
+     - Di `PlacementFormModal.tsx`, `selectedOutletObj` memprioritaskan `selOutlet` yang terpotong dan menimpa `placement.outlet` dengan nilai `undefined`/`null`, menyebabkan preview kartu Step 1 menampilkan *"Alamat belum tercatat"* dan *"Titik GPS Belum Diatur"*, serta mematahkan validasi geofencing di Step 4.
+   - **Persetujuan Checkpoint & Artefak Perencanaan:**
+     - Disetujui melalui Checkpoint 1 (Opsi 1: Full Object Propagation & Fail-Safe Merging).
+     - Disetujui melalui Checkpoint 2 (Ruang Lingkup & Asumsi Teknis).
+     - Disetujui melalui Checkpoint 3 (Strategi Pentahapan & Pengujian).
+     - ADR: [`docs/adr/0074-placement-form-selected-outlet-gps-and-address-propagation.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0074-placement-form-selected-outlet-gps-and-address-propagation.md)
+     - Spec: [`docs/superpowers/specs/2026-11-07-placement-form-selected-outlet-gps-propagation-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-07-placement-form-selected-outlet-gps-propagation-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-07-placement-form-selected-outlet-gps-propagation.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-placement-form-selected-outlet-gps-propagation.md)
+     - Handover: [`docs/handover-placement-form-selected-outlet-gps-propagation.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-placement-form-selected-outlet-gps-propagation.md)
+   - **Verifikasi Invarian Drift:**
+     - Berhasil memvalidasi 101/101 spec-plan pairing tanpa drift (`npm run drift:check` lulus 100%).
+
+2. **Implementasi Mobile Field Event Media Section Upload Action Layout (ADR-0073 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/EventsView/eventMediaResponsiveness.test.ts`):**
      - Memverifikasi tombol header disembunyikan di mobile dan dirender di desktop (`hidden sm:flex`).
      - Memverifikasi tombol *full-width* bawah dirender di mobile dan disembunyikan di desktop (`w-full sm:hidden`).
