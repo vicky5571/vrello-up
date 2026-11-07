@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Retrospective Documentation Backfill for Mobile Responsiveness (ADR-0068, ADR-0069, ADR-0070, ADR-0071) — **DOCUMENTATION COMPLETE**  
+**Previous Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Replace Home with Pipeline & Status (ADR-0066) — **PLANNING COMPLETE**  
@@ -34,7 +35,35 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067 — Implementation Complete):**
+1. **Penyusunan Dokumentasi Retrospektif Arsitektur Mobile Responsiveness (ADR-0068, ADR-0069, ADR-0070, ADR-0071 — Documentation Complete):**
+   - **Latar Belakang & Mandat Pengguna:** Mengodifikasi seluruh perbaikan responsivitas mobile yang sebelumnya diimplementasikan secara taktis menjadi paket dokumen arsitektur formal (ADR, Design Spec, Implementation Plan, Execution Handover) untuk mencegah miskomunikasi (*drift understanding*) antara pengguna, proyek, dan model AI lainnya.
+   - **Klaster 1: Standarisasi Perataan Kanan Tombol Aksi Header Mobile (ADR-0068):**
+     - Mengodifikasi aturan `justify-end sm:justify-start w-full sm:w-auto` untuk kenyamanan jempol satu tangan pada `BranchesHeader.tsx`, `DocumentsHeader.tsx`, `ReportsHeader.tsx`, dan `QuarterlyPosmReportTab.tsx`.
+     - ADR: `docs/adr/0068-mobile-header-action-alignment-standardization.md` (ACCEPTED)
+     - Spec: `docs/superpowers/specs/2026-11-07-mobile-header-action-alignment-standardization-design.md` (APPROVED)
+     - Plan: `docs/superpowers/plans/2026-11-07-mobile-header-action-alignment-standardization.md` (COMPLETED)
+     - Handover: `docs/handover-mobile-header-action-alignment-standardization.md` (IMPLEMENTED & VERIFIED)
+   - **Klaster 2: Toolbar Filter Anti-Shift & Grid Pencarian Proporsional Mobile (ADR-0069):**
+     - Mengodifikasi aturan `sm:order-first` untuk mencegah pergeseran 90px pada desktop saat filter aktif muncul, penataan 2 baris terorganisir di mobile, dan pencarian 100% full-width (`order-last sm:order-first relative w-full sm:w-56`) pada `BranchesHeader.tsx`, `InventoryHeaderKpis.tsx`, `InventoryTableView.tsx`, dan `BorrowRecordsTable.tsx`.
+     - ADR: `docs/adr/0069-mobile-filter-toolbar-anti-shift-and-search-grid.md` (ACCEPTED)
+     - Spec: `docs/superpowers/specs/2026-11-07-mobile-filter-toolbar-anti-shift-and-search-grid-design.md` (APPROVED)
+     - Plan: `docs/superpowers/plans/2026-11-07-mobile-filter-toolbar-anti-shift-and-search-grid.md` (COMPLETED)
+     - Handover: `docs/handover-mobile-filter-toolbar-anti-shift-and-search-grid.md` (IMPLEMENTED & VERIFIED)
+   - **Klaster 3: Ekualisasi Tinggi Track & Pill View Switcher Mobile (ADR-0070):**
+     - Mengodifikasi pola `flex items-stretch sm:items-center` dan `min-h-[40px] sm:min-h-0` pada `OutletsHeader.tsx` dan `PlacementFilterControls.tsx` agar active indicator pill putih selalu menutupi 100% tinggi track abu-abu secara presisi tanpa jeda vertikal pada tab multi-line maupun single-line.
+     - ADR: `docs/adr/0070-mobile-view-switcher-track-and-pill-height-equalization.md` (ACCEPTED)
+     - Spec: `docs/superpowers/specs/2026-11-07-mobile-view-switcher-track-and-pill-height-equalization-design.md` (APPROVED)
+     - Plan: `docs/superpowers/plans/2026-11-07-mobile-view-switcher-track-and-pill-height-equalization.md` (COMPLETED)
+     - Handover: `docs/handover-mobile-view-switcher-track-and-pill-height-equalization.md` (IMPLEMENTED & VERIFIED)
+   - **Klaster 4: Tata Letak Form GPS & Ketahanan Toast Mobile (ADR-0071):**
+     - Mengodifikasi penataan link GPS 2 baris di mobile (`sm:hidden` baris 2, `hidden sm:inline-flex` baris 1), ID toast Sonner persisten `outlet-gps-detection`, pass-through pointer events pada container toaster (`pointer-events: none` dengan `pointer-events: auto` pada toast aktif) untuk mencegah toast macet memblokir tombol modal di `OutletFormModal.tsx` dan `src/app/globals.css`.
+     - ADR: `docs/adr/0071-mobile-outlet-form-gps-layout-and-toast-resilience.md` (ACCEPTED)
+     - Spec: `docs/superpowers/specs/2026-11-07-mobile-outlet-form-gps-layout-and-toast-resilience-design.md` (APPROVED)
+     - Plan: `docs/superpowers/plans/2026-11-07-mobile-outlet-form-gps-layout-and-toast-resilience.md` (COMPLETED)
+     - Handover: `docs/handover-mobile-outlet-form-gps-layout-and-toast-resilience.md` (IMPLEMENTED & VERIFIED)
+   - **Verifikasi Drift Check:** `npm run drift:check` ✅ (98/98 spec-plan pairs valid, 0 drift).
+
+2. **Implementasi Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067 — Implementation Complete):**
    - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**
      - Menambahkan pengujian `it("verifies MobileBottomNav wraps tabs in LayoutGroup for projection tree isolation")` yang memverifikasi pembungkusan tab dengan `<LayoutGroup id="mobile-bottom-nav">`.
      - Mengonfirmasi siklus Red-Green: tes gagal saat asserting LayoutGroup (RED), kemudian lulus 100% setelah implementasi (GREEN).

@@ -24,21 +24,21 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
   - Verification: `npm run drift:check` ✅ (93/93 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (150/150), `npm test` ✅ (965/965)
   - Refs: `docs/adr/0066-mobile-bottom-nav-replace-home-with-pipeline.md`, `docs/superpowers/specs/2026-11-07-mobile-bottom-nav-pipeline-design.md`, `docs/superpowers/plans/2026-11-07-mobile-bottom-nav-pipeline.md`
 
-- `fix(placements)`: Equalize mobile view switcher pill height across tabs
+- `fix(placements)`: Equalize mobile view switcher pill height across tabs (ADR-0070)
   - Mobile: changed view switcher container from `flex items-center` to `flex items-stretch sm:items-center` in `PlacementFilterControls.tsx`
   - Mobile: added `min-h-[40px] sm:min-h-0` to all view switcher buttons so active pill spans the full track height consistently across all 3 tabs (`Table`, `Map View`, and 2-line `Rekap Kuartal`), eliminating the shrunken pill and vertical gaps
   - Desktop 100% preserved: resets to `sm:items-center` and `sm:min-h-0`
   - Added TDD assertions in `src/components/views/PlacementsView/placementsHeaderResponsiveness.test.ts` (5/5 tests passing)
   - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm run test:smoke` ✅ (150/150), `npm test` ✅ (965/965)
-  - Refs: direct mobile UI/UX bug report
+  - Refs: `docs/adr/0070-mobile-view-switcher-track-and-pill-height-equalization.md`, `docs/superpowers/specs/2026-11-07-mobile-view-switcher-track-and-pill-height-equalization-design.md`, `docs/superpowers/plans/2026-11-07-mobile-view-switcher-track-and-pill-height-equalization.md`
 
-- `fix(outlets)`: Equalize mobile view switcher pill height across loading and loaded states
+- `fix(outlets)`: Equalize mobile view switcher pill height across loading and loaded states (ADR-0070)
   - Mobile: changed view switcher container from `flex items-center` to `flex items-stretch sm:items-center` on `OutletsHeader.tsx`
   - Mobile: added `min-h-[40px] sm:min-h-0` to all view switcher buttons so active pill spans the full track height consistently, whether text is 1-line (`Tabel Data`) or 2-line (`Peta \n Sebaran`, `Antrean \n Approval`), eliminating the shrunken pill during loading
   - Desktop 100% preserved: resets to `sm:items-center` and `sm:min-h-0`
   - Added TDD assertions in `src/components/views/OutletsView/outletsHeaderResponsiveness.test.ts` (11/11 tests passing)
   - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm run test:smoke` ✅ (150/150), `npm test` ✅ (964/964)
-  - Refs: direct mobile UI/UX bug report
+  - Refs: `docs/adr/0070-mobile-view-switcher-track-and-pill-height-equalization.md`, `docs/superpowers/specs/2026-11-07-mobile-view-switcher-track-and-pill-height-equalization-design.md`, `docs/superpowers/plans/2026-11-07-mobile-view-switcher-track-and-pill-height-equalization.md`
 
 - `feat(analytics)`: Mobile header layout and horizontal KPI carousel (ADR-0065)
   - Mobile: aligned refresh action button to the right (`justify-end sm:justify-start`) for consistent one-handed thumb ergonomics
@@ -49,22 +49,22 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
   - Verification: `npm run drift:check` ✅ (92/92 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (150/150), `npm test` ✅ (963/963)
   - Refs: `docs/adr/0065-mobile-analytics-roi-header-layout-and-horizontal-kpi-carousel.md`, `docs/superpowers/specs/2026-11-07-mobile-analytics-roi-header-design.md`, `docs/superpowers/plans/2026-11-07-mobile-analytics-roi-header.md`
 
-- `fix(reports)`: Right-align header action buttons on mobile
+- `fix(reports)`: Right-align header action buttons on mobile (ADR-0068)
   - Mobile: aligned primary action row (`Refresh`, `Export Center`) to the right (`justify-end sm:justify-start`) and aligned `+ Buat Laporan Bulanan` button to the right (`self-end sm:self-auto`)
   - Mobile: aligned `QuarterlyPosmReportTab` action row to the right (`justify-end sm:justify-start`)
   - Desktop 100% preserved: action rows stay left-aligned within columns (`sm:justify-start`) and button stays standard flow (`sm:self-auto`)
   - Added TDD unit test suite in `src/components/views/ReportsView/reportsHeaderResponsiveness.test.ts` (3/3 tests passing)
   - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (958/958), `npm run test:smoke` ✅ (149/149)
-  - Refs: direct mobile UX review request
+  - Refs: `docs/adr/0068-mobile-header-action-alignment-standardization.md`, `docs/superpowers/specs/2026-11-07-mobile-header-action-alignment-standardization-design.md`, `docs/superpowers/plans/2026-11-07-mobile-header-action-alignment-standardization.md`
 
-- `fix(documents)`: Right-align header action buttons on mobile
+- `fix(documents)`: Right-align header action buttons on mobile (ADR-0068)
   - Mobile: aligned `Refresh` and `Tambah Dokumen` buttons to the right (`justify-end sm:justify-start`) for consistent one-handed thumb ergonomics
   - Desktop preserved: action buttons remain left-aligned in their column (`sm:justify-start`), and search/switcher controls are 100% untouched
   - Added TDD unit test suite in `src/components/views/DocumentsView/documentsHeaderResponsiveness.test.ts` (3/3 tests passing)
   - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅, `npm run test:smoke` ✅ (148/148)
-  - Refs: direct mobile UX review request
+  - Refs: `docs/adr/0068-mobile-header-action-alignment-standardization.md`, `docs/superpowers/specs/2026-11-07-mobile-header-action-alignment-standardization-design.md`, `docs/superpowers/plans/2026-11-07-mobile-header-action-alignment-standardization.md`
 
-- `fix(inventory)`: Optimize mobile header layout and prevent code badge wrapping
+- `fix(inventory)`: Optimize mobile header layout and prevent code badge wrapping (ADR-0069)
   - Mobile: expanded search input to full width on row 2 (`order-last sm:order-first relative w-full sm:w-56`), eliminating the cramped ~90px search input
   - Mobile: paired category dropdown (`flex-1 sm:flex-initial sm:w-44`) with view mode switcher (`shrink-0`) on row 1
   - Mobile: right-aligned action row (`justify-end sm:justify-start`) and balanced segmented tabs 50/50 (`w-full sm:w-auto` with `flex-1 sm:flex-initial`)
@@ -73,22 +73,22 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
   - Desktop 100% preserved: search remains first in row (`sm:order-first sm:w-56`), dropdown remains `sm:w-44`, action row left-aligned (`sm:justify-start`), and tabs inline
   - Added TDD unit test suite in `src/components/views/InventoryView/inventoryHeaderResponsiveness.test.ts` (7/7 tests passing)
   - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅, `npm run test:smoke` ✅ (147/147)
-  - Refs: direct mobile UX review request
+  - Refs: `docs/adr/0069-mobile-filter-toolbar-anti-shift-and-search-grid.md`, `docs/superpowers/specs/2026-11-07-mobile-filter-toolbar-anti-shift-and-search-grid-design.md`, `docs/superpowers/plans/2026-11-07-mobile-filter-toolbar-anti-shift-and-search-grid.md`
 
-- `fix(branches)`: Anchor Reset Filters to prevent desktop layout shift and mobile CLS
+- `fix(branches)`: Anchor Reset Filters to prevent desktop layout shift and mobile CLS (ADR-0069)
   - Mobile: moved `Reset Filters` to Row 1 alongside `CustomDropdown` using `justify-between sm:justify-start`, eliminating the orphaned 3rd row and preventing Cumulative Layout Shift (CLS)
   - Desktop: ordered `Reset Filters` before the region dropdown via `sm:order-first`, so when active filters appear, they expand into left dead space instead of pushing the dropdown and search bar 90px to the left
   - Added unit test coverage in `src/components/views/BranchesView/branchesHeaderResponsiveness.test.ts` (5/5 tests passing)
   - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅, `npm run test:smoke` ✅ (146/146)
-  - Refs: direct UX refinement request
+  - Refs: `docs/adr/0069-mobile-filter-toolbar-anti-shift-and-search-grid.md`, `docs/superpowers/specs/2026-11-07-mobile-filter-toolbar-anti-shift-and-search-grid-design.md`, `docs/superpowers/plans/2026-11-07-mobile-filter-toolbar-anti-shift-and-search-grid.md`
 
-- `fix(branches)`: Right-align header actions and make mobile search full width
+- `fix(branches)`: Right-align header actions and make mobile search full width (ADR-0068)
   - Mobile: the `Refresh` and `Tambah Branch` action row is now right-aligned (`justify-end sm:justify-start`), matching the card's right margin
   - Mobile: the branch search input now spans the full content width (`w-full sm:w-56`), eliminating the narrow left-aligned field
   - Desktop preserved: title and actions stay on one row, the action row remains left-aligned within its own column, the region dropdown stays `w-40 sm:w-44`, and the search stays `sm:w-56` (224px)
   - Added structural regression tests in `src/components/views/BranchesView/branchesHeaderResponsiveness.test.ts` (3/3 tests passing)
   - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (943/943), `npm run test:smoke` ✅ (146/146)
-  - Refs: direct mobile UX review request (no ADR/spec required for this targeted layout fix)
+  - Refs: `docs/adr/0068-mobile-header-action-alignment-standardization.md`, `docs/superpowers/specs/2026-11-07-mobile-header-action-alignment-standardization-design.md`, `docs/superpowers/plans/2026-11-07-mobile-header-action-alignment-standardization.md`
 
 - `fix(mobile)`: Remove spring overshoot from sidebar animation
   - Replaced the mobile sidebar's underdamped spring (`damping: 28, stiffness: 300`) with a monotonic 240ms tween (`ease: [0.2, 0, 0, 1]`) in `Sidebar.tsx`
@@ -100,14 +100,14 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
   - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (940/940), `npm run test:smoke` ✅ (145/145)
   - Refs: `docs/adr/0063-mobile-sidebar-slide-transition-and-backdrop-animation.md` (ADR-0063, amended)
 
-- `fix(outlets)`: Stabilize GPS toast and mobile Create Outlet layout
+- `fix(outlets)`: Stabilize GPS toast and mobile Create Outlet layout (ADR-0071)
   - Moved the `View on Maps` link to a dedicated second row on mobile (`sm:hidden`) while preserving the desktop header row (`hidden sm:inline-flex`) in `OutletFormModal.tsx`
   - Prevented the GPS header title from wrapping (`whitespace-nowrap`) so the header row stays compact at 390px
   - Fixed the GPS toast getting stuck on touch devices after it was tapped: the toast now uses a stable id, ignores pointer events so taps reach the modal close button, and is explicitly dismissed when the modal unmounts
   - Made the Sonner toaster container pass-through while keeping individual toasts interactive, preventing hover-pause on empty stack areas
   - Added TDD coverage in `src/components/views/OutletsView/outletFormModalMobileUx.test.ts` (7/7 tests passing)
   - Verification: `npm run drift:check` ✅, `npm run build:check` ✅, `npm test` ✅ (937/937), `npm run test:smoke` ✅ (145/145)
-  - Refs: direct mobile UX review request (no ADR/spec required for this targeted fix)
+  - Refs: `docs/adr/0071-mobile-outlet-form-gps-layout-and-toast-resilience.md`, `docs/superpowers/specs/2026-11-07-mobile-outlet-form-gps-layout-and-toast-resilience-design.md`, `docs/superpowers/plans/2026-11-07-mobile-outlet-form-gps-layout-and-toast-resilience.md`
 
 ## [2026-11-06]
 
