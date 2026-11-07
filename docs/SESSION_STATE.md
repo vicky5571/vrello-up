@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **PLANNING COMPLETE**  
+**Active Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Wizard Stepper Header Dynamic Accordion Expansion (ADR-0077) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Placement Modal Viewport Height Stabilization and Search Results Expansion (ADR-0076) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **PLANNING COMPLETE & AMENDED**  
@@ -44,7 +45,21 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Unifikasi Selektor Material POSM dengan CustomDropdown & Pembersihan Emoji (ADR-0078 — Planning Complete):**
+1. **Implementasi Unifikasi Selektor Material POSM dengan CustomDropdown & Pembersihan Emoji (ADR-0078 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/PlacementsView/step2MaterialResponsiveness.test.ts`):**
+     - Dibuat test suite 6 pengujian memverifikasi integrasi `CustomDropdown`, eliminasi pills redundan `POSM_MATERIALS.map(...)`, eliminasi native `<select>` untuk material, dan sanitasi emoji mentah.
+     - Terverifikasi baseline RED (6/6 pengujian gagal sebelum perbaikan) dan GREEN setelah perbaikan.
+   - **Refactor Komponen Langkah 2 (`src/components/views/PlacementsView/wizard/Step2MaterialTheme.tsx`):**
+     - Mengeliminasi container pills kategori hardcoded `POSM_MATERIALS.map(...)` dan handler `handleSelectPosmChip`/`activeChipLabel`, menghemat ~80px ruang vertikal modal.
+     - Menggantikan native HTML `<select>` dengan standar platform [`CustomDropdown`](file:///Users/mac/Web%20Development/vrello-up/src/components/ui/CustomDropdown.tsx) yang mendukung pencarian langsung (`searchable={true}`).
+     - Mensanitasi tombol skema biaya dari emoji mentah (`🏷️`, `💰`) menjadi icon SVG Lucide `<Tag />` dan `<CreditCard />`.
+     - Integritas data & validasi MoU: Seleksi material via `CustomDropdown` memperbarui `placement.materialId` dan mengevaluasi aturan MoU identik dengan perilaku sebelumnya.
+   - **Verifikasi Kualitas & Invarian:**
+     - `npm run drift:check`: ✅ 0 drift (105/105 spec-plan pairs).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 156/156 tests passing.
+
+2. **Perencanaan Arsitektur Unifikasi Selektor Material POSM dengan CustomDropdown & Pembersihan Emoji (ADR-0078 — Planning Complete):**
    - **Diagnosis Masalah UX Lapangan:**
      - Pada Langkah 2 wizard POSM (`Step2MaterialTheme.tsx`), terdapat redundansi ganda antara 7 tombol pills kategori (`Poster`, `Shopblind`, dll.) dan dropdown native HTML `<select>`. Keduanya sama-sama memanipulasi `placement.materialId`, membingungkan pengguna, dan memakan ~80px tinggi modal vertikal.
      - Native `<select>` tidak memiliki fitur pencarian/filter teks dan tampil tidak konsisten antar-OS.
