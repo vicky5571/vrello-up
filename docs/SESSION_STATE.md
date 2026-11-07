@@ -44,16 +44,18 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Stepper Header Dynamic Accordion di Mobile (ADR-0077 — Implementation Complete):**
+1. **Implementasi Stepper Header Dynamic Accordion di Mobile & Penyatuan Label Ringkas (ADR-0077 — Implementation Complete & Amended):**
    - **TDD Test Suite (`src/components/views/PlacementsView/wizardStepperResponsiveness.test.ts`):**
-     - Dibuat test suite mencakup 6 pengujian invariant tata letak responsif accordion dan integritas metadata langkah wizard.
-     - Terverifikasi baseline RED (4 pengujian gagal sebelum refactor komponen) dan GREEN setelah perbaikan.
+     - Dibuat test suite mencakup 6 pengujian invariant tata letak responsif accordion, penghapusan subtitle redundan, dan integritas metadata langkah wizard.
+     - Terverifikasi baseline RED (pengujian gagal sebelum refactor) dan GREEN setelah perbaikan.
    - **Refactor Komponen Stepper (`src/components/views/PlacementsView/wizard/WizardStepperHeader.tsx`):**
      - Container diubah dari grid kaku `grid grid-cols-4` menjadi dynamic accordion `flex items-center gap-1 sm:grid sm:grid-cols-4 sm:gap-2`.
-     - Langkah aktif (`isCurrent`): Memanfaatkan `flex-1 min-w-0 px-2.5 justify-start`, menampilkan lingkaran nomor, icon langkah, dan teks label aktif lengkap (`<span className="truncate text-xs font-bold sm:hidden text-lime-900 dark:text-lime-200">{s.label}</span>`).
-     - Langkah tidak aktif (`!isCurrent`): Menyusut rapi `shrink-0 px-2 sm:px-2.5 justify-center sm:justify-start` menampilkan nomor/centang dan icon tanpa label teks.
-     - Desktop invariant: Dipertahankan 100% *byte-for-byte* sebagai 4-kolom setara dengan label 2-baris (`hidden sm:flex flex-col min-w-0`).
-     - Ukuran file: `WizardStepperHeader.tsx` terjaga pada 105 LOC ($\le 150$ LOC target).
+     - **Penyatuan Label Ringkas (`s.shortLabel`):** Menggunakan `shortLabel` ringkas (`"Outlet"`, `"Materi"`, `"Foto"`, `"Lokasi"`) pada mobile dan desktop, mencegah terpotongnya teks menjadi `"Pilih ..."` pada layar mobile sempit.
+     - **Penghapusan Subtitle Redundan:** Menghapus teks `"Langkah {s.step}"` (`"Langkah 1"`, `"Langkah 2"`, dst.) pada **semua viewport** (mobile dan desktop) karena nomor langkah sudah jelas terpampang pada badge lingkaran angka.
+     - Langkah aktif (`isCurrent`): Memanfaatkan `flex-1 min-w-0 px-2.5 justify-start`, menampilkan lingkaran nomor, icon langkah, dan teks label aktif ringkas (`<span className="truncate text-xs font-bold min-w-0 inline text-lime-900 dark:text-lime-200">{s.shortLabel}</span>`).
+     - Langkah tidak aktif (`!isCurrent`): Menyusut rapi `shrink-0 px-2 sm:px-2.5 justify-center sm:justify-start` menampilkan nomor/centang dan icon tanpa label teks di mobile.
+     - Desktop invariant: Dipertahankan sebagai 4-kolom setara dengan label 1-baris yang bersih dan rapi (`hidden sm:inline`).
+     - Ukuran file: `WizardStepperHeader.tsx` terjaga pada 100 LOC ($\le 150$ LOC target).
    - **Verifikasi Kualitas & Invarian:**
      - `npm run drift:check`: ✅ 0 drift (104/104 spec-plan pairs).
      - `npm run build:check`: ✅ 0 TypeScript errors.

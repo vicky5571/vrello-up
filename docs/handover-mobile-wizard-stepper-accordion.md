@@ -217,6 +217,28 @@ REPLACE WITH:
 
 ---
 
+### Amendment (2026-11-07): Unified Short Labels & Subtitle Elimination
+
+**Lines 69–95 Replacement:**
+
+```tsx
+              {/* Step Short Label (Active-only on mobile; all steps on desktop; subtitle eliminated) */}
+              <span
+                className={cn(
+                  "truncate text-xs font-bold min-w-0",
+                  isCurrent
+                    ? "inline text-lime-900 dark:text-lime-200"
+                    : "hidden sm:inline"
+                )}
+              >
+                {s.shortLabel}
+              </span>
+```
+
+Eliminates `Langkah {s.step}` subtitle globally and prevents `"Pilih ..."` truncation on mobile by using concise `s.shortLabel`.
+
+---
+
 ## 4. Do Not Touch List
 
 | File / Component | Reason |

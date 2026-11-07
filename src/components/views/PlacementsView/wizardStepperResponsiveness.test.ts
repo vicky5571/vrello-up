@@ -35,17 +35,25 @@ describe("Mobile Wizard Stepper Header Dynamic Accordion Expansion (ADR-0077)", 
       );
     });
 
-    it("verifies active step renders full mobile label while desktop preserves 2-line label for all steps", () => {
+    it("verifies unified shortLabel is used and redundant Langkah subtitle is eliminated across all viewports", () => {
       const content = fs.readFileSync(stepperPath, "utf-8");
       assert.ok(
-        content.includes("{isCurrent && (") &&
-          content.includes("sm:hidden") &&
-          content.includes("{s.label}"),
-        "Active step must render s.label on mobile viewports (sm:hidden)"
+        content.includes("{s.shortLabel}"),
+        "Stepper must use concise s.shortLabel across all viewports"
       );
       assert.ok(
-        content.includes("hidden sm:flex flex-col min-w-0"),
-        "Desktop must preserve 2-line label block (hidden sm:flex flex-col min-w-0)"
+        !content.includes("{s.label}"),
+        "Stepper must eliminate long s.label to prevent mobile text truncation"
+      );
+      assert.ok(
+        !content.includes("Langkah"),
+        "Stepper must eliminate redundant 'Langkah {s.step}' subtitle across all viewports"
+      );
+      assert.ok(
+        content.includes("isCurrent") &&
+          content.includes('"inline text-lime-900') &&
+          content.includes('"hidden sm:inline"'),
+        "Stepper must display label on mobile active step and on all desktop steps"
       );
     });
 

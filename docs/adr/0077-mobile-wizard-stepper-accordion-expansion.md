@@ -69,6 +69,35 @@ Specifically:
 ### Negative Consequences / Accepted Technical Debt
 1. None. The change is strictly a responsive layout enhancement.
 
+---
+
+## Amendment (2026-11-07): Unified Short Labels & Redundant Subtitle Elimination
+
+### Context & Problem
+During live mobile validation on ~360px viewports (e.g., standard Android & iPhone screens), using the long title `s.label` (`"Pilih Outlet"`, `"Material & Tema"`, `"Foto Bukti Fisik"`, `"Validasi Lokasi"`) caused horizontal ellipsis clipping (`"Pilih ..."`) when paired with the step number badge and icon.
+Furthermore, the secondary line `"Langkah {s.step}"` (`"Langkah 1"`, `"Langkah 2"`, etc.) was identified as redundant across all viewports because the step number `1`, `2`, `3`, `4` is already prominently rendered in the numeric circle badge right beside it.
+
+### Decision
+1. **Unify Text to Short Labels:** Adopt `s.shortLabel` (`"Outlet"`, `"Materi"`, `"Foto"`, `"Lokasi"`) across **all viewports** (both mobile and desktop). These concise 4–6 character titles fit comfortably on the expanded mobile active step without text clipping.
+2. **Eliminate Subtitle Globally:** Remove the secondary `"Langkah {s.step}"` line from all viewports (mobile and desktop).
+3. **Consolidated Label Markup:** Replace separate mobile and desktop label elements with a unified responsive element:
+   ```tsx
+   <span
+     className={cn(
+       "truncate text-xs font-bold min-w-0",
+       isCurrent ? "inline text-lime-900 dark:text-lime-200" : "hidden sm:inline"
+     )}
+   >
+     {s.shortLabel}
+   </span>
+   ```
+4. **Visual Result:**
+   - **Mobile Active:** Clean, single-row pill `[ (1) 🏬 Outlet ]` with zero text truncation.
+   - **Mobile Inactive:** Compact icon badge `[ (2) 📚 ] [ (3) 📷 ] [ (4) 📍 ]`.
+   - **Desktop:** Four sleek, uncluttered pills `[ (1) 🏬 Outlet ] [ (2) 📚 Materi ] [ (3) 📷 Foto ] [ (4) 📍 Lokasi ]`.
+
+---
+
 ## Verification Strategy
 - **Unit & Structural Test:** `src/components/views/PlacementsView/wizardStepperResponsiveness.test.ts` to assert:
   - Stepper header container includes `flex items-center gap-1 sm:grid sm:grid-cols-4 sm:gap-2`.

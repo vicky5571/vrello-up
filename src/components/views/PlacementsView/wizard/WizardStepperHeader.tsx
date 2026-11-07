@@ -72,22 +72,17 @@ export function WizardStepperHeader({
               {/* Step Icon */}
               <Icon className="w-3.5 h-3.5 shrink-0" />
 
-              {/* Active Mobile Label */}
-              {isCurrent && (
-                <span className="truncate text-xs font-bold sm:hidden text-lime-900 dark:text-lime-200">
-                  {s.label}
-                </span>
-              )}
-
-              {/* Desktop Label (All 4 steps) */}
-              <div className="hidden sm:flex flex-col min-w-0">
-                <span className="truncate text-[11px] leading-tight font-bold">
-                  {s.shortLabel}
-                </span>
-                <span className="truncate text-[9px] opacity-75 font-normal">
-                  Langkah {s.step}
-                </span>
-              </div>
+              {/* Step Short Label (Active-only on mobile; all steps on desktop; subtitle removed) */}
+              <span
+                className={cn(
+                  "truncate text-xs font-bold min-w-0",
+                  isCurrent
+                    ? "inline text-lime-900 dark:text-lime-200"
+                    : "hidden sm:inline"
+                )}
+              >
+                {s.shortLabel}
+              </span>
             </button>
           );
         })}

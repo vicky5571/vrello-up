@@ -8,10 +8,11 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 - `feat(placements)`: Mobile wizard stepper header dynamic accordion expansion (ADR-0077)
   - Responsive layout transition: transformed 4-step wizard track in `WizardStepperHeader.tsx` from rigid 4-column mobile grid into dynamic flex accordion (`flex items-center gap-1 sm:grid sm:grid-cols-4 sm:gap-2`), while strictly preserving desktop equal 4-column grid layout
-  - Active step dynamic expansion: active step pill expands dynamically (`flex-1 min-w-0 px-2.5 justify-start`) on mobile, presenting full active milestone title (`s.label`) and icon, providing field operators immediate contextual milestone awareness without guesswork
+  - Active step dynamic expansion: active step pill expands dynamically (`flex-1 min-w-0 px-2.5 justify-start`) on mobile, presenting concise milestone title and icon, providing field operators immediate contextual milestone awareness without guesswork
+  - Unified short labels & subtitle elimination: adopted concise `s.shortLabel` (`"Outlet"`, `"Materi"`, `"Foto"`, `"Lokasi"`) across both mobile and desktop viewports, eliminating `"Pilih ..."` text truncation on mobile and completely removing redundant `"Langkah {s.step}"` secondary subtitle across all viewports for a sleek single-row visual profile
   - Inactive step compact badge collapse: non-active steps collapse into compact milestone badges (`shrink-0 px-2 sm:px-2.5 justify-center sm:justify-start`), hiding label text while retaining tactile step number, checkmark indicator, icon, and direct tap-to-navigate capability
   - Zero lateral overflow: fluid flexbox allocation eliminates all horizontal truncation and multiline breakage across compact 320px–420px mobile viewports
-  - Strict file budget adherence: `WizardStepperHeader.tsx` maintained at 105 LOC ($\le 150$ LOC target, well within $\le 250$ LOC coordinator invariant)
+  - Strict file budget adherence: `WizardStepperHeader.tsx` maintained at 100 LOC ($\le 150$ LOC target, well within $\le 250$ LOC coordinator invariant)
   - Added TDD unit test suite in `src/components/views/PlacementsView/wizardStepperResponsiveness.test.ts` (6/6 tests passing)
   - Verification: `npm run drift:check` ✅ (104/104 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (155/155), `npm test` ✅ (1002/1002)
   - Refs: `docs/adr/0077-mobile-wizard-stepper-accordion-expansion.md`, `docs/superpowers/specs/2026-11-07-mobile-wizard-stepper-accordion-design.md`, `docs/superpowers/plans/2026-11-07-mobile-wizard-stepper-accordion.md`

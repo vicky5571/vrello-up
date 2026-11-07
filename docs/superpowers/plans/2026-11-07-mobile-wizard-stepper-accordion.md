@@ -41,10 +41,16 @@ Implement dynamic accordion expansion on mobile viewports (< 640px) in `WizardSt
 - [ ] Run test suite and confirm pass (GREEN).
 
 ### Phase 3: Verification & Invariant Enforcement
-- [ ] Run `npm run drift:check` (verify 0 drift and 104/104 spec-plan pairing).
-- [ ] Run `npm run build:check` (verify 0 TypeScript errors).
-- [ ] Run `npm test` (verify all placement tests pass).
-- [ ] Update `CHANGELOG.md` and `docs/SESSION_STATE.md`.
+- [x] Run `npm run drift:check` (verify 0 drift and 104/104 spec-plan pairing).
+- [x] Run `npm run build:check` (verify 0 TypeScript errors).
+- [x] Run `npm test` (verify all placement tests pass).
+- [x] Update `CHANGELOG.md` and `docs/SESSION_STATE.md`.
+
+### Phase 4: Amendment — Unified Short Labels & Subtitle Elimination
+- [ ] Update `src/components/views/PlacementsView/wizardStepperResponsiveness.test.ts` to assert `s.shortLabel` and elimination of `Langkah {s.step}`.
+- [ ] Update `src/components/views/PlacementsView/wizard/WizardStepperHeader.tsx` to use unified `s.shortLabel` with `isCurrent ? "inline" : "hidden sm:inline"`.
+- [ ] Run test suite and confirm 0 failures.
+- [ ] Run full verification gates (`npm run drift:check`, `npm run build:check`, `npm test`).
 
 ## 3. Risks & Mitigations
 

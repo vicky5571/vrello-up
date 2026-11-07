@@ -60,9 +60,30 @@ Replace static grid partitioning on mobile with a dynamic flex accordion:
 ## 4. Explicit Non-Goals
 - No changes to step validation rules in `canAdvanceFromStep`.
 - No alterations to `WIZARD_STEPS` data or step sequence order.
-- No changes to desktop stepper presentation.
 
-## 5. Verification Checklist
+## 5. Amendment (2026-11-07): Unified Short Labels & Redundant Subtitle Elimination
+
+1. **Problem Observed:**
+   - In field testing, using `s.label` (`"Pilih Outlet"`) resulted in text truncation (`"Pilih ..."`) on ~360px mobile viewports.
+   - The subtitle `"Langkah {s.step}"` is redundant across all screen sizes because the step number `1`, `2`, `3`, `4` is already rendered in the circular indicator badge.
+2. **Updated Contract:**
+   - Use `s.shortLabel` (`"Outlet"`, `"Materi"`, `"Foto"`, `"Lokasi"`) across all viewports.
+   - Remove `"Langkah {s.step}"` from both mobile and desktop views.
+   - Consolidate label JSX:
+     ```tsx
+     <span
+       className={cn(
+         "truncate text-xs font-bold min-w-0",
+         isCurrent ? "inline text-lime-900 dark:text-lime-200" : "hidden sm:inline"
+       )}
+     >
+       {s.shortLabel}
+     </span>
+     ```
+   - On mobile, only the active step displays `s.shortLabel`.
+   - On desktop, all 4 steps display `s.shortLabel` in a single sleek line.
+
+## 6. Verification Checklist
 - [ ] Create unit & structural test `src/components/views/PlacementsView/wizardStepperResponsiveness.test.ts`.
 - [ ] Run test suite (`npm test`).
 - [ ] Run architectural drift verification (`npm run drift:check`).
