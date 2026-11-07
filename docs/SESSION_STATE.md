@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Event Preparation Checklist Checkbox Center-Left Alignment (ADR-0083) — **PLANNING COMPLETE**  
+**Previous Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **PLANNING COMPLETE**  
@@ -52,7 +53,24 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Blokir Navigasi Saat Upload Foto Langkah 3 (ADR-0082 / TD-006 — Implementation Complete):**
+1. **Perencanaan Penyelarasan Posisi Checkbox Center-Left pada Checklist Event (ADR-0083 — Planning Complete):**
+   - **Diagnosis Masalah Visual & Ergonomi Mobile:**
+     - Pada kartu item checklist persiapan event ([`EventChecklistSection.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/EventsView/EventChecklistSection.tsx)), penataan sebelumnya menggunakan `items-start` dengan offset `mt-0.5`.
+     - Saat judul subtask melipat menjadi 2–3 baris pada layar mobile, checkbox menempel di pojok kiri-atas (*top-left*), tampak asimetris dan meninggalkan kekosongan di area kiri-bawah kartu item.
+     - Penyelarasan tengah-kiri (*center-left*) membuat kartu terasa seimbang, modern, dan target ketuk jempol berada tepat di sumbu vertikal tengah kartu.
+   - **Solusi Desain Symmetrical Center-Left:**
+     - Mengubah baris kontainer dari `items-start` menjadi `items-center justify-between`.
+     - Mengubah elemen `<label>` dari `items-start` menjadi `items-center gap-2.5`.
+     - Menghapus offset `mt-0.5` pada `<input type="checkbox">` sehingga checkbox berukuran 16px (`w-4 h-4 shrink-0`) berada tepat di tengah tinggi kartu secara vertikal.
+     - Tombol hapus `X` di sisi kanan juga otomatis terselaraskan secara vertikal di tengah kartu (*center-right*).
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0083-event-checklist-checkbox-center-left-alignment.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0083-event-checklist-checkbox-center-left-alignment.md)
+     - Spec: [`docs/superpowers/specs/2026-11-07-event-checklist-checkbox-center-left-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-07-event-checklist-checkbox-center-left-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-07-event-checklist-checkbox-center-left.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-event-checklist-checkbox-center-left.md)
+     - Handover: [`docs/handover-event-checklist-checkbox-center-left.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-event-checklist-checkbox-center-left.md)
+     - Invarian Verifikasi: `npm run drift:check` ✅ (110/110 spec-plan pairs).
+
+2. **Implementasi Blokir Navigasi Saat Upload Foto Langkah 3 (ADR-0082 / TD-006 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/PlacementsView/step3UploadBlocker.test.ts`):**
      - Dibuat test suite 6 subtests memverifikasi:
        - `PlacementPhotoUploader` mendeklarasikan `onUploadingChange` dan menjalankannya dalam blok `try ... finally` (`true` saat mulai, `false` di `finally`).
