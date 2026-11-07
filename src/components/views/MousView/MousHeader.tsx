@@ -145,36 +145,38 @@ export function MousHeader({
         </div>
 
         {/* Status Chips with Fluid Sliding Pill Animation */}
-        <div className="flex items-center gap-1 w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-          <span className="sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]">
+        <div className="flex items-center w-full sm:w-auto max-w-full overflow-hidden bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+          <span className="shrink-0 flex items-center px-2.5 self-stretch text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/90 border-r border-slate-200/60 dark:border-slate-700/60 select-none">
             Status:
           </span>
-          {statusChips.map((chip) => {
-            const isActive = selectedStatus === chip.value;
-            return (
-              <motion.button
-                key={chip.value}
-                type="button"
-                whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
-                onClick={() => onStatusChange(chip.value)}
-                className={cn(
-                  "relative shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer",
-                  isActive
-                    ? "text-fuchsia-700 dark:text-fuchsia-300"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
-                )}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="activeMouStatusPill"
-                    className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-slate-200/50 dark:border-slate-700/50"
-                    transition={pillTransition}
-                  />
-                )}
-                <span className="relative z-10">{chip.label}</span>
-              </motion.button>
-            );
-          })}
+          <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto no-scrollbar p-1">
+            {statusChips.map((chip) => {
+              const isActive = selectedStatus === chip.value;
+              return (
+                <motion.button
+                  key={chip.value}
+                  type="button"
+                  whileTap={shouldReduceMotion ? undefined : { scale: 0.95 }}
+                  onClick={() => onStatusChange(chip.value)}
+                  className={cn(
+                    "relative shrink-0 whitespace-nowrap px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer",
+                    isActive
+                      ? "text-fuchsia-700 dark:text-fuchsia-300"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
+                  )}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeMouStatusPill"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs border border-slate-200/50 dark:border-slate-700/50"
+                      transition={pillTransition}
+                    />
+                  )}
+                  <span className="relative z-10">{chip.label}</span>
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />

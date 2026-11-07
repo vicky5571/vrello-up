@@ -64,14 +64,14 @@
        - `MarcomTableShell.tsx` menerapkan class responsif `static md:sticky` untuk sel header dan body sticky, serta menghapus inline `position: "sticky"` agar tidak mengaburkan viewport tabel mobile.
        - `MarcomTableShell.tsx` membatasi border pemisah dan bayangan drop-shadow pada breakpoint medium ke atas (`md:border-l` dan `md:shadow-[...]`).
        - `MousHeader.tsx` membungkus input pencarian dengan `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs` untuk tampilan mobile penuh.
-       - `MousHeader.tsx` mengaplikasikan `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar` pada kontainer kapsul status dan `shrink-0 whitespace-nowrap` pada tombol chip.
-       - `MousHeader.tsx` menerapkan `sticky left-0 z-20` pada label `Status:` dengan background solid (`bg-slate-100 dark:bg-slate-800`) dan drop-shadow pemisah agar label tetap terpampang (*fixed*) saat scroll horizontal tanpa *text bleed-through*.
+       - `MousHeader.tsx` membungkus seluruh bilah status dengan kontainer luar terpadu berbingkai rapi (`overflow-hidden rounded-xl border bg-slate-100 dark:bg-slate-800/60`).
+       - `MousHeader.tsx` menerapkan background label `Status:` penuh ke atas, kiri, dan bawah (`self-stretch px-2.5 bg-slate-100 dark:bg-slate-800/90 border-r border-slate-200/60 dark:border-slate-700/60 select-none`), mengisolasi rel tombol chip dalam kontainer `overflow-x-auto no-scrollbar p-1` terpisah sehingga tombol chip yang digeser terpotong bersih di garis batas vertikal dan tidak pernah tembus (*bleed-through*) atau terlihat di belakang, atas, bawah, maupun kiri label.
      - Terverifikasi siklus TDD: Baseline RED (assertion gagal) -> GREEN (8/8 passing).
    - **Refaktor Komponen Header MOUs (`MousHeader.tsx`):**
      - Input pencarian kini responsif: `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs`.
-     - Kontainer status filter pills memiliki batas lebar dan scroll horizontal sentuh: `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar`.
-     - Label `Status:` kini berposisi sticky di dalam rel (`sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]`), sehingga tetap terlihat permanen saat operator menggeser chip status di mobile.
-     - Tombol status chip dilindungi dengan `shrink-0 whitespace-nowrap` sehingga animasi kapsul geser Framer Motion `layoutId="activeMouStatusPill"` meluncur mulus tanpa teks terlipat.
+     - Kontainer kapsul status luar membungkus label dan rel dengan rapi: `w-full sm:w-auto max-w-full overflow-hidden bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60`.
+     - Label `Status:` berposisi solid penuh (*full top-left-bottom*) dengan `self-stretch` dan border pemisah `border-r border-slate-200/60 dark:border-slate-700/60`.
+     - Rel tombol chip diisolasi dalam `flex-1 min-w-0 overflow-x-auto no-scrollbar p-1` dengan perlindungan `shrink-0 whitespace-nowrap`, menjamin animasi kapsul geser Framer Motion `layoutId="activeMouStatusPill"` meluncur mulus tanpa ada chip yang terekspos di belakang label.
    - **Refaktor Komponen Tabel Bersama (`MarcomTableShell.tsx`):**
      - Menghapus deklarasi inline `position: "sticky"` pada header dan body cells (mempertahankan `right: "${rightOffset}px"`).
      - Menggantikan dengan kelas responsif `static md:sticky z-20` (header) dan `static md:sticky z-10` (body).

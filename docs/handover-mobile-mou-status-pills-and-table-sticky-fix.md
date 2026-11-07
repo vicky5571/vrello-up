@@ -69,11 +69,12 @@
 **Target Code:**
 ```tsx
         {/* Status Chips with Fluid Sliding Pill Animation */}
-        <div className="flex items-center gap-1 w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-          <span className="sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]">
+        <div className="flex items-center w-full sm:w-auto max-w-full overflow-hidden bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+          <span className="shrink-0 flex items-center px-2.5 self-stretch text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/90 border-r border-slate-200/60 dark:border-slate-700/60 select-none">
             Status:
           </span>
-          {statusChips.map((chip) => {
+          <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto no-scrollbar p-1">
+            {statusChips.map((chip) => {
             const isActive = selectedStatus === chip.value;
             return (
               <motion.button
@@ -192,7 +193,7 @@
 
 - [x] Status filter pill strip in `MousHeader.tsx` fits within the mobile viewport (`w-full sm:w-auto max-w-full`) and scrolls horizontally via touch (`overflow-x-auto no-scrollbar`).
 - [x] Status chip buttons do not shrink or wrap text (`shrink-0 whitespace-nowrap`).
-- [x] `Status:` label is in-rail sticky (`sticky left-0 z-20`) with solid background (`bg-slate-100 dark:bg-slate-800`) and shadow separator, remaining permanently visible during mobile horizontal scroll without text bleed-through.
+- [x] `Status:` label background goes full to the top, left, and bottom (`self-stretch`, `border-r`) within the unified outer container (`overflow-hidden`), with chip buttons isolated in their own inner scroll rail (`overflow-x-auto p-1`) so no chips can ever be exposed behind, above, below, or to the left of the label.
 - [x] Search input spans full width on mobile (`w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs`).
 - [x] On mobile (`< 768px`), `Dokumen MOU` and `Actions` columns are `position: static` and sit at the far right of the horizontal table scroll, leaving 100% of the mobile table viewport visible for primary left-hand columns.
 - [x] On tablet/desktop (`>= 768px`), `Dokumen MOU` (`right: 130px`) and `Actions` (`right: 0px`) remain sticky on the right with solid opaque backgrounds and left drop-shadow.

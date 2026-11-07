@@ -26,10 +26,12 @@ In the MOUs & Partnerships module (`/mode=marcom&view=mous`), field managers and
 
 ## Options Considered
 
-### Option 1: Scrollable Status Pill Rail with In-Rail Sticky "Status:" Label in `MousHeader` + Responsive CSS `static md:sticky` in `MarcomTableShell` (Accepted)
+### Option 1: Full-Height Fixed "Status:" Label with Isolated Chip Scroll Rail in `MousHeader` + Responsive CSS `static md:sticky` in `MarcomTableShell` (Accepted)
 - In `MousHeader.tsx`:
-  - Add `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar` to the status chips container.
-  - Pin the `Status:` label with in-rail sticky positioning: `sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]` so the label stays fixed in place during horizontal touch scrolling on mobile without text bleed-through.
+  - Outer pill container wraps the entire bar: `w-full sm:w-auto max-w-full overflow-hidden bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60`.
+  - The `Status:` label is flush to the top, left, and bottom: `shrink-0 flex items-center px-2.5 self-stretch text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/90 border-r border-slate-200/60 dark:border-slate-700/60 select-none`.
+  - The chip buttons sit in an isolated inner scroll container: `flex items-center gap-1 flex-1 min-w-0 overflow-x-auto no-scrollbar p-1`.
+  - Because `overflow-x-auto` is strictly bound to the chip rail container, any chip scrolling to the left is cleanly clipped at the vertical dividing border. Chips can never peek out behind, above, below, or to the left of the `Status:` label.
   - Add `shrink-0 whitespace-nowrap` to each `<motion.button>` chip so Framer Motion's `layoutId="activeMouStatusPill"` animates cleanly without text wrapping or flex compression.
   - Update search input wrapper from `flex-1 min-w-[200px] max-w-xs` to `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs` so it spans full width cleanly on mobile.
 - In `MarcomTableShell.tsx`:
@@ -68,8 +70,9 @@ In the MOUs & Partnerships module (`/mode=marcom&view=mous`), field managers and
 
 We accept **Option 1**:
 1. In `src/components/views/MousView/MousHeader.tsx`:
-   - Constrain the status chips container with `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar`.
-   - Make the `Status:` label fixed/sticky on mobile with `sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]` so context is preserved as chips slide behind it.
+   - Enclose status filtering in a unified rounded container (`overflow-hidden rounded-xl border bg-slate-100 dark:bg-slate-800/60`).
+   - Fix the `Status:` label full to the top, left, and bottom (`self-stretch px-2.5 bg-slate-100 dark:bg-slate-800/90 border-r border-slate-200/60 dark:border-slate-700/60`).
+   - Isolate the scroll rail inside `flex-1 min-w-0 overflow-x-auto no-scrollbar p-1` so scrolling chips are clipped at the dividing border and never exposed behind or around the label.
    - Add `shrink-0 whitespace-nowrap` to each `<motion.button>` status chip.
    - Make the search input container full-width on mobile (`w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs`).
 2. In `src/components/views/shared/MarcomTableShell.tsx`:

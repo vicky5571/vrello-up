@@ -25,14 +25,15 @@
 ### Phase 1: Test-Driven Harness Setup (TDD First)
 - [x] Update `src/components/views/MousView/mouColumns.test.ts`:
   - [x] Assert `MarcomTableShell.tsx` uses `static md:sticky` for `isRightSticky` header and body cells and does not hardcode inline `position: "sticky"`.
-  - [x] Assert `MousHeader.tsx` applies `overflow-x-auto no-scrollbar` and `max-w-full` on the status chips container, `shrink-0 whitespace-nowrap` on chip buttons, and in-rail `sticky left-0 z-20` on the `Status:` label with solid background and shadow separator.
+  - [x] Assert `MousHeader.tsx` wraps the bar with `overflow-hidden`, sets `Status:` label full top-left-bottom (`self-stretch`, `border-r`), and isolates chip rail with `overflow-x-auto no-scrollbar p-1`.
 - [x] Run test suite: `node --import tsx --test src/components/views/MousView/mouColumns.test.ts` (verify RED baseline failure).
 
 ### Phase 2: Component Refactor (`MousHeader.tsx` & `MarcomTableShell.tsx`)
 - [x] In `src/components/views/MousView/MousHeader.tsx`:
   - [x] Line 127: Change `className="relative flex-1 min-w-[200px] max-w-xs"` to `className="relative w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs"`.
-  - [x] Line 148: Add `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar` to the status chips container.
-  - [x] Line 149: Add `sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]` to the `Status:` label `<span>`.
+  - [x] Line 148: Set unified outer pill with `overflow-hidden` and no padding.
+  - [x] Line 149: Add `shrink-0 flex items-center px-2.5 self-stretch border-r select-none` to `Status:` label (full top-left-bottom).
+  - [x] Line 152: Isolate chip rail in `flex-1 min-w-0 overflow-x-auto no-scrollbar p-1`.
   - [x] Line 161: Add `shrink-0 whitespace-nowrap` to each `<motion.button>` status chip.
 - [x] In `src/components/views/shared/MarcomTableShell.tsx`:
   - [x] Lines 470–480 (Header cell): Remove `position: "sticky"` from inline `style` (keep `right: `${rightOffset}px``), replace unconditional `"relative"` + `isRightSticky && "z-20 ..."` with `isRightSticky ? "static md:sticky z-20 bg-slate-50 dark:bg-[#18191B]" : "relative"`, and prefix sticky border/shadow with `md:border-l` and `md:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)] dark:md:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.2)]`.

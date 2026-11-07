@@ -85,11 +85,12 @@ This specification defines the exact CSS/Tailwind changes in `MousHeader.tsx` an
 
 // AFTER:
 {/* Status Chips with Fluid Sliding Pill Animation */}
-<div className="flex items-center gap-1 w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-  <span className="sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 pl-1.5 pr-2 py-1 -my-1 rounded-l-lg text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0 whitespace-nowrap shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_4px_-1px_rgba(0,0,0,0.3)]">
+<div className="flex items-center w-full sm:w-auto max-w-full overflow-hidden bg-slate-100 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+  <span className="shrink-0 flex items-center px-2.5 self-stretch text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/90 border-r border-slate-200/60 dark:border-slate-700/60 select-none">
     Status:
   </span>
-  {statusChips.map((chip) => {
+  <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto no-scrollbar p-1">
+    {statusChips.map((chip) => {
     const isActive = selectedStatus === chip.value;
     return (
       <motion.button
@@ -182,7 +183,7 @@ Update `src/components/views/MousView/mouColumns.test.ts` to assert:
 1. `MarcomTableShell.tsx` uses responsive `static md:sticky` for `isRightSticky` columns instead of unconditional inline `position: "sticky"`.
 2. `MarcomTableShell.tsx` applies `md:border-l` and `md:shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.04)]` for `hasStickyBorder`.
 3. `MousHeader.tsx` applies `overflow-x-auto no-scrollbar` and `max-w-full` to the status chips container and `shrink-0 whitespace-nowrap` to status chip buttons.
-4. `MousHeader.tsx` applies in-rail `sticky left-0 z-20`, `bg-slate-100 dark:bg-slate-800`, and `shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)]` to the `Status:` label so it remains fixed during mobile horizontal scrolling without text bleed-through.
+4. `MousHeader.tsx` configures the unified outer container with `overflow-hidden`, pins the `Status:` label full top-left-bottom with `self-stretch` and `border-r`, and isolates the chip rail with `overflow-x-auto no-scrollbar p-1` so no scrolling chips can be exposed behind, above, below, or to the left of the label.
 
 ---
 

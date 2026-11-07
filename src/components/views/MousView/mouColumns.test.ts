@@ -136,22 +136,19 @@ describe("mouColumns and MarcomTableShell sticky right configuration (ADR-0030)"
       "MousHeader search input wrapper must be full-width on mobile and constrained on sm/desktop"
     );
     assert.ok(
-      mousHeaderContent.includes("w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar"),
-      "MousHeader status chips container must support horizontal touch scroll on mobile"
+      mousHeaderContent.includes("w-full sm:w-auto max-w-full") &&
+      mousHeaderContent.includes("overflow-hidden"),
+      "MousHeader status pill container must wrap the label and scroll rail cleanly with overflow-hidden"
     );
     assert.ok(
-      mousHeaderContent.includes("shrink-0 whitespace-nowrap") &&
+      mousHeaderContent.includes("self-stretch") &&
+      mousHeaderContent.includes("border-r border-slate-200/60 dark:border-slate-700/60") &&
       mousHeaderContent.includes("Status:"),
-      "MousHeader Status: label must not shrink or wrap"
+      "MousHeader Status: label must be full top-left-bottom (self-stretch) with a vertical divider border so no chips can be exposed behind it"
     );
     assert.ok(
-      mousHeaderContent.includes("sticky left-0 z-20") &&
-      mousHeaderContent.includes("bg-slate-100 dark:bg-slate-800"),
-      "MousHeader Status: label must be sticky left-0 z-20 with solid background to remain fixed on mobile scroll without bleed-through"
-    );
-    assert.ok(
-      mousHeaderContent.includes("shadow-[2px_0_4px_-1px_rgba(0,0,0,0.06)]"),
-      "MousHeader Status: label must have soft drop-shadow separator"
+      mousHeaderContent.includes("overflow-x-auto no-scrollbar p-1"),
+      "MousHeader chip rail must have isolated horizontal scroll to cleanly clip scrolling chips at the Status divider"
     );
     assert.ok(
       mousHeaderContent.includes("relative shrink-0 whitespace-nowrap px-2.5 py-1"),

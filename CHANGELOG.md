@@ -8,7 +8,7 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 - `feat(mous)`: Mobile MOU status pills horizontal scroll and desktop-only table sticky columns (ADR-0085)
   - Horizontally scrollable status rail: bounded status pills container in `MousHeader.tsx` with `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar`, allowing smooth touch scrolling across all 7 status chips on mobile screens ($\le 375\text{px}$)
-  - In-rail fixed status label: pinned `Status:` with `sticky left-0 z-20 bg-slate-100 dark:bg-slate-800` and subtle drop-shadow in `MousHeader.tsx`, keeping the filter context permanently visible during mobile scroll without text bleed-through
+  - Flush top-left-bottom fixed status label: anchored `Status:` label full to top, left, and bottom (`self-stretch`, `border-r`) within outer `overflow-hidden` pill bar, isolating the chip rail in a dedicated `overflow-x-auto p-1` container to completely eliminate any chip exposure behind, above, below, or to the left of the label
   - Text wrapping & animation guard: added `shrink-0 whitespace-nowrap` to the `Status:` label and each `<motion.button>` chip, preventing flex compression and ensuring Framer Motion `layoutId="activeMouStatusPill"` glides cleanly
   - Mobile full-width search: updated search input container in `MousHeader.tsx` to `w-full sm:flex-1 sm:min-w-[200px] sm:max-w-xs`, ensuring generous input tap targets on narrow viewports
   - Desktop-only sticky right columns: removed inline `position: "sticky"` in `MarcomTableShell.tsx` and applied responsive `static md:sticky` classes to right-pinned headers and body cells (`Dokumen MOU` and `Actions`), accompanied by `md:border-l` and `md:shadow-[...]`
