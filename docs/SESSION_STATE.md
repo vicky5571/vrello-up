@@ -8,8 +8,9 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **PLANNING COMPLETE**  
-**Previous Feature:** Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072) — **PLANNING COMPLETE**  
+**Active Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **PLANNING COMPLETE**  
+**Previous Feature:** Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Retrospective Documentation Backfill for Mobile Responsiveness (ADR-0068, ADR-0069, ADR-0070, ADR-0071) — **DOCUMENTATION COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **PLANNING COMPLETE**  
@@ -37,7 +38,26 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Mobile Field Event Media Section Upload Action Layout (ADR-0073 — Planning Complete):**
+1. **Implementasi Mobile Field Event Media Section Upload Action Layout (ADR-0073 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/EventsView/eventMediaResponsiveness.test.ts`):**
+     - Memverifikasi tombol header disembunyikan di mobile dan dirender di desktop (`hidden sm:flex`).
+     - Memverifikasi tombol *full-width* bawah dirender di mobile dan disembunyikan di desktop (`w-full sm:hidden`).
+     - Memverifikasi kedua tombol memicu `fileInputRef.current?.click()` dan disabled saat `isUploading`.
+     - Memverifikasi `EventMediaSection.tsx` tetap dalam batas aman ($\le 460$ LOC).
+     - Siklus TDD terverifikasi: RED state (3/4 assertions gagal saat baseline) -> GREEN state (4/4 assertions lulus).
+   - **Refaktor Komponen Media (`src/components/views/EventsView/EventMediaSection.tsx` — 454 LOC):**
+     - Menambahkan `shrink-0` pada icon `<Film className="w-4 h-4 text-blue-500 shrink-0" />` di baris header.
+     - Mengubah container tombol header menjadi `hidden sm:flex items-center gap-2`.
+     - Memindahkan input file `<input ref={fileInputRef} ... />` ke luar container `hidden sm:flex` agar tetap aktif di DOM tree dan dapat dipicu tombol mobile.
+     - Menambahkan tombol aksi *full-width* khusus mobile (`w-full sm:hidden py-2.5 px-3 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold flex items-center justify-center gap-2 border border-blue-200/60 shadow-2xs`) tepat di bawah area media (baik dropzone maupun daftar attachment thumbnail).
+     - **Invarian Desktop 100% Terjaga:** Tampilan desktop ($\ge 640\text{px}$) identik dengan desain asal.
+   - **Verifikasi Non-Negotiable Quality Gates:**
+     - `npm run drift:check` ✅ (100/100 spec-plan pairs valid, 0 drift).
+     - `npm run build:check` ✅ (0 TypeScript / Next.js compilation errors).
+     - `npm run test:smoke` ✅ (152/152 pass, 0 fail).
+     - `npm test` ✅ (975/975 pass, 0 fail).
+
+2. **Perencanaan Arsitektur Mobile Field Event Media Section Upload Action Layout (ADR-0073 — Planning Complete):**
    - **Diagnostik Masalah:**
      - Penempatan tombol `"Upload dari Perangkat"` di baris header `EventMediaSection.tsx` pada mobile viewports (< 640px) menyebabkan perebutan ruang sempit (~320px): judul `"Media & Dokumentasi Event"` terpecah menjadi 2 baris dan tombol terpecah menjadi 2 baris.
      - Posisi tombol kecil di header sulit dijangkau jempol satu tangan, dan saat aset sudah diunggah, kotak dropzone menghilang sehingga tombol kecil di header menjadi satu-satunya jalur penambahan file.

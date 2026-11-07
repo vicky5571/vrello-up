@@ -165,10 +165,10 @@ export function EventMediaSection({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-slate-100">
-          <Film className="w-4 h-4 text-blue-500" />
+          <Film className="w-4 h-4 text-blue-500 shrink-0" />
           <span>Media & Dokumentasi Event</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-2">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -178,15 +178,15 @@ export function EventMediaSection({
             <Upload className="w-3.5 h-3.5" />
             <span>Upload dari Perangkat</span>
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,video/*"
-            multiple
-            className="hidden"
-            onChange={handleDeviceFilesSelected}
-          />
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          className="hidden"
+          onChange={handleDeviceFilesSelected}
+        />
       </div>
 
       {/* Real-time Upload Progress Bar */}
@@ -400,6 +400,17 @@ export function EventMediaSection({
           </p>
         </div>
       )}
+
+      {/* Mobile-Only Full-Width Upload Button */}
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isUploading}
+        className="w-full sm:hidden py-2.5 px-3 rounded-lg bg-blue-50 hover:bg-blue-100 active:bg-blue-200 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center justify-center gap-2 border border-blue-200/60 dark:border-blue-900/40 transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
+      >
+        <Upload className="w-4 h-4" />
+        <span>Upload dari Perangkat</span>
+      </button>
 
       {/* Folder Archive Input Fallback */}
       <div className="pt-1">

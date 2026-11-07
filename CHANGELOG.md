@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(events)`: Mobile event media upload action layout and header stabilization (ADR-0073)
+  - Mobile (< 640px) header: hid the cramped `"Upload dari Perangkat"` header button via `hidden sm:flex` and added `shrink-0` to the header icon, allowing section title `"Media & Dokumentasi Event"` to span 100% on a single row without 2-line lateral wrapping
+  - Mobile (< 640px) upload action: relocated the primary upload button to a dedicated full-width action button (`w-full sm:hidden py-2.5 px-3 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold flex items-center justify-center gap-2 border border-blue-200/60 shadow-2xs`) positioned directly beneath the media area (below thumbnail grid or dropzone), dramatically improving thumb reach ergonomics for field teams
+  - Device input element accessibility: moved `<input ref={fileInputRef} ... />` outside the `hidden sm:flex` header container so it remains active in the DOM tree and cleanly triggered by both header and mobile buttons
+  - Desktop 100% preserved: resets to header right-aligned action row (`hidden sm:flex items-center gap-2`) and hides the mobile bottom button (`sm:hidden`) on viewports $\ge 640\text{px}$
+  - Safe file limit maintained: `EventMediaSection.tsx` maintains safe coordinator file limit at 454 LOC ($\le 460$ LOC)
+  - Added TDD unit test suite in `src/components/views/EventsView/eventMediaResponsiveness.test.ts` (4/4 tests passing)
+  - Verification: `npm run drift:check` ✅ (100/100 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (152/152), `npm test` ✅ (975/975)
+  - Refs: `docs/adr/0073-mobile-event-media-upload-action-layout.md`, `docs/superpowers/specs/2026-11-07-mobile-event-media-upload-layout-design.md`, `docs/superpowers/plans/2026-11-07-mobile-event-media-upload-layout.md`
+
 - `fix(events)`: Mobile checklist readability and responsive header layout (ADR-0072)
   - Mobile (< 640px) header: restructured header into 2 rows (`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2`) with title `Event Preparation Checklist` spanning row 1 and status strip (`0/5 selesai` + `Template <type>`) on row 2, eliminating text collision and 4-line squished wrapping
   - Multi-line subtask text wrapping: removed single-line `truncate` from checklist item titles, applying `break-words text-xs leading-snug` so field teams can read complete logistics subtasks
