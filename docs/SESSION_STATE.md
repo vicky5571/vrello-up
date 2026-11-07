@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **PLANNING COMPLETE**  
+**Active Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 3 Direct Physical Photo Upload Enforcement and Tautan URL Removal (ADR-0079) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **PLANNING COMPLETE**  
@@ -47,7 +48,25 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Guard Transisi Langkah Wizard & Normalisasi Tanggal Placement (ADR-0080 — Planning Complete):**
+1. **Implementasi Guard Transisi Langkah Wizard & Normalisasi Tanggal Placement (ADR-0080 — Implementation Complete):**
+   - **TDD Test Suite (`src/app/api/marcom/placements/placementDateSanitization.test.ts` & `src/components/views/PlacementsView/placementStepTransitionGuard.test.ts`):**
+     - Dibuat test suite mencakup 5 pengujian date sanitization (penerimaan format `"YYYY-MM-DD"`, ISO string, handling null/omitted date, serta static invariant helper check).
+     - Dibuat test suite mencakup 3 pengujian UI submission guard (verifikasi atribut `key="wizard-btn-next"` dan `key="wizard-btn-submit"`, verifikasi guard `handleFormSubmit` yang mengecek `currentStep !== 4`, serta batasan koordinator `PlacementFormModal.tsx` $\le 350$ LOC).
+     - Siklus TDD terverifikasi: Baseline RED (PrismaClientValidationError pada `"YYYY-MM-DD"` dan assertion failure pada tombol/guard) -> GREEN setelah perbaikan.
+   - **Pencegahan Premature Submission di UI Layer:**
+     - Menambahkan `key="wizard-btn-next"` pada tombol `"Lanjut"` (`type="button"`) dan `key="wizard-btn-submit"` pada tombol submit (`type="submit"`) di [`WizardFooter.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/PlacementsView/wizard/WizardFooter.tsx). Hal ini memaksa React melakukan unmount elemen DOM lama sehingga touch event / synthetic click tidak bocor ke tombol baru yang bermutasi menjadi `type="submit"`.
+     - Mengimplementasikan guard `handleFormSubmit(e)` pada [`PlacementFormModal.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/PlacementsView/PlacementFormModal.tsx) yang secara tegas menolak pemanggilan `onSave` jika `currentStep !== 4`.
+     - File `PlacementFormModal.tsx` terjaga pada 318 LOC ($\le 350$ LOC coordinator budget).
+   - **Normalisasi Tanggal di API Layer:**
+     - Menambahkan fungsi helper `parsePlacementDate(rawDate: unknown): Date | null` pada `POST /api/marcom/placements` (`route.ts`) dan `PATCH /api/marcom/placements/[id]` (`[id]/route.ts`).
+     - Mengonversi format tanggal string `"YYYY-MM-DD"`, ISO string, atau nullish secara aman menjadi objek native JavaScript `Date` sebelum Prisma query dieksekusi, meniadakan error HTTP 500 `PrismaClientValidationError`.
+   - **Verifikasi Kualitas & Invarian:**
+     - `npm run drift:check`: ✅ 0 drift (107/107 spec-plan pairs).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm run test:smoke`: ✅ 160/160 tests passing.
+     - `npm test`: ✅ 1024/1024 tests passing across 188 suites.
+
+2. **Perencanaan Arsitektur Guard Transisi Langkah Wizard & Normalisasi Tanggal Placement (ADR-0080 — Planning Complete):**
    - **Diagnosis Masalah UX Lapangan & Server Error:**
      - Menavigasi dari Langkah 3 ke Langkah 4 via tombol `"Lanjut"` pada modal wizard POSM (`PlacementFormModal.tsx`) secara prematur memicu pengiriman form (*auto-saving*), mengunci modal ke `"Menyimpan..."` sebelum petugas lapangan melakukan verifikasi titik koordinat/geofencing.
      - Teridentifikasi akar masalah UI: *React DOM reconciliation* menggunakan kembali (*reuses*) elemen `<button>` yang sama saat transisi dari `!isFinalStep` (`type="button"`) ke `isFinalStep` (`type="submit"`) karena ketiadaan atribut `key`. Pada siklus event layar sentuh / emulasi mobile, synthetic `click` event menyelesaikan aksinya pada tombol yang baru bermutasi menjadi `type="submit"`, memicu submit form langsung.

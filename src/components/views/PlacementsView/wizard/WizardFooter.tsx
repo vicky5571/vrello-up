@@ -69,6 +69,7 @@ export function WizardFooter({
 
         {!isFinalStep ? (
           <button
+            key="wizard-btn-next"
             type="button"
             onClick={onNextStep}
             disabled={!canAdvance || isSaving}
@@ -79,6 +80,7 @@ export function WizardFooter({
           </button>
         ) : (
           <button
+            key="wizard-btn-submit"
             type="submit"
             disabled={!canAdvance || isSaving}
             className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs rounded-xl font-bold text-white bg-lime-600 hover:bg-lime-700 transition-all shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"

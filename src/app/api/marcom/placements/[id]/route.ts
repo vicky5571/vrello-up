@@ -23,6 +23,12 @@ const PATCHABLE_FIELDS = [
   "locationNotes",
 ] as const;
 
+function parsePlacementDate(rawDate: unknown): Date | null {
+  if (!rawDate) return null;
+  const parsed = new Date(rawDate as string);
+  return !isNaN(parsed.getTime()) ? parsed : null;
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const existing = await prisma.placement.findUnique({ where: { id } });
@@ -46,6 +52,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if (data.brand !== undefined && typeof data.brand === "string") {
     data.brand = data.brand.toUpperCase() === "3" || data.brand.toUpperCase() === "TRI" ? "TRI" : "IM3";
+  }
+  if (data.date !== undefined) {
+    data.date = parsePlacementDate(data.date);
   }
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });

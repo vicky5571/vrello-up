@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `fix(placements)`: Wizard step transition submission guard and placement date sanitization (ADR-0080)
+  - Premature auto-save prevention: added explicit unique keys `key="wizard-btn-next"` and `key="wizard-btn-submit"` to `WizardFooter.tsx`, forcing React DOM reconciliation to unmount the transition button and preventing synthetic touch/pointer click leakage onto mutated `type="submit"` buttons when advancing from Step 3 to Step 4
+  - Modal form submission guard: implemented `handleFormSubmit` defensive wrapper in `PlacementFormModal.tsx` (`currentStep !== 4` returns immediately), ensuring form submission cannot execute prematurely on intermediate steps (1, 2, or 3) from rogue keyboard submit events or touch bleed
+  - Defensive date normalization: added `parsePlacementDate` helper in `POST /api/marcom/placements` (`route.ts`) and `PATCH /api/marcom/placements/[id]` (`[id]/route.ts`) to safely convert `"YYYY-MM-DD"`, ISO strings, and nullish dates into native JavaScript `Date` instances before executing Prisma queries, eliminating runtime `PrismaClientValidationError` HTTP 500 crashes
+  - Coordinator file budget preserved: `PlacementFormModal.tsx` maintained at 318 LOC ($\le 350$ LOC coordinator budget)
+  - Added TDD unit test suites: `src/app/api/marcom/placements/placementDateSanitization.test.ts` (5/5 tests passing) and `src/components/views/PlacementsView/placementStepTransitionGuard.test.ts` (4/4 tests passing)
+  - Verification: `npm run drift:check` ✅ (107/107 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (160/160), `npm test` ✅ (1024/1024)
+  - Refs: `docs/adr/0080-wizard-step-transition-guard-and-date-sanitization.md`, `docs/superpowers/specs/2026-11-07-wizard-step-transition-guard-and-date-sanitization-design.md`, `docs/superpowers/plans/2026-11-07-wizard-step-transition-guard-and-date-sanitization.md`
+
+
 - `feat(placements)`: Step 3 direct physical photo upload enforcement and Tautan URL removal (ADR-0079)
   - Legacy URL elimination: completely removed `"Tautan URL"` toggle button, collapsible text input box, and manual `"Tambah"` action from `PlacementPhotoUploader.tsx`, enforcing 100% authentic physical uploads via device camera or gallery
   - Dead code pruning: purged unused component states (`showManualUrl`, `manualUrlInput`), handler `handleAddManualUrl`, and unused Lucide icon imports (`Link as LinkIcon`, `ChevronDown`, `ChevronUp`, `Plus`), reducing component LOC by ~63 lines

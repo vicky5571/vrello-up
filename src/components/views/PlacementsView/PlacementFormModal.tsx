@@ -205,6 +205,14 @@ function PlacementFormModalContent({
     }
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (currentStep !== 4) {
+      return;
+    }
+    onSave(e);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-xs">
       <div className="w-full max-w-xl h-[88dvh] sm:h-auto sm:max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
@@ -235,7 +243,7 @@ function PlacementFormModalContent({
         </div>
 
         {/* Active Step Content Form with scrollable body & pinned footer */}
-        <form onSubmit={onSave} className="flex flex-col flex-1 min-h-0">
+        <form onSubmit={handleFormSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-4">
             {currentStep === 1 && (
               <Step1Outlet

@@ -22,6 +22,12 @@ const placementInclude = {
   },
 } as const;
 
+function parsePlacementDate(rawDate: unknown): Date | null {
+  if (!rawDate) return null;
+  const parsed = new Date(rawDate as string);
+  return !isNaN(parsed.getTime()) ? parsed : null;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -132,7 +138,7 @@ export async function POST(request: Request) {
         mouId: targetMouId,
         status,
         brand: normalizedBrand,
-        date,
+        date: parsePlacementDate(date),
         picName,
         photoUrl,
         dimensions,
