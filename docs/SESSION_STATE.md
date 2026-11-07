@@ -8,7 +8,9 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile MOU Status Pills Horizontal Scroll & Desktop-Only Table Sticky Columns (ADR-0085) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** BorrowRequestModal Rules of Hooks Order Stabilization (ADR-0086) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** BorrowRequestModal Rules of Hooks Order Stabilization (ADR-0086) — **PLANNING COMPLETE**  
+**Previous Feature:** Mobile MOU Status Pills Horizontal Scroll & Desktop-Only Table Sticky Columns (ADR-0085) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile MOU Status Pills Horizontal Scroll & Desktop-Only Table Sticky Columns (ADR-0085) — **PLANNING COMPLETE**  
 **Previous Feature:** Field Events Table Row Click Edit Drawer & Action Column Simplification (ADR-0084) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Field Events Table Row Click Edit Drawer & Action Column Simplification (ADR-0084) — **PLANNING COMPLETE**  
@@ -58,7 +60,28 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Scroll Horizontal Filter Status MOU Mobile & Sticky Kolom Khusus Desktop (ADR-0085 — Implementation Complete):**
+1. **Implementasi Stabilisasi Urutan React Hooks pada BorrowRequestModal (ADR-0086 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/InventoryView/borrowRequestModal.test.ts`):**
+     - Menambahkan subtest baru `"verifies all React hooks are called before early return if (!isOpen) return null"`.
+     - Memverifikasi keberadaan `if (!isOpen) return null;` dan `useMemo(`, menguji secara statis bahwa `useMemo` terpanggil sebelum early return (`useMemoIdx < earlyReturnIdx`).
+     - Menguji kode setelah `if (!isOpen) return null;` dengan regex invariant `/\buse(State|Effect|Memo|Callback|Ref|Context|Reducer|SyncExternalStore|Session|MarcomDataStore)\s*\(/` untuk menjamin tidak ada satupun React Hook yang dipanggil setelah early return.
+     - Terverifikasi siklus TDD: Baseline RED (assertion gagal) -> GREEN (11/11 tests passing).
+   - **Refaktor Komponen Wizard Modal (`BorrowRequestModal.tsx`):**
+     - Memindahkan `const completionStatus = useMemo(...)` dari baris 214 ke baris 93 (tepat setelah `useEffect` dan sebelum `handleEventChange` / `if (!isOpen) return null;`).
+     - Menjamin seluruh 33 React Hooks (`useSession`, 13× `useState`, 4× `useMarcomDataStore` selectors, 1× `useEffect`, 1× `useMemo`) dipanggil tanpa syarat (*unconditionally*) pada setiap render cycle baik saat modal tertutup (`isOpen === false`) maupun terbuka (`isOpen === true`).
+     - Menghapus pemanggilan hook kondisional yang sebelumnya memicu runtime error React 19 `Rendered more hooks than during the previous render`.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0086-borrow-request-modal-hook-order-fix.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0086-borrow-request-modal-hook-order-fix.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-borrow-request-modal-hook-order-fix-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-borrow-request-modal-hook-order-fix-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-borrow-request-modal-hook-order-fix.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-borrow-request-modal-hook-order-fix.md)
+     - Handover: [`docs/handover-borrow-request-modal-hook-order-fix.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-borrow-request-modal-hook-order-fix.md)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (113/113 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 164/164 tests passing across 65 suites (0 failures).
+     - Targeted unit test: ✅ 11/11 tests passing in `borrowRequestModal.test.ts`.
+
+2. **Implementasi Scroll Horizontal Filter Status MOU Mobile & Sticky Kolom Khusus Desktop (ADR-0085 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/MousView/mouColumns.test.ts`):**
      - Dibuat subtests baru memverifikasi:
        - `MarcomTableShell.tsx` menerapkan class responsif `static md:sticky` untuk sel header dan body sticky, serta menghapus inline `position: "sticky"` agar tidak mengaburkan viewport tabel mobile.

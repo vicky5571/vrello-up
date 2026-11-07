@@ -184,5 +184,25 @@ test("Borrow Request Modal Stepper Header Invariants (ADR-0055 smoke)", async (t
       "BorrowRequestModal must compute reactive completionStatus"
     );
   });
+
+  await t.test("verifies all React hooks are called before early return if (!isOpen) return null", () => {
+    const modalContent = fs.readFileSync(modalPath, "utf-8");
+    const earlyReturnIdx = modalContent.indexOf("if (!isOpen) return null;");
+    const useMemoIdx = modalContent.indexOf("useMemo(");
+
+    assert.ok(earlyReturnIdx !== -1, "BorrowRequestModal must have an early return guard for !isOpen");
+    assert.ok(useMemoIdx !== -1, "BorrowRequestModal must memoize completionStatus with useMemo");
+    assert.ok(
+      useMemoIdx < earlyReturnIdx,
+      "useMemo must be called before `if (!isOpen) return null;` to obey Rules of Hooks"
+    );
+
+    const codeAfterEarlyReturn = modalContent.slice(earlyReturnIdx);
+    assert.doesNotMatch(
+      codeAfterEarlyReturn,
+      /\buse(State|Effect|Memo|Callback|Ref|Context|Reducer|SyncExternalStore|Session|MarcomDataStore)\s*\(/,
+      "No React hooks may be called after `if (!isOpen) return null;`"
+    );
+  });
 });
 

@@ -90,6 +90,18 @@ export function BorrowRequestModal({
     }
   }, [isOpen, defaultEventId, fetchEvents, fetchInventory, session?.user?.name]);
 
+  const completionStatus = useMemo(
+    () =>
+      getBorrowStepCompletionStatus({
+        borrowerName,
+        borrowerPhone,
+        borrowDate,
+        returnDueDate,
+        selectedItems,
+      }),
+    [borrowerName, borrowerPhone, borrowDate, returnDueDate, selectedItems]
+  );
+
   // When event is selected, auto-fill location if empty
   const handleEventChange = (selectedId: string) => {
     setEventId(selectedId);
@@ -210,18 +222,6 @@ export function BorrowRequestModal({
       setLoading(false);
     }
   };
-
-  const completionStatus = useMemo(
-    () =>
-      getBorrowStepCompletionStatus({
-        borrowerName,
-        borrowerPhone,
-        borrowDate,
-        returnDueDate,
-        selectedItems,
-      }),
-    [borrowerName, borrowerPhone, borrowDate, returnDueDate, selectedItems]
-  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">

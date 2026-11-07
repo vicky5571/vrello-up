@@ -6,6 +6,13 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `fix(inventory)`: BorrowRequestModal React Rules of Hooks order stabilization (ADR-0086)
+  - Unconditional React hook hoisting: relocated `const completionStatus = useMemo(...)` in `BorrowRequestModal.tsx` from line 214 to line 93 (above `if (!isOpen) return null;`), ensuring all 33 hooks execute unconditionally in identical sequence across both open and closed modal states
+  - Elimination of hook ordering crash: completely resolved React 19 runtime crash (`Rendered more hooks than during the previous render`) triggered when opening the borrow equipment request modal
+  - Static invariant regression test: added subtest in `src/components/views/InventoryView/borrowRequestModal.test.ts` asserting that `useMemo` is placed before `if (!isOpen) return null;` and that no React hooks (`use*(`) appear in component code after the early return
+  - Verification: `npm run drift:check` ✅ (113/113 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (164/164), targeted test ✅ (11/11)
+  - Refs: `docs/adr/0086-borrow-request-modal-hook-order-fix.md`, `docs/superpowers/specs/2026-11-08-borrow-request-modal-hook-order-fix-design.md`, `docs/superpowers/plans/2026-11-08-borrow-request-modal-hook-order-fix.md`
+
 - `feat(mous)`: Mobile MOU status pills horizontal scroll and desktop-only table sticky columns (ADR-0085)
   - Horizontally scrollable status rail: bounded status pills container in `MousHeader.tsx` with `w-full sm:w-auto max-w-full overflow-x-auto no-scrollbar`, allowing smooth touch scrolling across all 7 status chips on mobile screens ($\le 375\text{px}$)
   - Flush top-left-bottom fixed status label: anchored `Status:` label full to top, left, and bottom (`self-stretch`, `border-r`) within outer `overflow-hidden` pill bar, isolating the chip rail in a dedicated `overflow-x-auto p-1` container to completely eliminate any chip exposure behind, above, below, or to the left of the label
