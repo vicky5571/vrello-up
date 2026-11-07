@@ -8,7 +8,7 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Step 3 Direct Physical Photo Upload Enforcement and Tautan URL Removal (ADR-0079) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 3 Direct Physical Photo Upload Enforcement and Tautan URL Removal (ADR-0079) — **PLANNING COMPLETE**  
 **Previous Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Step 2 POSM Material Selector Unification with CustomDropdown and Emoji Sanitization (ADR-0078) — **PLANNING COMPLETE**  
@@ -47,7 +47,23 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Penegakan Bukti Foto Fisik & Penghapusan Tautan URL Langkah 3 (ADR-0079 — Implementation Complete):**
+1. **Perencanaan Arsitektur Guard Transisi Langkah Wizard & Normalisasi Tanggal Placement (ADR-0080 — Planning Complete):**
+   - **Diagnosis Masalah UX Lapangan & Server Error:**
+     - Menavigasi dari Langkah 3 ke Langkah 4 via tombol `"Lanjut"` pada modal wizard POSM (`PlacementFormModal.tsx`) secara prematur memicu pengiriman form (*auto-saving*), mengunci modal ke `"Menyimpan..."` sebelum petugas lapangan melakukan verifikasi titik koordinat/geofencing.
+     - Teridentifikasi akar masalah UI: *React DOM reconciliation* menggunakan kembali (*reuses*) elemen `<button>` yang sama saat transisi dari `!isFinalStep` (`type="button"`) ke `isFinalStep` (`type="submit"`) karena ketiadaan atribut `key`. Pada siklus event layar sentuh / emulasi mobile, synthetic `click` event menyelesaikan aksinya pada tombol yang baru bermutasi menjadi `type="submit"`, memicu submit form langsung.
+     - Teridentifikasi akar masalah API: Request `POST /api/marcom/placements` mengalami crash HTTP 500 `PrismaClientValidationError` karena Prisma `Placement.date DateTime?` menolak string tanggal parsial `"YYYY-MM-DD"` (misal `"2026-11-07"`) yang dilewatkan langsung tanpa dikonversi ke objek JavaScript `Date`.
+   - **Solusi Desain Pertahanan Ganda (Dual Defense):**
+     - Di sisi UI: Memberikan `key="wizard-btn-next"` dan `key="wizard-btn-submit"` yang terisolasi pada [`WizardFooter.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/PlacementsView/wizard/WizardFooter.tsx), memaksa React melakukan *unmount* tombol lama dan membatalkan in-flight click event.
+     - Di sisi Modal: Memasang guard `handleFormSubmit(e)` pada [`PlacementFormModal.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/PlacementsView/PlacementFormModal.tsx) yang secara tegas menolak pemanggilan `onSave` jika `currentStep !== 4`.
+     - Di sisi API: Menambahkan fungsi helper `parsePlacementDate` pada `POST /api/marcom/placements/route.ts` dan `PATCH /api/marcom/placements/[id]/route.ts` untuk mengonversi string tanggal menjadi `new Date(date)` yang aman untuk Prisma.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0080-wizard-step-transition-guard-and-date-sanitization.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0080-wizard-step-transition-guard-and-date-sanitization.md)
+     - Spec: [`docs/superpowers/specs/2026-11-07-wizard-step-transition-guard-and-date-sanitization-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-07-wizard-step-transition-guard-and-date-sanitization-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-07-wizard-step-transition-guard-and-date-sanitization.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-wizard-step-transition-guard-and-date-sanitization.md)
+     - Handover: [`docs/handover-wizard-step-transition-guard-and-date-sanitization.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-wizard-step-transition-guard-and-date-sanitization.md)
+     - Invarian Verifikasi: `npm run drift:check` ✅ (107/107 spec-plan pairs).
+
+2. **Implementasi Penegakan Bukti Foto Fisik & Penghapusan Tautan URL Langkah 3 (ADR-0079 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/PlacementsView/step3PhotoUploadResponsiveness.test.ts`):**
      - Dibuat test suite 7 pengujian memverifikasi eliminasi total tombol `"Tautan URL"`, state `showManualUrl`/`manualUrlInput`, fungsi `handleAddManualUrl`, kontainer input URL `type="url"`, pembersihan icon Lucide (`LinkIcon`, `ChevronDown`, `ChevronUp`, `Plus`), serta preservasi tombol kamera dan galeri.
      - Terverifikasi baseline RED (4 pengujian gagal sebelum refactor) dan GREEN setelah perbaikan.
