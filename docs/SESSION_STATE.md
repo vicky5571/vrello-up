@@ -8,7 +8,7 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Placement Modal Viewport Height Stabilization and Search Results Expansion (ADR-0076) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile Wizard Stepper Header Dynamic Accordion Expansion (ADR-0077) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Placement Modal Viewport Height Stabilization and Search Results Expansion (ADR-0076) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **PLANNING COMPLETE & AMENDED**  
 **Previous Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **IMPLEMENTATION COMPLETE**  
@@ -43,7 +43,25 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Stabilisasi Ketinggian Modal & Ekspansi Hasil Pencarian Mobile (ADR-0076 — Implementation Complete):**
+1. **Perencanaan Arsitektur Stepper Header Dynamic Accordion di Mobile (ADR-0077 — Planning Complete):**
+   - **Diagnosis Masalah UX Lapangan:**
+     - Stepper wizard POSM (`WizardStepperHeader.tsx`) membagi 4 langkah secara rata (`grid grid-cols-4`) di mobile.
+     - Akibatnya, seluruh label teks langkah disembunyikan kaku (`hidden sm:flex`), hanya menyisakan angka dan icon kecil (`[ 1 🏬 ] [ 2 📚 ] [ 3 📷 ] [ 4 📍 ]`).
+     - Pengguna dan installer di lapangan kehilangan konteks teks mengenai nama langkah dan tindakan yang harus dilakukan.
+   - **Solusi Desain Responsif Mobile-First (Dynamic Flex Accordion):**
+     - Mengubah container tombol stepper di mobile menjadi `flex items-center gap-1 sm:grid sm:grid-cols-4 sm:gap-2`.
+     - **Langkah Aktif (`isCurrent`):** Melebar mengambil ruang sisa (`flex-1 min-w-0 px-2.5 py-1.5`) dan menampilkan nomor, icon, serta **teks label aktif** (`<span className="truncate text-xs font-bold sm:hidden">{s.label}</span>`).
+     - **Langkah Tidak Aktif (`!isCurrent`):** Menyusut ringkas (`shrink-0 px-2 py-1.5`), hanya menampilkan nomor/centang dan icon, menghemat ruang secara maksimal untuk langkah aktif.
+     - Desktop invariant: Tampilan desktop ($\ge 640\text{px}$) dipertahankan 100% *byte-for-byte* tanpa perubahan (`sm:grid sm:grid-cols-4 sm:gap-2`).
+   - **Artefak Perencanaan:**
+     - ADR: [`docs/adr/0077-mobile-wizard-stepper-accordion-expansion.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0077-mobile-wizard-stepper-accordion-expansion.md)
+     - Spec: [`docs/superpowers/specs/2026-11-07-mobile-wizard-stepper-accordion-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-07-mobile-wizard-stepper-accordion-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-07-mobile-wizard-stepper-accordion.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-mobile-wizard-stepper-accordion.md)
+     - Handover: [`docs/handover-mobile-wizard-stepper-accordion.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-mobile-wizard-stepper-accordion.md)
+   - **Verifikasi Invarian Drift:**
+     - 104/104 spec-plan pairing lulus 100% tanpa drift (`npm run drift:check`).
+
+2. **Perencanaan Arsitektur Stabilisasi Ketinggian Modal & Ekspansi Hasil Pencarian Mobile (ADR-0076 — Planning Complete):**
    - **TDD Test Suite (`src/components/views/PlacementsView/placementModalResponsiveness.test.ts`):**
      - Memverifikasi container modal menggunakan `h-[88dvh]` di mobile dan `sm:h-auto sm:max-h-[92vh]` di desktop.
      - Memverifikasi form body menggunakan `flex-1 min-h-0 overflow-y-auto` dan menghapus `min-h-[340px]`.
