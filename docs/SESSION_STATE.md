@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Step 3 Photo Upload Navigation Blocker and State Lifting (ADR-0082) — **PLANNING COMPLETE**  
+**Previous Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Step 4 Location Verification Emoji Sanitization and Map Label Simplification (ADR-0081) — **PLANNING COMPLETE**  
 **Previous Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Wizard Step Transition Submission Guard and Placement Date Sanitization (ADR-0080) — **PLANNING COMPLETE**  
@@ -50,7 +51,24 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Sanitasi Emoji Langkah 4 & Penyederhanaan Label Peta (ADR-0081 — Implementation Complete):**
+1. **Perencanaan Arsitektur Blokir Navigasi Saat Upload Foto Langkah 3 (ADR-0082 / TD-006 — Planning Complete):**
+   - **Diagnosis Masalah UX Lapangan & Integritas Bukti Foto:**
+     - Pada Langkah 3 wizard POSM (`Step3PhotoNotes.tsx` / `PlacementPhotoUploader.tsx`), status upload foto (`isUploading === true`) sebelumnya terisolasi di dalam *local state* komponen uploader.
+     - Tombol navigasi footer modal (`WizardFooter.tsx`) untuk aksi `Lanjut`, `Simpan Cepat`, dan `Kembali` tetap aktif (*clickable*) saat foto sedang dikompresi dan diunggah. Jika petugas berpindah ke Langkah 4 atau menekan Simpan Cepat, foto yang sedang diunggah tidak terlampir ke payload penyimpanan.
+     - Pengecualian operasional: Tombol `Batal` harus tetap aktif dan dapat diklik agar petugas tidak terkunci di dalam modal jika koneksi lapangan mengalami gangguan.
+   - **Solusi Desain Declarative State Lifting:**
+     - Menambahkan callback prop `onUploadingChange?: (isUploading: boolean) => void` pada `PlacementPhotoUploader` dan `Step3PhotoNotes`.
+     - Mengangkat status ke state modal `isPhotoUploading` di koordinator `PlacementFormModal.tsx`, lalu meneruskannya ke `WizardFooter.tsx`.
+     - Mengunci tombol `Lanjut`, `Simpan Cepat`, dan `Kembali` saat `isPhotoUploading === true`.
+     - Membiarkan tombol `Batal` tetap aktif (`disabled={isSaving}`) untuk keamanan petugas lapangan.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0082-step3-photo-upload-navigation-blocker.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0082-step3-photo-upload-navigation-blocker.md)
+     - Spec: [`docs/superpowers/specs/2026-11-07-step3-photo-upload-navigation-blocker-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-07-step3-photo-upload-navigation-blocker-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-07-step3-photo-upload-navigation-blocker.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-07-step3-photo-upload-navigation-blocker.md)
+     - Handover: [`docs/handover-step3-photo-upload-navigation-blocker.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-step3-photo-upload-navigation-blocker.md)
+     - Invarian Verifikasi: `npm run drift:check` ✅ (109/109 spec-plan pairs).
+
+2. **Implementasi Sanitasi Emoji Langkah 4 & Penyederhanaan Label Peta (ADR-0081 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/PlacementsView/step4EmojiSanitization.test.ts`):**
      - Dibuat test suite 7 pengujian memverifikasi eliminasi 100% emoji mentah (`👆`, `🔒`, `ℹ️`, `⚠️`, `📍`, `🗺️`), eliminasi teks teknis internal `(Mode Hemat RAM/Data)` dan `(Preview Radius 100m)`, penyederhanaan label toggle peta interaktif, integrasi icon Lucide SVG (`MousePointerClick`, `Lock`, `Info`, `AlertTriangle`, `CheckCircle2`), dan pemenuhan batas LOC komponen.
      - Terverifikasi baseline RED (6/7 pengujian gagal saat awal) -> GREEN setelah perbaikan.
