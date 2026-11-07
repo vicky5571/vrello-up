@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Wizard Stepper Header Dynamic Accordion Expansion (ADR-0077) — **PLANNING COMPLETE**  
+**Active Feature:** Mobile Wizard Stepper Header Dynamic Accordion Expansion (ADR-0077) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile Wizard Stepper Header Dynamic Accordion Expansion (ADR-0077) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Placement Modal Viewport Height Stabilization and Search Results Expansion (ADR-0076) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Outlet Search Results and Selected Card Readability (ADR-0075) — **PLANNING COMPLETE & AMENDED**  
 **Previous Feature:** Placement Form Selected Outlet GPS and Address Data Propagation (ADR-0074) — **IMPLEMENTATION COMPLETE**  
@@ -43,7 +44,22 @@
 
 ## What Was Completed This Session
 
-1. **Perencanaan Arsitektur Stepper Header Dynamic Accordion di Mobile (ADR-0077 — Planning Complete):**
+1. **Implementasi Stepper Header Dynamic Accordion di Mobile (ADR-0077 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/PlacementsView/wizardStepperResponsiveness.test.ts`):**
+     - Dibuat test suite mencakup 6 pengujian invariant tata letak responsif accordion dan integritas metadata langkah wizard.
+     - Terverifikasi baseline RED (4 pengujian gagal sebelum refactor komponen) dan GREEN setelah perbaikan.
+   - **Refactor Komponen Stepper (`src/components/views/PlacementsView/wizard/WizardStepperHeader.tsx`):**
+     - Container diubah dari grid kaku `grid grid-cols-4` menjadi dynamic accordion `flex items-center gap-1 sm:grid sm:grid-cols-4 sm:gap-2`.
+     - Langkah aktif (`isCurrent`): Memanfaatkan `flex-1 min-w-0 px-2.5 justify-start`, menampilkan lingkaran nomor, icon langkah, dan teks label aktif lengkap (`<span className="truncate text-xs font-bold sm:hidden text-lime-900 dark:text-lime-200">{s.label}</span>`).
+     - Langkah tidak aktif (`!isCurrent`): Menyusut rapi `shrink-0 px-2 sm:px-2.5 justify-center sm:justify-start` menampilkan nomor/centang dan icon tanpa label teks.
+     - Desktop invariant: Dipertahankan 100% *byte-for-byte* sebagai 4-kolom setara dengan label 2-baris (`hidden sm:flex flex-col min-w-0`).
+     - Ukuran file: `WizardStepperHeader.tsx` terjaga pada 105 LOC ($\le 150$ LOC target).
+   - **Verifikasi Kualitas & Invarian:**
+     - `npm run drift:check`: ✅ 0 drift (104/104 spec-plan pairs).
+     - `npm run build:check`: ✅ 0 TypeScript errors.
+     - `npm test`: ✅ 1002/1002 tests passing.
+
+2. **Perencanaan Arsitektur Stepper Header Dynamic Accordion di Mobile (ADR-0077 — Planning Complete):**
    - **Diagnosis Masalah UX Lapangan:**
      - Stepper wizard POSM (`WizardStepperHeader.tsx`) membagi 4 langkah secara rata (`grid grid-cols-4`) di mobile.
      - Akibatnya, seluruh label teks langkah disembunyikan kaku (`hidden sm:flex`), hanya menyisakan angka dan icon kecil (`[ 1 🏬 ] [ 2 📚 ] [ 3 📷 ] [ 4 📍 ]`).

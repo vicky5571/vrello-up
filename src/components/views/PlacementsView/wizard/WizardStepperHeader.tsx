@@ -28,8 +28,8 @@ export function WizardStepperHeader({
 }: WizardStepperHeaderProps) {
   return (
     <div className="space-y-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-      {/* 4 Step Pills */}
-      <div className="grid grid-cols-4 gap-1 sm:gap-2">
+      {/* 4 Step Pills (Accordion on Mobile, Grid on Desktop) */}
+      <div className="flex items-center gap-1 sm:grid sm:grid-cols-4 sm:gap-2">
         {WIZARD_STEPS.map((s) => {
           const Icon = STEP_ICONS[s.step];
           const isCurrent = currentStep === s.step;
@@ -43,12 +43,12 @@ export function WizardStepperHeader({
               disabled={!isClickable}
               onClick={() => isClickable && onSelectStep(s.step)}
               className={cn(
-                "flex items-center justify-center sm:justify-start gap-1.5 px-2 py-1.5 rounded-xl border text-left transition-all text-xs font-semibold",
+                "flex items-center gap-1.5 py-1.5 rounded-xl border text-left transition-all text-xs font-semibold",
                 isCurrent
-                  ? "bg-lime-500/10 text-lime-800 dark:text-lime-300 border-lime-500/40 ring-2 ring-lime-500/20 shadow-xs"
+                  ? "flex-1 min-w-0 px-2.5 justify-start bg-lime-500/10 text-lime-800 dark:text-lime-300 border-lime-500/40 ring-2 ring-lime-500/20 shadow-xs"
                   : isCompleted
-                  ? "bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 cursor-pointer"
-                  : "bg-slate-50/50 dark:bg-slate-900/40 text-slate-400 dark:text-slate-600 border-transparent cursor-not-allowed opacity-60"
+                  ? "shrink-0 px-2 sm:px-2.5 justify-center sm:justify-start bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 cursor-pointer"
+                  : "shrink-0 px-2 sm:px-2.5 justify-center sm:justify-start bg-slate-50/50 dark:bg-slate-900/40 text-slate-400 dark:text-slate-600 border-transparent cursor-not-allowed opacity-60"
               )}
             >
               {/* Step indicator circle */}
@@ -69,7 +69,17 @@ export function WizardStepperHeader({
                 )}
               </span>
 
-              {/* Label */}
+              {/* Step Icon */}
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+
+              {/* Active Mobile Label */}
+              {isCurrent && (
+                <span className="truncate text-xs font-bold sm:hidden text-lime-900 dark:text-lime-200">
+                  {s.label}
+                </span>
+              )}
+
+              {/* Desktop Label (All 4 steps) */}
               <div className="hidden sm:flex flex-col min-w-0">
                 <span className="truncate text-[11px] leading-tight font-bold">
                   {s.shortLabel}
@@ -78,9 +88,6 @@ export function WizardStepperHeader({
                   Langkah {s.step}
                 </span>
               </div>
-
-              {/* Mobile icon only */}
-              <Icon className="w-3.5 h-3.5 sm:hidden shrink-0" />
             </button>
           );
         })}

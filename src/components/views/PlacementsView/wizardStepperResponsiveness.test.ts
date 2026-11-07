@@ -1,0 +1,75 @@
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { WIZARD_STEPS } from "./wizard/placementWizardHelpers";
+
+describe("Mobile Wizard Stepper Header Dynamic Accordion Expansion (ADR-0077)", () => {
+  const stepperPath = path.resolve(
+    process.cwd(),
+    "src/components/views/PlacementsView/wizard/WizardStepperHeader.tsx"
+  );
+
+  describe("Responsive Layout & Accordion Invariants", () => {
+    it("verifies container switches from mobile flex accordion to desktop 4-column grid", () => {
+      const content = fs.readFileSync(stepperPath, "utf-8");
+      assert.ok(
+        content.includes("flex items-center gap-1 sm:grid sm:grid-cols-4 sm:gap-2"),
+        "Stepper track must use 'flex items-center gap-1 sm:grid sm:grid-cols-4 sm:gap-2'"
+      );
+    });
+
+    it("verifies active step expands dynamically (flex-1 min-w-0) on mobile viewports", () => {
+      const content = fs.readFileSync(stepperPath, "utf-8");
+      assert.ok(
+        content.includes("flex-1 min-w-0") && content.includes("px-2.5"),
+        "Active step must expand with flex-1 min-w-0 and comfortable horizontal padding"
+      );
+    });
+
+    it("verifies inactive steps shrink (shrink-0) into compact icon badges on mobile", () => {
+      const content = fs.readFileSync(stepperPath, "utf-8");
+      assert.ok(
+        content.includes("shrink-0 px-2 sm:px-2.5 justify-center sm:justify-start"),
+        "Inactive steps must use shrink-0 px-2 sm:px-2.5 justify-center sm:justify-start"
+      );
+    });
+
+    it("verifies active step renders full mobile label while desktop preserves 2-line label for all steps", () => {
+      const content = fs.readFileSync(stepperPath, "utf-8");
+      assert.ok(
+        content.includes("{isCurrent && (") &&
+          content.includes("sm:hidden") &&
+          content.includes("{s.label}"),
+        "Active step must render s.label on mobile viewports (sm:hidden)"
+      );
+      assert.ok(
+        content.includes("hidden sm:flex flex-col min-w-0"),
+        "Desktop must preserve 2-line label block (hidden sm:flex flex-col min-w-0)"
+      );
+    });
+
+    it("verifies WizardStepperHeader maintains strict file limit (<= 150 LOC)", () => {
+      const content = fs.readFileSync(stepperPath, "utf-8");
+      const loc = content.split("\n").length;
+      assert.ok(
+        loc <= 150,
+        `WizardStepperHeader.tsx has ${loc} LOC, exceeding 150 LOC budget`
+      );
+    });
+  });
+
+  describe("Wizard Step Definition & Integrity", () => {
+    it("verifies 4 distinct wizard steps exist with valid labels and step numbers", () => {
+      assert.equal(WIZARD_STEPS.length, 4);
+      assert.deepEqual(
+        WIZARD_STEPS.map((s) => s.step),
+        [1, 2, 3, 4]
+      );
+      assert.equal(WIZARD_STEPS[0].shortLabel, "Outlet");
+      assert.equal(WIZARD_STEPS[1].shortLabel, "Materi");
+      assert.equal(WIZARD_STEPS[2].shortLabel, "Foto");
+      assert.equal(WIZARD_STEPS[3].shortLabel, "Lokasi");
+    });
+  });
+});

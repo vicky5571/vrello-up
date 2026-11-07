@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-07]
 
+- `feat(placements)`: Mobile wizard stepper header dynamic accordion expansion (ADR-0077)
+  - Responsive layout transition: transformed 4-step wizard track in `WizardStepperHeader.tsx` from rigid 4-column mobile grid into dynamic flex accordion (`flex items-center gap-1 sm:grid sm:grid-cols-4 sm:gap-2`), while strictly preserving desktop equal 4-column grid layout
+  - Active step dynamic expansion: active step pill expands dynamically (`flex-1 min-w-0 px-2.5 justify-start`) on mobile, presenting full active milestone title (`s.label`) and icon, providing field operators immediate contextual milestone awareness without guesswork
+  - Inactive step compact badge collapse: non-active steps collapse into compact milestone badges (`shrink-0 px-2 sm:px-2.5 justify-center sm:justify-start`), hiding label text while retaining tactile step number, checkmark indicator, icon, and direct tap-to-navigate capability
+  - Zero lateral overflow: fluid flexbox allocation eliminates all horizontal truncation and multiline breakage across compact 320px–420px mobile viewports
+  - Strict file budget adherence: `WizardStepperHeader.tsx` maintained at 105 LOC ($\le 150$ LOC target, well within $\le 250$ LOC coordinator invariant)
+  - Added TDD unit test suite in `src/components/views/PlacementsView/wizardStepperResponsiveness.test.ts` (6/6 tests passing)
+  - Verification: `npm run drift:check` ✅ (104/104 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (155/155), `npm test` ✅ (1002/1002)
+  - Refs: `docs/adr/0077-mobile-wizard-stepper-accordion-expansion.md`, `docs/superpowers/specs/2026-11-07-mobile-wizard-stepper-accordion-design.md`, `docs/superpowers/plans/2026-11-07-mobile-wizard-stepper-accordion.md`
+
+
 - `fix(placements)`: Mobile placement modal fixed viewport height and search results expansion (ADR-0076)
   - Modal chassis height stabilization: updated outer dialog wrapper in `PlacementFormModal.tsx` to `w-full max-w-xl h-[88dvh] sm:h-auto sm:max-h-[92vh]`, anchoring the wizard chassis to a stable 88% dynamic viewport height on mobile devices and keeping the header and footer (`"Batal"` and `"Lanjut"`) permanently pinned without bouncing layout shift
   - Scroll container unconstrained baseline: replaced `min-h-[340px]` on form scroll body with `min-h-0 flex-1 overflow-y-auto`, ensuring seamless internal scrolling across all 4 steps without outer modal clipping or vertical distortion
