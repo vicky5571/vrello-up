@@ -8,7 +8,7 @@
 
 **Date:** 2026-11-07  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile Field Event Media Section Upload Action Layout (ADR-0073) — **PLANNING COMPLETE**  
 **Previous Feature:** Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072) — **PLANNING COMPLETE**  
 **Previous Feature:** Retrospective Documentation Backfill for Mobile Responsiveness (ADR-0068, ADR-0069, ADR-0070, ADR-0071) — **DOCUMENTATION COMPLETE**  
 **Previous Feature:** Mobile Bottom Navigation — Fluid Sliding Pill Animation & Layout Isolation (ADR-0067) — **IMPLEMENTATION COMPLETE**  
@@ -37,7 +37,22 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072 — Implementation Complete):**
+1. **Perencanaan Arsitektur Mobile Field Event Media Section Upload Action Layout (ADR-0073 — Planning Complete):**
+   - **Diagnostik Masalah:**
+     - Penempatan tombol `"Upload dari Perangkat"` di baris header `EventMediaSection.tsx` pada mobile viewports (< 640px) menyebabkan perebutan ruang sempit (~320px): judul `"Media & Dokumentasi Event"` terpecah menjadi 2 baris dan tombol terpecah menjadi 2 baris.
+     - Posisi tombol kecil di header sulit dijangkau jempol satu tangan, dan saat aset sudah diunggah, kotak dropzone menghilang sehingga tombol kecil di header menjadi satu-satunya jalur penambahan file.
+   - **Keputusan Desain & Rationale (ADR-0073 — Opsi A):**
+     - Sembunyikan tombol header di mobile via `hidden sm:flex`, membiarkan judul membentang penuh 100% pada **1 baris utuh**.
+     - Render tombol aksi *full-width* ergonomis khusus mobile (`w-full sm:hidden`) tepat di bawah area media (di bawah dropzone saat kosong, atau di bawah daftar thumbnail saat terisi).
+     - **Invarian Desktop 100% Terjaga:** Tampilan desktop ($\ge 640\text{px}$) tetap mempertahankan tombol di header (`sm:flex sm:items-center`) dan menyembunyikan tombol bawah (`sm:hidden`).
+   - **Dokumen Perencanaan Lengkap Disusun:**
+     - ADR: `docs/adr/0073-mobile-event-media-upload-action-layout.md` (ACCEPTED).
+     - Spec: `docs/superpowers/specs/2026-11-07-mobile-event-media-upload-layout-design.md` (APPROVED).
+     - Plan: `docs/superpowers/plans/2026-11-07-mobile-event-media-upload-layout.md` (APPROVED).
+     - Handover: `docs/handover-mobile-event-media-upload-layout.md` (EXECUTION-READY).
+   - **Verifikasi Drift Check:** `npm run drift:check` ✅ (100/100 spec-plan pairs valid, 0 drift).
+
+2. **Implementasi Mobile Field Event Checklist Readability & Header Layout Enhancement (ADR-0072 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/EventsView/eventChecklistResponsiveness.test.ts`):**
      - Menambahkan pengujian responsivitas 2 baris header pada mobile dan 1 baris inline pada desktop.
      - Memverifikasi ketiadaan kelas `truncate` dan penggunaan `break-words text-xs leading-snug` untuk pembungkusan multi-baris subtask.
