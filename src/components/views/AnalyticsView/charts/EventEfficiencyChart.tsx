@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -21,6 +22,18 @@ interface EventEfficiencyChartProps {
 
 export function EventEfficiencyChart({ data, onDrilldown }: EventEfficiencyChartProps) {
   const { theme } = useChartTheme();
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const mobileActive = mounted && isMobile;
 
   const accessibleRows = data.eventsByType.map((e) => [
     e.eventType,
@@ -57,13 +70,17 @@ export function EventEfficiencyChart({ data, onDrilldown }: EventEfficiencyChart
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data.eventsByType}
-            margin={{ top: 10, right: 20, left: 10, bottom: 5 }}
+            margin={{ top: 10, right: 20, left: 10, bottom: mobileActive ? 42 : 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} opacity={0.6} />
             <XAxis
               dataKey="eventType"
-              tick={{ fill: theme.tick, fontSize: 10 }}
+              interval={0}
+              angle={mobileActive ? -35 : 0}
+              textAnchor={mobileActive ? "end" : "middle"}
+              tick={{ fill: theme.tick, fontSize: mobileActive ? 9 : 10 }}
               axisLine={{ stroke: theme.axisLine }}
+              height={mobileActive ? 52 : 30}
             />
             <YAxis
               tick={{ fill: theme.tick, fontSize: 11 }}

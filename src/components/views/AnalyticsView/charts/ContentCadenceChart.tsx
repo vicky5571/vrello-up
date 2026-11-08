@@ -62,6 +62,7 @@ export function ContentCadenceChart({ data, onDrilldown }: ContentCadenceChartPr
             <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} opacity={0.6} />
             <XAxis
               dataKey="platform"
+              interval={0}
               tick={{ fill: theme.tick, fontSize: 11 }}
               axisLine={{ stroke: theme.axisLine }}
             />

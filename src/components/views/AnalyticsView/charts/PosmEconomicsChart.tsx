@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -23,6 +24,18 @@ interface PosmEconomicsChartProps {
 
 export function PosmEconomicsChart({ data, onDrilldown }: PosmEconomicsChartProps) {
   const { theme } = useChartTheme();
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const mobileActive = mounted && isMobile;
 
   const accessibleRows = data.materials.map((m) => [
     m.materialName,
@@ -59,12 +72,12 @@ export function PosmEconomicsChart({ data, onDrilldown }: PosmEconomicsChartProp
         rows: accessibleRows,
       }}
     >
-      <div className="h-72 mt-2">
+      <div className="h-96 sm:h-72 mt-2">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data.materials}
             layout="vertical"
-            margin={{ top: 10, right: 30, left: 10, bottom: 5 }}
+            margin={{ top: 10, right: mobileActive ? 15 : 30, left: mobileActive ? 0 : 10, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} opacity={0.6} />
             <XAxis
@@ -75,8 +88,8 @@ export function PosmEconomicsChart({ data, onDrilldown }: PosmEconomicsChartProp
             <YAxis
               dataKey="materialName"
               type="category"
-              width={120}
-              tick={{ fill: theme.tick, fontSize: 11 }}
+              width={mobileActive ? 96 : 120}
+              tick={{ fill: theme.tick, fontSize: mobileActive ? 10 : 11 }}
               axisLine={{ stroke: theme.axisLine }}
             />
             <Tooltip

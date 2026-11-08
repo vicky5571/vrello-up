@@ -43,10 +43,10 @@ export function ChartCard({
     >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 line-clamp-2 sm:truncate leading-tight">
             {title}
           </h3>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2 sm:line-clamp-1 leading-normal">
             {subtitle}
           </p>
         </div>

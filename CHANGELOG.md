@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(analytics)`: Mobile ROI charts readability via angled ticks, viewport height & multiline card titles (ADR-0098)
+  - Card header title wrapping: updated `ChartCard.tsx` with `line-clamp-2 sm:truncate leading-tight` on title and `line-clamp-2 sm:line-clamp-1 leading-normal` on subtitle, preventing mobile title truncation when paired with telemetry badges
+  - Event chart angled ticks & margin: updated `EventEfficiencyChart.tsx` with `interval={0}`, angled -35° ticks (`textAnchor="end"`), and expanded bottom margin on mobile (`bottom: mobileActive ? 42 : 5`) to prevent dropped Bar 1 labels and label collisions
+  - POSM chart vertical clearance: expanded `PosmEconomicsChart.tsx` mobile height to `h-96 sm:h-72` (384px vs 288px) and adjusted mobile YAxis width to `width={mobileActive ? 96 : 120}`, giving raw 45-character material descriptions ~64px vertical clearance without line overlap or string shortening
+  - Content chart XAxis interval: enforced `interval={0}` on `ContentCadenceChart.tsx` XAxis so all platform labels render reliably
+  - Desktop presentation invariant: preserved 100% single-line truncation, horizontal ticks, and 288px height on desktop viewports (`sm:` / `≥ 640px`)
+  - Dedicated unit tests: created `src/components/views/AnalyticsView/charts/roiChartsResponsiveness.test.ts` verifying all responsive classes and properties (4/4 tests passing)
+  - Verification: `npm run drift:check` ✅ (125/125 pairs), `npm run build:check` ✅, `npm test` ✅ (1070/1070 tests passing)
+  - Refs: `docs/adr/0098-mobile-roi-charts-readability-angled-ticks-and-multiline-titles.md`, `docs/superpowers/specs/2026-11-08-mobile-roi-charts-readability-angled-ticks-and-multiline-titles-design.md`, `docs/superpowers/plans/2026-11-08-mobile-roi-charts-readability-angled-ticks-and-multiline-titles.md`
+
 - `style(analytics)`: Remove "Live Metrics" pill from ROI page header
   - Eliminated the static badge `<span className="... text-[11px] font-semibold bg-indigo-50 ...">Live Metrics</span>` beside `Operational Intelligence & ROI` in `AnalyticsHeader.tsx`
   - Added test assertion in `src/components/views/AnalyticsView/analyticsHeaderResponsiveness.test.ts` verifying the badge is absent (6/6 tests passing)

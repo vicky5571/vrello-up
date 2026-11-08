@@ -8,7 +8,7 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Latest Fix:** ROI Analytics Header "Live Metrics" Pill Removal — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Mobile ROI Charts Readability via Angled Ticks, Viewport Height & Multiline Card Titles (ADR-0098) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Quarterly POSM Report Tab Control Bar Mobile Two-Line Layout & Theme Standardization (ADR-0097) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Monthly Reports Table Minimized Row Mobile Two-Line Layout (ADR-0096) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Reports Header Month-Range Executive PDF Export, Auto-Sync of Range & Current Month, and Redundant Export Center Button Removal (ADR-0095) — **IMPLEMENTATION COMPLETE**  
@@ -78,7 +78,27 @@
 
 ## What Was Completed This Session
 
-1. **Pembersihan UI Header Analitik ROI — Live Metrics Pill Removal (Implementation Complete):**
+1. **Implementasi Mobile ROI Charts Readability via Angled Ticks, Viewport Height & Multiline Card Titles (ADR-0098 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/AnalyticsView/charts/roiChartsResponsiveness.test.ts`):**
+     - Membuat unit test suite baru yang menguji wrapping `line-clamp-2 sm:truncate` pada judul dan `line-clamp-2 sm:line-clamp-1` pada subtitle `ChartCard.tsx`, penegakan `interval={0}`, sudut kemiringan tick $-35^\circ$, dan margin bawah mobile yang diperlebar pada `EventEfficiencyChart.tsx`, penambahan tinggi mobile `h-96 sm:h-72` dan lebar sumbu Y responsif pada `PosmEconomicsChart.tsx`, serta `interval={0}` pada `ContentCadenceChart.tsx`.
+     - Siklus TDD: Baseline RED (0/4 passing) -> GREEN (4/4 passing).
+   - **Refaktor Komponen Grafik ROI Mobile:**
+     - `ChartCard.tsx`: Mengganti `truncate` dengan `line-clamp-2 sm:truncate leading-tight` pada judul dan `line-clamp-2 sm:line-clamp-1 leading-normal` pada subtitle, mencegah judul terpotong elipsis di mobile saat bersanding dengan badge aksi metrik.
+     - `EventEfficiencyChart.tsx`: Menambahkan deteksi `isMobile` SSR-safe, menerapkan `interval={0}` sehingga batang pertama selalu memiliki label, memiringkan tick sebesar $-35^\circ$ dengan `textAnchor="end"`, serta memperbesar margin bawah mobile (`bottom: mobileActive ? 42 : 5`) dan tinggi sumbu X (`height: mobileActive ? 52 : 30`).
+     - `PosmEconomicsChart.tsx`: Memperluas tinggi kontainer mobile menjadi `h-96 sm:h-72` (384px vs 288px) sehingga tiap baris materi mendapat ruang vertikal $\approx 64\text{px}$, sepenuhnya menghilangkan tumpang tindih teks deskripsi fisik materi yang panjang tanpa merusak atau memendekkan teks asli database, serta menyesuaikan margin dan lebar sumbu Y mobile (`width={mobileActive ? 96 : 120}`).
+     - `ContentCadenceChart.tsx`: Menambahkan `interval={0}` pada `XAxis` untuk memastikan semua platform media sosial selalu tampil.
+     - **Invarian Desktop (`sm:`):** Seluruh grafik pada layar desktop ($\ge 640\text{px}$) tetap 100% identik dengan tampilan sebelumnya.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0098-mobile-roi-charts-readability-angled-ticks-and-multiline-titles.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0098-mobile-roi-charts-readability-angled-ticks-and-multiline-titles.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-mobile-roi-charts-readability-angled-ticks-and-multiline-titles-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-mobile-roi-charts-readability-angled-ticks-and-multiline-titles-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-mobile-roi-charts-readability-angled-ticks-and-multiline-titles.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-mobile-roi-charts-readability-angled-ticks-and-multiline-titles.md)
+     - Handover: [`docs/handover-mobile-roi-charts-readability-angled-ticks-and-multiline-titles.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-mobile-roi-charts-readability-angled-ticks-and-multiline-titles.md)
+   - **Verifikasi Kualitas Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (125/125 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1070/1070 tests passing across 191 suites (0 failures).
+
+2. **Pembersihan UI Header Analitik ROI — Live Metrics Pill Removal (Implementation Complete):**
    - **TDD Test Suite (`src/components/views/AnalyticsView/analyticsHeaderResponsiveness.test.ts`):**
      - Menambahkan unit test `verifies Live Metrics pill is removed from page header` yang memverifikasi bahwa `AnalyticsHeader.tsx` tidak lagi merender pill badge `"Live Metrics"`.
      - Mengonfirmasi siklus TDD: Baseline RED -> GREEN (6/6 tests passing).
