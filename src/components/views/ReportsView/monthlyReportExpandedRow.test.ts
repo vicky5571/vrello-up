@@ -121,5 +121,23 @@ describe("MonthlyReportExpandedRow & parseActivityDisplay (ADR-0035)", () => {
         "POST /api/marcom/reports must check findFirst and update existing (month, year) report row"
       );
     });
+
+    it("verifies collapsed monthly report row uses mobile two-line layout and anti-truncate period classes (ADR-0096)", () => {
+      const coordCode = fs.readFileSync(coordinatorPath, "utf-8");
+
+      assert.ok(
+        !coordCode.includes("truncate\">\n                        {periodLabel(report)}"),
+        "Period label must not use truncate class to prevent mobile period truncation"
+      );
+      assert.ok(
+        coordCode.includes("whitespace-nowrap") &&
+          coordCode.includes("{periodLabel(report)}"),
+        "Period label must use whitespace-nowrap"
+      );
+      assert.ok(
+        coordCode.includes("flex-col sm:flex-row"),
+        "Collapsed row must use responsive flex-col sm:flex-row two-line stacking on mobile"
+      );
+    });
   });
 });

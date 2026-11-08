@@ -622,26 +622,57 @@ export function ReportsView() {
                   <div
                     onClick={() => toggleExpand(report.id)}
                     className={cn(
-                      "flex items-center justify-between px-4 py-2.5 transition-colors cursor-pointer text-xs",
+                      "flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 sm:py-2.5 gap-2 sm:gap-3 transition-colors cursor-pointer text-xs",
                       isCurrentPeriod
                         ? "bg-indigo-50/50 dark:bg-indigo-950/20 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
                         : "hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
                     )}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="font-semibold text-slate-900 dark:text-slate-100 truncate">
-                        {periodLabel(report)}
-                      </span>
-                      {isCurrentPeriod && (
-                        <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100/80 dark:bg-indigo-900/40 px-1.5 py-0.5 rounded-full shrink-0">
-                          Bulan Ini
+                    {/* Line 1 on Mobile / Left on Desktop: Title + Current Badge + Mobile Actions */}
+                    <div className="flex items-center justify-between sm:justify-start gap-2.5 w-full sm:w-auto">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                          {periodLabel(report)}
                         </span>
-                      )}
-                      <span className="text-slate-500 dark:text-slate-400 shrink-0">
+                        {isCurrentPeriod && (
+                          <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100/80 dark:bg-indigo-900/40 px-1.5 py-0.5 rounded-full shrink-0">
+                            Bulan Ini
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Mobile-Only Action Buttons (top right on mobile) */}
+                      <div className="flex sm:hidden items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            printSingleMonthlyReport(report, {
+                              workspaceName: "Vrello Marcom Operations",
+                            });
+                          }}
+                          title={`Export PDF ${periodLabel(report)}`}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <Printer className="w-3 h-3 text-rose-500" />
+                          <span>Export PDF</span>
+                        </button>
+                        <ChevronDown
+                          className={cn(
+                            "w-4 h-4 text-slate-400 shrink-0 transition-transform",
+                            isExpanded && "rotate-180",
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Line 2 on Mobile / Middle on Desktop: Activities & Completion Rate */}
+                    <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto text-slate-500 dark:text-slate-400">
+                      <span className="shrink-0">
                         {report.summary?.totalActivities ?? 0} activities
                       </span>
-                      <div className="hidden sm:flex items-center gap-1.5 shrink-0">
-                        <div className="w-24 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="w-20 sm:w-24 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                           <div
                             className={cn("h-full rounded-full transition-all", completionBarColor(report.summary?.completionRate ?? 0))}
                             style={{ width: `${Math.min(report.summary?.completionRate ?? 0, 100)}%` }}
@@ -652,7 +683,9 @@ export function ReportsView() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+
+                    {/* Desktop-Only Action Buttons (aligned right on desktop) */}
+                    <div className="hidden sm:flex items-center gap-2 shrink-0">
                       <button
                         type="button"
                         onClick={(e) => {

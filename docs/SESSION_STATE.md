@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** Reports Header Month-Range Executive PDF Export, Auto-Sync of Range & Current Month, and Redundant Export Center Button Removal (ADR-0095) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Monthly Reports Table Minimized Row Mobile Two-Line Layout (ADR-0096) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Reports Header Month-Range Executive PDF Export, Auto-Sync of Range & Current Month, and Redundant Export Center Button Removal (ADR-0095) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Monthly Reports Export Button Deduplication, Automatic Draft Fetch on Open/Change, and Single-Row Period Upsert with Rollover Sync (ADR-0094) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentDrawer File Replacement Upload Mode Toggle, Safe URL Draft State & Metadata Form Alignment (ADR-0093) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentDrawer Empty Preview `src` Guard (ADR-0092) — **IMPLEMENTATION COMPLETE**  
@@ -75,7 +76,26 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Reports Header Month-Range Executive PDF Export, Auto-Sync of Range & Current Month, and Redundant Export Center Button Removal (ADR-0095 — Implementation Complete):**
+1. **Implementasi Monthly Reports Table Minimized Row Mobile Two-Line Layout & Anti-Truncate Period Labels (ADR-0096 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/ReportsView/monthlyReportExpandedRow.test.ts`):**
+     - Menambahkan subtest `verifies collapsed monthly report row uses mobile two-line layout and anti-truncate period classes (ADR-0096)` yang memvalidasi bahwa `ReportsView.tsx` tidak menggunakan class `truncate` pada label periode, menerapkan `whitespace-nowrap`, dan mengimplementasikan responsive stacking dua baris pada mobile (`flex-col sm:flex-row`).
+     - Terverifikasi siklus TDD: Baseline RED -> GREEN (10/10 tests passing).
+   - **Refaktor Presentasional Kolaps Baris Laporan (`src/components/views/ReportsView/ReportsView.tsx`):**
+     - Mengubah baris kolaps menjadi kontainer responsif `flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 sm:py-2.5 gap-2 sm:gap-3`.
+     - **Baris 1 (Mobile Header / Kiri Desktop):** Menampilkan label periode dengan `whitespace-nowrap font-semibold text-slate-900 dark:text-slate-100` (bebas pemotongan teks) bersama badge `Bulan Ini`, dipasangkan dengan tombol aksi mobile `Export PDF` dan `ChevronDown` di sisi kanan atas mobile (`flex sm:hidden`).
+     - **Baris 2 (Mobile Metrik / Tengah Desktop):** Menampilkan jumlah aktivitas operasional (`X activities`) di sisi kiri, serta memulihkan visualisasi progress bar (`w-20 sm:w-24`) dan persentase numerik (`tabular-nums font-bold text-[11px]`) di sisi kanan pada layar mobile.
+     - **Tampilan Desktop (`sm:`):** Mempertahankan 100% tata letak horizontal baris tunggal desktop yang identik dengan sebelumnya tanpa ada pergeseran visual.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0096-monthly-reports-table-minimized-row-mobile-two-line-layout.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0096-monthly-reports-table-minimized-row-mobile-two-line-layout.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-monthly-reports-table-minimized-row-mobile-two-line-layout-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-monthly-reports-table-minimized-row-mobile-two-line-layout-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-monthly-reports-table-minimized-row-mobile-two-line-layout.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-monthly-reports-table-minimized-row-mobile-two-line-layout.md)
+     - Handover: [`docs/handover-monthly-reports-table-minimized-row-mobile-two-line-layout.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-monthly-reports-table-minimized-row-mobile-two-line-layout.md)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (123/123 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1065/1065 tests passing across 190 suites (0 failures).
+
+2. **Implementasi Reports Header Month-Range Executive PDF Export, Auto-Sync of Range & Current Month, and Redundant Export Center Button Removal (ADR-0095 — Implementation Complete):**
    - **TDD Test Suites (`src/lib/marcom/monthlyReportSync.test.ts`, `src/lib/productivity/exportCenter.test.ts`, & `src/components/modals/MoreAppsMenu.test.ts`):**
      - Menambahkan unit test `enumerateReportPeriods` di `monthlyReportSync.test.ts` untuk pengujian single-month, multi-month dalam tahun yang sama, lintas batas tahun, dan validasi rentang terbalik (`start > end` mengembalikan `[]`).
      - Menambahkan unit test `buildMonthlyReportRangePrint` di `exportCenter.test.ts` yang memverifikasi bahwa multi-month export merender dokumen dengan pembatas cetak halaman (`page-break-after: always;`).

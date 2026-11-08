@@ -6,6 +6,14 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(reports)`: Monthly reports table minimized row mobile two-line layout and anti-truncate period labels (ADR-0096)
+  - Mobile two-line layout: restructured collapsed monthly report rows in `ReportsView.tsx` into a responsive two-line layout on mobile (`< sm` / `< 640px`) while keeping desktop view (`sm:`) strictly identical on a single horizontal line
+  - Anti-truncate period labels: eliminated `truncate` from period titles on collapsed rows, enforcing `whitespace-nowrap font-semibold text-slate-900 dark:text-slate-100` so full month and year (e.g. `"December 2099"` and `"September 2026"`) are 100% visible
+  - Mobile operational metrics line: promoted `activities` count and the completion rate progress bar + tabular percentage (`w-20 sm:w-24`) to a dedicated second line on mobile, restoring metrics readability
+  - Dedicated unit tests: verified mobile flex-col two-line structure and anti-truncate period classes in `src/components/views/ReportsView/monthlyReportExpandedRow.test.ts` (10/10 tests passing)
+  - Verification: `npm run drift:check` ✅ (123/123 pairs), `npm run build:check` ✅, `npm test` ✅ (1065/1065 tests passing)
+  - Refs: `docs/adr/0096-monthly-reports-table-minimized-row-mobile-two-line-layout.md`, `docs/superpowers/specs/2026-11-08-monthly-reports-table-minimized-row-mobile-two-line-layout-design.md`, `docs/superpowers/plans/2026-11-08-monthly-reports-table-minimized-row-mobile-two-line-layout.md`
+
 - `feat(reports)`: Reports header month-range executive PDF export, auto-sync of range and current month, and redundant export center button removal (ADR-0095)
   - Redundant button consolidation: removed duplicate `"Export Center"` button (retained in `MoreAppsMenu`) and obsolete `"⚡ 1-Click Executive PDF"` button from `ReportsHeader.tsx`, replacing them with `"Export Laporan PDF"`
   - Month-range export modal: created `ReportRangeExportModal.tsx` supporting start/end month-year selection (`Dari Periode` and `Sampai Periode`) with `CustomDropdown`, bounded to a maximum 12-month span with chronological validation (`start <= end`)
