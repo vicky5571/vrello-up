@@ -134,6 +134,11 @@ export function getDocumentTypeMeta(fileType: DocFileType): DocumentTypeMeta {
   return DOCUMENT_TYPE_CONFIG[fileType] || DOCUMENT_TYPE_CONFIG.PDF;
 }
 
+export function resolvePreviewSrc(filePath?: string | null): string | null {
+  const trimmed = filePath?.trim();
+  return trimmed ? trimmed : null;
+}
+
 export function calculateDocumentKPIs(documents: MarcomDocument[]): DocumentKPIs {
   const totalDocuments = documents.length;
   if (totalDocuments === 0) {

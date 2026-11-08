@@ -33,6 +33,7 @@ import {
   formatFileSize,
   isCloudDocumentUrl,
   isValidDocumentFilePath,
+  resolvePreviewSrc,
 } from "@/lib/marcom/documentWorkflow";
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
 import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
@@ -122,6 +123,7 @@ export function DocumentDrawer({
   const typeMeta = getDocumentTypeMeta(fileType);
   const isCloud = isCloudDocumentUrl(filePath);
   const driveInfo = isCloud ? parseGoogleDriveUrl(filePath) : null;
+  const previewSrc = resolvePreviewSrc(filePath);
 
   const handleCopyShareLink = () => {
     const shareUrl = buildShareableDocumentUrl(document.id, window.location.origin);
@@ -376,25 +378,37 @@ export function DocumentDrawer({
                   );
                 }
 
+                // Guard: never render src="" (ADR-0092)
+                if (
+                  !previewSrc &&
+                  (fileType === "MP4" || fileType === "PNG" || fileType === "JPG" || fileType === "PDF")
+                ) {
+                  return (
+                    <div className="py-10 px-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                      Belum ada file untuk dipratinjau
+                    </div>
+                  );
+                }
+
                 // 2. Video Format (MP4)
-                if (fileType === "MP4") {
+                if (previewSrc && fileType === "MP4") {
                   return (
                     <video
                       controls
                       preload="metadata"
-                      src={filePath}
+                      src={previewSrc}
                       className="w-full max-h-[340px] rounded-lg bg-black"
                     />
                   );
                 }
 
                 // 3. Image Formats (PNG, JPG)
-                if (fileType === "PNG" || fileType === "JPG") {
+                if (previewSrc && (fileType === "PNG" || fileType === "JPG")) {
                   return (
                     <div className="p-3 flex items-center justify-center w-full">
                       <div className="relative w-full h-[320px] rounded-lg overflow-hidden shadow-2xs flex items-center justify-center">
                         <AppImage
-                          src={filePath}
+                          src={previewSrc}
                           alt={name}
                           fill
                           sizes="lightbox"
@@ -406,10 +420,10 @@ export function DocumentDrawer({
                 }
 
                 // 4. PDF Documents
-                if (fileType === "PDF") {
+                if (previewSrc && fileType === "PDF") {
                   return (
                     <iframe
-                      src={filePath}
+                      src={previewSrc}
                       title={name}
                       className="w-full h-[360px] border-0 bg-white"
                     />

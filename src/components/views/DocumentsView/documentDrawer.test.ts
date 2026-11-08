@@ -268,5 +268,27 @@ describe("Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)"
     assert.equal(mp4Meta.type, "MP4");
     assert.equal(mp4Meta.iconName, "film");
   });
+
+  it("verifies DocumentDrawer guards empty preview src and renders placeholder (ADR-0092)", () => {
+    const drawerPath = path.join(docsDir, "DocumentDrawer.tsx");
+    const drawerContent = fs.readFileSync(drawerPath, "utf-8");
+
+    assert.ok(
+      drawerContent.includes("resolvePreviewSrc"),
+      "DocumentDrawer must import and call resolvePreviewSrc"
+    );
+    assert.ok(
+      drawerContent.includes("Belum ada file untuk dipratinjau"),
+      "DocumentDrawer must render placeholder when previewSrc is null for media formats"
+    );
+    assert.ok(
+      drawerContent.includes("src={previewSrc}"),
+      "DocumentDrawer must pass previewSrc to preview elements"
+    );
+    assert.ok(
+      !drawerContent.includes("<iframe\n                      src={filePath}"),
+      "DocumentDrawer must not render iframe with unguarded filePath"
+    );
+  });
 });
 

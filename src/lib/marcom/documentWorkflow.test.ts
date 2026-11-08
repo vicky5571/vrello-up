@@ -7,6 +7,7 @@ import {
   formatFileSize,
   getDocumentTypeMeta,
   isCloudDocumentUrl,
+  resolvePreviewSrc,
 } from "@/lib/marcom/documentWorkflow";
 import type { MarcomDocument } from "@/components/views/DocumentsView/DocumentsView";
 
@@ -124,4 +125,12 @@ test("filterDocuments filters correctly by category, fileType, and query", () =>
   const searchBillboard = filterDocuments(mockDocs, { searchQuery: "billboard" });
   assert.equal(searchBillboard.length, 1);
   assert.equal(searchBillboard[0].id, "doc-2");
+});
+
+test("resolvePreviewSrc returns null for blank values and trimmed string otherwise (ADR-0092)", () => {
+  assert.equal(resolvePreviewSrc(""), null);
+  assert.equal(resolvePreviewSrc("   "), null);
+  assert.equal(resolvePreviewSrc(undefined), null);
+  assert.equal(resolvePreviewSrc(null), null);
+  assert.equal(resolvePreviewSrc(" /api/marcom/files/a.pdf "), "/api/marcom/files/a.pdf");
 });

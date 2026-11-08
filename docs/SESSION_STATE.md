@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** DocumentCreateModal Real Branch Store Binding, Auto-Filled Owner/PIC, LINK FileType on URL Mode & Upload Submit Lock (ADR-0091) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** DocumentDrawer Empty Preview `src` Guard (ADR-0092) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** DocumentCreateModal Real Branch Store Binding, Auto-Filled Owner/PIC, LINK FileType on URL Mode & Upload Submit Lock (ADR-0091) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090 Amendment 2) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090 Amendment 2) — **PLANNING COMPLETE**  
 **Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090) — **IMPLEMENTATION COMPLETE**  
@@ -71,7 +72,29 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Real Branch Store Binding, Auto-Fill Owner/PIC, LINK FileType pada Mode URL, & Upload Submit Lock pada DocumentCreateModal (ADR-0091 — Implementation Complete):**
+1. **Implementasi DocumentDrawer Empty Preview `src` Guard (ADR-0092 — Implementation Complete):**
+   - **TDD Test Suites (`src/lib/marcom/documentWorkflow.test.ts` & `src/components/views/DocumentsView/documentDrawer.test.ts`):**
+     - Menambahkan unit test pure helper `resolvePreviewSrc(filePath)` pada `documentWorkflow.test.ts` (`""`, `"   "`, `undefined`, `null` mengembalikan `null`; path valid mengembalikan string yang telah di-trim).
+     - Menambahkan subtest regresi pada `documentDrawer.test.ts` yang memvalidasi bahwa `DocumentDrawer.tsx` mengimpor `resolvePreviewSrc`, merender placeholder `"Belum ada file untuk dipratinjau"`, dan menggunakan `src={previewSrc}` tanpa mengekspos `src={filePath}` tak-terjaga.
+     - Terverifikasi siklus TDD: Baseline RED -> GREEN (6/6 passing di `documentWorkflow.test.ts`, 13/13 passing di `documentDrawer.test.ts`).
+   - **Pure Helper Implementation (`src/lib/marcom/documentWorkflow.ts`):**
+     - Mengimplementasikan `resolvePreviewSrc(filePath?: string | null): string | null` yang mengekstrak nilai string ter-trim atau `null`.
+   - **Refaktor Komponen Drawer (`src/components/views/DocumentsView/DocumentDrawer.tsx`):**
+     - Mengimpor `resolvePreviewSrc` dan mendestrukturisasi `const previewSrc = resolvePreviewSrc(filePath);` setelah pemanggilan `driveInfo`.
+     - Menyematkan render guard placeholder berlabel `"Belum ada file untuk dipratinjau"` untuk format media (`MP4`, `PNG`, `JPG`, `PDF`) ketika `previewSrc === null`.
+     - Memperbarui branch rendering `MP4`, `PNG`/`JPG`, dan `PDF` dengan kondisi `previewSrc && fileType === ...` dan menyuplai `src={previewSrc}`, sehingga TypeScript mempersempit tipe menjadi `string` tanpa membutuhkan `any` maupun type assertion `as string`.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0092-document-drawer-empty-preview-src-guard.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0092-document-drawer-empty-preview-src-guard.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-document-drawer-empty-preview-src-guard-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-document-drawer-empty-preview-src-guard-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-document-drawer-empty-preview-src-guard.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-document-drawer-empty-preview-src-guard.md)
+     - Handover: [`docs/handover-document-drawer-empty-preview-src-guard.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-document-drawer-empty-preview-src-guard.md)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (119/119 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 168/168 tests passing across 65 suites (0 failures).
+     - Targeted unit tests: ✅ 13/13 in `documentDrawer.test.ts`, 6/6 in `documentWorkflow.test.ts`.
+
+2. **Implementasi Real Branch Store Binding, Auto-Fill Owner/PIC, LINK FileType pada Mode URL, & Upload Submit Lock pada DocumentCreateModal (ADR-0091 — Implementation Complete):**
    - **TDD Test Suites (`src/lib/marcom/documentWorkflow.test.ts` & `src/components/views/DocumentsView/documentDrawer.test.ts`):**
      - Menambahkan assertion meta `getDocumentTypeMeta("LINK")` pada `documentWorkflow.test.ts` (`type: "LINK"`, `label: "Link"`, `#6366F1`, badge indigo, icon `file-text`).
      - Menambahkan subtest baru `verifies DocumentCreateModal real branch store binding, auto-filled Owner/PIC, LINK fileType on URL mode, and upload submit lock (ADR-0091)` pada `documentDrawer.test.ts`.
@@ -3112,10 +3135,10 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (all 118 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (all 119 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
 - `npm run test:smoke` → ✅ 168 passed, 0 failed
-- Targeted unit tests → ✅ `documentDrawer.test.ts` (12/12 passing), `documentWorkflow.test.ts` (5/5 passing)
+- Targeted unit tests → ✅ `documentDrawer.test.ts` (13/13 passing), `documentWorkflow.test.ts` (6/6 passing)
 
 ---
 

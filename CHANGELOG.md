@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `fix(documents)`: DocumentDrawer empty preview src guard and placeholder rendering (ADR-0092)
+  - Pure helper `resolvePreviewSrc`: introduced `resolvePreviewSrc(filePath?: string | null): string | null` in `src/lib/marcom/documentWorkflow.ts` that returns trimmed string or `null` for blank/empty/whitespace values
+  - Empty `src` preview guard: eliminated React console error (`An empty string ("") was passed to the src attribute`) caused by initial render where `filePath` is `""` before `useEffect` document synchronization
+  - "Belum ada file untuk dipratinjau" placeholder: added fallback notice inside the preview frame when `previewSrc` is `null` for media formats (`MP4`, `PNG`, `JPG`, `PDF`)
+  - Type-safe preview branches: guarded `<video>`, `<AppImage>`, and `<iframe>` rendering with `previewSrc && fileType === ...`, passing `src={previewSrc}` with strict TypeScript string narrowing and zero `any`
+  - Regression unit tests: added pure helper coverage in `documentWorkflow.test.ts` (6/6 tests passing) and drawer guard assertions in `documentDrawer.test.ts` (13/13 tests passing)
+  - Verification: `npm run drift:check` ✅ (119/119 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (168/168)
+  - Refs: `docs/adr/0092-document-drawer-empty-preview-src-guard.md`, `docs/superpowers/specs/2026-11-08-document-drawer-empty-preview-src-guard-design.md`, `docs/superpowers/plans/2026-11-08-document-drawer-empty-preview-src-guard.md`
+
 - `feat(documents)`: DocumentCreateModal real branch store binding, auto-filled Owner/PIC, LINK fileType on URL mode, and upload submit lock (ADR-0091)
   - Real branch master binding: reactively subscribed `DocumentsView.tsx` and `DocumentCreateModal.tsx` to `useMarcomDataStore((s) => s.branches)`, eliminated synthetic `"HQ / Nasional (Semua Branch)"` item, and standardized placeholder to `"Choose"`
   - Active user Owner/PIC auto-fill: automatically pre-populated `ownerPic` with `session?.user?.name || currentUser?.name || ""` on modal open and reset, maintaining user editability
