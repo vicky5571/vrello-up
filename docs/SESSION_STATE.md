@@ -81,6 +81,17 @@
 
 ## What Was Completed This Session
 
+1. **Konfigurasi Otomatisasi Prisma Generate pada Vercel Build Pipeline (Complete):**
+   - **Akar Masalah:** Build Vercel menggunakan build cache lama yang berisi `@prisma/client` usang tanpa enum `WAREHOUSE`, memicu `Type error: Property 'WAREHOUSE' does not exist on type '{ ADMIN... }'` pada `prisma/seed.ts` saat `next build` melakukan validasi tipe.
+   - **Perbaikan (`package.json`):**
+     - Menambahkan script `"postinstall": "prisma generate"`.
+     - Mengubah script build menjadi `"build": "prisma generate && next build"`.
+     - Memastikan `@prisma/client` selalu di-generate ulang dari `schema.prisma` terbaru sebelum Next.js mengompilasi kode, mencegah ketidakcocokan tipe akibat cache lama di Vercel.
+   - **Verifikasi Kualitas Penuh:**
+     - `npm run drift:check`: ✅ 0 drift.
+     - `npm run build`: ✅ Code 0 (`✔ Generated Prisma Client (v6.19.3)`, `✓ Compiled successfully`, `✓ Linting and checking validity of types`, `✓ Generating static pages (34/34)`).
+     - `npm test`: ✅ 1073/1073 tests passing.
+
 1. **Resolusi Error Vercel Build (ESLint & TypeScript Invariants — Complete):**
    - **Akar Masalah:** Build Vercel menjalankan `npm run build` (`next build`), yang secara otomatis memicu `next lint` (ESLint dengan `@typescript-eslint/no-explicit-any` dan `@typescript-eslint/no-unused-vars`). Terdapat 18 pelanggaran ESLint di 18 file (variabel/import tidak terpakai dan penggunaan `any` tanpa typing eksplisit).
    - **Perbaikan 18 File:**
