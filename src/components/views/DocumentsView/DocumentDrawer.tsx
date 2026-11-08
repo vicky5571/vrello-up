@@ -13,16 +13,15 @@ import {
   Film,
   Image as ImageIcon,
   Trash2,
-  Building2,
   User as UserIcon,
-  Calendar,
-  Cloud,
   Download,
   Upload,
+  Link2,
   RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppImage } from "@/components/ui/AppImage";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import type {
   DocumentItem as MarcomDocument,
   DocFileType,
@@ -36,9 +35,8 @@ import {
   resolvePreviewSrc,
 } from "@/lib/marcom/documentWorkflow";
 import { parseGoogleDriveUrl } from "@/lib/marcom/googleDriveUtils";
-import { useGoogleDrivePicker } from "@/lib/marcom/useGoogleDrivePicker";
-import { GoogleDriveLinkModal } from "@/components/ui/GoogleDriveLinkModal";
 import { buildShareableDocumentUrl } from "@/lib/router/urlState";
+import { useMarcomDataStore } from "@/lib/marcom/marcomDataStore";
 
 export interface DocumentDrawerProps {
   document: MarcomDocument | null;
@@ -62,6 +60,28 @@ const VALID_FILE_TYPES: DocFileType[] = [
   "LINK",
 ];
 
+const DOCUMENT_CATEGORY_OPTIONS = [
+  { value: "Brand Guidelines", label: "Brand Guidelines" },
+  { value: "SOP", label: "SOP" },
+  { value: "Kontrak", label: "Kontrak" },
+  { value: "Master Key Visual", label: "Master Key Visual" },
+  { value: "Template Presentasi", label: "Template Presentasi" },
+  { value: "Legalitas", label: "Legalitas" },
+  { value: "Laporan", label: "Laporan" },
+];
+
+const FILE_TYPE_OPTIONS: { value: DocFileType; label: string }[] = [
+  { value: "PDF", label: "PDF Document" },
+  { value: "PNG", label: "PNG Image" },
+  { value: "JPG", label: "JPG Image" },
+  { value: "MP4", label: "MP4 Video" },
+  { value: "DOCX", label: "DOCX Word" },
+  { value: "XLSX", label: "XLSX Excel" },
+  { value: "CSV", label: "CSV Data" },
+  { value: "ZIP", label: "ZIP Archive" },
+  { value: "LINK", label: "Link" },
+];
+
 export function DocumentDrawer({
   document,
   onClose,
@@ -71,12 +91,17 @@ export function DocumentDrawer({
   members,
   canManage = false,
 }: DocumentDrawerProps) {
+  const storeBranches = useMarcomDataStore((s) => s.branches);
+  const fetchBranches = useMarcomDataStore((s) => s.fetchBranches);
+  const effectiveBranches = storeBranches.length > 0 ? storeBranches : branches;
+
   // Form states
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Brand Guidelines");
   const [branchName, setBranchName] = useState("");
   const [ownerPic, setOwnerPic] = useState("");
-  const [period, setPeriod] = useState("");
+  const [uploadMode, setUploadMode] = useState<"local" | "url">("local");
+  const [urlInput, setUrlInput] = useState("");
   const [fileType, setFileType] = useState<DocFileType>("PDF");
   const [fileSizeMb, setFileSizeMb] = useState<number>(0);
   const [filePath, setFilePath] = useState("");
@@ -87,27 +112,27 @@ export function DocumentDrawer({
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Google Drive Picker
-  const {
-    openSelector,
-    isModalOpen: isDriveModalOpen,
-    closeModal: closeDriveModal,
-    handleManualAttach,
-  } = useGoogleDrivePicker();
-
   // Populate state on document change
   useEffect(() => {
     if (!document) return;
+    if (storeBranches.length === 0) {
+      fetchBranches();
+    }
+    const initialPath = document.filePath || "";
+    const isInitialUrl =
+      isCloudDocumentUrl(initialPath) || document.fileType === "LINK";
+
     setName(document.name || "");
     setCategory(document.category || "Brand Guidelines");
     setBranchName(document.branchName || "");
     setOwnerPic(document.ownerPic || "");
-    setPeriod(document.period || "");
+    setUploadMode(isInitialUrl ? "url" : "local");
+    setUrlInput(isInitialUrl ? initialPath : "");
     setFileType((document.fileType as DocFileType) || "PDF");
     setFileSizeMb(document.fileSizeMb || 0);
-    setFilePath(document.filePath || "");
+    setFilePath(initialPath);
     setDescription(document.description || "");
-  }, [document]);
+  }, [document, storeBranches.length, fetchBranches]);
 
   // Keyboard Escape listener
   useEffect(() => {
@@ -124,6 +149,46 @@ export function DocumentDrawer({
   const isCloud = isCloudDocumentUrl(filePath);
   const driveInfo = isCloud ? parseGoogleDriveUrl(filePath) : null;
   const previewSrc = resolvePreviewSrc(filePath);
+
+  const restoreOriginalFileState = () => {
+    setFilePath(document.filePath || "");
+    setFileType((document.fileType as DocFileType) || "PDF");
+    setFileSizeMb(document.fileSizeMb || 0);
+  };
+
+  const handleModeChange = (nextMode: "local" | "url") => {
+    if (nextMode === uploadMode) return;
+    setUploadMode(nextMode);
+
+    if (nextMode === "url") {
+      const trimmedUrl = urlInput.trim();
+      if (trimmedUrl) {
+        setFilePath(trimmedUrl);
+        setFileType("LINK");
+        setFileSizeMb(0);
+      }
+      // Option 1B: when urlInput is empty, keep current filePath/fileType/fileSizeMb intact
+      return;
+    }
+
+    // Switching back to "local": if current filePath came from an unsaved urlInput draft, restore original document file state
+    if (urlInput.trim() && filePath === urlInput.trim() && filePath !== (document.filePath || "")) {
+      restoreOriginalFileState();
+    }
+  };
+
+  const handleUrlInputChange = (val: string) => {
+    setUrlInput(val);
+    const trimmed = val.trim();
+    if (trimmed) {
+      setFilePath(trimmed);
+      setFileType("LINK");
+      setFileSizeMb(0);
+    } else {
+      // Option 1B fallback: restore persisted document file state when URL input is cleared
+      restoreOriginalFileState();
+    }
+  };
 
   const handleCopyShareLink = () => {
     const shareUrl = buildShareableDocumentUrl(document.id, window.location.origin);
@@ -166,6 +231,7 @@ export function DocumentDrawer({
       setFilePath(data.filePath);
       setFileType(detectedType);
       setFileSizeMb(detectedSize);
+      setUrlInput("");
 
       toast.success("File baru berhasil diunggah");
     } catch (err) {
@@ -201,7 +267,6 @@ export function DocumentDrawer({
         category: category.trim(),
         branchName: branchName.trim() || undefined,
         ownerPic: ownerPic.trim() || undefined,
-        period: period.trim() || undefined,
         fileType,
         fileSizeMb: Number(fileSizeMb) || 0,
         filePath: filePath.trim(),
@@ -531,36 +596,64 @@ export function DocumentDrawer({
                 </div>
               </div>
 
-              {/* Action Buttons: Device Upload & Google Drive */}
-              <div className="flex items-center gap-2 pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-500 shadow-xs transition-all cursor-pointer disabled:opacity-50 flex-1"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Upload dari Perangkat</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    openSelector({
-                      defaultKind: "all",
-                      onSelect: (atts) => {
-                        if (atts[0]) {
-                          setFilePath(atts[0].url);
-                          toast.success("Tautan Google Drive berhasil disematkan!");
-                        }
-                      },
-                    })
-                  }
-                  disabled={isUploading}
-                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  <Cloud className="w-3.5 h-3.5 text-blue-500" />
-                  <span>Google Drive</span>
-                </button>
+              {/* Source Mode Toggle & Input (Upload File Lokal vs Tautan URL) */}
+              <div className="space-y-2.5 pt-0.5">
+                <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/70">
+                  <button
+                    type="button"
+                    onClick={() => handleModeChange("local")}
+                    disabled={isUploading}
+                    className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 ${
+                      uploadMode === "local"
+                        ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload File Lokal</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleModeChange("url")}
+                    disabled={isUploading}
+                    className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 ${
+                      uploadMode === "url"
+                        ? "bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    <Link2 className="w-3.5 h-3.5" />
+                    <span>Tautan URL</span>
+                  </button>
+                </div>
+
+                {uploadMode === "local" ? (
+                  <div key="drawer-upload-local-mode" className="flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-500 shadow-xs transition-all cursor-pointer disabled:opacity-50 w-full"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload dari Perangkat (Maksimal 25MB)</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div key="drawer-upload-url-mode" className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Tautan URL Baru
+                    </label>
+                    <input
+                      key="drawer-url-text-input"
+                      type="url"
+                      placeholder="https://..."
+                      value={urlInput ?? ""}
+                      onChange={(e) => handleUrlInputChange(e.target.value)}
+                      className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -572,124 +665,77 @@ export function DocumentDrawer({
 
               {/* Category & Branch */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Kategori Dokumen *
                   </label>
-                  <input
-                    type="text"
-                    required
-                    list="doc-drawer-categories-list"
-                    placeholder="Brand Guidelines, SOP..."
+                  <CustomDropdown
+                    className="w-full"
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                    onChange={(val) => setCategory(val)}
+                    options={DOCUMENT_CATEGORY_OPTIONS}
+                    placeholder="Pilih Kategori"
+                    searchable={false}
+                    size="sm"
+                    ariaLabel="Kategori Dokumen"
                   />
-                  <datalist id="doc-drawer-categories-list">
-                    <option value="Brand Guidelines" />
-                    <option value="SOP" />
-                    <option value="Kontrak" />
-                    <option value="Master Key Visual" />
-                    <option value="Template Presentasi" />
-                    <option value="Legalitas" />
-                    <option value="Laporan" />
-                  </datalist>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Branch / Wilayah
                   </label>
-                  <select
+                  <CustomDropdown
+                    className="w-full"
                     value={branchName}
-                    onChange={(e) => setBranchName(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
-                  >
-                    <option value="">HQ / Nasional (Semua Branch)</option>
-                    {branches.map((b) => (
-                      <option key={b.id} value={b.name}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setBranchName(val)}
+                    options={effectiveBranches.map((b) => ({
+                      value: b.name,
+                      label: b.name,
+                    }))}
+                    placeholder="Choose"
+                    size="sm"
+                    ariaLabel="Branch / Wilayah"
+                  />
                 </div>
               </div>
 
-              {/* Period & Owner PIC */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-teal-500" />
-                    <span>Periode Dokumen</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Contoh: 2026, Q1"
-                    value={period}
-                    onChange={(e) => setPeriod(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <UserIcon className="w-3.5 h-3.5 text-teal-500" />
-                    <span>Owner / PIC</span>
-                  </label>
-                  <input
-                    type="text"
-                    list="doc-drawer-members-list"
-                    placeholder="Nama PIC/Tim"
-                    value={ownerPic}
-                    onChange={(e) => setOwnerPic(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                  />
-                  <datalist id="doc-drawer-members-list">
-                    {members.map((m) => (
-                      <option key={m.id} value={m.name || m.email || ""} />
-                    ))}
-                  </datalist>
-                </div>
+              {/* Owner / PIC */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <UserIcon className="w-3.5 h-3.5 text-teal-500" />
+                  <span>Owner / PIC</span>
+                </label>
+                <input
+                  type="text"
+                  list="doc-drawer-members-list"
+                  placeholder="Nama PIC/Tim"
+                  value={ownerPic ?? ""}
+                  onChange={(e) => setOwnerPic(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                />
+                <datalist id="doc-drawer-members-list">
+                  {members.map((m) => (
+                    <option key={m.id} value={m.name || m.email || ""} />
+                  ))}
+                </datalist>
               </div>
 
-              {/* File Type & File Size */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Tipe File *
-                  </label>
-                  <select
-                    value={fileType}
-                    onChange={(e) => setFileType(e.target.value as DocFileType)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500 cursor-pointer"
-                  >
-                    <option value="PDF">PDF Document</option>
-                    <option value="PNG">PNG Image</option>
-                    <option value="JPG">JPG Image</option>
-                    <option value="MP4">MP4 Video</option>
-                    <option value="DOCX">DOCX Word</option>
-                    <option value="XLSX">XLSX Excel</option>
-                    <option value="CSV">CSV Data</option>
-                    <option value="ZIP">ZIP Archive</option>
-                    <option value="LINK">Link</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Ukuran File (MB)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={fileSizeMb}
-                    onChange={(e) =>
-                      setFileSizeMb(e.target.value ? Number(e.target.value) : 0)
-                    }
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
+              {/* File Type */}
+              <div className="space-y-1.5 min-w-0">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Tipe File *
+                </label>
+                <CustomDropdown
+                  className="w-full"
+                  value={fileType}
+                  onChange={(val) => setFileType(val as DocFileType)}
+                  options={FILE_TYPE_OPTIONS}
+                  placeholder="Choose File Type"
+                  searchable={false}
+                  size="sm"
+                  ariaLabel="Tipe File"
+                />
               </div>
 
               {/* Description */}
@@ -714,7 +760,7 @@ export function DocumentDrawer({
               <button
                 type="button"
                 onClick={handleDelete}
-                disabled={isDeleting || isSaving}
+                disabled={isSaving || isDeleting || isUploading}
                 className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
               >
                 {isDeleting ? (
@@ -732,7 +778,7 @@ export function DocumentDrawer({
               <button
                 type="button"
                 onClick={onClose}
-                disabled={isSaving || isDeleting}
+                disabled={isSaving || isDeleting || isUploading}
                 className="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
               >
                 Tutup
@@ -740,23 +786,20 @@ export function DocumentDrawer({
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={isSaving || isDeleting}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                disabled={isSaving || isDeleting || isUploading}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                <span>Simpan Perubahan</span>
+                {(isSaving || isUploading) && (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                )}
+                <span>
+                  {isUploading ? "Mengunggah..." : "Simpan Perubahan"}
+                </span>
               </button>
             </div>
           </div>
         </motion.aside>
       </div>
-
-      <GoogleDriveLinkModal
-        isOpen={isDriveModalOpen}
-        onClose={closeDriveModal}
-        onAttach={handleManualAttach}
-        defaultKind="all"
-      />
     </>
   );
 }

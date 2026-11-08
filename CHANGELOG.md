@@ -6,6 +6,17 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(documents)`: DocumentDrawer file replacement upload mode toggle, safe URL draft state, and metadata alignment (ADR-0093)
+  - Google Drive picker removal: eliminated `useGoogleDrivePicker`, `GoogleDriveLinkModal`, `Cloud` icon, and the `Google Drive` button from `DocumentDrawer.tsx`
+  - Segmented replacement mode toggle: introduced 2-mode toggle (`Upload File Lokal` | `Tautan URL`) placed directly beneath the Current Active File Card with distinct React 19 reconciliation keys (`drawer-upload-local-mode` and `drawer-upload-url-mode`)
+  - Safe URL draft state with Option 1B fallback: isolated `urlInput` draft state so switching to `Tautan URL` without entering a URL preserves `filePath`, `fileType`, `fileSizeMb`, media preview, and the active file card; clearing `urlInput` restores the original persisted document state
+  - Metadata controls alignment: replaced native form elements with `CustomDropdown` (`className="w-full"` inside `min-w-0` containers) for `Kategori Dokumen *`, `Branch / Wilayah` (binding to real `useMarcomDataStore` branches with `placeholder="Choose"`), and `Tipe File *`
+  - Removed obsolete form fields: removed manual `Periode Dokumen` (expanding `Owner / PIC` to full-width) and editable `Ukuran File (MB)` from the edit drawer
+  - Upload submit lock: locked footer buttons (`Simpan Perubahan`, `Tutup`, `Hapus Dokumen`) with `disabled={isSaving || isDeleting || isUploading}`, rendering `<RefreshCw className="animate-spin" />` and `"Mengunggah..."` button label during file upload
+  - Dedicated unit tests: verified drawer implementation invariants in `src/components/views/DocumentsView/documentDrawer.test.ts` (14/14 tests passing)
+  - Verification: `npm run drift:check` ✅ (120/120 pairs), `npm run build:check` ✅, `npm run test:smoke` ✅ (168/168)
+  - Refs: `docs/adr/0093-document-drawer-file-replacement-upload-mode-and-metadata-alignment.md`, `docs/superpowers/specs/2026-11-08-document-drawer-file-replacement-upload-mode-and-metadata-alignment-design.md`, `docs/superpowers/plans/2026-11-08-document-drawer-file-replacement-upload-mode-and-metadata-alignment.md`
+
 - `fix(documents)`: DocumentDrawer empty preview src guard and placeholder rendering (ADR-0092)
   - Pure helper `resolvePreviewSrc`: introduced `resolvePreviewSrc(filePath?: string | null): string | null` in `src/lib/marcom/documentWorkflow.ts` that returns trimmed string or `null` for blank/empty/whitespace values
   - Empty `src` preview guard: eliminated React console error (`An empty string ("") was passed to the src attribute`) caused by initial render where `filePath` is `""` before `useEffect` document synchronization

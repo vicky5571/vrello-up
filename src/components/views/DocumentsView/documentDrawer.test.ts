@@ -290,5 +290,47 @@ describe("Documents Detail & Edit Drawer with Focused Creation Modal (ADR-0024)"
       "DocumentDrawer must not render iframe with unguarded filePath"
     );
   });
+
+  it("verifies DocumentDrawer file replacement upload mode toggle, safe URL draft state, and metadata alignment (ADR-0093)", () => {
+    const drawerPath = path.join(docsDir, "DocumentDrawer.tsx");
+    const drawerContent = fs.readFileSync(drawerPath, "utf-8");
+
+    assert.ok(
+      !drawerContent.includes("useGoogleDrivePicker") &&
+        !drawerContent.includes("GoogleDriveLinkModal") &&
+        !drawerContent.includes("<span>Google Drive</span>"),
+      "DocumentDrawer must not include Google Drive picker or button (ADR-0093)"
+    );
+    assert.ok(
+      drawerContent.includes('useState<"local" | "url">("local")') &&
+        drawerContent.includes("urlInput") &&
+        drawerContent.includes("handleModeChange") &&
+        drawerContent.includes("handleUrlInputChange"),
+      "DocumentDrawer must implement uploadMode toggle, urlInput draft state, handleModeChange, and handleUrlInputChange"
+    );
+    assert.ok(
+      drawerContent.includes('key="drawer-upload-local-mode"') &&
+        drawerContent.includes('key="drawer-upload-url-mode"') &&
+        drawerContent.includes('key="drawer-url-text-input"'),
+      "DocumentDrawer must assign distinct keys to upload mode branches and URL input"
+    );
+    assert.ok(
+      drawerContent.includes("CustomDropdown") &&
+        drawerContent.includes("useMarcomDataStore") &&
+        drawerContent.includes('placeholder="Choose"') &&
+        !drawerContent.includes("HQ / Nasional (Semua Branch)"),
+      "DocumentDrawer must use CustomDropdown and real branches from useMarcomDataStore with placeholder='Choose'"
+    );
+    assert.ok(
+      !drawerContent.includes("Periode Dokumen") &&
+        !drawerContent.includes("Ukuran File (MB)"),
+      "DocumentDrawer must not render manual Periode Dokumen or editable Ukuran File (MB) inputs"
+    );
+    assert.ok(
+      drawerContent.includes("disabled={isSaving || isDeleting || isUploading}") &&
+        drawerContent.includes('isUploading ? "Mengunggah..." : "Simpan Perubahan"'),
+      "DocumentDrawer must lock footer buttons and show Mengunggah... on Simpan Perubahan while isUploading is true"
+    );
+  });
 });
 

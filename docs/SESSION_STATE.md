@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** DocumentDrawer Empty Preview `src` Guard (ADR-0092) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** DocumentDrawer File Replacement Upload Mode Toggle, Safe URL Draft State & Metadata Form Alignment (ADR-0093) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** DocumentDrawer Empty Preview `src` Guard (ADR-0092) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentCreateModal Real Branch Store Binding, Auto-Filled Owner/PIC, LINK FileType on URL Mode & Upload Submit Lock (ADR-0091) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090 Amendment 2) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090 Amendment 2) — **PLANNING COMPLETE**  
@@ -72,7 +73,35 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi DocumentDrawer Empty Preview `src` Guard (ADR-0092 — Implementation Complete):**
+1. **Implementasi DocumentDrawer File Replacement Upload Mode Toggle, Safe URL Draft State & Metadata Form Alignment (ADR-0093 — Implementation Complete):**
+   - **TDD Test Suites (`src/components/views/DocumentsView/documentDrawer.test.ts`):**
+     - Menambahkan subtest baru `verifies DocumentDrawer file replacement upload mode toggle, safe URL draft state, and metadata alignment (ADR-0093)` yang memvalidasi:
+       - Eliminasi penuh `useGoogleDrivePicker`, `GoogleDriveLinkModal`, ikon `Cloud`, dan tombol `Google Drive`.
+       - Kehadiran state `uploadMode` (`"local" | "url"`), `urlInput`, fungsi `handleModeChange`, dan `handleUrlInputChange`.
+       - Key isolation React 19 (`key="drawer-upload-local-mode"`, `key="drawer-upload-url-mode"`, dan `key="drawer-url-text-input"`).
+       - Standarisasi `CustomDropdown` dengan data cabang asli `useMarcomDataStore((s) => s.branches)` dan `placeholder="Choose"`.
+       - Eliminasi input manual `Periode Dokumen` dan `Ukuran File (MB)` yang dapat diedit.
+       - Footer lock: `disabled={isSaving || isDeleting || isUploading}` dan label dinamis `"Mengunggah..."` pada tombol `Simpan Perubahan`.
+     - Terverifikasi siklus TDD: Baseline RED -> GREEN (14/14 tests passing).
+   - **Refaktor Komponen Drawer (`src/components/views/DocumentsView/DocumentDrawer.tsx`):**
+     - Menghapus dependensi Google Drive picker (`useGoogleDrivePicker`, `GoogleDriveLinkModal`, `Cloud`, `Building2`, `Calendar`).
+     - Mengimplementasikan 2-mode segmented toggle (`Upload File Lokal` vs `Tautan URL`) di bawah kartu file aktif dengan draft state `urlInput`.
+     - Mengimplementasikan fallback Option 1B: berpindah ke tab `Tautan URL` saat `urlInput` kosong mempertahankan `filePath`, `fileType`, `fileSizeMb`, kartu file aktif, dan pratinjau media; saat pengguna mengosongkan kembali URL input, file asli dipulihkan secara otomatis.
+     - Mengaitkan `Branch / Wilayah` ke `useMarcomDataStore((s) => s.branches)` dengan `placeholder="Choose"`, serta menggunakan `CustomDropdown` untuk Kategori, Cabang, dan Tipe File.
+     - Menghapus input manual `Periode Dokumen` dan `Ukuran File (MB)` dari form metadata.
+     - Mengunci footer submit (`disabled={isSaving || isDeleting || isUploading}`) dengan spinner `RefreshCw` dan label `"Mengunggah..."` saat proses upload lokal sedang aktif.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0093-document-drawer-file-replacement-upload-mode-and-metadata-alignment.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0093-document-drawer-file-replacement-upload-mode-and-metadata-alignment.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-document-drawer-file-replacement-upload-mode-and-metadata-alignment-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-document-drawer-file-replacement-upload-mode-and-metadata-alignment-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-document-drawer-file-replacement-upload-mode-and-metadata-alignment.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-document-drawer-file-replacement-upload-mode-and-metadata-alignment.md)
+     - Handover: [`docs/handover-document-drawer-file-replacement-upload-mode-and-metadata-alignment.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-document-drawer-file-replacement-upload-mode-and-metadata-alignment.md)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (120/120 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run test:smoke`: ✅ 168/168 tests passing across 65 suites (0 failures).
+     - Targeted unit tests: ✅ 14/14 in `documentDrawer.test.ts`, 6/6 in `documentWorkflow.test.ts`.
+
+2. **Implementasi DocumentDrawer Empty Preview `src` Guard (ADR-0092 — Implementation Complete):**
    - **TDD Test Suites (`src/lib/marcom/documentWorkflow.test.ts` & `src/components/views/DocumentsView/documentDrawer.test.ts`):**
      - Menambahkan unit test pure helper `resolvePreviewSrc(filePath)` pada `documentWorkflow.test.ts` (`""`, `"   "`, `undefined`, `null` mengembalikan `null`; path valid mengembalikan string yang telah di-trim).
      - Menambahkan subtest regresi pada `documentDrawer.test.ts` yang memvalidasi bahwa `DocumentDrawer.tsx` mengimpor `resolvePreviewSrc`, merender placeholder `"Belum ada file untuk dipratinjau"`, dan menggunakan `src={previewSrc}` tanpa mengekspos `src={filePath}` tak-terjaga.
@@ -3135,10 +3164,10 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (all 119 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
+- `npm run drift:check` → ✅ No drift detected (all 120 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
 - `npm run build:check` → ✅ 0 TypeScript errors
 - `npm run test:smoke` → ✅ 168 passed, 0 failed
-- Targeted unit tests → ✅ `documentDrawer.test.ts` (13/13 passing), `documentWorkflow.test.ts` (6/6 passing)
+- Targeted unit tests → ✅ `documentDrawer.test.ts` (14/14 passing), `documentWorkflow.test.ts` (6/6 passing)
 
 ---
 
