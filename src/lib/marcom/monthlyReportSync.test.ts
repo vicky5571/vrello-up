@@ -2,10 +2,23 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   hasCustomNarratives,
+  resolvePreviousMonthPeriod,
   syncMonthlyReport,
 } from "./monthlyReportSync";
 
 describe("monthlyReportSync domain engine (ADR-0036)", () => {
+  describe("resolvePreviousMonthPeriod helper (ADR-0094)", () => {
+    it("resolves previous month within the same year (e.g. 1 December 2026 -> November 2026)", () => {
+      const res = resolvePreviousMonthPeriod(new Date(2026, 11, 1));
+      assert.deepStrictEqual(res, { month: "November", year: 2026 });
+    });
+
+    it("resolves previous month across year boundary (e.g. 1 January 2027 -> December 2026)", () => {
+      const res = resolvePreviousMonthPeriod(new Date(2027, 0, 1));
+      assert.deepStrictEqual(res, { month: "December", year: 2026 });
+    });
+  });
+
   describe("hasCustomNarratives helper", () => {
     it("returns false for non-array, null, or empty array", () => {
       assert.strictEqual(hasCustomNarratives(null, ["A", "B"]), false);

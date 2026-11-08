@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { syncMonthlyReport } from "@/lib/marcom/monthlyReportSync";
+import {
+  resolvePreviousMonthPeriod,
+  syncMonthlyReport,
+} from "@/lib/marcom/monthlyReportSync";
 
 export async function GET(request: Request) {
   try {
@@ -21,11 +24,21 @@ export async function GET(request: Request) {
     const yearParam = searchParams.get("year");
     const year = yearParam ? Number(yearParam) : undefined;
 
+    // On days 1-3 of a new month (when no explicit period query is passed),
+    // first run a final rollover update for the previous month (updating any
+    // report created mid-month, e.g. on 8 November, with complete end-of-month metrics).
+    const now = new Date();
+    const previousMonthResult =
+      !month && !yearParam && now.getDate() <= 3
+        ? await syncMonthlyReport(resolvePreviousMonthPeriod(now))
+        : undefined;
+
     const result = await syncMonthlyReport({ month, year });
 
     return NextResponse.json({
       ok: true,
-      syncedAt: new Date().toISOString(),
+      syncedAt: now.toISOString(),
+      previousMonthResult,
       result,
     });
   } catch (error) {

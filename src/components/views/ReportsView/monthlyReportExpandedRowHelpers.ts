@@ -62,7 +62,7 @@ export interface MonthlyReportExpandedRowProps<T extends MonthlyReportExpandedIt
   canManage: boolean;
   isDeletingId: string | null;
   onDeleteReport: (report: T) => void | Promise<void>;
-  onPrintReport: (report: T) => void | Promise<void>;
+  onPrintReport?: (report: T) => void | Promise<void>;
 }
 
 export const CATEGORY_STYLES: Record<

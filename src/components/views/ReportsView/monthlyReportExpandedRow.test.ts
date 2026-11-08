@@ -96,5 +96,30 @@ describe("MonthlyReportExpandedRow & parseActivityDisplay (ADR-0035)", () => {
         "Expected obsolete ReportSection function to be eliminated"
       );
     });
+
+    it("verifies duplicate Cetak Dokumen Resmi and manual Tarik Data Otomatis buttons are removed and POST route upserts by period (ADR-0094)", () => {
+      const expandedCode = fs.readFileSync(subcomponentPath, "utf-8");
+      const coordCode = fs.readFileSync(coordinatorPath, "utf-8");
+      const routePath = path.resolve(
+        process.cwd(),
+        "src/app/api/marcom/reports/route.ts"
+      );
+      const routeCode = fs.readFileSync(routePath, "utf-8");
+
+      assert.ok(
+        !expandedCode.includes("Cetak Dokumen Resmi (Save as PDF)"),
+        "MonthlyReportExpandedRow must not render duplicate Cetak Dokumen Resmi (Save as PDF) button"
+      );
+      assert.ok(
+        coordCode.includes("Export PDF") &&
+          !coordCode.includes("Tarik Data Otomatis (Auto-Draft)"),
+        "ReportsView must retain Export PDF button on row and remove manual Tarik Data Otomatis (Auto-Draft) button"
+      );
+      assert.ok(
+        routeCode.includes("prisma.monthlyReport.findFirst") &&
+          routeCode.includes("prisma.monthlyReport.update"),
+        "POST /api/marcom/reports must check findFirst and update existing (month, year) report row"
+      );
+    });
   });
 });

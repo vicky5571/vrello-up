@@ -227,43 +227,52 @@ export function ReportsView() {
     ];
   }, [summary, reports]);
 
-  const handleAutoDraft = async () => {
-    if (!month.trim()) {
-      toast.error("Pilih bulan terlebih dahulu");
-      return;
-    }
+  useEffect(() => {
+    if (!showCreateForm) return;
+    const trimmedMonth = month.trim();
     const parsedYear = Number(year);
-    if (!Number.isInteger(parsedYear)) {
-      toast.error("Tahun tidak valid");
+    if (!trimmedMonth || !Number.isInteger(parsedYear) || parsedYear < 2000 || parsedYear > 2100) {
       return;
     }
+
+    let cancelled = false;
     setIsDrafting(true);
-    try {
-      const res = await fetch(
-        `/api/marcom/reports/draft?month=${encodeURIComponent(month.trim())}&year=${parsedYear}`,
-      );
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || `Gagal menarik data (${res.status})`);
-      }
-      const json = await res.json();
-      const draft: ReportDraftResult = json.draft;
-      if (draft) {
-        setDraftData(draft);
-        setTotalActivities(String(draft.summary.totalActivities));
-        setCompletionRate(String(draft.summary.completionRate));
-        setAchievementsText(draft.achievements.join("\n"));
-        setKeyIssuesText(draft.keyIssues.join("\n"));
-        setActionPlansText(draft.actionPlans.join("\n"));
-        setActivitiesList(draft.activities);
-        toast.success("Draf laporan berhasil disusun dari data operasional!");
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal membuat draf laporan");
-    } finally {
-      setIsDrafting(false);
-    }
-  };
+
+    fetch(
+      `/api/marcom/reports/draft?month=${encodeURIComponent(trimmedMonth)}&year=${parsedYear}`,
+    )
+      .then(async (res) => {
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson.error || `Gagal menarik data (${res.status})`);
+        }
+        return res.json();
+      })
+      .then((json) => {
+        if (cancelled) return;
+        const draft: ReportDraftResult = json.draft;
+        if (draft) {
+          setDraftData(draft);
+          setTotalActivities(String(draft.summary.totalActivities));
+          setCompletionRate(String(draft.summary.completionRate));
+          setAchievementsText(draft.achievements.join("\n"));
+          setKeyIssuesText(draft.keyIssues.join("\n"));
+          setActionPlansText(draft.actionPlans.join("\n"));
+          setActivitiesList(draft.activities);
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        toast.error(err instanceof Error ? err.message : "Gagal membuat draf laporan");
+      })
+      .finally(() => {
+        if (!cancelled) setIsDrafting(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showCreateForm, month, year]);
 
   const handleInstantExecutiveExport = async () => {
     setIsInstantExporting(true);
@@ -474,27 +483,21 @@ export function ReportsView() {
                 </label>
               </div>
 
-              {/* Auto-Draft trigger banner */}
+              {/* Auto-Draft status banner */}
               <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-violet-50/80 dark:bg-violet-950/20 border border-violet-200/80 dark:border-violet-900/50">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0" />
+                  <Sparkles className={cn("w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0", isDrafting && "animate-spin")} />
                   <div className="text-xs text-slate-700 dark:text-slate-300">
                     <span className="font-bold text-violet-900 dark:text-violet-200">
                       Otomasi Laporan:
                     </span>{" "}
-                    Tarik metrik riil dari POSM, MOU, Media Sosial, & Field Events untuk periode{" "}
-                    <strong>{month} {year}</strong>.
+                    {isDrafting ? (
+                      <span>Menghitung metrik operasional untuk periode <strong>{month} {year}</strong>...</span>
+                    ) : (
+                      <span>Metrik riil dari POSM, MOU, Media Sosial, & Field Events untuk periode <strong>{month} {year}</strong> telah ditarik otomatis.</span>
+                    )}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAutoDraft}
-                  disabled={isDrafting}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50 transition-colors"
-                >
-                  <Sparkles className={cn("w-3.5 h-3.5", isDrafting && "animate-spin")} />
-                  <span>{isDrafting ? "Menghitung data..." : "⚡ Tarik Data Otomatis (Auto-Draft)"}</span>
-                </button>
               </div>
 
               {/* Operational Stats Breakdown if Drafted */}

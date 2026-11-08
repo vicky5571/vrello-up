@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** DocumentDrawer File Replacement Upload Mode Toggle, Safe URL Draft State & Metadata Form Alignment (ADR-0093) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Monthly Reports Export Button Deduplication, Automatic Draft Fetch on Open/Change, and Single-Row Period Upsert with Rollover Sync (ADR-0094) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** DocumentDrawer File Replacement Upload Mode Toggle, Safe URL Draft State & Metadata Form Alignment (ADR-0093) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentDrawer Empty Preview `src` Guard (ADR-0092) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentCreateModal Real Branch Store Binding, Auto-Filled Owner/PIC, LINK FileType on URL Mode & Upload Submit Lock (ADR-0091) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentCreateModal Upload Mode Toggle, Google Drive Removal & CustomDropdown Standardization (ADR-0090 Amendment 2) — **IMPLEMENTATION COMPLETE**  
@@ -73,7 +74,34 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi DocumentDrawer File Replacement Upload Mode Toggle, Safe URL Draft State & Metadata Form Alignment (ADR-0093 — Implementation Complete):**
+1. **Implementasi Monthly Reports Export Button Deduplication, Automatic Draft Fetch on Open/Change, and Single-Row Period Upsert with Rollover Sync (ADR-0094 — Implementation Complete):**
+   - **TDD Test Suites (`src/lib/marcom/monthlyReportSync.test.ts` & `src/components/views/ReportsView/monthlyReportExpandedRow.test.ts`):**
+     - Menambahkan unit test `resolvePreviousMonthPeriod` di `monthlyReportSync.test.ts` untuk pengujian pergantian bulan mid-year (`2026-12-01` -> `November 2026`) dan boundary akhir tahun (`2027-01-01` -> `December 2026`).
+     - Menambahkan assertion ADR-0094 pada `monthlyReportExpandedRow.test.ts` yang memverifikasi:
+       - Eliminasi tombol duplikat `Cetak Dokumen Resmi (Save as PDF)` dari `MonthlyReportExpandedRow.tsx`.
+       - Retensi tombol `Export PDF` pada header baris laporan di `ReportsView.tsx` dan eliminasi tombol manual `⚡ Tarik Data Otomatis (Auto-Draft)`.
+       - Query `prisma.monthlyReport.findFirst` dan `prisma.monthlyReport.update` pada handler `POST /api/marcom/reports`.
+     - Terverifikasi siklus TDD: Baseline RED -> GREEN (8/8 tests di `monthlyReportSync.test.ts`, 17/17 tests di `monthlyReportExpandedRow.test.ts`).
+   - **Backend Period Upsert & 1st-of-Month Rollover Sync (`src/lib/marcom/monthlyReportSync.ts`, `src/app/api/marcom/reports/route.ts`, & `src/app/api/cron/reports-sync/route.ts`):**
+     - Mengimplementasikan pure helper `resolvePreviousMonthPeriod(date?: Date)` pada `monthlyReportSync.ts`.
+     - Memperbarui `GET /api/cron/reports-sync` untuk menjalankan rollover sync bulan sebelumnya pada tanggal 1–3 setiap bulan (`now.getDate() <= 3` ketika tanpa query period manual) sebelum menyinkronkan bulan berjalan.
+     - Memperbarui `POST /api/marcom/reports` untuk mencari record eksisting via `prisma.monthlyReport.findFirst` berdasarkan `(month, year)` (dengan `mode: "insensitive"` pada normalized month) dan mengeksekusi `prisma.monthlyReport.update` (HTTP 200) jika sudah ada, sehingga mencegah duplikasi baris laporan untuk periode yang sama.
+   - **UI Deduplication & Automatic Draft Fetch (`src/components/views/ReportsView/MonthlyReportExpandedRow.tsx`, `monthlyReportExpandedRowHelpers.ts`, & `ReportsView.tsx`):**
+     - Menjadikan prop `onPrintReport?: (report: T) => void | Promise<void>` optional pada `MonthlyReportExpandedRowProps`.
+     - Menghapus tombol `Cetak Dokumen Resmi (Save as PDF)` dan icon `Printer` dari `MonthlyReportExpandedRow.tsx`.
+     - Menghapus tombol pemicu manual `⚡ Tarik Data Otomatis (Auto-Draft)` pada form pembuatan laporan di `ReportsView.tsx`.
+     - Menambahkan hook otomatis `useEffect([showCreateForm, month, year])` dengan pembatalan race condition (`let cancelled = false; return () => { cancelled = true; };`) untuk menarik metrik operasional dan narasi draft secara instan saat modal dibuka atau saat bulan/tahun diubah, dilengkapi banner status informatif.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0094-monthly-reports-export-dedup-auto-draft-and-period-upsert.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0094-monthly-reports-export-dedup-auto-draft-and-period-upsert.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-monthly-reports-export-dedup-auto-draft-and-period-upsert-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-monthly-reports-export-dedup-auto-draft-and-period-upsert-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-monthly-reports-export-dedup-auto-draft-and-period-upsert.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-monthly-reports-export-dedup-auto-draft-and-period-upsert.md)
+     - Handover: [`docs/handover-monthly-reports-export-dedup-auto-draft-and-period-upsert.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-monthly-reports-export-dedup-auto-draft-and-period-upsert.md)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (121/121 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1059/1059 tests passing across 189 suites (0 failures).
+
+2. **Implementasi DocumentDrawer File Replacement Upload Mode Toggle, Safe URL Draft State & Metadata Form Alignment (ADR-0093 — Implementation Complete):**
    - **TDD Test Suites (`src/components/views/DocumentsView/documentDrawer.test.ts`):**
      - Menambahkan subtest baru `verifies DocumentDrawer file replacement upload mode toggle, safe URL draft state, and metadata alignment (ADR-0093)` yang memvalidasi:
        - Eliminasi penuh `useGoogleDrivePicker`, `GoogleDriveLinkModal`, ikon `Cloud`, dan tombol `Google Drive`.

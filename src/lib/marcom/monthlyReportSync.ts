@@ -24,6 +24,20 @@ export interface SyncReportResult {
 }
 
 /**
+ * Resolves the immediately preceding calendar month and year for rollover syncs.
+ */
+export function resolvePreviousMonthPeriod(date: Date = new Date()): {
+  month: string;
+  year: number;
+} {
+  const currentMonthIdx = date.getMonth();
+  if (currentMonthIdx === 0) {
+    return { month: MONTH_OPTIONS[11], year: date.getFullYear() - 1 };
+  }
+  return { month: MONTH_OPTIONS[currentMonthIdx - 1], year: date.getFullYear() };
+}
+
+/**
  * Checks whether an existing narrative array has been customized by an admin.
  * If user customized it, returns true to prevent daily cron from overwriting.
  */

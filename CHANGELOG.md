@@ -6,6 +6,15 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(reports)`: Monthly reports export button deduplication, automatic draft fetch, and single-row period upsert with rollover sync (ADR-0094)
+  - Export PDF button deduplication: removed duplicate `"Cetak Dokumen Resmi (Save as PDF)"` button and `Printer` icon from `MonthlyReportExpandedRow.tsx`, consolidating on `"Export PDF"` in the report row header (`ReportsView.tsx`) as the single export action
+  - Automatic draft fetch: removed manual `"⚡ Tarik Data Otomatis (Auto-Draft)"` button and replaced with an automated `useEffect([showCreateForm, month, year])` hook that populates operational metrics and synthesized narratives upon opening `Buat Laporan Bulanan` or changing `(month, year)`, with race condition cancellation cleanup and an informative status banner
+  - Single-row period upsert: in `POST /api/marcom/reports`, look up existing report via `prisma.monthlyReport.findFirst({ where: { month: { equals: normalizedMonth, mode: "insensitive" }, year } })` and update in place (HTTP 200) instead of creating duplicate records for the same month/year
+  - 1st-of-month rollover sync: added pure helper `resolvePreviousMonthPeriod` in `src/lib/marcom/monthlyReportSync.ts`, and updated `GET /api/cron/reports-sync` to execute a rollover sync for the preceding month on days 1–3 of each month
+  - Dedicated unit tests: verified rollover helper in `src/lib/marcom/monthlyReportSync.test.ts` (8/8 passing) and UI/API invariants in `src/components/views/ReportsView/monthlyReportExpandedRow.test.ts` (17/17 passing)
+  - Verification: `npm run drift:check` ✅ (121/121 pairs), `npm run build:check` ✅, `npm test` ✅ (1059/1059 tests passing)
+  - Refs: `docs/adr/0094-monthly-reports-export-dedup-auto-draft-and-period-upsert.md`, `docs/superpowers/specs/2026-11-08-monthly-reports-export-dedup-auto-draft-and-period-upsert-design.md`, `docs/superpowers/plans/2026-11-08-monthly-reports-export-dedup-auto-draft-and-period-upsert.md`
+
 - `feat(documents)`: DocumentDrawer file replacement upload mode toggle, safe URL draft state, and metadata alignment (ADR-0093)
   - Google Drive picker removal: eliminated `useGoogleDrivePicker`, `GoogleDriveLinkModal`, `Cloud` icon, and the `Google Drive` button from `DocumentDrawer.tsx`
   - Segmented replacement mode toggle: introduced 2-mode toggle (`Upload File Lokal` | `Tautan URL`) placed directly beneath the Current Active File Card with distinct React 19 reconciliation keys (`drawer-upload-local-mode` and `drawer-upload-url-mode`)

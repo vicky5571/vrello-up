@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   ArrowUpRight,
-  Printer,
   Trash2,
   RefreshCw,
   FileSpreadsheet,
@@ -41,7 +40,6 @@ export function MonthlyReportExpandedRow<
   canManage,
   isDeletingId,
   onDeleteReport,
-  onPrintReport,
 }: MonthlyReportExpandedRowProps<T>) {
   const activities = Array.isArray(report.activities) ? report.activities : [];
   const achievements = Array.isArray(report.achievements) ? report.achievements : [];
@@ -77,14 +75,6 @@ export function MonthlyReportExpandedRow<
               <span>{isDeletingId === report.id ? "Menghapus..." : "Hapus Laporan"}</span>
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => onPrintReport(report)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Cetak Dokumen Resmi (Save as PDF)</span>
-          </button>
         </div>
       </div>
 

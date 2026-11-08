@@ -50,9 +50,33 @@ export async function POST(request: Request) {
     );
   }
 
+  const normalizedMonth = month.trim();
+  const existing = await prisma.monthlyReport.findFirst({
+    where: {
+      month: { equals: normalizedMonth, mode: "insensitive" },
+      year,
+    },
+  });
+
+  if (existing) {
+    const updated = await prisma.monthlyReport.update({
+      where: { id: existing.id },
+      data: {
+        month: normalizedMonth,
+        year,
+        summary: (summary ?? {}) as Prisma.InputJsonValue,
+        activities: asJsonArray(activities),
+        achievements: asJsonArray(achievements),
+        keyIssues: asJsonArray(keyIssues),
+        actionPlans: asJsonArray(actionPlans),
+      },
+    });
+    return NextResponse.json(updated, { status: 200 });
+  }
+
   const report = await prisma.monthlyReport.create({
     data: {
-      month,
+      month: normalizedMonth,
       year,
       summary: (summary ?? {}) as Prisma.InputJsonValue,
       activities: asJsonArray(activities),
