@@ -25,6 +25,7 @@ import type { ReportDraftResult, DraftActivityItem } from "@/lib/marcom/reportDr
 import { QuarterlyPosmReportTab } from "./QuarterlyPosmReportTab";
 import { ReportsHeader } from "./ReportsHeader";
 import { MonthlyReportExpandedRow } from "./MonthlyReportExpandedRow";
+import { ReportRangeExportModal } from "./ReportRangeExportModal";
 import type { KpiCardItem } from "@/components/views/shared/KpiSummaryCards";
 
 const MONTH_OPTIONS = [
@@ -103,7 +104,6 @@ function completionBarColor(rate: number): string {
 
 export function ReportsView() {
   const { can } = useMarcomPermissions();
-  const setExportCenterOpen = useWorkspaceStore((state) => state.setExportCenterOpen);
   const navigateToMarcom = useWorkspaceStore((state) => state.navigateToMarcom);
   const [reportTab, setReportTab] = useState<"monthly" | "posm_quarterly">("monthly");
   
@@ -137,7 +137,7 @@ export function ReportsView() {
   const [keyIssuesText, setKeyIssuesText] = useState("");
   const [actionPlansText, setActionPlansText] = useState("");
   const [activitiesList, setActivitiesList] = useState<DraftActivityItem[]>([]);
-  const [isInstantExporting, setIsInstantExporting] = useState(false);
+  const [isRangeExportOpen, setIsRangeExportOpen] = useState(false);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
 
   // Report creation is gated on MANAGE_MASTER_DATA (admin-only, matching
@@ -274,34 +274,6 @@ export function ReportsView() {
     };
   }, [showCreateForm, month, year]);
 
-  const handleInstantExecutiveExport = async () => {
-    setIsInstantExporting(true);
-    try {
-      const activeMonth = month || MONTH_OPTIONS[new Date().getMonth()];
-      const activeYear = Number(year) || new Date().getFullYear();
-
-      const res = await fetch(
-        `/api/marcom/reports/draft?month=${encodeURIComponent(activeMonth)}&year=${activeYear}`,
-      );
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || `Gagal menarik data draf (${res.status})`);
-      }
-      const json = await res.json();
-      if (!json.draft) {
-        throw new Error("Draf laporan kosong");
-      }
-      printSingleMonthlyReport(json.draft, {
-        workspaceName: "Vrello Marcom Operations",
-      });
-      toast.success(`Membuka Dokumen Eksekutif ${activeMonth} ${activeYear} (Save as PDF)...`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal generate laporan 1-klik");
-    } finally {
-      setIsInstantExporting(false);
-    }
-  };
-
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canManage) {
@@ -407,9 +379,7 @@ export function ReportsView() {
         kpiCards={kpiCards}
         isLoading={isLoading}
         fetchReports={fetchReports}
-        onOpenExportCenter={() => setExportCenterOpen(true)}
-        onInstantExecutiveExport={handleInstantExecutiveExport}
-        isInstantExporting={isInstantExporting}
+        onOpenRangeExport={() => setIsRangeExportOpen(true)}
         canManage={canManage}
         showCreateForm={showCreateForm}
         setShowCreateForm={setShowCreateForm}
@@ -753,6 +723,12 @@ export function ReportsView() {
         </>
       )}
     </div>
+
+    <ReportRangeExportModal
+      isOpen={isRangeExportOpen}
+      onClose={() => setIsRangeExportOpen(false)}
+      onSuccess={() => fetchReports({ silent: true })}
+    />
     </div>
   );
 }

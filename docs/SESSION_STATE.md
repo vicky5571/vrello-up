@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** Monthly Reports Export Button Deduplication, Automatic Draft Fetch on Open/Change, and Single-Row Period Upsert with Rollover Sync (ADR-0094) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Reports Header Month-Range Executive PDF Export, Auto-Sync of Range & Current Month, and Redundant Export Center Button Removal (ADR-0095) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Monthly Reports Export Button Deduplication, Automatic Draft Fetch on Open/Change, and Single-Row Period Upsert with Rollover Sync (ADR-0094) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentDrawer File Replacement Upload Mode Toggle, Safe URL Draft State & Metadata Form Alignment (ADR-0093) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentDrawer Empty Preview `src` Guard (ADR-0092) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentCreateModal Real Branch Store Binding, Auto-Filled Owner/PIC, LINK FileType on URL Mode & Upload Submit Lock (ADR-0091) — **IMPLEMENTATION COMPLETE**  
@@ -74,7 +75,34 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Monthly Reports Export Button Deduplication, Automatic Draft Fetch on Open/Change, and Single-Row Period Upsert with Rollover Sync (ADR-0094 — Implementation Complete):**
+1. **Implementasi Reports Header Month-Range Executive PDF Export, Auto-Sync of Range & Current Month, and Redundant Export Center Button Removal (ADR-0095 — Implementation Complete):**
+   - **TDD Test Suites (`src/lib/marcom/monthlyReportSync.test.ts`, `src/lib/productivity/exportCenter.test.ts`, & `src/components/modals/MoreAppsMenu.test.ts`):**
+     - Menambahkan unit test `enumerateReportPeriods` di `monthlyReportSync.test.ts` untuk pengujian single-month, multi-month dalam tahun yang sama, lintas batas tahun, dan validasi rentang terbalik (`start > end` mengembalikan `[]`).
+     - Menambahkan unit test `buildMonthlyReportRangePrint` di `exportCenter.test.ts` yang memverifikasi bahwa multi-month export merender dokumen dengan pembatas cetak halaman (`page-break-after: always;`).
+     - Memperbarui `MoreAppsMenu.test.ts` untuk memverifikasi bahwa `ReportsHeader.tsx` mengeliminasi prop `onOpenExportCenter`, menghapus tombol duplikat `Export Center` dan `1-Click Executive PDF`, serta merender tombol terpadu `Export Laporan PDF`.
+     - Terverifikasi siklus TDD: Baseline RED -> GREEN (12/12 tests di `monthlyReportSync.test.ts`, 8/8 tests di `exportCenter.test.ts`, 9/9 tests di `MoreAppsMenu.test.ts`).
+   - **Domain Pure Logic & Multi-Month Print Builder (`src/lib/marcom/monthlyReportSync.ts` & `src/lib/productivity/exportCenter.ts`):**
+     - Mengimplementasikan helper kronologis murni `enumerateReportPeriods(startMonth, startYear, endMonth, endYear)`.
+     - Mengimplementasikan `buildMonthlyReportRangePrint` dan `printMonthlyReportRange` yang merangkai rincian tiap laporan ke dalam template eksekutif formal dengan isolasi halaman cetak.
+   - **API Endpoint Range Export dengan Perilaku A Auto-Sync (`src/app/api/marcom/reports/export-range/route.ts`):**
+     - Membuat route handler `POST /api/marcom/reports/export-range` dengan validasi rentang maksimal 12 bulan.
+     - Selalu menjalankan auto-sync untuk bulan kalender berjalan (`syncMonthlyReport({ month: currentMonth, year: currentYear })`) sehingga data bulan ini selalu mencerminkan metrik lapangan terkini.
+     - Mengimplementasikan Perilaku A: mencari tiap periode dalam rentang; jika belum ada laporan tersimpan di database, otomatis menyinkronkan (`syncMonthlyReport`) dan menyimpannya (dilengkapi komentar `ponytail:` untuk beralih ke Perilaku B jika diinginkan di masa depan).
+   - **Komponen Modal & Integrasi Header (`src/components/views/ReportsView/ReportRangeExportModal.tsx`, `ReportsHeader.tsx`, & `ReportsView.tsx`):**
+     - Membuat komponen dialog modal modular `ReportRangeExportModal.tsx` dengan selektor `Dari Periode` dan `Sampai Periode` berbasis `CustomDropdown` untuk bulan dan input angka untuk tahun.
+     - Merestrukturisasi `ReportsHeader.tsx`: menghapus tombol `Export Center` dan `⚡ 1-Click Executive PDF`, menggantikannya dengan tombol `Export Laporan PDF`.
+     - Memperbarui `ReportsView.tsx`: mengelola state `isRangeExportOpen`, merender modal `ReportRangeExportModal`, memicu refresh reaktif tabel klien (`fetchReports({ silent: true })`), dan membuka dialog cetak PDF.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0095-reports-header-month-range-export-and-auto-sync.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0095-reports-header-month-range-export-and-auto-sync.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-reports-header-month-range-export-and-auto-sync-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-reports-header-month-range-export-and-auto-sync-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-reports-header-month-range-export-and-auto-sync.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-reports-header-month-range-export-and-auto-sync.md)
+     - Handover: [`docs/handover-reports-header-month-range-export-and-auto-sync.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-reports-header-month-range-export-and-auto-sync.md)
+   - **Verifikasi Kualitas & Invarian Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (122/122 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1064/1064 tests passing across 190 suites (0 failures).
+
+2. **Implementasi Monthly Reports Export Button Deduplication, Automatic Draft Fetch on Open/Change, and Single-Row Period Upsert with Rollover Sync (ADR-0094 — Implementation Complete):**
    - **TDD Test Suites (`src/lib/marcom/monthlyReportSync.test.ts` & `src/components/views/ReportsView/monthlyReportExpandedRow.test.ts`):**
      - Menambahkan unit test `resolvePreviousMonthPeriod` di `monthlyReportSync.test.ts` untuk pengujian pergantian bulan mid-year (`2026-12-01` -> `November 2026`) dan boundary akhir tahun (`2027-01-01` -> `December 2026`).
      - Menambahkan assertion ADR-0094 pada `monthlyReportExpandedRow.test.ts` yang memverifikasi:

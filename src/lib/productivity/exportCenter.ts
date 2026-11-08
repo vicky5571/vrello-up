@@ -765,3 +765,43 @@ export function printSingleMonthlyReport(
   const html = buildSingleMonthlyReportPrint(report, opts);
   printDocument(html);
 }
+
+/**
+ * Builds printable HTML for a range of monthly reports, each on a fresh page.
+ */
+export function buildMonthlyReportRangePrint(
+  reports: ReportLike[],
+  opts?: { workspaceName?: string; generatedAt?: string }
+): string {
+  if (reports.length === 0) {
+    return buildSingleMonthlyReportPrint({} as ReportLike, opts);
+  }
+  if (reports.length === 1) {
+    return buildSingleMonthlyReportPrint(reports[0], opts);
+  }
+
+  // Extract individual report bodies and join with print page breaks
+  const pagesHtml = reports
+    .map((r, idx) => {
+      const singleHtml = buildSingleMonthlyReportPrint(r, opts);
+      const bodyMatch = singleHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      const innerContent = bodyMatch ? bodyMatch[1] : singleHtml;
+      const isLast = idx === reports.length - 1;
+      return `<div class="monthly-report-page" style="${isLast ? "" : "page-break-after: always;"}">
+        ${innerContent}
+      </div>`;
+    })
+    .join("\n");
+
+  // Re-wrap in single HTML document with standard executive print stylesheet
+  const baseHtml = buildSingleMonthlyReportPrint(reports[0], opts);
+  return baseHtml.replace(/<body[^>]*>[\s\S]*?<\/body>/i, `<body>${pagesHtml}</body>`);
+}
+
+export function printMonthlyReportRange(
+  reports: ReportLike[],
+  opts?: { workspaceName?: string }
+): void {
+  const html = buildMonthlyReportRangePrint(reports, opts);
+  printDocument(html);
+}

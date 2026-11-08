@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(reports)`: Reports header month-range executive PDF export, auto-sync of range and current month, and redundant export center button removal (ADR-0095)
+  - Redundant button consolidation: removed duplicate `"Export Center"` button (retained in `MoreAppsMenu`) and obsolete `"⚡ 1-Click Executive PDF"` button from `ReportsHeader.tsx`, replacing them with `"Export Laporan PDF"`
+  - Month-range export modal: created `ReportRangeExportModal.tsx` supporting start/end month-year selection (`Dari Periode` and `Sampai Periode`) with `CustomDropdown`, bounded to a maximum 12-month span with chronological validation (`start <= end`)
+  - Range export API with Perilaku A auto-sync: added `POST /api/marcom/reports/export-range` which always auto-syncs the current calendar month with live operational data (`syncMonthlyReport`), auto-syncs any missing months in range under Perilaku A (with `ponytail:` comment for switching to Perilaku B), and returns ordered reports
+  - Multi-month executive print builder: added `buildMonthlyReportRangePrint` and `printMonthlyReportRange` in `exportCenter.ts` with page-break separation (`page-break-after: always;`) between consecutive reports
+  - Pure chronological enumeration helper: implemented `enumerateReportPeriods` in `monthlyReportSync.ts` supporting single-month, multi-month, and cross-year ranges
+  - Dedicated unit tests: verified period enumeration in `src/lib/marcom/monthlyReportSync.test.ts` (12/12 passing), print builder in `src/lib/productivity/exportCenter.test.ts` (8/8 passing), and header consolidation in `src/components/modals/MoreAppsMenu.test.ts` (9/9 passing)
+  - Verification: `npm run drift:check` ✅ (122/122 pairs), `npm run build:check` ✅, `npm test` ✅ (1064/1064 tests passing)
+  - Refs: `docs/adr/0095-reports-header-month-range-export-and-auto-sync.md`, `docs/superpowers/specs/2026-11-08-reports-header-month-range-export-and-auto-sync-design.md`, `docs/superpowers/plans/2026-11-08-reports-header-month-range-export-and-auto-sync.md`
+
 - `feat(reports)`: Monthly reports export button deduplication, automatic draft fetch, and single-row period upsert with rollover sync (ADR-0094)
   - Export PDF button deduplication: removed duplicate `"Cetak Dokumen Resmi (Save as PDF)"` button and `Printer` icon from `MonthlyReportExpandedRow.tsx`, consolidating on `"Export PDF"` in the report row header (`ReportsView.tsx`) as the single export action
   - Automatic draft fetch: removed manual `"⚡ Tarik Data Otomatis (Auto-Draft)"` button and replaced with an automated `useEffect([showCreateForm, month, year])` hook that populates operational metrics and synthesized narratives upon opening `Buat Laporan Bulanan` or changing `(month, year)`, with race condition cancellation cleanup and an informative status banner

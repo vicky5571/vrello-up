@@ -1,12 +1,44 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  enumerateReportPeriods,
   hasCustomNarratives,
   resolvePreviousMonthPeriod,
   syncMonthlyReport,
 } from "./monthlyReportSync";
 
 describe("monthlyReportSync domain engine (ADR-0036)", () => {
+  describe("enumerateReportPeriods helper (ADR-0095)", () => {
+    it("returns single period when start and end are identical", () => {
+      const periods = enumerateReportPeriods("November", 2026, "November", 2026);
+      assert.deepStrictEqual(periods, [{ month: "November", year: 2026 }]);
+    });
+
+    it("returns chronologically ordered periods within same year", () => {
+      const periods = enumerateReportPeriods("August", 2026, "October", 2026);
+      assert.deepStrictEqual(periods, [
+        { month: "August", year: 2026 },
+        { month: "September", year: 2026 },
+        { month: "October", year: 2026 },
+      ]);
+    });
+
+    it("returns chronologically ordered periods across year boundary", () => {
+      const periods = enumerateReportPeriods("November", 2025, "February", 2026);
+      assert.deepStrictEqual(periods, [
+        { month: "November", year: 2025 },
+        { month: "December", year: 2025 },
+        { month: "January", year: 2026 },
+        { month: "February", year: 2026 },
+      ]);
+    });
+
+    it("returns empty array when start is after end", () => {
+      const periods = enumerateReportPeriods("November", 2026, "August", 2026);
+      assert.deepStrictEqual(periods, []);
+    });
+  });
+
   describe("resolvePreviousMonthPeriod helper (ADR-0094)", () => {
     it("resolves previous month within the same year (e.g. 1 December 2026 -> November 2026)", () => {
       const res = resolvePreviousMonthPeriod(new Date(2026, 11, 1));

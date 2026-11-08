@@ -24,6 +24,36 @@ export interface SyncReportResult {
 }
 
 /**
+ * Enumerates every (month, year) period chronologically between start and end.
+ * Returns empty array if start is after end, or inputs are invalid.
+ */
+export function enumerateReportPeriods(
+  startMonth: string,
+  startYear: number,
+  endMonth: string,
+  endYear: number,
+): { month: string; year: number }[] {
+  const startIdx = MONTH_OPTIONS.indexOf(startMonth as any);
+  const endIdx = MONTH_OPTIONS.indexOf(endMonth as any);
+  if (startIdx === -1 || endIdx === -1) return [];
+  if (!Number.isInteger(startYear) || !Number.isInteger(endYear)) return [];
+
+  const startVal = startYear * 12 + startIdx;
+  const endVal = endYear * 12 + endIdx;
+  if (startVal > endVal) return [];
+
+  const results: { month: string; year: number }[] = [];
+  let currentVal = startVal;
+  while (currentVal <= endVal) {
+    const y = Math.floor(currentVal / 12);
+    const mIdx = currentVal % 12;
+    results.push({ month: MONTH_OPTIONS[mIdx], year: y });
+    currentVal++;
+  }
+  return results;
+}
+
+/**
  * Resolves the immediately preceding calendar month and year for rollover syncs.
  */
 export function resolvePreviousMonthPeriod(date: Date = new Date()): {

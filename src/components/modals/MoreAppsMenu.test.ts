@@ -151,19 +151,27 @@ describe("MoreAppsMenu & SettingsModal YAGNI Elimination (ADR-0031)", () => {
     );
   });
 
-  it("preserves Export Center in ReportsHeader (ADR-0033 non-goal)", () => {
+  it("verifies ReportsHeader consolidates into Export Laporan PDF and removes redundant Export Center (ADR-0095)", () => {
     const reportsHeaderPath = path.resolve(
       process.cwd(),
       "src/components/views/ReportsView/ReportsHeader.tsx"
     );
     const reportsHeaderContent = fs.readFileSync(reportsHeaderPath, "utf-8");
     assert.ok(
-      reportsHeaderContent.includes("onOpenExportCenter"),
-      "Expected ReportsHeader to retain onOpenExportCenter prop"
+      !reportsHeaderContent.includes("onOpenExportCenter"),
+      "Expected ReportsHeader to remove redundant onOpenExportCenter prop"
     );
     assert.ok(
-      reportsHeaderContent.includes("Export Center"),
-      "Expected ReportsHeader to retain Export Center button"
+      !reportsHeaderContent.includes("<span>Export Center</span>"),
+      "Expected ReportsHeader to remove duplicate Export Center button (retained in MoreAppsMenu)"
+    );
+    assert.ok(
+      reportsHeaderContent.includes("Export Laporan PDF"),
+      "Expected ReportsHeader to render Export Laporan PDF button"
+    );
+    assert.ok(
+      !reportsHeaderContent.includes("1-Click Executive PDF"),
+      "Expected ReportsHeader to remove obsolete 1-Click Executive PDF button"
     );
   });
 

@@ -19,9 +19,7 @@ interface ReportsHeaderProps {
   kpiCards: KpiCardItem[];
   isLoading: boolean;
   fetchReports: () => void;
-  onOpenExportCenter: () => void;
-  onInstantExecutiveExport: () => void;
-  isInstantExporting: boolean;
+  onOpenRangeExport: () => void;
   canManage: boolean;
   showCreateForm: boolean;
   setShowCreateForm: React.Dispatch<React.SetStateAction<boolean>>;
@@ -33,9 +31,7 @@ export function ReportsHeader({
   kpiCards,
   isLoading,
   fetchReports,
-  onOpenExportCenter,
-  onInstantExecutiveExport,
-  isInstantExporting,
+  onOpenRangeExport,
   canManage,
   showCreateForm,
   setShowCreateForm,
@@ -75,23 +71,12 @@ export function ReportsHeader({
 
           <button
             type="button"
-            onClick={onOpenExportCenter}
-            title="Open Export Center — PDF summaries & Excel sheets"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border shadow-2xs bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700 cursor-pointer"
+            onClick={onOpenRangeExport}
+            title="Ekspor Laporan PDF dalam rentang bulan"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all border shadow-2xs bg-indigo-600 hover:bg-indigo-700 border-indigo-600 text-white cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export Center</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onInstantExecutiveExport}
-            disabled={isInstantExporting}
-            title="1-Klik tarik data riil & buka cetak PDF Laporan Eksekutif Bulanan"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border shadow-2xs bg-gradient-to-r from-violet-600 to-indigo-600 border-indigo-500 text-white hover:from-violet-700 hover:to-indigo-700 cursor-pointer disabled:opacity-50"
-          >
-            <Sparkles className={cn("w-3.5 h-3.5", isInstantExporting && "animate-spin")} />
-            <span>{isInstantExporting ? "Menyusun PDF..." : "⚡ 1-Click Executive PDF"}</span>
+            <span>Export Laporan PDF</span>
           </button>
         </div>
       </div>

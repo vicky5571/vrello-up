@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildMonthlyReportRangePrint,
   buildMousCsv,
   buildPlacementsCsv,
   buildPrintHtml,
@@ -187,4 +188,32 @@ test("buildSingleMonthlyReportPrint adheres to executive editorial layout withou
 
   // Indonesian date format DD/MM/YYYY in activities
   assert.ok(html.includes("12/09/2026"), "Expected activity date formatted as DD/MM/YYYY (12/09/2026)");
+});
+
+test("buildMonthlyReportRangePrint renders multi-month documents with page breaks (ADR-0095)", () => {
+  const rep1: any = {
+    id: "r1",
+    month: "September",
+    year: 2026,
+    summary: { totalActivities: 2, completionRate: 100 },
+    achievements: ["Achievement 1"],
+    keyIssues: [],
+    actionPlans: [],
+    activities: [],
+  };
+  const rep2: any = {
+    id: "r2",
+    month: "October",
+    year: 2026,
+    summary: { totalActivities: 3, completionRate: 75 },
+    achievements: ["Achievement 2"],
+    keyIssues: [],
+    actionPlans: [],
+    activities: [],
+  };
+
+  const html = buildMonthlyReportRangePrint([rep1, rep2]);
+  assert.ok(html.includes("September 2026"), "Expected first report period");
+  assert.ok(html.includes("October 2026"), "Expected second report period");
+  assert.ok(html.includes("page-break-after: always;"), "Expected page-break-after between multiple reports");
 });
