@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(navigation)`: Decouple mobile menu drawer from desktop sidebar state (ADR-0099)
+  - State decoupling: introduced `isMobileMenuOpen: false`, `toggleMobileMenu()`, and `setMobileMenuOpen(open)` in `UiSlice`, completely separating mobile slide-over drawer modal state from desktop static layout column `isSidebarOpen: true`
+  - Mobile load UX fix: eliminated the intrusive initial load bug where mobile users were blocked by the drawer and backdrop covering 85% of the screen; the active page now renders cleanly on load
+  - Bottom navigation integration: bound "Menu" tab in `MobileBottomNav.tsx` to `isMobileMenuOpen` and `toggleMobileMenu()`, and added auto-closing of the drawer via `setMobileMenuOpen(false)` upon tapping any operational tab (Pipeline, Outlets, Placements, Events)
+  - Sidebar render guard: updated `Sidebar.tsx` to render mobile drawer based on `isMobile ? isMobileMenuOpen : isSidebarOpen`, closing the drawer on backdrop tap or item selection
+  - Invariants: desktop sidebar remains open (`isSidebarOpen: true`) by default with 100% invariant behavior; default page opened and `localStorage` persistence remain unchanged
+  - Dedicated unit tests: updated `src/components/layout/MobileBottomNav.test.ts` verifying state definitions, store actions, bottom nav tab contracts, and sidebar rendering guards (18/18 tests passing)
+  - Verification: `npm run drift:check` ✅ (126/126 pairs), `npm run build:check` ✅, `npm test` ✅ (1073/1073 tests passing)
+  - Refs: `docs/adr/0099-decouple-mobile-menu-drawer-from-desktop-sidebar-state.md`, `docs/superpowers/specs/2026-11-08-decouple-mobile-menu-drawer-from-desktop-sidebar-state-design.md`, `docs/superpowers/plans/2026-11-08-decouple-mobile-menu-drawer-from-desktop-sidebar-state.md`
+
 - `feat(analytics)`: Mobile ROI charts readability via angled ticks, viewport height & multiline card titles (ADR-0098)
   - Card header title wrapping: updated `ChartCard.tsx` with `line-clamp-2 sm:truncate leading-tight` on title and `line-clamp-2 sm:line-clamp-1 leading-normal` on subtitle, preventing mobile title truncation when paired with telemetry badges
   - Event chart angled ticks & margin: updated `EventEfficiencyChart.tsx` with `interval={0}`, angled -35° ticks (`textAnchor="end"`), and expanded bottom margin on mobile (`bottom: mobileActive ? 42 : 5`) to prevent dropped Bar 1 labels and label collisions

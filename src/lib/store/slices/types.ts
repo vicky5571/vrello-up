@@ -154,6 +154,7 @@ export interface UiSlice {
   filters: FilterOptions;
   viewPreferences: ViewPreferences;
   isSidebarOpen: boolean;
+  isMobileMenuOpen: boolean;
   isCommandPaletteOpen: boolean;
   isCreateTaskModalOpen: boolean;
   isCreatePostModalOpen: boolean;
@@ -189,6 +190,8 @@ export interface UiSlice {
   navigateToMarcom: (view: ViewMode, search?: string) => void;
   setCurrentUserId: (id: string) => void;
   toggleSidebar: () => void;
+  toggleMobileMenu: () => void;
+  setMobileMenuOpen: (open: boolean) => void;
   setFilters: (filters: Partial<FilterOptions>) => void;
   resetFilters: () => void;
   setViewPreferences: (prefs: {

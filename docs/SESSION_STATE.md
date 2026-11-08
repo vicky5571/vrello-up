@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** Mobile ROI Charts Readability via Angled Ticks, Viewport Height & Multiline Card Titles (ADR-0098) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Decouple Mobile Menu Drawer from Desktop Sidebar State (ADR-0099) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Mobile ROI Charts Readability via Angled Ticks, Viewport Height & Multiline Card Titles (ADR-0098) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Quarterly POSM Report Tab Control Bar Mobile Two-Line Layout & Theme Standardization (ADR-0097) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Monthly Reports Table Minimized Row Mobile Two-Line Layout (ADR-0096) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Reports Header Month-Range Executive PDF Export, Auto-Sync of Range & Current Month, and Redundant Export Center Button Removal (ADR-0095) — **IMPLEMENTATION COMPLETE**  
@@ -78,7 +79,27 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Mobile ROI Charts Readability via Angled Ticks, Viewport Height & Multiline Card Titles (ADR-0098 — Implementation Complete):**
+1. **Implementasi Decouple Mobile Menu Drawer from Desktop Sidebar State (ADR-0099 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**
+     - Menambahkan unit test suite baru `Decouple Mobile Menu Drawer from Desktop Sidebar State (ADR-0099)` yang menguji pendefinisian dan inisialisasi `isMobileMenuOpen: false`, `toggleMobileMenu`, dan `setMobileMenuOpen` di store slice, penggunaan `isMobileMenuOpen` dan `toggleMobileMenu` pada `MobileBottomNav.tsx`, penutupan drawer saat tab operasional diklik, serta pengamanan rendering drawer di `Sidebar.tsx`.
+     - Siklus TDD: Baseline RED (0/3 passing) -> GREEN (3/3 passing, 18/18 overall).
+   - **Refaktor Dekopling State UI Mobile & Desktop:**
+     - `src/lib/store/slices/types.ts`: Menambahkan `isMobileMenuOpen: boolean` ke `UiState`, serta `toggleMobileMenu: () => void` dan `setMobileMenuOpen: (open: boolean) => void` ke `UiActions`.
+     - `src/lib/store/slices/createUiSlice.ts`: Menginisialisasi `isMobileMenuOpen: false` dan mengimplementasikan action mutasinya.
+     - `src/components/layout/Sidebar.tsx`: Visibilitas drawer mobile kini bergantung pada `isMobile ? isMobileMenuOpen : isSidebarOpen`. Backdrop click dan pemilihan navigasi memanggil `setMobileMenuOpen(false)` pada mobile.
+     - `src/components/layout/MobileBottomNav.tsx`: Tab "Menu" kini terikat pada `isMobileMenuOpen` dan memicu `toggleMobileMenu()`. Tapping pada tab operasional (Pipeline, Outlets, Placements, Events) secara otomatis menutup drawer via `setMobileMenuOpen(false)`.
+     - **Invarian Desktop & Default View:** Desktop sidebar tetap `isSidebarOpen: true` secara default dan berfungsi 100% tanpa perubahan. Halaman default yang dibuka saat load dan persistensi `localStorage` sama sekali tidak diubah sesuai mandat pengguna.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0099-decouple-mobile-menu-drawer-from-desktop-sidebar-state.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0099-decouple-mobile-menu-drawer-from-desktop-sidebar-state.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-decouple-mobile-menu-drawer-from-desktop-sidebar-state-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-decouple-mobile-menu-drawer-from-desktop-sidebar-state-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-decouple-mobile-menu-drawer-from-desktop-sidebar-state.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-decouple-mobile-menu-drawer-from-desktop-sidebar-state.md)
+     - Handover: [`docs/handover-decouple-mobile-menu-drawer-from-desktop-sidebar-state.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-decouple-mobile-menu-drawer-from-desktop-sidebar-state.md)
+   - **Verifikasi Kualitas Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (126/126 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1073/1073 tests passing across 192 suites (0 failures).
+
+2. **Implementasi Mobile ROI Charts Readability via Angled Ticks, Viewport Height & Multiline Card Titles (ADR-0098 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/AnalyticsView/charts/roiChartsResponsiveness.test.ts`):**
      - Membuat unit test suite baru yang menguji wrapping `line-clamp-2 sm:truncate` pada judul dan `line-clamp-2 sm:line-clamp-1` pada subtitle `ChartCard.tsx`, penegakan `interval={0}`, sudut kemiringan tick $-35^\circ$, dan margin bawah mobile yang diperlebar pada `EventEfficiencyChart.tsx`, penambahan tinggi mobile `h-96 sm:h-72` dan lebar sumbu Y responsif pada `PosmEconomicsChart.tsx`, serta `interval={0}` pada `ContentCadenceChart.tsx`.
      - Siklus TDD: Baseline RED (0/4 passing) -> GREEN (4/4 passing).

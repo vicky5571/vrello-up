@@ -81,6 +81,7 @@ export const createUiSlice: StateCreator<
   navigatedFromMarcom: null,
   currentUserId: "user-1",
   isSidebarOpen: true,
+  isMobileMenuOpen: false,
   isCommandPaletteOpen: false,
   isCreateTaskModalOpen: false,
   isCreatePostModalOpen: false,
@@ -181,6 +182,11 @@ export const createUiSlice: StateCreator<
 
   toggleSidebar: () =>
     set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+
+  toggleMobileMenu: () =>
+    set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
+
+  setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
 
   setFilters: (newFilters) =>
     set((state) => ({ filters: { ...state.filters, ...newFilters } })),

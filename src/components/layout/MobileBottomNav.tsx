@@ -12,11 +12,12 @@ interface BottomTabItem {
   label: string;
   icon: typeof Layers;
   activeColor: string;
-  isActive: (activeView: ViewMode, isSidebarOpen: boolean) => boolean;
+  isActive: (activeView: ViewMode, isMobileMenuOpen: boolean) => boolean;
   onClick: (helpers: {
     setActiveView: (view: ViewMode) => void;
     setAppMode: (mode: "tasks" | "marcom") => void;
-    toggleSidebar: () => void;
+    toggleMobileMenu: () => void;
+    setMobileMenuOpen: (open: boolean) => void;
   }) => void;
 }
 
@@ -26,57 +27,58 @@ const BOTTOM_TABS: BottomTabItem[] = [
     label: "Pipeline",
     icon: Layers,
     activeColor: "text-indigo-500 dark:text-indigo-400",
-    isActive: (view, isSidebarOpen) => !isSidebarOpen && view === "pipeline",
-    onClick: ({ setActiveView, setAppMode }) => { setAppMode("marcom"); setActiveView("pipeline"); },
+    isActive: (view, isMobileMenuOpen) => !isMobileMenuOpen && view === "pipeline",
+    onClick: ({ setActiveView, setAppMode, setMobileMenuOpen }) => { setAppMode("marcom"); setActiveView("pipeline"); setMobileMenuOpen(false); },
   },
   {
     id: "outlets",
     label: "Outlets",
     icon: Store,
     activeColor: "text-violet-500 dark:text-violet-400",
-    isActive: (view, isSidebarOpen) => !isSidebarOpen && view === "outlets",
-    onClick: ({ setActiveView, setAppMode }) => { setAppMode("marcom"); setActiveView("outlets"); },
+    isActive: (view, isMobileMenuOpen) => !isMobileMenuOpen && view === "outlets",
+    onClick: ({ setActiveView, setAppMode, setMobileMenuOpen }) => { setAppMode("marcom"); setActiveView("outlets"); setMobileMenuOpen(false); },
   },
   {
     id: "placements",
     label: "Placements",
     icon: MapPin,
     activeColor: "text-emerald-500 dark:text-emerald-400",
-    isActive: (view, isSidebarOpen) => !isSidebarOpen && view === "placements",
-    onClick: ({ setActiveView, setAppMode }) => { setAppMode("marcom"); setActiveView("placements"); },
+    isActive: (view, isMobileMenuOpen) => !isMobileMenuOpen && view === "placements",
+    onClick: ({ setActiveView, setAppMode, setMobileMenuOpen }) => { setAppMode("marcom"); setActiveView("placements"); setMobileMenuOpen(false); },
   },
   {
     id: "events",
     label: "Events",
     icon: CalendarDays,
     activeColor: "text-blue-500 dark:text-blue-400",
-    isActive: (view, isSidebarOpen) => !isSidebarOpen && view === "events",
-    onClick: ({ setActiveView, setAppMode }) => { setAppMode("marcom"); setActiveView("events"); },
+    isActive: (view, isMobileMenuOpen) => !isMobileMenuOpen && view === "events",
+    onClick: ({ setActiveView, setAppMode, setMobileMenuOpen }) => { setAppMode("marcom"); setActiveView("events"); setMobileMenuOpen(false); },
   },
   {
     id: "menu",
     label: "Menu",
     icon: Menu,
     activeColor: "text-amber-500 dark:text-amber-400",
-    isActive: (_view, isSidebarOpen) => isSidebarOpen,
-    onClick: ({ toggleSidebar }) => toggleSidebar(),
+    isActive: (_view, isMobileMenuOpen) => isMobileMenuOpen,
+    onClick: ({ toggleMobileMenu }) => toggleMobileMenu(),
   },
 ];
 
 export function MobileBottomNav() {
-  const { activeView, isSidebarOpen } = useWorkspaceStore(
+  const { activeView, isMobileMenuOpen } = useWorkspaceStore(
     useShallow((s) => ({
       activeView: s.activeView,
-      isSidebarOpen: s.isSidebarOpen,
+      isMobileMenuOpen: s.isMobileMenuOpen,
     })),
   );
 
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
   const setAppMode = useWorkspaceStore((s) => s.setAppMode);
-  const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
+  const toggleMobileMenu = useWorkspaceStore((s) => s.toggleMobileMenu);
+  const setMobileMenuOpen = useWorkspaceStore((s) => s.setMobileMenuOpen);
   const shouldReduceMotion = useReducedMotion();
 
-  const helpers = { setActiveView, setAppMode, toggleSidebar };
+  const helpers = { setActiveView, setAppMode, toggleMobileMenu, setMobileMenuOpen };
 
   return (
     <nav
@@ -87,7 +89,7 @@ export function MobileBottomNav() {
       <LayoutGroup id="mobile-bottom-nav">
         {BOTTOM_TABS.map((tab) => {
           const Icon = tab.icon;
-          const active = tab.isActive(activeView, isSidebarOpen);
+          const active = tab.isActive(activeView, isMobileMenuOpen);
 
           return (
             <button

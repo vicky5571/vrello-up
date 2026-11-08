@@ -178,3 +178,72 @@ describe("Mobile Sidebar Slide Transition & Desktop Invariants (ADR-0063)", () =
     assert.ok(sidebarLoc <= 250, `Sidebar.tsx is ${sidebarLoc} LOC, exceeding 250 LOC limit`);
   });
 });
+
+describe("Decouple Mobile Menu Drawer from Desktop Sidebar State (ADR-0099)", () => {
+  const bottomNavPath = path.resolve(process.cwd(), "src/components/layout/MobileBottomNav.tsx");
+  const sidebarPath = path.resolve(process.cwd(), "src/components/layout/Sidebar.tsx");
+  const typesPath = path.resolve(process.cwd(), "src/lib/store/slices/types.ts");
+  const slicePath = path.resolve(process.cwd(), "src/lib/store/slices/createUiSlice.ts");
+
+  it("verifies store slice defines and initializes isMobileMenuOpen to false", () => {
+    const typesContent = fs.readFileSync(typesPath, "utf-8");
+    assert.ok(
+      typesContent.includes("isMobileMenuOpen: boolean"),
+      "types.ts must define isMobileMenuOpen: boolean in UiState"
+    );
+    assert.ok(
+      typesContent.includes("toggleMobileMenu: () => void"),
+      "types.ts must define toggleMobileMenu in UiActions"
+    );
+    assert.ok(
+      typesContent.includes("setMobileMenuOpen: (open: boolean) => void"),
+      "types.ts must define setMobileMenuOpen in UiActions"
+    );
+
+    const sliceContent = fs.readFileSync(slicePath, "utf-8");
+    assert.ok(
+      sliceContent.includes("isMobileMenuOpen: false"),
+      "createUiSlice.ts must initialize isMobileMenuOpen: false"
+    );
+    assert.ok(
+      sliceContent.includes("toggleMobileMenu: () =>"),
+      "createUiSlice.ts must implement toggleMobileMenu"
+    );
+    assert.ok(
+      sliceContent.includes("setMobileMenuOpen: (open) =>"),
+      "createUiSlice.ts must implement setMobileMenuOpen"
+    );
+  });
+
+  it("verifies MobileBottomNav uses isMobileMenuOpen and toggleMobileMenu", () => {
+    const content = fs.readFileSync(bottomNavPath, "utf-8");
+    assert.ok(
+      content.includes("isMobileMenuOpen"),
+      "MobileBottomNav must select and use isMobileMenuOpen"
+    );
+    assert.ok(
+      content.includes("toggleMobileMenu"),
+      "MobileBottomNav must bind Menu tab to toggleMobileMenu"
+    );
+    assert.ok(
+      content.includes("setMobileMenuOpen(false)"),
+      "MobileBottomNav operational tabs must dismiss drawer via setMobileMenuOpen(false)"
+    );
+  });
+
+  it("verifies Sidebar renders mobile drawer based on isMobileMenuOpen", () => {
+    const content = fs.readFileSync(sidebarPath, "utf-8");
+    assert.ok(
+      content.includes("isMobileMenuOpen"),
+      "Sidebar must select isMobileMenuOpen"
+    );
+    assert.ok(
+      content.includes("isMobileMenuOpen && isMobile"),
+      "Sidebar mobile backdrop must guard on isMobileMenuOpen && isMobile"
+    );
+    assert.ok(
+      content.includes("setMobileMenuOpen(false)"),
+      "Sidebar backdrop and item navigation must dismiss drawer via setMobileMenuOpen(false)"
+    );
+  });
+});

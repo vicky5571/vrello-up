@@ -30,26 +30,30 @@ export function Sidebar() {
     appMode,
     activeView,
     isSidebarOpen,
+    isMobileMenuOpen,
     isHelpDocsOpen,
   } = useWorkspaceStore(
     useShallow((s) => ({
       appMode: s.appMode,
       activeView: s.activeView,
       isSidebarOpen: s.isSidebarOpen,
+      isMobileMenuOpen: s.isMobileMenuOpen,
       isHelpDocsOpen: s.isHelpDocsOpen,
     })),
   );
 
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
   const setHelpDocsOpen = useWorkspaceStore((s) => s.setHelpDocsOpen);
-  const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
+  const setMobileMenuOpen = useWorkspaceStore((s) => s.setMobileMenuOpen);
 
   const handleSelectView = (viewId: string) => {
     setActiveView(viewId as any);
     if (typeof window !== "undefined" && window.innerWidth < 768) {
-      toggleSidebar();
+      setMobileMenuOpen(false);
     }
   };
+
+  const isMenuVisible = isMobile ? isMobileMenuOpen : isSidebarOpen;
 
   if (!shouldRenderSidebar(activeView)) {
     return null;
@@ -59,7 +63,7 @@ export function Sidebar() {
     <>
       <AnimatePresence>
         {/* Mobile overlay backdrop */}
-        {isSidebarOpen && isMobile && (
+        {isMobileMenuOpen && isMobile && (
           <motion.div
             key="mobile-sidebar-backdrop"
             initial={{ opacity: 0 }}
@@ -70,12 +74,12 @@ export function Sidebar() {
                 ? { duration: 0 }
                 : { duration: 0.24, ease: [0.2, 0, 0, 1] }
             }
-            onClick={toggleSidebar}
+            onClick={() => setMobileMenuOpen(false)}
             className="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-2xs"
           />
         )}
 
-        {isSidebarOpen && (
+        {isMenuVisible && (
           <motion.aside
             key="sidebar-aside"
             initial={isMobile && !shouldReduceMotion ? { x: "-100%" } : false}
