@@ -13,7 +13,6 @@ import {
   Megaphone,
   ArrowLeft,
   X,
-  Menu,
   User,
   Users,
 } from "lucide-react";
@@ -32,30 +31,18 @@ export function TopNavBreadcrumbs({
   const lastMarcomView = useWorkspaceStore((s) => s.lastMarcomView);
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
   const setAppMode = useWorkspaceStore((s) => s.setAppMode);
-  const toggleSidebar = useWorkspaceStore((s) => s.toggleSidebar);
   const navigatedFromMarcom = useWorkspaceStore((s) => s.navigatedFromMarcom);
   const setNavigatedFromMarcom = useWorkspaceStore((s) => s.setNavigatedFromMarcom);
 
   const renderBrandAnchor = () => (
-    <div className="flex items-center gap-2 text-xs shrink-0">
-      <button
-        type="button"
-        onClick={toggleSidebar}
-        title="Open navigation"
-        className="md:hidden p-1.5 -ml-1 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
-      >
-        <Menu className="w-4 h-4" />
-      </button>
-
-      <div className="hidden sm:flex items-center gap-2">
-        <div className="w-5 h-5 rounded bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shadow-2xs shrink-0">
-          V
-        </div>
-
-        <span className="font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[160px] sm:max-w-[200px]">
-          Vrello
-        </span>
+    <div className="hidden sm:flex items-center gap-2 text-xs shrink-0">
+      <div className="w-5 h-5 rounded bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shadow-2xs shrink-0">
+        V
       </div>
+
+      <span className="font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[160px] sm:max-w-[200px]">
+        Vrello
+      </span>
     </div>
   );
 

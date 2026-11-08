@@ -20,15 +20,17 @@ describe("Mobile Shell UI/UX Polish Invariants (ADR-0058)", () => {
     );
   });
 
-  it("verifies TopNavBreadcrumbs contains the single canonical hamburger button", () => {
+  it("verifies TopNavBreadcrumbs does NOT contain a mobile hamburger button (relies on MobileBottomNav)", () => {
     const breadcrumbsContent = fs.readFileSync(breadcrumbsPath, "utf-8");
-    assert.ok(
+    assert.strictEqual(
       breadcrumbsContent.includes('title="Open navigation"'),
-      "Expected TopNavBreadcrumbs to retain single canonical hamburger button"
+      false,
+      "Expected TopNavBreadcrumbs not to contain redundant mobile hamburger button"
     );
-    assert.ok(
+    assert.strictEqual(
       breadcrumbsContent.includes("toggleSidebar"),
-      "Expected TopNavBreadcrumbs to call toggleSidebar"
+      false,
+      "Expected TopNavBreadcrumbs not to invoke toggleSidebar"
     );
   });
 

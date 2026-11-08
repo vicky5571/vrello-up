@@ -6,6 +6,13 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `fix(navigation)`: Remove redundant and inactive mobile hamburger button from TopNav breadcrumbs
+  - Button removal: removed the inactive mobile hamburger button `<button title="Open navigation">` from `TopNavBreadcrumbs.tsx`, as navigation on mobile is handled canonically by `MobileBottomNav.tsx` (Menu tab)
+  - Dead code cleanup: removed unused `Menu` icon import from `lucide-react` and unused `toggleSidebar` store selector in `TopNavBreadcrumbs.tsx`
+  - Brand anchor responsive styling: updated `renderBrandAnchor()` to `hidden sm:flex`, rendering the Vrello brand badge cleanly on desktop viewports (`sm:` and above) while letting mobile breadcrumbs start cleanly with the active view title (e.g. Field Events)
+  - Unit tests: updated `src/components/layout/MobileBottomNav.test.ts` to assert that `TopNavBreadcrumbs.tsx` does not contain `title="Open navigation"` or calls to `toggleSidebar` (18/18 tests passing)
+  - Verification: `npm run drift:check` ✅ (126/126 pairs), `npm run build:check` ✅, `npm test` ✅ (1073/1073 tests passing)
+
 - `feat(navigation)`: Decouple mobile menu drawer from desktop sidebar state (ADR-0099)
   - State decoupling: introduced `isMobileMenuOpen: false`, `toggleMobileMenu()`, and `setMobileMenuOpen(open)` in `UiSlice`, completely separating mobile slide-over drawer modal state from desktop static layout column `isSidebarOpen: true`
   - Mobile load UX fix: eliminated the intrusive initial load bug where mobile users were blocked by the drawer and backdrop covering 85% of the screen; the active page now renders cleanly on load

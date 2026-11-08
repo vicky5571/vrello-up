@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** Decouple Mobile Menu Drawer from Desktop Sidebar State (ADR-0099) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** TopNav Breadcrumbs Redundant Mobile Hamburger Button Removal — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Decouple Mobile Menu Drawer from Desktop Sidebar State (ADR-0099) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile ROI Charts Readability via Angled Ticks, Viewport Height & Multiline Card Titles (ADR-0098) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Quarterly POSM Report Tab Control Bar Mobile Two-Line Layout & Theme Standardization (ADR-0097) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Monthly Reports Table Minimized Row Mobile Two-Line Layout (ADR-0096) — **IMPLEMENTATION COMPLETE**  
@@ -79,7 +80,21 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Decouple Mobile Menu Drawer from Desktop Sidebar State (ADR-0099 — Implementation Complete):**
+1. **Pembersihan UI & UX TopNav — Penghapusan Tombol Hamburger Mobile Redundan (Implementation Complete):**
+   - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**
+     - Memperbarui pengujian `verifies TopNavBreadcrumbs does NOT contain a mobile hamburger button (relies on MobileBottomNav)` untuk menegaskan bahwa tombol hamburger mobile (`title="Open navigation"` dan pemicu `toggleSidebar`) sudah tidak ada lagi di `TopNavBreadcrumbs.tsx`.
+     - Siklus TDD: Baseline RED -> GREEN (18/18 passing).
+   - **Refaktor Komponen Navigasi (`src/components/layout/TopNavBreadcrumbs.tsx` & `src/components/layout/TopNav.tsx`):**
+     - `src/components/layout/TopNavBreadcrumbs.tsx`: Menghapus tombol hamburger mobile yang sebelumnya terikat pada `toggleSidebar` (yang mengendalikan sidebar desktop sehingga tidak berfungsi di mobile), membersihkan import `Menu` dari `lucide-react` dan pemanggilan `toggleSidebar` dari `useWorkspaceStore`.
+     - `renderBrandAnchor()` kini langsung menggunakan styling `hidden sm:flex items-center gap-2 text-xs shrink-0` untuk badge "V" dan teks "Vrello", sehingga pada tampilan mobile (`< sm`) elemen breadcrumb langsung menampilkan judul view aktif (seperti "Field Events") dengan rapi tanpa tombol hamburger mati yang membingungkan.
+     - `src/components/layout/TopNav.tsx`: Memperbarui komentar arsitektur menjadi `{/* Left: Breadcrumbs */}`.
+     - **Invarian Desktop (`sm:`):** Tampilan header desktop tetap 100% identik dengan badge "V", teks "Vrello", dan navigasi breadcrumb.
+   - **Verifikasi Kualitas Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (126/126 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1073/1073 tests passing across 192 suites (0 failures).
+
+2. **Implementasi Decouple Mobile Menu Drawer from Desktop Sidebar State (ADR-0099 — Implementation Complete):**
    - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**
      - Menambahkan unit test suite baru `Decouple Mobile Menu Drawer from Desktop Sidebar State (ADR-0099)` yang menguji pendefinisian dan inisialisasi `isMobileMenuOpen: false`, `toggleMobileMenu`, dan `setMobileMenuOpen` di store slice, penggunaan `isMobileMenuOpen` dan `toggleMobileMenu` pada `MobileBottomNav.tsx`, penutupan drawer saat tab operasional diklik, serta pengamanan rendering drawer di `Sidebar.tsx`.
      - Siklus TDD: Baseline RED (0/3 passing) -> GREEN (3/3 passing, 18/18 overall).
