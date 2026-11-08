@@ -145,7 +145,7 @@ export function EventMediaSection({
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleRowDragOver = (e: React.DragEvent, index: number) => {
+  const handleRowDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
   };
@@ -273,7 +273,7 @@ export function EventMediaSection({
                 key={att.id || idx}
                 draggable
                 onDragStart={(e) => handleDragStart(e, idx)}
-                onDragOver={(e) => handleRowDragOver(e, idx)}
+                onDragOver={handleRowDragOver}
                 onDrop={(e) => handleRowDrop(e, idx)}
                 className={cn(
                   "flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-slate-800 border text-xs shadow-2xs transition-all",

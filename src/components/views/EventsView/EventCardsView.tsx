@@ -41,7 +41,6 @@ export function EventCardsView({
   conflicts,
   members,
   onSelectEvent,
-  onDeleteEvent,
   onOpenFootageModal,
 }: EventCardsViewProps) {
   const borrowRecords = useMarcomDataStore((s) => s.borrowRecords);

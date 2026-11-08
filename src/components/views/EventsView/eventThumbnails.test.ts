@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import type { FieldEventItem, TaskAttachment } from "@/types";
+import type { TaskAttachment } from "@/types";
 
 describe("Field Event Thumbnail Compression & Cover Preview (ADR-0023)", () => {
   it("verifies upload route supports context param and generates events thumbnail path", () => {

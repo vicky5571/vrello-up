@@ -14,6 +14,7 @@ import {
 import { AppModeSegmentedControl } from "./AppModeSegmentedControl";
 import { shouldRenderSidebar } from "./layoutHierarchyHelpers";
 import { HelpDocsModal } from "@/components/modals/HelpDocsModal";
+import type { ViewMode } from "@/types";
 
 export function Sidebar() {
   const shouldReduceMotion = useReducedMotion();
@@ -47,7 +48,7 @@ export function Sidebar() {
   const setMobileMenuOpen = useWorkspaceStore((s) => s.setMobileMenuOpen);
 
   const handleSelectView = (viewId: string) => {
-    setActiveView(viewId as any);
+    setActiveView(viewId as ViewMode);
     if (typeof window !== "undefined" && window.innerWidth < 768) {
       setMobileMenuOpen(false);
     }

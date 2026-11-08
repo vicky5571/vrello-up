@@ -11,11 +11,10 @@ import {
   Check,
   Upload,
   RefreshCw,
-  Eye,
 } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
 import { uploadMouDocument, saveMou } from "./mouApi";
-import { parseMouDocumentSource, extractCleanFilename } from "./mouDocumentHelpers";
+import { extractCleanFilename } from "./mouDocumentHelpers";
 import type { MarcomMou } from "@/types";
 
 export interface BranchOption {

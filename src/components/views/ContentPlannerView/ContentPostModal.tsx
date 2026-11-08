@@ -10,7 +10,6 @@ import {
   Store,
 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import type {
   PostPlatform,
   PostFormat,
@@ -81,7 +80,6 @@ export function ContentPostModal({
   setMediaUrl,
   mediaAttachments = [],
   setMediaAttachments,
-  onOpenUploadModal,
   onOpenDriveSelector,
   outletId,
   setOutletId,

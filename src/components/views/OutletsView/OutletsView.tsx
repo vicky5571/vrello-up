@@ -55,7 +55,7 @@ const TYPE_STYLES: Record<OutletType, string> = {
 };
 
 export function OutletsView() {
-  const { can, role } = useMarcomPermissions();
+  const { can } = useMarcomPermissions();
   const marcomFilters = useWorkspaceStore((s) => s.marcomFilters);
   const setMarcomFilter = useWorkspaceStore((s) => s.setMarcomFilter);
   const navigateToMarcom = useWorkspaceStore((s) => s.navigateToMarcom);

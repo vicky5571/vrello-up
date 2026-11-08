@@ -8,7 +8,7 @@ describe("GET /api/cron/reports-sync route handler (ADR-0036)", () => {
     const originalSecret = process.env.CRON_SECRET;
 
     try {
-      (process.env as any).NODE_ENV = "production";
+      process.env.NODE_ENV = "production";
       process.env.CRON_SECRET = "super-secret-cron-key-123";
 
       const req = new Request("http://localhost:3000/api/cron/reports-sync", {
@@ -22,7 +22,7 @@ describe("GET /api/cron/reports-sync route handler (ADR-0036)", () => {
       const json = await res.json();
       assert.strictEqual(json.error, "Unauthorized cron execution");
     } finally {
-      (process.env as any).NODE_ENV = originalEnv;
+      process.env.NODE_ENV = originalEnv;
       process.env.CRON_SECRET = originalSecret;
     }
   });
@@ -32,7 +32,7 @@ describe("GET /api/cron/reports-sync route handler (ADR-0036)", () => {
     const originalSecret = process.env.CRON_SECRET;
 
     try {
-      (process.env as any).NODE_ENV = "production";
+      process.env.NODE_ENV = "production";
       process.env.CRON_SECRET = "valid-secret-999";
 
       const req = new Request("http://localhost:3000/api/cron/reports-sync?month=December&year=2099", {
@@ -45,7 +45,7 @@ describe("GET /api/cron/reports-sync route handler (ADR-0036)", () => {
       // It should process the request without throwing 401
       assert.notStrictEqual(res.status, 401);
     } finally {
-      (process.env as any).NODE_ENV = originalEnv;
+      process.env.NODE_ENV = originalEnv;
       process.env.CRON_SECRET = originalSecret;
     }
   });

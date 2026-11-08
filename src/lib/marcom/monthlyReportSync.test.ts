@@ -82,16 +82,16 @@ describe("monthlyReportSync domain engine (ADR-0036)", () => {
 
   describe("syncMonthlyReport execution", () => {
     it("creates new monthly report on start-of-month kickoff when report does not exist", async () => {
-      let createdData: any = null;
+      let createdData: Record<string, unknown> | null = null;
 
-      const mockPrisma: any = {
+      const mockPrisma = {
         placement: { findMany: async () => [] },
         mou: { findMany: async () => [] },
         contentPost: { findMany: async () => [] },
         fieldEvent: { findMany: async () => [] },
         monthlyReport: {
           findFirst: async () => null,
-          create: async ({ data }: any) => {
+          create: async ({ data }: { data: Record<string, unknown> }) => {
             createdData = data;
             return { id: "rep-new-123", ...data };
           },
@@ -116,7 +116,7 @@ describe("monthlyReportSync domain engine (ADR-0036)", () => {
     });
 
     it("updates existing monthly report while strictly preserving user-authored custom narratives", async () => {
-      let updatedData: any = null;
+      let updatedData: Record<string, unknown> | null = null;
 
       const existingReport = {
         id: "rep-existing-456",
@@ -129,7 +129,7 @@ describe("monthlyReportSync domain engine (ADR-0036)", () => {
         actionPlans: ["Eskalasi pengiriman batch 2 minggu depan"],
       };
 
-      const mockPrisma: any = {
+      const mockPrisma = {
         placement: {
           findMany: async () => [
             {
@@ -147,7 +147,7 @@ describe("monthlyReportSync domain engine (ADR-0036)", () => {
         fieldEvent: { findMany: async () => [] },
         monthlyReport: {
           findFirst: async () => existingReport,
-          update: async ({ where, data }: any) => {
+          update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
             updatedData = data;
             return { id: where.id, ...data };
           },

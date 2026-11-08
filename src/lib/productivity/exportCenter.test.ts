@@ -10,6 +10,7 @@ import {
   buildTasksCsv,
   buildTasksPrint,
   toCsv,
+  type ReportLike,
 } from "@/lib/productivity/exportCenter";
 
 test("toCsv quotes commas, quotes, and newlines (RFC-4180)", () => {
@@ -191,7 +192,7 @@ test("buildSingleMonthlyReportPrint adheres to executive editorial layout withou
 });
 
 test("buildMonthlyReportRangePrint renders multi-month documents with page breaks (ADR-0095)", () => {
-  const rep1: any = {
+  const rep1: ReportLike = {
     id: "r1",
     month: "September",
     year: 2026,
@@ -201,7 +202,7 @@ test("buildMonthlyReportRangePrint renders multi-month documents with page break
     actionPlans: [],
     activities: [],
   };
-  const rep2: any = {
+  const rep2: ReportLike = {
     id: "r2",
     month: "October",
     year: 2026,

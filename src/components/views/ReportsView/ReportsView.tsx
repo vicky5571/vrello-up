@@ -7,7 +7,6 @@ import {
   ChevronDown,
   Plus,
   Printer,
-  RefreshCw,
   Sparkles,
   CheckCircle2,
   AlertTriangle,
@@ -76,24 +75,6 @@ function matchesPeriod(docPeriod: string, report: MarcomReport) {
     haystack.includes(report.month.toLowerCase()) ||
     haystack.includes(periodLabel(report).toLowerCase())
   );
-}
-
-function renderJsonItem(item: unknown, fallback: string) {
-  if (typeof item === "string") return item;
-  if (item && typeof item === "object") {
-    const record = item as Record<string, unknown>;
-    const text = ["title", "name", "description"].map((k) => record[k]).find((v) => typeof v === "string");
-    if (text) {
-      const extra = typeof record.detail === "string" && record.detail ? ` · ${record.detail}` : "";
-      return text + extra;
-    }
-    try {
-      return JSON.stringify(item);
-    } catch {
-      return fallback;
-    }
-  }
-  return fallback;
 }
 
 function completionBarColor(rate: number): string {

@@ -8,6 +8,7 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
+**Latest Fix:** Vercel CI/Build ESLint & TypeScript Errors Resolution — **VERIFIED & PASSING**  
 **Active Feature:** TopNav Breadcrumbs Redundant Mobile Hamburger Button Removal — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Decouple Mobile Menu Drawer from Desktop Sidebar State (ADR-0099) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile ROI Charts Readability via Angled Ticks, Viewport Height & Multiline Card Titles (ADR-0098) — **IMPLEMENTATION COMPLETE**  
@@ -79,6 +80,33 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Resolusi Error Vercel Build (ESLint & TypeScript Invariants — Complete):**
+   - **Akar Masalah:** Build Vercel menjalankan `npm run build` (`next build`), yang secara otomatis memicu `next lint` (ESLint dengan `@typescript-eslint/no-explicit-any` dan `@typescript-eslint/no-unused-vars`). Terdapat 18 pelanggaran ESLint di 18 file (variabel/import tidak terpakai dan penggunaan `any` tanpa typing eksplisit).
+   - **Perbaikan 18 File:**
+     - `src/app/api/cron/reportsSyncRoute.test.ts`: Menghapus casting `(process.env as any).NODE_ENV` menjadi standar `process.env.NODE_ENV`.
+     - `src/components/layout/Sidebar.tsx`: Mengimpor `ViewMode` dari `@/types` dan mengganti `viewId as any` menjadi `viewId as ViewMode`.
+     - `src/components/views/ContentPlannerView/ContentPostModal.tsx`: Menghapus import `cn` yang tidak dipakai dan props `onOpenUploadModal`.
+     - `src/components/views/EventsView/EventCardsView.tsx`: Menghapus unused props `onDeleteEvent`.
+     - `src/components/views/EventsView/EventCompleteWarningModal.tsx`: Menghapus unused import `Phone` dari `lucide-react`.
+     - `src/components/views/EventsView/EventDrawer.tsx`: Menghapus unused import `AnimatePresence`.
+     - `src/components/views/EventsView/EventMediaSection.tsx`: Menghapus unused parameter `index` pada `handleRowDragOver`.
+     - `src/components/views/EventsView/eventDrawer.test.ts`: Menghapus unused import `User` dan `EventStatus`.
+     - `src/components/views/EventsView/eventThumbnails.test.ts`: Menghapus unused import `FieldEventItem`.
+     - `src/components/views/InventoryView/ReturnProcessModal.tsx`: Menghapus unused import `Camera`.
+     - `src/components/views/MousView/MouFormModal.tsx`: Menghapus unused import `Eye` dan `parseMouDocumentSource`.
+     - `src/components/views/OutletsView/OutletsView.tsx`: Menghapus unused destructuring `role` dari `useMarcomPermissions()`.
+     - `src/components/views/ReportsView/ReportsView.tsx`: Menghapus unused import `RefreshCw` dan dead helper `renderJsonItem`.
+     - `src/components/views/ReportsView/monthlyReportExpandedRow.test.ts`: Menghapus unused type import `ParsedActivityItem`.
+     - `src/lib/marcom/monthlyReportSync.ts`: Mengganti tipe `any` dengan interface eksplisit, mengetik indeks dengan `as readonly string[]`, dan membungkus `asJsonArray` untuk mematuhi `Prisma.InputJsonValue`.
+     - `src/lib/marcom/monthlyReportSync.test.ts`: Mengganti tipe `any` dengan typed `Record<string, unknown>`.
+     - `src/lib/productivity/exportCenter.test.ts`: Mengimpor `ReportLike` dan mengetik objek mock tanpa `any`.
+     - `src/lib/productivity/useNotificationFeed.ts`: Menghapus variabel boolean `cancelled` yang tidak pernah dibaca.
+   - **Verifikasi Kualitas Penuh:**
+     - `npm run lint`: ✅ 0 error.
+     - `npm run drift:check`: ✅ 0 drift.
+     - `npm run build`: ✅ Code 0 (`✓ Compiled successfully`, `✓ Linting and checking validity of types`, `✓ Generating static pages (34/34)`).
+     - `npm test`: ✅ 1073/1073 tests passing (0 failures).
 
 1. **Pembersihan UI & UX TopNav — Penghapusan Tombol Hamburger Mobile Redundan (Implementation Complete):**
    - **TDD Test Suite (`src/components/layout/MobileBottomNav.test.ts`):**

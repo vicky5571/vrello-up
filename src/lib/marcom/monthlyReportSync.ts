@@ -10,7 +10,7 @@ function asJsonArray(value: unknown): Prisma.InputJsonValue {
 export interface SyncReportOptions {
   month?: string;
   year?: number;
-  prismaClient?: any;
+  prismaClient?: typeof prisma | Record<string, unknown>;
 }
 
 export interface SyncReportResult {
@@ -33,8 +33,8 @@ export function enumerateReportPeriods(
   endMonth: string,
   endYear: number,
 ): { month: string; year: number }[] {
-  const startIdx = MONTH_OPTIONS.indexOf(startMonth as any);
-  const endIdx = MONTH_OPTIONS.indexOf(endMonth as any);
+  const startIdx = (MONTH_OPTIONS as readonly string[]).indexOf(startMonth);
+  const endIdx = (MONTH_OPTIONS as readonly string[]).indexOf(endMonth);
   if (startIdx === -1 || endIdx === -1) return [];
   if (!Number.isInteger(startYear) || !Number.isInteger(endYear)) return [];
 
@@ -89,7 +89,8 @@ export function hasCustomNarratives(
  * - If report exists: refreshes summary metrics and activities, but strictly preserves user-authored narratives.
  */
 export async function syncMonthlyReport(opts?: SyncReportOptions): Promise<SyncReportResult> {
-  const db = opts?.prismaClient ?? prisma;
+  // @ts-expect-error: accepts mock client for unit testing
+  const db: typeof prisma = opts?.prismaClient ?? prisma;
   const now = new Date();
   const month = opts?.month?.trim() || MONTH_OPTIONS[now.getMonth()];
   const year = opts?.year ?? now.getFullYear();
@@ -179,9 +180,9 @@ export async function syncMonthlyReport(opts?: SyncReportOptions): Promise<SyncR
     data: {
       summary: draft.summary as unknown as Prisma.InputJsonValue,
       activities: asJsonArray(draft.activities),
-      achievements: isCustomAchievements ? existing.achievements : asJsonArray(draft.achievements),
-      keyIssues: isCustomIssues ? existing.keyIssues : asJsonArray(draft.keyIssues),
-      actionPlans: isCustomPlans ? existing.actionPlans : asJsonArray(draft.actionPlans),
+      achievements: asJsonArray(isCustomAchievements ? existing.achievements : draft.achievements),
+      keyIssues: asJsonArray(isCustomIssues ? existing.keyIssues : draft.keyIssues),
+      actionPlans: asJsonArray(isCustomPlans ? existing.actionPlans : draft.actionPlans),
     },
   });
 

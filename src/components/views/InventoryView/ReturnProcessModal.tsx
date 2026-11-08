@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Loader2, RotateCcw, AlertTriangle, Plus, Trash2, Camera } from "lucide-react";
+import { X, Loader2, RotateCcw, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import type { BorrowRecord } from "@/types";
 
 interface ReturnProcessModalProps {

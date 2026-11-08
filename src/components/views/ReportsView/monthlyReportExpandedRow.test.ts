@@ -4,7 +4,6 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   parseActivityDisplay,
-  type ParsedActivityItem,
 } from "./monthlyReportExpandedRowHelpers";
 
 describe("MonthlyReportExpandedRow & parseActivityDisplay (ADR-0035)", () => {

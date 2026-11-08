@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, Package, Calendar, User, Phone, X, AlertCircle } from "lucide-react";
+import { AlertTriangle, Package, Calendar, User, X, AlertCircle } from "lucide-react";
 import type { UnreturnedEquipmentItem } from "@/lib/marcom/eventEquipmentHelpers";
 
 export interface EventCompleteWarningModalProps {

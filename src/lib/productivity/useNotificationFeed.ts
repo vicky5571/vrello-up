@@ -40,11 +40,7 @@ export function useNotificationFeed({
 
   // 1. Initial mount fetch + re-fetch when isOpen transitions to true
   useEffect(() => {
-    let cancelled = false;
     fetchMous();
-    return () => {
-      cancelled = true;
-    };
   }, [fetchMous, isOpen]);
 
   // 2. Proactive sync on window focus (when user returns to the tab)

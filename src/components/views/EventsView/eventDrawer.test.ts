@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import type { FieldEventItem, User, EventStatus } from "@/types";
+import type { FieldEventItem } from "@/types";
 import { canTransitionEvent } from "@/lib/marcom/eventMachine";
 
 describe("Field Event Edit Drawer and Modal Separation (ADR-0022)", () => {
