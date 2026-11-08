@@ -54,4 +54,11 @@ describe("Analytics Header Mobile Responsiveness & Desktop Invariants (ADR-0065)
       "KPI cards must use min-w-[210px] shrink-0 on mobile to avoid text truncation"
     );
   });
+
+  it("verifies Live Metrics pill is removed from page header", () => {
+    assert.ok(
+      !content.includes("Live Metrics"),
+      "AnalyticsHeader must not render 'Live Metrics' pill"
+    );
+  });
 });

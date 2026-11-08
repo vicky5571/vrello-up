@@ -6,6 +6,11 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `style(analytics)`: Remove "Live Metrics" pill from ROI page header
+  - Eliminated the static badge `<span className="... text-[11px] font-semibold bg-indigo-50 ...">Live Metrics</span>` beside `Operational Intelligence & ROI` in `AnalyticsHeader.tsx`
+  - Added test assertion in `src/components/views/AnalyticsView/analyticsHeaderResponsiveness.test.ts` verifying the badge is absent (6/6 tests passing)
+  - Verification: `npm run drift:check` ✅ (124/124 pairs), `npm run build:check` ✅, `npm test` ✅ (1066/1066 tests passing)
+
 - `feat(reports)`: Quarterly POSM report tab control bar mobile two-line layout and theme standardization (ADR-0097)
   - Mobile two-line layout: restructured `QuarterlyPosmReportTab.tsx` control bar on mobile viewports (`< sm` / `< 640px`) from an asymmetrical 3-line wrap into a clean 2-line structure
   - Line 1 (Period selector & Refresh): paired `Pilih Periode:` + `<CustomDropdown>` with an icon-only square `RefreshCw` button (`p-2 border rounded-lg`) on the right

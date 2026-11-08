@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** Quarterly POSM Report Tab Control Bar Mobile Two-Line Layout & Theme Standardization (ADR-0097) — **IMPLEMENTATION COMPLETE**  
+**Latest Fix:** ROI Analytics Header "Live Metrics" Pill Removal — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Quarterly POSM Report Tab Control Bar Mobile Two-Line Layout & Theme Standardization (ADR-0097) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Monthly Reports Table Minimized Row Mobile Two-Line Layout (ADR-0096) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Reports Header Month-Range Executive PDF Export, Auto-Sync of Range & Current Month, and Redundant Export Center Button Removal (ADR-0095) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Monthly Reports Export Button Deduplication, Automatic Draft Fetch on Open/Change, and Single-Row Period Upsert with Rollover Sync (ADR-0094) — **IMPLEMENTATION COMPLETE**  
@@ -77,7 +78,18 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Quarterly POSM Report Tab Control Bar Mobile Two-Line Layout & Theme Standardization (ADR-0097 — Implementation Complete):**
+1. **Pembersihan UI Header Analitik ROI — Live Metrics Pill Removal (Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/AnalyticsView/analyticsHeaderResponsiveness.test.ts`):**
+     - Menambahkan unit test `verifies Live Metrics pill is removed from page header` yang memverifikasi bahwa `AnalyticsHeader.tsx` tidak lagi merender pill badge `"Live Metrics"`.
+     - Mengonfirmasi siklus TDD: Baseline RED -> GREEN (6/6 tests passing).
+   - **Refaktor Presentasional Header (`src/components/views/AnalyticsView/AnalyticsHeader.tsx`):**
+     - Menghapus elemen `<span className="... text-[11px] font-semibold bg-indigo-50 ...">Live Metrics</span>` dari judul halaman `Operational Intelligence & ROI` sesuai permintaan pengguna.
+   - **Verifikasi Kualitas Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (124/124 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1066/1066 tests passing across 190 suites (0 failures).
+
+2. **Implementasi Quarterly POSM Report Tab Control Bar Mobile Two-Line Layout & Theme Standardization (ADR-0097 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/ReportsView/reportsHeaderResponsiveness.test.ts`):**
      - Memperbarui subtest `verifies POSM quarterly tab action bar uses mobile 2-line layout and executive theme (ADR-0097)` untuk memverifikasi struktur `grid-cols-2`, label ringkas `"Cetak Laporan"`, ketiadaan label redundan `"Cetak PDF / Laporan"`, dan penerapan tema eksekutif `bg-indigo-600`.
      - Siklus TDD: Baseline RED (`AssertionError: QuarterlyPosmReportTab print button must use concise label 'Cetak Laporan'`) -> GREEN (3/3 tests passing).

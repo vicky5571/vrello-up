@@ -86,9 +86,6 @@ export function AnalyticsHeader({
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-indigo-500" />
             Operational Intelligence & ROI
-            <span className="px-2 py-0.5 text-[11px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 rounded-md border border-indigo-200/60 dark:border-indigo-800/60">
-              Live Metrics
-            </span>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Metrik operasional riil: SLA perizinan, unit economics POSM, reliabilitas konten & efisiensi event.
