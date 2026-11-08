@@ -6,6 +6,16 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-08]
 
+- `feat(reports)`: Quarterly POSM report tab control bar mobile two-line layout and theme standardization (ADR-0097)
+  - Mobile two-line layout: restructured `QuarterlyPosmReportTab.tsx` control bar on mobile viewports (`< sm` / `< 640px`) from an asymmetrical 3-line wrap into a clean 2-line structure
+  - Line 1 (Period selector & Refresh): paired `Pilih Periode:` + `<CustomDropdown>` with an icon-only square `RefreshCw` button (`p-2 border rounded-lg`) on the right
+  - Line 2 (Balanced action bar): organized `Ekspor CSV` and `Cetak Laporan` into a 50/50 balanced grid (`grid grid-cols-2 gap-2 w-full`) eliminating orphan buttons on mobile
+  - Desktop single horizontal row: strictly preserved single-line horizontal alignment (`flex flex-row justify-between`) on desktop viewports (`sm:` and up)
+  - Executive theme & label standardization: standardized primary print button from `bg-blue-600` with verbose label `"Cetak PDF / Laporan"` to executive `bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs` with concise label `"Cetak Laporan"`
+  - Dedicated unit tests: verified mobile two-line grid, concise label, absence of verbose label, and executive indigo theme in `src/components/views/ReportsView/reportsHeaderResponsiveness.test.ts` (3/3 passing)
+  - Verification: `npm run drift:check` ✅ (124/124 pairs), `npm run build:check` ✅, `npm test` ✅ (1065/1065 tests passing)
+  - Refs: `docs/adr/0097-quarterly-posm-control-bar-mobile-two-line-layout.md`, `docs/superpowers/specs/2026-11-08-quarterly-posm-control-bar-mobile-two-line-layout-design.md`, `docs/superpowers/plans/2026-11-08-quarterly-posm-control-bar-mobile-two-line-layout.md`
+
 - `feat(reports)`: Monthly reports table minimized row mobile two-line layout and anti-truncate period labels (ADR-0096)
   - Mobile two-line layout: restructured collapsed monthly report rows in `ReportsView.tsx` into a responsive two-line layout on mobile (`< sm` / `< 640px`) while keeping desktop view (`sm:`) strictly identical on a single horizontal line
   - Anti-truncate period labels: eliminated `truncate` from period titles on collapsed rows, enforcing `whitespace-nowrap font-semibold text-slate-900 dark:text-slate-100` so full month and year (e.g. `"December 2099"` and `"September 2026"`) are 100% visible

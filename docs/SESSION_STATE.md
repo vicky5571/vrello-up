@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-08  
 **Active Branch:** `vicky`  
-**Active Feature:** Monthly Reports Table Minimized Row Mobile Two-Line Layout (ADR-0096) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Quarterly POSM Report Tab Control Bar Mobile Two-Line Layout & Theme Standardization (ADR-0097) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Monthly Reports Table Minimized Row Mobile Two-Line Layout (ADR-0096) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Reports Header Month-Range Executive PDF Export, Auto-Sync of Range & Current Month, and Redundant Export Center Button Removal (ADR-0095) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Monthly Reports Export Button Deduplication, Automatic Draft Fetch on Open/Change, and Single-Row Period Upsert with Rollover Sync (ADR-0094) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** DocumentDrawer File Replacement Upload Mode Toggle, Safe URL Draft State & Metadata Form Alignment (ADR-0093) — **IMPLEMENTATION COMPLETE**  
@@ -76,7 +77,26 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Monthly Reports Table Minimized Row Mobile Two-Line Layout & Anti-Truncate Period Labels (ADR-0096 — Implementation Complete):**
+1. **Implementasi Quarterly POSM Report Tab Control Bar Mobile Two-Line Layout & Theme Standardization (ADR-0097 — Implementation Complete):**
+   - **TDD Test Suite (`src/components/views/ReportsView/reportsHeaderResponsiveness.test.ts`):**
+     - Memperbarui subtest `verifies POSM quarterly tab action bar uses mobile 2-line layout and executive theme (ADR-0097)` untuk memverifikasi struktur `grid-cols-2`, label ringkas `"Cetak Laporan"`, ketiadaan label redundan `"Cetak PDF / Laporan"`, dan penerapan tema eksekutif `bg-indigo-600`.
+     - Siklus TDD: Baseline RED (`AssertionError: QuarterlyPosmReportTab print button must use concise label 'Cetak Laporan'`) -> GREEN (3/3 tests passing).
+   - **Refaktor Baris Kontrol POSM Kuartalan (`src/components/views/ReportsView/QuarterlyPosmReportTab.tsx`):**
+     - **Baris 1 (Filter Periode & Refresh Mobile):** Memasangkan `Pilih Periode:` + `<CustomDropdown>` di sisi kiri dengan tombol Refresh icon-only persegi (`p-2 border rounded-lg`) di sisi kanan (`flex sm:hidden`).
+     - **Baris 2 (Balanced Action Grid):** Mengorganisasi `Ekspor CSV` dan `Cetak Laporan` ke dalam grid seimbang 50/50 (`grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center`), menghilangkan tombol terdampar (orphan).
+     - **Tampilan Desktop (`sm:`):** Mempertahankan 100% tata letak horizontal 1 baris (`flex-row justify-between`) dengan tombol Refresh desktop inline (`hidden sm:inline-flex`).
+     - **Standardisasi Tema Eksekutif:** Mengganti warna tombol cetak dari `bg-blue-600` menjadi `bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs` dengan label ringkas `"Cetak Laporan"`.
+   - **Artefak Perencanaan & Handover:**
+     - ADR: [`docs/adr/0097-quarterly-posm-control-bar-mobile-two-line-layout.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0097-quarterly-posm-control-bar-mobile-two-line-layout.md)
+     - Spec: [`docs/superpowers/specs/2026-11-08-quarterly-posm-control-bar-mobile-two-line-layout-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-08-quarterly-posm-control-bar-mobile-two-line-layout-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-08-quarterly-posm-control-bar-mobile-two-line-layout.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-08-quarterly-posm-control-bar-mobile-two-line-layout.md)
+     - Handover: [`docs/handover-quarterly-posm-control-bar-mobile-two-line-layout.md`](file:///Users/mac/Web%20Development/vrello-up/docs/handover-quarterly-posm-control-bar-mobile-two-line-layout.md)
+   - **Verifikasi Kualitas Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (124/124 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1065/1065 tests passing across 190 suites (0 failures).
+
+2. **Implementasi Monthly Reports Table Minimized Row Mobile Two-Line Layout & Anti-Truncate Period Labels (ADR-0096 — Implementation Complete):**
    - **TDD Test Suite (`src/components/views/ReportsView/monthlyReportExpandedRow.test.ts`):**
      - Menambahkan subtest `verifies collapsed monthly report row uses mobile two-line layout and anti-truncate period classes (ADR-0096)` yang memvalidasi bahwa `ReportsView.tsx` tidak menggunakan class `truncate` pada label periode, menerapkan `whitespace-nowrap`, dan mengimplementasikan responsive stacking dua baris pada mobile (`flex-col sm:flex-row`).
      - Terverifikasi siklus TDD: Baseline RED -> GREEN (10/10 tests passing).

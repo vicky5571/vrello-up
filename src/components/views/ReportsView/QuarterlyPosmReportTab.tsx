@@ -128,47 +128,63 @@ export function QuarterlyPosmReportTab({ onNavigateToPlacements }: QuarterlyPosm
   return (
     <div className="space-y-6 max-w-6xl mx-auto py-2">
       {/* Action & Period Bar (Hidden on print) */}
-      <div className="relative z-30 print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            Pilih Periode:
-          </span>
-          <CustomDropdown
-            value={selectedQuarter}
-            onChange={setSelectedQuarter}
-            options={availableQuarters.map((q) => ({ value: q, label: q }))}
-            ariaLabel="Pilih Periode Kuartal"
-            className="w-32 sm:w-36 text-xs sm:text-sm font-semibold"
-          />
-        </div>
+      <div className="relative z-30 print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+        {/* Line 1 on Mobile / Left on Desktop: Period selector + Mobile-positioned Refresh */}
+        <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 whitespace-nowrap">
+              Pilih Periode:
+            </span>
+            <CustomDropdown
+              value={selectedQuarter}
+              onChange={setSelectedQuarter}
+              options={availableQuarters.map((q) => ({ value: q, label: q }))}
+              ariaLabel="Pilih Periode Kuartal"
+              className="w-32 sm:w-36 text-xs sm:text-sm font-semibold"
+            />
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2 justify-end sm:justify-start">
+          {/* Refresh button positioned in top line on mobile */}
           <button
             type="button"
             onClick={() => fetchReportData(true)}
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            title="Segarkan data kuartalan"
+            className="flex sm:hidden p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
+          </button>
+        </div>
+
+        {/* Line 2 on Mobile (2-column balanced grid) / Inline actions on Desktop */}
+        <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+          {/* Refresh button visible only on desktop */}
+          <button
+            type="button"
+            onClick={() => fetchReportData(true)}
+            disabled={isLoading}
+            title="Segarkan data kuartalan"
+            className="hidden sm:inline-flex p-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
           </button>
 
           <button
             type="button"
             onClick={handleExportCsv}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-emerald-600" />
-            Ekspor CSV
+            <span>Ekspor CSV</span>
           </button>
 
           <button
             type="button"
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
-            Cetak PDF / Laporan
+            <span>Cetak Laporan</span>
           </button>
         </div>
       </div>

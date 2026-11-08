@@ -29,11 +29,23 @@ describe("Reports Header Mobile Responsiveness & Desktop Invariants", () => {
     );
   });
 
-  it("verifies POSM quarterly tab action bar aligns right on mobile", () => {
+  it("verifies POSM quarterly tab action bar uses mobile 2-line layout and executive theme (ADR-0097)", () => {
     const content = fs.readFileSync(posmTabPath, "utf-8");
     assert.ok(
-      content.includes("justify-end sm:justify-start"),
-      "QuarterlyPosmReportTab action bar must use justify-end on mobile and sm:justify-start on desktop"
+      content.includes("grid-cols-2"),
+      "QuarterlyPosmReportTab action bar must use balanced grid-cols-2 on mobile"
+    );
+    assert.ok(
+      content.includes("Cetak Laporan"),
+      "QuarterlyPosmReportTab print button must use concise label 'Cetak Laporan'"
+    );
+    assert.ok(
+      !content.includes("Cetak PDF / Laporan"),
+      "QuarterlyPosmReportTab must remove verbose label 'Cetak PDF / Laporan'"
+    );
+    assert.ok(
+      content.includes("bg-indigo-600"),
+      "QuarterlyPosmReportTab print button must use executive indigo theme"
     );
   });
 });
