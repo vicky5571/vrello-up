@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   Bell,
   UserPlus,
@@ -16,6 +17,7 @@ import {
   countUnread,
   deriveMouNotifications,
   deriveTaskNotifications,
+  deriveBorrowOverdueNotifications,
   type AppNotification,
   type NotificationKind,
 } from "@/lib/productivity/notifications";
@@ -26,6 +28,7 @@ const KIND_META: Record<
   NotificationKind,
   { label: string; icon: typeof Bell; className: string }
 > = {
+  borrow_overdue: { label: "Equipment overdue", icon: AlarmClock, className: "bg-rose-500/10 text-rose-500" },
   assignment: { label: "Assignments", icon: UserPlus, className: "bg-blue-500/10 text-blue-500" },
   mou_approval: { label: "MOU approvals", icon: FileCheck, className: "bg-violet-500/10 text-violet-500" },
   mou_expiry: { label: "MOU expiry", icon: AlertTriangle, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
@@ -33,7 +36,7 @@ const KIND_META: Record<
   overdue: { label: "Overdue", icon: AlarmClock, className: "bg-rose-500/10 text-rose-500" },
 };
 
-const KIND_ORDER: NotificationKind[] = ["overdue", "mou_expiry", "mou_approval", "assignment", "status"];
+const KIND_ORDER: NotificationKind[] = ["borrow_overdue", "overdue", "mou_expiry", "mou_approval", "assignment", "status"];
 
 function timeAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
@@ -64,7 +67,8 @@ export function NotificationCenter() {
   const setActiveView = useWorkspaceStore((s) => s.setActiveView);
 
   const [isOpen, setIsOpen] = useState(false);
-  const { mouRows } = useNotificationFeed({ isOpen });
+  const { data: session } = useSession();
+  const { mouRows, borrowRows } = useNotificationFeed({ isOpen });
   const panelRef = useRef<HTMLDivElement>(null);
 
   const doneStatusIds = useMemo(() => {
@@ -79,12 +83,21 @@ export function NotificationCenter() {
     [tasks, currentUserId, doneStatusIds],
   );
   const mouNotifs = useMemo(() => deriveMouNotifications(mouRows), [mouRows]);
+  const borrowNotifs = useMemo(
+    () =>
+      deriveBorrowOverdueNotifications({
+        records: borrowRows,
+        currentUserName: session?.user?.name || "",
+        userRole: (session?.user?.role as "admin" | "supervisor" | "warehouse" | "staff" | "viewer") || "staff",
+      }),
+    [borrowRows, session?.user?.name, session?.user?.role],
+  );
   const allNotifs = useMemo<AppNotification[]>(
     () =>
-      [...taskNotifs, ...mouNotifs].sort(
+      [...taskNotifs, ...mouNotifs, ...borrowNotifs].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
-    [taskNotifs, mouNotifs],
+    [taskNotifs, mouNotifs, borrowNotifs],
   );
   const unread = countUnread(allNotifs, lastSeenNotificationsAt);
   const isUnread = (n: AppNotification) =>
@@ -113,6 +126,10 @@ export function NotificationCenter() {
   };
   const handleOpenMous = () => {
     setActiveView("mous");
+    setIsOpen(false);
+  };
+  const handleOpenBorrowing = () => {
+    setActiveView("inventory");
     setIsOpen(false);
   };
 
@@ -187,7 +204,7 @@ export function NotificationCenter() {
                 <Bell className="w-6 h-6 mx-auto mb-2 text-slate-300 dark:text-slate-700" />
                 <p className="font-medium">You&apos;re all caught up</p>
                 <p className="text-[11px] mt-0.5">
-                  Assignments, MOU approvals, status changes, and overdue tasks land here.
+                  Assignments, MOU approvals, equipment overdues, status changes, and overdue tasks land here.
                 </p>
               </div>
             ) : (
@@ -204,9 +221,15 @@ export function NotificationCenter() {
                         <button
                           key={n.id}
                           type="button"
-                          onClick={() =>
-                            n.kind === "mou_approval" ? handleOpenMous() : handleOpenTask(n)
-                          }
+                          onClick={() => {
+                            if (n.kind === "borrow_overdue") {
+                              handleOpenBorrowing();
+                            } else if (n.kind === "mou_approval" || n.kind === "mou_expiry") {
+                              handleOpenMous();
+                            } else {
+                              handleOpenTask(n);
+                            }
+                          }}
                           className={cn(
                             "w-full flex items-start gap-2.5 px-2.5 py-2 rounded-xl text-left transition-colors cursor-pointer",
                             isUnread(n)

@@ -97,3 +97,88 @@ export async function sendRejectionEmail(
   }
 }
 
+/**
+ * Send an overdue equipment loan reminder to the borrower.
+ * Fail-silent if SMTP is not configured or if sending fails.
+ */
+export async function sendBorrowOverdueEmail(
+  to: string,
+  borrowerName: string,
+  borrowCode: string,
+  itemsDescription: string,
+  dueDate: string
+): Promise<void> {
+  if (!isSmtpConfigured()) {
+    console.warn("[mailer] SMTP_HOST not set. Skipping borrow overdue email.");
+    return;
+  }
+
+  const appUrl = getAppUrl();
+  const html = `
+    <p>Halo ${borrowerName},</p>
+    <p>Peminjaman peralatan Marcom Anda dengan kode <strong>${borrowCode}</strong> telah melewati batas waktu pengembalian pada <strong>${dueDate}</strong>.</p>
+    <p><strong>Peralatan:</strong> ${itemsDescription}</p>
+    <p>Harap segera melakukan pengembalian fisik ke gudang logistik atau menghubungi petugas gudang melalui portal Vrello:</p>
+    <p><a href="${appUrl}">${appUrl}</a></p>
+    <p>Terima kasih atas kerja samanya.</p>
+    <p>— Tim Logistik & Operasional Marcom Vrello</p>
+  `;
+
+  try {
+    const transporter = getTransporter();
+    await transporter.sendMail({
+      from: getFromAddress(),
+      to,
+      subject: `[Peringatan] Pengembalian Peralatan Marcom: ${borrowCode}`,
+      html,
+    });
+  } catch (error) {
+    console.error("[mailer] Failed to send borrow overdue email:", error);
+  }
+}
+
+/**
+ * Send a consolidated overdue equipment digest to logistics managers.
+ * Fail-silent if SMTP is not configured or if sending fails.
+ */
+export async function sendBorrowOverdueDigestEmail(
+  to: string[],
+  summaryList: Array<{ borrowCode: string; borrowerName: string; dueDate: string; itemsSummary: string }>
+): Promise<void> {
+  if (!isSmtpConfigured() || to.length === 0 || summaryList.length === 0) {
+    return;
+  }
+
+  const appUrl = getAppUrl();
+  const count = summaryList.length;
+  const listItems = summaryList
+    .map(
+      (s) =>
+        `<li><strong>${s.borrowCode}</strong> - ${s.borrowerName} (Jatuh tempo: ${s.dueDate})<br/><em>${s.itemsSummary}</em></li>`
+    )
+    .join("");
+
+  const html = `
+    <p>Yth. Tim Pengelola Gudang & Supervisor,</p>
+    <p>Terdapat <strong>${count} peminjaman peralatan</strong> aktif yang saat ini telah melewati batas waktu pengembalian (Overdue):</p>
+    <ul>
+      ${listItems}
+    </ul>
+    <p>Silakan buka tab Borrowing Tracking pada aplikasi Vrello untuk tindak lanjut operasional:</p>
+    <p><a href="${appUrl}">${appUrl}</a></p>
+    <p>— Sistem Notifikasi Otomatis Vrello</p>
+  `;
+
+  try {
+    const transporter = getTransporter();
+    await transporter.sendMail({
+      from: getFromAddress(),
+      to: to.join(", "),
+      subject: `[Laporan Harian] ${count} Peminjaman Peralatan Melewati Batas Pengembalian`,
+      html,
+    });
+  } catch (error) {
+    console.error("[mailer] Failed to send borrow overdue digest email:", error);
+  }
+}
+

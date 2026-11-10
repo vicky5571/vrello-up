@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 // @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
-import { countUnread, deriveMouNotifications, deriveTaskNotifications } from "./notifications.ts";
+import {
+  countUnread,
+  deriveMouNotifications,
+  deriveTaskNotifications,
+  deriveBorrowOverdueNotifications,
+} from "./notifications.ts";
 import type { Task } from "../../types/index.ts";
 
 const NOW = new Date("2026-09-07T12:00:00.000Z");
@@ -106,5 +111,117 @@ test("MOU expiry watchdog triggers for expiring (<30d) and expired MOUs", () => 
   assert.ok(expired);
   assert.equal(expired.kind, "mou_expiry");
   assert.match(expired.title, /Expired/);
+});
+
+test("deriveBorrowOverdueNotifications generates personal overdue alert for borrower (AC-1)", () => {
+  const records = [
+    {
+      id: "rec-1",
+      borrowCode: "BRW-20261101-001",
+      borrowerName: "Rahmat Hidayat",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "ACTIVE",
+      itemsSummary: "Tenda Lipat (2)",
+    },
+  ];
+
+  const notifs = deriveBorrowOverdueNotifications({
+    records,
+    currentUserName: "Rahmat Hidayat",
+    userRole: "staff",
+    now: new Date("2026-11-10T12:00:00.000Z"),
+  });
+
+  assert.equal(notifs.length, 1);
+  assert.equal(notifs[0].id, "borrow-overdue-rec-1");
+  assert.equal(notifs[0].kind, "borrow_overdue");
+  assert.match(notifs[0].title, /BRW-20261101-001 Telah Jatuh Tempo/);
+  assert.match(notifs[0].body || "", /Tenda Lipat \(2\)/);
+});
+
+test("deriveBorrowOverdueNotifications isolates alerts between different staff members (AC-2)", () => {
+  const records = [
+    {
+      id: "rec-1",
+      borrowCode: "BRW-20261101-001",
+      borrowerName: "Rahmat Hidayat",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "ACTIVE",
+      itemsSummary: "Tenda Lipat (2)",
+    },
+  ];
+
+  // Logged-in user is Siti Rahma (role staff) - should not see Rahmat's alert
+  const notifs = deriveBorrowOverdueNotifications({
+    records,
+    currentUserName: "Siti Rahma",
+    userRole: "staff",
+    now: new Date("2026-11-10T12:00:00.000Z"),
+  });
+
+  assert.equal(notifs.length, 0);
+});
+
+test("deriveBorrowOverdueNotifications generates single consolidated digest for warehouse officer (AC-3)", () => {
+  const records = [
+    {
+      id: "rec-1",
+      borrowCode: "BRW-20261101-001",
+      borrowerName: "Rahmat Hidayat",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "ACTIVE",
+      itemsSummary: "Tenda Lipat (2)",
+    },
+    {
+      id: "rec-2",
+      borrowCode: "BRW-20261102-002",
+      borrowerName: "Budi Santoso",
+      returnDueDate: "2026-11-06T00:00:00.000Z",
+      status: "ACTIVE",
+      itemsSummary: "Sound System (1)",
+    },
+    {
+      id: "rec-3",
+      borrowCode: "BRW-20261103-003",
+      borrowerName: "Dewi Lestari",
+      returnDueDate: "2026-11-07T00:00:00.000Z",
+      status: "ACTIVE",
+      itemsSummary: "Rollup Banner (3)",
+    },
+  ];
+
+  const notifs = deriveBorrowOverdueNotifications({
+    records,
+    currentUserName: "Agus Gudang",
+    userRole: "warehouse",
+    now: new Date("2026-11-10T12:00:00.000Z"),
+  });
+
+  assert.equal(notifs.length, 1);
+  assert.equal(notifs[0].kind, "borrow_overdue");
+  assert.match(notifs[0].title, /Perhatian: 3 Peminjaman Alat Melewati Batas Pengembalian/);
+  assert.match(notifs[0].body || "", /Terdapat 3 unit peminjaman aktif/);
+});
+
+test("deriveBorrowOverdueNotifications returns empty array when all returns are on time", () => {
+  const records = [
+    {
+      id: "rec-1",
+      borrowCode: "BRW-20261101-001",
+      borrowerName: "Rahmat Hidayat",
+      returnDueDate: "2026-11-15T00:00:00.000Z", // Future date
+      status: "ACTIVE",
+      itemsSummary: "Tenda Lipat (2)",
+    },
+  ];
+
+  const notifs = deriveBorrowOverdueNotifications({
+    records,
+    currentUserName: "Rahmat Hidayat",
+    userRole: "staff",
+    now: new Date("2026-11-10T12:00:00.000Z"),
+  });
+
+  assert.equal(notifs.length, 0);
 });
 

@@ -4,6 +4,30 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-11-11]
+
+- `feat(inventory)`: Virtual overdue status lifecycle and dual-channel notifications (ADR-0103)
+  - Pure In-App Notification Derivation Engine (`src/lib/productivity/notifications.ts`):
+    - Registered `"borrow_overdue"` in `NotificationKind` union and implemented `deriveBorrowOverdueNotifications()`.
+    - Pure derivation filters overdue active loans `(status === "ACTIVE" || status === "OVERDUE") && returnDueDate < now`.
+    - Generates personalized individual alert per overdue loan for the borrower (`borrowerName.trim().toLowerCase() === currentUserName.trim().toLowerCase()`) while strictly isolating other staff members.
+    - Generates a consolidated single operational digest alert for logistics managers (`role IN ['warehouse', 'supervisor', 'admin']`).
+  - TopNav Notification Center Feed Integration (`src/lib/productivity/useNotificationFeed.ts` & `NotificationCenter.tsx`):
+    - Integrated `/api/marcom/inventory/borrow?status=ACTIVE` query in parallel with `/api/marcom/mous` via `Promise.allSettled`.
+    - Preserved all hook lifecycle invariants (`fetchMous` call on mount, dependency array, window `focus` event listener).
+    - Registered `borrow_overdue` in `KIND_META` with highest sorting priority in `KIND_ORDER` (Amber/Alert styling).
+    - Added click routing: clicking a `borrow_overdue` notification closes the popover and navigates directly to `setActiveView("inventory")`.
+  - Operational Email Cron Endpoint (`src/app/api/cron/borrow-overdue-sync/route.ts`):
+    - Created daily operational cron route protected by `CRON_SECRET` in production.
+    - Queries active borrow records past due date without mutating database status (`UPDATE BorrowRecord SET status = 'OVERDUE'` is strictly forbidden; status remains virtual).
+    - Dispatches individual reminder emails to borrowers (`sendBorrowOverdueEmail`) and consolidated digest emails to warehouse/supervisor/admin users (`sendBorrowOverdueDigestEmail`) in `src/lib/server/mailer.ts`.
+    - Fail-silent execution when SMTP credentials are not configured.
+  - Automated Unit & Integration Tests:
+    - `src/lib/productivity/notifications.test.ts`: verified AC-1 (borrower personal alert), AC-2 (cross-staff isolation), AC-3 (manager digest), and on-time empty array.
+    - `src/app/api/cron/borrowOverdueSyncRoute.test.ts`: verified 401 unauthorized rejection, authorized execution with `CRON_SECRET`, fail-silent execution, and virtual status preservation.
+  - Verification: `npm run drift:check` ✅ (130/130 pairs), `npm run build:check` ✅ (0 errors), `npm test` ✅ (1101/1101 passing), `npm run test:smoke` ✅ (173/173 passing).
+  - Refs: `docs/adr/0103-virtual-overdue-status-lifecycle-and-dual-channel-notifications.md`, `docs/superpowers/specs/2026-11-11-virtual-overdue-status-lifecycle-and-dual-channel-notifications-design.md`, `docs/superpowers/plans/2026-11-11-virtual-overdue-status-lifecycle-and-dual-channel-notifications.md`
+
 ## [2026-11-10]
 
 - `feat(inventory)`: Calendar-based equipment booking and collision engine (ADR-0102)

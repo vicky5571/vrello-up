@@ -6,9 +6,10 @@
 
 ## Current Status
 
-**Date:** 2026-11-10  
+**Date:** 2026-11-11  
 **Active Branch:** `vicky`  
-**Active Feature:** Calendar-Based Equipment Booking & Collision Engine (ADR-0102) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Virtual Overdue Status Lifecycle & Dual-Channel Notifications (ADR-0103) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Calendar-Based Equipment Booking & Collision Engine (ADR-0102) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Staff Self-Cancellation and CANCEL_OWN_BORROW RBAC Action (ADR-0101) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Inventory Borrow Server-Side RBAC Guard & Audit Integrity (ADR-0100) — **IMPLEMENTATION COMPLETE**  
 
@@ -86,7 +87,38 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Penuh Calendar-Based Equipment Booking & Collision Engine (ADR-0102 — Implementation Complete):**
+1. **Implementasi Virtual Overdue Status Lifecycle & Dual-Channel Notifications (ADR-0103 — Implementation Complete):**
+   - **Akar Masalah & Invarian Arsitektural (Temuan 5):**
+     - Di PostgreSQL, status peminjaman peralatan (`BorrowRecord.status`) bersifat *virtual* (`ACTIVE`), yang secara dinamis dinormalisasi menjadi `OVERDUE` pada runtime pembacaan saat `returnDueDate < now`.
+     - Invarian ketat: Database status `BorrowRecord.status` TIDAK PERNAH dimutasi menjadi `OVERDUE` oleh cron atau notifikasi (tidak ada query `UPDATE BorrowRecord SET status = 'OVERDUE'`), menjaga zero database write-churn dan ketiadaan migrasi skema.
+   - **Phase 1: Pure In-App Notification Derivation Engine (`src/lib/productivity/notifications.ts` & `notifications.test.ts`):**
+     - Mendaftarkan `"borrow_overdue"` ke dalam union `NotificationKind`.
+     - Mengimplementasikan `deriveBorrowOverdueNotifications()` murni yang memfilter pinjaman overdue: `(status === "ACTIVE" || status === "OVERDUE") && returnDueDate < now`.
+     - Menghasilkan alert individual per transaksi untuk peminjam (`borrowerName.trim().toLowerCase() === currentUserName.trim().toLowerCase()`) dan mengisolasi staf lain (AC-1 & AC-2).
+     - Menghasilkan 1 notifikasi ringkasan konsolidasi (*digest*) untuk petugas gudang dan manajer (`userRole IN ['warehouse', 'supervisor', 'admin']`) jika jumlah pinjaman overdue $N > 0$ (AC-3).
+     - Unit test suite: 9/9 tests passing (100% scenario coverage).
+   - **Phase 2: Hook & TopNav Bell Feed Integration (`src/lib/productivity/useNotificationFeed.ts` & `NotificationCenter.tsx`):**
+     - Melakukan query paralel `/api/marcom/inventory/borrow?status=ACTIVE` bersamaan dengan `/api/marcom/mous` via `Promise.allSettled`.
+     - Mempertahankan seluruh invarian lifecycle hook (`fetchMous` saat mount, dependensi array, dan window focus listener).
+     - Menambahkan konfigurasi metadata `borrow_overdue` ke `KIND_META` dan meletakkannya di posisi teratas `KIND_ORDER` (Amber styling).
+     - Mengarahkan klik notifikasi `borrow_overdue` ke `setActiveView("inventory")` dan menutup popover secara mulus.
+     - Unit test suite: 5/5 hook invariant tests passing.
+   - **Phase 3: Operational Email Cron Endpoint (`src/app/api/cron/borrow-overdue-sync/route.ts` & `mailer.ts`):**
+     - Menambahkan fungsi helper `sendBorrowOverdueEmail` (pengingat individual borrower) dan `sendBorrowOverdueDigestEmail` (digest harian tim logistik) pada `src/lib/server/mailer.ts` dengan pola fail-silent saat SMTP belum terkonfigurasi.
+     - Membuat endpoint `GET /api/cron/borrow-overdue-sync` yang diproteksi oleh `CRON_SECRET` pada mode produksi (`process.env.NODE_ENV === "production"`).
+     - Menjalankan pemindaian Prisma terhadap `status: "ACTIVE"` dan `returnDueDate: { lt: now }`, mendistribusikan email pengingat dan digest tanpa memutasi status di database.
+     - Integration test suite (`src/app/api/cron/borrowOverdueSyncRoute.test.ts`): 3/3 tests passing (penolakan 401, eksekusi sah dengan `Bearer ${CRON_SECRET}`, dan eksekusi aman fail-silent tanpa SMTP).
+   - **Phase 4: Non-Negotiable Verification Gates & Invariants:**
+     - `npm run drift:check`: ✅ 0 drift detected (130/130 spec-plan pairs valid, coordinator files $\le 250$ LOC, single-tenant invariants terjaga).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1101/1101 tests passing across 196 suites (0 failures).
+     - `npm run test:smoke`: ✅ 173/173 smoke tests passing (0 failures).
+   - **Artefak:**
+     - ADR: [`docs/adr/0103-virtual-overdue-status-lifecycle-and-dual-channel-notifications.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0103-virtual-overdue-status-lifecycle-and-dual-channel-notifications.md)
+     - Spec: [`docs/superpowers/specs/2026-11-11-virtual-overdue-status-lifecycle-and-dual-channel-notifications-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-11-virtual-overdue-status-lifecycle-and-dual-channel-notifications-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-11-virtual-overdue-status-lifecycle-and-dual-channel-notifications.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-11-virtual-overdue-status-lifecycle-and-dual-channel-notifications.md)
+
+2. **Implementasi Penuh Calendar-Based Equipment Booking & Collision Engine (ADR-0102 — Implementation Complete):**
    - **Akar Masalah (Temuan 4):** Sebelumnya pemotongan stok fisik (`availableUnits -= quantity`) ditunda hingga serah terima fisik (`ACTIVE`), memicu race condition di mana dua permohonan yang bertabrakan di tanggal yang sama bisa sama-sama disetujui (`APPROVED`), dan salah satu pihak baru gagal saat tiba di meja gudang dengan error kehabisan unit. Sebaliknya, pemotongan flat saat approval akan mematikan utilitas aset masa depan (peralatan idle di gudang tidak bisa dipinjam hari ini jika ada booking bulan depan).
    - **Phase 1: Core Interval Math Collision Engine (`src/lib/marcom/inventoryCollisionEngine.ts` & `inventoryCollisionEngine.test.ts`):**
      - Mengimplementasikan `getDatesInRange(startDate, endDate)` berbasis UTC aman tanpa pergeseran zona waktu.
