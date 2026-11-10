@@ -6,6 +6,20 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-11]
 
+- `feat(inventory)`: Strict test-environment header isolation and inventory auth standardization (ADR-0104)
+  - Centralized Inventory Auth Helper (`src/lib/server/inventoryAuth.ts` & `inventoryAuth.test.ts`):
+    - Created single source of truth `resolveInventoryAuth(request)` standardizing session extraction and role normalization.
+    - Confined evaluation of `x-user-role` and `x-user-name` headers strictly to `process.env.NODE_ENV === "test"`, blocking privilege escalation in production and staging environments (OWASP A01).
+    - Normalized raw roles into `MarcomRole` ("admin" | "supervisor" | "warehouse" | "staff" | "viewer") and verified caller authentication state.
+  - Route Handlers Refactoring (`/borrow`, `/borrow/[id]`, `/return`, `/settle`):
+    - Replaced fragmented inline authentication checks with `resolveInventoryAuth`.
+    - Eliminated the non-production `"warehouse"` fallback in `POST /borrow/[id]/return` and enforced HTTP 401 across all endpoints for unauthenticated requests.
+  - Regression & Security Tests:
+    - Added security tests in `src/app/api/marcom/inventory/inventoryApi.test.ts` verifying unauthenticated `/return` rejection (HTTP 401) and production header spoof rejection across all 4 endpoints.
+    - Unit test suite: `src/lib/server/inventoryAuth.test.ts` (5/5 passing).
+  - Verification: `npm run drift:check` ✅ (131/131 pairs), `npm run build:check` ✅ (0 errors), `npm test` ✅ (1107/1107 passing), `npm run test:smoke` ✅ (173/173 passing).
+  - Refs: `docs/adr/0104-strict-test-environment-header-isolation-and-inventory-auth-standardization.md`, `docs/superpowers/specs/2026-11-11-strict-test-environment-header-isolation-and-inventory-auth-standardization-design.md`, `docs/superpowers/plans/2026-11-11-strict-test-environment-header-isolation-and-inventory-auth-standardization.md`
+
 - `feat(inventory)`: Virtual overdue status lifecycle and dual-channel notifications (ADR-0103)
   - Pure In-App Notification Derivation Engine (`src/lib/productivity/notifications.ts`):
     - Registered `"borrow_overdue"` in `NotificationKind` union and implemented `deriveBorrowOverdueNotifications()`.

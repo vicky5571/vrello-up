@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { BorrowStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { auth } from "@/auth";
-import { hasPermission, type MarcomRole } from "@/lib/marcom/guards";
+import { resolveInventoryAuth } from "@/lib/server/inventoryAuth";
+import { hasPermission } from "@/lib/marcom/guards";
 import {
   checkBookingCollision,
   type ExistingBookingItem,
@@ -106,30 +106,10 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
 
-    let session = null;
-    try {
-      session = await auth();
-    } catch {
-      // Handled in isolated test environments without Next.js request store
-    }
-
-    const roleHeader = request.headers.get("x-user-role");
-    if (!session?.user?.id && !roleHeader) {
+    const { role: userRole, userName, isAuthenticated } = await resolveInventoryAuth(request);
+    if (!isAuthenticated) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const rawRole = (roleHeader || session?.user?.role || "viewer").toLowerCase();
-    const userRole: MarcomRole =
-      rawRole === "admin" || rawRole === "supervisor" || rawRole === "warehouse" || rawRole === "staff"
-        ? rawRole
-        : "viewer";
-
-    const userName = (
-      session?.user?.name ||
-      session?.user?.email ||
-      (process.env.NODE_ENV !== "production" ? request.headers.get("x-user-name") : null) ||
-      "Authorized User"
-    ).trim();
 
     const existing = await prisma.borrowRecord.findUnique({
       where: { id },

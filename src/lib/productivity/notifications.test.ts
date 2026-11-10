@@ -1,13 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-// @ts-expect-error Node's strip-types runner requires an explicit TypeScript extension.
 import {
   countUnread,
   deriveMouNotifications,
   deriveTaskNotifications,
   deriveBorrowOverdueNotifications,
-} from "./notifications.ts";
-import type { Task } from "../../types/index.ts";
+} from "./notifications";
+import type { Task } from "@/types";
 
 const NOW = new Date("2026-09-07T12:00:00.000Z");
 

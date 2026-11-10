@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { EquipmentCondition } from "@prisma/client";
-import { auth } from "@/auth";
+import { resolveInventoryAuth } from "@/lib/server/inventoryAuth";
 import { prisma } from "@/lib/db";
-import { hasPermission, type MarcomRole } from "@/lib/marcom/guards";
+import { hasPermission } from "@/lib/marcom/guards";
 
 const recordInclude = {
   event: { select: { id: true, name: true } },
@@ -63,16 +63,11 @@ export async function POST(
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
 
-    // Authorization: reject staff or viewer
-    let session = null;
-    try {
-      session = await auth();
-    } catch {
-      // Handled in isolated test environments without Next.js request store
+    // Authorization: resolve session and enforce PROCESS_RETURN
+    const { role: userRole, isAuthenticated } = await resolveInventoryAuth(request);
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const roleHeader = request.headers.get("x-user-role");
-    const userRole = (roleHeader || session?.user?.role || (process.env.NODE_ENV === "production" ? "viewer" : "warehouse")).toLowerCase() as MarcomRole;
 
     if (!hasPermission(userRole, "PROCESS_RETURN")) {
       return NextResponse.json(

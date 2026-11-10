@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-11  
 **Active Branch:** `vicky`  
-**Active Feature:** Virtual Overdue Status Lifecycle & Dual-Channel Notifications (ADR-0103) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Strict Test-Environment Header Isolation & Inventory Auth Standardization (ADR-0104) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Virtual Overdue Status Lifecycle & Dual-Channel Notifications (ADR-0103) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Calendar-Based Equipment Booking & Collision Engine (ADR-0102) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Staff Self-Cancellation and CANCEL_OWN_BORROW RBAC Action (ADR-0101) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Inventory Borrow Server-Side RBAC Guard & Audit Integrity (ADR-0100) — **IMPLEMENTATION COMPLETE**  
@@ -87,7 +88,34 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Virtual Overdue Status Lifecycle & Dual-Channel Notifications (ADR-0103 — Implementation Complete):**
+1. **Implementasi Strict Test-Environment Header Isolation & Inventory Auth Standardization (ADR-0104 — Implementation Complete):**
+   - **Akar Masalah & Vektor Kerentanan (Temuan 6):**
+     - Endpoint peminjaman inventaris (`/borrow`, `/borrow/[id]`, `/return`, `/settle`) membaca header pengujian `x-user-role` tanpa pembatasan lingkungan yang ketat. Pada production atau staging terbuka, penyerang dapat menyuntikkan header `x-user-role: admin` untuk mengelevasi hak akses melompati otentikasi NextAuth.
+     - Pada `/return/route.ts`, terdapat fallback non-produksi `(process.env.NODE_ENV === "production" ? "viewer" : "warehouse")` yang secara implisit memberikan peran `warehouse` pada setiap request tanpa otentikasi di lingkungan pengembangan dan staging, melanggar *Four-Eyes Principle* (ADR-0050).
+   - **Phase 1: Centralized Inventory Auth Helper (`src/lib/server/inventoryAuth.ts` & `inventoryAuth.test.ts`):**
+     - Mengimplementasikan `resolveInventoryAuth(request)` sebagai single-source-of-truth perimeter otentikasi inventaris.
+     - Mengisolasi pembacaan header pengujian (`x-user-role` dan `x-user-name`) secara ketat hanya pada `process.env.NODE_ENV === "test"`. Pada mode `production` maupun `development`, header pengujian diabaikan 100%.
+     - Menormalkan nilai role ke dalam union `MarcomRole` ("admin" | "supervisor" | "warehouse" | "staff" | "viewer") dan menetapkan `isAuthenticated: boolean`.
+     - Unit test suite: 5/5 tests passing (100% scenario coverage).
+   - **Phase 2: Route Handler Refactoring Across Inventory Subsystem:**
+     - `POST /api/marcom/inventory/borrow`: Mengonsumsi `resolveInventoryAuth`, menolak request tidak terotentikasi dengan HTTP 401, dan memvalidasi izin `REQUEST_BORROW`.
+     - `PUT /api/marcom/inventory/borrow/[id]`: Mengonsumsi `resolveInventoryAuth`, menolak request tidak terotentikasi dengan HTTP 401, dan menggunakan identitas sesi `userName` yang terverifikasi.
+     - `POST /api/marcom/inventory/borrow/[id]/return`: Menghapus fallback non-produksi `"warehouse"`, menolak request tidak terotentikasi dengan HTTP 401, dan memvalidasi izin `PROCESS_RETURN`.
+     - `POST /api/marcom/inventory/borrow/[id]/settle`: Mengonsumsi `resolveInventoryAuth`, mengikat `settledBy` ke `userName` sesi terverifikasi, menolak request tidak terotentikasi dengan HTTP 401, dan memvalidasi izin `PROCESS_RETURN`.
+   - **Phase 3: Regression & Security Negative Tests (`src/app/api/marcom/inventory/inventoryApi.test.ts`):**
+     - Menguji penolakan HTTP 401 pada request tanpa sesi ke endpoint `/return`.
+     - Menguji simulasi produksi (`NODE_ENV = "production"`) dengan menyuntikkan header `x-user-role: admin` dan memverifikasi penolakan HTTP 401 di seluruh endpoint `/borrow`, `/borrow/[id]`, `/return`, dan `/settle`.
+     - Integration test suite: 8/8 tests passing (0 failures).
+   - **Phase 4: Non-Negotiable Verification Gates:**
+     - `npm run drift:check`: ✅ 0 drift detected (131/131 spec-plan pairs valid, coordinator files $\le 250$ LOC, single-tenant invariants terjaga).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1107/1107 tests passing across 196 suites (0 failures).
+   - **Artefak:**
+     - ADR: [`docs/adr/0104-strict-test-environment-header-isolation-and-inventory-auth-standardization.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0104-strict-test-environment-header-isolation-and-inventory-auth-standardization.md)
+     - Spec: [`docs/superpowers/specs/2026-11-11-strict-test-environment-header-isolation-and-inventory-auth-standardization-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-11-strict-test-environment-header-isolation-and-inventory-auth-standardization-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-11-strict-test-environment-header-isolation-and-inventory-auth-standardization.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-11-strict-test-environment-header-isolation-and-inventory-auth-standardization.md)
+
+2. **Implementasi Virtual Overdue Status Lifecycle & Dual-Channel Notifications (ADR-0103 — Implementation Complete):**
    - **Akar Masalah & Invarian Arsitektural (Temuan 5):**
      - Di PostgreSQL, status peminjaman peralatan (`BorrowRecord.status`) bersifat *virtual* (`ACTIVE`), yang secara dinamis dinormalisasi menjadi `OVERDUE` pada runtime pembacaan saat `returnDueDate < now`.
      - Invarian ketat: Database status `BorrowRecord.status` TIDAK PERNAH dimutasi menjadi `OVERDUE` oleh cron atau notifikasi (tidak ada query `UPDATE BorrowRecord SET status = 'OVERDUE'`), menjaga zero database write-churn dan ketiadaan migrasi skema.

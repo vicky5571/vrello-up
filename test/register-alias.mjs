@@ -3,6 +3,10 @@ import { registerHooks } from "node:module";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = "test";
+}
+
 const srcDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "src");
 
 function probe(base) {

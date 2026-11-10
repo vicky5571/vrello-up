@@ -1128,3 +1128,82 @@ test("API: Calendar-Based Equipment Booking and Collision Engine (ADR-0102)", as
     where: { id: { in: [singleItem.id, twoUnitItem.id] } },
   });
 });
+
+test("API: Strict Test-Environment Header Isolation & Inventory Auth Standardization (ADR-0104)", async () => {
+  const dummyId = "dummy-borrow-id-adr0104";
+
+  // 1. Unauthenticated request to /return returns 401 (remedying non-production warehouse fallback)
+  const unauthReturnReq = new Request(`http://localhost:3000/api/marcom/inventory/borrow/${dummyId}/return`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ returnNotes: "Attempting unauthenticated return" }),
+  });
+  const unauthReturnRes = await returnBorrow(unauthReturnReq, { params: Promise.resolve({ id: dummyId }) });
+  assert.equal(unauthReturnRes.status, 401);
+  const unauthReturnBody = await unauthReturnRes.json();
+  assert.equal(unauthReturnBody.error, "Unauthorized");
+
+  // 2. Production header spoofing simulation: x-user-role must be strictly ignored outside NODE_ENV === 'test'
+  const originalEnv = process.env.NODE_ENV;
+  try {
+    (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+
+    // Attempt spoofed POST /borrow
+    const spoofedBorrowRes = await postBorrow(
+      new Request("http://localhost:3000/api/marcom/inventory/borrow", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-role": "admin",
+          "x-user-name": "Hacker Admin",
+        },
+        body: JSON.stringify({ borrowerName: "Spoofed Borrower" }),
+      })
+    );
+    assert.equal(spoofedBorrowRes.status, 401);
+
+    // Attempt spoofed PUT /borrow/[id]
+    const spoofedPutRes = await putBorrow(
+      new Request(`http://localhost:3000/api/marcom/inventory/borrow/${dummyId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-role": "admin",
+        },
+        body: JSON.stringify({ status: "APPROVED" }),
+      }),
+      { params: Promise.resolve({ id: dummyId }) }
+    );
+    assert.equal(spoofedPutRes.status, 401);
+
+    // Attempt spoofed POST /return
+    const spoofedReturnRes = await returnBorrow(
+      new Request(`http://localhost:3000/api/marcom/inventory/borrow/${dummyId}/return`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-role": "warehouse",
+        },
+        body: JSON.stringify({ returnNotes: "Spoofed return" }),
+      }),
+      { params: Promise.resolve({ id: dummyId }) }
+    );
+    assert.equal(spoofedReturnRes.status, 401);
+
+    // Attempt spoofed POST /settle
+    const spoofedSettleRes = await settleBorrow(
+      new Request(`http://localhost:3000/api/marcom/inventory/borrow/${dummyId}/settle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-role": "warehouse",
+        },
+        body: JSON.stringify({ settlementType: "CASH_TRANSFER" }),
+      }),
+      { params: Promise.resolve({ id: dummyId }) }
+    );
+    assert.equal(spoofedSettleRes.status, 401);
+  } finally {
+    (process.env as Record<string, string | undefined>).NODE_ENV = originalEnv;
+  }
+});

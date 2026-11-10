@@ -1,29 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { auth } from "@/auth";
-import { hasPermission, type MarcomRole } from "@/lib/marcom/guards";
+import { resolveInventoryAuth } from "@/lib/server/inventoryAuth";
+import { hasPermission } from "@/lib/marcom/guards";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  let session = null;
-  try {
-    session = await auth();
-  } catch {
-    // Isolated test environment
-  }
-
-  const roleHeader = request.headers.get("x-user-role");
-  if (!session?.user?.id && !roleHeader) {
+  const { role, userName, isAuthenticated } = await resolveInventoryAuth(request);
+  if (!isAuthenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const rawRole = (roleHeader || session?.user?.role || "viewer").toLowerCase();
-  const role: MarcomRole =
-    rawRole === "admin" || rawRole === "supervisor" || rawRole === "warehouse" || rawRole === "staff"
-      ? rawRole
-      : "viewer";
 
   if (!hasPermission(role, "PROCESS_RETURN")) {
     return NextResponse.json(
@@ -95,7 +82,7 @@ export async function POST(
           settlementType,
           settledAmount: settlementType === "CASH_TRANSFER" ? settledAmountNum : 0,
           settledAt: new Date(),
-          settledBy: session?.user?.name || session?.user?.email || (roleHeader === "warehouse" ? "Warehouse Staff" : "Warehouse Admin"),
+          settledBy: userName,
           settlementNotes: settlementNotes.trim(),
           settlementProofUrls: cleanProofUrls,
         },
