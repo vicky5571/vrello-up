@@ -8,8 +8,10 @@
 
 **Date:** 2026-11-10  
 **Active Branch:** `vicky`  
-**Active Feature:** Staff Self-Cancellation and CANCEL_OWN_BORROW RBAC Action (ADR-0101) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Calendar-Based Equipment Booking & Collision Engine (ADR-0102) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Staff Self-Cancellation and CANCEL_OWN_BORROW RBAC Action (ADR-0101) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Inventory Borrow Server-Side RBAC Guard & Audit Integrity (ADR-0100) — **IMPLEMENTATION COMPLETE**  
+
 **Previous Feature:** TopNav Breadcrumbs Redundant Mobile Hamburger Button Removal — **IMPLEMENTATION COMPLETE**  
 
 
@@ -84,7 +86,35 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Staff Self-Cancellation & `CANCEL_OWN_BORROW` RBAC Action (ADR-0101 — Implementation Complete):**
+1. **Implementasi Penuh Calendar-Based Equipment Booking & Collision Engine (ADR-0102 — Implementation Complete):**
+   - **Akar Masalah (Temuan 4):** Sebelumnya pemotongan stok fisik (`availableUnits -= quantity`) ditunda hingga serah terima fisik (`ACTIVE`), memicu race condition di mana dua permohonan yang bertabrakan di tanggal yang sama bisa sama-sama disetujui (`APPROVED`), dan salah satu pihak baru gagal saat tiba di meja gudang dengan error kehabisan unit. Sebaliknya, pemotongan flat saat approval akan mematikan utilitas aset masa depan (peralatan idle di gudang tidak bisa dipinjam hari ini jika ada booking bulan depan).
+   - **Phase 1: Core Interval Math Collision Engine (`src/lib/marcom/inventoryCollisionEngine.ts` & `inventoryCollisionEngine.test.ts`):**
+     - Mengimplementasikan `getDatesInRange(startDate, endDate)` berbasis UTC aman tanpa pergeseran zona waktu.
+     - Mengimplementasikan `checkBookingCollision()` yang mengevaluasi kuantitas yang diminta vs sisa kapasitas per hari $\min_d (totalUnits - \text{allocated}_d)$, mendeteksi daftar tanggal bertabrakan (`conflictingDates`), dan memetakan kode peminjaman yang bentrok (`conflictingBorrowCodes`).
+     - Mengimplementasikan deteksi jadwal mepet ($T+0$ dan $T+1$) terhadap `returnDueDate` peminjaman sebelumnya tanpa memaksakan buffer kaku di kode.
+     - Mengimplementasikan `calculateItemRemainingCapacity()` untuk menghitung sisa unit minimum yang aman dipinjam pada rentang tanggal tertentu.
+     - Unit test suite: 6/6 tests passing (100% scenario coverage).
+   - **Phase 2: Backend API Guards & Concurrency Protection:**
+     - **Pre-Submission Check (`POST /api/marcom/inventory/borrow`):** Melakukan query booking aktif/disetujui yang bersinggungan dengan rentang $[borrowDate, returnDueDate]$ (termasuk margin $T+1$). Menolak permintaan bentrok dengan HTTP 422 dan rincian item bottleneck. Jika terdeteksi jadwal mepet ($T+0$/$T+1$), menyematkan tag `[TIGHT_SCHEDULE]` pada catatan peminjaman.
+     - **Approval Re-validation (`PUT /api/marcom/inventory/borrow/[id]`):** Melakukan validasi ulang tabrakan kalender saat status diubah menjadi `APPROVED` mengecualikan record saat ini. Mencegah double-approval race condition dengan menolak approval kedua dengan HTTP 422 jika kapasitas telah habis diklaim oleh approval sebelumnya.
+     - **Schedule Extension Guard (`PUT /api/marcom/inventory/borrow/[id]`):** Saat memperpanjang `returnDueDate`, memverifikasi bahwa penambahan hari tidak bertabrakan dengan booking masa depan yang telah disetujui. Menolak perpanjangan yang bentrok dengan HTTP 422.
+     - **Post-Inspection Capacity Deficit Detection (`POST /api/marcom/inventory/borrow/[id]/return`):** Saat barang dikembalikan dengan `majorDamageUnits > 0` atau `lostUnits > 0` (yang memotong `totalUnits`), sistem secara otomatis memindai booking masa depan yang telah disetujui/pending untuk item tersebut. Jika kapasitas baru tidak lagi mencukupi, secara otomatis menyematkan catatan `[DEFICIT_WARNING]: X unit rusak/hilang pada return ${borrowCode}. Verifikasi kesiapan fisik.`
+   - **Phase 3: Visual Indicators & UI Feedback on Modals:**
+     - **`BorrowRequestModal.tsx`:** Mengintegrasikan `calculateItemRemainingCapacity` pada katalog Step 3. Ketika item habis pada rentang tanggal yang dipilih di Step 2, sistem menampilkan badge `"Stok Habis di Tanggal Terpilih"` dan menonaktifkan tombol penambahan unit (`+`). Pada Step 4 Review, menampilkan banner peringatan oranye `"Peringatan Jadwal Mepet"` jika peminjaman dimulai pada $T+0$ atau $T+1$.
+     - **`BorrowDetailModal.tsx`:** Menampilkan banner callout oranye `"Jadwal Mepet"` saat approver meninjau tiket `PENDING`, banner peringatan merah `"Peringatan Defisit Unit"` saat ada tag `[DEFICIT_WARNING]`, serta kartu saran `"Unclaimed Booking"` bagi pengelola (`canManage`) ketika peminjaman berstatus `APPROVED` namun tanggal peminjaman telah lewat dan barang belum diambil fisik.
+   - **Phase 4: Integration Testing & Verification Gates:**
+     - **Integrasi Penuh (`src/app/api/marcom/inventory/inventoryApi.test.ts`):** Menambahkan skenario otomatis untuk AC-1 (booking non-overlapping berhasil), AC-2 (bentrok tanggal ditolak HTTP 422 saat submit), AC-3 (pencegahan double approval race condition ditolak HTTP 422), AC-6 (perpanjangan jadwal yang bentrok ditolak HTTP 422), dan AC-5 (propagasi catatan deficit warning saat return barang rusak).
+     - `npm run drift:check`: ✅ 0 drift (129/129 spec-plan pairs valid, invariant OK).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1094/1094 tests passing across 195 suites (0 failures).
+     - `npm run test:smoke`: ✅ 172/172 smoke tests passing (0 failures).
+   - **Artefak:**
+     - ADR: [`docs/adr/0102-calendar-based-equipment-booking-and-collision-engine.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0102-calendar-based-equipment-booking-and-collision-engine.md)
+     - Spec: [`docs/superpowers/specs/2026-11-10-calendar-based-equipment-booking-and-collision-engine-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-10-calendar-based-equipment-booking-and-collision-engine-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-10-calendar-based-equipment-booking-and-collision-engine.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-10-calendar-based-equipment-booking-and-collision-engine.md)
+
+2. **Implementasi Staff Self-Cancellation & `CANCEL_OWN_BORROW` RBAC Action (ADR-0101 — Implementation Complete):**
+
    - **Akar Masalah (Temuan 2):** Ketika izin `canManage` (`MANAGE_INVENTORY`) dicabut dari peran `staff` pada ADR-0050, tombol "Cancel Request" di `BorrowDetailModal.tsx` secara tidak sengaja tersembunyi dari Field Staff (`{record.status === "PENDING" && canManage && (...)}`). Akibatnya, staf lapangan yang membuat kesalahan pengetikan atau salah memilih item peralatan tidak dapat membatalkan permohonannya sendiri pada status `PENDING`, menciptakan dead-end UI dan memaksa manajer gudang/admin untuk membatalkannya secara manual.
    - **Pendaftaran Permission Action Baru (`src/lib/marcom/guards.ts`):**
      - Menambahkan `"CANCEL_OWN_BORROW"` ke union type `PermissionAction`.

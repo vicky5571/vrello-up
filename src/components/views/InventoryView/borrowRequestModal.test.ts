@@ -335,5 +335,21 @@ test("Borrow Request Modal Stepper Header Invariants (ADR-0055 smoke)", async (t
       "handleSubmit must invoke resetForm() before onSaved(data) and onClose()"
     );
   });
+
+  await t.test("verifies calendar-based booking and tight schedule advisory invariants (ADR-0102)", () => {
+    const modalContent = fs.readFileSync(modalPath, "utf-8");
+    assert.ok(
+      modalContent.includes("calculateItemRemainingCapacity"),
+      "Must import and compute calculateItemRemainingCapacity"
+    );
+    assert.ok(
+      modalContent.includes("Stok Habis di Tanggal Terpilih"),
+      "Step 3 must feature 'Stok Habis di Tanggal Terpilih' when capacity is exhausted"
+    );
+    assert.ok(
+      modalContent.includes("Peringatan Jadwal Mepet:"),
+      "Step 4 must feature 'Peringatan Jadwal Mepet:' advisory banner"
+    );
+  });
 });
 

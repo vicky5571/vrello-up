@@ -141,5 +141,17 @@ describe("BorrowDetailModal Staff Self-Cancellation & RBAC Invariants (ADR-0101)
       assert.ok(content.includes('record.status === "PENDING" && canCancelPending'), "Cancel Request must be guarded by canCancelPending");
       assert.ok(content.includes('record.status === "APPROVED" && canManage'), "Cancel Loan must remain guarded exclusively by canManage");
     });
+
+    it("verifies tight-schedule advisory, deficit warning, and unclaimed booking banner invariants (ADR-0102)", () => {
+      const filePath = path.resolve(root, "src/components/views/InventoryView/BorrowDetailModal.tsx");
+      const content = fs.readFileSync(filePath, "utf-8");
+
+      assert.ok(content.includes("isTightSchedule"), "Must check isTightSchedule");
+      assert.ok(content.includes("isUnclaimed"), "Must check isUnclaimed");
+      assert.ok(content.includes("hasDeficitWarning"), "Must check hasDeficitWarning");
+      assert.ok(content.includes("Peringatan Defisit Unit:"), "Must render deficit warning callout");
+      assert.ok(content.includes("Jadwal Mepet:"), "Must render tight-schedule advisory callout");
+      assert.ok(content.includes("Unclaimed Booking:"), "Must render unclaimed booking suggestion badge");
+    });
   });
 });

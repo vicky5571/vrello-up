@@ -26,6 +26,12 @@ import {
   getBorrowStepCompletionStatus,
   type BorrowWizardStepId,
 } from "./wizard/borrowWizardHelpers";
+import {
+  calculateItemRemainingCapacity,
+  checkBookingCollision,
+  type ExistingBookingItem,
+  type ItemMasterCapacity,
+} from "@/lib/marcom/inventoryCollisionEngine";
 
 interface BorrowRequestModalProps {
   isOpen: boolean;
@@ -72,6 +78,8 @@ export function BorrowRequestModal({
   const fetchEvents = useMarcomDataStore((s) => s.fetchEvents);
   const inventoryItems = useMarcomDataStore((s) => s.inventoryItems);
   const fetchInventory = useMarcomDataStore((s) => s.fetchInventory);
+  const borrowRecords = useMarcomDataStore((s) => s.borrowRecords);
+  const fetchBorrowRecords = useMarcomDataStore((s) => s.fetchBorrowRecords);
 
   const resetForm = () => {
     setStep(1);
@@ -97,6 +105,7 @@ export function BorrowRequestModal({
     if (isOpen) {
       fetchEvents();
       fetchInventory();
+      fetchBorrowRecords();
       setError(null);
       if (defaultEventId) {
         setEventId(defaultEventId);
@@ -105,7 +114,7 @@ export function BorrowRequestModal({
         setBorrowerName(session.user.name);
       }
     }
-  }, [isOpen, defaultEventId, fetchEvents, fetchInventory, session?.user?.name]);
+  }, [isOpen, defaultEventId, fetchEvents, fetchInventory, fetchBorrowRecords, session?.user?.name]);
 
   const completionStatus = useMemo(
     () =>
@@ -118,6 +127,60 @@ export function BorrowRequestModal({
       }),
     [borrowerName, borrowerPhone, borrowDate, returnDueDate, selectedItems]
   );
+
+  const existingBookings: ExistingBookingItem[] = useMemo(() => {
+    const list: ExistingBookingItem[] = [];
+    for (const rec of borrowRecords) {
+      if (rec.status !== "APPROVED" && rec.status !== "ACTIVE" && rec.status !== "OVERDUE") continue;
+      if (!rec.borrowDate || !rec.returnDueDate) continue;
+      for (const item of rec.items || []) {
+        list.push({
+          inventoryItemId: item.inventoryItemId,
+          quantity: item.quantity,
+          borrowCode: rec.borrowCode,
+          borrowDate: rec.borrowDate.slice(0, 10),
+          returnDueDate: rec.returnDueDate.slice(0, 10),
+          status: rec.status as "APPROVED" | "ACTIVE" | "OVERDUE",
+          borrowRecordId: rec.id,
+        });
+      }
+    }
+    return list;
+  }, [borrowRecords]);
+
+  const effectiveAvailableUnits = useMemo(() => {
+    if (!borrowDate || !returnDueDate) return new Map<string, number>();
+    const map = new Map<string, number>();
+    for (const item of inventoryItems) {
+      const rem = calculateItemRemainingCapacity({
+        inventoryItemId: item.id,
+        totalUnits: item.totalUnits,
+        borrowDate,
+        returnDueDate,
+        existingBookings,
+      });
+      map.set(item.id, rem);
+    }
+    return map;
+  }, [borrowDate, returnDueDate, inventoryItems, existingBookings]);
+
+  const tightScheduleCheck = useMemo(() => {
+    if (!borrowDate || !returnDueDate || selectedItems.length === 0) return null;
+    const itemCapacities = new Map<string, ItemMasterCapacity>();
+    for (const it of inventoryItems) {
+      itemCapacities.set(it.id, { id: it.id, name: it.name, totalUnits: it.totalUnits });
+    }
+    return checkBookingCollision({
+      requestedItems: selectedItems.map((si) => ({
+        inventoryItemId: si.inventoryItemId,
+        quantity: si.quantity,
+      })),
+      borrowDate,
+      returnDueDate,
+      existingBookings,
+      itemCapacities,
+    });
+  }, [borrowDate, returnDueDate, selectedItems, inventoryItems, existingBookings]);
 
   // When event is selected, auto-fill location if empty
   const handleEventChange = (selectedId: string) => {
@@ -133,6 +196,10 @@ export function BorrowRequestModal({
   if (!isOpen) return null;
 
   const handleSelectItem = (item: InventoryItem, qty: number) => {
+    const availableInWindow = borrowDate && returnDueDate
+      ? (effectiveAvailableUnits.get(item.id) ?? item.availableUnits)
+      : item.availableUnits;
+
     if (qty <= 0) {
       setSelectedItems((prev) => prev.filter((p) => p.inventoryItemId !== item.id));
     } else {
@@ -141,7 +208,7 @@ export function BorrowRequestModal({
         setSelectedItems((prev) =>
           prev.map((p) =>
             p.inventoryItemId === item.id
-              ? { ...p, quantity: Math.min(qty, item.availableUnits) }
+              ? { ...p, quantity: Math.min(qty, availableInWindow) }
               : p
           )
         );
@@ -150,7 +217,7 @@ export function BorrowRequestModal({
           ...prev,
           {
             inventoryItemId: item.id,
-            quantity: Math.min(qty, item.availableUnits),
+            quantity: Math.min(qty, availableInWindow),
             conditionOut: "GOOD",
           },
         ]);
@@ -489,7 +556,10 @@ export function BorrowRequestModal({
                   </div>
                 ) : (
                   filteredCatalog.map((item) => {
-                    const isAvailable = item.availableUnits > 0;
+                    const availableInWindow = borrowDate && returnDueDate
+                      ? (effectiveAvailableUnits.get(item.id) ?? item.availableUnits)
+                      : item.availableUnits;
+                    const isAvailable = availableInWindow > 0;
                     const selected = selectedItems.find((p) => p.inventoryItemId === item.id);
                     const currentQty = selected?.quantity || 0;
 
@@ -498,7 +568,7 @@ export function BorrowRequestModal({
                         key={item.id}
                         className={`p-3 flex flex-col gap-2 transition-colors ${
                           !isAvailable
-                            ? "opacity-50 bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed"
+                            ? "opacity-60 bg-slate-50 dark:bg-slate-900/50 cursor-not-allowed"
                             : currentQty > 0
                             ? "bg-blue-50/40 dark:bg-blue-950/20 hover:bg-blue-50/60 dark:hover:bg-blue-950/30"
                             : "hover:bg-slate-50/70 dark:hover:bg-slate-800/50"
@@ -530,7 +600,9 @@ export function BorrowRequestModal({
                             }`}
                           >
                             {isAvailable
-                              ? `${item.availableUnits} available (${item.totalUnits} total)`
+                              ? `${availableInWindow} available (${item.totalUnits} total)`
+                              : item.totalUnits > 0
+                              ? "Stok Habis di Tanggal Terpilih"
                               : "Not Available"}
                           </span>
 
@@ -549,7 +621,7 @@ export function BorrowRequestModal({
                                 <input
                                   type="number"
                                   min={0}
-                                  max={item.availableUnits}
+                                  max={availableInWindow}
                                   value={currentQty === 0 ? "" : currentQty}
                                   onChange={(e) =>
                                     handleSelectItem(item, parseInt(e.target.value, 10) || 0)
@@ -560,9 +632,9 @@ export function BorrowRequestModal({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    handleSelectItem(item, Math.min(item.availableUnits, currentQty + 1))
+                                    handleSelectItem(item, Math.min(availableInWindow, currentQty + 1))
                                   }
-                                  disabled={currentQty >= item.availableUnits}
+                                  disabled={currentQty >= availableInWindow}
                                   className="p-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 cursor-pointer"
                                 >
                                   <Plus className="w-3 h-3" />
@@ -570,7 +642,7 @@ export function BorrowRequestModal({
                               </div>
                             ) : (
                               <span className="text-[10px] text-rose-500 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 px-2 py-1 rounded">
-                                Out of Stock
+                                {item.totalUnits > 0 ? "Stok Habis di Tanggal Terpilih" : "Out of Stock"}
                               </span>
                             )}
                           </div>
@@ -621,6 +693,16 @@ export function BorrowRequestModal({
           {/* STEP 4: Review & Submit */}
           {step === 4 && (
             <div className="space-y-4">
+              {tightScheduleCheck?.isTightSchedule && (
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-800 dark:text-amber-200 text-xs flex items-start gap-2">
+                  <span className="text-base leading-none">⚠️</span>
+                  <div>
+                    <span className="font-semibold">Peringatan Jadwal Mepet:</span> Alat ini baru kembali pada{" "}
+                    <strong>{tightScheduleCheck.tightScheduleDetails[0]?.precedingReturnDueDate}</strong>. Ada risiko keterlambatan jika event sebelumnya molor.
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Left Column: Requester & Schedule */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl space-y-3 border border-slate-200 dark:border-slate-800">

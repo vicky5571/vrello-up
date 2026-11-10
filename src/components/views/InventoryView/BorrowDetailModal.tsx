@@ -52,6 +52,15 @@ export function BorrowDetailModal({
   );
   const canCancelPending = canManage || (canCancelOwn && isOwner);
 
+  const isTightSchedule = Boolean(record.notes?.includes("[TIGHT_SCHEDULE]"));
+  const isUnclaimed = Boolean(
+    record.status === "APPROVED" &&
+      record.borrowDate &&
+      new Date(record.borrowDate).toISOString().slice(0, 10) <
+        new Date().toISOString().slice(0, 10)
+  );
+  const hasDeficitWarning = Boolean(record.notes?.includes("[DEFICIT_WARNING]"));
+
   const isOverdue = record.status === "OVERDUE";
   const statusCfg = BORROW_STATUS_CONFIG[record.status] || {
     label: record.status,
@@ -465,6 +474,43 @@ export function BorrowDetailModal({
             </div>
           </div>
         </div>
+
+        {/* Action Banners & Operational Advisories (ADR-0102) */}
+        {hasDeficitWarning && (
+          <div className="mx-6 mb-3 p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-800 dark:text-rose-200 text-xs flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold">Peringatan Defisit Unit:</span> Unit peralatan mengalami kerusakan atau kehilangan pada pengembalian sebelumnya. Verifikasi kesiapan fisik alat sebelum pelaksanaan event.
+            </div>
+          </div>
+        )}
+
+        {record.status === "PENDING" && isTightSchedule && (
+          <div className="mx-6 mb-3 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-800 dark:text-amber-200 text-xs flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold">Jadwal Mepet:</span> Peminjaman ini dijadwalkan tepat setelah pengembalian alat sebelumnya. Pastikan koordinasi kesiapan fisik unit dengan peminjam sebelumnya.
+            </div>
+          </div>
+        )}
+
+        {isUnclaimed && canManage && (
+          <div className="mx-6 mb-3 p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-800 dark:text-blue-200 text-xs flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2">
+              <span className="text-base leading-none">💡</span>
+              <div>
+                <span className="font-semibold">Unclaimed Booking:</span> Tanggal peminjaman telah terlewati ({record.borrowDate ? record.borrowDate.slice(0, 10) : ""}) dan barang belum diambil secara fisik. Pertimbangkan untuk membatalkan tiket ini agar kuota kalender terlepas.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => onStatusChange(record.id, "CANCELLED")}
+              className="shrink-0 px-2.5 py-1 text-[11px] font-semibold bg-rose-100 hover:bg-rose-200 text-rose-700 dark:bg-rose-950 dark:hover:bg-rose-900 dark:text-rose-300 rounded border border-rose-300 dark:border-rose-800 transition-colors cursor-pointer"
+            >
+              Batalkan Tiket
+            </button>
+          </div>
+        )}
 
         {/* Footer Actions */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">

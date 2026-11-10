@@ -222,6 +222,37 @@ export async function POST(
               status: newStatus,
             },
           });
+
+          // Post-inspection capacity deficit detection (ADR-0102 / AC-5)
+          if (writeOffUnits > 0) {
+            const futureRecords = await tx.borrowRecord.findMany({
+              where: {
+                id: { not: existing.id },
+                status: { in: ["APPROVED", "PENDING"] },
+                returnDueDate: { gte: parsedReturnDate },
+                items: {
+                  some: { inventoryItemId: bi.inventoryItemId },
+                },
+              },
+              include: {
+                items: true,
+              },
+            });
+
+            for (const fut of futureRecords) {
+              const futItem = fut.items.find((x) => x.inventoryItemId === bi.inventoryItemId);
+              if (futItem && futItem.quantity > newTotal) {
+                const warningTag = `[DEFICIT_WARNING]: ${writeOffUnits} unit rusak/hilang pada return ${existing.borrowCode}. Verifikasi kesiapan fisik.`;
+                if (!fut.notes?.includes("[DEFICIT_WARNING]")) {
+                  const updatedNotes = fut.notes ? `${fut.notes}\n${warningTag}` : warningTag;
+                  await tx.borrowRecord.update({
+                    where: { id: fut.id },
+                    data: { notes: updatedNotes },
+                  });
+                }
+              }
+            }
+          }
         }
       }
 

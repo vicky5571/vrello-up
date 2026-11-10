@@ -6,6 +6,25 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-10]
 
+- `feat(inventory)`: Calendar-based equipment booking and collision engine (ADR-0102)
+  - Core Collision Engine (`src/lib/marcom/inventoryCollisionEngine.ts` & `inventoryCollisionEngine.test.ts`):
+    - Pure interval math evaluating daily equipment allocation across requested date window $[borrowDate, returnDueDate]$ against usable master stock (`totalUnits`).
+    - Tight-schedule risk advisory detection ($T+0$ same-day and $T+1$ next-day) relative to preceding return dates.
+    - Pure helper `calculateItemRemainingCapacity()` determining minimum remaining units across requested dates.
+  - Backend API Guards & Concurrency Protection:
+    - Pre-submission collision check on `POST /api/marcom/inventory/borrow` returning HTTP 422 with granular bottleneck item breakdown when dates conflict, and tagging `[TIGHT_SCHEDULE]` on notes.
+    - Approval re-validation on `PUT /api/marcom/inventory/borrow/[id]` eliminating double-approval race conditions with HTTP 422.
+    - Schedule extension guard on `PUT /api/marcom/inventory/borrow/[id]` rejecting extensions that collide with future bookings.
+    - Post-inspection capacity deficit detection on `POST /api/marcom/inventory/borrow/[id]/return` appending `[DEFICIT_WARNING]` to affected future bookings when equipment is damaged or lost.
+  - UI Feedback on Modals:
+    - `BorrowRequestModal.tsx`: dynamic catalog availability showing `"Stok Habis di Tanggal Terpilih"` and disabling increments for exhausted items; tight-schedule warning banner on Step 4.
+    - `BorrowDetailModal.tsx`: approver tight-schedule advisory, deficit warning alert, and manager unclaimed booking suggestion badge.
+  - Integration Tests & Invariants:
+    - Extended `inventoryApi.test.ts` with comprehensive end-to-end tests for AC-1 through AC-6.
+    - Extended `borrowDetailModal.test.ts` and `borrowRequestModal.test.ts` with UI and banner invariant assertions.
+  - Verification: `npm run drift:check` ✅ (129/129 pairs), `npm run build:check` ✅ (0 errors), `npm test` ✅ (1094/1094 passing), `npm run test:smoke` ✅ (172/172 passing).
+  - Refs: `docs/adr/0102-calendar-based-equipment-booking-and-collision-engine.md`, `docs/superpowers/specs/2026-11-10-calendar-based-equipment-booking-and-collision-engine-design.md`, `docs/superpowers/plans/2026-11-10-calendar-based-equipment-booking-and-collision-engine.md`
+
 - `feat(inventory)`: Staff self-cancellation and CANCEL_OWN_BORROW RBAC action (ADR-0101)
   - RBAC permission expansion (`src/lib/marcom/guards.ts`): registered `CANCEL_OWN_BORROW` in `PermissionAction` union type and granted it to `admin`, `supervisor`, `warehouse`, and `staff` (excluded from `viewer`).
   - Guards unit tests (`src/lib/marcom/guards.test.ts`): asserted `CANCEL_OWN_BORROW` capability across all roles (16/16 tests passing).

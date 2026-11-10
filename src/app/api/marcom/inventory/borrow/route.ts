@@ -3,6 +3,11 @@ import { Prisma, BorrowStatus, EquipmentCondition } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { hasPermission, type MarcomRole } from "@/lib/marcom/guards";
+import {
+  checkBookingCollision,
+  type ExistingBookingItem,
+  type ItemMasterCapacity,
+} from "@/lib/marcom/inventoryCollisionEngine";
 
 const recordInclude = {
   event: { select: { id: true, name: true } },
@@ -179,6 +184,7 @@ export async function POST(request: Request) {
     }
 
     // Validate items
+    const invItems = [];
     for (const item of items) {
       if (!item.inventoryItemId || !item.quantity || item.quantity < 1) {
         return NextResponse.json(
@@ -194,6 +200,74 @@ export async function POST(request: Request) {
           { error: `Inventory item with ID ${item.inventoryItemId} not found` },
           { status: 404 }
         );
+      }
+      invItems.push(invItem);
+    }
+
+    // Query active/approved/overdue bookings overlapping [borrowDate, returnDueDate] (with T+1 tight schedule margin)
+    const marginDate = new Date(parsedBorrowDate.getTime() - 2 * 86400000);
+    const overlappingRecords = await prisma.borrowRecord.findMany({
+      where: {
+        status: { in: ["APPROVED", "ACTIVE", "OVERDUE"] },
+        borrowDate: { lte: parsedReturnDueDate },
+        returnDueDate: { gte: marginDate },
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    const existingBookings: ExistingBookingItem[] = [];
+    for (const rec of overlappingRecords) {
+      for (const it of rec.items) {
+        existingBookings.push({
+          inventoryItemId: it.inventoryItemId,
+          quantity: it.quantity,
+          borrowCode: rec.borrowCode,
+          borrowDate: rec.borrowDate.toISOString().slice(0, 10),
+          returnDueDate: rec.returnDueDate.toISOString().slice(0, 10),
+          status: rec.status as "APPROVED" | "ACTIVE" | "OVERDUE",
+          borrowRecordId: rec.id,
+        });
+      }
+    }
+
+    const itemCapacities = new Map<string, ItemMasterCapacity>();
+    for (const inv of invItems) {
+      itemCapacities.set(inv.id, {
+        id: inv.id,
+        name: inv.name,
+        totalUnits: inv.totalUnits,
+      });
+    }
+
+    const collisionResult = checkBookingCollision({
+      requestedItems: items.map((it: { inventoryItemId: string; quantity: number | string }) => ({
+        inventoryItemId: it.inventoryItemId,
+        quantity: Math.max(1, parseInt(String(it.quantity), 10) || 1),
+      })),
+      borrowDate: parsedBorrowDate.toISOString().slice(0, 10),
+      returnDueDate: parsedReturnDueDate.toISOString().slice(0, 10),
+      existingBookings,
+      itemCapacities,
+    });
+
+    if (collisionResult.hasConflict) {
+      return NextResponse.json(
+        {
+          error: "Permintaan peminjaman bentrok dengan jadwal booking lain.",
+          conflicts: collisionResult.conflicts,
+        },
+        { status: 422 }
+      );
+    }
+
+    let finalNotes = String(notes || "").trim();
+    if (collisionResult.isTightSchedule && collisionResult.tightScheduleDetails.length > 0) {
+      const detail = collisionResult.tightScheduleDetails[0];
+      const tag = `[TIGHT_SCHEDULE]: Pengembalian ${detail.conflictingBorrowCode} (${detail.precedingReturnDueDate})`;
+      if (!finalNotes.includes("[TIGHT_SCHEDULE]")) {
+        finalNotes = finalNotes ? `${finalNotes}\n${tag}` : tag;
       }
     }
 
@@ -232,7 +306,7 @@ export async function POST(request: Request) {
         returnDueDate: parsedReturnDueDate,
         status: "PENDING",
         purpose: String(purpose).trim(),
-        notes: String(notes).trim(),
+        notes: finalNotes,
         items: {
           create: items.map((it: { inventoryItemId: string; quantity: number | string; conditionOut?: EquipmentCondition; notes?: string }) => ({
             inventoryItemId: it.inventoryItemId,

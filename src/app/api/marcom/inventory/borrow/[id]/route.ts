@@ -3,6 +3,11 @@ import { BorrowStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
 import { hasPermission, type MarcomRole } from "@/lib/marcom/guards";
+import {
+  checkBookingCollision,
+  type ExistingBookingItem,
+  type ItemMasterCapacity,
+} from "@/lib/marcom/inventoryCollisionEngine";
 
 const recordInclude = {
   event: { select: { id: true, name: true } },
@@ -141,7 +146,7 @@ export async function PUT(
       return NextResponse.json({ error: "Borrow record not found" }, { status: 404 });
     }
 
-    const { status, notes, picName, purpose, eventLocation } = body;
+    const { status, notes, picName, purpose, eventLocation, returnDueDate } = body;
 
     // Reject direct status update to RETURNED via PUT handler
     if (status === "RETURNED") {
@@ -164,6 +169,67 @@ export async function PUT(
           { error: "Hanya Admin, Supervisor, atau Warehouse yang dapat menyetujui peminjaman alat." },
           { status: 403 }
         );
+      }
+
+      // Re-validate collision on approval (prevent double-approval race conditions)
+      if (existing.status === "PENDING") {
+        const overlappingOnApproval = await prisma.borrowRecord.findMany({
+          where: {
+            id: { not: existing.id },
+            status: { in: ["APPROVED", "ACTIVE", "OVERDUE"] },
+            borrowDate: { lte: existing.returnDueDate },
+            returnDueDate: { gte: existing.borrowDate },
+          },
+          include: { items: true },
+        });
+
+        const existingBookings: ExistingBookingItem[] = [];
+        for (const rec of overlappingOnApproval) {
+          for (const it of rec.items) {
+            existingBookings.push({
+              inventoryItemId: it.inventoryItemId,
+              quantity: it.quantity,
+              borrowCode: rec.borrowCode,
+              borrowDate: rec.borrowDate.toISOString().slice(0, 10),
+              returnDueDate: rec.returnDueDate.toISOString().slice(0, 10),
+              status: rec.status as "APPROVED" | "ACTIVE" | "OVERDUE",
+              borrowRecordId: rec.id,
+            });
+          }
+        }
+
+        const itemCapacities = new Map<string, ItemMasterCapacity>();
+        for (const it of existing.items) {
+          if (it.inventoryItem) {
+            itemCapacities.set(it.inventoryItemId, {
+              id: it.inventoryItemId,
+              name: it.inventoryItem.name,
+              totalUnits: it.inventoryItem.totalUnits,
+            });
+          }
+        }
+
+        const approvalCheck = checkBookingCollision({
+          requestedItems: existing.items.map((it) => ({
+            inventoryItemId: it.inventoryItemId,
+            quantity: it.quantity,
+          })),
+          borrowDate: existing.borrowDate.toISOString().slice(0, 10),
+          returnDueDate: existing.returnDueDate.toISOString().slice(0, 10),
+          existingBookings,
+          itemCapacities,
+          excludeBorrowRecordId: existing.id,
+        });
+
+        if (approvalCheck.hasConflict) {
+          return NextResponse.json(
+            {
+              error: "Tidak dapat menyetujui: unit telah dialokasikan untuk peminjaman lain pada jadwal tersebut.",
+              conflicts: approvalCheck.conflicts,
+            },
+            { status: 422 }
+          );
+        }
       }
     }
 
@@ -189,7 +255,11 @@ export async function PUT(
 
     // Guard metadata updates
     const isUpdatingMetadata =
-      notes !== undefined || picName !== undefined || purpose !== undefined || eventLocation !== undefined;
+      notes !== undefined ||
+      picName !== undefined ||
+      purpose !== undefined ||
+      eventLocation !== undefined ||
+      returnDueDate !== undefined;
 
     if (isUpdatingMetadata && !isManager && !isRequesterOnPending) {
       return NextResponse.json(
@@ -262,6 +332,85 @@ export async function PUT(
     if (picName !== undefined) updateData.picName = String(picName).trim();
     if (purpose !== undefined) updateData.purpose = String(purpose).trim();
     if (eventLocation !== undefined) updateData.eventLocation = String(eventLocation).trim();
+
+    if (returnDueDate !== undefined) {
+      const parsedNewDueDate = new Date(returnDueDate);
+      if (isNaN(parsedNewDueDate.getTime())) {
+        return NextResponse.json({ error: "Invalid returnDueDate" }, { status: 400 });
+      }
+      if (parsedNewDueDate < existing.borrowDate) {
+        return NextResponse.json(
+          { error: "returnDueDate cannot be earlier than borrowDate" },
+          { status: 422 }
+        );
+      }
+
+      // If extending schedule, run collision check
+      if (parsedNewDueDate.getTime() > existing.returnDueDate.getTime()) {
+        const overlappingForExt = await prisma.borrowRecord.findMany({
+          where: {
+            id: { not: existing.id },
+            status: { in: ["APPROVED", "ACTIVE", "OVERDUE"] },
+            borrowDate: { lte: parsedNewDueDate },
+            returnDueDate: { gte: existing.returnDueDate },
+          },
+          include: { items: true },
+        });
+
+        const extExistingBookings: ExistingBookingItem[] = [];
+        for (const rec of overlappingForExt) {
+          for (const it of rec.items) {
+            extExistingBookings.push({
+              inventoryItemId: it.inventoryItemId,
+              quantity: it.quantity,
+              borrowCode: rec.borrowCode,
+              borrowDate: rec.borrowDate.toISOString().slice(0, 10),
+              returnDueDate: rec.returnDueDate.toISOString().slice(0, 10),
+              status: rec.status as "APPROVED" | "ACTIVE" | "OVERDUE",
+              borrowRecordId: rec.id,
+            });
+          }
+        }
+
+        const itemCapacities = new Map<string, ItemMasterCapacity>();
+        for (const it of existing.items) {
+          if (it.inventoryItem) {
+            itemCapacities.set(it.inventoryItemId, {
+              id: it.inventoryItemId,
+              name: it.inventoryItem.name,
+              totalUnits: it.inventoryItem.totalUnits,
+            });
+          }
+        }
+
+        const extCheck = checkBookingCollision({
+          requestedItems: existing.items.map((it) => ({
+            inventoryItemId: it.inventoryItemId,
+            quantity: it.quantity,
+          })),
+          borrowDate: existing.borrowDate.toISOString().slice(0, 10),
+          returnDueDate: parsedNewDueDate.toISOString().slice(0, 10),
+          existingBookings: extExistingBookings,
+          itemCapacities,
+          excludeBorrowRecordId: existing.id,
+        });
+
+        if (extCheck.hasConflict) {
+          const conflictCodes = Array.from(
+            new Set(extCheck.conflicts.flatMap((c) => c.conflictingBorrowCodes))
+          ).join(", ");
+          return NextResponse.json(
+            {
+              error: `Tidak dapat memperpanjang jadwal: bentrok dengan peminjaman lain (${conflictCodes || "jadwal penuh"}).`,
+              conflicts: extCheck.conflicts,
+            },
+            { status: 422 }
+          );
+        }
+      }
+
+      updateData.returnDueDate = parsedNewDueDate;
+    }
 
     if (status) {
       updateData.status = status;

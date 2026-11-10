@@ -845,3 +845,286 @@ test("API: Inventory Borrow Server-Side RBAC Guard & Audit Integrity (ADR-0100)"
   });
   await prisma.inventoryItem.delete({ where: { id: testItem.id } });
 });
+
+test("API: Calendar-Based Equipment Booking and Collision Engine (ADR-0102)", async () => {
+  // 1. Create a 1-unit test item
+  const itemCode = `COLLISION-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const itemRes = await postInventory(
+    new Request("http://localhost:3000/api/marcom/inventory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Solo Projector 4K",
+        code: itemCode,
+        category: "Visual",
+        totalUnits: 1,
+        storageLocation: "Shelf C-1",
+      }),
+    })
+  );
+  assert.equal(itemRes.status, 201);
+  const singleItem = await itemRes.json();
+  assert.equal(singleItem.totalUnits, 1);
+
+  // AC-1: Booking-1 for Nov 10-12
+  const b1Res = await postBorrow(
+    new Request("http://localhost:3000/api/marcom/inventory/borrow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Staff User",
+      },
+      body: JSON.stringify({
+        borrowerName: "Staff User",
+        borrowDate: "2026-11-10",
+        returnDueDate: "2026-11-12",
+        purpose: "Event A",
+        items: [{ inventoryItemId: singleItem.id, quantity: 1 }],
+      }),
+    })
+  );
+  assert.equal(b1Res.status, 201);
+  const b1 = await b1Res.json();
+
+  // Approve Booking-1
+  const appB1 = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${b1.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "supervisor",
+        "x-user-name": "Supervisor Lead",
+      },
+      body: JSON.stringify({ status: "APPROVED" }),
+    }),
+    { params: Promise.resolve({ id: b1.id }) }
+  );
+  assert.equal(appB1.status, 200);
+
+  // AC-1: Booking-2 for Nov 15-18 (Non-overlapping, should succeed)
+  const b2Res = await postBorrow(
+    new Request("http://localhost:3000/api/marcom/inventory/borrow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Staff User",
+      },
+      body: JSON.stringify({
+        borrowerName: "Staff User",
+        borrowDate: "2026-11-15",
+        returnDueDate: "2026-11-18",
+        purpose: "Event B",
+        items: [{ inventoryItemId: singleItem.id, quantity: 1 }],
+      }),
+    })
+  );
+  assert.equal(b2Res.status, 201);
+  const b2 = await b2Res.json();
+
+  const appB2 = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${b2.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "supervisor",
+        "x-user-name": "Supervisor Lead",
+      },
+      body: JSON.stringify({ status: "APPROVED" }),
+    }),
+    { params: Promise.resolve({ id: b2.id }) }
+  );
+  assert.equal(appB2.status, 200);
+
+  // AC-2: Hard Overlap Collision Rejection at Creation
+  // Attempt to book Nov 11-14 (overlaps Booking-1 on Nov 11 and 12)
+  const b3Res = await postBorrow(
+    new Request("http://localhost:3000/api/marcom/inventory/borrow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Another Staff",
+      },
+      body: JSON.stringify({
+        borrowerName: "Another Staff",
+        borrowDate: "2026-11-11",
+        returnDueDate: "2026-11-14",
+        purpose: "Event C",
+        items: [{ inventoryItemId: singleItem.id, quantity: 1 }],
+      }),
+    })
+  );
+  assert.equal(b3Res.status, 422);
+  const b3Err = await b3Res.json();
+  assert.ok(b3Err.error.includes("bentrok"));
+  assert.ok(Array.isArray(b3Err.conflicts));
+  assert.equal(b3Err.conflicts[0].itemName, "Solo Projector 4K");
+  assert.ok(b3Err.conflicts[0].conflictingDates.includes("2026-11-11"));
+
+  // AC-6: Schedule Extension Collision Block
+  // Booking-1 (Nov 10-12) tries to extend to Nov 16, which collides with Booking-2 (Nov 15-18)
+  const extRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${b1.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Manager",
+      },
+      body: JSON.stringify({ returnDueDate: "2026-11-16" }),
+    }),
+    { params: Promise.resolve({ id: b1.id }) }
+  );
+  assert.equal(extRes.status, 422);
+  const extErr = await extRes.json();
+  assert.ok(extErr.error.includes("Tidak dapat memperpanjang jadwal"));
+
+  // AC-3: Double-Approval Race Condition Prevention
+  // Create two pending records for the same future date Nov 25-27 directly
+  const p1 = await prisma.borrowRecord.create({
+    data: {
+      borrowCode: `BRW-P1-${Date.now()}`,
+      borrowerName: "Requester 1",
+      borrowDate: new Date("2026-11-25T00:00:00Z"),
+      returnDueDate: new Date("2026-11-27T00:00:00Z"),
+      status: "PENDING",
+      items: { create: [{ inventoryItemId: singleItem.id, quantity: 1, conditionOut: "GOOD" }] },
+    },
+  });
+  const p2 = await prisma.borrowRecord.create({
+    data: {
+      borrowCode: `BRW-P2-${Date.now()}`,
+      borrowerName: "Requester 2",
+      borrowDate: new Date("2026-11-25T00:00:00Z"),
+      returnDueDate: new Date("2026-11-27T00:00:00Z"),
+      status: "PENDING",
+      items: { create: [{ inventoryItemId: singleItem.id, quantity: 1, conditionOut: "GOOD" }] },
+    },
+  });
+
+  // Approver 1 approves p1 -> 200 OK
+  const appP1 = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${p1.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "supervisor",
+        "x-user-name": "Approver 1",
+      },
+      body: JSON.stringify({ status: "APPROVED" }),
+    }),
+    { params: Promise.resolve({ id: p1.id }) }
+  );
+  assert.equal(appP1.status, 200);
+
+  // Approver 2 attempts to approve p2 -> 422 Conflict!
+  const appP2 = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${p2.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "supervisor",
+        "x-user-name": "Approver 2",
+      },
+      body: JSON.stringify({ status: "APPROVED" }),
+    }),
+    { params: Promise.resolve({ id: p2.id }) }
+  );
+  assert.equal(appP2.status, 422);
+  const p2Err = await appP2.json();
+  assert.ok(p2Err.error.includes("unit telah dialokasikan"));
+
+  // AC-5: Return Deficit Warning Propagation
+  // Create a 2-unit item
+  const twoUnitRes = await postInventory(
+    new Request("http://localhost:3000/api/marcom/inventory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Dual Generator 5kVA",
+        code: `GEN-${Date.now()}`,
+        category: "Power",
+        totalUnits: 2,
+        storageLocation: "Yard B",
+      }),
+    })
+  );
+  assert.equal(twoUnitRes.status, 201);
+  const twoUnitItem = await twoUnitRes.json();
+
+  // Future approved booking needing 2 units on Dec 20
+  const futureApproved = await prisma.borrowRecord.create({
+    data: {
+      borrowCode: `BRW-FUT-${Date.now()}`,
+      borrowerName: "Big Festival",
+      borrowDate: new Date("2026-12-20T00:00:00Z"),
+      returnDueDate: new Date("2026-12-25T00:00:00Z"),
+      status: "APPROVED",
+      items: { create: [{ inventoryItemId: twoUnitItem.id, quantity: 2, conditionOut: "GOOD" }] },
+    },
+  });
+
+  // Active loan needing 1 unit currently returning on Dec 15
+  const activeLoan = await prisma.borrowRecord.create({
+    data: {
+      borrowCode: `BRW-ACT-${Date.now()}`,
+      borrowerName: "Early Roadshow",
+      borrowDate: new Date("2026-12-10T00:00:00Z"),
+      returnDueDate: new Date("2026-12-15T00:00:00Z"),
+      status: "ACTIVE",
+      items: { create: [{ inventoryItemId: twoUnitItem.id, quantity: 1, conditionOut: "GOOD" }] },
+    },
+    include: { items: true },
+  });
+
+  // Process return with majorDamageUnits: 1 (reduces totalUnits from 2 to 1)
+  const returnRes = await returnBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${activeLoan.id}/return`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Inspector",
+      },
+      body: JSON.stringify({
+        returnDate: "2026-12-15",
+        items: [
+          {
+            borrowItemId: activeLoan.items[0].id,
+            goodUnits: 0,
+            minorDamageUnits: 0,
+            majorDamageUnits: 1,
+            lostUnits: 0,
+          },
+        ],
+      }),
+    }),
+    { params: Promise.resolve({ id: activeLoan.id }) }
+  );
+  assert.equal(returnRes.status, 200);
+
+  // Assert future booking was flagged with DEFICIT_WARNING note
+  const checkedFuture = await prisma.borrowRecord.findUnique({
+    where: { id: futureApproved.id },
+  });
+  assert.ok(checkedFuture?.notes?.includes("[DEFICIT_WARNING]"));
+
+  // Cleanup ADR-0102 test entities
+  await prisma.borrowItem.deleteMany({
+    where: {
+      borrowRecordId: {
+        in: [b1.id, b2.id, p1.id, p2.id, futureApproved.id, activeLoan.id],
+      },
+    },
+  });
+  await prisma.borrowRecord.deleteMany({
+    where: {
+      id: { in: [b1.id, b2.id, p1.id, p2.id, futureApproved.id, activeLoan.id] },
+    },
+  });
+  await prisma.inventoryItem.deleteMany({
+    where: { id: { in: [singleItem.id, twoUnitItem.id] } },
+  });
+});
