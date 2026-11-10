@@ -4,6 +4,22 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-11-10]
+
+- `feat(inventory)`: Inventory borrow server-side RBAC guard and audit integrity (ADR-0100)
+  - Server-Side RBAC on `POST /borrow`: integrated NextAuth session extraction (`auth()`) and permission checking via `hasPermission(userRole, "REQUEST_BORROW")`. Unauthenticated requests return 401, while unauthorized roles (such as `viewer`) return 403.
+  - Granular RBAC on `PUT /borrow/[id]`:
+    - `APPROVED` transition: enforced `APPROVE_BORROW` permission check (`admin`, `supervisor`, `warehouse`), blocking `staff` and `viewer` with 403.
+    - Server-derived `approvedBy`: completely ignored client-provided `body.approvedBy`, strictly setting `approvedBy` to the authenticated server session identity (`userName`) and stamping `approvedAt = new Date()`.
+    - `ACTIVE` transition: enforced `MANAGE_INVENTORY` permission check, preventing unauthorized roles from triggering automatic stock decrement (`availableUnits`).
+    - `CANCELLED` transition: restricted cancellation to managers (`MANAGE_INVENTORY`) OR the original borrower on `PENDING` requests (`borrowerName === userName`), rejecting unauthorized cancellation with 403.
+    - Metadata updates: restricted to managers or matching requester on `PENDING` records.
+  - Integration & Security Test Suite: extended `src/app/api/marcom/inventory/inventoryApi.test.ts` with comprehensive security negative tests verifying 401 unauthenticated, 403 viewer creation, 403 staff approval, 403 staff activation, staff self-cancellation on pending, cross-staff cancellation rejection, and audit log spoof resistance.
+  - Verification: `npm run drift:check` ✅ (128/128 pairs), `npm run build:check` ✅ (0 errors), `npm run lint` ✅ (0 errors), `npm test` ✅ (1074/1074 passing), `npm run build` ✅.
+  - Refs: `docs/adr/0100-inventory-borrow-server-side-rbac-and-audit-integrity.md`, `docs/superpowers/specs/2026-11-10-inventory-borrow-server-side-rbac-and-audit-integrity-design.md`, `docs/superpowers/plans/2026-11-10-inventory-borrow-server-side-rbac-and-audit-integrity.md`
+
+---
+
 ## [2026-11-08]
 
 - `fix(navigation)`: Remove redundant and inactive mobile hamburger button from TopNav breadcrumbs

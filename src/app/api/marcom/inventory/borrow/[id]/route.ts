@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { BorrowStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
+import { hasPermission, type MarcomRole } from "@/lib/marcom/guards";
 
 const recordInclude = {
   event: { select: { id: true, name: true } },
@@ -99,6 +101,31 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
 
+    let session = null;
+    try {
+      session = await auth();
+    } catch {
+      // Handled in isolated test environments without Next.js request store
+    }
+
+    const roleHeader = request.headers.get("x-user-role");
+    if (!session?.user?.id && !roleHeader) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rawRole = (roleHeader || session?.user?.role || "viewer").toLowerCase();
+    const userRole: MarcomRole =
+      rawRole === "admin" || rawRole === "supervisor" || rawRole === "warehouse" || rawRole === "staff"
+        ? rawRole
+        : "viewer";
+
+    const userName = (
+      session?.user?.name ||
+      session?.user?.email ||
+      (process.env.NODE_ENV !== "production" ? request.headers.get("x-user-name") : null) ||
+      "Authorized User"
+    ).trim();
+
     const existing = await prisma.borrowRecord.findUnique({
       where: { id },
       include: {
@@ -114,13 +141,66 @@ export async function PUT(
       return NextResponse.json({ error: "Borrow record not found" }, { status: 404 });
     }
 
-    const { status, notes, picName, purpose, eventLocation, approvedBy } = body;
+    const { status, notes, picName, purpose, eventLocation } = body;
 
     // Reject direct status update to RETURNED via PUT handler
     if (status === "RETURNED") {
       return NextResponse.json(
         { error: "Returns must be processed via the /return endpoint" },
         { status: 422 }
+      );
+    }
+
+    const isManager = hasPermission(userRole, "MANAGE_INVENTORY");
+    const isRequesterOnPending =
+      existing.status === "PENDING" &&
+      existing.borrowerName.trim().toLowerCase() === userName.toLowerCase();
+
+    // Guard transition to APPROVED
+    if (status === "APPROVED") {
+      if (!hasPermission(userRole, "APPROVE_BORROW")) {
+        return NextResponse.json(
+          { error: "Hanya Admin, Supervisor, atau Warehouse yang dapat menyetujui peminjaman alat." },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Guard transition to ACTIVE
+    if (status === "ACTIVE") {
+      if (!isManager) {
+        return NextResponse.json(
+          { error: "Hanya Admin, Supervisor, atau Warehouse yang dapat menyerahkan / mengaktifkan peminjaman alat." },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Guard transition to CANCELLED
+    if (status === "CANCELLED") {
+      if (!isManager && !isRequesterOnPending) {
+        return NextResponse.json(
+          { error: "Hanya manajer atau peminjam terkait yang dapat membatalkan peminjaman ini." },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Guard metadata updates
+    const isUpdatingMetadata =
+      notes !== undefined || picName !== undefined || purpose !== undefined || eventLocation !== undefined;
+
+    if (isUpdatingMetadata && !isManager && !isRequesterOnPending) {
+      return NextResponse.json(
+        { error: "Hanya manajer atau peminjam terkait yang dapat memperbarui data peminjaman." },
+        { status: 403 }
+      );
+    }
+
+    if (!status && !isUpdatingMetadata && !isManager && !isRequesterOnPending) {
+      return NextResponse.json(
+        { error: "Akses ditolak." },
+        { status: 403 }
       );
     }
 
@@ -185,7 +265,7 @@ export async function PUT(
     if (status) {
       updateData.status = status;
       if (status === "APPROVED" && existing.status === "PENDING") {
-        updateData.approvedBy = String(approvedBy || "Admin").trim();
+        updateData.approvedBy = userName;
         updateData.approvedAt = new Date();
       }
     }

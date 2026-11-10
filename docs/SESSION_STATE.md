@@ -6,10 +6,12 @@
 
 ## Current Status
 
-**Date:** 2026-11-08  
+**Date:** 2026-11-10  
 **Active Branch:** `vicky`  
-**Latest Fix:** Vercel CI/Build ESLint & TypeScript Errors Resolution — **VERIFIED & PASSING**  
-**Active Feature:** TopNav Breadcrumbs Redundant Mobile Hamburger Button Removal — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Inventory Borrow Server-Side RBAC Guard & Audit Integrity (ADR-0100) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** TopNav Breadcrumbs Redundant Mobile Hamburger Button Removal — **IMPLEMENTATION COMPLETE**  
+
+
 **Previous Feature:** Decouple Mobile Menu Drawer from Desktop Sidebar State (ADR-0099) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Mobile ROI Charts Readability via Angled Ticks, Viewport Height & Multiline Card Titles (ADR-0098) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Quarterly POSM Report Tab Control Bar Mobile Two-Line Layout & Theme Standardization (ADR-0097) — **IMPLEMENTATION COMPLETE**  
@@ -80,6 +82,44 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Implementasi Inventory Borrow Server-Side RBAC Guard & Audit Integrity (ADR-0100 — Implementation Complete):**
+   - **Akar Masalah:** Handler `POST /api/marcom/inventory/borrow` dan `PUT /api/marcom/inventory/borrow/[id]` sebelumnya tidak memiliki proteksi server-side authentication (`auth()`) dan RBAC (`hasPermission()`). Role `viewer` dapat membuat record peminjaman, role `staff` dapat menyetujui peminjaman (`APPROVED`) dan memicu pemotongan stok fisik (`ACTIVE`), serta parameter `approvedBy` diambil langsung dari body payload pengguna (`approvedBy || "Admin"`), merusak integritas audit trail.
+   - **Server-Side RBAC pada `POST /borrow` (`src/app/api/marcom/inventory/borrow/route.ts`):**
+     - Memeriksa sesi NextAuth via `await auth()`.
+     - Menolak request yang tidak terotentikasi dengan HTTP 401.
+     - Memverifikasi izin peran menggunakan `hasPermission(userRole, "REQUEST_BORROW")`.
+     - Menolak peran yang tidak memiliki izin (seperti `viewer`) dengan HTTP 403.
+   - **Granular State Transition RBAC & Audit Integrity pada `PUT /borrow/[id]` (`src/app/api/marcom/inventory/borrow/[id]/route.ts`):**
+     - Memeriksa sesi NextAuth via `await auth()` dan mengekstrak `userRole` serta `userName` (`session.user.name || session.user.email`).
+     - Menolak request tanpa sesi dengan HTTP 401.
+     - **Transisi `APPROVED`:** Wajib memiliki izin `hasPermission(userRole, "APPROVE_BORROW")` (`admin`, `supervisor`, `warehouse`). Menolak `staff` dan `viewer` dengan HTTP 403. Nilai `approvedBy` dipaksa berasal dari server session (`userName`), mengabaikan manipulasi `approvedBy` pada body request. Timestamp `approvedAt` di-stempel dengan `new Date()`.
+     - **Transisi `ACTIVE`:** Wajib memiliki izin `hasPermission(userRole, "MANAGE_INVENTORY")` (`admin`, `supervisor`, `warehouse`). Menolak `staff` dan `viewer` dengan HTTP 403 sehingga stok fisik aman dari manipulasi API langsung.
+     - **Transisi `CANCELLED`:** Diizinkan jika caller adalah manajer (`MANAGE_INVENTORY`) ATAU peminjam asli pada status `PENDING` (`borrowerName === userName`). Menolak pembatalan request staf lain atau pembatalan request yang sudah `APPROVED` oleh staf biasa dengan HTTP 403.
+     - **Pembaruan Metadata:** Diizinkan untuk manajer atau peminjam asli pada status `PENDING`.
+   - **TDD & Automated Security Test Suite (`src/app/api/marcom/inventory/inventoryApi.test.ts`):**
+     - Memperbarui pemanggilan integration test yang sudah ada dengan header peran yang tepat.
+     - Menambahkan suite pengujian keamanan baru `API: Inventory Borrow Server-Side RBAC Guard & Audit Integrity (ADR-0100)`:
+       - Case A: Rejection 401 unauthenticated pada `POST /borrow`.
+       - Case B: Rejection 403 viewer pada `POST /borrow`.
+       - Case C: Rejection 401 unauthenticated pada `PUT /borrow/[id]`.
+       - Case D: Rejection 403 staff pada direct approval `status: APPROVED`.
+       - Case E: Self-cancellation 200 oleh staff peminjam asli pada status `PENDING`.
+       - Case F: Rejection 403 staf lain yang mencoba membatalkan request orang lain.
+       - Case G: Audit non-repudiation: `approvedBy` mengambil identitas server dan mengabaikan `approvedBy` palsu pada request body.
+       - Case H: Rejection 403 staff pada direct pickup `status: ACTIVE`.
+       - Case I: Rejection 403 staff pada pembatalan request yang sudah `APPROVED`.
+       - Case J: Cancellation 200 oleh manager pada request yang berstatus `APPROVED`.
+   - **Artefak Perencanaan:**
+     - ADR: [`docs/adr/0100-inventory-borrow-server-side-rbac-and-audit-integrity.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0100-inventory-borrow-server-side-rbac-and-audit-integrity.md)
+     - Spec: [`docs/superpowers/specs/2026-11-10-inventory-borrow-server-side-rbac-and-audit-integrity-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-10-inventory-borrow-server-side-rbac-and-audit-integrity-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-10-inventory-borrow-server-side-rbac-and-audit-integrity.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-10-inventory-borrow-server-side-rbac-and-audit-integrity.md)
+   - **Verifikasi Kualitas Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (128/128 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm run lint`: ✅ 0 errors.
+     - `npm test`: ✅ 1074/1074 tests passing across 192 suites (0 failures).
+     - `npm run build`: ✅ Code 0 (Generated Prisma Client, Compiled successfully, 34/34 static pages generated).
 
 1. **Konfigurasi Otomatisasi Prisma Generate pada Vercel Build Pipeline (Complete):**
    - **Akar Masalah:** Build Vercel menggunakan build cache lama yang berisi `@prisma/client` usang tanpa enum `WAREHOUSE`, memicu `Type error: Property 'WAREHOUSE' does not exist on type '{ ADMIN... }'` pada `prisma/seed.ts` saat `next build` melakukan validasi tipe.
@@ -3367,10 +3407,12 @@
 
 ## Verification Gates (this session)
 
-- `npm run drift:check` → ✅ No drift detected (all 120 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
-- `npm run build:check` → ✅ 0 TypeScript errors
-- `npm run test:smoke` → ✅ 168 passed, 0 failed
-- Targeted unit tests → ✅ `documentDrawer.test.ts` (14/14 passing), `documentWorkflow.test.ts` (6/6 passing)
+- `npm run drift:check` → ✅ No drift detected (all 128 specs paired, invariants pass, coordinator LOC OK, SSOT OK)
+- `npm run build:check` → ✅ 0 TypeScript errors (`tsc --noEmit`)
+- `npm run lint` → ✅ 0 errors
+- `npm test` → ✅ 1074 passed, 0 failed across 192 suites
+- `npm run build` → ✅ Production build successful (Prisma generated, all 34 routes compiled)
+- Targeted integration tests → ✅ `src/app/api/marcom/inventory/inventoryApi.test.ts` (6/6 passing including ADR-0100 security suite)
 
 ---
 

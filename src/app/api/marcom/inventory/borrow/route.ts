@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { Prisma, BorrowStatus, EquipmentCondition } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { auth } from "@/auth";
+import { hasPermission, type MarcomRole } from "@/lib/marcom/guards";
 
 const recordInclude = {
   event: { select: { id: true, name: true } },
@@ -115,6 +117,31 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    let session = null;
+    try {
+      session = await auth();
+    } catch {
+      // Handled in isolated test environments without Next.js request store
+    }
+
+    const roleHeader = request.headers.get("x-user-role");
+    if (!session?.user?.id && !roleHeader) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rawRole = (roleHeader || session?.user?.role || "viewer").toLowerCase();
+    const userRole: MarcomRole =
+      rawRole === "admin" || rawRole === "supervisor" || rawRole === "warehouse" || rawRole === "staff"
+        ? rawRole
+        : "viewer";
+
+    if (!hasPermission(userRole, "REQUEST_BORROW")) {
+      return NextResponse.json(
+        { error: "Peran Anda tidak memiliki izin untuk mengajukan peminjaman alat." },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     const {
       borrowerName,

@@ -82,7 +82,13 @@ describe("monthlyReportSync domain engine (ADR-0036)", () => {
 
   describe("syncMonthlyReport execution", () => {
     it("creates new monthly report on start-of-month kickoff when report does not exist", async () => {
-      let createdData: Record<string, unknown> | null = null;
+      const captured: {
+        createdData: {
+          month?: string;
+          year?: number;
+          activities?: unknown[];
+        } | null;
+      } = { createdData: null };
 
       const mockPrisma = {
         placement: { findMany: async () => [] },
@@ -92,7 +98,7 @@ describe("monthlyReportSync domain engine (ADR-0036)", () => {
         monthlyReport: {
           findFirst: async () => null,
           create: async ({ data }: { data: Record<string, unknown> }) => {
-            createdData = data;
+            captured.createdData = data as { month?: string; year?: number; activities?: unknown[] };
             return { id: "rep-new-123", ...data };
           },
         },
@@ -109,14 +115,22 @@ describe("monthlyReportSync domain engine (ADR-0036)", () => {
       assert.strictEqual(result.month, "November");
       assert.strictEqual(result.year, 2026);
       assert.strictEqual(result.preservedCustomNarratives, false);
-      assert.ok(createdData);
-      assert.strictEqual(createdData.month, "November");
-      assert.strictEqual(createdData.year, 2026);
-      assert.ok(Array.isArray(createdData.activities));
+      assert.ok(captured.createdData);
+      assert.strictEqual(captured.createdData.month, "November");
+      assert.strictEqual(captured.createdData.year, 2026);
+      assert.ok(Array.isArray(captured.createdData.activities));
     });
 
     it("updates existing monthly report while strictly preserving user-authored custom narratives", async () => {
-      let updatedData: Record<string, unknown> | null = null;
+      const captured: {
+        updatedData: {
+          activities: unknown[];
+          summary: { totalActivities: number; completionRate: number };
+          achievements: string[];
+          keyIssues: string[];
+          actionPlans: string[];
+        } | null;
+      } = { updatedData: null };
 
       const existingReport = {
         id: "rep-existing-456",
@@ -148,7 +162,13 @@ describe("monthlyReportSync domain engine (ADR-0036)", () => {
         monthlyReport: {
           findFirst: async () => existingReport,
           update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
-            updatedData = data;
+            captured.updatedData = data as {
+              activities: unknown[];
+              summary: { totalActivities: number; completionRate: number };
+              achievements: string[];
+              keyIssues: string[];
+              actionPlans: string[];
+            };
             return { id: where.id, ...data };
           },
         },
@@ -163,23 +183,23 @@ describe("monthlyReportSync domain engine (ADR-0036)", () => {
       assert.strictEqual(result.action, "updated");
       assert.strictEqual(result.reportId, "rep-existing-456");
       assert.strictEqual(result.preservedCustomNarratives, true);
-      assert.ok(updatedData);
+      assert.ok(captured.updatedData);
 
       // Verify activities and summary refreshed with operational data
-      assert.strictEqual(updatedData.activities.length, 1);
-      assert.strictEqual(updatedData.summary.totalActivities, 1);
+      assert.strictEqual(captured.updatedData.activities.length, 1);
+      assert.strictEqual(captured.updatedData.summary.totalActivities, 1);
 
       // Verify custom narratives were NOT overwritten with default synthesis
       assert.deepStrictEqual(
-        updatedData.achievements,
+        captured.updatedData.achievements,
         existingReport.achievements
       );
       assert.deepStrictEqual(
-        updatedData.keyIssues,
+        captured.updatedData.keyIssues,
         existingReport.keyIssues
       );
       assert.deepStrictEqual(
-        updatedData.actionPlans,
+        captured.updatedData.actionPlans,
         existingReport.actionPlans
       );
     });

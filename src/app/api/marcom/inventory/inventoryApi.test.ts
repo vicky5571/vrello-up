@@ -73,7 +73,11 @@ test("API: Full Borrow & Return Lifecycle", async () => {
   // 3. Create Borrow Request (AC-6: initial status PENDING, availableUnits unchanged)
   const borrowReq = new Request("http://localhost:3000/api/marcom/inventory/borrow", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-role": "staff",
+      "x-user-name": "Budi Test",
+    },
     body: JSON.stringify({
       borrowerName: "Budi Test",
       borrowerPhone: "0811111111",
@@ -98,7 +102,11 @@ test("API: Full Borrow & Return Lifecycle", async () => {
   // 4. Approve request: PENDING -> APPROVED
   const approveReq = new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrowRecord.id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-role": "supervisor",
+      "x-user-name": "Supervisor Approver",
+    },
     body: JSON.stringify({ status: "APPROVED", approvedBy: "Admin Test" }),
   });
   const approveRes = await putBorrow(approveReq, { params: Promise.resolve({ id: borrowRecord.id }) });
@@ -109,7 +117,11 @@ test("API: Full Borrow & Return Lifecycle", async () => {
   // 5. Activate borrow: APPROVED -> ACTIVE (AC-7: decrements availableUnits)
   const activateReq = new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrowRecord.id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-user-role": "warehouse",
+      "x-user-name": "Warehouse Officer",
+    },
     body: JSON.stringify({ status: "ACTIVE" }),
   });
   const activateRes = await putBorrow(activateReq, { params: Promise.resolve({ id: borrowRecord.id }) });
@@ -186,7 +198,11 @@ test("API: Return Inspection Breakdown, Compensation Workflow, and Four-Eyes Pri
   const borrowRes = await postBorrow(
     new Request("http://localhost:3000/api/marcom/inventory/borrow", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Field Staff Tester",
+      },
       body: JSON.stringify({
         borrowerName: "Field Staff Tester",
         borrowerPhone: "0812345678",
@@ -203,7 +219,11 @@ test("API: Return Inspection Breakdown, Compensation Workflow, and Four-Eyes Pri
   await putBorrow(
     new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrowRecord.id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "supervisor",
+        "x-user-name": "Supervisor Approver",
+      },
       body: JSON.stringify({ status: "APPROVED" }),
     }),
     { params: Promise.resolve({ id: borrowRecord.id }) }
@@ -212,7 +232,11 @@ test("API: Return Inspection Breakdown, Compensation Workflow, and Four-Eyes Pri
   const activateRes = await putBorrow(
     new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrowRecord.id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Officer",
+      },
       body: JSON.stringify({ status: "ACTIVE" }),
     }),
     { params: Promise.resolve({ id: borrowRecord.id }) }
@@ -331,7 +355,11 @@ test("API: Compensation Settlement Lifecycle, Dual-Mode Stock Restoration, and F
   const borrowRes = await postBorrow(
     new Request("http://localhost:3000/api/marcom/inventory/borrow", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Settlement Test User",
+      },
       body: JSON.stringify({
         borrowerName: "Settlement Test User",
         borrowDate: new Date().toISOString().slice(0, 10),
@@ -343,23 +371,33 @@ test("API: Compensation Settlement Lifecycle, Dual-Mode Stock Restoration, and F
   assert.equal(borrowRes.status, 201);
   const borrow = await borrowRes.json();
 
-  await putBorrow(
+  const approveRes = await putBorrow(
     new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "supervisor",
+        "x-user-name": "Supervisor Approver",
+      },
       body: JSON.stringify({ status: "APPROVED" }),
     }),
     { params: Promise.resolve({ id: borrow.id }) }
   );
+  assert.equal(approveRes.status, 200);
 
   const activateRes = await putBorrow(
     new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Officer",
+      },
       body: JSON.stringify({ status: "ACTIVE" }),
     }),
     { params: Promise.resolve({ id: borrow.id }) }
   );
+  assert.equal(activateRes.status, 200);
   const activeRecord = await activateRes.json();
   const borrowItemId = activeRecord.items[0].id;
 
@@ -553,5 +591,257 @@ test("API: Compensation Settlement Lifecycle, Dual-Mode Stock Restoration, and F
   // 11. Cleanup test records
   await prisma.borrowItem.deleteMany({ where: { borrowRecordId: borrow.id } });
   await prisma.borrowRecord.delete({ where: { id: borrow.id } });
+  await prisma.inventoryItem.delete({ where: { id: testItem.id } });
+});
+
+test("API: Inventory Borrow Server-Side RBAC Guard & Audit Integrity (ADR-0100)", async () => {
+  // 1. Create a test item with 5 units
+  const testCode = `RBAC-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const itemRes = await postInventory(
+    new Request("http://localhost:3000/api/marcom/inventory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "RBAC Test Sound System",
+        code: testCode,
+        category: "Audio",
+        totalUnits: 5,
+        storageLocation: "Security Warehouse",
+      }),
+    })
+  );
+  assert.equal(itemRes.status, 201);
+  const testItem = await itemRes.json();
+
+  // Test Case A: Unauthenticated rejection (401) on POST /borrow
+  const unauthBorrowRes = await postBorrow(
+    new Request("http://localhost:3000/api/marcom/inventory/borrow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        borrowerName: "Unauthenticated Caller",
+        borrowDate: new Date().toISOString().slice(0, 10),
+        returnDueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+        items: [{ inventoryItemId: testItem.id, quantity: 1 }],
+      }),
+    })
+  );
+  assert.equal(unauthBorrowRes.status, 401);
+
+  // Test Case B: Viewer rejection (403) on POST /borrow (AC-1)
+  const viewerBorrowRes = await postBorrow(
+    new Request("http://localhost:3000/api/marcom/inventory/borrow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "viewer",
+        "x-user-name": "Viewer User",
+      },
+      body: JSON.stringify({
+        borrowerName: "Viewer User",
+        borrowDate: new Date().toISOString().slice(0, 10),
+        returnDueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+        items: [{ inventoryItemId: testItem.id, quantity: 1 }],
+      }),
+    })
+  );
+  assert.equal(viewerBorrowRes.status, 403);
+  const viewerBorrowBody = await viewerBorrowRes.json();
+  assert.ok(viewerBorrowBody.error.includes("tidak memiliki izin"));
+
+  // 2. Staff creates a valid borrow request for Alice Smith (status: PENDING)
+  const aliceBorrowRes = await postBorrow(
+    new Request("http://localhost:3000/api/marcom/inventory/borrow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Alice Smith",
+      },
+      body: JSON.stringify({
+        borrowerName: "Alice Smith",
+        borrowerPhone: "0812999999",
+        borrowerDivision: "Field Sales",
+        eventLocation: "Expo Center",
+        borrowDate: new Date().toISOString().slice(0, 10),
+        returnDueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+        purpose: "Demo Product Launch",
+        items: [{ inventoryItemId: testItem.id, quantity: 2 }],
+      }),
+    })
+  );
+  assert.equal(aliceBorrowRes.status, 201);
+  const aliceRecord = await aliceBorrowRes.json();
+  assert.equal(aliceRecord.status, "PENDING");
+
+  // Test Case C: Unauthenticated rejection (401) on PUT /borrow/[id]
+  const unauthPutRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${aliceRecord.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "APPROVED" }),
+    }),
+    { params: Promise.resolve({ id: aliceRecord.id }) }
+  );
+  assert.equal(unauthPutRes.status, 401);
+
+  // Test Case D: Staff / Viewer rejection (403) on direct approval (AC-2)
+  const staffApproveRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${aliceRecord.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Alice Smith",
+      },
+      body: JSON.stringify({ status: "APPROVED" }),
+    }),
+    { params: Promise.resolve({ id: aliceRecord.id }) }
+  );
+  assert.equal(staffApproveRes.status, 403);
+  const staffApproveBody = await staffApproveRes.json();
+  assert.ok(staffApproveBody.error.includes("Supervisor"));
+
+  // Verify record status is still PENDING
+  const recordStillPending = await prisma.borrowRecord.findUnique({ where: { id: aliceRecord.id } });
+  assert.equal(recordStillPending?.status, "PENDING");
+
+  // Test Case E: Staff self-cancellation on PENDING request allowed (AC-4)
+  const aliceCancelRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${aliceRecord.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Alice Smith",
+      },
+      body: JSON.stringify({ status: "CANCELLED" }),
+    }),
+    { params: Promise.resolve({ id: aliceRecord.id }) }
+  );
+  assert.equal(aliceCancelRes.status, 200);
+  const cancelledRecord = await aliceCancelRes.json();
+  assert.equal(cancelledRecord.status, "CANCELLED");
+
+  // 3. Create a second borrow request for Alice Smith to test unmatching staff cancellation & approval flow
+  const secondBorrowRes = await postBorrow(
+    new Request("http://localhost:3000/api/marcom/inventory/borrow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Alice Smith",
+      },
+      body: JSON.stringify({
+        borrowerName: "Alice Smith",
+        borrowDate: new Date().toISOString().slice(0, 10),
+        returnDueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+        items: [{ inventoryItemId: testItem.id, quantity: 2 }],
+      }),
+    })
+  );
+  assert.equal(secondBorrowRes.status, 201);
+  const secondRecord = await secondBorrowRes.json();
+
+  // Test Case F: Staff Bob cannot cancel Alice's request (AC-5)
+  const bobCancelRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${secondRecord.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Bob Jones",
+      },
+      body: JSON.stringify({ status: "CANCELLED" }),
+    }),
+    { params: Promise.resolve({ id: secondRecord.id }) }
+  );
+  assert.equal(bobCancelRes.status, 403);
+
+  // Test Case G: Server-derived approvedBy enforcement & spoof body discarded (AC-3)
+  const approveRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${secondRecord.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "supervisor",
+        "x-user-name": "John Doe",
+      },
+      body: JSON.stringify({
+        status: "APPROVED",
+        approvedBy: "Fake Admin Spoof",
+      }),
+    }),
+    { params: Promise.resolve({ id: secondRecord.id }) }
+  );
+  assert.equal(approveRes.status, 200);
+  const approvedData = await approveRes.json();
+  assert.equal(approvedData.status, "APPROVED");
+  assert.equal(approvedData.approvedBy, "John Doe");
+  assert.ok(approvedData.approvedAt);
+
+  // Check DB directly
+  const dbApproved = await prisma.borrowRecord.findUnique({ where: { id: secondRecord.id } });
+  assert.equal(dbApproved?.approvedBy, "John Doe");
+  assert.ok(dbApproved?.approvedAt);
+
+  // Test Case H: Staff rejection on direct pickup / ACTIVE (AC-6)
+  const staffPickupRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${secondRecord.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Alice Smith",
+      },
+      body: JSON.stringify({ status: "ACTIVE" }),
+    }),
+    { params: Promise.resolve({ id: secondRecord.id }) }
+  );
+  assert.equal(staffPickupRes.status, 403);
+
+  // Item availability still 5 (NOT decremented)
+  const itemBeforeManagerPickup = await prisma.inventoryItem.findUnique({ where: { id: testItem.id } });
+  assert.equal(itemBeforeManagerPickup?.availableUnits, 5);
+
+  // Test Case I: Staff cannot cancel an APPROVED request (only managers can)
+  const staffCancelApprovedRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${secondRecord.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Alice Smith",
+      },
+      body: JSON.stringify({ status: "CANCELLED" }),
+    }),
+    { params: Promise.resolve({ id: secondRecord.id }) }
+  );
+  assert.equal(staffCancelApprovedRes.status, 403);
+
+  // Test Case J: Manager (Warehouse) can cancel an APPROVED request
+  const managerCancelRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${secondRecord.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Lead",
+      },
+      body: JSON.stringify({ status: "CANCELLED" }),
+    }),
+    { params: Promise.resolve({ id: secondRecord.id }) }
+  );
+  assert.equal(managerCancelRes.status, 200);
+  const managerCancelledData = await managerCancelRes.json();
+  assert.equal(managerCancelledData.status, "CANCELLED");
+
+  // 4. Cleanup test records
+  await prisma.borrowItem.deleteMany({
+    where: { borrowRecordId: { in: [aliceRecord.id, secondRecord.id] } },
+  });
+  await prisma.borrowRecord.deleteMany({
+    where: { id: { in: [aliceRecord.id, secondRecord.id] } },
+  });
   await prisma.inventoryItem.delete({ where: { id: testItem.id } });
 });
