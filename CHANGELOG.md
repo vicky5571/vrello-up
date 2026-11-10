@@ -6,6 +6,20 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-10]
 
+- `feat(inventory)`: Staff self-cancellation and CANCEL_OWN_BORROW RBAC action (ADR-0101)
+  - RBAC permission expansion (`src/lib/marcom/guards.ts`): registered `CANCEL_OWN_BORROW` in `PermissionAction` union type and granted it to `admin`, `supervisor`, `warehouse`, and `staff` (excluded from `viewer`).
+  - Guards unit tests (`src/lib/marcom/guards.test.ts`): asserted `CANCEL_OWN_BORROW` capability across all roles (16/16 tests passing).
+  - Dynamic requester ownership guard (`src/components/views/InventoryView/BorrowDetailModal.tsx` & `borrowDetailModalHelpers.ts`):
+    - Integrated `useSession` and `useMarcomPermissions` at the component root in compliance with React Rules of Hooks.
+    - Dynamically determined request ownership: `borrowerName.trim().toLowerCase() === session.user.name.trim().toLowerCase()`.
+    - Computed `canCancelPending = canManage || (canCancelOwn && isOwner)`.
+    - Rendered "Cancel Request" button when `{record.status === "PENDING" && canCancelPending}`, giving Field Staff the ability to cancel pending borrow requests without requiring `MANAGE_INVENTORY`.
+    - Strictly preserved `{record.status === "APPROVED" && canManage}` for "Cancel Loan" (warehouse staging control).
+  - Backend alignment (`src/app/api/marcom/inventory/borrow/[id]/route.ts`): aligned `isRequesterOnPending` evaluation with `CANCEL_OWN_BORROW` permission check and case-insensitive borrower name matching.
+  - Automated unit test suite (`src/components/views/InventoryView/borrowDetailModal.test.ts`): verified AC-1 through AC-5, borrower name case-insensitive whitespace trimming, and React Rules of Hooks call order stability (10/10 tests passing).
+  - Verification: `npm run drift:check` ✅ (128/128 pairs), `npm run build:check` ✅ (0 errors), `npm test` ✅ (1085/1085 passing), `npm run test:smoke` ✅ (170/170 passing).
+  - Refs: `docs/adr/0101-staff-self-cancellation-and-cancel-own-borrow-rbac-action.md`, `docs/superpowers/specs/2026-11-10-staff-self-cancellation-and-cancel-own-borrow-rbac-action-design.md`, `docs/superpowers/plans/2026-11-10-staff-self-cancellation-and-cancel-own-borrow-rbac-action.md`
+
 - `feat(inventory)`: Inventory borrow server-side RBAC guard and audit integrity (ADR-0100)
   - Server-Side RBAC on `POST /borrow`: integrated NextAuth session extraction (`auth()`) and permission checking via `hasPermission(userRole, "REQUEST_BORROW")`. Unauthenticated requests return 401, while unauthorized roles (such as `viewer`) return 403.
   - Granular RBAC on `PUT /borrow/[id]`:

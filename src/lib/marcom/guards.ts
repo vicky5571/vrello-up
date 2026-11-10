@@ -4,7 +4,8 @@ export type PermissionAction =
   | "UPDATE_PLACEMENT" | "CREATE_EVENT" | "UPLOAD_VIDEO_FOOTAGE"
   | "UPLOAD_DOCUMENT" | "DELETE_DOCUMENT" | "MANAGE_MASTER_DATA" | "EXPORT_REPORTS"
   | "SUBMIT_DRAFT_OUTLET" | "APPROVE_OUTLET"
-  | "VIEW_INVENTORY" | "MANAGE_INVENTORY" | "REQUEST_BORROW" | "APPROVE_BORROW" | "PROCESS_RETURN";
+  | "VIEW_INVENTORY" | "MANAGE_INVENTORY" | "REQUEST_BORROW" | "APPROVE_BORROW" | "PROCESS_RETURN"
+  | "CANCEL_OWN_BORROW";
 
 const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
   admin: [
@@ -26,6 +27,7 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
     "REQUEST_BORROW",
     "APPROVE_BORROW",
     "PROCESS_RETURN",
+    "CANCEL_OWN_BORROW",
   ],
   supervisor: [
     "CREATE_MOU",
@@ -44,6 +46,7 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
     "REQUEST_BORROW",
     "APPROVE_BORROW",
     "PROCESS_RETURN",
+    "CANCEL_OWN_BORROW",
   ],
   warehouse: [
     "VIEW_INVENTORY",
@@ -51,6 +54,7 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
     "REQUEST_BORROW",
     "APPROVE_BORROW",
     "PROCESS_RETURN",
+    "CANCEL_OWN_BORROW",
   ],
   staff: [
     "CREATE_MOU",
@@ -62,6 +66,7 @@ const rolePermissions: Record<MarcomRole, PermissionAction[]> = {
     "EXPORT_REPORTS",
     "VIEW_INVENTORY",
     "REQUEST_BORROW",
+    "CANCEL_OWN_BORROW",
   ],
   viewer: ["EXPORT_REPORTS", "VIEW_INVENTORY"],
 };

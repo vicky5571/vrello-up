@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-10  
 **Active Branch:** `vicky`  
-**Active Feature:** Inventory Borrow Server-Side RBAC Guard & Audit Integrity (ADR-0100) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Staff Self-Cancellation and CANCEL_OWN_BORROW RBAC Action (ADR-0101) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Inventory Borrow Server-Side RBAC Guard & Audit Integrity (ADR-0100) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** TopNav Breadcrumbs Redundant Mobile Hamburger Button Removal — **IMPLEMENTATION COMPLETE**  
 
 
@@ -82,6 +83,35 @@
 ---
 
 ## What Was Completed This Session
+
+1. **Implementasi Staff Self-Cancellation & `CANCEL_OWN_BORROW` RBAC Action (ADR-0101 — Implementation Complete):**
+   - **Akar Masalah (Temuan 2):** Ketika izin `canManage` (`MANAGE_INVENTORY`) dicabut dari peran `staff` pada ADR-0050, tombol "Cancel Request" di `BorrowDetailModal.tsx` secara tidak sengaja tersembunyi dari Field Staff (`{record.status === "PENDING" && canManage && (...)}`). Akibatnya, staf lapangan yang membuat kesalahan pengetikan atau salah memilih item peralatan tidak dapat membatalkan permohonannya sendiri pada status `PENDING`, menciptakan dead-end UI dan memaksa manajer gudang/admin untuk membatalkannya secara manual.
+   - **Pendaftaran Permission Action Baru (`src/lib/marcom/guards.ts`):**
+     - Menambahkan `"CANCEL_OWN_BORROW"` ke union type `PermissionAction`.
+     - Memetakan `"CANCEL_OWN_BORROW"` ke `admin`, `supervisor`, `warehouse`, dan `staff` (dikecualikan dari `viewer`).
+   - **Pengujian Unit RBAC Guards (`src/lib/marcom/guards.test.ts`):**
+     - Menegaskan bahwa peran `admin`, `supervisor`, `warehouse`, dan `staff` memiliki hak `CANCEL_OWN_BORROW`, sedangkan `viewer` bernilai `false`.
+   - **Dynamic Ownership Guard pada Modal (`src/components/views/InventoryView/BorrowDetailModal.tsx` & `borrowDetailModalHelpers.ts`):**
+     - Mengintegrasikan hook `useSession` dari `next-auth/react` dan `useMarcomPermissions` dari `@/lib/marcom/permissions` di baris teratas komponen sesuai React Rules of Hooks.
+     - Menghitung kepemilikan dinamis: `isOwner = Boolean(session?.user?.name && record.borrowerName.trim().toLowerCase() === session.user.name.trim().toLowerCase())`.
+     - Mengevaluasi penjaga aksi: `canCancelPending = canManage || (canCancelOwn && isOwner)`.
+     - Merender tombol "Cancel Request" jika `{record.status === "PENDING" && canCancelPending}`.
+     - Menjaga tombol "Cancel Loan" tetap terisolasi untuk manajer gudang saja jika `{record.status === "APPROVED" && canManage}`.
+   - **Server-Side RBAC Alignment (`src/app/api/marcom/inventory/borrow/[id]/route.ts`):**
+     - Memastikan handler `PUT` menggunakan evaluasi yang konsisten: `existing.status === "PENDING" && hasPermission(userRole, "CANCEL_OWN_BORROW") && existing.borrowerName.trim().toLowerCase() === userName.toLowerCase()`.
+   - **TDD Test Suite Komponen (`src/components/views/InventoryView/borrowDetailModal.test.ts`):**
+     - Mencakup seluruh acceptance criteria AC-1 sampai AC-5 (Staff peminjam asli pada `PENDING` dapat cancel, staf non-pemilik pada `PENDING` ditolak, staf pemilik pada status `APPROVED` tidak dapat cancel, manajer selalu dapat cancel pada `PENDING` dan `APPROVED`, viewer ditolak).
+     - Menguji ketahanan normalisasi nama peminjam (whitespace dan case insensitivity).
+     - Menguji kepatuhan urutan pemanggilan hooks (React Rules of Hooks invariant).
+   - **Artefak Perencanaan:**
+     - ADR: [`docs/adr/0101-staff-self-cancellation-and-cancel-own-borrow-rbac-action.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0101-staff-self-cancellation-and-cancel-own-borrow-rbac-action.md)
+     - Spec: [`docs/superpowers/specs/2026-11-10-staff-self-cancellation-and-cancel-own-borrow-rbac-action-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-10-staff-self-cancellation-and-cancel-own-borrow-rbac-action-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-10-staff-self-cancellation-and-cancel-own-borrow-rbac-action.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-10-staff-self-cancellation-and-cancel-own-borrow-rbac-action.md)
+   - **Verifikasi Kualitas Penuh:**
+     - `npm run drift:check`: ✅ 0 drift (128/128 spec-plan pairs valid).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1085/1085 tests passing across 195 suites (0 failures).
+     - `npm run test:smoke`: ✅ 170/170 smoke tests passing (0 failures).
 
 1. **Implementasi Inventory Borrow Server-Side RBAC Guard & Audit Integrity (ADR-0100 — Implementation Complete):**
    - **Akar Masalah:** Handler `POST /api/marcom/inventory/borrow` dan `PUT /api/marcom/inventory/borrow/[id]` sebelumnya tidak memiliki proteksi server-side authentication (`auth()`) dan RBAC (`hasPermission()`). Role `viewer` dapat membuat record peminjaman, role `staff` dapat menyetujui peminjaman (`APPROVED`) dan memicu pemotongan stok fisik (`ACTIVE`), serta parameter `approvedBy` diambil langsung dari body payload pengguna (`approvedBy || "Admin"`), merusak integritas audit trail.

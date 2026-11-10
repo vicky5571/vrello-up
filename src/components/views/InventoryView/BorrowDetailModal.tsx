@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   X,
   AlertCircle,
@@ -13,6 +14,7 @@ import {
   FileText,
 } from "lucide-react";
 import type { BorrowRecord, BorrowStatus } from "@/types";
+import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { BORROW_STATUS_CONFIG, CONDITION_CONFIG } from "./inventoryConstants";
 import { BorrowSettlementModal } from "./BorrowSettlementModal";
 
@@ -38,8 +40,17 @@ export function BorrowDetailModal({
   onSettled,
 }: BorrowDetailModalProps) {
   const [isSettlementModalOpen, setIsSettlementModalOpen] = useState(false);
+  const { data: session } = useSession();
+  const { can } = useMarcomPermissions();
 
   if (!isOpen || !record) return null;
+
+  const canCancelOwn = can("CANCEL_OWN_BORROW");
+  const isOwner = Boolean(
+    session?.user?.name &&
+    record.borrowerName.trim().toLowerCase() === session.user.name.trim().toLowerCase()
+  );
+  const canCancelPending = canManage || (canCancelOwn && isOwner);
 
   const isOverdue = record.status === "OVERDUE";
   const statusCfg = BORROW_STATUS_CONFIG[record.status] || {
@@ -458,7 +469,7 @@ export function BorrowDetailModal({
         {/* Footer Actions */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
-            {record.status === "PENDING" && canManage && (
+            {record.status === "PENDING" && canCancelPending && (
               <button
                 type="button"
                 onClick={() => onStatusChange(record.id, "CANCELLED")}

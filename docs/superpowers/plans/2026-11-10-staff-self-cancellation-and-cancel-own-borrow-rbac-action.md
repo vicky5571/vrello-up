@@ -1,7 +1,7 @@
 # Implementation Plan: Staff Self-Cancellation and CANCEL_OWN_BORROW RBAC Action
 
 - **Date:** 2026-11-10
-- **Status:** READY FOR EXECUTION
+- **Status:** IMPLEMENTATION COMPLETE
 - **Spec:** [2026-11-10-staff-self-cancellation-and-cancel-own-borrow-rbac-action-design.md](../specs/2026-11-10-staff-self-cancellation-and-cancel-own-borrow-rbac-action-design.md)
 - **ADR:** [ADR-0101](../../adr/0101-staff-self-cancellation-and-cancel-own-borrow-rbac-action.md)
 
@@ -30,31 +30,31 @@ This plan implements the `CANCEL_OWN_BORROW` permission action and dynamic reque
 
 ## 2. Phase 1: Register `CANCEL_OWN_BORROW` in Central Guards SSOT
 
-- [ ] **Task 1.1: Update `PermissionAction` union type**
+- [x] **Task 1.1: Update `PermissionAction` union type**
   - File: `src/lib/marcom/guards.ts`
   - Append `| "CANCEL_OWN_BORROW"` to `PermissionAction`.
-- [ ] **Task 1.2: Update `rolePermissions` table**
+- [x] **Task 1.2: Update `rolePermissions` table**
   - Add `"CANCEL_OWN_BORROW"` to `admin`, `supervisor`, `warehouse`, and `staff`.
   - Leave `viewer` without this permission.
-- [ ] **Task 1.3: Update Guards Unit Test**
+- [x] **Task 1.3: Update Guards Unit Test**
   - File: `src/lib/marcom/guards.test.ts`
   - Assert `hasPermission("staff", "CANCEL_OWN_BORROW") === true`.
   - Assert `hasPermission("warehouse", "CANCEL_OWN_BORROW") === true`.
   - Assert `hasPermission("supervisor", "CANCEL_OWN_BORROW") === true`.
   - Assert `hasPermission("admin", "CANCEL_OWN_BORROW") === true`.
   - Assert `hasPermission("viewer", "CANCEL_OWN_BORROW") === false`.
-- [ ] **Task 1.4: Verify Phase 1**
+- [x] **Task 1.4: Verify Phase 1**
   - Run: `node --test --import ./test/register-alias.mjs src/lib/marcom/guards.test.ts`
 
 ---
 
 ## 3. Phase 2: Dynamic Ownership Guard in `BorrowDetailModal.tsx`
 
-- [ ] **Task 2.1: Hook Integration**
+- [x] **Task 2.1: Hook Integration**
   - File: `src/components/views/InventoryView/BorrowDetailModal.tsx`
   - Import `useSession` from `next-auth/react`.
   - Import `useMarcomPermissions` from `@/lib/marcom/permissions`.
-- [ ] **Task 2.2: Compute Ownership and Permission Guard**
+- [x] **Task 2.2: Compute Ownership and Permission Guard**
   - Inside `BorrowDetailModal`:
     ```tsx
     const { data: session } = useSession();
@@ -68,7 +68,7 @@ This plan implements the `CANCEL_OWN_BORROW` permission action and dynamic reque
 
     const canCancelPending = canManage || (canCancelOwn && isOwner);
     ```
-- [ ] **Task 2.3: Update Button Rendering Condition**
+- [x] **Task 2.3: Update Button Rendering Condition**
   - Replace line 461:
     ```tsx
     {record.status === "PENDING" && canCancelPending && (
@@ -88,27 +88,27 @@ This plan implements the `CANCEL_OWN_BORROW` permission action and dynamic reque
 
 ## 4. Phase 3: Automated Unit Testing
 
-- [ ] **Task 3.1: Create `src/components/views/InventoryView/borrowDetailModal.test.ts`**
+- [x] **Task 3.1: Create `src/components/views/InventoryView/borrowDetailModal.test.ts`**
   - Implement pure helper/logic or JSX test simulating:
     - Condition 1: Staff user matching `borrowerName` with `status === "PENDING"` $\rightarrow$ `canCancelPending === true`.
     - Condition 2: Staff user NOT matching `borrowerName` with `status === "PENDING"` $\rightarrow$ `canCancelPending === false`.
     - Condition 3: Staff user matching `borrowerName` with `status === "APPROVED"` $\rightarrow$ `canManage === false`, no cancel button rendered.
     - Condition 4: Manager user (`canManage === true`) with `status === "PENDING"` $\rightarrow$ `canCancelPending === true` regardless of owner.
     - Condition 5: Manager user (`canManage === true`) with `status === "APPROVED"` $\rightarrow$ "Cancel Loan" rendered.
-- [ ] **Task 3.2: Execute Component & Guard Tests**
+- [x] **Task 3.2: Execute Component & Guard Tests**
   - Run: `node --test --import ./test/register-alias.mjs src/lib/marcom/guards.test.ts src/components/views/InventoryView/borrowDetailModal.test.ts`
 
 ---
 
 ## 5. Phase 4: Non-Negotiable Verification Gates & Session Handoff
 
-- [ ] **Task 4.1: Drift Invariant Verification**
+- [x] **Task 4.1: Drift Invariant Verification**
   - Run: `npm run drift:check` (must pass 100%).
-- [ ] **Task 4.2: Full Test Suite Execution**
+- [x] **Task 4.2: Full Test Suite Execution**
   - Run: `npm test` (0 failures across all tests).
-- [ ] **Task 4.3: TypeScript Build Verification**
+- [x] **Task 4.3: TypeScript Build Verification**
   - Run: `npm run build:check` (0 errors).
-- [ ] **Task 4.4: Session Handoff Documentation**
+- [x] **Task 4.4: Session Handoff Documentation**
   - Update `docs/SESSION_STATE.md` with feature completion notes and references to ADR-0101, Spec, and Plan.
 
 

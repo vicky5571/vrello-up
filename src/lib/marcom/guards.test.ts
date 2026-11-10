@@ -438,3 +438,11 @@ test("warehouse role permissions and staff Four-Eyes Principle revocation", () =
   assert.equal(hasScopedPermission({ role: "warehouse", action: "CREATE_PLACEMENT" }), false);
 });
 
+test("CANCEL_OWN_BORROW permission allows staff, warehouse, supervisor, and admin but rejects viewer (ADR-0101)", () => {
+  assert.equal(hasPermission("staff", "CANCEL_OWN_BORROW"), true);
+  assert.equal(hasPermission("warehouse", "CANCEL_OWN_BORROW"), true);
+  assert.equal(hasPermission("supervisor", "CANCEL_OWN_BORROW"), true);
+  assert.equal(hasPermission("admin", "CANCEL_OWN_BORROW"), true);
+  assert.equal(hasPermission("viewer", "CANCEL_OWN_BORROW"), false);
+});
+

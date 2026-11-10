@@ -154,6 +154,7 @@ export async function PUT(
     const isManager = hasPermission(userRole, "MANAGE_INVENTORY");
     const isRequesterOnPending =
       existing.status === "PENDING" &&
+      hasPermission(userRole, "CANCEL_OWN_BORROW") &&
       existing.borrowerName.trim().toLowerCase() === userName.toLowerCase();
 
     // Guard transition to APPROVED
