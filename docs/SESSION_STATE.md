@@ -8,7 +8,7 @@
 
 **Date:** 2026-11-12  
 **Active Branch:** `vicky`  
-**Active Feature:** Strict One-Shot Settlement Nominal Lock and Compensation Adjustment Workflow (ADR-0108) — **PLANNING COMPLETE**  
+**Active Feature:** Strict One-Shot Settlement Nominal Lock and Compensation Adjustment Workflow (ADR-0108) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Localized Async Mutation Feedback and Loading States for Inventory Borrow Lifecycle (ADR-0107) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Hybrid Staff Cash Settlement Submission and Warehouse Verification Workflow (ADR-0106) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Multi-Photo Direct Upload for Inventory Damage Inspection (ADR-0105) — **IMPLEMENTATION COMPLETE**  
@@ -92,7 +92,39 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Localized Async Mutation Feedback and Loading States for Inventory Borrow Lifecycle (ADR-0107 — Implementation Complete):**
+1. **Implementasi Strict One-Shot Settlement Nominal Lock and Compensation Adjustment Workflow (ADR-0108 — Implementation Complete):**
+   - **Konteks & Solusi Lapangan:**
+     - Mengatasi celah *moral hazard* dan kebocoran finansial di mana peminjam (`staff`) atau operator sebelumnya dapat mengubah nilai transfer pelunasan secara sembarangan pada `BorrowSettlementModal` (misal dari Rp 1.000.000 menjadi Rp 100.000) dan setelah dikonfirmasi, kewajiban ganti rugi permanen dianggap `RESOLVED` (lunas).
+     - Menjamin integritas prinsip *one-shot terminal settlement*: form pelunasan bertindak murni sebagai eksekutor pembayaran (Read-Only) yang mengikat nominal ke `record.compensationAmount` secara immutabel.
+     - Menyediakan jalur administratif resmi bagi petugas gudang/admin (`PROCESS_RETURN`) untuk melakukan penyesuaian nominal ganti rugi (`Adjust Nilai Ganti Rugi`) berdasarkan nota bengkel resmi atau subsidi manajemen dengan audit log permanen dan penanganan *waiver* ke Rp 0.
+   - **Phase 1: SSOT Domain Types & Server-Side Nominal Enforcement (`src/types/index.ts` & `/api/marcom/inventory/borrow/[id]/settle/route.ts`):**
+     - Mendaftarkan interface `AdjustCompensationPayload` di `src/types/index.ts`.
+     - Mengunci `settledAmount` pada route `/settle` untuk `SUBMIT` dan `DIRECT_RESOLVE`: server secara mutlak menetapkan `settledAmount: existing.compensationAmount || 0` untuk mode `CASH_TRANSFER`, mengabaikan segala modifikasi atau injeksi dari payload client.
+   - **Phase 2: Compensation Adjustment API Route & Comprehensive Tests (`/api/marcom/inventory/borrow/[id]/adjust-compensation/route.ts` & `inventoryApi.test.ts`):**
+     - Membuat endpoint baru `POST /api/marcom/inventory/borrow/[id]/adjust-compensation`.
+     - Memasang proteksi otorisasi RBAC: wajib memiliki izin `PROCESS_RETURN` (warehouse, supervisor, admin). Staf non-otoritas ditolak dengan HTTP 403 Forbidden.
+     - Memvalidasi input: `newAmount >= 0`, `newAmount !== existing.compensationAmount`, dan `reason.trim().length >= 5` (menolak data tidak valid dengan HTTP 400 Bad Request).
+     - Menolak penyesuaian jika status ganti rugi bukan `PENDING_SETTLEMENT` (misal saat `PENDING_VERIFICATION`).
+     - Menyematkan log audit permanen bertanggal dan berstempel nama/role petugas ke dalam `compensationNotes`:  
+       `[PENYESUAIAN Rp X -> Rp Y oleh Nama (Role) - Tanggal]: Alasan`.
+     - Menangani pembebasan penalti (*waiver* ke Rp 0): otomatis mengalihkan status ke `RESOLVED` dengan `settledAt` dan `settledBy`.
+     - Menambahkan automated integration test di `inventoryApi.test.ts` yang memverifikasi seluruh skenario di atas.
+   - **Phase 3: Read-Only Settlement Form (`BorrowSettlementModal.tsx` & `borrowSettlementModal.test.ts`):**
+     - Menghapus input numerik `<input type="number">` dan state `settledAmount`.
+     - Merender kartu metrik statis berformat Rupiah dengan badge `"Tagihan Penuh (One-Shot)"` dan teks penjelasan operasional.
+     - Mengikat payload submit `settledAmount: record.compensationAmount || 0`.
+     - Memperbarui invariant test di `borrowSettlementModal.test.ts` (6/6 tests passing).
+   - **Phase 4: Adjustment Modal & Detail Modal Integration (`CompensationAdjustmentModal.tsx` & `BorrowDetailModal.tsx`):**
+     - Membuat modal mandiri `CompensationAdjustmentModal.tsx` dengan kartu nilai saat ini, input nilai baru, callout peringatan waiver, dan textarea alasan penyesuaian.
+     - Menampilkan tombol sekunder `"Adjust Nilai Ganti Rugi"` pada `BorrowDetailModal.tsx` khusus untuk petugas (`canManage`) saat status `PENDING_SETTLEMENT`.
+     - Mengintegrasikan dialog penyesuaian dan me-refresh data peminjaman saat penyesuaian sukses.
+     - Menambahkan unit test invariant di `borrowDetailModal.test.ts` (18/18 tests passing).
+   - **Phase 5: Non-Negotiable Verification Gates:**
+     - `npm run drift:check`: ✅ PASS (135/135 spec-plan pairs valid, coordinator files $\le 250$ LOC, 0 drift).
+     - `npm run build:check`: ✅ PASS (`tsc --noEmit`, exit code 0).
+     - Full test suite: ✅ PASS (0 failures).
+
+2. **Implementasi Localized Async Mutation Feedback and Loading States for Inventory Borrow Lifecycle (ADR-0107 — Implementation Complete):**
    - **Konteks & Solusi Lapangan:**
      - Mengatasi celah race condition dan double-click submission pada tombol-tombol transisi status peminjaman ("Approve Request", "Mark as Picked Up", "Process Return", serta tombol aksi pada modal detail).
      - Menggunakan pendekatan *Localized Mutation State & Concurrency Lock* (Option 1): state `mutatingBorrowId` dan `mutatingAction` diangkat ke `InventoryView.tsx`, memberikan umpan balik visual langsung berupa spinner animasi (`Loader2`) dan teks kontekstual ("Approving...", "Picking Up..."), sembari menonaktifkan seluruh tombol mutasi transisi pada board guna mencegah mutasi tumpang tindih.

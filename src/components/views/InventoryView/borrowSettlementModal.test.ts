@@ -66,5 +66,16 @@ describe("BorrowSettlementModal & Settlement UI Invariants (ADR-0052)", () => {
     assert.ok(content.includes("settlementNotes?: string;"), "BorrowRecord must include settlementNotes");
     assert.ok(content.includes("settlementProofUrls?: string[];"), "BorrowRecord must include settlementProofUrls");
   });
+
+  it("BorrowSettlementModal enforces strict read-only one-shot nominal card (ADR-0108)", () => {
+    const filePath = path.resolve(root, "src/components/views/InventoryView/BorrowSettlementModal.tsx");
+    const content = fs.readFileSync(filePath, "utf-8");
+
+    assert.ok(content.includes("Nominal Pelunasan Wajib (One-Shot)"), "Must display One-Shot nominal title");
+    assert.ok(content.includes("Tagihan Penuh"), "Must display Tagihan Penuh badge");
+    assert.ok(!content.includes('type="number"'), "Must NOT contain editable numeric input for settlement amount");
+    assert.ok(!content.includes("setSettledAmount"), "Must NOT maintain mutable settledAmount state");
+    assert.ok(content.includes("formatIDR(record.compensationAmount || 0)"), "Must render formatted compensationAmount");
+  });
 });
 

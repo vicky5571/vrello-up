@@ -816,6 +816,11 @@ export interface SettleCompensationPayload {
   rejectionReason?: string;
 }
 
+export interface AdjustCompensationPayload {
+  newAmount: number;
+  reason: string;
+}
+
 export interface BorrowRecord {
   id: string;
   borrowCode: string;

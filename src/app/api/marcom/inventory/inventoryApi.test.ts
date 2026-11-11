@@ -6,6 +6,7 @@ import { POST as postBorrow } from "./borrow/route";
 import { PUT as putBorrow } from "./borrow/[id]/route";
 import { POST as returnBorrow } from "./borrow/[id]/return/route";
 import { POST as settleBorrow } from "./borrow/[id]/settle/route";
+import { POST as adjustCompensation } from "./borrow/[id]/adjust-compensation/route";
 import { prisma } from "@/lib/db";
 
 test("API: GET /api/marcom/inventory returns catalog items", async () => {
@@ -1488,4 +1489,235 @@ test("API: Hybrid Staff Cash Settlement Submission and Warehouse Verification (A
   assert.equal(resolvedRecord.compensationStatus, "RESOLVED");
   assert.equal(resolvedRecord.settledBy, "Warehouse Lead");
   assert.ok(resolvedRecord.settledAt);
+});
+
+test("API: POST /api/marcom/inventory/borrow/[id]/adjust-compensation & One-Shot Nominal Enforcement (ADR-0108)", async () => {
+  // 1. Seed catalog item & borrow record
+  const item = await prisma.inventoryItem.create({
+    data: {
+      code: `ADR0108-${Date.now()}`,
+      name: "Adjustable Gear Unit",
+      category: "OTHER",
+      totalUnits: 5,
+      availableUnits: 4,
+      status: "AVAILABLE",
+    },
+  });
+
+  const borrow = await prisma.borrowRecord.create({
+    data: {
+      borrowCode: `BRW-0108-${Date.now()}`,
+      borrowerName: "Staff Debtor",
+      borrowDate: new Date("2026-11-01"),
+      returnDueDate: new Date("2026-11-05"),
+      returnDate: new Date("2026-11-06"),
+      status: "RETURNED",
+      compensationAmount: 1000000,
+      compensationStatus: "PENDING_SETTLEMENT",
+      compensationNotes: "Estimasi kerusakan awal Rp 1.000.000",
+      items: {
+        create: [
+          {
+            inventoryItemId: item.id,
+            quantity: 1,
+            conditionOut: "GOOD",
+            conditionIn: "MINOR_DAMAGE",
+            goodUnits: 0,
+            minorDamageUnits: 1,
+            majorDamageUnits: 0,
+            lostUnits: 0,
+          },
+        ],
+      },
+    },
+  });
+
+  // 2. Staff attempts adjustment -> 403 Forbidden
+  const staffReq = new Request(
+    `http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/adjust-compensation`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Staff Debtor",
+      },
+      body: JSON.stringify({
+        newAmount: 500000,
+        reason: "Minta diskon ganti rugi",
+      }),
+    }
+  );
+  const staffRes = await adjustCompensation(staffReq, { params: Promise.resolve({ id: borrow.id }) });
+  assert.equal(staffRes.status, 403);
+
+  // 3. Officer sends invalid payload (negative amount, empty reason, identical amount) -> 400 Bad Request
+  const negReq = new Request(
+    `http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/adjust-compensation`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Admin",
+      },
+      body: JSON.stringify({ newAmount: -100, reason: "Negatif tidak valid" }),
+    }
+  );
+  const negRes = await adjustCompensation(negReq, { params: Promise.resolve({ id: borrow.id }) });
+  assert.equal(negRes.status, 400);
+
+  const shortReasonReq = new Request(
+    `http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/adjust-compensation`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Admin",
+      },
+      body: JSON.stringify({ newAmount: 800000, reason: "oke" }),
+    }
+  );
+  const shortReasonRes = await adjustCompensation(shortReasonReq, { params: Promise.resolve({ id: borrow.id }) });
+  assert.equal(shortReasonRes.status, 400);
+
+  const sameAmountReq = new Request(
+    `http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/adjust-compensation`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Admin",
+      },
+      body: JSON.stringify({ newAmount: 1000000, reason: "Nominal masih sama persis" }),
+    }
+  );
+  const sameAmountRes = await adjustCompensation(sameAmountReq, { params: Promise.resolve({ id: borrow.id }) });
+  assert.equal(sameAmountRes.status, 400);
+
+  // 4. Valid officer adjustment -> updates compensationAmount and appends audit note
+  const validAdjustReq = new Request(
+    `http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/adjust-compensation`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Admin",
+      },
+      body: JSON.stringify({
+        newAmount: 850000,
+        reason: "Nota resmi bengkel servis Canon Center #INV-9920",
+      }),
+    }
+  );
+  const validAdjustRes = await adjustCompensation(validAdjustReq, { params: Promise.resolve({ id: borrow.id }) });
+  assert.equal(validAdjustRes.status, 200);
+  const adjustedRecord = await validAdjustRes.json();
+  assert.equal(adjustedRecord.compensationAmount, 850000);
+  assert.equal(adjustedRecord.compensationStatus, "PENDING_SETTLEMENT");
+  assert.ok(adjustedRecord.compensationNotes.includes("PENYESUAIAN Rp 1.000.000 -> Rp 850.000"));
+  assert.ok(adjustedRecord.compensationNotes.includes("Warehouse Admin (warehouse)"));
+  assert.ok(adjustedRecord.compensationNotes.includes("Nota resmi bengkel servis"));
+
+  // 5. One-Shot Settlement Nominal Lock: Staff attempts to submit arbitrary amount (e.g. Rp 100) -> server forces 850000
+  const submitWithAlteredAmountReq = new Request(
+    `http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Staff Debtor",
+      },
+      body: JSON.stringify({
+        action: "SUBMIT",
+        settlementType: "CASH_TRANSFER",
+        settledAmount: 100, // Client tries to pay only Rp 100
+        settlementNotes: "Transfer pelunasan via BCA",
+        settlementProofUrls: ["https://example.com/bca-receipt.jpg"],
+      }),
+    }
+  );
+  const submitRes = await settleBorrow(submitWithAlteredAmountReq, { params: Promise.resolve({ id: borrow.id }) });
+  assert.equal(submitRes.status, 200);
+  const submittedRecord = await submitRes.json();
+  // Server-enforced one-shot invariant: must be 850000, NOT 100
+  assert.equal(submittedRecord.settledAmount, 850000);
+  assert.equal(submittedRecord.compensationStatus, "PENDING_VERIFICATION");
+
+  // 6. Adjustment while PENDING_VERIFICATION -> 400 Bad Request
+  const pendingVerifAdjustReq = new Request(
+    `http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/adjust-compensation`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Admin",
+      },
+      body: JSON.stringify({
+        newAmount: 700000,
+        reason: "Penyesuaian tidak boleh saat verifikasi aktif",
+      }),
+    }
+  );
+  const pendingVerifAdjustRes = await adjustCompensation(pendingVerifAdjustReq, { params: Promise.resolve({ id: borrow.id }) });
+  assert.equal(pendingVerifAdjustRes.status, 400);
+
+  // 7. Seed second record to test complete liability waiver (newAmount = 0)
+  const waiverBorrow = await prisma.borrowRecord.create({
+    data: {
+      borrowCode: `BRW-0108-W-${Date.now()}`,
+      borrowerName: "Staff Excused",
+      borrowDate: new Date("2026-11-01"),
+      returnDueDate: new Date("2026-11-05"),
+      returnDate: new Date("2026-11-06"),
+      status: "RETURNED",
+      compensationAmount: 500000,
+      compensationStatus: "PENDING_SETTLEMENT",
+      compensationNotes: "Kerusakan wajar usia pakai",
+      items: {
+        create: [
+          {
+            inventoryItemId: item.id,
+            quantity: 1,
+            conditionOut: "GOOD",
+            conditionIn: "MINOR_DAMAGE",
+            goodUnits: 0,
+            minorDamageUnits: 1,
+            majorDamageUnits: 0,
+            lostUnits: 0,
+          },
+        ],
+      },
+    },
+  });
+
+  const waiverReq = new Request(
+    `http://localhost:3000/api/marcom/inventory/borrow/${waiverBorrow.id}/adjust-compensation`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Admin",
+      },
+      body: JSON.stringify({
+        newAmount: 0,
+        reason: "Pembebasan ganti rugi disetujui Manajemen Marketing (Memo #12)",
+      }),
+    }
+  );
+  const waiverRes = await adjustCompensation(waiverReq, { params: Promise.resolve({ id: waiverBorrow.id }) });
+  assert.equal(waiverRes.status, 200);
+  const waivedRecord = await waiverRes.json();
+  assert.equal(waivedRecord.compensationAmount, 0);
+  assert.equal(waivedRecord.compensationStatus, "RESOLVED");
+  assert.equal(waivedRecord.settledBy, "Warehouse Admin");
+  assert.ok(waivedRecord.settledAt);
+  assert.ok(waivedRecord.settlementNotes.includes("Ganti rugi dibebaskan/dihapus"));
+  assert.ok(waivedRecord.compensationNotes.includes("PENYESUAIAN Rp 500.000 -> Rp 0"));
 });

@@ -178,6 +178,25 @@ describe("BorrowDetailModal Staff Self-Cancellation & RBAC Invariants (ADR-0101)
       assert.ok(content.includes('"Picking Up..."'), "Must render Picking Up... text when mutating");
       assert.ok(content.includes("disabled={isMutating}"), "Must disable action buttons when isMutating is true");
     });
+
+    it("verifies compensation adjustment button and modal integration (ADR-0108)", () => {
+      const filePath = path.resolve(root, "src/components/views/InventoryView/BorrowDetailModal.tsx");
+      const content = fs.readFileSync(filePath, "utf-8");
+
+      assert.ok(content.includes("CompensationAdjustmentModal"), "Must import CompensationAdjustmentModal");
+      assert.ok(content.includes("Adjust Nilai Ganti Rugi"), "Must render Adjust Nilai Ganti Rugi button");
+      assert.ok(content.includes("isAdjustModalOpen"), "Must manage isAdjustModalOpen state");
+      assert.ok(content.includes("<CompensationAdjustmentModal"), "Must mount CompensationAdjustmentModal");
+
+      // Verify CompensationAdjustmentModal component implementation
+      const modalPath = path.resolve(root, "src/components/views/InventoryView/CompensationAdjustmentModal.tsx");
+      const modalContent = fs.readFileSync(modalPath, "utf-8");
+      assert.ok(modalContent.includes("Penyesuaian Nilai Ganti Rugi"), "Must render adjustment title");
+      assert.ok(modalContent.includes("Nominal Tagihan Saat Ini"), "Must render current amount card");
+      assert.ok(modalContent.includes("Pembebasan Ganti Rugi (Waiver to Rp 0)"), "Must render waiver notice when newAmount is 0");
+      assert.ok(modalContent.includes("reason.trim().length >= 5"), "Must validate minimum 5 characters reason");
+      assert.ok(modalContent.includes("/adjust-compensation"), "Must POST to adjust-compensation endpoint");
+    });
   });
 
   describe("getSettlementUiState helper invariants (ADR-0106)", () => {

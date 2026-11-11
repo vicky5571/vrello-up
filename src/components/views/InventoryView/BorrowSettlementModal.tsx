@@ -28,7 +28,6 @@ export function BorrowSettlementModal({
   const isStaff = effectiveRole === "staff";
 
   const [settlementType, setSettlementType] = useState<"CASH_TRANSFER" | "ITEM_REPLACEMENT">("CASH_TRANSFER");
-  const [settledAmount, setSettledAmount] = useState<number>(record.compensationAmount || 0);
   const [settlementNotes, setSettlementNotes] = useState<string>("");
   const [proofUrls, setProofUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -106,7 +105,7 @@ export function BorrowSettlementModal({
         body: JSON.stringify({
           action,
           settlementType: effectiveType,
-          settledAmount: effectiveType === "CASH_TRANSFER" ? settledAmount : 0,
+          settledAmount: effectiveType === "CASH_TRANSFER" ? (record.compensationAmount || 0) : 0,
           settlementNotes: settlementNotes.trim(),
           settlementProofUrls: proofUrls,
         }),
@@ -191,20 +190,20 @@ export function BorrowSettlementModal({
 
           {/* Form Content Mode A / Mode B */}
           {settlementType === "CASH_TRANSFER" ? (
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Nominal Pelunasan (Rp)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={settledAmount}
-                onChange={(e) => setSettledAmount(Math.max(0, Number(e.target.value)))}
-                className="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold"
-                required
-              />
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Nominal Pelunasan Wajib (One-Shot)
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  Tagihan Penuh
+                </span>
+              </div>
+              <div className="text-lg font-bold text-slate-900 dark:text-slate-100 mt-1">
+                {formatIDR(record.compensationAmount || 0)}
+              </div>
               <p className="text-[11px] text-slate-400 mt-1">
-                Tagihan awal: {formatIDR(record.compensationAmount || 0)}. Nilai di atas dapat disesuaikan sesuai nominal transfer aktual.
+                Nominal transfer wajib sesuai dengan total nilai ganti rugi yang telah ditetapkan.
               </p>
             </div>
           ) : (

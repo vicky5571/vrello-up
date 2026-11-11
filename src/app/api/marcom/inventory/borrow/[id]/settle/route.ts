@@ -100,10 +100,8 @@ export async function POST(
       );
     }
 
-    const settledAmountNum =
-      typeof settledAmount === "number" && !Number.isNaN(settledAmount)
-        ? Math.max(0, settledAmount)
-        : (existing.compensationAmount || 0);
+    // Unconditionally force exact outstanding liability (One-Shot Nominal Lock, ADR-0108)
+    const settledAmountNum = existing.compensationAmount || 0;
 
     try {
       const updated = await prisma.borrowRecord.update({
@@ -263,10 +261,9 @@ export async function POST(
     );
   }
 
+  // Unconditionally force exact outstanding liability for CASH_TRANSFER (One-Shot Nominal Lock, ADR-0108)
   const settledAmountNum =
-    typeof settledAmount === "number" && !Number.isNaN(settledAmount)
-      ? Math.max(0, settledAmount)
-      : (existing.compensationAmount || 0);
+    settlementType === "CASH_TRANSFER" ? (existing.compensationAmount || 0) : 0;
 
   try {
     const updated = await prisma.$transaction(async (tx) => {

@@ -15,12 +15,14 @@ import {
   Upload,
   XCircle,
   Loader2,
+  SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { BorrowRecord, BorrowStatus } from "@/types";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { BORROW_STATUS_CONFIG, CONDITION_CONFIG } from "./inventoryConstants";
 import { BorrowSettlementModal } from "./BorrowSettlementModal";
+import { CompensationAdjustmentModal } from "./CompensationAdjustmentModal";
 
 interface BorrowDetailModalProps {
   isOpen: boolean;
@@ -46,6 +48,7 @@ export function BorrowDetailModal({
   isMutating = false,
 }: BorrowDetailModalProps) {
   const [isSettlementModalOpen, setIsSettlementModalOpen] = useState(false);
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
   const [showRejectForm, setShowRejectForm] = useState(false);
@@ -402,9 +405,17 @@ export function BorrowDetailModal({
                 </div>
               )}
 
-              {/* Action Button: Selesaikan Ganti Rugi for Pending Settlement (Officer) */}
+              {/* Action Buttons: Selesaikan Ganti Rugi & Adjust for Pending Settlement (Officer) */}
               {record.compensationStatus === "PENDING_SETTLEMENT" && canManage && (
-                <div className="pt-2 border-t border-amber-200/60 dark:border-amber-900/40 flex justify-end">
+                <div className="pt-2 border-t border-amber-200/60 dark:border-amber-900/40 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAdjustModalOpen(true)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-800 dark:text-amber-300 bg-amber-100/80 hover:bg-amber-200/80 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700/60 flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <span>Adjust Nilai Ganti Rugi</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setIsSettlementModalOpen(true)}
@@ -817,6 +828,18 @@ export function BorrowDetailModal({
             onSettled?.(updated);
           }}
           userRole={role}
+        />
+      )}
+
+      {isAdjustModalOpen && (
+        <CompensationAdjustmentModal
+          record={record}
+          isOpen={isAdjustModalOpen}
+          onClose={() => setIsAdjustModalOpen(false)}
+          onSuccess={(updated) => {
+            setIsAdjustModalOpen(false);
+            onSettled?.(updated);
+          }}
         />
       )}
     </div>

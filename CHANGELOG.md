@@ -6,6 +6,26 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-12]
 
+- `feat(inventory)`: Strict one-shot settlement nominal lock and compensation adjustment workflow (ADR-0108)
+  - SSOT & Backend Enforcement (`src/types/index.ts`, `src/app/api/marcom/inventory/borrow/[id]/settle/route.ts`):
+    - Added `AdjustCompensationPayload` interface in SSOT `src/types/index.ts`.
+    - Enforced strict server-side nominal lock on `/settle`: `settledAmount` unconditionally locked to `existing.compensationAmount` for `CASH_TRANSFER`, discarding client alterations.
+  - Dedicated Adjustment API Route (`src/app/api/marcom/inventory/borrow/[id]/adjust-compensation/route.ts`):
+    - Created `POST /adjust-compensation` route with `PROCESS_RETURN` RBAC permission check (403 for unauthorized staff).
+    - Validates `newAmount >= 0`, `newAmount !== currentAmount`, and `reason.trim().length >= 5` (400 on validation failure).
+    - Appends timestamped audit trail log with officer identity, roles, and reason to `compensationNotes`.
+    - Handles complete liability waiver: setting `newAmount: 0` automatically transitions status to `RESOLVED` with `settledAt` and `settledBy`.
+  - Read-Only Settlement Modal (`src/components/views/InventoryView/BorrowSettlementModal.tsx`):
+    - Removed editable `<input type="number">` and mutable `settledAmount` state.
+    - Rendered styled read-only metric card with `"Tagihan Penuh (One-Shot)"` badge and formatted IDR value.
+  - Officer Adjustment Modal & Detail Modal Integration (`CompensationAdjustmentModal.tsx`, `BorrowDetailModal.tsx`):
+    - Created `CompensationAdjustmentModal.tsx` with current amount card, new amount input, waiver warning callout, and reason textarea.
+    - Mounted `"Adjust Nilai Ganti Rugi"` secondary button in `BorrowDetailModal.tsx` visible only to authorized officers (`canManage`) during `PENDING_SETTLEMENT`.
+  - Invariant Verification Tests:
+    - Added test suite in `src/app/api/marcom/inventory/inventoryApi.test.ts` for RBAC, validation, audit notes, waiver to 0, and one-shot lock.
+    - Updated `src/components/views/InventoryView/borrowSettlementModal.test.ts` and `borrowDetailModal.test.ts`.
+  - Refs: `docs/adr/0108-strict-one-shot-settlement-nominal-lock-and-compensation-adjustment-workflow.md`, `docs/superpowers/specs/2026-11-12-strict-one-shot-settlement-nominal-lock-and-compensation-adjustment-design.md`, `docs/superpowers/plans/2026-11-12-strict-one-shot-settlement-nominal-lock-and-compensation-adjustment.md`
+
 - `feat(inventory)`: Localized async mutation feedback and loading states for borrow lifecycle (ADR-0107)
   - Controller State & Concurrency Guard (`src/components/views/InventoryView/InventoryView.tsx`, `InventoryViewModals.tsx`):
     - Added `mutatingBorrowId` and `mutatingAction` state pair, guarding `handleStatusChange` against concurrent clicks and resetting cleanly in `finally`.
