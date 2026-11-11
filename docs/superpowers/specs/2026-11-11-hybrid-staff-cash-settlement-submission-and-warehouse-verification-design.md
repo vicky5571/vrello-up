@@ -165,6 +165,36 @@ export interface SettleCompensationPayload {
     - Retains dual-mode toggle (`CASH_TRANSFER` vs `ITEM_REPLACEMENT`).
     - Primary CTA button reads: `"Selesaikan & Verifikasi Pelunasan"` (dispatches `action: "DIRECT_RESOLVE"`).
 
+### 4.3. File: `src/lib/productivity/notifications.ts` & `NotificationCenter.tsx`
+- **NotificationKind Extension:** Add `"borrow_compensation"` to `NotificationKind`.
+- **Pure Derivation Function: `deriveBorrowCompensationNotifications(params)`:**
+  - **Borrower Alert:** When `rec.compensationStatus === "PENDING_SETTLEMENT"` and `rec.compensationAmount > 0`, if `isBorrower` (matched by `currentUserName`), emit:
+    - `id: "borrow-comp-${rec.id}"`
+    - `kind: "borrow_compensation"`
+    - `title: "Kewajiban Ganti Rugi: ${rec.borrowCode}"`
+    - `body: "Pengembalian alat memiliki estimasi ganti rugi sebesar Rp ${format(amount)}. Harap unggah bukti transfer atau temui petugas gudang."`
+  - **Manager Alert:** When `rec.compensationStatus === "PENDING_VERIFICATION"` and user has manager role (`warehouse`, `supervisor`, `admin`), emit:
+    - `id: "borrow-verify-${rec.id}"`
+    - `kind: "borrow_compensation"`
+    - `title: "Verifikasi Pelunasan: ${rec.borrowCode}"`
+    - `body: "Peminjam ${rec.borrowerName} telah mengajukan bukti pelunasan transfer. Mohon tinjau & konfirmasi."`
+- **`useNotificationFeed.ts`:** Update `borrowEndpoint` to include records with open compensation liabilities (`/api/marcom/inventory/borrow` or filter that includes returned compensation items).
+
+### 4.4. Files: `BorrowTrackingBoard.tsx` & `BorrowRecordsTable.tsx`
+- **Kanban Board (`BorrowTrackingBoard.tsx`):**
+  - For any card with `compensationStatus === "PENDING_SETTLEMENT"`:
+    - Render badge: `⚠️ Ganti Rugi: Rp ${amount} (Pending)` with amber/rose accent styling.
+    - If user is borrower: render shortcut button `"Unggah Bukti Transfer"`.
+    - If user is warehouse/admin: render shortcut button `"Proses Pelunasan"`.
+  - For any card with `compensationStatus === "PENDING_VERIFICATION"`:
+    - Render badge: `⏳ Menunggu Konfirmasi: Rp ${amount}`.
+  - For any card with `compensationStatus === "RESOLVED"`:
+    - Render badge: `✓ Ganti Rugi Lunas`.
+- **Table View (`BorrowRecordsTable.tsx`):**
+  - Add filter tab: `{ id: "SETTLEMENT", label: "Ganti Rugi Pending" }`.
+  - Status column renders compensation sub-badge alongside `"Returned"`.
+
+
 ---
 
 ## 5. Acceptance Criteria (Gherkin Scenarios)
@@ -204,6 +234,19 @@ export interface SettleCompensationPayload {
 - **And** the officer has role `warehouse`
 - **When** the officer settles compensation at the counter
 - **Then** the record transitions directly to `RESOLVED` in 1 step without passing through `PENDING_VERIFICATION`.
+
+### AC-6: Activity Center Derives Compensation Notifications
+- **Given** an officer returns equipment and records afkir compensation (`compensationStatus = "PENDING_SETTLEMENT"`)
+- **When** the borrower opens the TopNav notification center
+- **Then** an in-app alert is displayed: `"Kewajiban Ganti Rugi: BRW-XXXX"` with the liability amount.
+- **And** when a staff submits transfer proof, managers (`warehouse`, `supervisor`, `admin`) receive an alert `"Verifikasi Pelunasan: BRW-XXXX"`.
+
+### AC-7: Borrow Transaction Board & Table Compensation Visibility
+- **Given** a record in `"Returned to Storage"` has `compensationStatus = "PENDING_SETTLEMENT"`
+- **When** a user views the Borrow Transactions kanban board
+- **Then** the card renders a prominent badge `⚠️ Ganti Rugi: Rp X (Pending)` and border accent
+- **And** in Table view, switching to tab `"Ganti Rugi Pending"` filters all records with unsettled compensation.
+
 
 ---
 

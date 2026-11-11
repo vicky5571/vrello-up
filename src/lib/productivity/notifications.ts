@@ -19,7 +19,8 @@ export type NotificationKind =
   | "mou_expiry"
   | "status"
   | "overdue"
-  | "borrow_overdue";
+  | "borrow_overdue"
+  | "borrow_compensation";
 
 export interface AppNotification {
   id: string;
@@ -235,12 +236,15 @@ export interface BorrowNotificationRow {
   borrowCode: string;
   borrowerName: string;
   returnDueDate: string; // ISO string
-  status: string; // "ACTIVE" | "OVERDUE"
+  status: string; // "ACTIVE" | "OVERDUE" | "RETURNED"
   itemsSummary?: string; // e.g. "Tenda Lipat (2), Sound System (1)"
   items?: Array<{
     inventoryItem?: { name?: string };
     quantity?: number;
   }>;
+  compensationStatus?: string; // "NONE" | "PENDING_SETTLEMENT" | "PENDING_VERIFICATION" | "RESOLVED"
+  compensationAmount?: number;
+  updatedAt?: string; // ISO string — used as createdAt for compensation notifications
 }
 
 /**
@@ -318,5 +322,79 @@ export function deriveBorrowOverdueNotifications(params: {
 
   return notifs.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+/**
+ * Derives in-app notifications for equipment borrowing compensation liabilities (ADR-0106).
+ *
+ * Emits personal alerts for borrowers who have an open compensation obligation
+ * (PENDING_SETTLEMENT), and operational alerts for warehouse/supervisor/admin when
+ * a staff member has submitted a proof and is awaiting verification (PENDING_VERIFICATION).
+ */
+export function deriveBorrowCompensationNotifications(params: {
+  records: BorrowNotificationRow[];
+  currentUserName: string;
+  userRole: "admin" | "supervisor" | "warehouse" | "staff" | "viewer";
+  now?: Date;
+}): AppNotification[] {
+  const { records, currentUserName, userRole, now = new Date() } = params;
+  const notifs: AppNotification[] = [];
+  const normalizedUser = (currentUserName || "").trim().toLowerCase();
+  const isManager =
+    userRole === "warehouse" || userRole === "supervisor" || userRole === "admin";
+
+  for (const rec of records) {
+    if (!rec.compensationStatus || rec.compensationStatus === "NONE" || rec.compensationStatus === "RESOLVED") {
+      continue;
+    }
+
+    const isBorrower =
+      Boolean(normalizedUser) &&
+      rec.borrowerName.trim().toLowerCase() === normalizedUser;
+
+    const createdAt = rec.updatedAt || now.toISOString();
+    const formattedAmount = (rec.compensationAmount || 0).toLocaleString("id-ID");
+
+    if (rec.compensationStatus === "PENDING_SETTLEMENT" && (rec.compensationAmount ?? 0) > 0) {
+      // Personal alert for the borrower with an outstanding obligation
+      if (isBorrower) {
+        notifs.push({
+          id: `borrow-comp-${rec.id}`,
+          kind: "borrow_compensation",
+          title: `Kewajiban Ganti Rugi: ${rec.borrowCode}`,
+          body: `Kamu memiliki kewajiban ganti rugi sebesar Rp ${formattedAmount}. Silakan ajukan bukti transfer melalui halaman peminjaman.`,
+          createdAt,
+        });
+      }
+    }
+
+    if (rec.compensationStatus === "PENDING_VERIFICATION") {
+      // Personal reminder for the borrower that their submission is under review
+      if (isBorrower) {
+        notifs.push({
+          id: `borrow-comp-sent-${rec.id}`,
+          kind: "borrow_compensation",
+          title: `Pengajuan Pelunasan Dikirim: ${rec.borrowCode}`,
+          body: `Bukti transfer kamu (Rp ${formattedAmount}) sedang menunggu konfirmasi admin/gudang.`,
+          createdAt,
+        });
+      }
+
+      // Operational alert for manager to verify the submission
+      if (isManager) {
+        notifs.push({
+          id: `borrow-verify-${rec.id}`,
+          kind: "borrow_compensation",
+          title: `Verifikasi Pelunasan: ${rec.borrowCode}`,
+          body: `${rec.borrowerName} telah mengajukan bukti transfer (Rp ${formattedAmount}). Harap konfirmasi atau tolak pengajuan.`,
+          createdAt,
+        });
+      }
+    }
+  }
+
+  return notifs.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 }

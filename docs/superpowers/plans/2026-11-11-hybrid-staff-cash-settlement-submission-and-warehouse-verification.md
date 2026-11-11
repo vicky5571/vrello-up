@@ -22,6 +22,12 @@ This plan implements the hybrid staff settlement submission and two-step verific
 | `src/components/views/InventoryView/borrowSettlementModal.test.ts` | Edit | Assert modal role differentiation, helper text, and submit action. | ~35 lines added |
 | `src/components/views/InventoryView/BorrowDetailModal.tsx` | Edit | Display amber `"Menunggu Konfirmasi"` badge, review cards, and officer Confirm / Reject action controls. | ~50 lines edited |
 | `src/components/views/InventoryView/borrowDetailModal.test.ts` | Edit | Assert `PENDING_VERIFICATION` badge, officer confirmation/rejection buttons, and staff alert banner. | ~35 lines added |
+| `src/lib/productivity/notifications.ts` | Edit | Extend `NotificationKind` with `"borrow_compensation"` and pure derivation `deriveBorrowCompensationNotifications`. | ~45 lines added |
+| `src/lib/productivity/notifications.test.ts` | Edit | Unit tests for borrower compensation alert and manager verification notification. | ~30 lines added |
+| `src/components/layout/NotificationCenter.tsx` | Edit | Register `borrow_compensation` in `KIND_META` and group notifications. | ~10 lines edited |
+| `src/lib/productivity/useNotificationFeed.ts` | Edit | Ensure borrow notifications feed fetches records with open compensation liabilities. | ~10 lines edited |
+| `src/components/views/InventoryView/BorrowTrackingBoard.tsx` | Edit | Render compensation badges (`PENDING_SETTLEMENT`, `PENDING_VERIFICATION`, `RESOLVED`), border accent, and quick actions. | ~40 lines edited |
+| `src/components/views/InventoryView/BorrowRecordsTable.tsx` | Edit | Add `"Ganti Rugi Pending"` filter tab and table row status sub-badges. | ~25 lines edited |
 | `docs/SESSION_STATE.md` | Edit | Record ADR-0106 completion and verification gate results. | ~20 lines edited |
 
 ### Prerequisites & Dependencies
@@ -117,17 +123,46 @@ This plan implements the hybrid staff settlement submission and two-step verific
 
 ---
 
-## 5. Phase 4: Non-Negotiable Verification & Session Handoff
+## 5. Phase 4: Activity Center Notifications & Borrow Transactions Board/Table Visibility
 
-- [ ] **Task 4.1: Drift Check**
+- [ ] **Task 4.1: Extend Notifications Derivation (`notifications.ts`)**
+  - File: `src/lib/productivity/notifications.ts`
+  - Add `"borrow_compensation"` to `NotificationKind`.
+  - Add `compensationStatus?: string` and `compensationAmount?: number` to `BorrowNotificationRow`.
+  - Implement `deriveBorrowCompensationNotifications(params)`:
+    - Personal alert for borrower when `compensationStatus === "PENDING_SETTLEMENT"`.
+    - Manager notification when `compensationStatus === "PENDING_VERIFICATION"`.
+- [ ] **Task 4.2: Register in `NotificationCenter.tsx` & Feed Sync**
+  - File: `src/components/layout/NotificationCenter.tsx`
+  - File: `src/lib/productivity/useNotificationFeed.ts`
+  - Register `borrow_compensation` in `KIND_META` and `KIND_ORDER`.
+  - Call `deriveBorrowCompensationNotifications` and merge with `allNotifs`.
+  - Update `useNotificationFeed.ts` to ensure returned records with compensation are fetched.
+- [ ] **Task 4.3: Enhance Kanban Cards (`BorrowTrackingBoard.tsx`)**
+  - File: `src/components/views/InventoryView/BorrowTrackingBoard.tsx`
+  - Display compensation chips (`PENDING_SETTLEMENT` amber/rose, `PENDING_VERIFICATION` yellow, `RESOLVED` green).
+  - Add border styling and quick action buttons for staff and warehouse roles.
+- [ ] **Task 4.4: Enhance Table View (`BorrowRecordsTable.tsx`)**
+  - File: `src/components/views/InventoryView/BorrowRecordsTable.tsx`
+  - Add `"Ganti Rugi Pending"` tab in `STATUS_TABS`.
+  - Add status sub-badge for compensation liability in the Status column.
+- [ ] **Task 4.5: Verify Phase 4 Invariants**
+  - Run: `node --test --import ./test/register-alias.mjs src/lib/productivity/notifications.test.ts`
+
+---
+
+## 6. Phase 5: Non-Negotiable Verification & Session Handoff
+
+- [ ] **Task 5.1: Drift Check**
   - Run: `npm run drift:check` (must pass with 133/133 spec-plan pairs, 0 drift).
-- [ ] **Task 4.2: Build Check**
+- [ ] **Task 5.2: Build Check**
   - Run: `npm run build:check` (0 TypeScript / Next.js compilation errors).
-- [ ] **Task 4.3: Full Test Suite**
+- [ ] **Task 5.3: Full Test Suite**
   - Run: `npm test` (0 failures across all suites).
-- [ ] **Task 4.4: Update Documentation Handoff**
+- [ ] **Task 5.4: Update Documentation Handoff**
   - File: `docs/SESSION_STATE.md`
   - Record ADR-0106 completion and verification gate results.
+
 
 
 

@@ -18,6 +18,7 @@ import {
   deriveMouNotifications,
   deriveTaskNotifications,
   deriveBorrowOverdueNotifications,
+  deriveBorrowCompensationNotifications,
   type AppNotification,
   type NotificationKind,
 } from "@/lib/productivity/notifications";
@@ -28,6 +29,7 @@ const KIND_META: Record<
   NotificationKind,
   { label: string; icon: typeof Bell; className: string }
 > = {
+  borrow_compensation: { label: "Kompensasi ganti rugi", icon: AlertTriangle, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
   borrow_overdue: { label: "Equipment overdue", icon: AlarmClock, className: "bg-rose-500/10 text-rose-500" },
   assignment: { label: "Assignments", icon: UserPlus, className: "bg-blue-500/10 text-blue-500" },
   mou_approval: { label: "MOU approvals", icon: FileCheck, className: "bg-violet-500/10 text-violet-500" },
@@ -36,7 +38,7 @@ const KIND_META: Record<
   overdue: { label: "Overdue", icon: AlarmClock, className: "bg-rose-500/10 text-rose-500" },
 };
 
-const KIND_ORDER: NotificationKind[] = ["borrow_overdue", "overdue", "mou_expiry", "mou_approval", "assignment", "status"];
+const KIND_ORDER: NotificationKind[] = ["borrow_compensation", "borrow_overdue", "overdue", "mou_expiry", "mou_approval", "assignment", "status"];
 
 function timeAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
@@ -92,12 +94,21 @@ export function NotificationCenter() {
       }),
     [borrowRows, session?.user?.name, session?.user?.role],
   );
+  const compensationNotifs = useMemo(
+    () =>
+      deriveBorrowCompensationNotifications({
+        records: borrowRows,
+        currentUserName: session?.user?.name || "",
+        userRole: (session?.user?.role as "admin" | "supervisor" | "warehouse" | "staff" | "viewer") || "staff",
+      }),
+    [borrowRows, session?.user?.name, session?.user?.role],
+  );
   const allNotifs = useMemo<AppNotification[]>(
     () =>
-      [...taskNotifs, ...mouNotifs, ...borrowNotifs].sort(
+      [...taskNotifs, ...mouNotifs, ...borrowNotifs, ...compensationNotifs].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
-    [taskNotifs, mouNotifs, borrowNotifs],
+    [taskNotifs, mouNotifs, borrowNotifs, compensationNotifs],
   );
   const unread = countUnread(allNotifs, lastSeenNotificationsAt);
   const isUnread = (n: AppNotification) =>
@@ -222,7 +233,7 @@ export function NotificationCenter() {
                           key={n.id}
                           type="button"
                           onClick={() => {
-                            if (n.kind === "borrow_overdue") {
+                            if (n.kind === "borrow_overdue" || n.kind === "borrow_compensation") {
                               handleOpenBorrowing();
                             } else if (n.kind === "mou_approval" || n.kind === "mou_expiry") {
                               handleOpenMous();

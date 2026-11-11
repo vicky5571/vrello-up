@@ -114,6 +114,13 @@ stateDiagram-v2
    - When opened by `staff`:
      - Mode toggle is locked to `"Pembayaran Kas / Transfer Bank"`.
      - The `"Penggantian Barang Fisik"` toggle is disabled with a descriptive tooltip / helper text.
+3. **Activity Center Notifications (`NotificationCenter.tsx` & `notifications.ts`):**
+   - **Borrower Alert:** Emits personal alert to borrower when `compensationStatus === "PENDING_SETTLEMENT"` informing of the outstanding compensation obligation with amount.
+   - **Manager Alert:** Emits notification to `warehouse`, `supervisor`, and `admin` when `compensationStatus === "PENDING_VERIFICATION"` informing that staff has submitted transfer proof awaiting confirmation.
+4. **Borrow Transactions Page Visibility (`BorrowTrackingBoard.tsx` & `BorrowRecordsTable.tsx`):**
+   - **Kanban Card Deck:** Renders prominent amber/rose badge `⚠️ Ganti Rugi: Rp X (Pending)` or `⏳ Menunggu Verifikasi: Rp X` on returned cards with border highlight and quick action buttons.
+   - **Table View:** Introduces a dedicated filter tab `"Ganti Rugi Pending (N)"` alongside status sub-badges in the table rows for immediate visibility.
+
 
 ---
 

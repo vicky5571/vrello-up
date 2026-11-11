@@ -104,6 +104,10 @@ export function BorrowTrackingBoard({
                       className={`bg-white dark:bg-slate-900 border rounded-lg p-3.5 shadow-sm hover:shadow-md transition-all cursor-pointer group ${
                         isOverdue
                           ? "border-rose-300 dark:border-rose-900/60 bg-rose-50/20 dark:bg-rose-950/10"
+                          : r.compensationStatus === "PENDING_SETTLEMENT"
+                          ? "border-amber-300 dark:border-amber-800/60"
+                          : r.compensationStatus === "PENDING_VERIFICATION"
+                          ? "border-yellow-300 dark:border-yellow-700/60"
                           : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                       }`}
                     >
@@ -134,6 +138,28 @@ export function BorrowTrackingBoard({
                       <div className="mt-2 text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-2 rounded line-clamp-2">
                         {itemsSummary || "No items recorded"}
                       </div>
+
+                      {/* Compensation Status Badge */}
+                      {r.compensationStatus && r.compensationStatus !== "NONE" && (
+                        <div
+                          className={`mt-2 flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold border ${
+                            r.compensationStatus === "RESOLVED"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900"
+                              : r.compensationStatus === "PENDING_VERIFICATION"
+                              ? "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-400 dark:border-yellow-900"
+                              : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900"
+                          }`}
+                        >
+                          <AlertCircle className="w-3 h-3 shrink-0" />
+                          <span>
+                            {r.compensationStatus === "RESOLVED"
+                              ? "✓ Ganti Rugi Lunas"
+                              : r.compensationStatus === "PENDING_VERIFICATION"
+                              ? `⏳ Menunggu Konfirmasi: Rp ${(r.compensationAmount || 0).toLocaleString("id-ID")}`
+                              : `⚠ Ganti Rugi: Rp ${(r.compensationAmount || 0).toLocaleString("id-ID")} (Pending)`}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Location & Linked Event */}
                       <div className="mt-2 flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 truncate">

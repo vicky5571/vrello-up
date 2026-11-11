@@ -21,6 +21,7 @@ const STATUS_TABS = [
   { id: "ACTIVE", label: "Active" },
   { id: "OVERDUE", label: "Overdue" },
   { id: "RETURNED", label: "Returned" },
+  { id: "SETTLEMENT", label: "Ganti Rugi Pending" },
 ];
 
 export function BorrowRecordsTable({
@@ -33,6 +34,8 @@ export function BorrowRecordsTable({
 }: BorrowRecordsTableProps) {
   const filteredRecords = records.filter((r) => {
     if (activeStatusTab === "ALL") return true;
+    if (activeStatusTab === "SETTLEMENT")
+      return r.compensationStatus === "PENDING_SETTLEMENT" || r.compensationStatus === "PENDING_VERIFICATION";
     return r.status === activeStatusTab;
   });
 
@@ -44,6 +47,8 @@ export function BorrowRecordsTable({
           const count =
             tab.id === "ALL"
               ? records.length
+              : tab.id === "SETTLEMENT"
+              ? records.filter((r) => r.compensationStatus === "PENDING_SETTLEMENT" || r.compensationStatus === "PENDING_VERIFICATION").length
               : records.filter((r) => r.status === tab.id).length;
           const isActive = activeStatusTab === tab.id;
 
@@ -173,6 +178,23 @@ export function BorrowRecordsTable({
                           {r.status === "RETURNED" && <CheckCircle2 className="w-3 h-3" />}
                           {statusCfg.label}
                         </span>
+                        {r.compensationStatus && r.compensationStatus !== "NONE" && (
+                          <span
+                            className={`mt-1 flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full border w-fit ${
+                              r.compensationStatus === "RESOLVED"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900"
+                                : r.compensationStatus === "PENDING_VERIFICATION"
+                                ? "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-400 dark:border-yellow-900"
+                                : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900"
+                            }`}
+                          >
+                            {r.compensationStatus === "RESOLVED"
+                              ? "✓ Lunas"
+                              : r.compensationStatus === "PENDING_VERIFICATION"
+                              ? "⏳ Menunggu Verifikasi"
+                              : "⚠ Ganti Rugi Pending"}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="inline-flex items-center gap-1.5">

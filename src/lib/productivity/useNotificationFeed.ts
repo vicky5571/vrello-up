@@ -19,7 +19,7 @@ export interface UseNotificationFeedResult {
 export function useNotificationFeed({
   isOpen = false,
   endpoint = "/api/marcom/mous",
-  borrowEndpoint = "/api/marcom/inventory/borrow?status=ACTIVE",
+  borrowEndpoint = "/api/marcom/inventory/borrow",
 }: UseNotificationFeedOptions = {}): UseNotificationFeedResult {
   const [mouRows, setMouRows] = useState<MouLike[]>([]);
   const [borrowRows, setBorrowRows] = useState<BorrowNotificationRow[]>([]);

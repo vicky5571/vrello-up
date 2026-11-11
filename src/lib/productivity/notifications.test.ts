@@ -224,3 +224,203 @@ test("deriveBorrowOverdueNotifications returns empty array when all returns are 
   assert.equal(notifs.length, 0);
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ADR-0106 — deriveBorrowCompensationNotifications
+// ─────────────────────────────────────────────────────────────────────────────
+import { deriveBorrowCompensationNotifications } from "./notifications";
+
+test("deriveBorrowCompensationNotifications: borrower receives PENDING_SETTLEMENT alert when amount > 0 (AC-5a)", () => {
+  const records = [
+    {
+      id: "comp-1",
+      borrowCode: "BRW-20261101-010",
+      borrowerName: "Alice Smith",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "PENDING_SETTLEMENT",
+      compensationAmount: 500000,
+      updatedAt: "2026-11-06T10:00:00.000Z",
+    },
+  ];
+
+  const notifs = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Alice Smith",
+    userRole: "staff",
+  });
+
+  assert.equal(notifs.length, 1);
+  assert.equal(notifs[0].kind, "borrow_compensation");
+  assert.ok(notifs[0].title.includes("BRW-20261101-010"));
+  assert.ok(notifs[0].body!.includes("500.000"));
+});
+
+test("deriveBorrowCompensationNotifications: borrower does NOT receive alert when compensationStatus is NONE (AC-5b)", () => {
+  const records = [
+    {
+      id: "comp-2",
+      borrowCode: "BRW-20261101-011",
+      borrowerName: "Alice Smith",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "NONE",
+      compensationAmount: 0,
+    },
+  ];
+
+  const notifs = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Alice Smith",
+    userRole: "staff",
+  });
+
+  assert.equal(notifs.length, 0);
+});
+
+test("deriveBorrowCompensationNotifications: borrower does NOT receive alert when compensationStatus is RESOLVED (AC-5c)", () => {
+  const records = [
+    {
+      id: "comp-3",
+      borrowCode: "BRW-20261101-012",
+      borrowerName: "Alice Smith",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "RESOLVED",
+      compensationAmount: 500000,
+    },
+  ];
+
+  const notifs = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Alice Smith",
+    userRole: "staff",
+  });
+
+  assert.equal(notifs.length, 0);
+});
+
+test("deriveBorrowCompensationNotifications: manager receives PENDING_VERIFICATION operational alert (AC-5d)", () => {
+  const records = [
+    {
+      id: "comp-4",
+      borrowCode: "BRW-20261101-013",
+      borrowerName: "Budi Santoso",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "PENDING_VERIFICATION",
+      compensationAmount: 750000,
+      updatedAt: "2026-11-07T08:00:00.000Z",
+    },
+  ];
+
+  const notifs = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Warehouse Manager",
+    userRole: "warehouse",
+  });
+
+  assert.equal(notifs.length, 1);
+  assert.equal(notifs[0].id, "borrow-verify-comp-4");
+  assert.ok(notifs[0].title.includes("BRW-20261101-013"));
+  assert.ok(notifs[0].body!.includes("Budi Santoso"));
+  assert.ok(notifs[0].body!.includes("750.000"));
+});
+
+test("deriveBorrowCompensationNotifications: staff non-borrower does NOT receive verification alert (AC-5e)", () => {
+  const records = [
+    {
+      id: "comp-5",
+      borrowCode: "BRW-20261101-014",
+      borrowerName: "Budi Santoso",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "PENDING_VERIFICATION",
+      compensationAmount: 750000,
+    },
+  ];
+
+  const notifs = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Other Staff",
+    userRole: "staff",
+  });
+
+  // Other staff: not borrower (no personal alert), not manager (no operational alert)
+  assert.equal(notifs.length, 0);
+});
+
+test("deriveBorrowCompensationNotifications: PENDING_VERIFICATION emits both borrower and manager alerts (AC-5f)", () => {
+  const records = [
+    {
+      id: "comp-6",
+      borrowCode: "BRW-20261101-015",
+      borrowerName: "Clara Dewi",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "PENDING_VERIFICATION",
+      compensationAmount: 300000,
+      updatedAt: "2026-11-08T10:00:00.000Z",
+    },
+  ];
+
+  // Test from admin perspective (is also the borrower — unlikely but test both roles)
+  const notifsAdmin = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Admin User",
+    userRole: "admin",
+  });
+  // Admin is not the borrower, only gets operational alert
+  assert.equal(notifsAdmin.length, 1);
+  assert.equal(notifsAdmin[0].id, "borrow-verify-comp-6");
+
+  // Test from borrower's perspective
+  const notifsBorrower = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Clara Dewi",
+    userRole: "staff",
+  });
+  // Borrower gets personal "sent" reminder
+  assert.equal(notifsBorrower.length, 1);
+  assert.equal(notifsBorrower[0].id, "borrow-comp-sent-comp-6");
+});
+
+test("deriveBorrowCompensationNotifications: multiple records produce correct notification count (AC-5g)", () => {
+  const records = [
+    {
+      id: "multi-1",
+      borrowCode: "BRW-001",
+      borrowerName: "Staff A",
+      returnDueDate: "2026-11-01T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "PENDING_SETTLEMENT",
+      compensationAmount: 100000,
+    },
+    {
+      id: "multi-2",
+      borrowCode: "BRW-002",
+      borrowerName: "Staff B",
+      returnDueDate: "2026-11-01T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "PENDING_VERIFICATION",
+      compensationAmount: 200000,
+    },
+    {
+      id: "multi-3",
+      borrowCode: "BRW-003",
+      borrowerName: "Staff C",
+      returnDueDate: "2026-11-01T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "NONE",
+      compensationAmount: 0,
+    },
+  ];
+
+  // As warehouse manager: should get 1 operational alert (multi-2 PENDING_VERIFICATION)
+  const notifsManager = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Warehouse Manager",
+    userRole: "warehouse",
+  });
+  assert.equal(notifsManager.length, 1);
+  assert.equal(notifsManager[0].id, "borrow-verify-multi-2");
+});
