@@ -112,10 +112,20 @@
      - Menampilkan banner edukatif bagi staf bahwa bukti sedang menunggu verifikasi admin/gudang.
      - Menyediakan tombol `"Kirim Bukti Pelunasan Transfer"` bagi peminjam (`staff`) saat status `PENDING_SETTLEMENT`.
      - Unit test invariant passing (16/16 tests pass).
-   - **Phase 4: Non-Negotiable Verification Gates:**
+   - **Phase 4: Notification & Visibility Enhancement (`notifications.ts`, `NotificationCenter.tsx`, `BorrowTrackingBoard.tsx`, `BorrowRecordsTable.tsx`):**
+     - Mendaftarkan kind `"borrow_compensation"` pada `NotificationKind` dan memperluas interface `BorrowNotificationRow` di `src/lib/productivity/notifications.ts`.
+     - Mengimplementasikan pure function `deriveBorrowCompensationNotifications`:
+       - Alert personal untuk peminjam (`staff`) saat memiliki kewajiban ganti rugi (`PENDING_SETTLEMENT`) dan reminder pengajuan dikirim (`PENDING_VERIFICATION`).
+       - Alert operasional untuk manajer (`warehouse`/`supervisor`/`admin`) saat staf mengajukan bukti transfer (`PENDING_VERIFICATION`).
+     - Menambahkan 7 unit tests untuk notifikasi ganti rugi di `src/lib/productivity/notifications.test.ts` (16/16 tests pass).
+     - Menyesuaikan `useNotificationFeed.ts` agar mengambil seluruh peminjaman tanpa batasan `status=ACTIVE` sehingga status `RETURNED` dengan ganti rugi pending masuk ke feed.
+     - Melakukan modularisasi Strangler Pattern pada `NotificationCenter.tsx` dengan mengekstrak `notificationCenterConfig.ts` dan subkomponen `NotificationItem.tsx`, menjaga ukuran file koordinator di 227 LOC (mematuhi batas ketat `< 250 LOC`).
+     - Memperbarui `BorrowTrackingBoard.tsx` dengan chip badge status kompensasi (amber/yellow/emerald) dan aksen border dinamis pada kartu peminjaman.
+     - Memperbarui `BorrowRecordsTable.tsx` dengan penambahan tab filter `"Ganti Rugi Pending"` beserta counter badge dan sub-badge kompensasi pada kolom status.
+   - **Phase 5: Non-Negotiable Verification Gates:**
      - `npm run drift:check`: PASS (133/133 spec-plan pairs valid, coordinator files <= 250 LOC, zero drift).
      - `npm run build:check`: PASS (TypeScript 5 + Next.js 15 compilation, 0 errors).
-     - `npm test`: PASS (1115 tests passed across 197 test suites, 0 failures).
+     - `npm test`: PASS (1122 tests passed across 197 test suites, 0 failures).
 
 2. **Implementasi Multi-Photo Direct Upload for Inventory Damage Inspection (ADR-0105 — Implementation Complete):**
    - **Akar Masalah & Kebutuhan Lapangan (Temuan Lapangan):**
