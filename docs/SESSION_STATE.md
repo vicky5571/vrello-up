@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-11  
 **Active Branch:** `vicky`  
-**Active Feature:** Strict Test-Environment Header Isolation & Inventory Auth Standardization (ADR-0104) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Multi-Photo Direct Upload for Inventory Damage Inspection (ADR-0105) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Strict Test-Environment Header Isolation & Inventory Auth Standardization (ADR-0104) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Virtual Overdue Status Lifecycle & Dual-Channel Notifications (ADR-0103) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Calendar-Based Equipment Booking & Collision Engine (ADR-0102) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Staff Self-Cancellation and CANCEL_OWN_BORROW RBAC Action (ADR-0101) — **IMPLEMENTATION COMPLETE**  
@@ -88,7 +89,37 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Strict Test-Environment Header Isolation & Inventory Auth Standardization (ADR-0104 — Implementation Complete):**
+1. **Implementasi Multi-Photo Direct Upload for Inventory Damage Inspection (ADR-0105 — Implementation Complete):**
+   - **Akar Masalah & Kebutuhan Lapangan (Temuan Lapangan):**
+     - Pada modal pengembalian alat (`ReturnProcessModal.tsx`), input foto kerusakan sebelumnya berupa input teks pasif yang mengharuskan petugas gudang mengetikkan URL eksternal secara manual.
+     - Ketika petugas mengklik tombol "+ Tambah" tanpa mengisi URL atau mencoba mengunggah foto, tidak ada respon visual (silent failure) karena `handleAddPhoto` mensyaratkan `photoInputUrl.trim()`.
+     - Secara operasional, petugas gudang memotret kondisi fisik alat yang rusak langsung dari ponsel atau kamera kerja mereka, sehingga membutuhkan pemilihan file foto langsung dari galeri/kamera lokal.
+   - **Phase 1: Backend Storage & Authorization Mapping (`src/app/api/marcom/uploads/route.ts` & `uploadsApi.test.ts`):**
+     - Mendaftarkan kind `"inventory-damage"` pada `VALID_KINDS`.
+     - Memetakan storage bucket `"inventory-damage"` pada `BUCKET_MAP` dan folder prefix `"damage"` pada `KIND_PREFIX`.
+     - Memetakan izin keamanan `"PROCESS_RETURN"` pada `PERMISSION_MAP` untuk memastikan hanya petugas berwenang (warehouse/admin) yang dapat mengunggah bukti kerusakan.
+     - Menambahkan verifikasi unit test invariant pada `src/app/api/marcom/uploads/uploadsApi.test.ts`.
+   - **Phase 2: Active Multi-Photo Deck & Client Compression (`src/components/views/InventoryView/ReturnProcessModal.tsx`):**
+     - Menghapus input teks URL pasif `photoInputUrl` dan tombol "+ Tambah".
+     - Memasang native hidden input `<input type="file" multiple accept="image/*">` dengan tombol interaktif `+ Unggah Foto Kerusakan`.
+     - Mengintegrasikan kompresi gambar klien (`compressImage`) untuk mereduksi resolusi foto resolusi tinggi kamera smartphone (12-48MP) menjadi maksimal 1600x1600 pada kualitas 0.82 sebelum upload HTTP multipart.
+     - Menyediakan indikator loading/progres unggahan visual (`uploadStatus`, `isUploading`) dan galeri thumbnail interaktif dengan preview foto dan tombol hapus individual (`handleRemovePhoto`).
+     - Mengunci tombol submit dan tombol batal modal saat upload sedang berlangsung (`disabled={loading || isUploading || isAnySumInvalid}`).
+   - **Phase 3: Automated Invariant & Security Tests (`src/components/views/InventoryView/returnProcessModal.test.ts`):**
+     - Memperbarui invariant guard tombol submit agar memvalidasi status `isUploading`.
+     - Menambahkan unit test invariant untuk ADR-0105: memastikan penghapusan teks URL, keberadaan input file `multiple` dan `accept="image/*"`, kompresi klien `compressImage`, kind upload `inventory-damage`, dan fungsi hapus thumbnail.
+     - Unit test suite: 5/5 tests passing (0 failures).
+   - **Phase 4: Non-Negotiable Verification Gates:**
+     - `npm run drift:check`: ✅ 0 drift detected (132/132 spec-plan pairs valid, coordinator files $\le 250$ LOC, single-tenant invariants terjaga).
+     - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
+     - `npm test`: ✅ 1,108/1,108 tests passing across 196 suites (0 failures).
+     - `npm run test:smoke`: ✅ 174/174 tests passing (0 failures).
+   - **Artefak:**
+     - ADR: [`docs/adr/0105-multi-photo-direct-upload-for-inventory-damage-inspection.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0105-multi-photo-direct-upload-for-inventory-damage-inspection.md)
+     - Spec: [`docs/superpowers/specs/2026-11-11-multi-photo-direct-upload-for-inventory-damage-inspection-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-11-multi-photo-direct-upload-for-inventory-damage-inspection-design.md)
+     - Plan: [`docs/superpowers/plans/2026-11-11-multi-photo-direct-upload-for-inventory-damage-inspection.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-11-multi-photo-direct-upload-for-inventory-damage-inspection.md)
+
+2. **Implementasi Strict Test-Environment Header Isolation & Inventory Auth Standardization (ADR-0104 — Implementation Complete):**
    - **Akar Masalah & Vektor Kerentanan (Temuan 6):**
      - Endpoint peminjaman inventaris (`/borrow`, `/borrow/[id]`, `/return`, `/settle`) membaca header pengujian `x-user-role` tanpa pembatasan lingkungan yang ketat. Pada production atau staging terbuka, penyerang dapat menyuntikkan header `x-user-role: admin` untuk mengelevasi hak akses melompati otentikasi NextAuth.
      - Pada `/return/route.ts`, terdapat fallback non-produksi `(process.env.NODE_ENV === "production" ? "viewer" : "warehouse")` yang secara implisit memberikan peran `warehouse` pada setiap request tanpa otentikasi di lingkungan pengembangan dan staging, melanggar *Four-Eyes Principle* (ADR-0050).

@@ -15,7 +15,34 @@ describe("ReturnProcessModal & Compensation UI Invariants (ADR-0050)", () => {
     assert.ok(content.includes("majorDamageUnits"), "Must support majorDamageUnits");
     assert.ok(content.includes("lostUnits"), "Must support lostUnits");
     assert.ok(content.includes("isAnySumInvalid"), "Must calculate isAnySumInvalid");
-    assert.ok(content.includes("disabled={loading || isAnySumInvalid}"), "Submit button must disable when sum is invalid");
+    assert.ok(
+      content.includes("disabled={loading || isAnySumInvalid}") ||
+        content.includes("disabled={loading || isUploading || isAnySumInvalid}"),
+      "Submit button must disable when sum is invalid or uploading",
+    );
+  });
+
+  it("ReturnProcessModal employs direct multi-photo upload from device camera/storage (ADR-0105)", () => {
+    const filePath = path.resolve(root, "src/components/views/InventoryView/ReturnProcessModal.tsx");
+    const content = fs.readFileSync(filePath, "utf-8");
+
+    // Must eliminate passive URL input
+    assert.ok(!content.includes("photoInputUrl"), "Must eliminate photoInputUrl state");
+    assert.ok(!content.includes("https://... URL foto"), "Must eliminate text URL placeholder");
+
+    // Must have native file picker with multiple and accept="image/*"
+    assert.ok(content.includes('type="file"'), "Must mount native file input");
+    assert.ok(content.includes("multiple"), "File input must support multiple selection");
+    assert.ok(content.includes('accept="image/*"'), "File input must restrict to images");
+
+    // Must use compressImage
+    assert.ok(content.includes("compressImage"), "Must compress image client-side");
+
+    // Must upload to /api/marcom/uploads with kind inventory-damage
+    assert.ok(content.includes('kind", "inventory-damage"'), "Must upload with kind inventory-damage");
+
+    // Must support photo removal
+    assert.ok(content.includes("handleRemovePhoto"), "Must support removing uploaded photos");
   });
 
   it("ReturnProcessModal includes compensation and damage photo controls", () => {

@@ -6,6 +6,21 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-11]
 
+- `feat(inventory)`: Multi-photo direct upload for inventory damage inspection (ADR-0105)
+  - Backend Storage & Authorization (`src/app/api/marcom/uploads/route.ts`):
+    - Registered `inventory-damage` in `VALID_KINDS`, `BUCKET_MAP` (`inventory-damage`), `KIND_PREFIX` (`damage`), and `PERMISSION_MAP` (`PROCESS_RETURN`).
+    - Verified permission check enforcing `PROCESS_RETURN` for damage photo uploads.
+  - Frontend Return Inspection Modal (`src/components/views/InventoryView/ReturnProcessModal.tsx`):
+    - Eliminated passive text URL input and placeholder, eliminating silent failure on empty submission.
+    - Mounted native multi-file picker `<input type="file" multiple accept="image/*">` triggered by `+ Unggah Foto Kerusakan`.
+    - Integrated sequential client-side image compression (`compressImage`) downsampling camera photos to max 1600x1600 at 0.82 quality.
+    - Added interactive thumbnail deck with individual deletion buttons and upload lock on modal submission.
+  - Automated Unit & Invariant Tests:
+    - Updated `src/app/api/marcom/uploads/uploadsApi.test.ts` to assert `inventory-damage` kind, bucket mapping, and `PROCESS_RETURN` guard.
+    - Updated `src/components/views/InventoryView/returnProcessModal.test.ts` to verify elimination of text URL inputs, presence of native multi-file picker, client-side compression, and upload kind configuration.
+  - Verification: `npm run drift:check` ✅ (132/132 pairs), `npm run build:check` ✅ (0 errors), `npm test` ✅ (1108/1108 passing), `npm run test:smoke` ✅ (174/174 passing).
+  - Refs: `docs/adr/0105-multi-photo-direct-upload-for-inventory-damage-inspection.md`, `docs/superpowers/specs/2026-11-11-multi-photo-direct-upload-for-inventory-damage-inspection-design.md`, `docs/superpowers/plans/2026-11-11-multi-photo-direct-upload-for-inventory-damage-inspection.md`
+
 - `feat(inventory)`: Strict test-environment header isolation and inventory auth standardization (ADR-0104)
   - Centralized Inventory Auth Helper (`src/lib/server/inventoryAuth.ts` & `inventoryAuth.test.ts`):
     - Created single source of truth `resolveInventoryAuth(request)` standardizing session extraction and role normalization.

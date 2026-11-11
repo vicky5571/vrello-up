@@ -31,13 +31,14 @@ describe("Uploads API Route Invariants (Supabase Storage Migration)", () => {
       "Must call uploadToSupabase",
     );
 
-    // Must support documents, mou-documents, placements, outlets
+    // Must support documents, mou-documents, placements, outlets, and inventory-damage (ADR-0105)
     assert.ok(
       content.includes('"documents"') &&
         content.includes('"mou-documents"') &&
         content.includes('"placements"') &&
-        content.includes('"outlets"'),
-      "Must support documents, mou-documents, placements, and outlets kinds",
+        content.includes('"outlets"') &&
+        content.includes('"inventory-damage"'),
+      "Must support documents, mou-documents, placements, outlets, and inventory-damage kinds",
     );
 
     // Must map to correct buckets
@@ -45,14 +46,19 @@ describe("Uploads API Route Invariants (Supabase Storage Migration)", () => {
       content.includes('"marcom-documents"') &&
         content.includes('"mou-documents"') &&
         content.includes('"placement-photos"') &&
-        content.includes('"outlet-photos"'),
-      "Must map to marcom-documents, mou-documents, placement-photos, and outlet-photos buckets",
+        content.includes('"outlet-photos"') &&
+        content.includes('"inventory-damage"'),
+      "Must map to marcom-documents, mou-documents, placement-photos, outlet-photos, and inventory-damage buckets",
     );
 
     // Must map permissions
     assert.ok(
       content.includes('"SUBMIT_DRAFT_OUTLET"'),
       "Must require SUBMIT_DRAFT_OUTLET for outlets kind",
+    );
+    assert.ok(
+      content.includes('"PROCESS_RETURN"'),
+      "Must require PROCESS_RETURN for inventory-damage kind (ADR-0105)",
     );
 
     // Must return public CDN filePath

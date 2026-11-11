@@ -9,7 +9,13 @@ import {
 } from "@/lib/marcom/upload";
 import { uploadToSupabase } from "@/lib/server/supabaseStorage";
 
-const VALID_KINDS = ["documents", "mou-documents", "placements", "outlets"] as const;
+const VALID_KINDS = [
+  "documents",
+  "mou-documents",
+  "placements",
+  "outlets",
+  "inventory-damage",
+] as const;
 type UploadKind = (typeof VALID_KINDS)[number];
 
 const BUCKET_MAP: Record<UploadKind, string> = {
@@ -17,6 +23,7 @@ const BUCKET_MAP: Record<UploadKind, string> = {
   "mou-documents": "mou-documents",
   placements: "placement-photos",
   outlets: "outlet-photos",
+  "inventory-damage": "inventory-damage",
 };
 
 const KIND_PREFIX: Record<UploadKind, string> = {
@@ -24,6 +31,7 @@ const KIND_PREFIX: Record<UploadKind, string> = {
   "mou-documents": "mou-documents",
   placements: "placements",
   outlets: "outlets",
+  "inventory-damage": "damage",
 };
 
 const PERMISSION_MAP: Record<UploadKind, string> = {
@@ -31,6 +39,7 @@ const PERMISSION_MAP: Record<UploadKind, string> = {
   "mou-documents": "UPLOAD_DOCUMENT",
   placements: "CREATE_PLACEMENT",
   outlets: "SUBMIT_DRAFT_OUTLET",
+  "inventory-damage": "PROCESS_RETURN",
 };
 
 // Derive MIME type from file extension for storage Content-Type header
@@ -68,7 +77,7 @@ export async function POST(request: Request) {
     !(VALID_KINDS as readonly string[]).includes(kind)
   ) {
     return NextResponse.json(
-      { error: "Invalid kind: expected documents, mou-documents, placements, or outlets" },
+      { error: "Invalid kind: expected documents, mou-documents, placements, outlets, or inventory-damage" },
       { status: 400 },
     );
   }
