@@ -1207,3 +1207,285 @@ test("API: Strict Test-Environment Header Isolation & Inventory Auth Standardiza
     (process.env as Record<string, string | undefined>).NODE_ENV = originalEnv;
   }
 });
+
+test("API: Hybrid Staff Cash Settlement Submission and Warehouse Verification (ADR-0106)", async () => {
+  // 1. Create inventory item
+  const itemRes = await postInventory(
+    new Request("http://localhost:3000/api/marcom/inventory", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+      },
+      body: JSON.stringify({
+        code: `TEST-HYBRID-${Date.now()}`,
+        name: "Hybrid Settlement Test Gear",
+        category: "Audio",
+        totalUnits: 5,
+        storageLocation: "Test Warehouse",
+      }),
+    })
+  );
+  assert.equal(itemRes.status, 201);
+  const testItem = await itemRes.json();
+
+  // 2. Create borrow request as borrower "Staff Borrower"
+  const borrowRes = await postBorrow(
+    new Request("http://localhost:3000/api/marcom/inventory/borrow", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Staff Borrower",
+      },
+      body: JSON.stringify({
+        borrowerName: "Staff Borrower",
+        borrowDate: new Date().toISOString().slice(0, 10),
+        returnDueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+        items: [{ inventoryItemId: testItem.id, quantity: 2 }],
+      }),
+    })
+  );
+  assert.equal(borrowRes.status, 201);
+  const borrow = await borrowRes.json();
+
+  // Approve and activate
+  await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "supervisor",
+        "x-user-name": "Supervisor Approver",
+      },
+      body: JSON.stringify({ status: "APPROVED" }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+
+  const activateRes = await putBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Handover",
+      },
+      body: JSON.stringify({ status: "ACTIVE" }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  const activeRecord = await activateRes.json();
+  const borrowItemId = activeRecord.items[0].id;
+
+  // 3. Return with 1 major damage -> status becomes PENDING_SETTLEMENT
+  const returnRes = await returnBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/return`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+      },
+      body: JSON.stringify({
+        returnNotes: "Return with damage",
+        compensationAmount: 350000,
+        compensationNotes: "Broken casing",
+        items: [
+          {
+            borrowItemId,
+            goodUnits: 1,
+            minorDamageUnits: 0,
+            majorDamageUnits: 1,
+            lostUnits: 0,
+          },
+        ],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(returnRes.status, 200);
+  const returnedRecord = await returnRes.json();
+  assert.equal(returnedRecord.compensationStatus, "PENDING_SETTLEMENT");
+
+  // 4. Invariant: Staff attempts ITEM_REPLACEMENT submission -> 403 Forbidden
+  const itemReplacementStaffRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Staff Borrower",
+      },
+      body: JSON.stringify({
+        action: "SUBMIT",
+        settlementType: "ITEM_REPLACEMENT",
+        settlementNotes: "Handing in replacement box from home",
+        settlementProofUrls: ["https://example.com/box.jpg"],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(itemReplacementStaffRes.status, 403);
+  const itemReplacementErr = await itemReplacementStaffRes.json();
+  assert.ok(itemReplacementErr.error.includes("Penggantian unit fisik"));
+
+  // 5. Invariant: Non-borrower staff attempts SUBMIT -> 403 Forbidden
+  const nonBorrowerRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Stranger Staff",
+      },
+      body: JSON.stringify({
+        action: "SUBMIT",
+        settlementType: "CASH_TRANSFER",
+        settlementNotes: "Transfer attempt",
+        settlementProofUrls: ["https://example.com/slip.jpg"],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(nonBorrowerRes.status, 403);
+
+  // 6. Invariant: Staff submits without proof URLs -> 422 Unprocessable Entity
+  const noProofRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Staff Borrower",
+      },
+      body: JSON.stringify({
+        action: "SUBMIT",
+        settlementType: "CASH_TRANSFER",
+        settlementNotes: "Forgot the slip",
+        settlementProofUrls: [],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(noProofRes.status, 422);
+
+  // 7. Legitimate staff SUBMIT -> transitions to PENDING_VERIFICATION
+  const validSubmitRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Staff Borrower",
+      },
+      body: JSON.stringify({
+        action: "SUBMIT",
+        settlementType: "CASH_TRANSFER",
+        settledAmount: 350000,
+        settlementNotes: "Transfer via BCA m-banking",
+        settlementProofUrls: ["https://example.com/bca-proof.jpg"],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(validSubmitRes.status, 200);
+  const submittedRecord = await validSubmitRes.json();
+  assert.equal(submittedRecord.compensationStatus, "PENDING_VERIFICATION");
+  assert.equal(submittedRecord.settlementType, "CASH_TRANSFER");
+  assert.equal(submittedRecord.settledAmount, 350000);
+  assert.equal(submittedRecord.settledBy, "Staff Borrower");
+
+  // 8. Invariant: Staff attempts to CONFIRM -> 403 Forbidden
+  const staffConfirmRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Staff Borrower",
+      },
+      body: JSON.stringify({ action: "CONFIRM" }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(staffConfirmRes.status, 403);
+
+  // 9. Officer REJECT without rejectionReason -> 400 Bad Request
+  const emptyReasonRejectRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Lead",
+      },
+      body: JSON.stringify({ action: "REJECT", rejectionReason: "  " }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(emptyReasonRejectRes.status, 400);
+
+  // 10. Officer REJECT with reason -> reverts to PENDING_SETTLEMENT with note appended
+  const validRejectRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Lead",
+      },
+      body: JSON.stringify({
+        action: "REJECT",
+        rejectionReason: "Bukti transfer terpotong, silakan unggah ulang",
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(validRejectRes.status, 200);
+  const rejectedRecord = await validRejectRes.json();
+  assert.equal(rejectedRecord.compensationStatus, "PENDING_SETTLEMENT");
+  assert.ok(rejectedRecord.settlementNotes.includes("DITOLAK Warehouse Lead"));
+  assert.ok(rejectedRecord.settlementNotes.includes("Bukti transfer terpotong"));
+
+  // 11. Staff re-submits with clearer proof -> PENDING_VERIFICATION
+  const reSubmitRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "staff",
+        "x-user-name": "Staff Borrower",
+      },
+      body: JSON.stringify({
+        action: "SUBMIT",
+        settlementType: "CASH_TRANSFER",
+        settledAmount: 350000,
+        settlementNotes: "Unggah ulang bukti lengkap dengan nomor referensi",
+        settlementProofUrls: ["https://example.com/clear-proof.jpg"],
+      }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(reSubmitRes.status, 200);
+  const reSubmittedRecord = await reSubmitRes.json();
+  assert.equal(reSubmittedRecord.compensationStatus, "PENDING_VERIFICATION");
+
+  // 12. Officer CONFIRM -> transitions to RESOLVED
+  const officerConfirmRes = await settleBorrow(
+    new Request(`http://localhost:3000/api/marcom/inventory/borrow/${borrow.id}/settle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-role": "warehouse",
+        "x-user-name": "Warehouse Lead",
+      },
+      body: JSON.stringify({ action: "CONFIRM" }),
+    }),
+    { params: Promise.resolve({ id: borrow.id }) }
+  );
+  assert.equal(officerConfirmRes.status, 200);
+  const resolvedRecord = await officerConfirmRes.json();
+  assert.equal(resolvedRecord.compensationStatus, "RESOLVED");
+  assert.equal(resolvedRecord.settledBy, "Warehouse Lead");
+  assert.ok(resolvedRecord.settledAt);
+});

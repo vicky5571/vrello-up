@@ -5,6 +5,7 @@ import { X, Upload, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-
 import { toast } from "sonner";
 import { formatIDR } from "@/lib/utils";
 import { compressImage } from "@/lib/marcom/photoUtils";
+import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import type { BorrowRecord } from "@/types";
 
 export interface BorrowSettlementModalProps {
@@ -12,6 +13,7 @@ export interface BorrowSettlementModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSettled: (updatedRecord: BorrowRecord) => void;
+  userRole?: string;
 }
 
 export function BorrowSettlementModal({
@@ -19,7 +21,12 @@ export function BorrowSettlementModal({
   isOpen,
   onClose,
   onSettled,
+  userRole,
 }: BorrowSettlementModalProps) {
+  const { role: hookRole } = useMarcomPermissions();
+  const effectiveRole = userRole || hookRole;
+  const isStaff = effectiveRole === "staff";
+
   const [settlementType, setSettlementType] = useState<"CASH_TRANSFER" | "ITEM_REPLACEMENT">("CASH_TRANSFER");
   const [settledAmount, setSettledAmount] = useState<number>(record.compensationAmount || 0);
   const [settlementNotes, setSettlementNotes] = useState<string>("");
@@ -88,14 +95,18 @@ export function BorrowSettlementModal({
       return;
     }
 
+    const action = isStaff ? "SUBMIT" : "DIRECT_RESOLVE";
+    const effectiveType = isStaff ? "CASH_TRANSFER" : settlementType;
+
     setIsSubmitting(true);
     try {
       const res = await fetch(`/api/marcom/inventory/borrow/${record.id}/settle`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          settlementType,
-          settledAmount: settlementType === "CASH_TRANSFER" ? settledAmount : 0,
+          action,
+          settlementType: effectiveType,
+          settledAmount: effectiveType === "CASH_TRANSFER" ? settledAmount : 0,
           settlementNotes: settlementNotes.trim(),
           settlementProofUrls: proofUrls,
         }),
@@ -107,7 +118,11 @@ export function BorrowSettlementModal({
       }
 
       const updated = await res.json();
-      toast.success("Ganti rugi berhasil diselesaikan.");
+      toast.success(
+        isStaff
+          ? "Pengajuan bukti pelunasan berhasil dikirim untuk verifikasi."
+          : "Ganti rugi berhasil diselesaikan."
+      );
       onSettled(updated);
       onClose();
     } catch (err) {
@@ -124,7 +139,7 @@ export function BorrowSettlementModal({
           <div>
             <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              Pelunasan Ganti Rugi Inventaris
+              {isStaff ? "Pengajuan Bukti Pelunasan Transfer" : "Pelunasan Ganti Rugi Inventaris"}
             </h3>
             <p className="text-xs text-slate-500 font-mono">{record.borrowCode} • {record.borrowerName}</p>
           </div>
@@ -153,9 +168,12 @@ export function BorrowSettlementModal({
               </button>
               <button
                 type="button"
-                onClick={() => setSettlementType("ITEM_REPLACEMENT")}
+                disabled={isStaff}
+                onClick={() => !isStaff && setSettlementType("ITEM_REPLACEMENT")}
                 className={`p-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center justify-center gap-1 transition-all ${
-                  settlementType === "ITEM_REPLACEMENT"
+                  isStaff
+                    ? "opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800/50 text-slate-400 border-slate-200 dark:border-slate-700"
+                    : settlementType === "ITEM_REPLACEMENT"
                     ? "bg-emerald-50 text-emerald-800 border-emerald-400 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700 shadow-2xs"
                     : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700"
                 }`}
@@ -163,6 +181,12 @@ export function BorrowSettlementModal({
                 <span>📦 Penggantian Barang Fisik</span>
               </button>
             </div>
+            {isStaff && (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1.5 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                Penggantian unit fisik wajib diserahkan langsung di meja gudang oleh petugas warehouse.
+              </p>
+            )}
           </div>
 
           {/* Form Content Mode A / Mode B */}
@@ -275,7 +299,7 @@ export function BorrowSettlementModal({
               className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-              <span>Simpan Pelunasan</span>
+              <span>{isStaff ? "Kirim Pengajuan Pelunasan" : "Selesaikan & Verifikasi Pelunasan"}</span>
             </button>
           </div>
         </form>
@@ -283,4 +307,3 @@ export function BorrowSettlementModal({
     </div>
   );
 }
-

@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-11  
 **Active Branch:** `vicky`  
-**Active Feature:** Multi-Photo Direct Upload for Inventory Damage Inspection (ADR-0105) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Hybrid Staff Cash Settlement Submission and Warehouse Verification Workflow (ADR-0106) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Multi-Photo Direct Upload for Inventory Damage Inspection (ADR-0105) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Strict Test-Environment Header Isolation & Inventory Auth Standardization (ADR-0104) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Virtual Overdue Status Lifecycle & Dual-Channel Notifications (ADR-0103) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Calendar-Based Equipment Booking & Collision Engine (ADR-0102) — **IMPLEMENTATION COMPLETE**  
@@ -89,7 +90,34 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Multi-Photo Direct Upload for Inventory Damage Inspection (ADR-0105 — Implementation Complete):**
+1. **Implementasi Hybrid Staff Cash Settlement Submission and Warehouse Verification Workflow (ADR-0106 — Implementation Complete):**
+   - **Konteks & Solusi Lapangan:**
+     - Mengatasi hambatan operasional bagi tim lapangan (`staff`) yang melunasi ganti rugi kerusakan/kehilangan inventaris via transfer bank di luar jam kerja gudang tanpa kehilangan penegakan Prinsip Empat Mata (Four-Eyes Principle).
+     - Menghilangkan celah *Phantom Stock* dengan mengunci mode penggantian unit fisik (`ITEM_REPLACEMENT`) secara ketat di meja serah-terima gudang fisik (`warehouse`/`admin`), sementara pengajuan transfer kas (`CASH_TRANSFER`) dapat dilakukan secara asinkron oleh peminjam (`staff`).
+   - **Phase 1: SSOT Domain Types & Server-Side Settle Endpoint (`src/types/index.ts` & `src/app/api/marcom/inventory/borrow/[id]/settle/route.ts`):**
+     - Mendaftarkan tipe `SettlementAction = "SUBMIT" | "CONFIRM" | "REJECT" | "DIRECT_RESOLVE"` dan payload `SettleCompensationPayload` di SSOT `src/types/index.ts`.
+     - Memperluas union `compensationStatus` menjadi `"NONE" | "PENDING_SETTLEMENT" | "PENDING_VERIFICATION" | "RESOLVED"`.
+     - Mengimplementasikan aksi:
+       - `SUBMIT`: Diizinkan untuk peminjam (`staff`) atau petugas berwenang, wajib `CASH_TRANSFER`, minimal 1 bukti transfer, transisi ke `PENDING_VERIFICATION`.
+       - `CONFIRM`: Wajib izin `PROCESS_RETURN` (`warehouse`/`admin`), transisi ke `RESOLVED`, mencatat `settledAt` & `settledBy`.
+       - `REJECT`: Wajib izin `PROCESS_RETURN`, wajib `rejectionReason`, mengembalikan status ke `PENDING_SETTLEMENT` dan menyematkan audit trail penolakan pada `settlementNotes`.
+       - `DIRECT_RESOLVE`: Menjaga jalur cepat 1-langkah di meja gudang (mendukung `CASH_TRANSFER` maupun `ITEM_REPLACEMENT` dengan pemulihan stok katalog atomik).
+   - **Phase 2: Staff-Aware Settlement Modal (`BorrowSettlementModal.tsx` & `borrowSettlementModal.test.ts`):**
+     - Membaca sesi role pengguna; untuk role `staff`, mode dikunci ke `CASH_TRANSFER`, opsi `ITEM_REPLACEMENT` dinonaktifkan dengan callout peringatan operasional, dan aksi submit mengirim `action: "SUBMIT"`.
+     - Unit test invariant passing (5/5 tests pass).
+   - **Phase 3: Detail Modal Review & Verification Deck (`BorrowDetailModal.tsx`, `borrowDetailModalHelpers.ts` & `borrowDetailModal.test.ts`):**
+     - Menampilkan badge status amber `"Menunggu Konfirmasi Gudang/Admin"` saat `compensationStatus === "PENDING_VERIFICATION"`.
+     - Menampilkan review deck detail pengajuan (nominal, catatan peminjam, tautan berkas bukti transfer).
+     - Menyediakan kontrol aksi bagi petugas gudang/admin: tombol `"Konfirmasi Pelunasan"` dan `"Tolak Bukti"` (dengan form alasan penolakan inline).
+     - Menampilkan banner edukatif bagi staf bahwa bukti sedang menunggu verifikasi admin/gudang.
+     - Menyediakan tombol `"Kirim Bukti Pelunasan Transfer"` bagi peminjam (`staff`) saat status `PENDING_SETTLEMENT`.
+     - Unit test invariant passing (16/16 tests pass).
+   - **Phase 4: Non-Negotiable Verification Gates:**
+     - `npm run drift:check`: PASS (133/133 spec-plan pairs valid, coordinator files <= 250 LOC, zero drift).
+     - `npm run build:check`: PASS (TypeScript 5 + Next.js 15 compilation, 0 errors).
+     - `npm test`: PASS (1115 tests passed across 197 test suites, 0 failures).
+
+2. **Implementasi Multi-Photo Direct Upload for Inventory Damage Inspection (ADR-0105 — Implementation Complete):**
    - **Akar Masalah & Kebutuhan Lapangan (Temuan Lapangan):**
      - Pada modal pengembalian alat (`ReturnProcessModal.tsx`), input foto kerusakan sebelumnya berupa input teks pasif yang mengharuskan petugas gudang mengetikkan URL eksternal secara manual.
      - Ketika petugas mengklik tombol "+ Tambah" tanpa mengisi URL atau mencoba mengunggah foto, tidak ada respon visual (silent failure) karena `handleAddPhoto` mensyaratkan `photoInputUrl.trim()`.

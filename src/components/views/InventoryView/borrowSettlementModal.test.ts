@@ -42,6 +42,18 @@ describe("BorrowSettlementModal & Settlement UI Invariants (ADR-0052)", () => {
     assert.ok(content.includes("record.settlementProofUrls"), "Must display settlementProofUrls links");
   });
 
+  it("BorrowSettlementModal differentiates staff submission from officer verification (ADR-0106)", () => {
+    const filePath = path.resolve(root, "src/components/views/InventoryView/BorrowSettlementModal.tsx");
+    const content = fs.readFileSync(filePath, "utf-8");
+
+    assert.ok(content.includes("isStaff"), "Must compute isStaff");
+    assert.ok(content.includes("disabled={isStaff}"), "Must disable ITEM_REPLACEMENT button for staff");
+    assert.ok(content.includes("Penggantian unit fisik wajib diserahkan langsung"), "Must show warning for staff on physical item replacement");
+    assert.ok(content.includes('action = isStaff ? "SUBMIT" : "DIRECT_RESOLVE"'), "Must pass SUBMIT action for staff and DIRECT_RESOLVE for officer");
+    assert.ok(content.includes("Kirim Pengajuan Pelunasan"), "Must render staff submit button label");
+    assert.ok(content.includes("Selesaikan & Verifikasi Pelunasan"), "Must render officer submit button label");
+  });
+
   it("SSOT domain types define CompensationSettlementType and settlement fields on BorrowRecord", () => {
     const filePath = path.resolve(root, "src/types/index.ts");
     const content = fs.readFileSync(filePath, "utf-8");

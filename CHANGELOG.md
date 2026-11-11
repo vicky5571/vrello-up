@@ -6,6 +6,24 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-11]
 
+- `feat(inventory)`: Hybrid staff cash settlement submission and warehouse verification workflow (ADR-0106)
+  - SSOT Domain Types & API Route Refactoring (`src/types/index.ts`, `src/app/api/marcom/inventory/borrow/[id]/settle/route.ts`):
+    - Added `SettlementAction` ("SUBMIT" | "CONFIRM" | "REJECT" | "DIRECT_RESOLVE") and `SettleCompensationPayload` to SSOT.
+    - Extended `BorrowRecord.compensationStatus` union with `"PENDING_VERIFICATION"`.
+    - Implemented `SUBMIT` action allowing borrowers (`staff`) to upload bank transfer receipts (`CASH_TRANSFER` only) while strictly blocking `ITEM_REPLACEMENT` (HTTP 403 Forbidden).
+    - Implemented `CONFIRM` action for officers (`warehouse`/`admin`) transitioning status to `RESOLVED` and recording `settledAt` & `settledBy`.
+    - Implemented `REJECT` action requiring `rejectionReason`, reverting status to `PENDING_SETTLEMENT` and appending rejection reason to `settlementNotes`.
+    - Preserved in-person `DIRECT_RESOLVE` fast-path for counter settlement with atomic stock restoration.
+  - Frontend Modal Updates (`BorrowSettlementModal.tsx`, `BorrowDetailModal.tsx`, `borrowDetailModalHelpers.ts`):
+    - In `BorrowSettlementModal`, locked mode to `CASH_TRANSFER` for staff, disabled `ITEM_REPLACEMENT` with operational guidance warning, and sent `action: "SUBMIT"`.
+    - In `BorrowDetailModal`, added amber `"Menunggu Konfirmasi Gudang/Admin"` pill for `PENDING_VERIFICATION`, review deck with transfer proof links, officer Confirm / Reject action controls, and staff waiting alert banner.
+    - Added `"Kirim Bukti Pelunasan Transfer"` trigger button for staff borrowers on `PENDING_SETTLEMENT`.
+  - Automated Unit & Integration Tests:
+    - Added end-to-end tests in `src/app/api/marcom/inventory/inventoryApi.test.ts` covering staff submission, role guards, rejection revert, re-submission, and officer confirmation.
+    - Updated `borrowSettlementModal.test.ts` and `borrowDetailModal.test.ts` asserting UI states, badges, buttons, and helper logic.
+  - Verification: `npm run drift:check` ✅ (133/133 pairs), `npm run build:check` ✅ (0 errors), `npm test` ✅ (1115/1115 passing).
+  - Refs: `docs/adr/0106-hybrid-staff-cash-settlement-submission-and-warehouse-verification.md`, `docs/superpowers/specs/2026-11-11-hybrid-staff-cash-settlement-submission-and-warehouse-verification-design.md`, `docs/superpowers/plans/2026-11-11-hybrid-staff-cash-settlement-submission-and-warehouse-verification.md`
+
 - `feat(inventory)`: Multi-photo direct upload for inventory damage inspection (ADR-0105)
   - Backend Storage & Authorization (`src/app/api/marcom/uploads/route.ts`):
     - Registered `inventory-damage` in `VALID_KINDS`, `BUCKET_MAP` (`inventory-damage`), `KIND_PREFIX` (`damage`), and `PERMISSION_MAP` (`PROCESS_RETURN`).

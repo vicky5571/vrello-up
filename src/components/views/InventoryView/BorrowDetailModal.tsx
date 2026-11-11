@@ -12,7 +12,11 @@ import {
   Calendar,
   User,
   FileText,
+  Upload,
+  XCircle,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import type { BorrowRecord, BorrowStatus } from "@/types";
 import { useMarcomPermissions } from "@/lib/marcom/permissions";
 import { BORROW_STATUS_CONFIG, CONDITION_CONFIG } from "./inventoryConstants";
@@ -40,10 +44,69 @@ export function BorrowDetailModal({
   onSettled,
 }: BorrowDetailModalProps) {
   const [isSettlementModalOpen, setIsSettlementModalOpen] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
   const { data: session } = useSession();
-  const { can } = useMarcomPermissions();
+  const { can, role } = useMarcomPermissions();
 
   if (!isOpen || !record) return null;
+
+  const handleConfirmSettlement = async () => {
+    if (!record) return;
+    setIsVerifying(true);
+    try {
+      const res = await fetch(`/api/marcom/inventory/borrow/${record.id}/settle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "CONFIRM" }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Gagal mengonfirmasi pelunasan.");
+      }
+      const updated = await res.json();
+      toast.success("Pelunasan ganti rugi berhasil diverifikasi.");
+      onSettled?.(updated);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleRejectSettlement = async () => {
+    if (!record) return;
+    if (!rejectionReason.trim()) {
+      toast.error("Alasan penolakan bukti pelunasan wajib diisi.");
+      return;
+    }
+    setIsRejecting(true);
+    try {
+      const res = await fetch(`/api/marcom/inventory/borrow/${record.id}/settle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "REJECT",
+          rejectionReason: rejectionReason.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Gagal menolak bukti pelunasan.");
+      }
+      const updated = await res.json();
+      toast.success("Bukti pelunasan berhasil ditolak.");
+      setShowRejectForm(false);
+      setRejectionReason("");
+      onSettled?.(updated);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Terjadi kesalahan");
+    } finally {
+      setIsRejecting(false);
+    }
+  };
 
   const canCancelOwn = can("CANCEL_OWN_BORROW");
   const isOwner = Boolean(
@@ -287,10 +350,16 @@ export function BorrowDetailModal({
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                     record.compensationStatus === "RESOLVED"
                       ? "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-300"
+                      : record.compensationStatus === "PENDING_VERIFICATION"
+                      ? "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/60 dark:text-amber-300"
                       : "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/60 dark:text-amber-300"
                   }`}
                 >
-                  {record.compensationStatus === "RESOLVED" ? "LUNAS / SELESAI" : "BELUM LUNAS"}
+                  {record.compensationStatus === "RESOLVED"
+                    ? "LUNAS / SELESAI"
+                    : record.compensationStatus === "PENDING_VERIFICATION"
+                    ? "Menunggu Konfirmasi Gudang/Admin"
+                    : "BELUM LUNAS"}
                 </span>
               </div>
 
@@ -331,7 +400,7 @@ export function BorrowDetailModal({
                 </div>
               )}
 
-              {/* Action Button: Selesaikan Ganti Rugi for Pending Settlement */}
+              {/* Action Button: Selesaikan Ganti Rugi for Pending Settlement (Officer) */}
               {record.compensationStatus === "PENDING_SETTLEMENT" && canManage && (
                 <div className="pt-2 border-t border-amber-200/60 dark:border-amber-900/40 flex justify-end">
                   <button
@@ -342,6 +411,147 @@ export function BorrowDetailModal({
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Selesaikan Ganti Rugi</span>
                   </button>
+                </div>
+              )}
+
+              {/* Action Button: Kirim Bukti Pelunasan Transfer for Staff Borrower */}
+              {record.compensationStatus === "PENDING_SETTLEMENT" && !canManage && isOwner && (
+                <div className="pt-2 border-t border-amber-200/60 dark:border-amber-900/40 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsSettlementModalOpen(true)}
+                    className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Kirim Bukti Pelunasan Transfer</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Review Deck for PENDING_VERIFICATION */}
+              {record.compensationStatus === "PENDING_VERIFICATION" && (
+                <div className="pt-2 border-t border-amber-200/60 dark:border-amber-900/40 text-xs space-y-2">
+                  <div className="p-3 bg-amber-100/60 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 rounded-xl space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-amber-950 dark:text-amber-200 flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                        Pengajuan Pelunasan Transfer Masuk
+                      </span>
+                      <span className="text-[10px] font-mono font-medium text-amber-800 dark:text-amber-300">
+                        Diajukan oleh: {record.settledBy || record.borrowerName}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                      <div>
+                        <span className="text-slate-500 block">Nominal Ditransfer:</span>
+                        <strong className="text-slate-900 dark:text-slate-100">
+                          Rp {(record.settledAmount ?? record.compensationAmount ?? 0).toLocaleString("id-ID")}
+                        </strong>
+                      </div>
+                      {record.settlementNotes && (
+                        <div>
+                          <span className="text-slate-500 block">Catatan Peminjam:</span>
+                          <span className="text-slate-800 dark:text-slate-200">{record.settlementNotes}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {record.settlementProofUrls && record.settlementProofUrls.length > 0 && (
+                      <div>
+                        <span className="text-[11px] font-medium text-slate-500 block mb-1">
+                          Bukti Transfer ({record.settlementProofUrls.length}):
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {record.settlementProofUrls.map((url, i) => (
+                            <a
+                              key={i}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2.5 py-1 text-[11px] font-semibold rounded-md bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 hover:border-blue-400 flex items-center gap-1 shadow-2xs"
+                            >
+                              <FileText className="w-3 h-3 text-blue-500" />
+                              <span>Lihat Bukti #{i + 1}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* If user is staff: render informative alert */}
+                  {!canManage && (
+                    <div className="p-2.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 rounded-lg text-blue-800 dark:text-blue-200 text-xs flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-blue-600 shrink-0" />
+                      <span>
+                        Bukti transfer Anda telah dikirim dan sedang menunggu konfirmasi admin atau petugas gudang.
+                      </span>
+                    </div>
+                  )}
+
+                  {/* If user is officer: render review actions */}
+                  {canManage && (
+                    <div className="space-y-2 pt-1">
+                      {showRejectForm ? (
+                        <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl space-y-2">
+                          <label className="block text-xs font-semibold text-rose-900 dark:text-rose-200">
+                            Alasan Penolakan Bukti Pelunasan *
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                            placeholder="Contoh: Bukti buram, nominal transfer tidak sesuai, atau belum masuk mutasi rekening..."
+                            className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                          />
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowRejectForm(false);
+                                setRejectionReason("");
+                              }}
+                              disabled={isRejecting}
+                              className="px-2.5 py-1 text-xs text-slate-600 hover:text-slate-800 cursor-pointer"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleRejectSettlement}
+                              disabled={isRejecting || !rejectionReason.trim()}
+                              className="px-3 py-1 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold rounded-lg text-xs flex items-center gap-1 cursor-pointer"
+                            >
+                              {isRejecting ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}
+                              <span>Kirim Penolakan</span>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowRejectForm(true)}
+                            disabled={isVerifying}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 dark:bg-rose-950/50 dark:border-rose-900 dark:text-rose-300 flex items-center gap-1 cursor-pointer"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Tolak Bukti</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleConfirmSettlement}
+                            disabled={isVerifying}
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 flex items-center gap-1.5 shadow-xs cursor-pointer"
+                          >
+                            {isVerifying ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                            <span>Konfirmasi Pelunasan</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -591,6 +801,7 @@ export function BorrowDetailModal({
             setIsSettlementModalOpen(false);
             onSettled?.(updated);
           }}
+          userRole={role}
         />
       )}
     </div>

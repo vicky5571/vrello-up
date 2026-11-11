@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { canCancelBorrowRecord } from "./borrowDetailModalHelpers";
+import { canCancelBorrowRecord, getSettlementUiState } from "./borrowDetailModalHelpers";
 
 describe("BorrowDetailModal Staff Self-Cancellation & RBAC Invariants (ADR-0101)", () => {
   const root = process.cwd();
@@ -122,7 +122,8 @@ describe("BorrowDetailModal Staff Self-Cancellation & RBAC Invariants (ADR-0101)
       const content = fs.readFileSync(filePath, "utf-8");
 
       const sessionCallIdx = content.indexOf("const { data: session } = useSession();");
-      const permsCallIdx = content.indexOf("const { can } = useMarcomPermissions();");
+      const permsMatch = content.match(/useMarcomPermissions\(\)/);
+      const permsCallIdx = permsMatch ? (permsMatch.index ?? -1) : -1;
       const earlyReturnIdx = content.indexOf("if (!isOpen || !record) return null;");
 
       assert.ok(sessionCallIdx !== -1, "useSession must be called");
@@ -152,6 +153,74 @@ describe("BorrowDetailModal Staff Self-Cancellation & RBAC Invariants (ADR-0101)
       assert.ok(content.includes("Peringatan Defisit Unit:"), "Must render deficit warning callout");
       assert.ok(content.includes("Jadwal Mepet:"), "Must render tight-schedule advisory callout");
       assert.ok(content.includes("Unclaimed Booking:"), "Must render unclaimed booking suggestion badge");
+    });
+
+    it("verifies hybrid staff cash settlement submission and warehouse verification invariants (ADR-0106)", () => {
+      const filePath = path.resolve(root, "src/components/views/InventoryView/BorrowDetailModal.tsx");
+      const content = fs.readFileSync(filePath, "utf-8");
+
+      assert.ok(content.includes("Menunggu Konfirmasi Gudang/Admin"), "Must render pending verification badge");
+      assert.ok(content.includes("Kirim Bukti Pelunasan Transfer"), "Must render staff submission trigger button");
+      assert.ok(content.includes("Konfirmasi Pelunasan"), "Must render officer confirm button");
+      assert.ok(content.includes("Tolak Bukti"), "Must render officer reject button");
+      assert.ok(content.includes("Kirim Penolakan"), "Must render reject submission button");
+      assert.ok(content.includes("Bukti transfer Anda telah dikirim dan sedang menunggu konfirmasi admin atau petugas gudang."), "Must render staff waiting alert banner");
+      assert.ok(content.includes("userRole={role}"), "Must pass role to BorrowSettlementModal");
+    });
+  });
+
+  describe("getSettlementUiState helper invariants (ADR-0106)", () => {
+    it("allows staff owner to submit cash settlement proof when status is PENDING_SETTLEMENT", () => {
+      const state = getSettlementUiState({
+        compensationStatus: "PENDING_SETTLEMENT",
+        borrowerName: "Dewi Sartika",
+        sessionUserName: "dewi sartika",
+        canManage: false,
+      });
+
+      assert.strictEqual(state.isOwner, true);
+      assert.strictEqual(state.canStaffSubmit, true);
+      assert.strictEqual(state.canDirectSettle, false);
+      assert.strictEqual(state.isPendingVerification, false);
+      assert.strictEqual(state.canVerify, false);
+    });
+
+    it("allows warehouse officer to direct settle when status is PENDING_SETTLEMENT", () => {
+      const state = getSettlementUiState({
+        compensationStatus: "PENDING_SETTLEMENT",
+        borrowerName: "Dewi Sartika",
+        sessionUserName: "Warehouse Officer",
+        canManage: true,
+      });
+
+      assert.strictEqual(state.canDirectSettle, true);
+      assert.strictEqual(state.canStaffSubmit, false);
+    });
+
+    it("allows warehouse officer to verify or reject when status is PENDING_VERIFICATION", () => {
+      const state = getSettlementUiState({
+        compensationStatus: "PENDING_VERIFICATION",
+        borrowerName: "Dewi Sartika",
+        sessionUserName: "Warehouse Officer",
+        canManage: true,
+      });
+
+      assert.strictEqual(state.isPendingVerification, true);
+      assert.strictEqual(state.canVerify, true);
+      assert.strictEqual(state.isStaffWaiting, false);
+    });
+
+    it("displays waiting advisory for staff borrower when status is PENDING_VERIFICATION", () => {
+      const state = getSettlementUiState({
+        compensationStatus: "PENDING_VERIFICATION",
+        borrowerName: "Dewi Sartika",
+        sessionUserName: "Dewi Sartika",
+        canManage: false,
+      });
+
+      assert.strictEqual(state.isPendingVerification, true);
+      assert.strictEqual(state.canVerify, false);
+      assert.strictEqual(state.isStaffWaiting, true);
     });
   });
 });
