@@ -4,12 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
   Bell,
-  UserPlus,
-  FileCheck,
-  ArrowLeftRight,
-  AlarmClock,
   CheckCheck,
-  AlertTriangle,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/lib/store/useWorkspaceStore";
 import { useShallow } from "zustand/react/shallow";
@@ -24,33 +19,8 @@ import {
 } from "@/lib/productivity/notifications";
 import { useNotificationFeed } from "@/lib/productivity/useNotificationFeed";
 import { cn } from "@/lib/utils";
-
-const KIND_META: Record<
-  NotificationKind,
-  { label: string; icon: typeof Bell; className: string }
-> = {
-  borrow_compensation: { label: "Kompensasi ganti rugi", icon: AlertTriangle, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
-  borrow_overdue: { label: "Equipment overdue", icon: AlarmClock, className: "bg-rose-500/10 text-rose-500" },
-  assignment: { label: "Assignments", icon: UserPlus, className: "bg-blue-500/10 text-blue-500" },
-  mou_approval: { label: "MOU approvals", icon: FileCheck, className: "bg-violet-500/10 text-violet-500" },
-  mou_expiry: { label: "MOU expiry", icon: AlertTriangle, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
-  status: { label: "Status changes", icon: ArrowLeftRight, className: "bg-teal-500/10 text-teal-600 dark:text-teal-400" },
-  overdue: { label: "Overdue", icon: AlarmClock, className: "bg-rose-500/10 text-rose-500" },
-};
-
-const KIND_ORDER: NotificationKind[] = ["borrow_compensation", "borrow_overdue", "overdue", "mou_expiry", "mou_approval", "assignment", "status"];
-
-function timeAgo(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  if (isNaN(ms) || ms < 0) return "just now";
-  const min = Math.floor(ms / 60000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min}m ago`;
-  const h = Math.floor(min / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  return d === 1 ? "yesterday" : `${d}d ago`;
-}
+import { KIND_META, KIND_ORDER } from "./notificationCenterConfig";
+import { NotificationItem } from "./NotificationItem";
 
 export function NotificationCenter() {
   const { tasks, spaces, activeSpaceId, currentUserId, lastSeenNotificationsAt } =
@@ -221,7 +191,6 @@ export function NotificationCenter() {
             ) : (
               grouped.map(({ kind, items }) => {
                 const meta = KIND_META[kind];
-                const Icon = meta.icon;
                 return (
                   <div key={kind}>
                     <div className="px-2 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -229,50 +198,20 @@ export function NotificationCenter() {
                     </div>
                     <div className="space-y-0.5">
                       {items.map((n) => (
-                        <button
+                        <NotificationItem
                           key={n.id}
-                          type="button"
-                          onClick={() => {
-                            if (n.kind === "borrow_overdue" || n.kind === "borrow_compensation") {
+                          notification={n}
+                          isUnread={isUnread(n)}
+                          onSelect={(item) => {
+                            if (item.kind === "borrow_overdue" || item.kind === "borrow_compensation") {
                               handleOpenBorrowing();
-                            } else if (n.kind === "mou_approval" || n.kind === "mou_expiry") {
+                            } else if (item.kind === "mou_approval" || item.kind === "mou_expiry") {
                               handleOpenMous();
                             } else {
-                              handleOpenTask(n);
+                              handleOpenTask(item);
                             }
                           }}
-                          className={cn(
-                            "w-full flex items-start gap-2.5 px-2.5 py-2 rounded-xl text-left transition-colors cursor-pointer",
-                            isUnread(n)
-                              ? "bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-50 dark:hover:bg-indigo-950/50"
-                              : "hover:bg-slate-100/70 dark:hover:bg-white/5",
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5",
-                              meta.className,
-                            )}
-                          >
-                            <Icon className="w-3.5 h-3.5" />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-xs font-semibold text-slate-800 dark:text-slate-200 leading-snug break-words">
-                              {n.title}
-                            </span>
-                            {n.body && (
-                              <span className="block text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                                {n.body}
-                              </span>
-                            )}
-                            <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                              {timeAgo(n.createdAt)}
-                            </span>
-                          </span>
-                          {isUnread(n) && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0 mt-1.5" />
-                          )}
-                        </button>
+                        />
                       ))}
                     </div>
                   </div>
