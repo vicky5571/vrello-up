@@ -37,6 +37,8 @@ export function InventoryView() {
   const [returningRecord, setReturningRecord] = useState<BorrowRecord | null>(null);
   const [deletingItem, setDeletingItem] = useState<InventoryItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [mutatingBorrowId, setMutatingBorrowId] = useState<string | null>(null);
+  const [mutatingAction, setMutatingAction] = useState<string | null>(null);
 
   // Store data
   const {
@@ -114,6 +116,9 @@ export function InventoryView() {
   };
 
   const handleStatusChange = async (id: string, newStatus: BorrowStatus) => {
+    if (mutatingBorrowId) return;
+    setMutatingBorrowId(id);
+    setMutatingAction(newStatus);
     try {
       const res = await fetch(`/api/marcom/inventory/borrow/${id}`, {
         method: "PUT",
@@ -128,6 +133,9 @@ export function InventoryView() {
       toast.success(`Borrow request marked as ${newStatus}`);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setMutatingBorrowId(null);
+      setMutatingAction(null);
     }
   };
 
@@ -182,6 +190,8 @@ export function InventoryView() {
               onApprove={(id) => handleStatusChange(id, "APPROVED")}
               onActivate={(id) => handleStatusChange(id, "ACTIVE")}
               onReturn={(r) => setReturningRecord(r)}
+              mutatingBorrowId={mutatingBorrowId}
+              mutatingAction={mutatingAction}
             />
           ) : (
             <BorrowRecordsTable
@@ -191,6 +201,7 @@ export function InventoryView() {
               canReturn={canManage}
               onView={(r) => setSelectedBorrow(r)}
               onReturn={(r) => setReturningRecord(r)}
+              mutatingBorrowId={mutatingBorrowId}
             />
           )
         )}
@@ -229,6 +240,7 @@ export function InventoryView() {
           fetchInventory(true);
           toast.success(`Equipment return recorded for ${r.borrowCode}!`);
         }}
+        mutatingBorrowId={mutatingBorrowId}
       />
 
       {/* Delete Confirmation Dialog */}

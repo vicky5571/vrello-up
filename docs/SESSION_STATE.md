@@ -6,9 +6,10 @@
 
 ## Current Status
 
-**Date:** 2026-11-11  
+**Date:** 2026-11-12  
 **Active Branch:** `vicky`  
-**Active Feature:** Hybrid Staff Cash Settlement Submission and Warehouse Verification Workflow (ADR-0106) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Localized Async Mutation Feedback and Loading States for Inventory Borrow Lifecycle (ADR-0107) — **IMPLEMENTATION COMPLETE**  
+**Previous Feature:** Hybrid Staff Cash Settlement Submission and Warehouse Verification Workflow (ADR-0106) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Multi-Photo Direct Upload for Inventory Damage Inspection (ADR-0105) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Strict Test-Environment Header Isolation & Inventory Auth Standardization (ADR-0104) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Virtual Overdue Status Lifecycle & Dual-Channel Notifications (ADR-0103) — **IMPLEMENTATION COMPLETE**  
@@ -90,7 +91,30 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Hybrid Staff Cash Settlement Submission and Warehouse Verification Workflow (ADR-0106 — Implementation Complete):**
+1. **Implementasi Localized Async Mutation Feedback and Loading States for Inventory Borrow Lifecycle (ADR-0107 — Implementation Complete):**
+   - **Konteks & Solusi Lapangan:**
+     - Mengatasi celah race condition dan double-click submission pada tombol-tombol transisi status peminjaman ("Approve Request", "Mark as Picked Up", "Process Return", serta tombol aksi pada modal detail).
+     - Menggunakan pendekatan *Localized Mutation State & Concurrency Lock* (Option 1): state `mutatingBorrowId` dan `mutatingAction` diangkat ke `InventoryView.tsx`, memberikan umpan balik visual langsung berupa spinner animasi (`Loader2`) dan teks kontekstual ("Approving...", "Picking Up..."), sembari menonaktifkan seluruh tombol mutasi transisi pada board guna mencegah mutasi tumpang tindih.
+   - **Phase 1: Lifting Mutation State & Concurrency Locks (`src/components/views/InventoryView/InventoryView.tsx` & `InventoryViewModals.tsx`):**
+     - Menambahkan state `[mutatingBorrowId, setMutatingBorrowId]` dan `[mutatingAction, setMutatingAction]` pada `InventoryView.tsx`.
+     - Melindungi `handleStatusChange` dengan guard awal (`if (mutatingBorrowId) return;`) dan blok `finally` untuk mereset state mutasi secara aman baik saat operasi sukses maupun gagal.
+     - Meneruskan `mutatingBorrowId` dan `mutatingAction` ke `BorrowTrackingBoard`, `BorrowRecordsTable`, dan `InventoryViewModals` (diteruskan ke `BorrowDetailModal` sebagai `isMutating`).
+   - **Phase 2: Board-Level Spinners & Concurrency Locks (`src/components/views/InventoryView/BorrowTrackingBoard.tsx`):**
+     - Mengimpor icon `Loader2` dari `lucide-react`.
+     - Mengubah tombol "Approve Request" dan "Mark as Picked Up" agar menampilkan icon `Loader2 animate-spin` serta teks dinamis `"Approving..."` atau `"Picking Up..."` ketika kartu tersebut sedang bermutasi.
+     - Mengunci seluruh tombol transisi status pada papan kanban dengan atribut `disabled={isBoardMutating}` dan styling `disabled:opacity-60 disabled:cursor-not-allowed` selama mutasi jaringan berlangsung.
+   - **Phase 3: Detail Modal & Table Mutation Sync (`BorrowDetailModal.tsx` & `BorrowRecordsTable.tsx`):**
+     - Menerima prop `isMutating?: boolean` pada `BorrowDetailModal.tsx`, menampilkan spinner `Loader2` dan label dinamis saat proses berlangsung, serta menonaktifkan tombol aksi modal dan tombol batal.
+     - Menerima `mutatingBorrowId` pada `BorrowRecordsTable.tsx` dan menonaktifkan tombol "Proses Pengembalian" pada baris tabel yang relevan selama mutasi berlangsung.
+   - **Phase 4: Unit Test Suite & Invariants (`borrowTrackingBoard.test.ts` & `borrowDetailModal.test.ts`):**
+     - Membuat unit test suite baru `src/components/views/InventoryView/borrowTrackingBoard.test.ts` untuk memverifikasi kontrak ADR-0107 (5/5 tests pass).
+     - Menambahkan invariant tests pada `src/components/views/InventoryView/borrowDetailModal.test.ts` untuk memverifikasi prop `isMutating` dan spinner `Loader2` (18/18 tests pass).
+   - **Phase 5: Non-Negotiable Verification Gates:**
+     - `npm run drift:check`: ✅ PASS (134/134 spec-plan pairs valid, 0 drift).
+     - `npm run build:check`: ✅ PASS (`tsc --noEmit`, exit code 0).
+     - `npm test`: ✅ PASS (1128 tests passed across 198 test suites, 0 failures).
+
+2. **Implementasi Hybrid Staff Cash Settlement Submission and Warehouse Verification Workflow (ADR-0106 — Implementation Complete):**
    - **Konteks & Solusi Lapangan:**
      - Mengatasi hambatan operasional bagi tim lapangan (`staff`) yang melunasi ganti rugi kerusakan/kehilangan inventaris via transfer bank di luar jam kerja gudang tanpa kehilangan penegakan Prinsip Empat Mata (Four-Eyes Principle).
      - Menghilangkan celah *Phantom Stock* dengan mengunci mode penggantian unit fisik (`ITEM_REPLACEMENT`) secara ketat di meja serah-terima gudang fisik (`warehouse`/`admin`), sementara pengajuan transfer kas (`CASH_TRANSFER`) dapat dilakukan secara asinkron oleh peminjam (`staff`).

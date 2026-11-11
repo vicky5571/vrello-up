@@ -31,6 +31,7 @@ interface BorrowDetailModalProps {
   onStatusChange: (id: string, newStatus: BorrowStatus) => void;
   onReturn: (record: BorrowRecord) => void;
   onSettled?: (record: BorrowRecord) => void;
+  isMutating?: boolean;
 }
 
 export function BorrowDetailModal({
@@ -42,6 +43,7 @@ export function BorrowDetailModal({
   onStatusChange,
   onReturn,
   onSettled,
+  isMutating = false,
 }: BorrowDetailModalProps) {
   const [isSettlementModalOpen, setIsSettlementModalOpen] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -728,8 +730,9 @@ export function BorrowDetailModal({
             {record.status === "PENDING" && canCancelPending && (
               <button
                 type="button"
+                disabled={isMutating}
                 onClick={() => onStatusChange(record.id, "CANCELLED")}
-                className="px-3 py-1.5 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:hover:bg-rose-950/40 rounded-lg text-xs font-medium flex items-center gap-1"
+                className="px-3 py-1.5 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:hover:bg-rose-950/40 rounded-lg text-xs font-medium flex items-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Ban className="w-3.5 h-3.5" />
                 Cancel Request
@@ -738,8 +741,9 @@ export function BorrowDetailModal({
             {record.status === "APPROVED" && canManage && (
               <button
                 type="button"
+                disabled={isMutating}
                 onClick={() => onStatusChange(record.id, "CANCELLED")}
-                className="px-3 py-1.5 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:hover:bg-rose-950/40 rounded-lg text-xs font-medium flex items-center gap-1"
+                className="px-3 py-1.5 border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900 dark:hover:bg-rose-950/40 rounded-lg text-xs font-medium flex items-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Ban className="w-3.5 h-3.5" />
                 Cancel Loan
@@ -759,33 +763,44 @@ export function BorrowDetailModal({
             {record.status === "PENDING" && canApprove && (
               <button
                 type="button"
+                disabled={isMutating}
                 onClick={() => onStatusChange(record.id, "APPROVED")}
-                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors"
+                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Approve Request
+                {isMutating ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                )}
+                <span>{isMutating ? "Approving..." : "Approve Request"}</span>
               </button>
             )}
 
             {record.status === "APPROVED" && canManage && (
               <button
                 type="button"
+                disabled={isMutating}
                 onClick={() => onStatusChange(record.id, "ACTIVE")}
-                className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors"
+                className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
-                <PackageCheck className="w-3.5 h-3.5" />
-                Mark as Picked Up
+                {isMutating ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <PackageCheck className="w-3.5 h-3.5" />
+                )}
+                <span>{isMutating ? "Picking Up..." : "Mark as Picked Up"}</span>
               </button>
             )}
 
             {(record.status === "ACTIVE" || record.status === "OVERDUE") && canManage && (
               <button
                 type="button"
+                disabled={isMutating}
                 onClick={() => onReturn(record)}
-                className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors"
+                className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                Process Return
+                <span>Process Return</span>
               </button>
             )}
           </div>

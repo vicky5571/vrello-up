@@ -8,6 +8,7 @@ import {
   PackageCheck,
   RotateCcw,
   MapPin,
+  Loader2,
 } from "lucide-react";
 import type { BorrowRecord } from "@/types";
 
@@ -19,6 +20,8 @@ interface BorrowTrackingBoardProps {
   onApprove: (id: string) => void;
   onActivate: (id: string) => void;
   onReturn: (record: BorrowRecord) => void;
+  mutatingBorrowId?: string | null;
+  mutatingAction?: string | null;
 }
 
 interface ColumnDef {
@@ -36,6 +39,8 @@ export function BorrowTrackingBoard({
   onApprove,
   onActivate,
   onReturn,
+  mutatingBorrowId,
+  mutatingAction,
 }: BorrowTrackingBoardProps) {
   const columns: ColumnDef[] = [
     {
@@ -194,38 +199,58 @@ export function BorrowTrackingBoard({
 
                       {/* Action Button inside card */}
                       <div className="mt-3 pt-2" onClick={(e) => e.stopPropagation()}>
-                        {r.status === "PENDING" && canApprove && (
-                          <button
-                            type="button"
-                            onClick={() => onApprove(r.id)}
-                            className="w-full py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium flex items-center justify-center gap-1.5 shadow-sm transition-colors"
-                          >
-                            <CheckCircle className="w-3.5 h-3.5" />
-                            Approve Request
-                          </button>
-                        )}
+                        {(() => {
+                          const isThisMutating = mutatingBorrowId === r.id;
+                          const isBoardMutating = Boolean(mutatingBorrowId);
 
-                        {r.status === "APPROVED" && canManage && (
-                          <button
-                            type="button"
-                            onClick={() => onActivate(r.id)}
-                            className="w-full py-1.5 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-medium flex items-center justify-center gap-1.5 shadow-sm transition-colors"
-                          >
-                            <PackageCheck className="w-3.5 h-3.5" />
-                            Mark as Picked Up
-                          </button>
-                        )}
+                          return (
+                            <>
+                              {r.status === "PENDING" && canApprove && (
+                                <button
+                                  type="button"
+                                  disabled={isBoardMutating}
+                                  onClick={() => onApprove(r.id)}
+                                  className="w-full py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium flex items-center justify-center gap-1.5 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                                >
+                                  {isThisMutating ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                  )}
+                                  <span>{isThisMutating ? "Approving..." : "Approve Request"}</span>
+                                </button>
+                              )}
 
-                        {(r.status === "ACTIVE" || r.status === "OVERDUE") && canManage && (
-                          <button
-                            type="button"
-                            onClick={() => onReturn(r)}
-                            className="w-full py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium flex items-center justify-center gap-1.5 shadow-sm transition-colors"
-                          >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                            Process Return
-                          </button>
-                        )}
+                              {r.status === "APPROVED" && canManage && (
+                                <button
+                                  type="button"
+                                  disabled={isBoardMutating}
+                                  onClick={() => onActivate(r.id)}
+                                  className="w-full py-1.5 px-2 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-medium flex items-center justify-center gap-1.5 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                                >
+                                  {isThisMutating ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <PackageCheck className="w-3.5 h-3.5" />
+                                  )}
+                                  <span>{isThisMutating ? "Picking Up..." : "Mark as Picked Up"}</span>
+                                </button>
+                              )}
+
+                              {(r.status === "ACTIVE" || r.status === "OVERDUE") && canManage && (
+                                <button
+                                  type="button"
+                                  disabled={isBoardMutating}
+                                  onClick={() => onReturn(r)}
+                                  className="w-full py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium flex items-center justify-center gap-1.5 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                                >
+                                  <RotateCcw className="w-3.5 h-3.5" />
+                                  <span>Process Return</span>
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   );

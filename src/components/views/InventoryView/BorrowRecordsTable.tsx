@@ -12,6 +12,7 @@ interface BorrowRecordsTableProps {
   canReturn: boolean;
   onView: (record: BorrowRecord) => void;
   onReturn: (record: BorrowRecord) => void;
+  mutatingBorrowId?: string | null;
 }
 
 const STATUS_TABS = [
@@ -31,6 +32,7 @@ export function BorrowRecordsTable({
   canReturn,
   onView,
   onReturn,
+  mutatingBorrowId,
 }: BorrowRecordsTableProps) {
   const filteredRecords = records.filter((r) => {
     if (activeStatusTab === "ALL") return true;
@@ -209,9 +211,10 @@ export function BorrowRecordsTable({
                           {canProcessReturn && (
                             <button
                               type="button"
+                              disabled={Boolean(mutatingBorrowId)}
                               onClick={() => onReturn(r)}
                               title="Process Return"
-                              className="px-2 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-100 rounded text-[11px] font-medium flex items-center gap-1"
+                              className="px-2 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-100 rounded text-[11px] font-medium flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                             >
                               <RotateCcw className="w-3 h-3" />
                               Return

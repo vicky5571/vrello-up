@@ -4,6 +4,24 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ---
 
+## [2026-11-12]
+
+- `feat(inventory)`: Localized async mutation feedback and loading states for borrow lifecycle (ADR-0107)
+  - Controller State & Concurrency Guard (`src/components/views/InventoryView/InventoryView.tsx`, `InventoryViewModals.tsx`):
+    - Added `mutatingBorrowId` and `mutatingAction` state pair, guarding `handleStatusChange` against concurrent clicks and resetting cleanly in `finally`.
+    - Threaded `mutatingBorrowId` to `BorrowTrackingBoard`, `BorrowRecordsTable`, and forwarded `isMutating` to `BorrowDetailModal`.
+  - Kanban Board Card Loaders (`src/components/views/InventoryView/BorrowTrackingBoard.tsx`):
+    - Mounted `Loader2` spinner and dynamic loading labels (`"Approving..."` and `"Picking Up..."`) on active mutating cards.
+    - Disabled buttons with `disabled:opacity-60 disabled:cursor-not-allowed` to block rage clicks and duplicate requests.
+  - Detail Modal & Table Row Guards (`src/components/views/InventoryView/BorrowDetailModal.tsx`, `BorrowRecordsTable.tsx`):
+    - Added `isMutating` prop to `BorrowDetailModalProps`, mounting spinner and disabling action/cancel buttons during mutation.
+    - Guarded table row action buttons from concurrent submissions.
+  - Automated Invariant Tests:
+    - Created `src/components/views/InventoryView/borrowTrackingBoard.test.ts` (5/5 tests passing).
+    - Updated `src/components/views/InventoryView/borrowDetailModal.test.ts` with ADR-0107 invariants.
+  - Verification: `npm run drift:check` ✅ (134/134 pairs), `npm run build:check` ✅ (0 errors), `npm test` ✅ (1128/1128 passing).
+  - Refs: `docs/adr/0107-inventory-borrow-lifecycle-button-loaders-and-mutation-guards.md`, `docs/superpowers/specs/2026-11-12-inventory-borrow-lifecycle-button-loaders-and-mutation-guards-design.md`, `docs/superpowers/plans/2026-11-12-inventory-borrow-lifecycle-button-loaders-and-mutation-guards.md`
+
 ## [2026-11-11]
 
 - `feat(inventory)`: Hybrid staff cash settlement submission and warehouse verification workflow (ADR-0106)

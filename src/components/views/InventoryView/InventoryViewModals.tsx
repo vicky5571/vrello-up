@@ -27,6 +27,7 @@ interface InventoryViewModalsProps {
   returningRecord: BorrowRecord | null;
   setReturningRecord: (record: BorrowRecord | null) => void;
   onReturned: (record: BorrowRecord) => void;
+  mutatingBorrowId?: string | null;
 }
 
 export function InventoryViewModals({
@@ -46,6 +47,7 @@ export function InventoryViewModals({
   returningRecord,
   setReturningRecord,
   onReturned,
+  mutatingBorrowId,
 }: InventoryViewModalsProps) {
   return (
     <>
@@ -80,6 +82,7 @@ export function InventoryViewModals({
           onReturned(r);
           setSelectedBorrow(r);
         }}
+        isMutating={Boolean(mutatingBorrowId && selectedBorrow?.id === mutatingBorrowId)}
       />
 
       <ReturnProcessModal

@@ -167,6 +167,17 @@ describe("BorrowDetailModal Staff Self-Cancellation & RBAC Invariants (ADR-0101)
       assert.ok(content.includes("Bukti transfer Anda telah dikirim dan sedang menunggu konfirmasi admin atau petugas gudang."), "Must render staff waiting alert banner");
       assert.ok(content.includes("userRole={role}"), "Must pass role to BorrowSettlementModal");
     });
+
+    it("verifies localized mutation button loaders and concurrency guards (ADR-0107)", () => {
+      const filePath = path.resolve(root, "src/components/views/InventoryView/BorrowDetailModal.tsx");
+      const content = fs.readFileSync(filePath, "utf-8");
+
+      assert.ok(content.includes("isMutating?: boolean;"), "Must define isMutating in BorrowDetailModalProps");
+      assert.ok(content.includes('isMutating ? ('), "Must conditionally render loader based on isMutating");
+      assert.ok(content.includes('"Approving..."'), "Must render Approving... text when mutating");
+      assert.ok(content.includes('"Picking Up..."'), "Must render Picking Up... text when mutating");
+      assert.ok(content.includes("disabled={isMutating}"), "Must disable action buttons when isMutating is true");
+    });
   });
 
   describe("getSettlementUiState helper invariants (ADR-0106)", () => {
