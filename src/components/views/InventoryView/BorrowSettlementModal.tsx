@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import { X, Upload, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatIDR } from "@/lib/utils";
+import { compressImage } from "@/lib/marcom/photoUtils";
 import type { BorrowRecord } from "@/types";
 
 export interface BorrowSettlementModalProps {
@@ -40,13 +41,27 @@ export function BorrowSettlementModal({
     try {
       const uploaded: string[] = [];
       for (const file of files) {
+        let fileToUpload: Blob = file;
+        if (file.type.startsWith("image/")) {
+          try {
+            fileToUpload = await compressImage(file, {
+              maxWidth: 1600,
+              maxHeight: 1600,
+              quality: 0.82,
+            });
+          } catch {
+            // fallback to original file if compression fails
+          }
+        }
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", fileToUpload);
         formData.append("kind", "inventory-proofs");
+        formData.append("id", record.id);
         const res = await fetch("/api/marcom/uploads", { method: "POST", body: formData });
-        if (!res.ok) throw new Error("Gagal mengunggah berkas");
-        const data = await res.json();
-        if (data.url) uploaded.push(data.url);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Gagal mengunggah berkas");
+        const fileUrl = data.filePath || data.url;
+        if (fileUrl) uploaded.push(fileUrl);
       }
       setProofUrls((prev) => [...prev, ...uploaded]);
       toast.success(`${uploaded.length} berkas berhasil diunggah`);

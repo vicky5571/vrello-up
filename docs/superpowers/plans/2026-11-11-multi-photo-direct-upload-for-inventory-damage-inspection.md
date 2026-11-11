@@ -15,11 +15,12 @@ This plan implements direct multi-photo upload from device camera/storage for ph
 
 | File Path | Action | Purpose | LOC Est. |
 | :--- | :--- | :--- | :--- |
-| `src/app/api/marcom/uploads/route.ts` | Edit | Register `"inventory-damage"` in `VALID_KINDS`, `BUCKET_MAP`, `KIND_PREFIX`, and `PERMISSION_MAP`. | ~12 lines edited |
-| `src/app/api/marcom/uploads/uploadsApi.test.ts` | Edit | Add tests verifying `"inventory-damage"` upload kind authorization. | ~20 lines added |
+| `src/app/api/marcom/uploads/route.ts` | Edit | Register `"inventory-damage"` and `"inventory-proofs"` in `VALID_KINDS`, `BUCKET_MAP`, `KIND_PREFIX`, and `PERMISSION_MAP`. | ~18 lines edited |
+| `src/app/api/marcom/uploads/uploadsApi.test.ts` | Edit | Add tests verifying `"inventory-damage"` and `"inventory-proofs"` upload kind authorization. | ~25 lines added |
 | `src/components/views/InventoryView/ReturnProcessModal.tsx` | Edit | Replace URL input with hidden file picker, `+ Unggah Foto Kerusakan` button, client-side compression loop, and thumbnail deck. | ~60 lines edited |
+| `src/components/views/InventoryView/BorrowSettlementModal.tsx` | Edit | Pass `id: record.id` in `FormData`, client image compression, and extract `data.filePath \|\| data.url`. | ~20 lines edited |
 | `src/components/views/InventoryView/returnProcessModal.test.ts` | Edit | Add unit test verifying direct multi-file input and elimination of URL input. | ~30 lines added |
-| `docs/SESSION_STATE.md` | Edit | Update feature status and verification history. | ~15 lines edited |
+| `docs/SESSION_STATE.md` | Edit | Update feature status and verification history. | ~20 lines edited |
 
 ### Prerequisites & Dependencies
 - Zero database migrations (Prisma `BorrowRecord.damagePhotos` already stores `String[]`).
@@ -61,22 +62,40 @@ This plan implements direct multi-photo upload from device camera/storage for ph
 
 ---
 
-## 4. Phase 3: Integration Testing & Verification Gates
+## 4. Phase 3: Alignment of Settlement Proof Uploads (`BorrowSettlementModal.tsx` & `inventory-proofs`)
 
-- [x] **Task 3.1: Unit Test `ReturnProcessModal.tsx` Multi-Photo Invariants**
+- [x] **Task 3.1: Register `inventory-proofs` in Uploads API**
+  - File: `src/app/api/marcom/uploads/route.ts`
+  - Register `"inventory-proofs"` in `VALID_KINDS`.
+  - Map `"inventory-proofs"` to bucket `"inventory-damage"` with prefix `"settlement"` and permission `"PROCESS_RETURN"`.
+- [x] **Task 3.2: Fix FormData and Compression in `BorrowSettlementModal.tsx`**
+  - File: `src/components/views/InventoryView/BorrowSettlementModal.tsx`
+  - Append `formData.append("id", record.id)`.
+  - Add client image compression (`compressImage`) before upload.
+  - Read `data.filePath || data.url` from response.
+- [x] **Task 3.3: Verify Settlement Upload Invariants**
+  - File: `src/app/api/marcom/uploads/uploadsApi.test.ts`
+  - File: `src/components/views/InventoryView/borrowSettlementModal.test.ts`
+
+---
+
+## 5. Phase 4: Integration Testing & Verification Gates
+
+- [x] **Task 4.1: Unit Test `ReturnProcessModal.tsx` Multi-Photo Invariants**
   - File: `src/components/views/InventoryView/returnProcessModal.test.ts`
   - Assert hidden file input with `multiple` and `accept="image/*"` exists.
   - Assert raw URL input and placeholder are eliminated.
   - Assert thumbnail rendering and photo removal functions exist.
-- [x] **Task 3.2: Verify Modal Tests**
+- [x] **Task 4.2: Verify Modal Tests**
   - Run: `node --test --import ./test/register-alias.mjs src/components/views/InventoryView/returnProcessModal.test.ts`
-- [x] **Task 3.3: Drift Check**
+- [x] **Task 4.3: Drift Check**
   - Run `npm run drift:check` (must pass with 132/132 pairs).
-- [x] **Task 3.4: Full Test Suite**
+- [x] **Task 4.4: Full Test Suite**
   - Run `npm test` (all tests passing with 0 failures).
-- [x] **Task 3.5: Build Check**
+- [x] **Task 4.5: Build Check**
   - Run `npm run build:check` (0 TypeScript / Next.js errors).
-- [x] **Task 3.6: Update SESSION_STATE.md**
+- [x] **Task 4.6: Update SESSION_STATE.md**
+
 
 
 

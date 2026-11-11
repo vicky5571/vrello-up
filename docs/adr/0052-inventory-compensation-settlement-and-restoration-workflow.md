@@ -94,5 +94,15 @@ We choose **Option 1**.
 4. **Stock Math Invariant (`ITEM_REPLACEMENT`)**: In `ITEM_REPLACEMENT` mode, for each item with replaced units, `totalUnits` and `availableUnits` must increase by exactly the number of replaced units, and no stock adjustment may occur in `CASH_TRANSFER` mode.
 5. **Non-Negotiable Gates**: `npm run drift:check`, `npm run build:check`, and `npm test` must pass with 0 errors and 0 failures.
 
+---
+
+## 6. Addendum: Storage Infrastructure & Upload Route Alignment (2026-11-11)
+
+In ADR-0052 (Section 4, Item 4), the storage bucket for settlement proofs was projected as `inventory-proofs`. During operational execution under [ADR-0105](0105-multi-photo-direct-upload-for-inventory-damage-inspection.md), the storage architecture was standardized:
+- The upload kind `inventory-proofs` is formally registered in `VALID_KINDS` in `/api/marcom/uploads/route.ts`.
+- Storage is unified into the `inventory-damage` Supabase Storage bucket under the folder prefix `settlement/`.
+- `BorrowSettlementModal.tsx` passes `id: record.id` in `FormData`, applies client-side image compression, and extracts `data.filePath || data.url`.
+
+
 
 

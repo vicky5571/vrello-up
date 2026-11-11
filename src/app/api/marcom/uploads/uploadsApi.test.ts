@@ -31,14 +31,15 @@ describe("Uploads API Route Invariants (Supabase Storage Migration)", () => {
       "Must call uploadToSupabase",
     );
 
-    // Must support documents, mou-documents, placements, outlets, and inventory-damage (ADR-0105)
+    // Must support documents, mou-documents, placements, outlets, inventory-damage, and inventory-proofs
     assert.ok(
       content.includes('"documents"') &&
         content.includes('"mou-documents"') &&
         content.includes('"placements"') &&
         content.includes('"outlets"') &&
-        content.includes('"inventory-damage"'),
-      "Must support documents, mou-documents, placements, outlets, and inventory-damage kinds",
+        content.includes('"inventory-damage"') &&
+        content.includes('"inventory-proofs"'),
+      "Must support documents, mou-documents, placements, outlets, inventory-damage, and inventory-proofs kinds",
     );
 
     // Must map to correct buckets

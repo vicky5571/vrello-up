@@ -59,5 +59,24 @@ We choose **Option 1: Pure Direct Multi-Photo File Upload (Eliminating External 
 ### Accepted Technical Debt & Mitigations
 - In isolated test environments where Supabase Storage credentials are not configured, `/api/marcom/uploads` falls back to simulated/mock responses or tests continue to pass raw URLs directly into the return endpoint payload.
 
+---
+
+## 5. Addendum: Unified Inventory Proofs & Settlement Upload Support (`inventory-proofs`)
+
+- **Date:** 2026-11-11
+- **Context:** Extension of `/api/marcom/uploads` and alignment with [ADR-0052](0052-inventory-compensation-settlement-and-restoration-workflow.md).
+
+### Problem Statement
+During operational testing of the equipment loan lifecycle following ADR-0105 deployment, resolving an outstanding compensation record in [`BorrowSettlementModal.tsx`](file:///Users/mac/Web%20Development/vrello-up/src/components/views/InventoryView/BorrowSettlementModal.tsx) resulted in `HTTP 400 Bad Request` on file upload:
+1. `BorrowSettlementModal` uploaded files with `kind: "inventory-proofs"`, but `"inventory-proofs"` was absent from `VALID_KINDS` in `/api/marcom/uploads/route.ts`.
+2. `BorrowSettlementModal` omitted the mandatory `id` parameter in `FormData` expected by `/api/marcom/uploads`.
+3. Supabase Storage did not have a dedicated `inventory-proofs` bucket.
+
+### Decision
+1. **Unified Storage Bucket:** Both inspection damage photos (`kind: "inventory-damage"`) and compensation settlement receipts (`kind: "inventory-proofs"`) are routed to the single `inventory-damage` Supabase Storage bucket, partitioned into folder prefixes `damage/` and `settlement/` respectively.
+2. **Permission Guard:** Both inventory upload kinds are strictly guarded by the `PROCESS_RETURN` RBAC permission (`warehouse`, `supervisor`, `admin`).
+3. **Modal Alignment:** Updated `BorrowSettlementModal.tsx` to pass `id: record.id`, integrated client-side `compressImage` (max 1600x1600, 0.82 quality), and updated the URL extractor to read `data.filePath || data.url`.
+
+
 
 

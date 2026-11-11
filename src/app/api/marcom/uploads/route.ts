@@ -15,6 +15,7 @@ const VALID_KINDS = [
   "placements",
   "outlets",
   "inventory-damage",
+  "inventory-proofs",
 ] as const;
 type UploadKind = (typeof VALID_KINDS)[number];
 
@@ -24,6 +25,7 @@ const BUCKET_MAP: Record<UploadKind, string> = {
   placements: "placement-photos",
   outlets: "outlet-photos",
   "inventory-damage": "inventory-damage",
+  "inventory-proofs": "inventory-damage",
 };
 
 const KIND_PREFIX: Record<UploadKind, string> = {
@@ -32,6 +34,7 @@ const KIND_PREFIX: Record<UploadKind, string> = {
   placements: "placements",
   outlets: "outlets",
   "inventory-damage": "damage",
+  "inventory-proofs": "settlement",
 };
 
 const PERMISSION_MAP: Record<UploadKind, string> = {
@@ -40,6 +43,7 @@ const PERMISSION_MAP: Record<UploadKind, string> = {
   placements: "CREATE_PLACEMENT",
   outlets: "SUBMIT_DRAFT_OUTLET",
   "inventory-damage": "PROCESS_RETURN",
+  "inventory-proofs": "PROCESS_RETURN",
 };
 
 // Derive MIME type from file extension for storage Content-Type header
@@ -77,7 +81,7 @@ export async function POST(request: Request) {
     !(VALID_KINDS as readonly string[]).includes(kind)
   ) {
     return NextResponse.json(
-      { error: "Invalid kind: expected documents, mou-documents, placements, outlets, or inventory-damage" },
+      { error: "Invalid kind: expected documents, mou-documents, placements, outlets, inventory-damage, or inventory-proofs" },
       { status: 400 },
     );
   }

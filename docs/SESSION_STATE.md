@@ -109,13 +109,20 @@
      - Memperbarui invariant guard tombol submit agar memvalidasi status `isUploading`.
      - Menambahkan unit test invariant untuk ADR-0105: memastikan penghapusan teks URL, keberadaan input file `multiple` dan `accept="image/*"`, kompresi klien `compressImage`, kind upload `inventory-damage`, dan fungsi hapus thumbnail.
      - Unit test suite: 5/5 tests passing (0 failures).
+   - **Addendum: Supabase Storage Bucket Provisioning & Settlement Proof Upload Alignment (`BorrowSettlementModal.tsx` & `inventory-proofs`):**
+     - **Penyediaan Bucket Supabase `inventory-damage`:** Mengatasi error runtime `Bucket not found (404)` dengan memprovisi bucket publik `inventory-damage` pada Supabase Storage (kuota 25MB, public read).
+     - **Penyelesaian HTTP 400 pada `BorrowSettlementModal.tsx`:**
+       - Mendaftarkan kind `"inventory-proofs"` pada `VALID_KINDS` di `/api/marcom/uploads/route.ts` dan memetakannya ke bucket `"inventory-damage"` dengan folder prefix `"settlement/"` dan guard izin `"PROCESS_RETURN"`.
+       - Memperbaiki `BorrowSettlementModal.tsx` agar menyertakan `formData.append("id", record.id)`, menerapkan kompresi gambar klien (`compressImage`), dan mengekstrak `data.filePath || data.url`.
+       - Menambahkan verifikasi unit test invariant pada `uploadsApi.test.ts` dan `borrowSettlementModal.test.ts`.
    - **Phase 4: Non-Negotiable Verification Gates:**
      - `npm run drift:check`: ✅ 0 drift detected (132/132 spec-plan pairs valid, coordinator files $\le 250$ LOC, single-tenant invariants terjaga).
      - `npm run build:check`: ✅ 0 TypeScript errors (`tsc --noEmit`).
      - `npm test`: ✅ 1,108/1,108 tests passing across 196 suites (0 failures).
      - `npm run test:smoke`: ✅ 174/174 tests passing (0 failures).
    - **Artefak:**
-     - ADR: [`docs/adr/0105-multi-photo-direct-upload-for-inventory-damage-inspection.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0105-multi-photo-direct-upload-for-inventory-damage-inspection.md)
+     - ADR: [`docs/adr/0105-multi-photo-direct-upload-for-inventory-damage-inspection.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0105-multi-photo-direct-upload-for-inventory-damage-inspection.md) (dengan Addendum)
+     - ADR-0052: [`docs/adr/0052-inventory-compensation-settlement-and-restoration-workflow.md`](file:///Users/mac/Web%20Development/vrello-up/docs/adr/0052-inventory-compensation-settlement-and-restoration-workflow.md) (dengan Addendum)
      - Spec: [`docs/superpowers/specs/2026-11-11-multi-photo-direct-upload-for-inventory-damage-inspection-design.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/specs/2026-11-11-multi-photo-direct-upload-for-inventory-damage-inspection-design.md)
      - Plan: [`docs/superpowers/plans/2026-11-11-multi-photo-direct-upload-for-inventory-damage-inspection.md`](file:///Users/mac/Web%20Development/vrello-up/docs/superpowers/plans/2026-11-11-multi-photo-direct-upload-for-inventory-damage-inspection.md)
 

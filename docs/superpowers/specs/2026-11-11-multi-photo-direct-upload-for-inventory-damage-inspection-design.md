@@ -80,7 +80,7 @@ sequenceDiagram
 ## 3. Backend API Contract (`/api/marcom/uploads/route.ts`)
 
 ### 3.1. Extend `VALID_KINDS`
-Update `VALID_KINDS` to include `"inventory-damage"`:
+Update `VALID_KINDS` to include both `"inventory-damage"` and `"inventory-proofs"`:
 ```ts
 const VALID_KINDS = [
   "documents",
@@ -88,6 +88,7 @@ const VALID_KINDS = [
   "placements",
   "outlets",
   "inventory-damage",
+  "inventory-proofs",
 ] as const;
 ```
 
@@ -99,6 +100,7 @@ const BUCKET_MAP: Record<UploadKind, string> = {
   placements: "placement-photos",
   outlets: "outlet-photos",
   "inventory-damage": "inventory-damage",
+  "inventory-proofs": "inventory-damage",
 };
 
 const KIND_PREFIX: Record<UploadKind, string> = {
@@ -107,6 +109,7 @@ const KIND_PREFIX: Record<UploadKind, string> = {
   placements: "placements",
   outlets: "outlets",
   "inventory-damage": "damage",
+  "inventory-proofs": "settlement",
 };
 ```
 
@@ -118,9 +121,10 @@ const PERMISSION_MAP: Record<UploadKind, string> = {
   placements: "CREATE_PLACEMENT",
   outlets: "SUBMIT_DRAFT_OUTLET",
   "inventory-damage": "PROCESS_RETURN",
+  "inventory-proofs": "PROCESS_RETURN",
 };
 ```
-This ensures callers with `PROCESS_RETURN` permissions (`warehouse`, `supervisor`, `admin`) can upload physical damage proof without escalating general document permissions.
+This ensures callers with `PROCESS_RETURN` permissions (`warehouse`, `supervisor`, `admin`) can upload physical damage proof and compensation settlement receipts without escalating general document permissions.
 
 ---
 
