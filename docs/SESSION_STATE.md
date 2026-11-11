@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-12  
 **Active Branch:** `vicky`  
-**Active Feature:** Localized Async Mutation Feedback and Loading States for Inventory Borrow Lifecycle (ADR-0107) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** Strict One-Shot Settlement Nominal Lock and Compensation Adjustment Workflow (ADR-0108) — **PLANNING COMPLETE**  
+**Previous Feature:** Localized Async Mutation Feedback and Loading States for Inventory Borrow Lifecycle (ADR-0107) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Hybrid Staff Cash Settlement Submission and Warehouse Verification Workflow (ADR-0106) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Multi-Photo Direct Upload for Inventory Damage Inspection (ADR-0105) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Strict Test-Environment Header Isolation & Inventory Auth Standardization (ADR-0104) — **IMPLEMENTATION COMPLETE**  
