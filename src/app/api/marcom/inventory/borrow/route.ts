@@ -53,6 +53,7 @@ function normalizeBorrowRecord(record: RawBorrowRecord) {
     returnDueDate: record.returnDueDate ? new Date(record.returnDueDate).toISOString() : null,
     returnDate: record.returnDate ? record.returnDate.toISOString() : null,
     approvedAt: record.approvedAt ? record.approvedAt.toISOString() : null,
+    settledAt: record.settledAt ? (record.settledAt instanceof Date ? record.settledAt.toISOString() : String(record.settledAt)) : null,
     createdAt: record.createdAt ? record.createdAt.toISOString() : null,
     updatedAt: record.updatedAt ? record.updatedAt.toISOString() : null,
     items: (record.items || []).map((item: RawBorrowItem) => ({

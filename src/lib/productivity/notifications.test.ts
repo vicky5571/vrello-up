@@ -227,7 +227,10 @@ test("deriveBorrowOverdueNotifications returns empty array when all returns are 
 // ─────────────────────────────────────────────────────────────────────────────
 // ADR-0106 — deriveBorrowCompensationNotifications
 // ─────────────────────────────────────────────────────────────────────────────
-import { deriveBorrowCompensationNotifications } from "./notifications";
+import {
+  deriveBorrowCompensationNotifications,
+  extractLatestRejectionReason,
+} from "./notifications";
 
 test("deriveBorrowCompensationNotifications: borrower receives PENDING_SETTLEMENT alert when amount > 0 (AC-5a)", () => {
   const records = [
@@ -277,7 +280,7 @@ test("deriveBorrowCompensationNotifications: borrower does NOT receive alert whe
   assert.equal(notifs.length, 0);
 });
 
-test("deriveBorrowCompensationNotifications: borrower does NOT receive alert when compensationStatus is RESOLVED (AC-5c)", () => {
+test("deriveBorrowCompensationNotifications: borrower does NOT receive alert when compensationStatus is RESOLVED and already seen (AC-5c & ADR-0109)", () => {
   const records = [
     {
       id: "comp-3",
@@ -287,6 +290,7 @@ test("deriveBorrowCompensationNotifications: borrower does NOT receive alert whe
       status: "RETURNED",
       compensationStatus: "RESOLVED",
       compensationAmount: 500000,
+      settledAt: "2026-11-07T10:00:00.000Z",
     },
   ];
 
@@ -294,6 +298,7 @@ test("deriveBorrowCompensationNotifications: borrower does NOT receive alert whe
     records,
     currentUserName: "Alice Smith",
     userRole: "staff",
+    lastSeenNotificationsAt: "2026-11-07T11:00:00.000Z",
   });
 
   assert.equal(notifs.length, 0);
@@ -423,4 +428,226 @@ test("deriveBorrowCompensationNotifications: multiple records produce correct no
   });
   assert.equal(notifsManager.length, 1);
   assert.equal(notifsManager[0].id, "borrow-verify-multi-2");
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADR-0109 — Borrower Compensation Settlement & Rejection Feedback Notifications
+// ─────────────────────────────────────────────────────────────────────────────
+
+test("extractLatestRejectionReason extracts officer and reason correctly", () => {
+  // Empty or non-rejection notes
+  assert.deepEqual(extractLatestRejectionReason(""), {
+    reason: "Bukti transfer ditolak oleh petugas.",
+  });
+  assert.deepEqual(extractLatestRejectionReason("Transfer pelunasan via BCA"), {
+    reason: "Bukti transfer ditolak oleh petugas.",
+  });
+
+  // Single rejection note
+  const singleNote = "[DITOLAK Budi Santoso - 12/11/2026]: Bukti transfer buram, mutasi belum masuk";
+  const res1 = extractLatestRejectionReason(singleNote);
+  assert.equal(res1.officer, "Budi Santoso");
+  assert.equal(res1.reason, "Bukti transfer buram, mutasi belum masuk");
+
+  // Multiple sequential rejection notes (extracts latest)
+  const multiNotes = `Transfer pertama\n\n[DITOLAK Budi - 10/11/2026]: Bukti buram\n\nTransfer kedua\n\n[DITOLAK Warehouse Lead - 12/11/2026]: Nominal tidak sesuai tagihan`;
+  const res2 = extractLatestRejectionReason(multiNotes);
+  assert.equal(res2.officer, "Warehouse Lead");
+  assert.equal(res2.reason, "Nominal tidak sesuai tagihan");
+});
+
+test("deriveBorrowCompensationNotifications: borrower receives resolution confirmation when lastSeenNotificationsAt is null (AC-1 & AC-2)", () => {
+  const records = [
+    {
+      id: "res-1",
+      borrowCode: "BRW-20261101-099",
+      borrowerName: "Alice Smith",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "RESOLVED",
+      compensationAmount: 500000,
+      settledAmount: 500000,
+      settledAt: "2026-11-08T12:00:00.000Z",
+      settledBy: "Supervisor Budi",
+    },
+  ];
+
+  const notifs = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Alice Smith",
+    userRole: "staff",
+    lastSeenNotificationsAt: null, // First time opening
+  });
+
+  assert.equal(notifs.length, 1);
+  assert.equal(notifs[0].id, "borrow-comp-resolved-res-1");
+  assert.equal(notifs[0].kind, "borrow_compensation");
+  assert.equal(notifs[0].title, "Pelunasan Ganti Rugi Disetujui: BRW-20261101-099");
+  assert.ok(notifs[0].body!.includes("Rp 500.000"));
+  assert.ok(notifs[0].body!.includes("Supervisor Budi"));
+  assert.ok(notifs[0].body!.includes("Kewajiban Anda telah selesai"));
+});
+
+test("deriveBorrowCompensationNotifications: borrower receives resolution confirmation when settledAt > lastSeenNotificationsAt (AC-2)", () => {
+  const records = [
+    {
+      id: "res-2",
+      borrowCode: "BRW-20261101-100",
+      borrowerName: "Alice Smith",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "RESOLVED",
+      compensationAmount: 250000,
+      settledAmount: 250000,
+      settledAt: "2026-11-10T14:00:00.000Z",
+      settledBy: "Admin Clara",
+    },
+  ];
+
+  const notifs = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Alice Smith",
+    userRole: "staff",
+    lastSeenNotificationsAt: "2026-11-10T10:00:00.000Z", // User last viewed 4 hours before approval
+  });
+
+  assert.equal(notifs.length, 1);
+  assert.equal(notifs[0].id, "borrow-comp-resolved-res-2");
+  assert.equal(notifs[0].title, "Pelunasan Ganti Rugi Disetujui: BRW-20261101-100");
+  assert.ok(notifs[0].body!.includes("Admin Clara"));
+});
+
+test("deriveBorrowCompensationNotifications: resolution notification is dismissed when lastSeenNotificationsAt >= settledAt (AC-3)", () => {
+  const records = [
+    {
+      id: "res-3",
+      borrowCode: "BRW-20261101-101",
+      borrowerName: "Alice Smith",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "RESOLVED",
+      compensationAmount: 250000,
+      settledAmount: 250000,
+      settledAt: "2026-11-10T14:00:00.000Z",
+      settledBy: "Admin Clara",
+    },
+  ];
+
+  // User clicked "Mark all read" at 15:00, after 14:00 settlement
+  const notifs = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Alice Smith",
+    userRole: "staff",
+    lastSeenNotificationsAt: "2026-11-10T15:00:00.000Z",
+  });
+
+  // Omitted from active feed to prevent clutter
+  assert.equal(notifs.length, 0);
+});
+
+test("deriveBorrowCompensationNotifications: borrower receives rejection alert with parsed officer and reason (AC-4)", () => {
+  const records = [
+    {
+      id: "rej-1",
+      borrowCode: "BRW-20261101-102",
+      borrowerName: "Alice Smith",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "PENDING_SETTLEMENT",
+      compensationAmount: 400000,
+      settlementNotes: "Transfer BCA\n\n[DITOLAK Budi Santoso - 12/11/2026]: Bukti transfer buram, mutasi rekening belum masuk",
+      updatedAt: "2026-11-12T09:00:00.000Z",
+    },
+  ];
+
+  const notifs = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Alice Smith",
+    userRole: "staff",
+  });
+
+  assert.equal(notifs.length, 1);
+  assert.equal(notifs[0].id, "borrow-comp-rejected-rej-1");
+  assert.equal(notifs[0].kind, "borrow_compensation");
+  assert.equal(notifs[0].title, "Pengajuan Pelunasan Ditolak: BRW-20261101-102");
+  assert.ok(notifs[0].body!.includes("Budi Santoso"));
+  assert.ok(notifs[0].body!.includes("Bukti transfer buram, mutasi rekening belum masuk"));
+  assert.ok(notifs[0].body!.includes("Silakan ajukan ulang bukti yang sah"));
+});
+
+test("deriveBorrowCompensationNotifications: non-borrowers and managers do NOT receive resolution or rejection alerts (AC-5)", () => {
+  const records = [
+    {
+      id: "res-4",
+      borrowCode: "BRW-20261101-103",
+      borrowerName: "Alice Smith",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "RESOLVED",
+      compensationAmount: 500000,
+      settledAt: "2026-11-12T10:00:00.000Z",
+      settledBy: "Warehouse Lead",
+    },
+    {
+      id: "rej-2",
+      borrowCode: "BRW-20261101-104",
+      borrowerName: "Alice Smith",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "PENDING_SETTLEMENT",
+      compensationAmount: 500000,
+      settlementNotes: "[DITOLAK Warehouse Lead - 12/11/2026]: Foto tidak jelas",
+    },
+  ];
+
+  // 1. Other staff: should get 0 notifications
+  const notifsOtherStaff = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Dewi Sartika",
+    userRole: "staff",
+  });
+  assert.equal(notifsOtherStaff.length, 0);
+
+  // 2. Warehouse Manager: should get 0 notifications (not pending verification)
+  const notifsWarehouse = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Warehouse Lead",
+    userRole: "warehouse",
+  });
+  assert.equal(notifsWarehouse.length, 0);
+
+  // 3. Admin: should get 0 notifications
+  const notifsAdmin = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Super Admin",
+    userRole: "admin",
+  });
+  assert.equal(notifsAdmin.length, 0);
+});
+
+test("deriveBorrowCompensationNotifications: manager continues to receive verification operational alerts (AC-6)", () => {
+  const records = [
+    {
+      id: "verif-1",
+      borrowCode: "BRW-20261101-105",
+      borrowerName: "Alice Smith",
+      returnDueDate: "2026-11-05T00:00:00.000Z",
+      status: "RETURNED",
+      compensationStatus: "PENDING_VERIFICATION",
+      compensationAmount: 600000,
+      updatedAt: "2026-11-12T11:00:00.000Z",
+    },
+  ];
+
+  const notifs = deriveBorrowCompensationNotifications({
+    records,
+    currentUserName: "Warehouse Lead",
+    userRole: "warehouse",
+  });
+
+  assert.equal(notifs.length, 1);
+  assert.equal(notifs[0].id, "borrow-verify-verif-1");
+  assert.equal(notifs[0].title, "Verifikasi Pelunasan: BRW-20261101-105");
+  assert.ok(notifs[0].body!.includes("Alice Smith"));
+  assert.ok(notifs[0].body!.includes("600.000"));
 });

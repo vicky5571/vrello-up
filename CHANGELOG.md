@@ -6,6 +6,23 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-12]
 
+- `feat(inventory)`: Borrower compensation settlement and rejection feedback notifications (ADR-0109)
+  - Pure Derivation & Rejection Parsing (`src/lib/productivity/notifications.ts`):
+    - Extended `BorrowNotificationRow` with `settledAt`, `settledBy`, `settledAmount`, and `settlementNotes`.
+    - Added `extractLatestRejectionReason` helper to parse officer identity and specific rejection reason from notes.
+    - Updated `deriveBorrowCompensationNotifications` with `lastSeenNotificationsAt` support.
+    - Emits positive resolution notification (`"Pelunasan Ganti Rugi Disetujui"`) for borrower, persisting until marked as read.
+    - Emits rejection notification (`"Pengajuan Pelunasan Ditolak"`) with parsed officer and reason when notes contain `[DITOLAK`.
+    - Automatically dismisses resolution notification once `lastSeenNotificationsAt >= settledAt` to keep feed clean.
+  - Serialization Alignment (`src/app/api/marcom/inventory/borrow/route.ts`):
+    - Added explicit ISO string normalization for `settledAt` on `normalizeBorrowRecord`.
+  - NotificationCenter Activity Feed Integration (`src/components/layout/NotificationCenter.tsx`):
+    - Forwarded `lastSeenNotificationsAt` to `deriveBorrowCompensationNotifications` in `useMemo`.
+    - Kept coordinator file at 228 LOC (strictly $\le 250$ LOC).
+  - Automated Tests:
+    - Added 7 unit tests in `src/lib/productivity/notifications.test.ts` verifying AC-1 through AC-6.
+  - Refs: `docs/adr/0109-borrower-compensation-settlement-and-rejection-feedback-notifications.md`, `docs/superpowers/specs/2026-11-12-borrower-compensation-settlement-and-rejection-feedback-notifications-design.md`, `docs/superpowers/plans/2026-11-12-borrower-compensation-settlement-and-rejection-feedback-notifications.md`
+
 - `feat(inventory)`: Strict one-shot settlement nominal lock and compensation adjustment workflow (ADR-0108)
   - SSOT & Backend Enforcement (`src/types/index.ts`, `src/app/api/marcom/inventory/borrow/[id]/settle/route.ts`):
     - Added `AdjustCompensationPayload` interface in SSOT `src/types/index.ts`.

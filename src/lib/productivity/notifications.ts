@@ -245,6 +245,10 @@ export interface BorrowNotificationRow {
   compensationStatus?: string; // "NONE" | "PENDING_SETTLEMENT" | "PENDING_VERIFICATION" | "RESOLVED"
   compensationAmount?: number;
   updatedAt?: string; // ISO string — used as createdAt for compensation notifications
+  settledAt?: string;
+  settledBy?: string;
+  settledAmount?: number;
+  settlementNotes?: string;
 }
 
 /**
@@ -326,26 +330,44 @@ export function deriveBorrowOverdueNotifications(params: {
 }
 
 /**
- * Derives in-app notifications for equipment borrowing compensation liabilities (ADR-0106).
+ * Helper to extract the latest rejection reason and officer from settlementNotes (ADR-0109).
+ */
+export function extractLatestRejectionReason(notes?: string): { officer?: string; reason: string } {
+  if (!notes || !notes.includes("[DITOLAK")) {
+    return { reason: "Bukti transfer ditolak oleh petugas." };
+  }
+  // Matches "[DITOLAK <Officer> - <Date>]: <Reason>" or "[DITOLAK <Officer>]: <Reason>"
+  const matches = [...notes.matchAll(/\[DITOLAK\s+([^-\]]+?)(?:\s*-\s*[^\]]+)?\]:\s*([^\n]+)/g)];
+  if (matches.length > 0) {
+    const last = matches[matches.length - 1];
+    return { officer: last[1].trim(), reason: last[2].trim() };
+  }
+  return { reason: "Bukti transfer ditolak oleh petugas." };
+}
+
+/**
+ * Derives in-app notifications for equipment borrowing compensation liabilities (ADR-0106 & ADR-0109).
  *
- * Emits personal alerts for borrowers who have an open compensation obligation
- * (PENDING_SETTLEMENT), and operational alerts for warehouse/supervisor/admin when
- * a staff member has submitted a proof and is awaiting verification (PENDING_VERIFICATION).
+ * Emits personal alerts for borrowers who have an open compensation obligation (PENDING_SETTLEMENT),
+ * rejection feedback with officer reason when a submission was rejected, positive affirmation
+ * when a settlement is approved (RESOLVED, persistent until marked as read), and operational
+ * review alerts for warehouse/supervisor/admin when proof is awaiting verification (PENDING_VERIFICATION).
  */
 export function deriveBorrowCompensationNotifications(params: {
   records: BorrowNotificationRow[];
   currentUserName: string;
   userRole: "admin" | "supervisor" | "warehouse" | "staff" | "viewer";
+  lastSeenNotificationsAt?: string | null;
   now?: Date;
 }): AppNotification[] {
-  const { records, currentUserName, userRole, now = new Date() } = params;
+  const { records, currentUserName, userRole, lastSeenNotificationsAt, now = new Date() } = params;
   const notifs: AppNotification[] = [];
   const normalizedUser = (currentUserName || "").trim().toLowerCase();
   const isManager =
     userRole === "warehouse" || userRole === "supervisor" || userRole === "admin";
 
   for (const rec of records) {
-    if (!rec.compensationStatus || rec.compensationStatus === "NONE" || rec.compensationStatus === "RESOLVED") {
+    if (!rec.compensationStatus || rec.compensationStatus === "NONE") {
       continue;
     }
 
@@ -357,15 +379,28 @@ export function deriveBorrowCompensationNotifications(params: {
     const formattedAmount = (rec.compensationAmount || 0).toLocaleString("id-ID");
 
     if (rec.compensationStatus === "PENDING_SETTLEMENT" && (rec.compensationAmount ?? 0) > 0) {
-      // Personal alert for the borrower with an outstanding obligation
+      // Personal alert for the borrower with an outstanding obligation or rejection feedback
       if (isBorrower) {
-        notifs.push({
-          id: `borrow-comp-${rec.id}`,
-          kind: "borrow_compensation",
-          title: `Kewajiban Ganti Rugi: ${rec.borrowCode}`,
-          body: `Kamu memiliki kewajiban ganti rugi sebesar Rp ${formattedAmount}. Silakan ajukan bukti transfer melalui halaman peminjaman.`,
-          createdAt,
-        });
+        const hasRejection = Boolean(rec.settlementNotes && rec.settlementNotes.includes("[DITOLAK"));
+        if (hasRejection) {
+          const { officer, reason } = extractLatestRejectionReason(rec.settlementNotes);
+          const officerText = officer ? ` oleh ${officer}` : " oleh petugas";
+          notifs.push({
+            id: `borrow-comp-rejected-${rec.id}`,
+            kind: "borrow_compensation",
+            title: `Pengajuan Pelunasan Ditolak: ${rec.borrowCode}`,
+            body: `Bukti transfer ditolak${officerText}: ${reason}. Silakan ajukan ulang bukti yang sah.`,
+            createdAt,
+          });
+        } else {
+          notifs.push({
+            id: `borrow-comp-${rec.id}`,
+            kind: "borrow_compensation",
+            title: `Kewajiban Ganti Rugi: ${rec.borrowCode}`,
+            body: `Kamu memiliki kewajiban ganti rugi sebesar Rp ${formattedAmount}. Silakan ajukan bukti transfer melalui halaman peminjaman.`,
+            createdAt,
+          });
+        }
       }
     }
 
@@ -389,6 +424,31 @@ export function deriveBorrowCompensationNotifications(params: {
           title: `Verifikasi Pelunasan: ${rec.borrowCode}`,
           body: `${rec.borrowerName} telah mengajukan bukti transfer (Rp ${formattedAmount}). Harap konfirmasi atau tolak pengajuan.`,
           createdAt,
+        });
+      }
+    }
+
+    // Positive resolution confirmation for borrower (ADR-0109: persistent until read/dismissed)
+    if (rec.compensationStatus === "RESOLVED") {
+      if (isBorrower) {
+        const resolvedAt = rec.settledAt || rec.updatedAt || now.toISOString();
+        const resolvedAtMs = new Date(resolvedAt).getTime();
+        const lastSeenMs = lastSeenNotificationsAt ? new Date(lastSeenNotificationsAt).getTime() : 0;
+
+        // Dismiss from active feed if already seen and marked as read
+        if (lastSeenNotificationsAt && !isNaN(lastSeenMs) && resolvedAtMs <= lastSeenMs) {
+          continue;
+        }
+
+        const settledAmountFormatted = (rec.settledAmount ?? rec.compensationAmount ?? 0).toLocaleString("id-ID");
+        const verifier = rec.settledBy || "Admin/Gudang";
+
+        notifs.push({
+          id: `borrow-comp-resolved-${rec.id}`,
+          kind: "borrow_compensation",
+          title: `Pelunasan Ganti Rugi Disetujui: ${rec.borrowCode}`,
+          body: `Pembayaran ganti rugi sebesar Rp ${settledAmountFormatted} telah diverifikasi oleh ${verifier}. Kewajiban Anda telah selesai.`,
+          createdAt: resolvedAt,
         });
       }
     }

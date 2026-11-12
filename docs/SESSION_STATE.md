@@ -8,7 +8,7 @@
 
 **Date:** 2026-11-12  
 **Active Branch:** `vicky`  
-**Active Feature:** Borrower Compensation Settlement and Rejection Feedback Notifications (ADR-0109) — **PLANNING COMPLETE**  
+**Active Feature:** Borrower Compensation Settlement and Rejection Feedback Notifications (ADR-0109) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Strict One-Shot Settlement Nominal Lock and Compensation Adjustment Workflow (ADR-0108) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Localized Async Mutation Feedback and Loading States for Inventory Borrow Lifecycle (ADR-0107) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Hybrid Staff Cash Settlement Submission and Warehouse Verification Workflow (ADR-0106) — **IMPLEMENTATION COMPLETE**  
@@ -93,7 +93,30 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Strict One-Shot Settlement Nominal Lock and Compensation Adjustment Workflow (ADR-0108 — Implementation Complete):**
+1. **Implementasi Borrower Compensation Settlement and Rejection Feedback Notifications (ADR-0109 — Implementation Complete):**
+   - **Konteks & Solusi Lapangan:**
+     - Mengatasi kekosongan umpan balik operasional (*operational feedback void*) saat transaksi ganti rugi disetujui (`CONFIRM` $\rightarrow$ `RESOLVED`) atau ditolak (`REJECT` $\rightarrow$ `PENDING_SETTLEMENT`).
+     - Sebelumnya, saat admin/gudang mengonfirmasi pelunasan, notifikasi verifikasi hilang seketika tanpa konfirmasi positif kepada peminjam (`staff`), menimbulkan ketidakpastian apakah dana transfer telah diverifikasi atau hilang dalam antrean.
+     - Sebelumnya, saat pengajuan ditolak karena bukti buram atau dana belum masuk rekening, peminjam hanya melihat notifikasi generik tanpa mengetahui bahwa buktinya ditolak serta alasan spesifik penolakannya.
+     - Menerapkan model *State-Aware Persistence Until Dismissed/Read*: notifikasi sukses pelunasan tetap muncul saat refresh/buka tab baru hingga staf membacanya (`lastSeenNotificationsAt >= settledAt`), sehingga terbebas dari penumpukan arsip lama di Activity Center.
+   - **Phase 1: Pure Notification Derivation & Rejection Parser (`src/lib/productivity/notifications.ts`):**
+     - Memperluas interface `BorrowNotificationRow` dengan `settledAt`, `settledBy`, `settledAmount`, dan `settlementNotes`.
+     - Mengimplementasikan helper `extractLatestRejectionReason` untuk mengekstrak identitas petugas dan alasan penolakan spesifik dari catatan `settlementNotes` (`[DITOLAK ...]: ...`).
+     - Memperbarui `deriveBorrowCompensationNotifications` dengan parameter `lastSeenNotificationsAt?: string | null`.
+     - Mengirim notifikasi penolakan (`"Pengajuan Pelunasan Ditolak"`) lengkap dengan alasan penolakan agar staf dapat langsung mengunggah ulang bukti yang sah.
+     - Mengirim notifikasi penyelesaian (`"Pelunasan Ganti Rugi Disetujui"`) secara personal kepada peminjam dan menyaringnya keluar dari feed aktif saat sudah ditandai dibaca (`lastSeenNotificationsAt >= settledAt`).
+   - **Phase 2: Activity Center Integration & Coordinator LOC Protection (`NotificationCenter.tsx`):**
+     - Meneruskan `lastSeenNotificationsAt` dari Zustand store ke dalam pemanggilan `deriveBorrowCompensationNotifications`.
+     - Menjaga ukuran file koordinator `NotificationCenter.tsx` pada 228 LOC (mematuhi batas ketat $\le 250$ LOC).
+   - **Phase 3: Automated Invariant Tests (`notifications.test.ts` & `useNotificationFeed.test.ts`):**
+     - Menambahkan 7 unit tests baru yang memverifikasi seluruh kriteria penerimaan AC-1 hingga AC-6: penerimaan konfirmasi saat `lastSeen` null, persistensi saat `settledAt > lastSeen`, penghapusan saat `lastSeen >= settledAt`, ekstraksi alasan penolakan, serta isolasi ketat antar-peminjam dan manajer.
+     - Seluruh 23 unit test di `notifications.test.ts` dan 5 test di `useNotificationFeed.test.ts` lulus tanpa kegagalan.
+   - **Phase 4: Non-Negotiable Verification Gates:**
+     - `npm run drift:check`: ✅ PASS (136/136 spec-plan pairs valid, coordinator files $\le 250$ LOC, 0 drift).
+     - `npm run build:check`: ✅ PASS (`tsc --noEmit`, exit code 0).
+     - `npm test`: ✅ PASS (1131/1131 tests passing, 0 failures).
+
+2. **Implementasi Strict One-Shot Settlement Nominal Lock and Compensation Adjustment Workflow (ADR-0108 — Implementation Complete):**
    - **Konteks & Solusi Lapangan:**
      - Mengatasi celah *moral hazard* dan kebocoran finansial di mana peminjam (`staff`) atau operator sebelumnya dapat mengubah nilai transfer pelunasan secara sembarangan pada `BorrowSettlementModal` (misal dari Rp 1.000.000 menjadi Rp 100.000) dan setelah dikonfirmasi, kewajiban ganti rugi permanen dianggap `RESOLVED` (lunas).
      - Menjamin integritas prinsip *one-shot terminal settlement*: form pelunasan bertindak murni sebagai eksekutor pembayaran (Read-Only) yang mengikat nominal ke `record.compensationAmount` secara immutabel.

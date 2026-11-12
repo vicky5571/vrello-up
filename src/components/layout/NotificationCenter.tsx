@@ -70,8 +70,9 @@ export function NotificationCenter() {
         records: borrowRows,
         currentUserName: session?.user?.name || "",
         userRole: (session?.user?.role as "admin" | "supervisor" | "warehouse" | "staff" | "viewer") || "staff",
+        lastSeenNotificationsAt,
       }),
-    [borrowRows, session?.user?.name, session?.user?.role],
+    [borrowRows, session?.user?.name, session?.user?.role, lastSeenNotificationsAt],
   );
   const allNotifs = useMemo<AppNotification[]>(
     () =>
