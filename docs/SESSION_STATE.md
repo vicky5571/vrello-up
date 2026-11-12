@@ -8,7 +8,8 @@
 
 **Date:** 2026-11-12  
 **Active Branch:** `vicky`  
-**Active Feature:** Borrower Compensation Settlement and Rejection Feedback Notifications (ADR-0109) — **IMPLEMENTATION COMPLETE**  
+**Active Feature:** POSM Unit Economics Segmented Progress Bar List Layout (ADR-0110) — **PLANNING COMPLETE**  
+**Previous Feature:** Borrower Compensation Settlement and Rejection Feedback Notifications (ADR-0109) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Strict One-Shot Settlement Nominal Lock and Compensation Adjustment Workflow (ADR-0108) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Localized Async Mutation Feedback and Loading States for Inventory Borrow Lifecycle (ADR-0107) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Hybrid Staff Cash Settlement Submission and Warehouse Verification Workflow (ADR-0106) — **IMPLEMENTATION COMPLETE**  
