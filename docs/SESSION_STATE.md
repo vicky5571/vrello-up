@@ -8,7 +8,7 @@
 
 **Date:** 2026-11-12  
 **Active Branch:** `vicky`  
-**Active Feature:** POSM Unit Economics Segmented Progress Bar List Layout (ADR-0110) — **PLANNING COMPLETE**  
+**Active Feature:** POSM Unit Economics Segmented Progress Bar List Layout (ADR-0110) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Borrower Compensation Settlement and Rejection Feedback Notifications (ADR-0109) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Strict One-Shot Settlement Nominal Lock and Compensation Adjustment Workflow (ADR-0108) — **IMPLEMENTATION COMPLETE**  
 **Previous Feature:** Localized Async Mutation Feedback and Loading States for Inventory Borrow Lifecycle (ADR-0107) — **IMPLEMENTATION COMPLETE**  
@@ -94,7 +94,29 @@
 
 ## What Was Completed This Session
 
-1. **Implementasi Borrower Compensation Settlement and Rejection Feedback Notifications (ADR-0109 — Implementation Complete):**
+1. **Implementasi POSM Unit Economics Segmented Progress Bar List Layout (ADR-0110 — Implementation Complete):**
+   - **Konteks & Solusi Lapangan:**
+     - Mengatasi cacat visual parah berupa tabrakan/tumpang-tindih teks (*text collision defect*) pada chart POSM Unit Economics di dashboard Analytics/ROI.
+     - Sebelumnya, nama materi teknis yang panjang (43 hingga 55 karakter, seperti *"Signboard Acrylic LED 240x80cm Backlit Aluminium Frame"*) dipaksa masuk ke sumbu Y SVG Recharts yang sempit (96px mobile / 120px desktop) dengan alokasi tinggi per baris hanya ~31px–48px. Akibatnya, 4–5 baris teks membentur baris kategori di bawahnya sehingga huruf-huruf bertumpukan secara tidak terbaca di mobile dan desktop.
+     - Mengadopsi pola modern *Segmented Progress Bar List* (pola enterprise Linear/Tremor/Vercel): nama materi teknis berposisi di baris tersendiri selebar 100% tanpa risiko terpotong atau bertabrakan, diikuti ringkasan metrik ekonomi (`X Titik (Y% Selesai) · Avg Rp Z/unit`) dan track progress bar horizontal bersegmen warna proporsional.
+   - **Phase 1: Component Refactoring (`PosmEconomicsChart.tsx`):**
+     - Menghapus komponen SVG Recharts (`BarChart`, `Bar`, `XAxis`, `YAxis`, `CartesianGrid`, `Tooltip`, `Legend`, `ResponsiveContainer`) dan container statis `h-96 sm:h-72`.
+     - Menyusun status legend horizontal di bagian atas (`Selesai (DONE)`, `Sedang Proses`, `Kendala (Issue)`, `Belum Mulai`).
+     - Merender daftar meter kemajuan untuk setiap materi dalam `data.materials`:
+       - Header row: nama materi lengkap (`text-xs font-semibold`) dan badge ringkasan metrik.
+       - Track bar: `h-3 w-full rounded-full bg-slate-100 dark:bg-slate-800/80 overflow-hidden flex shadow-inner`.
+       - Segmen warna proporsional untuk DONE (emerald), ON_PROGRESS (amber), ISSUE (rose), dan NOT_STARTED (slate).
+       - Tooltip hover bawaan yang informatif dan click handler untuk navigasi filter drill-down (`onDrilldown(materialName, status)`).
+     - Menjaga wrapper `ChartCard` dan `accessibleTable` untuk aksesibilitas screen reader.
+   - **Phase 2: Invariant & Unit Test Suite (`PosmEconomicsChart.test.ts` & `roiChartsResponsiveness.test.ts`):**
+     - Menambahkan invariant tests di `PosmEconomicsChart.test.ts` untuk memastikan tidak adanya elemen `YAxis` dan `BarChart` yang menyebabkan collision, memastikan 4 segmen warna terpasang lengkap dengan drilldown mappings, serta memvalidasi perhitungan persentase dan guard pembagian nol (`total === 0`).
+     - Menyesuaikan `roiChartsResponsiveness.test.ts` yang sebelumnya menguji ukuran sumbu Y lama agar selaras dengan pola layout bersegmen ADR-0110.
+   - **Phase 3: Non-Negotiable Verification Gates:**
+     - `npm run drift:check`: ✅ PASS (137/137 spec-plan pairs valid, coordinator files $\le 250$ LOC, 0 drift).
+     - `npm run build:check`: ✅ PASS (`tsc --noEmit`, exit code 0).
+     - `npm test`: ✅ PASS (1138/1138 tests passing, 0 failures).
+
+2. **Implementasi Borrower Compensation Settlement and Rejection Feedback Notifications (ADR-0109 — Implementation Complete):**
    - **Konteks & Solusi Lapangan:**
      - Mengatasi kekosongan umpan balik operasional (*operational feedback void*) saat transaksi ganti rugi disetujui (`CONFIRM` $\rightarrow$ `RESOLVED`) atau ditolak (`REJECT` $\rightarrow$ `PENDING_SETTLEMENT`).
      - Sebelumnya, saat admin/gudang mengonfirmasi pelunasan, notifikasi verifikasi hilang seketika tanpa konfirmasi positif kepada peminjam (`staff`), menimbulkan ketidakpastian apakah dana transfer telah diverifikasi atau hilang dalam antrean.

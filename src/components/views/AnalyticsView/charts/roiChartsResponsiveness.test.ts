@@ -49,15 +49,23 @@ describe("ROI Charts Mobile Readability & Desktop Invariants (ADR-0098)", () => 
     );
   });
 
-  it("verifies PosmEconomicsChart applies responsive height h-96 sm:h-72 and responsive YAxis width", () => {
+  it("verifies PosmEconomicsChart adopts segmented progress bar list layout (ADR-0110 supersedes ADR-0098)", () => {
     const content = fs.readFileSync(posmChartPath, "utf-8");
     assert.ok(
-      content.includes("h-96 sm:h-72"),
-      "PosmEconomicsChart must use h-96 sm:h-72"
+      !content.includes("h-96 sm:h-72"),
+      "PosmEconomicsChart must not use cramped fixed SVG height h-96 sm:h-72"
     );
     assert.ok(
-      content.includes("width={mobileActive ? 96 : 120}"),
-      "PosmEconomicsChart YAxis must use responsive width (96 mobile vs 120 desktop)"
+      !content.includes("<YAxis"),
+      "PosmEconomicsChart must eliminate cramped YAxis to prevent text collisions"
+    );
+    assert.ok(
+      content.includes("h-3 w-full rounded-full"),
+      "PosmEconomicsChart must use full-width segmented progress bar tracks"
+    );
+    assert.ok(
+      content.includes("bg-emerald-500"),
+      "PosmEconomicsChart must render emerald done segments"
     );
   });
 

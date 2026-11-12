@@ -6,6 +6,19 @@ Format: `[YYYY-MM-DD] <type>(<scope>): <description>` with spec/plan references.
 
 ## [2026-11-12]
 
+- `feat(analytics)`: POSM unit economics segmented progress bar list layout (ADR-0110)
+  - Layout Architecture Refactoring (`src/components/views/AnalyticsView/charts/PosmEconomicsChart.tsx`):
+    - Replaced cramped Recharts SVG `<BarChart>` and narrow left `<YAxis>` with semantic Segmented Progress Bar List pattern.
+    - Completely eliminated text collision defect where long descriptive material names (up to 55 characters) overlapped vertically across adjacent category rows.
+    - Added full-width material name header row with metrics summary (`{m.total} Titik ({m.doneRate}%) · {formatCompactIDR(m.avgCost)}/unit`).
+    - Implemented full-width segmented progress bar tracks with emerald (`done`), amber (`inProgress`), rose (`issue`), and slate (`notStarted`) status bars.
+    - Added rich hover tooltips and interactive click drilldown (`onDrilldown(materialName, status)`).
+    - Mounted compact status legend row at top and preserved screen reader accessible table.
+  - Test Suite & Invariants (`src/components/views/AnalyticsView/charts/PosmEconomicsChart.test.ts`, `roiChartsResponsiveness.test.ts`):
+    - Added unit tests for zero text collision layout, segment styling, drilldown mappings, and zero-division math guard.
+    - Updated `roiChartsResponsiveness.test.ts` acknowledging ADR-0110 layout superseding the old ADR-0098 SVG workaround.
+  - Refs: `docs/adr/0110-posm-unit-economics-segmented-progress-bar-list-layout.md`, `docs/superpowers/specs/2026-11-12-posm-unit-economics-segmented-progress-bar-list-design.md`, `docs/superpowers/plans/2026-11-12-posm-unit-economics-segmented-progress-bar-list.md`
+
 - `feat(inventory)`: Borrower compensation settlement and rejection feedback notifications (ADR-0109)
   - Pure Derivation & Rejection Parsing (`src/lib/productivity/notifications.ts`):
     - Extended `BorrowNotificationRow` with `settledAt`, `settledBy`, `settledAmount`, and `settlementNotes`.
